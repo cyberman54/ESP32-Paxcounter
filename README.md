@@ -5,7 +5,7 @@ built on cheap ESP32 boards
 <img src="img/Paxcounter_GIF.gif">
 
 Check out Wiki in this git repo for additional information on suitable hardware:
-https://github.com/cyberman54/Paxcounter/wiki
+https://github.com/cyberman54/ESP32-Paxcounter/wiki
 
 # Hardware
 
@@ -15,14 +15,14 @@ Currently supported IoT boards:
 - Pycom LoPy
 - Pycom LoPy4
 
-Target platform must be selected in [platformio.ini](https://github.com/cyberman54/Paxcounter/blob/master/platformio.ini).
+Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.
 
 # Building
 
 Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
 
-Before compiling the code, create file loraconf.h in the /src directory from the template [loraconf.sample.h](https://github.com/cyberman54/Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. Only OTAA join is supported, not ABP. The DEVEUI will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings. If you enter a DEVEUI in loraconf.h it will be used instead.
+Before compiling the code, create file loraconf.h in the /src directory from the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. Only OTAA join is supported, not ABP. The DEVEUI will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings. If you enter a DEVEUI in loraconf.h it will be used instead.
 
 # Legal note
 
@@ -162,4 +162,4 @@ Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
 
 NOTICE: 
 Parts of the source files in this repository are made available under different licenses,
-see file <A HREF="https://github.com/cyberman54/Paxcounter/blob/master/LICENSE">LICENSE.txt</A> in this repository. Refer to each individual source file for more details.
+see file <A HREF="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/LICENSE">LICENSE.txt</A> in this repository. Refer to each individual source file for more details.
