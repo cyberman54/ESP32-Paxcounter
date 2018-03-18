@@ -1,0 +1,165 @@
+# Paxcounter
+Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini ESP32 Paxcounter
+built on cheap ESP32 boards
+
+<img src="img/Paxcounter_GIF.gif">
+
+Check out Wiki in this git repo for additional information on suitable hardware:
+https://github.com/cyberman54/Paxcounter/wiki
+
+# Hardware
+
+Currently supported IoT boards:
+- Heltec LoRa-32
+- TTGOv2
+- Pycom LoPy
+- Pycom LoPy4
+
+Target platform must be selected in [platformio.ini](https://github.com/cyberman54/Paxcounter/blob/master/platformio.ini).
+Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.
+
+# Building
+
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
+
+Before compiling the code, create file loraconf.h in the /src directory from the template [loraconf.sample.h](https://github.com/cyberman54/Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. Only OTAA join is supported, not ABP. The DEVEUI will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings. If you enter a DEVEUI in loraconf.h it will be used instead.
+
+# Legal note
+
+**Depending on your country's laws it may be illegal to sniff wireless networks for MAC addresses. Please check and respect your country's laws before using this code!**
+
+(e.g. US citizens check [Section 18 U.S. Code § 2511](https://www.law.cornell.edu/uscode/text/18/2511) and [discussion](https://github.com/schollz/howmanypeoplearearound/issues/4) on this)
+
+(e.g. UK citizens check [Data Protection Act 1998](https://ico.org.uk/media/1560691/wi-fi-location-analytics-guidance.pdf) and [this case](https://www.cbsnews.com/news/uk-bars-trash-cans-from-tracking-people-with-wi-fi/)) 
+
+Disclosure: The Paxcounter code stores scanned MAC adresses in the device's RAM, and keeps it in RAM temporary for a configurable scan cycle time (default 240 seconds). After each scan cycle the collected MAC data is erased from RAM. MAC data never is transferred to the LoRaWAN network. No kind of tracking and no persistent storing of MAC data or timestamps on the device and no other kind of analytics than counting is implemented in this code. Wireless networks are not touched by this code, but MAC adresses from wireless devices as well within as not within wireless networks, regardless if encrypted or unencrypted, are made visible and scanned by this code. The same applies to Bluetooth MACs, if the bluetooth option in the code is enabled.
+
+# Payload format description
+
+FPort1:
+
+	byte 1:			16-bit Wifi counter, MSB
+	byte 2:			16-bit Wifi counter, LSB
+	byte 3:			16-bit BLE counter, MSB
+	byte 4:			16-bit BLE counter, LSB
+
+FPort2:
+
+	see remote command set
+
+# Remote command set
+
+The device listenes for remote control commands on LoRaWAN Port 2.
+Each command is followed by exactly one parameter.
+Multiple command/parameter pairs can be concatenated and sent in one single payload downlink.
+
+Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
+
+0x01 set Wifi scan RSSI limit
+
+	1 ... 255 used for wifi scan radius (greater values increase wifi scan radius, values 50...110 make sense)
+	0 = Wifi rssi limiter disabled [default]
+	
+0x02 set counter mode
+
+	0 = cyclic unconfirmed, mac counter reset after each wifi scan cycle, data is sent only once [default]
+	1 = cumulative counter, mac counter is never reset
+	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
+  
+0x03 set screen saver mode
+
+	0 = screen saver off [default]
+	1 = screen saver on
+
+0x04 set display on/off
+
+	0 = display off
+	1 = display on [default]
+
+0x05 set LoRa spread factor
+
+	7 ... 12 [default: 9]
+
+0x06 set LoRa TXpower
+
+	2 ... 15 [default: 15]
+	
+0x07 set LoRa Adaptive Data Rate mode
+
+	0 = ADR off
+	1 = ADR on [default] 
+	
+	note: set ADR to off, if device is moving, set to on, if not.
+
+0x08 do nothing
+
+	useful to clear pending commands from LoRaWAN server quere, or to check RSSI on device
+
+0x09 reset functions
+
+	0 = restart device
+	1 = reset MAC counter to zero
+	2 = reset device to factory settings
+
+0x0A set Wifi scan cycle timer
+
+	0 ... 255 duration of a wifi scan cycle in seconds/2
+	e.g. 120 -> 1 cycle runs for 240 seconds
+
+0x0B set Wifi channel switch interval timer
+
+	0 ... 255 timeout for scanning 1 wifi channel in seconds/100
+	e.g. 50 -> each channel is scanned for 0,5 seconds
+
+0x0C set BLE scan cycle timer
+
+	0 ... 255 duration of a BLE scan cycle in seconds
+	e.g. 30 -> 1 cycle runs for 30 seconds
+
+0x0D set BLE scan mode
+
+	0 = disabled [default]
+	1 = enabled
+
+0x80 get device configuration
+
+	device answers with it's current configuration:
+
+	byte 1:			Lora SF (7..12)
+	byte 2:			Lora TXpower (2..15)
+	byte 3:			Lora ADR (1=on, 0=off)
+	byte 4:			Screensaver status (1=on, 0=off)
+	byte 5:			Display status (1=on, 0=off)
+	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed)
+	bytes 7-8:		RSSI limiter threshold value (negative)
+	byte 9:			Wifi scan cycle duration in seconds/2 (0..255)
+	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
+	byte 11:		BLE scan cycle duration in seconds (0..255)
+	byte 12:		BLE scan mode (1=on, 0=0ff)
+	bytes 13-22:		Software version (ASCII format)
+
+0x81 get device uptime
+
+	bytes 1-7:		Uptime in seconds (little endian format)
+	
+# License
+
+Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
+
+Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+NOTICE: 
+Parts of the source files in this repository are made available under different licenses,
+see file <A HREF="https://github.com/cyberman54/Paxcounter/blob/master/LICENSE">LICENSE.txt</A> in this repository. Refer to each individual source file for more details.
