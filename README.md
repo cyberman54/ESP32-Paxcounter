@@ -4,9 +4,6 @@ built on cheap ESP32 boards
 
 <img src="img/Paxcounter_GIF.gif">
 
-Check out Wiki in this git repo for additional information on suitable hardware:
-https://github.com/cyberman54/ESP32-Paxcounter/wiki
-
 # Hardware
 
 Currently supported IoT boards:
