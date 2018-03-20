@@ -13,7 +13,11 @@ Currently supported IoT boards:
 - Pycom LoPy4
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).
+
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.
+
+Suitable 3D printable cases can be found (and, if wanted so, ordered) on Thingiverse, see 
+<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A> and <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, for example.
 
 # Building
 
