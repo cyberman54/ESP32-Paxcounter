@@ -326,8 +326,9 @@ void setup() {
     
     ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
 
+    tcpip_adapter_init(); // not sure if necessary, but seems needed for TTGOv1
     // ESP Event Loop
-    esp_event_loop_init(NULL, NULL);
+    esp_event_loop_init(NULL, NULL);  // not sure if necessary -> to be checked
 
     // Print chip information on startup
 #ifdef VERBOSE
