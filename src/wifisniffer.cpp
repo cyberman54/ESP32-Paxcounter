@@ -13,23 +13,6 @@
 #include <esp_event.h>
 #include <esp_event_loop.h>
 
-#define WIFI_INIT_CONFIG_PAXCOUNTER() { \
-    .event_handler = &esp_event_send, \
-    .wpa_crypto_funcs = g_wifi_default_wpa_crypto_funcs, \
-    .static_rx_buf_num = CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM,\
-    .dynamic_rx_buf_num = CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM,\
-    .tx_buf_type = CONFIG_ESP32_WIFI_TX_BUFFER_TYPE,\
-    .static_tx_buf_num = WIFI_STATIC_TX_BUFFER_NUM,\
-    .dynamic_tx_buf_num = WIFI_DYNAMIC_TX_BUFFER_NUM,\
-    .ampdu_rx_enable = WIFI_AMPDU_RX_ENABLED,\
-    .ampdu_tx_enable = WIFI_AMPDU_TX_ENABLED,\
-    .nvs_enable = 0,\
-    .nano_enable = WIFI_NANO_FORMAT_ENABLED,\
-    .tx_ba_win = WIFI_DEFAULT_TX_BA_WIN,\
-    .rx_ba_win = WIFI_DEFAULT_RX_BA_WIN,\
-    .magic = WIFI_INIT_CONFIG_MAGIC\
-};
-
 // Local logging tag
 static const char *TAG = "wifisniffer";
 
@@ -61,13 +44,14 @@ typedef struct {
 } wifi_ieee80211_packet_t;
 
 void wifi_sniffer_init(void) {
-		wifi_init_config_t cfg = WIFI_INIT_CONFIG_PAXCOUNTER();
-    	ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-    	ESP_ERROR_CHECK( esp_wifi_set_country(&wifi_country) );
-    	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-    	ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
-    	ESP_ERROR_CHECK( esp_wifi_start() );
-    	ESP_ERROR_CHECK( esp_wifi_set_max_tx_power(-128) ); // we don't need to TX, so we use lowest power level to save energy
+		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+		cfg.nvs_enable = 0; // we don't want wifi settings from NVRAM
+    	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));
+		//ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+    	//ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
+    	//ESP_ERROR_CHECK( esp_wifi_start() );
+    	//ESP_ERROR_CHECK( esp_wifi_set_max_tx_power(-128) ); // we don't need to TX, so we use lowest power level to save energy
     	wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
