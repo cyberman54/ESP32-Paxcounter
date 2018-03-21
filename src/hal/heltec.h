@@ -1,9 +1,8 @@
 // Hardware related definitions for Heltec LoRa-32 Board
 
-#define HELTEC
-#define HAS_DISPLAY // has OLED-Display
-#define HAS_LED // has usable on board LED
-#define HAS_BUTTON // has usable on board button
+#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
+#define HAS_LED GPIO_NUM_25 // white LED on board
+#define HAS_BUTTON GPIO_NUM_0 // button "PROG" on board
 #define CFG_sx1276_radio 1
 
 // re-define pin definitions of pins_arduino.h
@@ -19,6 +18,6 @@
 #define DIO2  32 // ESP32 GPIO32 (Pin12) -- SX1276 DIO2 (Pin10) not used by LMIC for LoRa (Timeout for FSK only)
 
 // Hardware pin definitions for Heltec LoRa-32 Board with OLED SSD1306 I2C Display
-#define OLED_RST 16 // ESP32 GPIO16 (Pin16) -- SD1306 Reset
-#define OLED_SDA 4  // ESP32 GPIO4 (Pin4)   -- SD1306 Data
-#define OLED_SCL 15 // ESP32 GPIO15 (Pin15) -- SD1306 Clock
+#define OLED_RST 16 // ESP32 GPIO16 (Pin16) -- SD1306 RST
+#define OLED_SDA 4  // ESP32 GPIO4 (Pin4)   -- SD1306 D1+D2
+#define OLED_SCL 15 // ESP32 GPIO15 (Pin15) -- SD1306 D0

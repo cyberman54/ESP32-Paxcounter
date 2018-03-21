@@ -1,5 +1,6 @@
 /* configmanager persists runtime configuration using NVRAM of ESP32*/
 
+#include "main.h"
 #include "globals.h"
 #include <nvs.h>
 #include <nvs_flash.h>

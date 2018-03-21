@@ -1,10 +1,6 @@
-#include "main.h"
-
-#include <Arduino.h>
-
 // Basic Config
+#include "main.h"
 #include "globals.h"
-#include "loraconf.h"
 
 // WiFi Functions
 #include <esp_wifi.h>
@@ -49,7 +45,7 @@ void wifi_sniffer_init(void) {
     	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));
 		ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-		//ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL) );
+		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL) );
     	//ESP_ERROR_CHECK( esp_wifi_start() );
     	//ESP_ERROR_CHECK( esp_wifi_set_max_tx_power(-128) ); // we don't need to TX, so we use lowest power level to save energy
     	wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames

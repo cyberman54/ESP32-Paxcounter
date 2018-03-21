@@ -2,6 +2,8 @@
 // parses multiple number of command / value pairs from LoRaWAN remote command port (RCMDPORT)  
 // checks commands and executes each command with 1 argument per command
 
+// Basic Config
+#include "main.h"
 #include "globals.h"
 
 // Local logging tag
