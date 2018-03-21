@@ -82,8 +82,11 @@ void RevBytes(unsigned char* b, size_t c);
 #endif // VERBOSE
 
 // LMIC callback functions
-void os_getArtEui (u1_t *buf) { memcpy(buf, APPEUI, 8);}
 void os_getDevKey (u1_t *buf) { memcpy(buf, APPKEY, 16);}
+void os_getArtEui (u1_t *buf) { 
+    memcpy(buf, APPEUI, 8);
+    RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
+}
 void os_getDevEui (u1_t* buf) {
     #ifdef DEVEUI
         memcpy(buf, DEVEUI, 8);

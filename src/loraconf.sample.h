@@ -10,13 +10,10 @@
 /* 
 
 // Only define DEVEUI here if you don't want it to be derived from device's MAC address
-// Use same format as in TTN console (cut & paste, for your convenience)
+// Note: Use same format as in TTN console (cut & paste, for your convenience)
 // static const u1_t DEVEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-// This EUI must be in little-endian format, so least-significant-byte
-// first. When copying an EUI from ttnctl output, this means to reverse
-// the bytes. For TTN issued EUIs the last bytes should be 0xD5, 0xB3,
-// 0x70.
+// Note: Use msb format for APPEUI as in TTN console (cut & paste, for your convenience)
 static const u1_t APPEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0xD5, 0xB3, 0x70 };
 
 // This key should be in big endian format (or, since it is not really a
