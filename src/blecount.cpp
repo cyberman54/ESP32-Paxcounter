@@ -1,21 +1,19 @@
-// Log Level magic
-#include "main.h"
-
 // not using this seems to break U8X8LIB
-#include <Arduino.h>
-
-// Local logging tag
-static const char *TAG = "blecount";
+//#include <Arduino.h>
 
 // Basic Config
+#include "main.h"
 #include "globals.h"
-#include "loraconf.h"
+//#include "loraconf.h"
 
 #ifdef BLECOUNTER
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEScan.h>
 #include <BLEAdvertisedDevice.h>
+
+// Local logging tag
+static const char *TAG = "blecount";
 
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {

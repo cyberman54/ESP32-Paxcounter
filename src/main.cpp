@@ -1,27 +1,29 @@
 /*
- * 
- * Oliver Brandmueller <ob@sysadm.in> 2017/2018
- * Klaus Wilting <verkehrsrot@arcor.de> 2018
- *
- * some lines of code taken from:
- * 
- * Copyright (c) 2017, Łukasz Marcin Podkalicki <lpodkalicki@gmail.com>
- * ESP32/016 WiFi Sniffer.
- * https://github.com/lpodkalicki/blog/tree/master/esp32/016_wifi_sniffer
- * 
- * Arduino-LMIC Library
- * TTN OTAA Example
- * https://github.com/matthijskooijman/arduino-lmic/blob/master/examples/ttn-otaa/
- * 
- * nkolban esp32 snippets
- * BLE Scan
- * https://github.com/nkolban/esp32-snippets/tree/master/cpp_utils/tests/BLETests/Arduino/BLE_scan
- * 
- * parts of code in lorawan.cpp has been grabbed from RadioHead Library
- */
+ 
+Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
+Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
 
-// First things first
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+NOTICE: 
+Parts of the source files in this repository are made available under different licenses.
+Refer to LICENSE.txt file in repository for more details.
+
+*/
+
+// Basic Config
 #include "main.h"
+#include "globals.h"
 
 // std::set for unified array functions
 #include <set>
@@ -30,12 +32,9 @@
 #include <U8x8lib.h>
 
 // LMIC-Arduino LoRaWAN Stack
+#include "loraconf.h"
 #include <lmic.h>
 #include <hal/hal.h>
-
-// Basic Config
-#include "loraconf.h"
-#include "globals.h"
 
 // WiFi Functions
 #include <esp_wifi.h>

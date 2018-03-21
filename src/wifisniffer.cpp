@@ -1,10 +1,6 @@
-#include "main.h"
-
-#include <Arduino.h>
-
 // Basic Config
+#include "main.h"
 #include "globals.h"
-#include "loraconf.h"
 
 // WiFi Functions
 #include <esp_wifi.h>
