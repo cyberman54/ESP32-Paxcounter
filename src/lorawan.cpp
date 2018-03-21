@@ -36,6 +36,16 @@ void gen_lora_deveui(uint8_t *pdeveui) {
                 }
 }
 
+// Function to do a byte swap in a byte array
+void RevBytes(unsigned char* b, size_t c)
+{
+  u1_t i;
+  for (i = 0; i < c / 2; i++)
+  { unsigned char t = b[i];
+    b[i] = b[c - 1 - i];
+    b[c - 1 - i] = t; }
+}
+
 #ifdef VERBOSE
 
 // Display a key

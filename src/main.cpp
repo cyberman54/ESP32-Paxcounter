@@ -75,6 +75,8 @@ void loadConfig(void);
 
 // defined in lorawan.cpp
 void gen_lora_deveui(uint8_t * pdeveui);
+void RevBytes(unsigned char* b, size_t c);
+
 #ifdef VERBOSE
     void printKeys(void);
 #endif // VERBOSE
@@ -82,11 +84,14 @@ void gen_lora_deveui(uint8_t * pdeveui);
 // LMIC callback functions
 void os_getArtEui (u1_t *buf) { memcpy(buf, APPEUI, 8);}
 void os_getDevKey (u1_t *buf) { memcpy(buf, APPKEY, 16);}
-#ifdef DEVEUI // if DEVEUI defined in loraconf.h use that and hardwire it in code ...
-    void os_getDevEui (u1_t *buf) { memcpy(buf, DEVEUI, 8);}
-#else // ... otherwise generate DEVEUI at runtime from devices's MAC
-    void os_getDevEui (u1_t *buf) { gen_lora_deveui(buf);} 
-#endif
+void os_getDevEui (u1_t* buf) {
+    #ifdef DEVEUI
+        memcpy(buf, DEVEUI, 8);
+        RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
+    #else
+        gen_lora_deveui(buf);
+    #endif
+}
 
 // LMIC enhanced Pin mapping 
 const lmic_pinmap lmic_pins = {
