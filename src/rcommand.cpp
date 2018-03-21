@@ -165,7 +165,7 @@ void get_config (int val) {
     memcpy(sendData, &cfg, size);
     LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
     delete sendData; // free memory
-    ESP_LOGI(TAG, "Configuration data queued in send queue");
+    ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);
 };
 
 void get_uptime (int val) {
@@ -175,7 +175,18 @@ void get_uptime (int val) {
     memcpy(sendData, (unsigned char*)&uptimecounter, size);
     LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
     delete sendData; // free memory
-    ESP_LOGI(TAG, "Uptime queued in send queue");
+    ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);
+};
+
+void get_cputemp (int val) {
+    ESP_LOGI(TAG, "Remote command: get cpu temperature");
+    float temp = temperatureRead();
+    int size = sizeof(temp);
+    unsigned char *sendData = new unsigned char[size];
+    memcpy(sendData, (unsigned char*)&temp, size);
+    LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
+    delete sendData; // free memory
+    ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);
 };
 
 // assign previously defined functions to set of numeric remote commands
@@ -197,6 +208,7 @@ cmd_t table[] = {
                 {0x0d, set_blescan, true},
                 {0x80, get_config, false},
                 {0x81, get_uptime, false},
+                {0x82, get_cputemp, false}
                 };
 
 // check and execute remote command

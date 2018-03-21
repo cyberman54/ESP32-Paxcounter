@@ -1,6 +1,6 @@
 # Paxcounter
-Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini ESP32 Paxcounter
-built on cheap ESP32 boards
+**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini ESP32 Paxcounter
+built on cheap ESP32 boards**
 
 <img src="img/foto_no_exif.jpg">
 
@@ -8,6 +8,7 @@ built on cheap ESP32 boards
 
 Currently supported IoT boards:
 - Heltec LoRa-32
+- TTGOv1
 - TTGOv2
 - Pycom LoPy
 - Pycom LoPy4
@@ -152,6 +153,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 0x81 get device uptime
 
 	bytes 1-7:		Uptime in seconds (little endian format)
+
+0x82 get device cpu temperature
+
+	bytes 1-3:		chip temperature in celsius (little endian format)
 	
 # License
 

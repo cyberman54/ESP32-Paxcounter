@@ -45,12 +45,13 @@ typedef struct {
 
 void wifi_sniffer_init(void) {
 		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    	ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-    	ESP_ERROR_CHECK( esp_wifi_set_country(&wifi_country) );
-    	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-    	ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
-    	ESP_ERROR_CHECK( esp_wifi_start() );
-    	ESP_ERROR_CHECK( esp_wifi_set_max_tx_power(-128) ); // we don't need to TX, so we use lowest power level to save energy
+		cfg.nvs_enable = 0; // we don't want wifi settings from NVRAM
+    	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));
+		ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+		//ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL) );
+    	//ESP_ERROR_CHECK( esp_wifi_start() );
+    	//ESP_ERROR_CHECK( esp_wifi_set_max_tx_power(-128) ); // we don't need to TX, so we use lowest power level to save energy
     	wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));

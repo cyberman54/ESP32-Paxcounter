@@ -2,8 +2,8 @@
 
 #define HELTEC
 #define HAS_DISPLAY // has OLED-Display
-#define HAS_LED // has on usable board LED
-#define HAS_BUTTON // has onboard button
+#define HAS_LED // has usable on board LED
+#define HAS_BUTTON // has usable on board button
 #define CFG_sx1276_radio 1
 
 // re-define pin definitions of pins_arduino.h
