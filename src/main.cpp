@@ -342,6 +342,7 @@ void setup() {
             (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "", 
             chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+    ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
 #endif // VERBOSE
 
     // Read settings from NVRAM
