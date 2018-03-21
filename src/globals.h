@@ -1,13 +1,5 @@
-// First things first
-#include "main.h"
-
 // The mother of all embedded development...
 #include <Arduino.h>
-
-// we neededthis  to ESP_LOGx on arduino framework
-#include "esp32-hal-log.h"
-
-#include <String.h>
 
 // std::set for unified array functions
 #include <set>
@@ -19,21 +11,36 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
-// configData_t
-#include "configmanager.h"
+// Struct holding devices's runtime configuration
 
-extern uint8_t mydata[];
-extern uint64_t uptimecounter;
-extern int macnum, blenum, countermode, screensaver, adrmode, lorasf, txpower, rlim;
-extern bool joinstate;
-
-extern osjob_t sendjob;
-
-extern std::set<uint64_t, std::greater <uint64_t> > macs;
-
-extern U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8;
+typedef struct {
+  int8_t lorasf;                       // 7-12, lora spreadfactor
+  int8_t txpower;                      // 2-15, lora tx power
+  int8_t adrmode;                      // 0=disabled, 1=enabled
+  int8_t screensaver;                  // 0=disabled, 1=enabled
+  int8_t screenon;                     // 0=disabled, 1=enabled
+  int8_t countermode;                  // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
+  int16_t rssilimit;                   // threshold for rssilimiter, negative value!
+  int8_t wifiscancycle;                // wifi scan cycle [seconds/2]
+  int8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
+  int8_t blescancycle;                 // BLE scan cycle [seconds]
+  int8_t blescan;                      // 0=disabled, 1=enabled
+  char version[10];                    // Firmware version
+  } configData_t;
 
 extern configData_t cfg;
+extern uint8_t mydata[];
+extern uint64_t uptimecounter;
+extern osjob_t sendjob;
+extern int macnum, blenum, countermode, screensaver, adrmode, lorasf, txpower, rlim;
+extern bool joinstate;
+extern std::set<uint64_t, std::greater <uint64_t> > macs;
+
+#ifdef HAS_DISPLAY
+    extern HAS_DISPLAY u8x8;
+#else
+    extern U8X8_NULL u8x8;
+#endif
 
 #ifdef BLECOUNTER
     extern int scanTime;

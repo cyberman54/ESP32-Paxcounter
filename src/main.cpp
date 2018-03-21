@@ -29,19 +29,13 @@
 // OLED driver
 #include <U8x8lib.h>
 
-#ifdef HAS_DISPLAY
-    U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(OLED_RST, OLED_SCL, OLED_SDA);
-#else
-    U8X8_NULL u8x8;
-#endif
-
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
 #include <hal/hal.h>
 
 // Basic Config
 #include "loraconf.h"
-#include "configmanager.h"
+#include "globals.h"
 
 // WiFi Functions
 #include <esp_wifi.h>
@@ -50,15 +44,15 @@
 #include <esp_event.h>
 #include <esp_event_loop.h>
 #include <esp_spi_flash.h>
+#include <esp32-hal-log.h> // we need this for ESP_LOGx on arduino framework
 
 configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
 int macnum = 0, blenum = 0;
-uint32_t uptimecounter = 0;
+uint64_t uptimecounter = 0;
 bool joinstate = false;
-extern uint8_t mydata[];
 
 std::set<uint64_t, std::greater <uint64_t> > macs; // storage holds MAC frames
 
@@ -67,8 +61,8 @@ static volatile bool ButtonTriggered = false;
 
 // local Tag for logging
 static const char *TAG = "paxcnt";
-// Note: Log level control seems working during runtime, so we need to switch loglevel
-// by compiler build option in platformio.ini
+// Note: Log level control seems not working during runtime,
+// so we need to switch loglevel by compiler build option in platformio.ini
 #ifndef VERBOSE
 int redirect_log(const char * fmt, va_list args) {
    //do nothing
@@ -140,6 +134,12 @@ void lorawan_loop(void * pvParameters) {
 
 /* beginn hardware specific parts -------------------------------------------------------- */
 
+#ifdef HAS_DISPLAY
+    HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
+#else
+    U8X8_NULL u8x8;
+#endif
+
 #ifdef LOPY
     // defined in antenna.cpp
     void antenna_init (void);
@@ -155,8 +155,8 @@ void lorawan_loop(void * pvParameters) {
 void set_onboard_led(int st){
 #ifdef HAS_LED
     switch (st) {
-        case 1: digitalWrite(LED_BUILTIN, HIGH); break;
-        case 0: digitalWrite(LED_BUILTIN, LOW); break;
+        case 1: digitalWrite(HAS_LED, HIGH); break;
+        case 0: digitalWrite(HAS_LED, LOW); break;
     }
 #endif
 };
@@ -326,11 +326,8 @@ void setup() {
     
     ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
 
-/*
-    tcpip_adapter_init(); // not sure if necessary, but seems needed for TTGOv1
-    // ESP Event Loop
-    esp_event_loop_init(NULL, NULL);  // not sure if necessary -> to be checked
-*/
+    // system event handler for wifi task, needed for wifi_sniffer_init()
+    esp_event_loop_init(NULL, NULL);
 
     // Print chip information on startup
 #ifdef VERBOSE
@@ -348,17 +345,17 @@ void setup() {
     // Read settings from NVRAM
     loadConfig(); // includes initialize if necessary
       
-    // initialize hardware -> perhaps to be moved to new hal.cpp
+    // initialize hardware
 #ifdef HAS_LED
     // initialize LED
-    pinMode(LED_BUILTIN, OUTPUT); // white LED on Heltec board
-    digitalWrite(LED_BUILTIN, LOW);
+    pinMode(HAS_LED, OUTPUT);
+    digitalWrite(HAS_LED, LOW);
 #endif
 
 #ifdef HAS_BUTTON
     // install button interrupt
-    pinMode(GPIO_NUM_0, INPUT_PULLDOWN); // button "PROG" on Heltec board
-    attachInterrupt(digitalPinToInterrupt(GPIO_NUM_0), isr_button_pressed, FALLING); 
+    pinMode(HAS_BUTTON, INPUT_PULLDOWN);
+    attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, FALLING); 
 #endif
 
     // initialize wifi antenna

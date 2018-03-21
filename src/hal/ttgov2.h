@@ -1,7 +1,6 @@
 // Hardware related definitions for TTGO V2 Board
 
-#define TTGO
-#define HAS_DISPLAY // has OLED-Display
+#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define CFG_sx1276_radio 1
 
 // re-define pin definitions of pins_arduino.h
