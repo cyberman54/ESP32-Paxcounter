@@ -6,6 +6,10 @@
 #include "main.h"
 #include "globals.h"
 
+// LMIC-Arduino LoRaWAN Stack
+#include <lmic.h>
+#include <hal/hal.h>
+
 // Local logging tag
 static const char *TAG = "rcommand";
 
