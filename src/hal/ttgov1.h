@@ -1,6 +1,8 @@
-// Hardware related definitions for Heltec TTGOv1 board
+// Hardware related definitions for TTGOv1 board
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
+#define HAS_LED GPIO_NUM_2 // white LED on board
+#define HAS_BUTTON GPIO_NUM_0 // button "PRG" on board
 #define CFG_sx1276_radio 1
 
 // re-define pin definitions of pins_arduino.h

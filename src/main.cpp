@@ -36,14 +36,10 @@ Refer to LICENSE.txt file in repository for more details.
 #include <lmic.h>
 #include <hal/hal.h>
 
-// WiFi Functions
-#include <esp_wifi.h>
-#include <esp_wifi_types.h>
-#include <esp_system.h>
-#include <esp_event.h>
-#include <esp_event_loop.h>
-#include <esp_spi_flash.h>
-#include <esp32-hal-log.h> // we need this for ESP_LOGx on arduino framework
+// ESP32 Functions
+#include <esp_event_loop.h> // needed for Wifi event handler
+#include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
+#include <esp32-hal-log.h> // needed for ESP_LOGx on arduino framework
 
 configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC

@@ -1,10 +1,6 @@
-// not using this seems to break U8X8LIB
-//#include <Arduino.h>
 
 // Basic Config
-#include "main.h"
 #include "globals.h"
-//#include "loraconf.h"
 
 #ifdef BLECOUNTER
 #include <BLEDevice.h>

@@ -7,7 +7,6 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
-// needs to be defined here
 uint8_t mydata[] = "0000";
 
 // Local logging Tag

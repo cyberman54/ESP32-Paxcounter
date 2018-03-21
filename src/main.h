@@ -1,5 +1,5 @@
 // program version
-#define PROGVERSION                     "1.2.3" // use max 10 chars here!
+#define PROGVERSION                     "1.2.31" // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output

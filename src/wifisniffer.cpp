@@ -2,27 +2,19 @@
 #include "main.h"
 #include "globals.h"
 
-// WiFi Functions
+// ESP32 Functions
 #include <esp_wifi.h>
-#include <esp_wifi_types.h>
-#include <esp_system.h>
-#include <esp_event.h>
-#include <esp_event_loop.h>
+
+#ifdef VENDORFILTER
+	#include <array>
+	#include <algorithm>
+	#include "vendor_array.h"
+#endif
 
 // Local logging tag
 static const char *TAG = "wifisniffer";
 
 static wifi_country_t wifi_country = {.cc="EU", .schan=1, .nchan=13, .policy=WIFI_COUNTRY_POLICY_AUTO};
-
-#ifdef VENDORFILTER
-#include <array>
-#include <algorithm>
-#include "vendor_array.h"
-#endif
-
-extern void wifi_sniffer_init(void);
-extern void wifi_sniffer_set_channel(uint8_t channel);
-extern void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
 typedef struct {
 	unsigned frame_ctrl:16;
@@ -39,6 +31,10 @@ typedef struct {
 	uint8_t payload[0]; /* network data ended with 4 bytes csum (CRC32) */
 } wifi_ieee80211_packet_t;
 
+extern void wifi_sniffer_init(void);
+extern void wifi_sniffer_set_channel(uint8_t channel);
+extern void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
+
 void wifi_sniffer_init(void) {
 		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 		cfg.nvs_enable = 0; // we don't want wifi settings from NVRAM
@@ -46,8 +42,8 @@ void wifi_sniffer_init(void) {
     	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));
 		ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM) );
 		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL) );
-    	//ESP_ERROR_CHECK( esp_wifi_start() );
-    	//ESP_ERROR_CHECK( esp_wifi_set_max_tx_power(-128) ); // we don't need to TX, so we use lowest power level to save energy
+    	//ESP_ERROR_CHECK(esp_wifi_start()); // not sure if we need this in this application?
+    	//ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(-128)); // we don't need to TX, so we use lowest power level to save energy
     	wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
