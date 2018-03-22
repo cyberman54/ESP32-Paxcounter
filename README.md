@@ -6,9 +6,9 @@ built on cheap ESP32 boards**
 
 # Use case
 
-Paxcounter is a device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. The counter detects Wifi and Bluetooth signals in the air, send out by those devices.
+Paxcounter is a device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, send out by those devices.
 
-You don't need a full blown and expensive wifi network management software like cisco meraki etc. for this purpose. And you can do it with far less intrusion in privacy: You don't need to track and fingerprint people owned devices, if you just want to count them. 
+Intention of this project is to do this without intrusion in privacy: You don't need to track and fingerprint people owned devices, if you just want to count them.
 
 Bonus of this project is that metered data ist transferred via a LoRaWAN network, not via usual GSM/LTE or Wifi uplink. 
 
