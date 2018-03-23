@@ -10,7 +10,7 @@ Paxcounter is a device for metering passenger flows in realtime. It counts how m
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track and fingerprint people owned devices, if you just want to count them.
 
-Bonus of this project is that metered data ist transferred via a LoRaWAN network, not via usual GSM/LTE or Wifi uplink. 
+Bonus of this project is that metered data is transferred via a LoRaWAN network, not via usual GSM/LTE or Wifi uplink. 
 
 If you need it, you can build this project battery powered and reach uptimes up to 3 days with a single 18650 Li-Ion cell.
 
