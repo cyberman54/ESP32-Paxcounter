@@ -82,18 +82,24 @@ void RevBytes(unsigned char* b, size_t c);
 #endif // VERBOSE
 
 // LMIC callback functions
-void os_getDevKey (u1_t *buf) { memcpy(buf, APPKEY, 16);}
+void os_getDevKey (u1_t *buf) { 
+    memcpy(buf, APPKEY, 16);
+}
+
 void os_getArtEui (u1_t *buf) { 
     memcpy(buf, APPEUI, 8);
     RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
 }
+
 void os_getDevEui (u1_t* buf) {
-    #ifdef DEVEUI
-        memcpy(buf, DEVEUI, 8);
-        RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
-    #else
-        gen_lora_deveui(buf);
-    #endif
+    int i=0, k=0;
+    memcpy(buf, DEVEUI, 8); // get fixed DEVEUI from loraconf.h 
+    for (i=0; i<8 ; i++)
+        k += buf[i];
+    if (k) 
+        RevBytes(buf, 8); // use fixed DEVEUI and swap bytes to LSB format
+    else
+        gen_lora_deveui(buf); // generate DEVEUI from device's MAC
 }
 
 // LMIC enhanced Pin mapping 
