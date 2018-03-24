@@ -149,10 +149,10 @@ void lorawan_loop(void * pvParameters) {
     U8X8_NULL u8x8;
 #endif
 
-#ifdef LOPY
+#ifdef HAS_ANTENNA_SWITCH
     // defined in antenna.cpp
-    void antenna_init (void);
-    void antenna_select (antenna_type_t antenna_type);
+    void antenna_init();
+    void antenna_select(const int8_t _ant);
 #endif
 
 #if defined BLECOUNTER
@@ -368,9 +368,8 @@ void setup() {
 #endif
 
     // initialize wifi antenna
-#ifdef LOPY
+#ifdef HAS_ANTENNA_SWITCH
     antenna_init();
-    antenna_select(WIFI_ANTENNA);
 #endif
 
     // initialize display

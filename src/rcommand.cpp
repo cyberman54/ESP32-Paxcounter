@@ -17,6 +17,11 @@ static const char *TAG = "rcommand";
 void eraseConfig(void);
 void saveConfig(void);
 
+// defined in antenna.cpp
+#ifdef HAS_ANTENNA_SWITCH
+    void antenna_select(const int8_t _ant);
+#endif
+
 // table of remote commands and assigned functions
 typedef struct {
     const int nam;
@@ -153,6 +158,17 @@ void set_blescan(int val) {
         }
 };
 
+void set_wifiant(int val) {
+    ESP_LOGI(TAG, "Remote command: set Wifi antenna to %s", val ? "external" : "internal");
+    switch (val) {
+        case 1: cfg.wifiant = val; break;
+        default: cfg.wifiant = 0; break;
+        }
+    #ifdef HAS_ANTENNA_SWITCH
+        antenna_select(cfg.wifiant);
+    #endif
+};
+
 void set_lorapower(int val) {
     ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %i", val);
     switch_lora(cfg.lorasf, val);
@@ -212,6 +228,7 @@ cmd_t table[] = {
                 {0x0b, set_wifichancycle, true},
                 {0x0c, set_blescancycle, true},
                 {0x0d, set_blescan, true},
+                {0x0e, set_wifiant, true},
                 {0x80, get_config, false},
                 {0x81, get_uptime, false},
                 {0x82, get_cputemp, false}

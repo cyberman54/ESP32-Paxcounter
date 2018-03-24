@@ -25,6 +25,7 @@ typedef struct {
   int8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
   int8_t blescancycle;                 // BLE scan cycle [seconds]
   int8_t blescan;                      // 0=disabled, 1=enabled
+  int8_t wifiant;                      // 0=internal, 1=external (for LoPy/LoPy4)
   char version[10];                    // Firmware version
   } configData_t;
 

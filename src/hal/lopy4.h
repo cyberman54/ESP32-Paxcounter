@@ -1,6 +1,5 @@
 // Hardware related definitions for Pycom LoPy Board (not: LoPy4)
 
-#define LOPY
 #define CFG_sx1276_radio 1
 
 // Hardware pin definitions for Pycom LoPy4 board
@@ -14,5 +13,5 @@
 #define DIO2  23 // workaround 
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
-#define PIN_ANTENNA_SWITCH  21
-#define WIFI_ANTENNA ANTENNA_INT // can be switced to ANTENNA_EXT
+#define HAS_ANTENNA_SWITCH  21      // pin for switching wifi antenna
+#define WIFI_ANTENNA 0              // 0 = internal, 1 = external

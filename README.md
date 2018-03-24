@@ -147,6 +147,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 = disabled [default]
 	1 = enabled
 
+0x0E set WIFI antenna switch (works on LoPy/LoPy4 only)
+
+	0 = internal antenna [default]
+	1 = external antenna
+
 0x80 get device configuration
 
 	device answers with it's current configuration:
@@ -162,7 +167,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
 	byte 11:		BLE scan cycle duration in seconds (0..255)
 	byte 12:		BLE scan mode (1=on, 0=0ff)
-	bytes 13-22:		Software version (ASCII format)
+	byte 13:		Wifi antenna switch (0=internal, 1=external)
+	bytes 14-23:		Software version (ASCII format)
 
 0x81 get device uptime
 

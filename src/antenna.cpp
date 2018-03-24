@@ -1,4 +1,6 @@
-#ifdef LOPY
+/* switches wifi antenna, if board has switch to select internal and external antenna */
+
+#ifdef HAS_ANTENNA_SWITCH
 
 #include <Arduino.h>
 
@@ -11,7 +13,7 @@ typedef enum {
 } antenna_type_t;
 
 void antenna_init(void) {
-        gpio_config_t gpioconf = {.pin_bit_mask = 1ull << PIN_ANTENNA_SWITCH,
+        gpio_config_t gpioconf = {.pin_bit_mask = 1ull << HAS_ANTENNA_SWITCH,
                                   .mode = GPIO_MODE_OUTPUT,
                                   .pull_up_en = GPIO_PULLUP_DISABLE,
                                   .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -19,21 +21,21 @@ void antenna_init(void) {
         gpio_config(&gpioconf);
 }
 
-void antenna_select (antenna_type_t _ant) {
-        if (PIN_ANTENNA_SWITCH < 32) {
+void antenna_select (const int8_t _ant) {
+        if (HAS_ANTENNA_SWITCH < 32) {
             if (_ant == ANTENNA_EXT) {
-                GPIO_REG_WRITE(GPIO_OUT_W1TS_REG, 1 << PIN_ANTENNA_SWITCH);
+                GPIO_REG_WRITE(GPIO_OUT_W1TS_REG, 1 << HAS_ANTENNA_SWITCH);
             } else {
-                GPIO_REG_WRITE(GPIO_OUT_W1TC_REG, 1 << PIN_ANTENNA_SWITCH);
+                GPIO_REG_WRITE(GPIO_OUT_W1TC_REG, 1 << HAS_ANTENNA_SWITCH);
             }
         } else {
             if (_ant == ANTENNA_EXT) {
-                GPIO_REG_WRITE(GPIO_OUT1_W1TS_REG, 1 << (PIN_ANTENNA_SWITCH & 31));
+                GPIO_REG_WRITE(GPIO_OUT1_W1TS_REG, 1 << (HAS_ANTENNA_SWITCH & 31));
             } else {
-                GPIO_REG_WRITE(GPIO_OUT1_W1TC_REG, 1 << (PIN_ANTENNA_SWITCH & 31));
+                GPIO_REG_WRITE(GPIO_OUT1_W1TC_REG, 1 << (HAS_ANTENNA_SWITCH & 31));
             }
         }
         ESP_LOGI(TAG, "Wifi Antenna switched to %s", _ant ? "external" : "internal");
 }
 
-#endif //
+#endif
