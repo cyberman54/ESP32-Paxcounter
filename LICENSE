@@ -20,22 +20,6 @@ Parts of the source files in this repository are made available under different 
 listed below. Refer to each individual source file for more details.
 
 ------------------------------------------------------------------------------------------------
-antenna.cpp
-
-Parts of antenna.cpp were derived or taken from
-
-https://github.com/pycom/pycom-micropython-sigfox/blob/master/esp32/util/antenna.c
-
-under this Licence:
-
-Copyright (c) 2016, Pycom Limited.
-
-This software is licensed under the GNU GPL version 3 or any
-later version, with permitted additional terms. For more information
-see the Pycom Licence v1.0 document supplied with this file, or
-available at https://www.pycom.io/opensource/licensing
-
-------------------------------------------------------------------------------------------------
 wifisniffer.cpp
 
 Parts of wifisniffer.cpp were derived or taken from

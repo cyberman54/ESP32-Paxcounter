@@ -370,7 +370,7 @@ void setup() {
     // initialize wifi antenna
 #ifdef LOPY
     antenna_init();
-    antenna_select(WIFI_LOPY_ANTENNA);
+    antenna_select(WIFI_ANTENNA);
 #endif
 
     // initialize display

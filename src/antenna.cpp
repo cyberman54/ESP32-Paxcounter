@@ -5,7 +5,10 @@
 // Local logging tag
 static const char *TAG = "antenna";
 
-static antenna_type_t antenna_type_selected = ANTENNA_TYPE_INTERNAL;
+typedef enum {
+    ANTENNA_INT = 0,
+    ANTENNA_EXT
+} antenna_type_t;
 
 void antenna_init(void) {
         gpio_config_t gpioconf = {.pin_bit_mask = 1ull << PIN_ANTENNA_SWITCH,
@@ -16,22 +19,21 @@ void antenna_init(void) {
         gpio_config(&gpioconf);
 }
 
-void antenna_select (antenna_type_t _antenna) {
+void antenna_select (antenna_type_t _ant) {
         if (PIN_ANTENNA_SWITCH < 32) {
-            // set the pin value
-            if (_antenna == ANTENNA_TYPE_EXTERNAL) {
+            if (_ant == ANTENNA_EXT) {
                 GPIO_REG_WRITE(GPIO_OUT_W1TS_REG, 1 << PIN_ANTENNA_SWITCH);
             } else {
                 GPIO_REG_WRITE(GPIO_OUT_W1TC_REG, 1 << PIN_ANTENNA_SWITCH);
             }
         } else {
-            if (_antenna == ANTENNA_TYPE_EXTERNAL) {
+            if (_ant == ANTENNA_EXT) {
                 GPIO_REG_WRITE(GPIO_OUT1_W1TS_REG, 1 << (PIN_ANTENNA_SWITCH & 31));
             } else {
                 GPIO_REG_WRITE(GPIO_OUT1_W1TC_REG, 1 << (PIN_ANTENNA_SWITCH & 31));
             }
         }
-        antenna_type_selected = _antenna;
+        ESP_LOGI(TAG, "Wifi Antenna switched to %s", _ant ? "external" : "internal");
 }
 
 #endif //

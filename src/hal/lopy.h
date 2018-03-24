@@ -15,12 +15,4 @@
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define PIN_ANTENNA_SWITCH  16
-#define WIFI_LOPY_ANTENNA ANTENNA_TYPE_INTERNAL
-
-typedef enum {
-    ANTENNA_TYPE_INTERNAL = 0,
-    ANTENNA_TYPE_EXTERNAL
-} antenna_type_t;
-
-extern void antenna_init (void);
-extern void antenna_select (antenna_type_t antenna_type);
+#define WIFI_ANTENNA ANTENNA_INT // can be switced to ANTENNA_EXT
