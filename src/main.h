@@ -1,5 +1,5 @@
 // program version
-#define PROGVERSION                     "1.2.4" // use max 10 chars here!
+#define PROGVERSION                     "1.2.41" // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
@@ -28,8 +28,10 @@
 // define hardware independent LMIC settings here, settings of standard library in /lmic/config.h will be ignored
 // define hardware specifics settings in platformio.ini as build_flag for hardware environment
 
+// Select frequency band here according to national regulations
 #define CFG_eu868 1
 //#define CFG_us915 1
+
 // This is the SX1272/SX1273 radio, which is also used on the HopeRF
 // RFM92 boards.
 //#define CFG_sx1272_radio 1

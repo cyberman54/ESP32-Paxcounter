@@ -38,8 +38,18 @@ void switch_lora (int sf, int tx) {
         case 8: LMIC_setDrTxpow(DR_SF8,tx); cfg.lorasf=sf; break;
         case 9: LMIC_setDrTxpow(DR_SF9,tx); cfg.lorasf=sf; break;
         case 10: LMIC_setDrTxpow(DR_SF10,tx); cfg.lorasf=sf; break;
-        case 11: LMIC_setDrTxpow(DR_SF11,tx); cfg.lorasf=sf; break;
-        case 12: LMIC_setDrTxpow(DR_SF12,tx); cfg.lorasf=sf; break;
+        case 11: 
+        #if defined(CFG_eu868)
+            LMIC_setDrTxpow(DR_SF11,tx); cfg.lorasf=sf; break;
+        #elif defined(CFG_us915)
+            LMIC_setDrTxpow(DR_SF11CR,tx); cfg.lorasf=sf; break;
+        #endif
+        case 12: 
+        #if defined(CFG_eu868)
+            LMIC_setDrTxpow(DR_SF12,tx); cfg.lorasf=sf; break;
+        #elif defined(CFG_us915)
+            LMIC_setDrTxpow(DR_SF12CR,tx); cfg.lorasf=sf; break;
+        #endif
         default: break;
     }
 }

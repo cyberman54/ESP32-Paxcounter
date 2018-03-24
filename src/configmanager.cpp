@@ -264,7 +264,8 @@ void loadConfig() {
     ESP_LOGI(TAG, "Done");
 
     // put actions to be triggered on loaded config here
-    #ifdef HAS_ANTENNA_SWITCH
+    u8x8.setPowerSave(!cfg.screenon); // set display on/off
+    #ifdef HAS_ANTENNA_SWITCH // set antenna type, if device has one
       antenna_select(cfg.wifiant);
     #endif
     } 
