@@ -34,7 +34,7 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 <b>Power consumption</b>:
 
 - Heltec ~650mW
-- TTGOV1 ~650mW
+- TTGOv1 ~650mW
 - TTGOv2 ~670mW
 - LoPy with expansion board: ~530mW
 - LoPy pure, without expansion board: ~460mW
