@@ -12,7 +12,7 @@ Intention of this project is to do this without intrusion in privacy: You don't 
 
 Bonus of this project is that metered data is transferred via a LoRaWAN network, not via usual GSM/LTE or Wifi uplink. 
 
-If you need it, you can build this project battery powered and reach uptimes up to 3 days with a single 18650 Li-Ion cell.
+If you need it, you can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
 
 This can all be done with a single small and cheap ESP32 board for less than $20.
 
