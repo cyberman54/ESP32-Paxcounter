@@ -16,7 +16,7 @@ static const u1_t DEVEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 // Note: Use msb format for APPEUI as in TTN console (cut & paste, for your convenience)
 // For TTN, APPEUI always starts with 0x70, 0xB3, 0xD5
-static const u1_t APPEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0xD5, 0xB3, 0x70 };
+static const u1_t APPEUI[8]={ 0x70, 0xB3, 0xD5, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 // This key should be in big endian format (or, since it is not really a
 // number but a block of memory, endianness does not really apply). In
