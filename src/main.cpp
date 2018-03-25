@@ -155,7 +155,7 @@ void lorawan_loop(void * pvParameters) {
     void antenna_select(const int8_t _ant);
 #endif
 
-#if defined BLECOUNTER
+#ifdef BLECOUNTER
     void BLECount(void);
 #else
     btStop();
@@ -171,10 +171,10 @@ void set_onboard_led(int st){
 };
 
 #ifdef HAS_BUTTON
-    // Button Handling, board dependent -> perhaps to be moved to new hal.cpp
+    // Button Handling, board dependent -> perhaps to be moved to hal/<$board.h>
     // IRAM_ATTR necessary here, see https://github.com/espressif/arduino-esp32/issues/855
     void IRAM_ATTR isr_button_pressed(void) {
-        ButtonTriggered++; }
+        ButtonTriggered = true; }
 #endif
 
 /* end hardware specific parts -------------------------------------------------------- */
@@ -349,7 +349,7 @@ void setup() {
             chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
     ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
-#endif // VERBOSE
+#endif
 
     // Read settings from NVRAM
     loadConfig(); // includes initialize if necessary
@@ -361,8 +361,8 @@ void setup() {
     digitalWrite(HAS_LED, LOW);
 #endif
 
-#ifdef HAS_BUTTON
     // install button interrupt
+#ifdef HAS_BUTTON
     pinMode(HAS_BUTTON, INPUT_PULLDOWN);
     attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, FALLING); 
 #endif
@@ -416,15 +416,16 @@ void setup() {
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
     while(1) {
-
+#ifdef HAS_BUTTON
     if (ButtonTriggered) {
         ButtonTriggered = false;
         ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
         eraseConfig();
         esp_restart();
         }
-    else {
-        vTaskDelay(1000/portTICK_PERIOD_MS);
+    else 
+#endif
+    {   vTaskDelay(1000/portTICK_PERIOD_MS);
         uptimecounter = uptime() / 1000; // count uptime seconds
         }
     }
