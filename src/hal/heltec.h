@@ -1,9 +1,10 @@
 // Hardware related definitions for Heltec LoRa-32 Board
 
+#define CFG_sx1276_radio 1
+
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
 #define HAS_LED GPIO_NUM_25 // white LED on board
 #define HAS_BUTTON GPIO_NUM_0 // button "PROG" on board
-#define CFG_sx1276_radio 1
 
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    18 // ESP32 GPIO18 (Pin18) -- SX1276 NSS (Pin19) SPI Chip Select Input

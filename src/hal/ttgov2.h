@@ -1,7 +1,8 @@
 // Hardware related definitions for TTGO V2 Board
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
+
+#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    18 // ESP32 GPIO18 (Pin18) -- HPD13A NSS/SEL (Pin4) SPI Chip Select Input
