@@ -1,18 +1,17 @@
-# Paxcounter
-**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini ESP32 Paxcounter
-built on cheap ESP32 boards**
+# ESP32-Paxcounter
+**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 boards**
 
 <img src="img/Paxcounter-title.jpg">
 
 # Use case
 
-Paxcounter is a device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by filtering vendor OUIs in the MAC adress.
+Paxcounter is a proof-of-concept device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by filtering vendor OUIs in the MAC adress.
 
-Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting scanned devices.
+Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
 Bonus of this project is that metered data is transferred via a LoRaWAN network, not via usual GSM/LTE or Wifi uplink. 
 
-If you need it, you can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
+You can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
 
 This can all be done with a single small and cheap ESP32 board for less than $20.
 
