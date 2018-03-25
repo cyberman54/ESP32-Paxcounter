@@ -1,6 +1,5 @@
 # ESP32-Paxcounter
-**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini ESP32 Paxcounter
-built on cheap ESP32 boards**
+**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 boards**
 
 <img src="img/Paxcounter-title.jpg">
 
