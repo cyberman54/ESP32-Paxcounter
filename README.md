@@ -24,6 +24,7 @@ Currently supported IoT boards:
 - Pycom LoPy
 - Pycom LoPy4
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)
+- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -39,6 +40,7 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 - LoPy with expansion board: ~530mW
 - LoPy pure, without expansion board: ~460mW
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora): TBD
+- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora): TBD
 
 These results where metered with software version 1.2.0 during active wifi scan, no LoRa TX’ing, OLED display off, 5V USB powered.
 
