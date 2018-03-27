@@ -24,6 +24,7 @@
 #define DIO0  27 // ESP32 GPIO27 (Pin27) -- SX1276 DIO0   (Pin8)  used by LMIC for detecting LoRa RX_Done & TX_Done
 #define DIO1  26 // ESP32 GPIO26 (Pin26) -- SX1276 DIO1   (Pin9)  used by LMIC for detecting LoRa RX_Timeout
 #define DIO2   4 // ESP32  GPIO4 (Pin4)  -- SX1276 DIO2   (Pin10) not used by LMIC for LoRa (Timeout for FSK only)
+#define DIO5  35 // ESP32 GPIO35 (Pin35) -- SX1276 DIO5   not used by LMIC for LoRa (Timeout for FSK only)
 
 // Hardware pin definitions for LoRaNode32 Board with OLED I2C Display
 #define OLED_RST U8X8_PIN_NONE  // Not reset pin
