@@ -19,7 +19,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 void BLECount() {
     u8x8.clearLine(3);
     u8x8.drawString(0,3,"BLE Scan...");
-    BLEDevice::init("PaxCnt");
+    BLEDevice::init(PROGNAME);
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
