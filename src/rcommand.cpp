@@ -13,15 +13,6 @@
 // Local logging tag
 static const char *TAG = "rcommand";
 
-// functions defined in configmanager.cpp
-void eraseConfig(void);
-void saveConfig(void);
-
-// defined in antenna.cpp
-#ifdef HAS_ANTENNA_SWITCH
-    void antenna_select(const int8_t _ant);
-#endif
-
 // table of remote commands and assigned functions
 typedef struct {
     const int nam;
@@ -29,7 +20,16 @@ typedef struct {
     const bool store;
 } cmd_t;
 
-// help function to assign LoRa datarates to spreadfactor values
+// functions defined in configmanager.cpp
+void eraseConfig(void);
+void saveConfig(void);
+
+// function defined in antenna.cpp
+#ifdef HAS_ANTENNA_SWITCH
+    void antenna_select(const int8_t _ant);
+#endif
+
+// help function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora (int sf, int tx) {
     if ( tx > 20 ) return;
     cfg.txpower = tx;
