@@ -323,6 +323,12 @@ void init_display(const char *Productname, const char *Version) {
 
 void setup() {
 
+  // disable brownout detection
+#ifdef DISABLE_BROWNOUT
+  // Register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
+  (*((volatile uint32_t *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE+0xd4)))) = 0;
+#endif
+
     // setup debug output or silence device
 #ifdef VERBOSE
     Serial.begin(115200);
@@ -361,10 +367,16 @@ void setup() {
     digitalWrite(HAS_LED, LOW);
 #endif
 
-    // install button interrupt
 #ifdef HAS_BUTTON
-    pinMode(HAS_BUTTON, INPUT_PULLDOWN);
-    attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, FALLING); 
+    #ifdef BUTTON_PULLUP
+        // install button interrupt (pullup mode)
+        pinMode(HAS_BUTTON, INPUT_PULLUP);
+        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, RISING); 
+    #else
+        // install button interrupt (pulldown mode)
+        pinMode(HAS_BUTTON, INPUT_PULLDOWN);
+        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, FALLING); 
+    #endif
 #endif
 
     // initialize wifi antenna
