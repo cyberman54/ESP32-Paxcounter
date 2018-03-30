@@ -14,7 +14,7 @@
 // Local logging tag
 static const char *TAG = "wifisniffer";
 
-static wifi_country_t wifi_country = {.cc="EU", .schan=1, .nchan=13, .policy=WIFI_COUNTRY_POLICY_AUTO};
+static wifi_country_t wifi_country = {.cc=WIFI_MY_COUNTRY, .schan=WIFI_CHANNEL_MIN, .nchan=WIFI_CHANNEL_MAX, .policy=WIFI_COUNTRY_POLICY_MANUAL};
 
 typedef struct {
 	unsigned frame_ctrl:16;

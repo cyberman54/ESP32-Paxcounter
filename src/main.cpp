@@ -46,7 +46,7 @@ int macnum = 0, blenum = 0;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint64_t> macs; // storage holds MAC frames
+std::set<uint64_t> macs; // associative container holds filtered MAC adresses
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -70,13 +70,27 @@ void loadConfig(void);
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
 
+// LMIC enhanced Pin mapping 
+const lmic_pinmap lmic_pins = {
+    .mosi = PIN_SPI_MOSI,
+    .miso = PIN_SPI_MISO,
+    .sck = PIN_SPI_SCK,
+    .nss = PIN_SPI_SS,
+    .rxtx = LMIC_UNUSED_PIN,
+    .rst = RST,
+    .dio = {DIO0, DIO1, DIO2}
+};
+
 // defined in lorawan.cpp
 void gen_lora_deveui(uint8_t * pdeveui);
 void RevBytes(unsigned char* b, size_t c);
-
 #ifdef VERBOSE
     void printKeys(void);
-#endif // VERBOSE
+#endif
+
+// LMIC functions
+void onEvent(ev_t ev);
+void do_send(osjob_t* j);
 
 // LMIC callback functions
 void os_getDevKey (u1_t *buf) { 
@@ -98,21 +112,6 @@ void os_getDevEui (u1_t* buf) {
     else
         gen_lora_deveui(buf); // generate DEVEUI from device's MAC
 }
-
-// LMIC enhanced Pin mapping 
-extern const lmic_pinmap lmic_pins = {
-    .mosi = PIN_SPI_MOSI,
-    .miso = PIN_SPI_MISO,
-    .sck = PIN_SPI_SCK,
-    .nss = PIN_SPI_SS,
-    .rxtx = LMIC_UNUSED_PIN,
-    .rst = RST,
-    .dio = {DIO0, DIO1, DIO2}
-};
-
-// LMIC functions
-void onEvent(ev_t ev);
-void do_send(osjob_t* j);
 
 // LoRaWAN Initjob
 static void lora_init (osjob_t* j) {
