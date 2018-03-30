@@ -22,7 +22,7 @@ Refer to LICENSE.txt file in repository for more details.
 */
 
 // Basic Config
-#include "main.conf"
+#include "main.h"
 #include "globals.h"
 
 // OLED driver

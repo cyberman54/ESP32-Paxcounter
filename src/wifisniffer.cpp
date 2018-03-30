@@ -1,5 +1,5 @@
 // Basic Config
-#include "main.conf"
+#include "main.h"
 #include "globals.h"
 
 // ESP32 Functions
