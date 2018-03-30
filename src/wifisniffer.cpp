@@ -38,13 +38,11 @@ extern void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t 
 void wifi_sniffer_init(void) {
 		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 		cfg.nvs_enable = 0; // we don't want wifi settings from NVRAM
+		wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
     	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));
 		ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM) );
 		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL) );
-    	//ESP_ERROR_CHECK(esp_wifi_start()); // not sure if we need this in this application?
-    	//ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(-128)); // we don't need to TX, so we use lowest power level to save energy
-    	wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
@@ -59,6 +57,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 	const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
 	const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
 	char counter [10];
+	std::pair<std::set<uint64_t>::iterator, bool> newmac;
 
 	if (( cfg.rssilimit == 0 ) || (ppkt->rx_ctrl.rssi > cfg.rssilimit )) { // rssi is negative value
 	    uint64_t addr2int = ( (uint64_t)hdr->addr2[0] ) | ( (uint64_t)hdr->addr2[1] << 8 ) | ( (uint64_t)hdr->addr2[2] << 16 ) | \
@@ -69,19 +68,18 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 
 		if ( std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
 #endif
-		    macs.insert(addr2int);
-
-			// INFO: RSSI when adding MAC
+		    
+			// INFO: RSSI when found MAC in range
 			ESP_LOGI(TAG, "WiFi RSSI: %02d", ppkt->rx_ctrl.rssi);
 
 			// if new unique MAC logged increment counter on display
-			if ( macs.size() > macnum ) {
-				macnum = macs.size();
+			newmac = macs.insert(addr2int);
+			if (newmac.second) {
+				macnum++;
 				itoa(macnum, counter, 10);
 				u8x8.draw2x2String(0, 0, counter);
 				ESP_LOGI(TAG, "MAC counter: %4i", macnum);
-			}
-			
+			}	
 			
 #ifdef VENDORFILTER
 		}

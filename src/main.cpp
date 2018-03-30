@@ -49,7 +49,7 @@ int macnum = 0, blenum = 0;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint64_t, std::greater <uint64_t> > macs; // storage holds MAC frames
+std::set<uint64_t> macs; // storage holds MAC frames
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -208,7 +208,7 @@ void wifi_sniffer_loop(void * pvParameters) {
             
             // execute BLE count if BLE function is enabled
             #ifdef BLECOUNTER
-                if ( cfg.blescan )
+                if (cfg.blescan)
                     BLECount();
             #endif
             
@@ -220,8 +220,9 @@ void wifi_sniffer_loop(void * pvParameters) {
             yield();
 
             // clear counter if not in cumulative counter mode
-            if ( cfg.countermode != 1 ) {
-                macs.erase(macs.begin(), macs.end()); // clear RAM
+            if (cfg.countermode != 1) {
+                //macs.erase(macs.begin(), macs.end()); // clear RAM
+                macs.clear(); // clear macs container
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             }      
