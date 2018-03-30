@@ -1,5 +1,5 @@
 // Basic Config
-#include "main.h"
+#include "main.conf"
 #include "globals.h"
 
 // ESP32 Functions
@@ -37,7 +37,7 @@ extern void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t 
 
 void wifi_sniffer_init(void) {
 		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-		cfg.nvs_enable = 0; // we don't want wifi settings from NVRAM
+		cfg.nvs_enable = 0; // we don't need any wifi settings from NVRAM
 		wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
     	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));

@@ -22,11 +22,8 @@ Refer to LICENSE.txt file in repository for more details.
 */
 
 // Basic Config
-#include "main.h"
+#include "main.conf"
 #include "globals.h"
-
-// std::set for unified array functions
-#include <set>
 
 // OLED driver
 #include <U8x8lib.h>

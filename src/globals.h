@@ -12,7 +12,6 @@
 #include <hal/hal.h>
 
 // Struct holding devices's runtime configuration
-
 typedef struct {
   int8_t lorasf;                       // 7-12, lora spreadfactor
   int8_t txpower;                      // 2-15, lora tx power
@@ -35,7 +34,6 @@ extern uint64_t uptimecounter;
 extern osjob_t sendjob;
 extern int macnum, blenum, countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern bool joinstate;
-//extern std::set<uint64_t, std::greater <uint64_t> > macs;
 extern std::set<uint64_t> macs;
 
 #ifdef HAS_DISPLAY

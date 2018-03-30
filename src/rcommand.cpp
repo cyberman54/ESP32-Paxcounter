@@ -3,7 +3,7 @@
 // checks commands and executes each command with 1 argument per command
 
 // Basic Config
-#include "main.h"
+#include "main.conf"
 #include "globals.h"
 
 // LMIC-Arduino LoRaWAN Stack
