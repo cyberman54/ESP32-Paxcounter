@@ -67,7 +67,6 @@ void set_reset(int val) {
             break;
         case 1: // reset MAC counter
             ESP_LOGI(TAG, "Remote command: reset MAC counter");
-            //macs.erase(macs.begin(), macs.end()); // clear RAM
             macs.clear(); // clear macs container
             macnum = 0;
             u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter

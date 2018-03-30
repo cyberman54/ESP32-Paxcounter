@@ -218,7 +218,6 @@ void wifi_sniffer_loop(void * pvParameters) {
 
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
-                //macs.erase(macs.begin(), macs.end()); // clear RAM
                 macs.clear(); // clear macs container
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
