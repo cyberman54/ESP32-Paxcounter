@@ -50,6 +50,13 @@ Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for
 
 Before compiling the code, create file loraconf.h in the /src directory from the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. Only OTAA join is supported, not ABP. The DEVEUI will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings. If you enter a DEVEUI in loraconf.h it will be used instead.
 
+# Uploading
+
+To upload the code to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
+The LoPy/LoPy4 board needs to be set manually. See these 
+<A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it.<p>
+For the LoPy/LoPy4 the original Pycom firmware is not needed here, so there is no need to update it before flashing Paxcounter. Just flash the paxcounter code on your LoPy/LoPy4. If you want to go back to the Pycom firmware, no problem. Download the firmware from Pycom and flash it over.
+
 # Legal note
 
 **Depending on your country's laws it may be illegal to sniff wireless networks for MAC addresses. Please check and respect your country's laws before using this code!**
