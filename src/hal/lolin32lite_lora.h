@@ -1,5 +1,5 @@
-// Hardware related definitions for lolin32 loraNode32 shield
-// See https://github.com/hallard/LoLin32-Lora
+// Hardware related definitions for lolin32 lite loraNode32 shield
+// See https://github.com/hallard/LoLin32-Lite-Lora
 
 // disable brownout detection (avoid unexpected reset on some boards)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
@@ -28,6 +28,6 @@
 
 // Hardware pin definitions for LoRaNode32 Board with OLED I2C Display
 #define OLED_RST U8X8_PIN_NONE  // Not reset pin
-#define OLED_SDA 21             // ESP32 GPIO21 (Pin21) -- OLED SDA
-#define OLED_SCL 22             // ESP32 GPIO22 (Pin22) -- OLED SCL
+#define OLED_SDA 14             // ESP32 GPIO14 (Pin14) -- OLED SDA
+#define OLED_SCL 12             // ESP32 GPIO12 (Pin12) -- OLED SCL
 
