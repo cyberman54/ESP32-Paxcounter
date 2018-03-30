@@ -100,7 +100,7 @@ void os_getDevEui (u1_t* buf) {
 }
 
 // LMIC enhanced Pin mapping 
-const lmic_pinmap lmic_pins = {
+extern const lmic_pinmap lmic_pins = {
     .mosi = PIN_SPI_MOSI,
     .miso = PIN_SPI_MISO,
     .sck = PIN_SPI_SCK,
