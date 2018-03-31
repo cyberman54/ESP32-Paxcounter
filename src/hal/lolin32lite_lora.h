@@ -5,8 +5,8 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
-#define HAS_LED NOT_A_PIN // Led os on same pin than Lora SS pin, to avoid pb, we don't use it
-                          // Anyway shield is on over the LoLin32 board, so we won't be able to see this LED
+#define HAS_LED       22  // ESP32 GPIO12 (pin22) On Board LED
+#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_RGB_LED   13  // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
 #define HAS_BUTTON    15  // ESP32 GPIO15 (pin15) Button is on the LoraNode32 shield
 #define BUTTON_PULLUP  1  // Button need pullup instead of default pulldown
@@ -30,4 +30,3 @@
 #define OLED_RST U8X8_PIN_NONE  // Not reset pin
 #define OLED_SDA 14             // ESP32 GPIO14 (Pin14) -- OLED SDA
 #define OLED_SCL 12             // ESP32 GPIO12 (Pin12) -- OLED SCL
-
