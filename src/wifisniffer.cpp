@@ -61,15 +61,16 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 	const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
 	char counter [11]; // uint32_t -> 4 byte -> 10 decimals + '0' terminator -> 11 chars
 	char macbuf [21]; // uint64_t -> 8 byte -> 20 decimals + '0' terminator -> 21 chars
-	uint32_t hashedmac;
+	uint32_t hashedmac, vendor2int;
+	uint64_t addr2int;
 	std::pair<std::set<uint32_t>::iterator, bool> newmac;
 
 	if (( cfg.rssilimit == 0 ) || (ppkt->rx_ctrl.rssi > cfg.rssilimit )) { // rssi is negative value
-	    uint64_t addr2int = ( (uint64_t)hdr->addr2[0] ) | ( (uint64_t)hdr->addr2[1] << 8 ) | ( (uint64_t)hdr->addr2[2] << 16 ) | \
+	    addr2int = ( (uint64_t)hdr->addr2[0] ) | ( (uint64_t)hdr->addr2[1] << 8 ) | ( (uint64_t)hdr->addr2[2] << 16 ) | \
 			( (uint64_t)hdr->addr2[3] << 24 ) | ( (uint64_t)hdr->addr2[4] << 32 ) | ( (uint64_t)hdr->addr2[5] << 40 );
 
 #ifdef VENDORFILTER
-		uint32_t vendor2int = ( (uint32_t)hdr->addr2[2] ) | ( (uint32_t)hdr->addr2[1] << 8 ) | ( (uint32_t)hdr->addr2[0] << 16 );
+		vendor2int = ( (uint32_t)hdr->addr2[2] ) | ( (uint32_t)hdr->addr2[1] << 8 ) | ( (uint32_t)hdr->addr2[0] << 16 );
 
 		if ( std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
 #endif
@@ -82,7 +83,6 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 			itoa(addr2int, macbuf, 10); // convert 64 bit MAC to base 10 decimal string
 			hashedmac = rokkit(macbuf, 10); // hash MAC for privacy, use 10 chars to fit in uint32_t container
 			newmac = macs.insert(hashedmac); // store hashed MAC if new unique
-			
 			if (newmac.second) { // first time seen MAC
 				macnum++; // increment MAC counter
 				itoa(macnum, counter, 10); // base 10 decimal counter value
