@@ -31,6 +31,8 @@ void defaultConfig() {
     cfg.blescancycle  = BLESCANTIME; // BLE scan cycle [seconds]
     cfg.blescan     = 0;  // 0=disabled, 1=enabled
     cfg.wifiant     = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
+    cfg.rgblum      = RGBLUMINOSITY; // RGB Led luminosity (0 100%)
+
     strncpy( cfg.version, PROGVERSION, sizeof(cfg.version)-1 );
 }
 
@@ -47,7 +49,7 @@ void open_storage() {
     // Open
     ESP_LOGI(TAG, "Opening NVS");
     err = nvs_open("config", NVS_READWRITE, &my_handle);
-    if (err != ESP_OK) 
+    if (err != ESP_OK)
       ESP_LOGI(TAG, "Error (%d) opening NVS handle", err);
     else
       ESP_LOGI(TAG, "Done");
@@ -56,14 +58,14 @@ void open_storage() {
 // erase all keys and values in NVRAM
 void eraseConfig() {
     ESP_LOGI(TAG, "Clearing settings in NVS");
-    open_storage(); 
+    open_storage();
     if (err == ESP_OK) {
       nvs_erase_all(my_handle);
       nvs_commit(my_handle);
       nvs_close(my_handle);
-      ESP_LOGI(TAG, "Done");} 
-    else { 
-      ESP_LOGW(TAG, "NVS erase failed"); } 
+      ESP_LOGI(TAG, "Done");}
+    else {
+      ESP_LOGW(TAG, "NVS erase failed"); }
 }
 
 // save current configuration from RAM to NVRAM
@@ -75,10 +77,10 @@ void saveConfig() {
       int16_t flash16 = 0;
       size_t required_size;
       char storedversion[10];
-    
+
       if( nvs_get_str(my_handle, "version", storedversion, &required_size) != ESP_OK || strcmp(storedversion, cfg.version) != 0 )
         nvs_set_str(my_handle, "version", cfg.version);
-      
+
       if( nvs_get_i8(my_handle, "lorasf", &flash8) != ESP_OK || flash8 != cfg.lorasf )
         nvs_set_i8(my_handle, "lorasf", cfg.lorasf);
 
@@ -110,11 +112,14 @@ void saveConfig() {
         nvs_set_i8(my_handle, "blescanmode", cfg.blescan);
 
       if( nvs_get_i8(my_handle, "wifiant", &flash8) != ESP_OK || flash8 != cfg.wifiant )
-        nvs_set_i8(my_handle, "wifiant", cfg.wifiant);        
+        nvs_set_i8(my_handle, "wifiant", cfg.wifiant);
+
+      if( nvs_get_i8(my_handle, "rgblum", &flash8) != ESP_OK || flash8 != cfg.rgblum )
+          nvs_set_i8(my_handle, "rgblum", cfg.rgblum);
 
       if( nvs_get_i16(my_handle, "rssilimit", &flash16) != ESP_OK || flash16 != cfg.rssilimit )
         nvs_set_i16(my_handle, "rssilimit", cfg.rssilimit);
-      
+
       err = nvs_commit(my_handle);
       nvs_close(my_handle);
       if ( err == ESP_OK ) {
@@ -146,7 +151,7 @@ void loadConfig() {
     int8_t  flash8  = 0;
     int16_t flash16 = 0;
     size_t required_size;
-    
+
     // check if configuration stored in NVRAM matches PROGVERSION
     if( nvs_get_str(my_handle, "version", NULL, &required_size) == ESP_OK ) {
       nvs_get_str(my_handle, "version", cfg.version, &required_size);
@@ -227,12 +232,20 @@ void loadConfig() {
       ESP_LOGI(TAG, "WIFI channel cycle set to default %i", cfg.wifichancycle);
       saveConfig();
     }
-    
+
     if( nvs_get_i8(my_handle, "wifiant", &flash8) == ESP_OK ) {
       cfg.wifiant = flash8;
       ESP_LOGI(TAG, "wifiantenna = %i", flash8);
     } else {
       ESP_LOGI(TAG, "WIFI antenna switch set to default %i", cfg.wifiant);
+      saveConfig();
+    }
+
+    if( nvs_get_i8(my_handle, "rgblum", &flash8) == ESP_OK ) {
+      cfg.rgblum = flash8;
+      ESP_LOGI(TAG, "rgbluminosity = %i", flash8);
+    } else {
+      ESP_LOGI(TAG, "RGB luminosity set to default %i", cfg.rgblum);
       saveConfig();
     }
 
@@ -251,7 +264,7 @@ void loadConfig() {
       ESP_LOGI(TAG, "BLEscanmode set to default %i", cfg.blescan);
       saveConfig();
     }
-    
+
     if( nvs_get_i16(my_handle, "rssilimit", &flash16) == ESP_OK ) {
       cfg.rssilimit = flash16;
       ESP_LOGI(TAG, "rssilimit = %i", flash16);
@@ -259,7 +272,7 @@ void loadConfig() {
       ESP_LOGI(TAG, "rssilimit set to default %i", cfg.rssilimit);
       saveConfig();
     }
-    
+
     nvs_close(my_handle);
     ESP_LOGI(TAG, "Done");
 
@@ -268,5 +281,5 @@ void loadConfig() {
     #ifdef HAS_ANTENNA_SWITCH // set antenna type, if device has one
       antenna_select(cfg.wifiant);
     #endif
-    } 
+    }
 }
