@@ -77,7 +77,8 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 		if (!(addr2int & WIFI_MAC_FILTER_MASK)) { // filter local and group MACs   
 
 			// alt and hash MAC, and if new unique one, store hash in container and increment counter on display
-			addr2int <<= 8 || salt; // append salt value to MAC before hashing it
+			addr2int <<= 8;
+			addr2int += salt; // append salt value to MAC before hashing it
 			itoa(addr2int, macbuf, 10); // convert 64 bit MAC to base 10 decimal string
 			hashedmac = rokkit(macbuf, 10); // hash MAC for privacy, use 10 chars to fit in uint32_t container
 			newmac = macs.insert(hashedmac); // store hashed MAC if new unique
