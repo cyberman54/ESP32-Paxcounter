@@ -32,9 +32,10 @@ extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
 extern osjob_t sendjob;
-extern int macnum, blenum, countermode, screensaver, adrmode, lorasf, txpower, rlim, salt;
+extern uint16_t macnum, blenum;
+extern int countermode, screensaver, adrmode, lorasf, txpower, rlim, salt;
 extern bool joinstate;
-extern std::set<uint32_t> macs; 
+extern std::set<uint16_t> macs; 
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;

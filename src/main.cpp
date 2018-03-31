@@ -42,11 +42,12 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-int macnum = 0, blenum = 0, salt;
+uint16_t macnum = 0, blenum = 0;
+int salt;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint32_t> macs; // associative container holds filtered MAC adresses
+std::set<uint16_t> macs; // associative container holds filtered MAC adresses
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -211,7 +212,7 @@ void wifi_sniffer_loop(void * pvParameters) {
             
             // Prepare and execute LoRaWAN data upload
             u8x8.setCursor(0,4);
-            u8x8.printf("MAC#: %4i", macnum);
+            u8x8.printf("MAC#: %i", macnum);
             do_send(&sendjob); // send payload
             vTaskDelay(500/portTICK_PERIOD_MS);
             yield();
@@ -388,7 +389,7 @@ void setup() {
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.setCursor(0,5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
+    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
     u8x8.drawString(0,6,"Join Wait       ");
     
     // output LoRaWAN keys to console

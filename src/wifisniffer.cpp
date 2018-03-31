@@ -59,11 +59,12 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 	const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
 	const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
 	const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
-	char counter [11]; // uint32_t -> 4 byte -> 10 decimals + '0' terminator -> 11 chars
+	char counter [6]; // uint16_t -> 2 byte -> 5 decimals + '0' terminator -> 6 chars
 	char macbuf [21]; // uint64_t -> 8 byte -> 20 decimals + '0' terminator -> 21 chars
-	uint32_t hashedmac, vendor2int;
 	uint64_t addr2int;
-	std::pair<std::set<uint32_t>::iterator, bool> newmac;
+	uint32_t vendor2int;
+	uint16_t hashedmac; 
+	std::pair<std::set<uint16_t>::iterator, bool> newmac;
 
 	if (( cfg.rssilimit == 0 ) || (ppkt->rx_ctrl.rssi > cfg.rssilimit )) { // rssi is negative value
 	    addr2int = ( (uint64_t)hdr->addr2[0] ) | ( (uint64_t)hdr->addr2[1] << 8 ) | ( (uint64_t)hdr->addr2[2] << 16 ) | \
@@ -78,16 +79,16 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 		//if (!(addr2int & WIFI_MAC_FILTER_MASK)) { // filter local and group MACs   
 
 			// salt and hash MAC, and if new unique one, store hash in container and increment counter on display
-			addr2int <<= 8;
+			addr2int <<= 8; // left shift out msb of vendor oui
 			addr2int += salt; // append salt value to MAC before hashing it
 			itoa(addr2int, macbuf, 10); // convert 64 bit MAC to base 10 decimal string
-			hashedmac = rokkit(macbuf, 10); // hash MAC for privacy, use 10 chars to fit in uint32_t container
+			hashedmac = rokkit(macbuf, 5); // hash MAC for privacy, use 5 chars to fit in uint16_t container
 			newmac = macs.insert(hashedmac); // store hashed MAC if new unique
 			if (newmac.second) { // first time seen MAC
 				macnum++; // increment MAC counter
 				itoa(macnum, counter, 10); // base 10 decimal counter value
 				u8x8.draw2x2String(0, 0, counter);
-				ESP_LOGI(TAG, "RSSI %04d -> Hash %010u -> #%04i", ppkt->rx_ctrl.rssi, hashedmac, macnum);
+				ESP_LOGI(TAG, "RSSI %04d -> Hash %05u -> #%05i", ppkt->rx_ctrl.rssi, hashedmac, macnum);
 			}
 			else // already seen MAC
 				ESP_LOGI(TAG, "RSSI %04d -> already seen", ppkt->rx_ctrl.rssi);
