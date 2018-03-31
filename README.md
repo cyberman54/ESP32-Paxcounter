@@ -126,8 +126,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 0x07 set LoRa Adaptive Data Rate mode
 
 	0 = ADR off
-	1 = ADR on [default] 
-	
+	1 = ADR on [default]
+
 	note: set ADR to off, if device is moving, set to on, if not.
 
 0x08 do nothing
@@ -164,6 +164,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 	0 = internal antenna [default]
 	1 = external antenna
+
+0x0F set RGB led luminosity (works on LoPy/LoPy4 and LoRaNode32 shield only)
+
+		0 ... 100 percentage of luminosity (100% = full light)
+		e.g. 40 -> 40% of luminosity
 
 0x80 get device configuration
 
