@@ -73,30 +73,30 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 
 		if ( std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
 #endif
-
-//		if ( addr2int & WIFI_MAC_FILTER_MASK == 0) {
 		
-			// log rssi info for scanned MAC
-			ESP_LOGI(TAG, "WiFi RSSI: %02d", ppkt->rx_ctrl.rssi);
+		if (!(addr2int & WIFI_MAC_FILTER_MASK)) { // filter local and group MACs   
 
-			// hash MAC, and if new unique one, store hash in container and increment counter on display
+			// alt and hash MAC, and if new unique one, store hash in container and increment counter on display
+			addr2int <<= 8 || salt; // append salt value to MAC before hashing it
 			itoa(addr2int, macbuf, 10); // convert 64 bit MAC to base 10 decimal string
 			hashedmac = rokkit(macbuf, 10); // hash MAC for privacy, use 10 chars to fit in uint32_t container
 			newmac = macs.insert(hashedmac); // store hashed MAC if new unique
 			
-			if (newmac.second) {
+			if (newmac.second) { // first time seen MAC
 				macnum++; // increment MAC counter
 				itoa(macnum, counter, 10); // base 10 decimal counter value
 				u8x8.draw2x2String(0, 0, counter);
-				ESP_LOGI(TAG, "#%04i: MAC %llx -> Hash %u", macnum, addr2int, hashedmac);
+				ESP_LOGI(TAG, "RSSI %04d -> Hash %010u -> #%04i", ppkt->rx_ctrl.rssi, hashedmac, macnum);
 			}
-//		}
+			else // already seen MAC
+				ESP_LOGI(TAG, "RSSI %04d -> already seen", ppkt->rx_ctrl.rssi);
+		}
 
 #ifdef VENDORFILTER
 		}
 #endif
-	} else {
-		ESP_LOGI(TAG, "Ignoring RSSI %02d (limit: %i)", ppkt->rx_ctrl.rssi, cfg.rssilimit );
-	}
+	} else
+		ESP_LOGI(TAG, "RSSI %04d -> ignoring (limit: %i)", ppkt->rx_ctrl.rssi, cfg.rssilimit);
+
 	yield();
 }

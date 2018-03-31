@@ -69,6 +69,7 @@ void set_reset(int val) {
             ESP_LOGI(TAG, "Remote command: reset MAC counter");
             macs.clear(); // clear macs container
             macnum = 0;
+            //salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
             u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             u8x8.clearLine(5);
             u8x8.setCursor(0, 5);

@@ -1,5 +1,5 @@
 // program version
-#define PROGVERSION                     "1.2.54" // use max 10 chars here!
+#define PROGVERSION                     "1.2.6" // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
@@ -20,7 +20,7 @@
 #define	WIFI_CHANNEL_MAX                13  // total channel number to scan
 #define WIFI_MY_COUNTRY                 "EU"  // for Wifi RF settings
 #define	WIFI_CHANNEL_SWITCH_INTERVAL    50  // [seconds/100] -> 0,5 sec.
-#define WIFI_MAC_FILTER_MASK            0x000000000003 // filter local and group MACs             
+#define WIFI_MAC_FILTER_MASK            0x000000000003 // filter local and group MACs       
 
 // Default LoRa Spreadfactor
 #define LORASFDEFAULT                   9 // 7 ... 12

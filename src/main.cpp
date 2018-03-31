@@ -187,7 +187,7 @@ void wifi_sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
     uint8_t channel = 1;
-    int nloop=0, lorawait=0;
+    int nloop=0, lorawait=0, salt = rand() % 256; // random int between 0 and 255 used for salting MAC hashes
 
   	while (true) {
         nloop++;
@@ -219,6 +219,7 @@ void wifi_sniffer_loop(void * pvParameters) {
                 macs.clear(); // clear macs container
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
+                salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
