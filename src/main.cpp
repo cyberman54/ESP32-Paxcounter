@@ -219,11 +219,10 @@ void wifi_sniffer_loop(void * pvParameters) {
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
                 macs.clear(); // clear macs container
-                //srand(macnum); // use macnum to reinitialize pseudorandom generator
                 srand((uint32_t) temperatureRead()); // use chip temperature for pseudorandom generator init
+                salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
-                salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
                 ESP_LOGI(TAG, "Scan cycle completed, new salt value: %i", salt);
             }      
 
