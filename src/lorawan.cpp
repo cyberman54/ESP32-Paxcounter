@@ -95,7 +95,6 @@ void do_send(osjob_t* j){
         ESP_LOGI(TAG, "Packet queued");
         u8x8.clearLine(7);
         u8x8.drawString(0, 7, "PACKET QUEUED");
-        set_onboard_led(1);
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -162,7 +161,6 @@ void onEvent (ev_t ev) {
             ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
             u8x8.clearLine(7);
             u8x8.drawString(0, 7, "TX COMPLETE");
-            set_onboard_led(0);
             if (LMIC.txrxFlags & TXRX_ACK) {
               ESP_LOGI(TAG, "Received ack");
               u8x8.clearLine(7);
@@ -176,7 +174,7 @@ void onEvent (ev_t ev) {
                 u8x8.clearLine(7);
                 u8x8.setCursor(0, 7);
                 // LMIC.snr = SNR twos compliment [dB] * 4
-                // LMIC.rssi = RSSI [dBm] (-196...+63)              
+                // LMIC.rssi = RSSI [dBm] (-196...+63)
                 u8x8.printf("RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4);
                 // check if payload received on command port, then call remote command interpreter
                 if ( (LMIC.txrxFlags & TXRX_PORT) && (LMIC.frame[LMIC.dataBeg-1] == RCMDPORT ) ) {
@@ -224,3 +222,4 @@ void onEvent (ev_t ev) {
             break;
     }
 }
+
