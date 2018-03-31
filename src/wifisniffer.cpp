@@ -73,22 +73,25 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 
 		if ( std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
 #endif
-		    
+
+//		if ( addr2int & WIFI_MAC_FILTER_MASK == 0) {
+		
 			// log rssi info for scanned MAC
 			ESP_LOGI(TAG, "WiFi RSSI: %02d", ppkt->rx_ctrl.rssi);
 
-			// if found new unique MAC hash it and increment counter on display
-			itoa(addr2int, macbuf, 10); // convert 64 bit MAC to decimal string
-			hashedmac = rokkit(macbuf, 10); // hash MAC for privacy, use 10 chars to store in uint32_t set
+			// hash MAC, and if new unique one, store hash in container and increment counter on display
+			itoa(addr2int, macbuf, 10); // convert 64 bit MAC to base 10 decimal string
+			hashedmac = rokkit(macbuf, 10); // hash MAC for privacy, use 10 chars to fit in uint32_t container
 			newmac = macs.insert(hashedmac); // store hashed MAC if new unique
-			//if ( (newmac.second) && ((uint32_t)hdr->addr2[0] & 0x03 == 0) ) { // filter local and group MACs
-			if (newmac.second) {
-				macnum++;
-				itoa(macnum, counter, 10); // 10 -> decimal counter value
-				u8x8.draw2x2String(0, 0, counter);
-				ESP_LOGI(TAG, "#%04i -> Hash %u", macnum, hashedmac);
-			}
 			
+			if (newmac.second) {
+				macnum++; // increment MAC counter
+				itoa(macnum, counter, 10); // base 10 decimal counter value
+				u8x8.draw2x2String(0, 0, counter);
+				ESP_LOGI(TAG, "#%04i: MAC %llx -> Hash %u", macnum, addr2int, hashedmac);
+			}
+//		}
+
 #ifdef VENDORFILTER
 		}
 #endif
