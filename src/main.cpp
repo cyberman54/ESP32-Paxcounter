@@ -188,8 +188,7 @@ void wifi_sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
     uint8_t channel = 1;
-    srand((uint32_t) temperatureRead()); // use chip temperature for pseudorandom generator init
-    int nloop=0, lorawait=0, salt=rand() % 256; // random int between 0 and 255 used for salting MAC hashes
+    int nloop=0, lorawait=0;
     ESP_LOGI(TAG, "Scan initialized, salt value: %i", salt);
 
   	while (true) {
@@ -384,6 +383,10 @@ void setup() {
 #ifdef HAS_ANTENNA_SWITCH
     antenna_init();
 #endif
+
+    // initialize pseudorandom generator and salt value
+    srand((uint32_t) temperatureRead()); // use chip temperature for pseudorandom generator init
+    salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
 
     // initialize display
     init_display(PROGNAME, PROGVERSION);     
