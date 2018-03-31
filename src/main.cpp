@@ -46,7 +46,7 @@ int macnum = 0, blenum = 0;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint64_t> macs; // associative container holds filtered MAC adresses
+std::set<uint32_t> macs; // associative container holds filtered MAC adresses
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -66,7 +66,6 @@ int redirect_log(const char * fmt, va_list args) {
 void eraseConfig(void);
 void saveConfig(void);
 void loadConfig(void);
-
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
 
