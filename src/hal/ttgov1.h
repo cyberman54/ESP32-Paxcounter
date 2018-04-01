@@ -4,6 +4,7 @@
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
 #define HAS_LED GPIO_NUM_2 // white LED on board
+#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_BUTTON GPIO_NUM_0 // button "PRG" on board
 
 // re-define pin definitions of pins_arduino.h
