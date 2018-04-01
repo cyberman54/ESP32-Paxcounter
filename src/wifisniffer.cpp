@@ -62,8 +62,9 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 	char counter [6]; // uint16_t -> 2 byte -> 5 decimals + '0' terminator -> 6 chars
 	char macbuf [21]; // uint64_t -> 8 byte -> 20 decimals + '0' terminator -> 21 chars
 	uint64_t addr2int;
-	uint32_t vendor2int, hashedmac;
-	std::pair<std::set<uint32_t>::iterator, bool> newmac;
+	uint32_t vendor2int;
+	uint16_t hashedmac;
+	std::pair<std::set<uint16_t>::iterator, bool> newmac;
 
 	if (( cfg.rssilimit == 0 ) || (ppkt->rx_ctrl.rssi > cfg.rssilimit )) { // rssi is negative value
 	    addr2int = ( (uint64_t)hdr->addr2[0] ) | ( (uint64_t)hdr->addr2[1] << 8 ) | ( (uint64_t)hdr->addr2[2] << 16 ) | \
@@ -84,7 +85,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 				macnum++;						// increment MAC counter
 				itoa(macnum, counter, 10);		// base 10 decimal counter value
 				u8x8.draw2x2String(0, 0, counter);
-				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Salt %04x -> Hash %08x", macnum, ppkt->rx_ctrl.rssi, salt, hashedmac);
+				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Salt %04x -> Hash %04x", macnum, ppkt->rx_ctrl.rssi, salt, hashedmac);
 			}
 
 #ifdef VENDORFILTER

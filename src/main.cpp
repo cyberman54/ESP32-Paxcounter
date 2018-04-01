@@ -46,7 +46,7 @@ uint16_t macnum = 0, blenum = 0, salt;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint32_t> macs; // associative container holds filtered MAC adresses
+std::set<uint16_t> macs; // associative container holds filtered MAC adresses
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
