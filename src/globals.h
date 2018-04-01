@@ -35,7 +35,7 @@ extern osjob_t sendjob;
 extern uint16_t macnum, blenum, salt;
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern bool joinstate;
-extern std::set<uint16_t> macs; 
+extern std::set<uint32_t> macs; 
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;
