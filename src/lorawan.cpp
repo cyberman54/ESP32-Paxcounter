@@ -79,10 +79,22 @@ void printKeys(void) {
 #endif // VERBOSE
 
 void do_send(osjob_t* j){
-    mydata[0] = (macnum & 0x0000ff00) >> 8;
-    mydata[1] = macnum  & 0x000000ff;
-    mydata[2] = (blenum & 0x0000ff00) >> 8;
-    mydata[3] = blenum  & 0x000000ff;
+    uint16_t data;
+    // Total of differents MAC seen (BLE+WiFi)
+    data = (uint16_t) macs.size();
+    mydata[0] = (data & 0xff00) >> 8;
+    mydata[1] = data  & 0xff;
+    
+    // Total of differents MAC seen BLE Only
+    data = (uint16_t) bles.size();
+    mydata[2] = (data & 0xff00) >> 8;
+    mydata[3] = data  & 0xff;
+
+    // Total of differents MAC seen Wifi Only
+    // TBD ?
+    //data = (uint16_t) wifis.size();
+    //mydata[4] = (data & 0xff00) >> 8;
+    //mydata[5] = data  & 0xff;
 
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
