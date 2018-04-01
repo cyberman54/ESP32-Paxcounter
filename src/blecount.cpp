@@ -27,6 +27,6 @@ void BLECount() {
     u8x8.clearLine(3);
     u8x8.setCursor(0,3);
     blenum=foundDevices.getCount();
-    u8x8.printf("BLE#: %5i",blenum);
+    u8x8.printf("BLE#: %-5i",blenum);
 }
 #endif
