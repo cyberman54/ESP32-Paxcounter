@@ -79,7 +79,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 			
 			addr2int |= (uint64_t) salt << 48;	// prepend 12 bit salt to 48 bit MAC
 			itoa(addr2int, macbuf, 10);			// convert 64 bit MAC to base 10 decimal string
-			hashedmac = rokkit(macbuf, 10); 	// hash MAC, use 10 chars to fit hash in uint32_t container
+			hashedmac = rokkit(macbuf, 5);		// hash MAC, use 5 chars to fit hash in uint16_t container
 			newmac = macs.insert(hashedmac);	// store hashed MAC if new unique
 			if (newmac.second) {				// first time seen MAC
 				macnum++;						// increment MAC counter
