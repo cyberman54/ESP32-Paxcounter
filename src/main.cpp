@@ -42,8 +42,7 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-uint16_t macnum = 0, blenum = 0;
-int salt;
+uint16_t macnum = 0, blenum = 0, salt;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 

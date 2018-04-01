@@ -32,8 +32,8 @@ extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
 extern osjob_t sendjob;
-extern uint16_t macnum, blenum;
-extern int countermode, screensaver, adrmode, lorasf, txpower, rlim, salt;
+extern uint16_t macnum, blenum, salt;
+extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern bool joinstate;
 extern std::set<uint16_t> macs; 
 
