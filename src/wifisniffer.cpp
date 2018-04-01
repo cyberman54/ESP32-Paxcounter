@@ -60,7 +60,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 	const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
 	const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
 	char counter [6]; // uint16_t -> 2 byte -> 5 decimals + '0' terminator -> 6 chars
-	char macbuf [21]; // uint64_t -> 8 byte -> 20 decimals + '0' terminator -> 21 chars
+	char macbuf [21]; // uint64_t -> 8 byte -> 10 decimals + '0' terminator -> 21 chars
 	uint64_t addr2int;
 	uint32_t vendor2int;
 	uint16_t hashedmac;
@@ -77,15 +77,15 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 			// salt and hash MAC, and if new unique one, store identifier in container and increment counter on display
 			// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 			
-			addr2int |= (uint64_t) salt << 48;	// prepend 12 bit salt to 48 bit MAC
-			itoa(addr2int, macbuf, 10);			// convert 64 bit MAC to base 10 decimal string
-			hashedmac = rokkit(macbuf, 5);		// hash MAC, use 5 chars to fit hash in uint16_t container
-			newmac = macs.insert(hashedmac);	// store hashed MAC if new unique
-			if (newmac.second) {				// first time seen MAC
-				macnum++;						// increment MAC counter
-				itoa(macnum, counter, 10);		// base 10 decimal counter value
-				u8x8.draw2x2String(0, 0, counter);
-				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Salt %04x -> Hash %04x", macnum, ppkt->rx_ctrl.rssi, salt, hashedmac);
+			addr2int |= (uint64_t) salt << 48;		// prepend 16-bit salt to 48-bit MAC
+			snprintf(macbuf, 21, "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
+			hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
+			newmac = macs.insert(hashedmac);		// store hashed MAC only if first time seen
+			if (newmac.second) {					// if first time seen MAC
+				macnum++;								// increment MAC counter
+				snprintf(counter, 6, "%i", macnum);		// convert 16-bit MAC counter to decimal counter value
+				u8x8.draw2x2String(0, 0, counter);		// display counter
+				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Hash %04x", macnum, ppkt->rx_ctrl.rssi, salt, hashedmac);
 			}
 
 #ifdef VENDORFILTER
