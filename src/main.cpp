@@ -42,11 +42,18 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-int macnum = 0, blenum = 0, salt;
+int macnum = 0, wifimac = 0, mactot = 0, salt;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint32_t> macs; // associative container holds filtered MAC adresses
+std::set<uint32_t> macs; // associative container holds filtered Total differents MAC adresses (Wifi + BLE)
+std::set<uint32_t> wifis; // associative container holds filtered Wifi MAC adresses
+
+#ifdef BLECOUNTER
+    std::set<uint32_t> bles; // associative container holds filtered BLE MAC adresses
+    int scanTime;
+    int blemac = 0;
+#endif
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -193,35 +200,48 @@ void wifi_sniffer_loop(void * pvParameters) {
 
   	while (true) {
         nloop++;
-		vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
+        vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
         yield();
-		wifi_sniffer_set_channel(channel);
-		channel = (channel % WIFI_CHANNEL_MAX) + 1;
+        wifi_sniffer_set_channel(channel);
+        channel = (channel % WIFI_CHANNEL_MAX) + 1;
+        
+        // Prepare and execute LoRaWAN data upload
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
+        u8x8.setCursor(11,5);
+        u8x8.printf("ch:%02i", channel);
+        u8x8.setCursor(0,4);
+        u8x8.printf("MAC#: %-5i", wifis.size());
+        
+        #ifdef BLECOUNTER
+        // Once 2 full Wifi Channels scan, do a BLE scan
+        if (nloop % (WIFI_CHANNEL_MAX*2) == 0 ) {
+          // execute BLE count if BLE function is enabled
+              if (cfg.blescan)
+                  BLECount();
+        }
+        #endif
         
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ((100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) ) {
             u8x8.setPowerSave(!cfg.screenon); // set display on if enabled
             nloop = 0; // reset wlan sniffing loop counter
             
-            // execute BLE count if BLE function is enabled
-            #ifdef BLECOUNTER
-                if (cfg.blescan)
-                    BLECount();
-            #endif
-            
             // Prepare and execute LoRaWAN data upload
-            u8x8.setCursor(0,4);
-            u8x8.printf("MAC#: %4i", macnum);
             do_send(&sendjob); // send payload
             vTaskDelay(500/portTICK_PERIOD_MS);
             yield();
 
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
-                macs.clear(); // clear macs container
+                macs.clear(); // clear all macs container
+                wifis.clear(); // clear Wifi macs couner
+                #ifdef BLECOUNTER
+                  bles.clear(); // clear BLE macs counter
+                #endif
+                
                 srand((uint32_t) temperatureRead()); // use chip temperature for pseudorandom generator init
                 salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
-                macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
                 ESP_LOGI(TAG, "Scan cycle completed, new salt value: %i", salt);
             }      
