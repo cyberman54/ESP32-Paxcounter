@@ -79,14 +79,13 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 			
 			addr2int |= (uint64_t) salt << 48;		// prepend 16-bit salt to 48-bit MAC
 			snprintf(macbuf, 21, "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
-			hashedmac = rokkit(macbuf, 5);			// hash MAC, use 5 chars to fit hash in uint16_t container
-			newmac = macs.insert(hashedmac);		// store hashed MAC if new unique
-			if (newmac.second) {					// first time seen MAC
-				macnum++;							// increment MAC counter
-				snprintf(counter, 6, "%i", macnum);	// convert 16-bit MAC counter to decimal counter value
-				u8x8.draw2x2String(0, 0, counter);	// display counter
-				ESP_LOGI(TAG, "addr2int: %016llx macbuf: %s", addr2int, macbuf);
-				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Salt %04x -> Hash %04x", macnum, ppkt->rx_ctrl.rssi, salt, hashedmac);
+			hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
+			newmac = macs.insert(hashedmac);		// store hashed MAC only if first time seen
+			if (newmac.second) {					// if first time seen MAC
+				macnum++;								// increment MAC counter
+				snprintf(counter, 6, "%i", macnum);		// convert 16-bit MAC counter to decimal counter value
+				u8x8.draw2x2String(0, 0, counter);		// display counter
+				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Hash %04x", macnum, ppkt->rx_ctrl.rssi, salt, hashedmac);
 			}
 
 #ifdef VENDORFILTER
