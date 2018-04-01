@@ -211,7 +211,7 @@ void wifi_sniffer_loop(void * pvParameters) {
             
             // Prepare and execute LoRaWAN data upload
             u8x8.setCursor(0,4);
-            u8x8.printf("MAC#: %i", macnum);
+            u8x8.printf("MAC#: %5i", macnum);
             do_send(&sendjob); // send payload
             vTaskDelay(500/portTICK_PERIOD_MS);
             yield();
