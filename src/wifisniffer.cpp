@@ -85,7 +85,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 				macnum++;								// increment MAC counter
 				snprintf(counter, 6, "%i", macnum);		// convert 16-bit MAC counter to decimal counter value
 				u8x8.draw2x2String(0, 0, counter);		// display counter
-				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Hash %04x", macnum, ppkt->rx_ctrl.rssi, salt, hashedmac);
+				ESP_LOGI(TAG, "#%05i: RSSI %04d -> Hash %04x", macnum, ppkt->rx_ctrl.rssi, hashedmac);
 			}
 
 #ifdef VENDORFILTER
