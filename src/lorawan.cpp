@@ -79,10 +79,10 @@ void printKeys(void) {
 #endif // VERBOSE
 
 void do_send(osjob_t* j){
-    mydata[0] = (macnum & 0x0000ff00) >> 8;
-    mydata[1] = macnum  & 0x000000ff;
-    mydata[2] = (blenum & 0x0000ff00) >> 8;
-    mydata[3] = blenum  & 0x000000ff;
+    mydata[0] = (macnum & 0xff00) >> 8;
+    mydata[1] = macnum  & 0x00ff;
+    mydata[2] = (blenum & 0xff00) >> 8;
+    mydata[3] = blenum  & 0x00ff;
 
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {

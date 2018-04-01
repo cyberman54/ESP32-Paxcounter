@@ -217,6 +217,11 @@ Arduino-LMIC Library
 TTN OTAA Example
 https://github.com/matthijskooijman/arduino-lmic/blob/master/examples/ttn-otaa/
 
+and it's fork
+
+LoraWAN-in-C library, adapted to run under the Arduino environment
+https://github.com/jpmeijers/arduino-lmic
+
 under this Licence:
 
 "License

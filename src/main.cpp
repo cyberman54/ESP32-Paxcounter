@@ -25,9 +25,6 @@ Refer to LICENSE.txt file in repository for more details.
 #include "main.h"
 #include "globals.h"
 
-// std::set for unified array functions
-#include <set>
-
 // OLED driver
 #include <U8x8lib.h>
 
@@ -45,11 +42,11 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-int macnum = 0, blenum = 0;
+uint16_t macnum = 0, blenum = 0, salt;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint64_t, std::greater <uint64_t> > macs; // storage holds MAC frames
+std::set<uint16_t> macs; // associative container holds filtered MAC adresses
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -70,16 +67,29 @@ void eraseConfig(void);
 void saveConfig(void);
 void loadConfig(void);
 
-
 /* begin LMIC specific parts ------------------------------------------------------------ */
+
+// LMIC enhanced Pin mapping 
+const lmic_pinmap lmic_pins = {
+    .mosi = PIN_SPI_MOSI,
+    .miso = PIN_SPI_MISO,
+    .sck = PIN_SPI_SCK,
+    .nss = PIN_SPI_SS,
+    .rxtx = LMIC_UNUSED_PIN,
+    .rst = RST,
+    .dio = {DIO0, DIO1, DIO2}
+};
 
 // defined in lorawan.cpp
 void gen_lora_deveui(uint8_t * pdeveui);
 void RevBytes(unsigned char* b, size_t c);
-
 #ifdef VERBOSE
     void printKeys(void);
-#endif // VERBOSE
+#endif
+
+// LMIC functions
+void onEvent(ev_t ev);
+void do_send(osjob_t* j);
 
 // LMIC callback functions
 void os_getDevKey (u1_t *buf) { 
@@ -101,21 +111,6 @@ void os_getDevEui (u1_t* buf) {
     else
         gen_lora_deveui(buf); // generate DEVEUI from device's MAC
 }
-
-// LMIC enhanced Pin mapping 
-const lmic_pinmap lmic_pins = {
-    .mosi = PIN_SPI_MOSI,
-    .miso = PIN_SPI_MISO,
-    .sck = PIN_SPI_SCK,
-    .nss = PIN_SPI_SS,
-    .rxtx = LMIC_UNUSED_PIN,
-    .rst = RST,
-    .dio = {DIO0, DIO1, DIO2}
-};
-
-// LMIC functions
-void onEvent(ev_t ev);
-void do_send(osjob_t* j);
 
 // LoRaWAN Initjob
 static void lora_init (osjob_t* j) {
@@ -193,7 +188,7 @@ void wifi_sniffer_loop(void * pvParameters) {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
     uint8_t channel = 1;
     int nloop=0, lorawait=0;
-
+    
   	while (true) {
         nloop++;
 		vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
@@ -208,20 +203,21 @@ void wifi_sniffer_loop(void * pvParameters) {
             
             // execute BLE count if BLE function is enabled
             #ifdef BLECOUNTER
-                if ( cfg.blescan )
+                if (cfg.blescan)
                     BLECount();
             #endif
             
             // Prepare and execute LoRaWAN data upload
             u8x8.setCursor(0,4);
-            u8x8.printf("MAC#: %4i", macnum);
+            u8x8.printf("MAC#: %-5i", macnum);
             do_send(&sendjob); // send payload
             vTaskDelay(500/portTICK_PERIOD_MS);
             yield();
 
             // clear counter if not in cumulative counter mode
-            if ( cfg.countermode != 1 ) {
-                macs.erase(macs.begin(), macs.end()); // clear RAM
+            if (cfg.countermode != 1) {
+                macs.clear(); // clear macs container
+                salt = random(65536); // get new 16bit random for salting hashes
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             }      
@@ -384,11 +380,14 @@ void setup() {
     antenna_init();
 #endif
 
+    // initialize salt value using esp_random() called by random in arduino-esp32 core
+    salt = random(65536); // get new 16bit random for salting hashes
+
     // initialize display
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.setCursor(0,5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
+    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
     u8x8.drawString(0,6,"Join Wait       ");
     
     // output LoRaWAN keys to console
