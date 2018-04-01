@@ -42,13 +42,13 @@ void wifi_sniffer_init(void) {
 		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 		cfg.nvs_enable = 0; // we don't need any wifi settings from NVRAM
 		wifi_promiscuous_filter_t filter = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
-    	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));
-		ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL) );
-    	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
+    	ESP_ERROR_CHECK(esp_wifi_init(&cfg));						// configure Wifi with cfg
+    	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));		// set locales for RF and channels
+		ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));	// we don't need NVRAM
+		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+    	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter));	// set MAC frame filter
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
-    	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
+    	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));			// now switch on monitor mode
 }
 
 void wifi_sniffer_set_channel(uint8_t channel) {
@@ -75,14 +75,14 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 		if ( std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
 #endif
 			// salt and hash MAC, and if new unique one, store hash in container and increment counter on display
-			addr2int <<= 16; // left shift out 2 bytes of vendor oui to give space for salt
-			addr2int |= salt; // append salt value to MAC before hashing it
-			itoa(addr2int, macbuf, 10); // convert 64 bit MAC to base 10 decimal string
-			hashedmac = rokkit(macbuf, 5); // hash MAC for privacy, use 5 chars to fit in uint16_t container
-			newmac = macs.insert(hashedmac); // store hashed MAC if new unique
-			if (newmac.second) { // first time seen MAC
-				macnum++; // increment MAC counter
-				itoa(macnum, counter, 10); // base 10 decimal counter value
+			addr2int <<= 16;					// left shift out 2 bytes of vendor oui to give space for salt
+			addr2int |= salt;					// append salt value to MAC before hashing it
+			itoa(addr2int, macbuf, 10);			// convert 64 bit MAC to base 10 decimal string
+			hashedmac = rokkit(macbuf, 5); 		// hash MAC for privacy, use 5 chars to fit in uint16_t container
+			newmac = macs.insert(hashedmac);	// store hashed MAC if new unique
+			if (newmac.second) {				// first time seen MAC
+				macnum++;						// increment MAC counter
+				itoa(macnum, counter, 10);		// base 10 decimal counter value
 				u8x8.draw2x2String(0, 0, counter);
 				ESP_LOGI(TAG, "RSSI %04d -> Hash %05u -> #%05i", ppkt->rx_ctrl.rssi, hashedmac, macnum);
 			}
