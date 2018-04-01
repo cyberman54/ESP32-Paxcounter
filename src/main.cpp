@@ -219,8 +219,7 @@ void wifi_sniffer_loop(void * pvParameters) {
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
                 macs.clear(); // clear macs container
-                srand(temperatureRead()); // use chip temperature for pseudorandom generator init
-                salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
+                salt = random(65536); // get new 16bit random for salting hashes
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
                 ESP_LOGI(TAG, "Scan cycle completed, new salt value: %i", salt);
@@ -384,9 +383,8 @@ void setup() {
     antenna_init();
 #endif
 
-    // initialize pseudorandom generator and salt value
-    srand(temperatureRead()); // use chip temperature for pseudorandom generator init
-    salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
+    // initialize salt value using esp_random() called by random in arduino-esp32 core
+    salt = random(65536); // get new 16bit random for salting hashes
 
     // initialize display
     init_display(PROGNAME, PROGVERSION);     
