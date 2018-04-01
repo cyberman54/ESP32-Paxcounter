@@ -189,8 +189,7 @@ void wifi_sniffer_loop(void * pvParameters) {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
     uint8_t channel = 1;
     int nloop=0, lorawait=0;
-    ESP_LOGI(TAG, "Scan initialized, salt value: %i", salt);
-
+    
   	while (true) {
         nloop++;
 		vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
@@ -222,7 +221,6 @@ void wifi_sniffer_loop(void * pvParameters) {
                 salt = random(65536); // get new 16bit random for salting hashes
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
-                ESP_LOGI(TAG, "Scan cycle completed, new salt value: %i", salt);
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
