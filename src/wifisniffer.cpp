@@ -70,14 +70,10 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 	    addr2int = ( (uint64_t)hdr->addr2[0] ) | ( (uint64_t)hdr->addr2[1] << 8 ) | ( (uint64_t)hdr->addr2[2] << 16 ) | \
 			( (uint64_t)hdr->addr2[3] << 24 ) | ( (uint64_t)hdr->addr2[4] << 32 ) | ( (uint64_t)hdr->addr2[5] << 40 );
 
-#ifdef VENDORFILTER
+#ifdef VENDORFILTER // uses vendor array with prefiltered OUIs (no local nd no group MACs, bits 0+1 in 1st byte of OUI)
 		vendor2int = ( (uint32_t)hdr->addr2[2] ) | ( (uint32_t)hdr->addr2[1] << 8 ) | ( (uint32_t)hdr->addr2[0] << 16 );
-
 		if ( std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
 #endif
-		
-		//if (!(addr2int & WIFI_MAC_FILTER_MASK)) { // filter local and group MACs   
-
 			// salt and hash MAC, and if new unique one, store hash in container and increment counter on display
 			addr2int <<= 16; // left shift out 2 bytes of vendor oui to give space for salt
 			addr2int |= salt; // append salt value to MAC before hashing it
@@ -92,7 +88,6 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
 			}
 			else // already seen MAC
 				ESP_LOGI(TAG, "RSSI %04d -> already seen", ppkt->rx_ctrl.rssi);
-		//}
 
 #ifdef VENDORFILTER
 		}

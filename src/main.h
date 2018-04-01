@@ -19,8 +19,7 @@
 #define WIFI_CHANNEL_MIN                1   // start channel number where scan begings
 #define	WIFI_CHANNEL_MAX                13  // total channel number to scan
 #define WIFI_MY_COUNTRY                 "EU"  // for Wifi RF settings
-#define	WIFI_CHANNEL_SWITCH_INTERVAL    50  // [seconds/100] -> 0,5 sec.
-#define WIFI_MAC_FILTER_MASK            0x000000000003 // filter local and group MACs       
+#define	WIFI_CHANNEL_SWITCH_INTERVAL    50  // [seconds/100] -> 0,5 sec.     
 
 // Default LoRa Spreadfactor
 #define LORASFDEFAULT                   9 // 7 ... 12
