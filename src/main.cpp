@@ -219,7 +219,7 @@ void wifi_sniffer_loop(void * pvParameters) {
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
                 macs.clear(); // clear macs container
-                srand((uint32_t) temperatureRead()); // use chip temperature for pseudorandom generator init
+                srand(temperatureRead()); // use chip temperature for pseudorandom generator init
                 salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
                 macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
@@ -385,7 +385,7 @@ void setup() {
 #endif
 
     // initialize pseudorandom generator and salt value
-    srand((uint32_t) temperatureRead()); // use chip temperature for pseudorandom generator init
+    srand(temperatureRead()); // use chip temperature for pseudorandom generator init
     salt = rand() % 256; // get new random int between 0 and 255 for salting MAC hashes
 
     // initialize display
