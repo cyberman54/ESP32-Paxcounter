@@ -6,6 +6,7 @@
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
 #define HAS_LED NOT_A_PIN // Led os on same pin than Lora SS pin, to avoid pb, we don't use it
+#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
                           // Anyway shield is on over the LoLin32 board, so we won't be able to see this LED
 #define HAS_RGB_LED   13  // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
 #define HAS_BUTTON    15  // ESP32 GPIO15 (pin15) Button is on the LoraNode32 shield
@@ -30,4 +31,3 @@
 #define OLED_RST U8X8_PIN_NONE  // Not reset pin
 #define OLED_SDA 21             // ESP32 GPIO21 (Pin21) -- OLED SDA
 #define OLED_SCL 22             // ESP32 GPIO22 (Pin22) -- OLED SCL
-

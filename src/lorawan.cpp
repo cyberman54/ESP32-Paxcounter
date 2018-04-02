@@ -79,10 +79,22 @@ void printKeys(void) {
 #endif // VERBOSE
 
 void do_send(osjob_t* j){
-    mydata[0] = (macnum & 0xff00) >> 8;
-    mydata[1] = macnum  & 0x00ff;
-    mydata[2] = (blenum & 0xff00) >> 8;
-    mydata[3] = blenum  & 0x00ff;
+    uint16_t data;
+    // Total BLE+WIFI unique MACs seen
+    data = (uint16_t) macs.size();
+    mydata[0] = (data & 0xff00) >> 8;
+    mydata[1] = data  & 0xff;
+    
+    // Sum of unique BLE MACs seen
+    data = (uint16_t) bles.size();
+    mydata[2] = (data & 0xff00) >> 8;
+    mydata[3] = data  & 0xff;
+
+    // Sum of unique WIFI MACs seen
+    // TBD ?
+    //data = (uint16_t) wifis.size();
+    //mydata[4] = (data & 0xff00) >> 8;
+    //mydata[5] = data  & 0xff;
 
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
@@ -95,7 +107,6 @@ void do_send(osjob_t* j){
         ESP_LOGI(TAG, "Packet queued");
         u8x8.clearLine(7);
         u8x8.drawString(0, 7, "PACKET QUEUED");
-        set_onboard_led(1);
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -162,7 +173,6 @@ void onEvent (ev_t ev) {
             ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
             u8x8.clearLine(7);
             u8x8.drawString(0, 7, "TX COMPLETE");
-            set_onboard_led(0);
             if (LMIC.txrxFlags & TXRX_ACK) {
               ESP_LOGI(TAG, "Received ack");
               u8x8.clearLine(7);
@@ -176,7 +186,7 @@ void onEvent (ev_t ev) {
                 u8x8.clearLine(7);
                 u8x8.setCursor(0, 7);
                 // LMIC.snr = SNR twos compliment [dB] * 4
-                // LMIC.rssi = RSSI [dBm] (-196...+63)              
+                // LMIC.rssi = RSSI [dBm] (-196...+63)
                 u8x8.printf("RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4);
                 // check if payload received on command port, then call remote command interpreter
                 if ( (LMIC.txrxFlags & TXRX_PORT) && (LMIC.frame[LMIC.dataBeg-1] == RCMDPORT ) ) {
@@ -224,3 +234,4 @@ void onEvent (ev_t ev) {
             break;
     }
 }
+
