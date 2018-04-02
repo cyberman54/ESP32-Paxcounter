@@ -253,13 +253,6 @@ void wifi_sniffer_loop(void * pvParameters) {
 
         nloop++; // acutal number of wifi loops, controls cycle when data is sent
 
-        #ifdef BLECOUNTER                               // execute BLE count if BLE function is enabled
-            if (nloop % (WIFI_CHANNEL_MAX*2) == 0 ) {   // once 2 full Wifi Channels scan, do a BLE scan
-                if (cfg.blescan)                        // execute BLE count if BLE function is enabled
-                    BLECount();
-        }
-        #endif
-
         vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
         yield();
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
@@ -274,9 +267,9 @@ void wifi_sniffer_loop(void * pvParameters) {
         u8x8.printf("MAC#: %-5i", wifis.size());
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
-        if( nloop >= ((100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) ) {
+        if( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
             u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
-            nloop = 0;                                  // reset wifi scan loop counter           
+            nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
             do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
             vTaskDelay(500/portTICK_PERIOD_MS);
             yield();
@@ -314,6 +307,14 @@ void wifi_sniffer_loop(void * pvParameters) {
             yield();
             u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
         } // end of send data cycle
+        else {
+            #ifdef BLECOUNTER                               // execute BLE count if BLE function is enabled
+                if (nloop % (WIFI_CHANNEL_MAX * BLESCANCYCLE) == 0 ) {   // once after BLESCANCYCLE Wifi scans, do a BLE scan
+                    if (cfg.blescan)                        // execute BLE count if BLE function is enabled
+                        BLECount();
+            }
+        #endif
+        } // end of channel rotation loop
     } // end of infinite wifi scan loop
 }
 
