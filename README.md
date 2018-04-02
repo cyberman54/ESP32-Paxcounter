@@ -162,8 +162,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x0E set BLE scan mode
 
-	0 = disabled [default]
-	1 = enabled
+	0 = disabled
+	1 = enabled [default]
 
 0x0F set WIFI antenna switch (works on LoPy/LoPy4 only)
 
