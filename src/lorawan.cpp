@@ -80,17 +80,17 @@ void printKeys(void) {
 
 void do_send(osjob_t* j){
     uint16_t data;
-    // Total of differents MAC seen (BLE+WiFi)
+    // Total BLE+WIFI unique MACs seen
     data = (uint16_t) macs.size();
     mydata[0] = (data & 0xff00) >> 8;
     mydata[1] = data  & 0xff;
     
-    // Total of differents MAC seen BLE Only
+    // Sum of unique BLE MACs seen
     data = (uint16_t) bles.size();
     mydata[2] = (data & 0xff00) >> 8;
     mydata[3] = data  & 0xff;
 
-    // Total of differents MAC seen Wifi Only
+    // Sum of unique WIFI MACs seen
     // TBD ?
     //data = (uint16_t) wifis.size();
     //mydata[4] = (data & 0xff00) >> 8;
