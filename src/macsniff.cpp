@@ -100,7 +100,7 @@ void BLECount() {
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
-    BLEScanResults foundDevices = pBLEScan->start(cfg.blescancycle);
+    BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime);
     blenum=foundDevices.getCount();
     u8x8.clearLine(3);
     u8x8.setCursor(0,3);

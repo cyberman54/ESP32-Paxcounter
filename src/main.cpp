@@ -309,7 +309,7 @@ void wifi_sniffer_loop(void * pvParameters) {
         } // end of send data cycle
         else {
             #ifdef BLECOUNTER                               // execute BLE count if BLE function is enabled
-                if (nloop % (WIFI_CHANNEL_MAX * BLESCANCYCLE) == 0 ) {   // once after BLESCANCYCLE Wifi scans, do a BLE scan
+                if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 ) {  // once after cfg.blescancycle Wifi scans, do a BLE scan
                     if (cfg.blescan)                        // execute BLE count if BLE function is enabled
                         BLECount();
             }

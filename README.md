@@ -155,17 +155,22 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 ... 255 duration of a BLE scan cycle in seconds
 	e.g. 30 -> 1 cycle runs for 30 seconds
 
-0x0D set BLE scan mode
+0x0D set BLE scan cycle frequency
+
+	run BLE scan once after 0 ... 255 full wifi scans
+	e.g. 2 -> BLE scan runs once after each 2nd wifi scan [default]
+
+0x0E set BLE scan mode
 
 	0 = disabled [default]
 	1 = enabled
 
-0x0E set WIFI antenna switch (works on LoPy/LoPy4 only)
+0x0F set WIFI antenna switch (works on LoPy/LoPy4 only)
 
 	0 = internal antenna [default]
 	1 = external antenna
 
-0x0F set RGB led luminosity (works on LoPy/LoPy4 and LoRaNode32 shield only)
+0x10 set RGB led luminosity (works on LoPy/LoPy4 and LoRaNode32 shield only)
 
 		0 ... 100 percentage of luminosity (100% = full light)
 		e.g. 40 -> 40% of luminosity
@@ -184,10 +189,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	byte 9:			Wifi scan cycle duration in seconds/2 (0..255)
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
 	byte 11:		BLE scan cycle duration in seconds (0..255)
-	byte 12:		BLE scan mode (1=on, 0=0ff)
-	byte 13:		Wifi antenna switch (0=internal, 1=external)
-	byte 14:		RGB LED luminosity (0..100 %)
-	bytes 15-24:		Software version (ASCII format)
+	byte 12:		BLE scan frequency, do once after (0..255) full wifi scans
+	byte 13:		BLE scan mode (1=on, 0=0ff)
+	byte 14:		Wifi antenna switch (0=internal, 1=external)
+	byte 15:		RGB LED luminosity (0..100 %)
+	bytes 16-25:		Software version (ASCII format)
 
 0x81 get device uptime
 

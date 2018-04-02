@@ -104,10 +104,15 @@ void set_wifichancycle(int val) {
     ESP_LOGI(TAG, "Remote command: set Wifi channel switch interval to %i seconds", cfg.wifichancycle/100);
 };    
 
+void set_blescantime(int val) {
+    cfg.blescantime = val;
+    ESP_LOGI(TAG, "Remote command: set BLE scan time to %i seconds", cfg.blescantime);
+};
+
 void set_blescancycle(int val) {
     cfg.blescancycle = val;
-    ESP_LOGI(TAG, "Remote command: set Wifi channel cycle duration to %i seconds", cfg.blescancycle);
-};    
+    ESP_LOGI(TAG, "Remote command: set BLE scan cycle to %i", cfg.blescancycle);
+};  
 
 void set_countmode(int val) {
     switch (val) {
@@ -244,10 +249,11 @@ cmd_t table[] = {
                 {0x09, set_reset, false},
                 {0x0a, set_wifiscancycle, true},
                 {0x0b, set_wifichancycle, true},
-                {0x0c, set_blescancycle, true},
-                {0x0d, set_blescan, true},
-                {0x0e, set_wifiant, true},
-                {0x0f, set_rgblum, true},
+                {0x0c, set_blescantime, true},
+                {0x0d, set_blescancycle, true},
+                {0x0e, set_blescan, true},
+                {0x0f, set_wifiant, true},
+                {0x10, set_rgblum, true},
                 {0x80, get_config, false},
                 {0x81, get_uptime, false},
                 {0x82, get_cputemp, false}

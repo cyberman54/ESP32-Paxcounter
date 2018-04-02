@@ -28,10 +28,11 @@ void defaultConfig() {
     cfg.rssilimit   = 0;  // threshold for rssilimiter, negative value!
     cfg.wifiscancycle = SEND_SECS; // wifi scan cycle [seconds/2]
     cfg.wifichancycle = WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
-    cfg.blescancycle  = BLESCANTIME; // BLE scan cycle [seconds]
+    cfg.blescantime  = BLESCANTIME; // BLE scan cycle duration [seconds]
+    cfg.blescancycle = BLESCANCYCLE; // do a BLE scan after [BLESCANCYCLE] full Wifi scan cycles
     cfg.blescan     = 1;  // 0=disabled, 1=enabled
     cfg.wifiant     = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
-    cfg.rgblum      = RGBLUMINOSITY; // RGB Led luminosity (0 100%)
+    cfg.rgblum      = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
 
     strncpy( cfg.version, PROGVERSION, sizeof(cfg.version)-1 );
 }
@@ -105,8 +106,11 @@ void saveConfig() {
       if( nvs_get_i8(my_handle, "wifichancycle", &flash8) != ESP_OK || flash8 != cfg.wifichancycle )
         nvs_set_i8(my_handle, "wifichancycle", cfg.wifichancycle);
 
+      if( nvs_get_i8(my_handle, "blescantime", &flash8) != ESP_OK || flash8 != cfg.blescantime )
+        nvs_set_i8(my_handle, "blescantime", cfg.blescantime);
+
       if( nvs_get_i8(my_handle, "blescancycle", &flash8) != ESP_OK || flash8 != cfg.blescancycle )
-        nvs_set_i8(my_handle, "blescancycle", cfg.blescancycle);
+        nvs_set_i8(my_handle, "blescantime", cfg.blescancycle);
 
       if( nvs_get_i8(my_handle, "blescanmode", &flash8) != ESP_OK || flash8 != cfg.blescan )
         nvs_set_i8(my_handle, "blescanmode", cfg.blescan);
@@ -249,11 +253,19 @@ void loadConfig() {
       saveConfig();
     }
 
+    if( nvs_get_i8(my_handle, "blescantime", &flash8) == ESP_OK ) {
+      cfg.blescantime = flash8;
+      ESP_LOGI(TAG, "blescantime = %i", flash8);
+    } else {
+      ESP_LOGI(TAG, "BLEscantime set to default %i", cfg.blescantime);
+      saveConfig();
+    }
+
     if( nvs_get_i8(my_handle, "blescancycle", &flash8) == ESP_OK ) {
       cfg.blescancycle = flash8;
       ESP_LOGI(TAG, "blescancycle = %i", flash8);
     } else {
-      ESP_LOGI(TAG, "BLEscan cycle set to default %i", cfg.blescancycle);
+      ESP_LOGI(TAG, "BLEscancycle set to default %i", cfg.blescancycle);
       saveConfig();
     }
 
