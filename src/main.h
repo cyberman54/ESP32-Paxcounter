@@ -1,30 +1,35 @@
 // program version
-#define PROGVERSION                     "1.2.62" // use max 10 chars here!
+#define PROGVERSION                     "1.2.85"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
-#define VERBOSE                         1 // comment out to silence the device, for mute use build option
+#define VERBOSE                         1       // comment out to silence the device, for mute use build option
 
 // set this to include BLE counting and vendor filter functions
-#define VENDORFILTER                    1 // comment out if you want to count things, not people
-#define BLECOUNTER                      1 // comment out if you don't want BLE count
+#define VENDORFILTER                    1       // comment out if you want to count things, not people
+#define BLECOUNTER                      1       // comment out if you don't want BLE count
 
 // BLE scan time
-#define BLESCANTIME                     30 // [seconds]
+#define BLESCANTIME                     15      // [seconds]
+#define BLESCANCYCLE                    2       // BLE scan once after each <BLECYCLE> wifi scans
 
 // WiFi Sniffer cycle interval
-#define SEND_SECS                       120 // [seconds/2] -> 240 sec.
+#define SEND_SECS                       120     // [seconds/2] -> 240 sec.
+//#define SEND_SECS                       30    // [seconds/2] -> 60 sec.
 
 // WiFi sniffer config
-#define WIFI_CHANNEL_MIN                1   // start channel number where scan begings
-#define	WIFI_CHANNEL_MAX                13  // total channel number to scan
-#define WIFI_MY_COUNTRY                 "EU"  // for Wifi RF settings
-#define	WIFI_CHANNEL_SWITCH_INTERVAL    50  // [seconds/100] -> 0,5 sec.     
+#define WIFI_CHANNEL_MIN                1       // start channel number where scan begings
+#define	WIFI_CHANNEL_MAX                13      // total channel number to scan
+#define WIFI_MY_COUNTRY                 "EU"    // select locale for Wifi RF settings
+#define	WIFI_CHANNEL_SWITCH_INTERVAL    50      // [seconds/100] -> 0,5 sec.
 
 // Default LoRa Spreadfactor
-#define LORASFDEFAULT                   9 // 7 ... 12
-#define MAXLORARETRY                    500 // maximum count of TX retries if LoRa busy
-#define RCMDPORT                        2 // LoRaWAN Port on which device listenes for remote commands
+#define LORASFDEFAULT                   9       // 7 ... 12 SF, according to LoRaWAN specs
+#define MAXLORARETRY                    500     // maximum count of TX retries if LoRa busy
+#define RCMDPORT                        2       // LoRaWAN Port on which device listenes for remote commands
+
+// Default RGB LED luminosity (in %)
+#define RGBLUMINOSITY                   50      // 50%
 
 // LMIC settings
 // define hardware independent LMIC settings here, settings of standard library in /lmic/config.h will be ignored
@@ -99,10 +104,10 @@
 // implementation is optimized for speed on 32-bit processors using
 // fairly big lookup tables, but it takes up big amounts of flash on the
 // AVR architecture.
-// #define USE_ORIGINAL_AES
+#define USE_ORIGINAL_AES
 //
 // This selects the AES implementation written by Ideetroon for their
 // own LoRaWAN library. It also uses lookup tables, but smaller
 // byte-oriented ones, making it use a lot less flash space (but it is
 // also about twice as slow as the original).
-#define USE_IDEETRON_AES
+// #define USE_IDEETRON_AES
