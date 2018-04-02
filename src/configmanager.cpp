@@ -29,7 +29,7 @@ void defaultConfig() {
     cfg.wifiscancycle = SEND_SECS; // wifi scan cycle [seconds/2]
     cfg.wifichancycle = WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
     cfg.blescancycle  = BLESCANTIME; // BLE scan cycle [seconds]
-    cfg.blescan     = 0;  // 0=disabled, 1=enabled
+    cfg.blescan     = 1;  // 0=disabled, 1=enabled
     cfg.wifiant     = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
     cfg.rgblum      = RGBLUMINOSITY; // RGB Led luminosity (0 100%)
 
