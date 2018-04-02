@@ -172,8 +172,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x10 set RGB led luminosity (works on LoPy/LoPy4 and LoRaNode32 shield only)
 
-		0 ... 100 percentage of luminosity (100% = full light)
-		e.g. 50 -> 50% of luminosity [default]
+	0 ... 100 percentage of luminosity (100% = full light)
+	e.g. 50 -> 50% of luminosity [default]
 
 0x80 get device configuration
 
