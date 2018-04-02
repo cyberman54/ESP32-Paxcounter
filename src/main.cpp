@@ -25,6 +25,9 @@ Refer to LICENSE.txt file in repository for more details.
 #include "main.h"
 #include "globals.h"
 
+// std::set for unified array functions
+#include <set>
+
 // OLED driver
 #include <U8x8lib.h>
 
@@ -42,11 +45,17 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-uint16_t macnum = 0, blenum = 0, salt;
+uint16_t macnum = 0, salt;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint16_t> macs; // associative container holds filtered MAC adresses
+std::set<uint16_t> macs; // associative container holds filtered total unique MAC adress hashes (Wifi + BLE)
+std::set<uint16_t> wifis; // associative container holds filtered Wifi MAC adress hashes
+
+#ifdef BLECOUNTER
+    std::set<uint16_t> bles; // associative container holds filtered BLE MAC adresses hashes
+    int scanTime;
+#endif
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -67,29 +76,19 @@ void eraseConfig(void);
 void saveConfig(void);
 void loadConfig(void);
 
-/* begin LMIC specific parts ------------------------------------------------------------ */
+#ifdef HAS_LED
+void set_onboard_led(int st);
+#endif
 
-// LMIC enhanced Pin mapping 
-const lmic_pinmap lmic_pins = {
-    .mosi = PIN_SPI_MOSI,
-    .miso = PIN_SPI_MISO,
-    .sck = PIN_SPI_SCK,
-    .nss = PIN_SPI_SS,
-    .rxtx = LMIC_UNUSED_PIN,
-    .rst = RST,
-    .dio = {DIO0, DIO1, DIO2}
-};
+/* begin LMIC specific parts ------------------------------------------------------------ */
 
 // defined in lorawan.cpp
 void gen_lora_deveui(uint8_t * pdeveui);
 void RevBytes(unsigned char* b, size_t c);
+
 #ifdef VERBOSE
     void printKeys(void);
-#endif
-
-// LMIC functions
-void onEvent(ev_t ev);
-void do_send(osjob_t* j);
+#endif // VERBOSE
 
 // LMIC callback functions
 void os_getDevKey (u1_t *buf) { 
@@ -112,6 +111,21 @@ void os_getDevEui (u1_t* buf) {
         gen_lora_deveui(buf); // generate DEVEUI from device's MAC
 }
 
+// LMIC enhanced Pin mapping
+const lmic_pinmap lmic_pins = {
+    .mosi = PIN_SPI_MOSI,
+    .miso = PIN_SPI_MISO,
+    .sck = PIN_SPI_SCK,
+    .nss = PIN_SPI_SS,
+    .rxtx = LMIC_UNUSED_PIN,
+    .rst = RST,
+    .dio = {DIO0, DIO1, DIO2}
+};
+
+// LMIC functions
+void onEvent(ev_t ev);
+void do_send(osjob_t* j);
+
 // LoRaWAN Initjob
 static void lora_init (osjob_t* j) {
     // reset MAC state
@@ -125,8 +139,48 @@ static void lora_init (osjob_t* j) {
 // LMIC Task
 void lorawan_loop(void * pvParameters) {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
+
+    static bool led_state ;
+    bool new_led_state ;
+
     while(1) {
+        uint16_t color;
         os_runloop_once();
+
+        // All follow is Led management
+        // Let join at the begining of if sequence,
+        // is prior to send because joining state send data
+        if ( LMIC.opmode & (OP_JOINING | OP_REJOIN) )  {
+            color = COLOR_YELLOW;
+            // Joining Quick blink 20ms on each 1/5 second
+            new_led_state = ((millis() % 200) < 20) ? HIGH : LOW;
+            
+        // Small blink 10ms on each 1/2sec (not when joining)
+        } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
+            color = COLOR_BLUE;
+            new_led_state = ((millis() % 500) < 20) ? HIGH : LOW;
+        
+        // This should not happen so indicate a pb
+        } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
+            color = COLOR_RED;
+            // Heartbeat long blink 200ms on each 2 seconds
+            new_led_state = ((millis() % 2000) < 200) ? HIGH : LOW;
+        } else {
+          rgb_set_color(COLOR_NONE);
+        }
+        // led  need to change state ?
+        // avoid digitalWrite() for nothing
+        if (led_state != new_led_state) {
+            if (new_led_state == HIGH) {
+                set_onboard_led(1);
+                rgb_set_color(color);
+            } else {
+                set_onboard_led(0);
+                rgb_set_color(COLOR_NONE);
+            }
+            led_state = new_led_state;
+        }
+
         vTaskDelay(10/portTICK_PERIOD_MS);
         yield();
     }    
@@ -159,11 +213,17 @@ void lorawan_loop(void * pvParameters) {
 void set_onboard_led(int st){
 #ifdef HAS_LED
     switch (st) {
-        case 1: digitalWrite(HAS_LED, HIGH); break;
-        case 0: digitalWrite(HAS_LED, LOW); break;
+        #ifdef LED_ACTIVE_LOW
+          case 1: digitalWrite(HAS_LED, LOW); break;
+          case 0: digitalWrite(HAS_LED, HIGH); break;
+        #else
+          case 1: digitalWrite(HAS_LED, HIGH); break;
+          case 0: digitalWrite(HAS_LED, LOW); break;
+        #endif
     }
 #endif
 };
+
 
 #ifdef HAS_BUTTON
     // Button Handling, board dependent -> perhaps to be moved to hal/<$board.h>
@@ -191,34 +251,48 @@ void wifi_sniffer_loop(void * pvParameters) {
     
   	while (true) {
         nloop++;
-		vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
+        vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
         yield();
-		wifi_sniffer_set_channel(channel);
-		channel = (channel % WIFI_CHANNEL_MAX) + 1;
+        wifi_sniffer_set_channel(channel);
+        channel = (channel % WIFI_CHANNEL_MAX) + 1;
+        ESP_LOGI(TAG, "Wifi set channel %d", channel);
+        
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
+        u8x8.setCursor(11,5);
+        u8x8.printf("ch:%02i", channel);
+        u8x8.setCursor(0,4);
+        u8x8.printf("MAC#: %-5i", wifis.size());
+        
+        // execute BLE count if BLE function is enabled
+        #ifdef BLECOUNTER
+        // Once 2 full Wifi Channels scan, do a BLE scan
+        if (nloop % (WIFI_CHANNEL_MAX*2) == 0 ) {
+            // execute BLE count if BLE function is enabled
+            if (cfg.blescan)
+                BLECount();
+        }
+        #endif
         
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ((100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) ) {
             u8x8.setPowerSave(!cfg.screenon); // set display on if enabled
             nloop = 0; // reset wlan sniffing loop counter
             
-            // execute BLE count if BLE function is enabled
-            #ifdef BLECOUNTER
-                if (cfg.blescan)
-                    BLECount();
-            #endif
-            
             // Prepare and execute LoRaWAN data upload
-            u8x8.setCursor(0,4);
-            u8x8.printf("MAC#: %-5i", macnum);
             do_send(&sendjob); // send payload
             vTaskDelay(500/portTICK_PERIOD_MS);
             yield();
 
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
-                macs.clear(); // clear macs container
+                macs.clear(); // clear all macs container
+                wifis.clear(); // clear Wifi macs couner
+                #ifdef BLECOUNTER
+                  bles.clear(); // clear BLE macs counter
+                #endif
+                
                 salt = random(65536); // get new 16bit random for salting hashes
-                macnum = 0;
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             }      
 
@@ -237,8 +311,10 @@ void wifi_sniffer_loop(void * pvParameters) {
             }
 
             u8x8.clearLine(6);
-	                    
-            if (cfg.screenon && cfg.screensaver) vTaskDelay(2000/portTICK_PERIOD_MS); // pause for displaying results
+
+            if (cfg.screenon && cfg.screensaver) {
+              vTaskDelay(2000/portTICK_PERIOD_MS); // pause for displaying results
+            }
             yield();
             u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
         }
@@ -336,7 +412,8 @@ void setup() {
 #endif
     
     ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
-
+    rgb_set_color(COLOR_NONE);
+                
     // system event handler for wifi task, needed for wifi_sniffer_init()
     esp_event_loop_init(NULL, NULL);
 
@@ -355,7 +432,7 @@ void setup() {
 
     // Read settings from NVRAM
     loadConfig(); // includes initialize if necessary
-      
+
     // initialize hardware
 #ifdef HAS_LED
     // initialize LED

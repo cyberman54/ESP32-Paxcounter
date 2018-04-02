@@ -67,8 +67,9 @@ void set_reset(int val) {
             break;
         case 1: // reset MAC counter
             ESP_LOGI(TAG, "Remote command: reset MAC counter");
-            macs.clear(); // clear macs container
-            macnum = 0;
+            macs.clear(); // clear all macs container
+            wifis.clear(); // clear Wifi macs container
+            bles.clear(); // clear BLE macs container
             salt = random(65536); // get new 16bit random for salting hashes
             u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             u8x8.clearLine(5);
@@ -140,7 +141,7 @@ void set_display(int val) {
         case 1: cfg.screenon = val; break;
         default: cfg.screenon = 0; break;
         }
-    u8x8.setPowerSave(!cfg.screenon); // set display 0=on / 1=off                          
+    u8x8.setPowerSave(!cfg.screenon); // set display 0=on / 1=off
 };
 
 void set_lorasf(int val) {
@@ -161,8 +162,8 @@ void set_blescan(int val) {
     ESP_LOGI(TAG, "Remote command: set BLE scan mode to %s", val ? "on" : "off");
     switch (val) {
         case 1: cfg.blescan = val; break;
-        default: 
-            cfg.blescan = 0; 
+        default:
+            cfg.blescan = 0;
             btStop();
             u8x8.clearLine(3); // clear BLE results from display
             break;
@@ -178,6 +179,12 @@ void set_wifiant(int val) {
     #ifdef HAS_ANTENNA_SWITCH
         antenna_select(cfg.wifiant);
     #endif
+};
+
+void set_rgblum(int val) {
+    // Avoid wrong parameters
+    cfg.rgblum = (val>=0 && val<=100) ? (uint8_t) val : RGBLUMINOSITY;
+    ESP_LOGI(TAG, "Remote command: set RGB Led luminosity %d", cfg.rgblum);
 };
 
 void set_lorapower(int val) {
@@ -240,13 +247,14 @@ cmd_t table[] = {
                 {0x0c, set_blescancycle, true},
                 {0x0d, set_blescan, true},
                 {0x0e, set_wifiant, true},
+                {0x0f, set_rgblum, true},
                 {0x80, get_config, false},
                 {0x81, get_uptime, false},
                 {0x82, get_cputemp, false}
                 };
 
 // check and execute remote command
-void rcommand(int cmd, int arg) {         
+void rcommand(int cmd, int arg) {
     int i = sizeof(table) / sizeof(table[0]); // number of commands in command table
     bool store_flag = false;
     while(i--) { 
