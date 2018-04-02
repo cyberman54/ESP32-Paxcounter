@@ -140,20 +140,20 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 
-0x0A set Wifi scan cycle timer
+0x0A set Wifi scan cycle and payload transmit cycle
 
-	0 ... 255 duration of a wifi scan cycle in seconds/2
-	e.g. 120 -> 1 cycle runs for 240 seconds
+	0 ... 255 duration of a wifi scan cycle in seconds/2, after this payload is sent
+	e.g. 120 -> 1 cycle runs for 240 seconds [default]
 
 0x0B set Wifi channel switch interval timer
 
 	0 ... 255 timeout for scanning 1 wifi channel in seconds/100
-	e.g. 50 -> each channel is scanned for 0,5 seconds
+	e.g. 50 -> each channel is scanned for 0,5 seconds [default]
 
 0x0C set BLE scan cycle timer
 
 	0 ... 255 duration of a BLE scan cycle in seconds
-	e.g. 30 -> 1 cycle runs for 30 seconds
+	e.g. 15 -> 1 cycle runs for 15 seconds [default]
 
 0x0D set BLE scan cycle frequency
 
@@ -173,7 +173,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 0x10 set RGB led luminosity (works on LoPy/LoPy4 and LoRaNode32 shield only)
 
 		0 ... 100 percentage of luminosity (100% = full light)
-		e.g. 40 -> 40% of luminosity
+		e.g. 50 -> 50% of luminosity [default]
 
 0x80 get device configuration
 
@@ -224,3 +224,7 @@ Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
 NOTICE: 
 Parts of the source files in this repository are made available under different licenses,
 see file <A HREF="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/LICENSE">LICENSE.txt</A> in this repository. Refer to each individual source file for more details.
+
+# Credits
+
+Thanks to Charles Hallard (https://github.com/hallard) for major contributions to this project.
