@@ -159,13 +159,14 @@ void lorawan_loop(void * pvParameters) {
         } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
             color = COLOR_BLUE;
             new_led_state = ((millis() % 500) < 20) ? HIGH : LOW;
-        }
         
         // This should not happen so indicate a pb
-        if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
+        } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
             color = COLOR_RED;
             // Heartbeat long blink 200ms on each 2 seconds
             new_led_state = ((millis() % 2000) < 200) ? HIGH : LOW;
+        } else {
+          rgb_set_color(COLOR_NONE);
         }
         // led  need to change state ?
         // avoid digitalWrite() for nothing
