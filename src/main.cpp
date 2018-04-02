@@ -246,26 +246,24 @@ void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 void wifi_sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
-    uint8_t channel = 1;
+    uint8_t channel=0;
     int nloop=0, lorawait=0;
     
   	while (true) {
-        nloop++; // acutal number of wifi loops
 
-        // execute BLE count if BLE function is enabled
-        #ifdef BLECOUNTER
-        // Once 2 full Wifi Channels scan, do a BLE scan
-        if (nloop % (WIFI_CHANNEL_MAX*2) == 0 ) {
-            // execute BLE count if BLE function is enabled
-            if (cfg.blescan)
-                BLECount();
+        nloop++; // acutal number of wifi loops, controls cycle when data is sent
+
+        #ifdef BLECOUNTER                               // execute BLE count if BLE function is enabled
+            if (nloop % (WIFI_CHANNEL_MAX*2) == 0 ) {   // once 2 full Wifi Channels scan, do a BLE scan
+                if (cfg.blescan)                        // execute BLE count if BLE function is enabled
+                    BLECount();
         }
         #endif
 
         vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
         yield();
+        channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
-        channel = (channel % WIFI_CHANNEL_MAX) + 1;
         ESP_LOGI(TAG, "Wifi set channel %d", channel);
         
         u8x8.setCursor(0,5);
@@ -274,26 +272,24 @@ void wifi_sniffer_loop(void * pvParameters) {
         u8x8.printf("ch:%02i", channel);
         u8x8.setCursor(0,4);
         u8x8.printf("MAC#: %-5i", wifis.size());
-        
+
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ((100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) ) {
-            u8x8.setPowerSave(!cfg.screenon); // set display on if enabled
-            nloop = 0; // reset wlan sniffing loop counter
-            
-            // Prepare and execute LoRaWAN data upload
-            do_send(&sendjob); // send payload
+            u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
+            nloop = 0;                                  // reset wifi scan loop counter           
+            do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
             vTaskDelay(500/portTICK_PERIOD_MS);
             yield();
 
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
-                macs.clear(); // clear all macs container
-                wifis.clear(); // clear Wifi macs couner
+                macs.clear();                           // clear all macs container
+                wifis.clear();                          // clear Wifi macs couner
                 #ifdef BLECOUNTER
-                  bles.clear(); // clear BLE macs counter
+                  bles.clear();                         // clear BLE macs counter
                 #endif 
-                salt = random(65536); // get new 16bit random for salting hashes
-                u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
+                salt = random(65536);                   // get new 16bit random for salting hashes
+                u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
@@ -317,8 +313,8 @@ void wifi_sniffer_loop(void * pvParameters) {
             }
             yield();
             u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
-        }
-    }
+        } // end of send data cycle
+    } // end of infinite wifi scan loop
 }
 
 /* end wifi specific parts ------------------------------------------------------------ */
