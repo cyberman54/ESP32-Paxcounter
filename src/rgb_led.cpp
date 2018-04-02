@@ -7,9 +7,6 @@
 // RGB Led instance
 SmartLed rgb_led(LED_WS2812, 1, HAS_RGB_LED);
 
-// Luminosity from 0 to 100%
-uint8_t rgb_luminosity = 50 ;
-
 float rgb_CalcColor(float p, float q, float t)
 {
     if (t < 0.0f)
@@ -70,7 +67,7 @@ void rgb_set_color(uint16_t hue) {
     // H (is color from 0..360) should be between 0.0 and 1.0
     // S is saturation keep it to 1
     // L is brightness should be between 0.0 and 0.5
-    // rgb_luminosity is between 0 and 100 (percent)
+    // cfg.rgblum is between 0 and 100 (percent)
     RGBColor target = rgb_hsl2rgb( hue / 360.0f, 1.0f, 0.005f * cfg.rgblum);
     //uint32_t color = target.R<<16 | target.G<<8 | target.B;
     rgb_led[0] = Rgb(target.R, target.G, target.B);
