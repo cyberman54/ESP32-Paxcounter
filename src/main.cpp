@@ -49,11 +49,11 @@ int macnum = 0, salt;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
-std::set<uint16_t> macs; // associative container holds filtered total unique MAC adress hashes (Wifi + BLE)
-std::set<uint16_t> wifis; // associative container holds filtered Wifi MAC adress hashes
+std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
+std::set<uint16_t> wifis; // associative container holds unique Wifi MAC adress hashes
 
 #ifdef BLECOUNTER
-    std::set<uint16_t> bles; // associative container holds filtered BLE MAC adresses hashes
+    std::set<uint16_t> bles; // associative container holds unique BLE MAC adresses hashes
     int scanTime;
 #endif
 
@@ -77,7 +77,7 @@ void saveConfig(void);
 void loadConfig(void);
 
 #ifdef HAS_LED
-void set_onboard_led(int st);
+    void set_onboard_led(int st);
 #endif
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
@@ -250,7 +250,18 @@ void wifi_sniffer_loop(void * pvParameters) {
     int nloop=0, lorawait=0;
     
   	while (true) {
-        nloop++;
+        nloop++; // acutal number of wifi loops
+
+        // execute BLE count if BLE function is enabled
+        #ifdef BLECOUNTER
+        // Once 2 full Wifi Channels scan, do a BLE scan
+        if (nloop % (WIFI_CHANNEL_MAX*2) == 0 ) {
+            // execute BLE count if BLE function is enabled
+            if (cfg.blescan)
+                BLECount();
+        }
+        #endif
+
         vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
         yield();
         wifi_sniffer_set_channel(channel);
@@ -263,16 +274,6 @@ void wifi_sniffer_loop(void * pvParameters) {
         u8x8.printf("ch:%02i", channel);
         u8x8.setCursor(0,4);
         u8x8.printf("MAC#: %-5i", wifis.size());
-        
-        // execute BLE count if BLE function is enabled
-        #ifdef BLECOUNTER
-        // Once 2 full Wifi Channels scan, do a BLE scan
-        if (nloop % (WIFI_CHANNEL_MAX*2) == 0 ) {
-            // execute BLE count if BLE function is enabled
-            if (cfg.blescan)
-                BLECount();
-        }
-        #endif
         
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ((100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) ) {
@@ -290,8 +291,7 @@ void wifi_sniffer_loop(void * pvParameters) {
                 wifis.clear(); // clear Wifi macs couner
                 #ifdef BLECOUNTER
                   bles.clear(); // clear BLE macs counter
-                #endif
-                
+                #endif 
                 salt = random(65536); // get new 16bit random for salting hashes
                 u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             }      
@@ -457,7 +457,7 @@ void setup() {
     antenna_init();
 #endif
 
-    // initialize salt value using esp_random() called by random in arduino-esp32 core
+    // initialize salt value using esp_random() called by random() in arduino-esp32 core
     salt = random(65536); // get new 16bit random for salting hashes
 
     // initialize display

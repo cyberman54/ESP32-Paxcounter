@@ -186,7 +186,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	byte 11:		BLE scan cycle duration in seconds (0..255)
 	byte 12:		BLE scan mode (1=on, 0=0ff)
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
-	bytes 14-23:		Software version (ASCII format)
+	byte 14:		RGB LED luminosity (0..100 %)
+	bytes 15-24:		Software version (ASCII format)
 
 0x81 get device uptime
 

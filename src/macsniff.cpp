@@ -4,16 +4,16 @@
 #include "globals.h"
 
 #ifdef BLECOUNTER
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
+    #include <BLEDevice.h>
+    #include <BLEUtils.h>
+    #include <BLEScan.h>
+    #include <BLEAdvertisedDevice.h>
 #endif
 
 #ifdef VENDORFILTER
-  #include <array>
-  #include <algorithm>
-  #include "vendor_array.h"
+    #include <array>
+    #include <algorithm>
+    #include "vendor_array.h"
 #endif
 
 // Local logging tag
@@ -27,8 +27,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     char counter [6]; // uint16_t -> 2 byte -> 5 decimals + '0' terminator -> 6 chars
     char macbuf [21]; // uint64_t -> 8 byte -> 20 decimals + '0' terminator -> 21 chars
-    char typebuff[8] ;
-    bool added = false;
+    char typebuff[8];
     uint64_t addr2int;
 	uint32_t vendor2int;
 	uint16_t hashedmac;
@@ -38,9 +37,9 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     ( (uint64_t)paddr[3] << 24 ) | ( (uint64_t)paddr[4] << 32 ) | ( (uint64_t)paddr[5] << 40 );
 
     #ifdef VENDORFILTER
-    vendor2int = ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[1] << 8 ) | ( (uint32_t)paddr[0] << 16 );
-    // No vendor filter for BLE
-    if ( (sniff_type==MAC_SNIFF_BLE) || std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
+        vendor2int = ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[1] << 8 ) | ( (uint32_t)paddr[0] << 16 );
+        // No vendor filter for BLE
+        if ( (sniff_type==MAC_SNIFF_BLE) || std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
     #endif
 
         // salt and hash MAC, and if new unique one, store identifier in container and increment counter on display
@@ -49,25 +48,21 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 		addr2int |= (uint64_t) salt << 48;		// prepend 16-bit salt to 48-bit MAC
 		snprintf(macbuf, 21, "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
 		hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
-		newmac = macs.insert(hashedmac);		// store hashed MAC only if first time seen
+		newmac = macs.insert(hashedmac);		// add hashed MAC to total container if new unique
 
         if (sniff_type == MAC_SNIFF_WIFI ) {
-            newmac = wifis.insert(hashedmac); // store hashed MAC if new unique
+            newmac = wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
             strcpy(typebuff, "WiFi");
         } else if (sniff_type == MAC_SNIFF_BLE ) {
-            newmac = bles.insert(hashedmac); // store hashed MAC if new unique
+            newmac = bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
             strcpy(typebuff, "BLE ");
         }
      
-        if (newmac.second) { // first time seen this WIFI/BLE MAC
-            // Insert to global counter
-            macs.insert(hashedmac);
-            added = true;
+        if (newmac.second) { // first time seen this WIFI or BLE MAC
             snprintf(counter, 6, "%i", macs.size());		// convert 16-bit MAC counter to decimal counter value
-            //itoa(macs.size(), counter, 10); // base 10 decimal counter value
             u8x8.draw2x2String(0, 0, counter);
             ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> #%05i", typebuff, rssi, hashedmac, macs.size());
-        } else {
+        } else { // already seen WIFI or BLE MAC
             ESP_LOGI(TAG, "%s RSSI %04d -> already seen", typebuff, rssi);
         }
 
@@ -78,8 +73,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     }
     #endif
 
-    // True if MAC (WiFi/BLE was new)
-    return added;
+    // True if MAC WiFi/BLE was new
+    return newmac.second;
 }
 
 #ifdef BLECOUNTER
