@@ -110,7 +110,7 @@ void saveConfig() {
         nvs_set_i8(my_handle, "blescantime", cfg.blescantime);
 
       if( nvs_get_i8(my_handle, "blescancycle", &flash8) != ESP_OK || flash8 != cfg.blescancycle )
-        nvs_set_i8(my_handle, "blescantime", cfg.blescancycle);
+        nvs_set_i8(my_handle, "blescancycle", cfg.blescancycle);
 
       if( nvs_get_i8(my_handle, "blescanmode", &flash8) != ESP_OK || flash8 != cfg.blescan )
         nvs_set_i8(my_handle, "blescanmode", cfg.blescan);
