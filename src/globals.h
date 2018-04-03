@@ -49,8 +49,6 @@ extern std::set<uint16_t> macs;
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;
-#else
-    extern U8X8_NULL u8x8;
 #endif
 
 #ifdef BLECOUNTER

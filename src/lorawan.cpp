@@ -99,14 +99,18 @@ void do_send(osjob_t* j){
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
-        u8x8.clearLine(7); 
-        u8x8.drawString(0, 7, "LORA BUSY");
+        #ifdef HAS_DISPLAY
+            u8x8.clearLine(7); 
+            u8x8.drawString(0, 7, "LORA BUSY");
+        #endif
     } else {
         // Prepare upstream data transmission at the next possible time.
         LMIC_setTxData2(1, mydata, sizeof(mydata)-1, (cfg.countermode & 0x02));
         ESP_LOGI(TAG, "Packet queued");
-        u8x8.clearLine(7);
-        u8x8.drawString(0, 7, "PACKET QUEUED");
+        #ifdef HAS_DISPLAY
+            u8x8.clearLine(7);
+            u8x8.drawString(0, 7, "PACKET QUEUED");
+        #endif
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -115,34 +119,46 @@ void onEvent (ev_t ev) {
     switch(ev) {
         case EV_SCAN_TIMEOUT:
             ESP_LOGI(TAG, "EV_SCAN_TIMEOUT");
-            u8x8.clearLine(7); 
-            u8x8.drawString(0, 7, "SCAN TIMEOUT");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7); 
+                u8x8.drawString(0, 7, "SCAN TIMEOUT");
+            #endif
             break;
         case EV_BEACON_FOUND:
             ESP_LOGI(TAG, "EV_BEACON_FOUND");
-            u8x8.clearLine(7); 
-            u8x8.drawString(0, 7, "BEACON FOUND");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7); 
+                u8x8.drawString(0, 7, "BEACON FOUND");
+            #endif
             break;
         case EV_BEACON_MISSED:
             ESP_LOGI(TAG, "EV_BEACON_MISSED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "BEACON MISSED");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "BEACON MISSED");
+            #endif
             break;
         case EV_BEACON_TRACKED:
             ESP_LOGI(TAG, "EV_BEACON_TRACKED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "BEACON TRACKED");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "BEACON TRACKED");
+            #endif
             break;
         case EV_JOINING:
             ESP_LOGI(TAG, "EV_JOINING");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "JOINING");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "JOINING");
+            #endif
             break;
         case EV_JOINED:
             ESP_LOGI(TAG, "EV_JOINED");
-            u8x8.clearLine(6); // erase "Join Wait" message from display, see main.cpp
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "JOINED");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(6); // erase "Join Wait" message from display, see main.cpp
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "JOINED");
+            #endif
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
             LMIC_setLinkCheckMode(0);
@@ -156,38 +172,50 @@ void onEvent (ev_t ev) {
             break;
         case EV_RFU1:
             ESP_LOGI(TAG, "EV_RFU1");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "RFUI");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "RFUI");
+            #endif
             break;
         case EV_JOIN_FAILED:
             ESP_LOGI(TAG, "EV_JOIN_FAILED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "JOIN FAILED");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "JOIN FAILED");
+            #endif
             break;
         case EV_REJOIN_FAILED:
             ESP_LOGI(TAG, "EV_REJOIN_FAILED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "REJOIN FAILED");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "REJOIN FAILED");
+                #endif
             break;
         case EV_TXCOMPLETE:
             ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "TX COMPLETE");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "TX COMPLETE");
+            #endif
             if (LMIC.txrxFlags & TXRX_ACK) {
               ESP_LOGI(TAG, "Received ack");
-              u8x8.clearLine(7);
-              u8x8.drawString(0, 7, "RECEIVED ACK");
+              #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "RECEIVED ACK");
+              #endif
             }   
             if (LMIC.dataLen) {
                 ESP_LOGI(TAG, "Received %i bytes of payload", LMIC.dataLen);
-                u8x8.clearLine(6); 
-                u8x8.setCursor(0, 6);
-                u8x8.printf("Rcvd %i bytes", LMIC.dataLen);
-                u8x8.clearLine(7);
-                u8x8.setCursor(0, 7);
-                // LMIC.snr = SNR twos compliment [dB] * 4
-                // LMIC.rssi = RSSI [dBm] (-196...+63)
-                u8x8.printf("RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4);
+                #ifdef HAS_DISPLAY
+                    u8x8.clearLine(6); 
+                    u8x8.setCursor(0, 6);
+                    u8x8.printf("Rcvd %i bytes", LMIC.dataLen);
+                    u8x8.clearLine(7);
+                    u8x8.setCursor(0, 7);
+                    // LMIC.snr = SNR twos compliment [dB] * 4
+                    // LMIC.rssi = RSSI [dBm] (-196...+63)
+                    u8x8.printf("RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4);
+                #endif
                 // check if payload received on command port, then call remote command interpreter
                 if ( (LMIC.txrxFlags & TXRX_PORT) && (LMIC.frame[LMIC.dataBeg-1] == RCMDPORT ) ) {
                     // caution: buffering LMIC values here because rcommand() can modify LMIC.frame
@@ -202,35 +230,47 @@ void onEvent (ev_t ev) {
             break;
         case EV_LOST_TSYNC:
             ESP_LOGI(TAG, "EV_LOST_TSYNC");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "LOST TSYNC");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "LOST TSYNC");
+            #endif
             break;
         case EV_RESET:
             ESP_LOGI(TAG, "EV_RESET");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "RESET");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "RESET");
+            #endif
             break;
         case EV_RXCOMPLETE:
             // data received in ping slot
             ESP_LOGI(TAG, "EV_RXCOMPLETE");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "RX COMPLETE");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "RX COMPLETE");
+            #endif
             break;
         case EV_LINK_DEAD:
             ESP_LOGI(TAG, "EV_LINK_DEAD");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "LINK DEAD");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "LINK DEAD");
+            #endif
             break;
         case EV_LINK_ALIVE:
             ESP_LOGI(TAG, "EV_LINK_ALIVE");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "LINK ALIVE");
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.drawString(0, 7, "LINK ALIVE");
+            #endif
             break;
         default:
             ESP_LOGI(TAG, "Unknown event");
-            u8x8.clearLine(7);
-            u8x8.setCursor(0, 7);
-            u8x8.printf("UNKNOWN EVENT %d", ev);
+            #ifdef HAS_DISPLAY
+                u8x8.clearLine(7);
+                u8x8.setCursor(0, 7);
+                u8x8.printf("UNKNOWN EVENT %d", ev);
+            #endif
             break;
     }
 }
