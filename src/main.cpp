@@ -282,8 +282,7 @@ void wifi_sniffer_loop(void * pvParameters) {
                   bles.clear();                         // clear BLE macs counter
                 #endif 
                 salt = random(65536);                   // get new 16bit random for salting hashes
-                u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter
-                
+                u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter    
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
@@ -303,12 +302,13 @@ void wifi_sniffer_loop(void * pvParameters) {
 
             u8x8.clearLine(6);
 
-            if (cfg.screenon && cfg.screensaver) 
+            if (cfg.screenon && cfg.screensaver) {
                 vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
                 yield();
                 u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
-            
+            }          
         } // end of send data cycle
+        
         else {
             #ifdef BLECOUNTER
                 if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 )   // once after cfg.blescancycle Wifi scans, do a BLE scan
