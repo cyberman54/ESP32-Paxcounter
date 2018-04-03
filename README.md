@@ -98,7 +98,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 	1 ... 255 used for wifi scan radius (greater values increase wifi scan radius, values 50...110 make sense)
 	0 = Wifi rssi limiter disabled [default]
-	
+
 0x02 set counter mode
 
 	0 = cyclic unconfirmed, mac counter reset after each wifi scan cycle, data is sent only once [default]
@@ -177,7 +177,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-	device answers with it's current configuration:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L22-L37) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -202,7 +202,18 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 0x82 get device cpu temperature
 
 	bytes 1-3:		chip temperature in celsius (little endian format)
-	
+
+# RGB Led color description
+
+Description of the RGB LED color (Lopy and Lolin32 only):
+
+- Yellow quick blink
+    - LoRaWAN join
+- Blue blink
+    - LoRaWAN transmit (including receive windows)
+- Magenta each blink
+    - BLE Scan, seen a device (new or not)
+
 # License
 
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
