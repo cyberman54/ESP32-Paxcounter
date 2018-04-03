@@ -1,5 +1,5 @@
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.2.88"    // use max 10 chars here!
+#define PROGVERSION                     "1.2.9"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
@@ -10,7 +10,7 @@
 #define BLECOUNTER                      1       // comment out if you don't want BLE count
 
 // BLE scan time
-#define BLESCANTIME                     15      // [seconds]
+#define BLESCANTIME                     10      // [seconds]
 #define BLESCANCYCLE                    2       // BLE scan once after each <BLECYCLE> wifi scans
 
 // WiFi Sniffer cycle interval
