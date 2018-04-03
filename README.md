@@ -23,10 +23,10 @@ Currently supported IoT boards:
 - TTGOv2 {1}
 - Pycom LoPy {2}
 - Pycom LoPy4 {2}
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}
+- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
+- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
 
-{1} on board OLED Display supported; {2} on board RGB LED supported
+{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -51,6 +51,8 @@ These results where metered with software version 1.2.0 during active wifi scan,
 Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
 
 Before compiling the code, create file loraconf.h in the /src directory from the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. Only OTAA join is supported, not ABP. The DEVEUI will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings. If you enter a DEVEUI in loraconf.h it will be used instead.
+
+**If Using a board with Microchip 24AA02E64 Unique ID for deveui, it will override the one of loraconf.h**
 
 # Uploading
 
