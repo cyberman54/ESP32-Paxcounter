@@ -18,11 +18,11 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Currently supported IoT boards:
-- Heltec LoRa-32
-- TTGOv1
-- TTGOv2
-- Pycom LoPy {1}
-- Pycom LoPy4 {1}
+- Heltec LoRa-32 {1}
+- TTGOv1 {1}
+- TTGOv2 {1}
+- Pycom LoPy {2}
+- Pycom LoPy4 {2}
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}
 
