@@ -7,6 +7,10 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+#include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
+#endif
+
 uint8_t mydata[] = "0000";
 
 // Local logging Tag
@@ -31,9 +35,9 @@ void gen_lora_deveui(uint8_t *pdeveui) {
     *p++ = 0xFF;
     *p++ = 0xFE;
     // Then next 6 bytes are mac address reversed
-                for ( i=0; i<6 ; i++) {
-                  *p++ = dmac[5-i];
-                }
+    for ( i=0; i<6 ; i++) {
+        *p++ = dmac[5-i];
+    }
 }
 
 // Function to do a byte swap in a byte array
@@ -44,6 +48,37 @@ void RevBytes(unsigned char* b, size_t c)
   { unsigned char t = b[i];
     b[i] = b[c - 1 - i];
     b[c - 1 - i] = t; }
+}
+
+void get_hard_deveui(uint8_t *pdeveui) {
+    // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+    uint8_t i2c_ret;
+    // Init this just in case, no more to 100KHz
+    Wire.begin(OLED_SDA, OLED_SCL, 100000);
+    Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
+    Wire.write(MCP_24AA02E64_MAC_ADDRESS); 
+    i2c_ret = Wire.endTransmission();
+    // check if device seen on i2c bus
+    if (i2c_ret == 0) {
+        char deveui[32]="";
+        uint8_t data;
+        Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
+        Wire.write(MCP_24AA02E64_MAC_ADDRESS); 
+        Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8);
+        while (Wire.available()) {
+            data = Wire.read();
+            sprintf(deveui+strlen(deveui), "%02X ", data) ;
+            *pdeveui++ = data;
+        }
+        i2c_ret = Wire.endTransmission();
+        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 found, read DEVEUI %s", deveui);
+    } else {
+        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 not found ret=%d", i2c_ret);
+    }
+    // Set back to 400KHz to speed up OLED
+    Wire.setClock(400000);
+#endif // MCP 24AA02E64    
 }
 
 #ifdef VERBOSE
