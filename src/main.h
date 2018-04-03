@@ -1,9 +1,9 @@
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.2.87"    // use max 10 chars here!
+#define PROGVERSION                     "1.2.88"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
-#define VERBOSE                         1       // comment out to silence the device, for mute use build option
+//#define VERBOSE                         1       // comment out to silence the device, for mute use build option
 
 // set this to include BLE counting and vendor filter functions
 #define VENDORFILTER                    1       // comment out if you want to count things, not people

@@ -28,6 +28,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     char counter [6]; // uint16_t -> 2 byte -> 5 decimals + '0' terminator -> 6 chars
     char macbuf [21]; // uint64_t -> 8 byte -> 20 decimals + '0' terminator -> 21 chars
     char typebuff[8];
+    bool added = false;
     uint64_t addr2int;
 	uint32_t vendor2int;
 	uint16_t hashedmac;
@@ -49,6 +50,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 		snprintf(macbuf, 21, "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
 		hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
 		newmac = macs.insert(hashedmac);		// add hashed MAC to total container if new unique
+        added = newmac.second;                  // true if hashed MAC is unique in container
 
         if (sniff_type == MAC_SNIFF_WIFI ) {
             newmac = wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
@@ -58,12 +60,12 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
             strcpy(typebuff, "BLE ");
         }
      
-        if (newmac.second) { // first time seen this WIFI or BLE MAC
-            snprintf(counter, 6, "%i", macs.size());		// convert 16-bit MAC counter to decimal counter value
-            u8x8.draw2x2String(0, 0, counter);
-            ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> #%05i", typebuff, rssi, hashedmac, macs.size());
+        if (added) { // first time seen this WIFI or BLE MAC
+            snprintf(counter, 6, "%i", macs.size());	// convert 16-bit MAC counter to decimal counter value
+            u8x8.draw2x2String(0, 0, counter);          // display number on unique macs total Wifi + BLE
+            ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> counted #%05i", typebuff, rssi, hashedmac, macs.size());
         } else { // already seen WIFI or BLE MAC
-            ESP_LOGI(TAG, "%s RSSI %04d -> already seen", typebuff, rssi);
+            ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> already seen", typebuff, rssi, hashedmac);
         }
 
     #ifdef VENDORFILTER
@@ -74,7 +76,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     #endif
 
     // True if MAC WiFi/BLE was new
-    return newmac.second;
+    return added; // function returns bool if a new and unique Wifi or BLE mac was counted (true) or not (false)
 }
 
 #ifdef BLECOUNTER
@@ -92,6 +94,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 };
 
 void BLECount() {
+    ESP_LOGI(TAG, "BLE scan started");
     int blenum = 0; // Total device seen on this scan session
     currentScanDevice = 0; // Set 0 seen device on this scan session
     u8x8.clearLine(3);
@@ -105,6 +108,7 @@ void BLECount() {
     u8x8.clearLine(3);
     u8x8.setCursor(0,3);
     u8x8.printf("BLE#: %-5i %-3i",bles.size(), blenum);
+    ESP_LOGI(TAG, "BLE scan done");
 }
 #endif
 
