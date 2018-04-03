@@ -21,10 +21,12 @@ Currently supported IoT boards:
 - Heltec LoRa-32
 - TTGOv1
 - TTGOv2
-- Pycom LoPy
-- Pycom LoPy4
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+- Pycom LoPy {1}
+- Pycom LoPy4 {1}
+- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}
+- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}
+
+{1} on board OLED Display supported; {2} on board RGB LED supported
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
