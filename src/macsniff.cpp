@@ -60,9 +60,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
      
         if (newmac.second) { // first time seen this WIFI or BLE MAC
             snprintf(counter, 6, "%i", macs.size());		// convert 16-bit MAC counter to decimal counter value
-            #ifdef HAS_DISPLAY  
-                u8x8.draw2x2String(0, 0, counter);
-            #endif
+            u8x8.draw2x2String(0, 0, counter);
             ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> #%05i", typebuff, rssi, hashedmac, macs.size());
         } else { // already seen WIFI or BLE MAC
             ESP_LOGI(TAG, "%s RSSI %04d -> already seen", typebuff, rssi);
@@ -89,10 +87,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         // Current devices seen on this scan session
         currentScanDevice++;
         mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE);
-        #ifdef HAS_DISPLAY  
-            u8x8.setCursor(12,3);
-            u8x8.printf("%d", currentScanDevice);
-        #endif
+        u8x8.setCursor(12,3);
+        u8x8.printf("%d", currentScanDevice);
         rgb_set_color(COLOR_NONE);
 
     }
@@ -101,21 +97,17 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 void BLECount() {
     int blenum = 0; // Total device seen on this scan session
     currentScanDevice = 0; // Set 0 seen device on this scan session
-    #ifdef HAS_DISPLAY  
-        u8x8.clearLine(3);
-        u8x8.drawString(0,3,"BLE Scan...");
-    #endif
+    u8x8.clearLine(3);
+    u8x8.drawString(0,3,"BLE Scan...");
     BLEDevice::init(PROGNAME);
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
     BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime);
     blenum=foundDevices.getCount();
-    #ifdef HAS_DISPLAY  
-        u8x8.clearLine(3);
-        u8x8.setCursor(0,3);
-        u8x8.printf("BLE#: %-5i %-3i",bles.size(), blenum);
-    #endif
+    u8x8.clearLine(3);
+    u8x8.setCursor(0,3);
+    u8x8.printf("BLE#: %-5i %-3i",bles.size(), blenum);
 }
 #endif
 
