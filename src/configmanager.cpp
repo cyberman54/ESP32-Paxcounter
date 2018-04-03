@@ -19,20 +19,20 @@ esp_err_t err;
 
 // populate cfg vars with factory settings
 void defaultConfig() {
-    cfg.lorasf      = LORASFDEFAULT; // 7-12, initial lora spreadfactor defined in main.h
-    cfg.txpower     = 15; // 2-15, lora tx power
-    cfg.adrmode     = 1;  // 0=disabled, 1=enabled
-    cfg.screensaver = 0;  // 0=disabled, 1=enabled
-    cfg.screenon    = 1;  // 0=disbaled, 1=enabled
-    cfg.countermode = 0;  // 0=cyclic, 1=cumulative, 2=cyclic confirmed
-    cfg.rssilimit   = 0;  // threshold for rssilimiter, negative value!
-    cfg.wifiscancycle = SEND_SECS; // wifi scan cycle [seconds/2]
+    cfg.lorasf        = LORASFDEFAULT;  // 7-12, initial lora spreadfactor defined in main.h
+    cfg.txpower       = 15;             // 2-15, lora tx power
+    cfg.adrmode       = 1;              // 0=disabled, 1=enabled
+    cfg.screensaver   = 0;              // 0=disabled, 1=enabled
+    cfg.screenon      = 1;              // 0=disbaled, 1=enabled
+    cfg.countermode   = 0;              // 0=cyclic, 1=cumulative, 2=cyclic confirmed
+    cfg.rssilimit     = 0;              // threshold for rssilimiter, negative value!
+    cfg.wifiscancycle = SEND_SECS;      // wifi scan cycle [seconds/2]
     cfg.wifichancycle = WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
-    cfg.blescantime  = BLESCANTIME; // BLE scan cycle duration [seconds]
-    cfg.blescancycle = BLESCANCYCLE; // do a BLE scan after [BLESCANCYCLE] full Wifi scan cycles
-    cfg.blescan     = 1;  // 0=disabled, 1=enabled
-    cfg.wifiant     = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
-    cfg.rgblum      = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
+    cfg.blescantime   = BLESCANTIME;    // BLE scan cycle duration [seconds]
+    cfg.blescancycle  = BLESCANCYCLE;   // do a BLE scan after [BLESCANCYCLE] full Wifi scan cycles
+    cfg.blescan       = 1;              // 0=disabled, 1=enabled
+    cfg.wifiant       = 0;              // 0=internal, 1=external (for LoPy/LoPy4)
+    cfg.rgblum        = RGBLUMINOSITY;  // RGB Led luminosity (0..100%)
 
     strncpy( cfg.version, PROGVERSION, sizeof(cfg.version)-1 );
 }
@@ -110,7 +110,7 @@ void saveConfig() {
         nvs_set_i8(my_handle, "blescantime", cfg.blescantime);
 
       if( nvs_get_i8(my_handle, "blescancycle", &flash8) != ESP_OK || flash8 != cfg.blescancycle )
-        nvs_set_i8(my_handle, "blescantime", cfg.blescancycle);
+        nvs_set_i8(my_handle, "blescancycle", cfg.blescancycle);
 
       if( nvs_get_i8(my_handle, "blescanmode", &flash8) != ESP_OK || flash8 != cfg.blescan )
         nvs_set_i8(my_handle, "blescanmode", cfg.blescan);

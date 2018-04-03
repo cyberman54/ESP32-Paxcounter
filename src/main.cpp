@@ -136,12 +136,12 @@ static void lora_init (osjob_t* j) {
     LMIC_startJoining();
 }
 
-// LMIC Task
+// LMIC FreeRTos Task
 void lorawan_loop(void * pvParameters) {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    static bool led_state ;
-    bool new_led_state ;
+    static bool led_state;
+    bool new_led_state;
 
     while(1) {
         uint16_t color;
@@ -152,24 +152,25 @@ void lorawan_loop(void * pvParameters) {
         // is prior to send because joining state send data
         if ( LMIC.opmode & (OP_JOINING | OP_REJOIN) )  {
             color = COLOR_YELLOW;
-            // Joining Quick blink 20ms on each 1/5 second
+            // quick blink 20ms on each 1/5 second
             new_led_state = ((millis() % 200) < 20) ? HIGH : LOW;
             
-        // Small blink 10ms on each 1/2sec (not when joining)
+        // TX data pending
         } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
             color = COLOR_BLUE;
+            // small blink 10ms on each 1/2sec (not when joining)
             new_led_state = ((millis() % 500) < 20) ? HIGH : LOW;
         
-        // This should not happen so indicate a pb
+        // This should not happen so indicate a problem
         } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
             color = COLOR_RED;
-            // Heartbeat long blink 200ms on each 2 seconds
+            // heartbeat long blink 200ms on each 2 seconds
             new_led_state = ((millis() % 2000) < 200) ? HIGH : LOW;
         } else {
-          rgb_set_color(COLOR_NONE);
+            // led off
+            rgb_set_color(COLOR_NONE);
         }
-        // led  need to change state ?
-        // avoid digitalWrite() for nothing
+        // led need to change state? avoid digitalWrite() for nothing
         if (led_state != new_led_state) {
             if (new_led_state == HIGH) {
                 set_onboard_led(1);
@@ -302,18 +303,17 @@ void wifi_sniffer_loop(void * pvParameters) {
             u8x8.clearLine(6);
 
             if (cfg.screenon && cfg.screensaver) {
-              vTaskDelay(2000/portTICK_PERIOD_MS); // pause for displaying results
+              vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
             }
             yield();
             u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
         } // end of send data cycle
         else {
-            #ifdef BLECOUNTER                               // execute BLE count if BLE function is enabled
-                if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 ) {  // once after cfg.blescancycle Wifi scans, do a BLE scan
-                    if (cfg.blescan)                        // execute BLE count if BLE function is enabled
-                        BLECount();
-            }
-        #endif
+            #ifdef BLECOUNTER
+                if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 )   // once after cfg.blescancycle Wifi scans, do a BLE scan
+                    if (cfg.blescan)                 // execute BLE count if BLE function is enabled
+                        BLECount();           
+            #endif
         } // end of channel rotation loop
     } // end of infinite wifi scan loop
 }
