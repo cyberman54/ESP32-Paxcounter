@@ -259,21 +259,16 @@ void wifi_sniffer_loop(void * pvParameters) {
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
         ESP_LOGI(TAG, "Wifi set channel %d", channel);
-        
-        #ifdef HAS_DISPLAY  
-            u8x8.setCursor(0,5);
-            u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
-            u8x8.setCursor(11,5);
-            u8x8.printf("ch:%02i", channel);
-            u8x8.setCursor(0,4);
-            u8x8.printf("MAC#: %-5i", wifis.size());
-        #endif
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
+        u8x8.setCursor(11,5);
+        u8x8.printf("ch:%02i", channel);
+        u8x8.setCursor(0,4);
+        u8x8.printf("MAC#: %-5i", wifis.size());
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
-            #ifdef HAS_DISPLAY  
-                u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
-            #endif
+            u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
             nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
             do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
             vTaskDelay(500/portTICK_PERIOD_MS);
@@ -287,19 +282,15 @@ void wifi_sniffer_loop(void * pvParameters) {
                   bles.clear();                         // clear BLE macs counter
                 #endif 
                 salt = random(65536);                   // get new 16bit random for salting hashes
-                #ifdef HAS_DISPLAY  
-                    u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter
-                #endif
+                u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter
+                
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
             lorawait = 0;
             while(LMIC.opmode & OP_TXRXPEND) {
-                #ifdef HAS_DISPLAY  
-                    if(!lorawait) {
-                        u8x8.drawString(0,6,"LoRa wait       ");
-                    }
-                #endif
+                if(!lorawait) 
+                    u8x8.drawString(0,6,"LoRa wait       ");
                 lorawait++;
                 // in case sending really fails: reset and rejoin network
                 if( (lorawait % MAXLORARETRY ) == 0) {
@@ -310,17 +301,12 @@ void wifi_sniffer_loop(void * pvParameters) {
                 yield();
             }
 
-            #ifdef HAS_DISPLAY  
-                u8x8.clearLine(6);
+            u8x8.clearLine(6);
 
-                if (cfg.screenon && cfg.screensaver) {
-                  vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
-                }
+            if (cfg.screenon && cfg.screensaver) 
+                vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
                 yield();
                 u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
-            #else
-                yield();
-            #endif
             
         } // end of send data cycle
         else {
@@ -346,8 +332,6 @@ uint64_t uptime() {
 
 // Print a key on display
 void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
-#ifdef HAS_DISPLAY  
-
   uint8_t start=lsb?len:0;
   uint8_t end = lsb?0:len;
   const uint8_t * p ;
@@ -356,10 +340,11 @@ void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
     u8x8.printf("%02X", *p);
   }
   u8x8.printf("\n");
-#endif
 }
 
 void init_display(const char *Productname, const char *Version) {
+    u8x8.begin();
+    u8x8.setFont(u8x8_font_chroma48medium8_r);
 #ifdef HAS_DISPLAY  
     u8x8.begin();
     u8x8.setFont(u8x8_font_chroma48medium8_r);
@@ -496,14 +481,12 @@ void setup() {
     }
 #endif // MCP 24AA02E64
 
-// initialize display
-#ifdef HAS_DISPLAY  
+// initialize display  
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
     u8x8.drawString(0,6,"Join Wait       ");
-#endif
     
 // output LoRaWAN keys to console
 #ifdef VERBOSE
