@@ -205,14 +205,11 @@ device answers with it's current configuration. The configuration is a C structu
 
 # RGB Led color description
 
-Description of the RGB LED color (Lopy and Lolin32 only):
+Description of the RGB LED color (LoPy/LoPy4 and Lolin32 only):
 
-- Yellow quick blink
-    - LoRaWAN join
-- Blue blink
-    - LoRaWAN transmit (including receive windows)
-- Magenta each blink
-    - BLE Scan, seen a device (new or not)
+- Yellow quick blink: joining LoRaWAN network in progress or pending
+- Blue blink: LoRaWAN data transmit (including waiting for receive windows) in progress or pending
+- Magenta each blink: seen a BLE device, new or not, while BLE scanning
 
 # License
 
