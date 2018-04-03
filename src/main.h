@@ -3,7 +3,7 @@
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
-//#define VERBOSE                         1       // comment out to silence the device, for mute use build option
+#define VERBOSE                         1       // comment out to silence the device, for mute use build option
 
 // set this to include BLE counting and vendor filter functions
 #define VENDORFILTER                    1       // comment out if you want to count things, not people
@@ -29,7 +29,7 @@
 #define RCMDPORT                        2       // LoRaWAN Port on which device listenes for remote commands
 
 // Default RGB LED luminosity (in %)
-#define RGBLUMINOSITY                   50      // 50%
+#define RGBLUMINOSITY                   30      // 30%
 
 // LMIC settings
 // define hardware independent LMIC settings here, settings of standard library in /lmic/config.h will be ignored
