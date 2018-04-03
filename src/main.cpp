@@ -27,11 +27,9 @@ Refer to LICENSE.txt file in repository for more details.
 
 // std::set for unified array functions
 #include <set>
-#include <Wire.h>
-
 
 // OLED driver
-#include <U8x8lib.h>
+#include <U8x8lib.h> // includes <wire.h> if needed for other on board i2c components
 
 // LMIC-Arduino LoRaWAN Stack
 #include "loraconf.h"
@@ -197,6 +195,8 @@ void lorawan_loop(void * pvParameters) {
 
 #ifdef HAS_DISPLAY
     HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
+#else
+    U8X8_NULL u8x8;
 #endif
 
 #ifdef HAS_ANTENNA_SWITCH
@@ -410,9 +410,9 @@ void init_display(const char *Productname, const char *Version) {
 
 void setup() {
 
-  // disable brownout detection
+    // disable brownout detection
 #ifdef DISABLE_BROWNOUT
-  // Register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
+    // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((volatile uint32_t *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE+0xd4)))) = 0;
 #endif
 
@@ -429,10 +429,10 @@ void setup() {
     ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
     rgb_set_color(COLOR_NONE);
                 
-    // system event handler for wifi task, needed for wifi_sniffer_init()
+    // initialize system event handler for wifi task, needed for wifi_sniffer_init()
     esp_event_loop_init(NULL, NULL);
 
-    // Print chip information on startup
+    // print chip information on startup if in verbose mode
 #ifdef VERBOSE
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
@@ -445,16 +445,16 @@ void setup() {
     ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
 #endif
 
-    // Read settings from NVRAM
+    // read settings from NVRAM
     loadConfig(); // includes initialize if necessary
 
-    // initialize hardware
+    // initialize led if needed
 #ifdef HAS_LED
-    // initialize LED
     pinMode(HAS_LED, OUTPUT);
     digitalWrite(HAS_LED, LOW);
 #endif
 
+    // initialize button handling if needed
 #ifdef HAS_BUTTON
     #ifdef BUTTON_PULLUP
         // install button interrupt (pullup mode)
@@ -467,60 +467,58 @@ void setup() {
     #endif
 #endif
 
-    // initialize wifi antenna
+    // initialize wifi antenna if needed
 #ifdef HAS_ANTENNA_SWITCH
     antenna_init();
 #endif
 
-    // ======================================
-    // READ Microchip 24AA02E64 EEP DEVEUI
-    // ======================================
-    #ifdef MCP_24AA02E64_I2C_ADDRESS
-    //#if 0
-        uint8_t i2c_ret;
-        // Init this before OLED, we just need to get value then we done
-        Wire.begin(OLED_SDA, OLED_SDA, 100000);
+    // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+    uint8_t i2c_ret;
+    // Init this before OLED, we just need to get value then we're done with i2c bus
+    Wire.begin(OLED_SDA, OLED_SDA, 100000);
+    Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
+    Wire.write(MCP_24AA02E64_MAC_ADDRESS); 
+    i2c_ret = Wire.endTransmission();
+    // check if device seen on i2c bus
+    if (i2c_ret == 0) {
+        char deveui[24];
+        uint8_t data;
         Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
-        Wire.write(MCP_24AA02E64_MAC_ADDRESS); 
-        i2c_ret = Wire.endTransmission();
-        // device seen 
-        if (i2c_ret == 0) {
-            char deveui[24];
-            uint8_t data;
-            Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
-            while (Wire.available()) {
-                data = Wire.read();
-                sprintf(deveui+strlen(deveui), "%02X ", data) ;
-            }
-            i2c_ret = Wire.endTransmission();
-            ESP_LOGI(TAG, "24AA02E64 found DEVEUI %s", deveui);
-        } else {
-            ESP_LOGI(TAG, "24AA02E64 not found ret=%d", i2c_ret);
+        while (Wire.available()) {
+            data = Wire.read();
+            sprintf(deveui+strlen(deveui), "%02X ", data) ;
         }
-    #endif // MCP 24AA02E64
-    
-    // initialize salt value using esp_random() called by random() in arduino-esp32 core
-    salt = random(65536); // get new 16bit random for salting hashes
+        i2c_ret = Wire.endTransmission();
+        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 found, read DEVEUI %s", deveui);
+    } else {
+        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 not found ret=%d", i2c_ret);
+    }
+#endif // MCP 24AA02E64
 
-    // initialize display
-    #ifdef HAS_DISPLAY  
-        init_display(PROGNAME, PROGVERSION);     
-        u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
-        u8x8.drawString(0,6,"Join Wait       ");
-    #endif
+// initialize display
+#ifdef HAS_DISPLAY  
+    init_display(PROGNAME, PROGVERSION);     
+    u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
+    u8x8.setCursor(0,5);
+    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
+    u8x8.drawString(0,6,"Join Wait       ");
+#endif
     
-    // output LoRaWAN keys to console
+// output LoRaWAN keys to console
 #ifdef VERBOSE
     printKeys();
-#endif // VERBOSE
+#endif
 
-    os_init(); // setup LMIC
-    os_setCallback(&initjob, lora_init); // setup initial job & join network 
-    wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
+os_init(); // setup LMIC
+os_setCallback(&initjob, lora_init); // setup initial job & join network 
+wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
+
+// initialize salt value using esp_random() called by random() in arduino-esp32 core
+// note: do this *after* wifi has started, since gets it's seed from RF noise
+salt = random(65536); // get new 16bit random for salting hashes
  
-    // Start FreeRTOS tasks
+// Start FreeRTOS tasks
 #if CONFIG_FREERTOS_UNICORE // run all tasks on core 0 and switch off core 1
     ESP_LOGI(TAG, "Starting Lora task on core 0");
     xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 0);  
@@ -534,9 +532,9 @@ void setup() {
     xTaskCreatePinnedToCore(wifi_sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
 #endif
     
-    // Kickoff first sendjob, use payload "0000"
-    uint8_t mydata[] = "0000";
-    do_send(&sendjob);
+// Finally: kickoff first sendjob and join, then send initial payload "0000"
+uint8_t mydata[] = "0000";
+do_send(&sendjob);
 }
 
 /* end Aruino SETUP ------------------------------------------------------------ */

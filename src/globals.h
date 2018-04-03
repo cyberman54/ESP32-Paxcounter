@@ -13,9 +13,11 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
+// LED controls
 #ifdef HAS_RGB_LED
-#include <SmartLeds.h>
+    #include <SmartLeds.h>
 #endif
+
 #include "rgb_led.h"
 #include "macsniff.h"
 

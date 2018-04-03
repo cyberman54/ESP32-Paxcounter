@@ -1,5 +1,5 @@
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.2.88"    // use max 10 chars here!
+#define PROGVERSION                     "1.2.9"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
