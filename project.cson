@@ -1,8 +1,0 @@
-[
-  {
-    title: 'ESP32-Paxcounter'
-    settings:
-      'editor.tabLength': 4
-      'editor.showInvisibles': true
-  }
-]

@@ -33,7 +33,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 	uint16_t hashedmac;
 	std::pair<std::set<uint16_t>::iterator, bool> newmac;
 
-    rgb_set_color(COLOR_MAGENTA);
     addr2int = ( (uint64_t)paddr[0] ) | ( (uint64_t)paddr[1] << 8 ) | ( (uint64_t)paddr[2] << 16 ) | \
     ( (uint64_t)paddr[3] << 24 ) | ( (uint64_t)paddr[4] << 32 ) | ( (uint64_t)paddr[5] << 40 );
 
@@ -45,7 +44,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
         // salt and hash MAC, and if new unique one, store identifier in container and increment counter on display
 		// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
-
+			
 		addr2int |= (uint64_t) salt << 48;		// prepend 16-bit salt to 48-bit MAC
 		snprintf(macbuf, 21, "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
 		hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
@@ -58,7 +57,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
             newmac = bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
             strcpy(typebuff, "BLE ");
         }
-
+     
         if (newmac.second) { // first time seen this WIFI or BLE MAC
             snprintf(counter, 6, "%i", macs.size());		// convert 16-bit MAC counter to decimal counter value
             u8x8.draw2x2String(0, 0, counter);
@@ -73,8 +72,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         //ESP_LOGI(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X", paddr[0],paddr[1],paddr[2],paddr[3],paddr[5],paddr[5]);
     }
     #endif
-
-    rgb_set_color(COLOR_NONE);
 
     // True if MAC WiFi/BLE was new
     return newmac.second;
@@ -132,7 +129,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
     const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
     const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
-
+    
     if (( cfg.rssilimit == 0 ) || (ppkt->rx_ctrl.rssi > cfg.rssilimit )) { // rssi is negative value
         uint8_t *p = (uint8_t *) hdr->addr2;
         mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI) ;
@@ -141,3 +138,4 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
     }
     yield();
 }
+

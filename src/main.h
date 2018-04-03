@@ -10,7 +10,7 @@
 #define BLECOUNTER                      1       // comment out if you don't want BLE count
 
 // BLE scan time
-#define BLESCANTIME                     10      // [seconds]
+#define BLESCANTIME                     15      // [seconds]
 #define BLESCANCYCLE                    2       // BLE scan once after each <BLECYCLE> wifi scans
 
 // WiFi Sniffer cycle interval
