@@ -3,6 +3,7 @@
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+//#define DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED NOT_A_PIN // on-board LED is wired to SCL (used by display) therefore totally useless
 
 // disable brownout detection (needed on TTGOv2 for battery powered operation)

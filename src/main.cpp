@@ -367,6 +367,10 @@ void init_display(const char *Productname, const char *Version) {
     u8x8.setFlipMode(0);
     u8x8.clear();
 
+    #ifdef DISPLAY_FLIP
+        u8x8.setFlipMode(1);
+    #endif
+
     // Display chip information
     #ifdef VERBOSE
         esp_chip_info_t chip_info;
