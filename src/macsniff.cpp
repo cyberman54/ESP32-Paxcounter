@@ -83,11 +83,14 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
         uint8_t *p = (uint8_t *) advertisedDevice.getAddress().getNative();
 
+        rgb_set_color(COLOR_MAGENTA);
         // Current devices seen on this scan session
         currentScanDevice++;
         mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE);
         u8x8.setCursor(12,3);
         u8x8.printf("%d", currentScanDevice);
+        rgb_set_color(COLOR_NONE);
+
     }
 };
 
