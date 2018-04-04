@@ -38,7 +38,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     uint32_t addr2int;
 	uint32_t vendor2int;
 	uint16_t hashedmac;
-	std::pair<std::set<uint16_t>::iterator, bool> newmac;
 
     // Only last 3 MAC Address bytes are used bay MAC Address Anonymization
     addr2int =  ( (uint32_t)paddr[3] ) | ( (uint32_t)paddr[4] << 8 ) | ( (uint32_t)paddr[5] << 16 );
@@ -55,17 +54,17 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 		addr2int += (uint32_t) salt << 16;		// add 16-bit salt to 24-bit MAC
 		snprintf(macbuf, sizeof(macbuf), "%08X", addr2int);	// convert unsigned 32-bit salted MAC to 8 digit hex string
 		hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
-		newmac = macs.insert(hashedmac);		// add hashed MAC to total container if new unique
-        added = newmac.second;                  // true if hashed MAC is unique in container
+		auto newmac = macs.insert(hashedmac);	// add hashed MAC to total container if new unique
+        added = newmac.second ? true:false;     // true if hashed MAC is unique in container
 
         if (sniff_type == MAC_SNIFF_WIFI ) {
             rgb_set_color(COLOR_GREEN);
-            newmac = wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
+            wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
             strcpy(typebuff, "WiFi");
             rgb_set_color(COLOR_NONE);
         } else if (sniff_type == MAC_SNIFF_BLE ) {
             rgb_set_color(COLOR_MAGENTA);
-            newmac = bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
+            bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
             strcpy(typebuff, "BLE ");
             rgb_set_color(COLOR_NONE);
         }
@@ -73,10 +72,11 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         if (added) { // first time seen this WIFI or BLE MAC
             snprintf(counter, sizeof(counter), "%d", (int) macs.size());	// convert 16-bit MAC counter to decimal counter value
             u8x8.draw2x2String(0, 0, counter);          // display number on unique macs total Wifi + BLE
-            ESP_LOGI(TAG, "%s RSSI %4d -> Hash %04X -> counted #%d", typebuff, rssi, hashedmac, (int) macs.size());
-            ESP_LOGI(TAG, "%s   Counted WiFi #%d : BLE #%d", typebuff,  (int) wifis.size(), (int) bles.size());
+            ESP_LOGI(TAG, "%s RSSI %d -> Hash %04X -> WiFi:%d  BLE:%d  Tot:%d", 
+                                typebuff, rssi, hashedmac, 
+                                (int) wifis.size(), (int) bles.size(), (int) macs.size());
         } else { // already seen WIFI or BLE MAC
-            ESP_LOGI(TAG, "%s RSSI %4d -> Hash %04X -> already seen", typebuff, rssi, hashedmac);
+            ESP_LOGI(TAG, "%s RSSI %d -> Hash %04X -> already seen", typebuff, rssi, hashedmac);
         }
 
     #ifdef VENDORFILTER
@@ -106,7 +106,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
 void BLECount() {
     ESP_LOGI(TAG, "BLE scan started");
-    int blenum = 0; // Total device seen on this scan session
     currentScanDevice = 0; // Set 0 seen device on this scan session
     u8x8.clearLine(3);
     u8x8.drawString(0,3,"BLE Scan...");
@@ -115,11 +114,11 @@ void BLECount() {
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
     BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime);
-    blenum=foundDevices.getCount();
+    int blenum=foundDevices.getCount();
+    ESP_LOGI(TAG, "BLE scan done, seen %d device(s)", blenum);
     u8x8.clearLine(3);
     u8x8.setCursor(0,3);
-    u8x8.printf("BLE#: %-5i %-3i",bles.size(), blenum);
-    ESP_LOGI(TAG, "BLE scan done");
+    u8x8.printf("BLE#: %-4d  %d", (int) bles.size(), currentScanDevice);
 }
 #endif
 
@@ -149,7 +148,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
         uint8_t *p = (uint8_t *) hdr->addr2;
         mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI) ;
     } else {
-        ESP_LOGI(TAG, "WiFi RSSI %04d -> ignoring (limit: %i)", ppkt->rx_ctrl.rssi, cfg.rssilimit);
+        ESP_LOGI(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi, cfg.rssilimit);
     }
     yield();
 }
