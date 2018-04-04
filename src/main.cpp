@@ -271,11 +271,11 @@ void wifi_sniffer_loop(void * pvParameters) {
         wifi_sniffer_set_channel(channel);
         ESP_LOGI(TAG, "Wifi set channel %d", channel);
         u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
+        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
         u8x8.setCursor(11,5);
         u8x8.printf("ch:%02i", channel);
         u8x8.setCursor(0,4);
-        u8x8.printf("MAC#: %-5i", wifis.size());
+        u8x8.printf("MAC#: %-5d", (int) wifis.size());
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
@@ -293,7 +293,8 @@ void wifi_sniffer_loop(void * pvParameters) {
                   bles.clear();                         // clear BLE macs counter
                 #endif 
                 salt_reset(); // get new salt for salting hashes
-                u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter    
+                u8x8.clearLine(0); // clear Display counter 
+                u8x8.clearLine(1); 
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
@@ -476,7 +477,7 @@ void setup() {
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.setCursor(0,5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
+    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
     u8x8.drawString(0,6,"Join Wait       ");
 
 // output LoRaWAN keys to console
