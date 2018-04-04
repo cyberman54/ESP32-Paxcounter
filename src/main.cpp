@@ -29,7 +29,7 @@ Refer to LICENSE.txt file in repository for more details.
 #include <set>
 
 // OLED driver
-#include <U8x8lib.h> // includes <wire.h> if needed for other on board i2c components
+#include <U8x8lib.h>
 
 // LMIC-Arduino LoRaWAN Stack
 #include "loraconf.h"
@@ -85,6 +85,8 @@ void loadConfig(void);
 // defined in lorawan.cpp
 void gen_lora_deveui(uint8_t * pdeveui);
 void RevBytes(unsigned char* b, size_t c);
+void get_hard_deveui(uint8_t *pdeveui);
+
 
 #ifdef VERBOSE
     void printKeys(void);
@@ -103,12 +105,20 @@ void os_getArtEui (u1_t *buf) {
 void os_getDevEui (u1_t* buf) {
     int i=0, k=0;
     memcpy(buf, DEVEUI, 8); // get fixed DEVEUI from loraconf.h 
-    for (i=0; i<8 ; i++)
+    for (i=0; i<8 ; i++) {
         k += buf[i];
-    if (k) 
+    }
+    if (k) {
         RevBytes(buf, 8); // use fixed DEVEUI and swap bytes to LSB format
-    else
+    } else {
         gen_lora_deveui(buf); // generate DEVEUI from device's MAC
+    }
+
+    // Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
+    #ifdef MCP_24AA02E64_I2C_ADDRESS
+        get_hard_deveui(buf); 
+        RevBytes(buf, 8); // swap bytes to LSB format
+    #endif
 }
 
 // LMIC enhanced Pin mapping
@@ -417,7 +427,7 @@ void setup() {
     
     ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
     rgb_set_color(COLOR_NONE);
-                
+    
     // initialize system event handler for wifi task, needed for wifi_sniffer_init()
     esp_event_loop_init(NULL, NULL);
 
@@ -461,37 +471,13 @@ void setup() {
     antenna_init();
 #endif
 
-    // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
-#ifdef MCP_24AA02E64_I2C_ADDRESS
-    uint8_t i2c_ret;
-    // Init this before OLED, we just need to get value then we're done with i2c bus
-    Wire.begin(OLED_SDA, OLED_SDA, 100000);
-    Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
-    Wire.write(MCP_24AA02E64_MAC_ADDRESS); 
-    i2c_ret = Wire.endTransmission();
-    // check if device seen on i2c bus
-    if (i2c_ret == 0) {
-        char deveui[24];
-        uint8_t data;
-        Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
-        while (Wire.available()) {
-            data = Wire.read();
-            sprintf(deveui+strlen(deveui), "%02X ", data) ;
-        }
-        i2c_ret = Wire.endTransmission();
-        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 found, read DEVEUI %s", deveui);
-    } else {
-        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 not found ret=%d", i2c_ret);
-    }
-#endif // MCP 24AA02E64
-
 // initialize display  
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
     u8x8.drawString(0,6,"Join Wait       ");
-    
+
 // output LoRaWAN keys to console
 #ifdef VERBOSE
     printKeys();
