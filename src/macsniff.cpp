@@ -72,11 +72,11 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         if (added) { // first time seen this WIFI or BLE MAC
             snprintf(counter, sizeof(counter), "%d", (uint16_t) macs.size()); // convert 16-bit MAC counter to decimal counter value
             u8x8.draw2x2String(0, 0, counter);          // display number on unique macs total Wifi + BLE
-            ESP_LOGI(TAG, "%s RSSI %d -> Hash %04X -> WiFi:%d  BLE:%d  Tot:%d", 
+            ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> WiFi:%d  BLE:%d  Tot:%d", 
                                 typebuff, rssi, hashedmac, 
                                 (int) wifis.size(), (int) bles.size(), (int) macs.size());
         } else { // already seen WIFI or BLE MAC
-            ESP_LOGI(TAG, "%s RSSI %d -> Hash %04X -> already seen", typebuff, rssi, hashedmac);
+            ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> already seen", typebuff, rssi, hashedmac);
         }
 
     #ifdef VENDORFILTER
