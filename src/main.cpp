@@ -357,7 +357,8 @@ void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
 void init_display(const char *Productname, const char *Version) {
     u8x8.begin();
     u8x8.setFont(u8x8_font_chroma48medium8_r);
-#ifdef HAS_DISPLAY  
+#ifdef HAS_DISPLAY
+    Wire.setClock(100000); // experimental: reduce I2C bus speed to avoid display errors (must be done after begin)
     uint8_t buf[32];
     u8x8.clear();
     u8x8.setFlipMode(0);
