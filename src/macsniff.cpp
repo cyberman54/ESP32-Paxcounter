@@ -47,7 +47,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 		// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 			
 		addr2int |= (uint64_t) salt << 48;		// prepend 16-bit salt to 48-bit MAC
-		snprintf(macbuf, sizeof(macbuf), "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
+		snprintf(macbuf, 21, "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
 		hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
 		newmac = macs.insert(hashedmac);		// add hashed MAC to total container if new unique
         added = newmac.second;                  // true if hashed MAC is unique in container
@@ -65,7 +65,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         }
      
         if (added) { // first time seen this WIFI or BLE MAC
-            snprintf(counter, sizeof(counter), "%i", macs.size());	// convert 16-bit MAC counter to decimal counter value
+            snprintf(counter, 6, "%i", macs.size());	// convert 16-bit MAC counter to decimal counter value
             u8x8.draw2x2String(0, 0, counter);          // display number on unique macs total Wifi + BLE
             ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> counted #%05i", typebuff, rssi, hashedmac, macs.size());
         } else { // already seen WIFI or BLE MAC
