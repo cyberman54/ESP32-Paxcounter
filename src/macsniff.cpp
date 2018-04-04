@@ -53,11 +53,15 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         added = newmac.second;                  // true if hashed MAC is unique in container
 
         if (sniff_type == MAC_SNIFF_WIFI ) {
+            rgb_set_color(COLOR_GREEN);
             newmac = wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
             strcpy(typebuff, "WiFi");
+            rgb_set_color(COLOR_NONE);
         } else if (sniff_type == MAC_SNIFF_BLE ) {
+            rgb_set_color(COLOR_MAGENTA);
             newmac = bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
             strcpy(typebuff, "BLE ");
+            rgb_set_color(COLOR_NONE);
         }
      
         if (added) { // first time seen this WIFI or BLE MAC
@@ -85,14 +89,11 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
         uint8_t *p = (uint8_t *) advertisedDevice.getAddress().getNative();
 
-        rgb_set_color(COLOR_MAGENTA);
         // Current devices seen on this scan session
         currentScanDevice++;
         mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE);
         u8x8.setCursor(12,3);
         u8x8.printf("%d", currentScanDevice);
-        rgb_set_color(COLOR_NONE);
-
     }
 };
 

@@ -18,13 +18,15 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Currently supported IoT boards:
-- Heltec LoRa-32
-- TTGOv1
-- TTGOv2
-- Pycom LoPy
-- Pycom LoPy4
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+- Heltec LoRa-32 {1}
+- TTGOv1 {1}
+- TTGOv2 {1}
+- Pycom LoPy {2}
+- Pycom LoPy4 {2}
+- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
+- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
+
+{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -49,6 +51,8 @@ These results where metered with software version 1.2.0 during active wifi scan,
 Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
 
 Before compiling the code, create file loraconf.h in the /src directory from the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. Only OTAA join is supported, not ABP. The DEVEUI will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings. If you enter a DEVEUI in loraconf.h it will be used instead.
+
+**If Using a board with Microchip 24AA02E64 Unique ID for deveui, it will override the one of loraconf.h**
 
 # Uploading
 
@@ -177,7 +181,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L23-L38) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L24-L41) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -205,14 +209,12 @@ device answers with it's current configuration. The configuration is a C structu
 
 # RGB Led color description
 
-Description of the RGB LED color (Lopy and Lolin32 only):
+Description of the RGB LED color (LoPy/LoPy4 and Lolin32 only):
 
-- Yellow quick blink
-    - LoRaWAN join
-- Blue blink
-    - LoRaWAN transmit (including receive windows)
-- Magenta each blink
-    - BLE Scan, seen a device (new or not)
+- Yellow quick blink: joining LoRaWAN network in progress or pending
+- Blue blink: LoRaWAN data transmit (including waiting for receive windows) in progress or pending
+- Green each blink: seen a Wifi device, new or not, while Wifi scanning
+- Magenta each blink: seen a BLE device, new or not, while BLE scanning
 
 # License
 

@@ -3,6 +3,7 @@
 #define CFG_sx1276_radio 1
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
+//#define DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED GPIO_NUM_25 // white LED on board
 #define HAS_BUTTON GPIO_NUM_0 // button "PROG" on board
 
