@@ -31,8 +31,7 @@ uint16_t salt_reset(void) {
 
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
-    char counter [6]; // uint16_t -> 2 byte -> 5 decimals + '0' terminator -> 6 chars
-    char macbuf [17]; // uint64_t -> 8 byte -> 16 hexadecimals + '0' terminator -> 17 chars
+    char buff[32]; // temporary buffer for printf
     char typebuff[8];
     bool added = false;
     uint32_t addr2int;
@@ -52,8 +51,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 		// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 			
 		addr2int += (uint32_t) salt << 16;		// add 16-bit salt to 24-bit MAC
-		snprintf(macbuf, sizeof(macbuf), "%08X", addr2int);	// convert unsigned 32-bit salted MAC to 8 digit hex string
-		hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
+		snprintf(buff, sizeof(buff), "%08X", addr2int);	// convert unsigned 32-bit salted MAC to 8 digit hex string
+		hashedmac = rokkit(buff, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
 		auto newmac = macs.insert(hashedmac);	// add hashed MAC to total container if new unique
         added = newmac.second ? true:false;     // true if hashed MAC is unique in container
 
@@ -70,11 +69,11 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         }
      
         if (added) { // first time seen this WIFI or BLE MAC
-            snprintf(counter, sizeof(counter), "%d", (uint16_t) macs.size()); // convert 16-bit MAC counter to decimal counter value
-            u8x8.draw2x2String(0, 0, counter);          // display number on unique macs total Wifi + BLE
-            ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> WiFi:%d  BLE:%d  Tot:%d", 
+            snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
+            u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
+            ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
                                 typebuff, rssi, hashedmac, 
-                                (int) wifis.size(), (int) bles.size(), (int) macs.size());
+                                (int) wifis.size(), (int) bles.size(), buff );
         } else { // already seen WIFI or BLE MAC
             ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> already seen", typebuff, rssi, hashedmac);
         }
