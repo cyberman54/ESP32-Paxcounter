@@ -22,20 +22,26 @@ static const char *TAG = "macsniff";
 static wifi_country_t wifi_country = {.cc=WIFI_MY_COUNTRY, .schan=WIFI_CHANNEL_MIN, .nchan=WIFI_CHANNEL_MAX, .policy=WIFI_COUNTRY_POLICY_MANUAL};
 
 uint16_t currentScanDevice = 0;
+uint16_t salt;
+
+uint16_t salt_reset(void) {
+    salt = random(65536); // get new 16bit random for salting hashes
+    return salt;
+}
 
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     char counter [6]; // uint16_t -> 2 byte -> 5 decimals + '0' terminator -> 6 chars
-    char macbuf [21]; // uint64_t -> 8 byte -> 20 decimals + '0' terminator -> 21 chars
+    char macbuf [17]; // uint64_t -> 8 byte -> 16 hexadecimals + '0' terminator -> 17 chars
     char typebuff[8];
     bool added = false;
-    uint64_t addr2int;
+    uint32_t addr2int;
 	uint32_t vendor2int;
 	uint16_t hashedmac;
 	std::pair<std::set<uint16_t>::iterator, bool> newmac;
 
-    addr2int = ( (uint64_t)paddr[0] ) | ( (uint64_t)paddr[1] << 8 ) | ( (uint64_t)paddr[2] << 16 ) | \
-    ( (uint64_t)paddr[3] << 24 ) | ( (uint64_t)paddr[4] << 32 ) | ( (uint64_t)paddr[5] << 40 );
+    // Only last 3 MAC Address bytes are used bay MAC Address Anonymization
+    addr2int =  ( (uint32_t)paddr[3] ) | ( (uint32_t)paddr[4] << 8 ) | ( (uint32_t)paddr[5] << 16 );
 
     #ifdef VENDORFILTER
         vendor2int = ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[1] << 8 ) | ( (uint32_t)paddr[0] << 16 );
@@ -46,8 +52,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         // salt and hash MAC, and if new unique one, store identifier in container and increment counter on display
 		// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 			
-		addr2int |= (uint64_t) salt << 48;		// prepend 16-bit salt to 48-bit MAC
-		snprintf(macbuf, 21, "%llx", addr2int);	// convert unsigned 64-bit salted MAC to 16 digit hex string
+		addr2int += (uint32_t) salt << 16;		// add 16-bit salt to 24-bit MAC
+		snprintf(macbuf, sizeof(macbuf), "%08X", addr2int);	// convert unsigned 32-bit salted MAC to 8 digit hex string
 		hashedmac = rokkit(macbuf, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
 		newmac = macs.insert(hashedmac);		// add hashed MAC to total container if new unique
         added = newmac.second;                  // true if hashed MAC is unique in container
@@ -65,11 +71,12 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         }
      
         if (added) { // first time seen this WIFI or BLE MAC
-            snprintf(counter, 6, "%i", macs.size());	// convert 16-bit MAC counter to decimal counter value
+            snprintf(counter, sizeof(counter), "%d", (int) macs.size());	// convert 16-bit MAC counter to decimal counter value
             u8x8.draw2x2String(0, 0, counter);          // display number on unique macs total Wifi + BLE
-            ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> counted #%05i", typebuff, rssi, hashedmac, macs.size());
+            ESP_LOGI(TAG, "%s RSSI %4d -> Hash %04X -> counted #%d", typebuff, rssi, hashedmac, (int) macs.size());
+            ESP_LOGI(TAG, "%s   Counted WiFi #%d : BLE #%d", typebuff,  (int) wifis.size(), (int) bles.size());
         } else { // already seen WIFI or BLE MAC
-            ESP_LOGI(TAG, "%s RSSI %04d -> Hash %04x -> already seen", typebuff, rssi, hashedmac);
+            ESP_LOGI(TAG, "%s RSSI %4d -> Hash %04X -> already seen", typebuff, rssi, hashedmac);
         }
 
     #ifdef VENDORFILTER
