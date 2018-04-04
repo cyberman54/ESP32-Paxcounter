@@ -30,6 +30,7 @@ Refer to LICENSE.txt file in repository for more details.
 
 // OLED driver
 #include <U8x8lib.h>
+#include <Wire.h> // Does nothing and avoid any compilation error with I2C
 
 // LMIC-Arduino LoRaWAN Stack
 #include "loraconf.h"
@@ -45,7 +46,7 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-int macnum = 0, salt;
+int macnum = 0;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
@@ -291,7 +292,7 @@ void wifi_sniffer_loop(void * pvParameters) {
                 #ifdef BLECOUNTER
                   bles.clear();                         // clear BLE macs counter
                 #endif 
-                salt = random(65536);                   // get new 16bit random for salting hashes
+                salt_reset(); // get new salt for salting hashes
                 u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter    
             }      
 
@@ -489,7 +490,7 @@ wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
 
 // initialize salt value using esp_random() called by random() in arduino-esp32 core
 // note: do this *after* wifi has started, since gets it's seed from RF noise
-salt = random(65536); // get new 16bit random for salting hashes
+salt_reset(); // get new 16bit for salting hashes
  
 // Start FreeRTOS tasks
 #if CONFIG_FREERTOS_UNICORE // run all tasks on core 0 and switch off core 1
