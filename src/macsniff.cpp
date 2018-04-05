@@ -110,7 +110,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 void BLECount() {
     ESP_LOGI(TAG, "BLE scan started");
     currentScanDevice = 0; // Set 0 seen device on this scan session
-    u8x8.clearLine(3);
+    //u8x8.clearLine(3); // causes little screen flicker, and seems not needed
     u8x8.drawString(0,3,"BLE Scan...");
     BLEDevice::init(PROGNAME);
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
