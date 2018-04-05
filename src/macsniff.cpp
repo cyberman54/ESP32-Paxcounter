@@ -1,6 +1,5 @@
 
 // Basic Config
-#include "main.h"
 #include "globals.h"
 
 #ifdef BLECOUNTER
@@ -31,7 +30,7 @@ uint16_t salt_reset(void) {
 
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
-    char buff[32]; // temporary buffer for printf
+    char buff[16]; // temporary buffer for printf
     char typebuff[8];
     bool added = false;
     uint32_t addr2int;
@@ -69,8 +68,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         }
      
         if (added) { // first time seen this WIFI or BLE MAC
-            snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-            u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
             ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
                                 typebuff, rssi, hashedmac, 
                                 (int) wifis.size(), (int) bles.size(), buff );
@@ -93,11 +90,18 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
+        int lastcount = (int) macs.size();
         uint8_t *p = (uint8_t *) advertisedDevice.getAddress().getNative();
 
         // Current devices seen on this scan session
         currentScanDevice++;
-        mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE);
+        // add this device and refresh display if it was not previously added
+        if ( mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE) ) {
+            char buff[16];
+            snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
+            u8x8.setCursor(0,0);
+            u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
+        }
         u8x8.setCursor(12,3);
         u8x8.printf("%d", currentScanDevice);
     }
@@ -115,9 +119,6 @@ void BLECount() {
     BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime);
     int blenum=foundDevices.getCount();
     ESP_LOGI(TAG, "BLE scan done, seen %d device(s)", blenum);
-    u8x8.clearLine(3);
-    u8x8.setCursor(0,3);
-    u8x8.printf("BLE#: %-4d  %d", (int) bles.size(), currentScanDevice);
 }
 #endif
 
