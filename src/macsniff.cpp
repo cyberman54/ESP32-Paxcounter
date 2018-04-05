@@ -38,7 +38,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 	uint16_t hashedmac;
 
     // Only last 3 MAC Address bytes are used bay MAC Address Anonymization
-    addr2int =  ( (uint32_t)paddr[3] ) | ( (uint32_t)paddr[4] << 8 ) | ( (uint32_t)paddr[5] << 16 );
+    // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
+    addr2int =  ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[3] << 8 ) | ( (uint32_t)paddr[4] << 16 ) | ( (uint32_t)paddr[5] << 24 );
 
     #ifdef VENDORFILTER
         vendor2int = ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[1] << 8 ) | ( (uint32_t)paddr[0] << 16 );
@@ -49,9 +50,9 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         // salt and hash MAC, and if new unique one, store identifier in container and increment counter on display
 		// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 			
-		addr2int += (uint32_t) salt << 16;		// add 16-bit salt to 24-bit MAC
+		addr2int += (uint32_t) salt;		    // add 16-bit salt to pseudo MAC
 		snprintf(buff, sizeof(buff), "%08X", addr2int);	// convert unsigned 32-bit salted MAC to 8 digit hex string
-		hashedmac = rokkit(buff, 5);			// hash MAC string, use 5 chars to fit hash in uint16_t container
+		hashedmac = rokkit(&buff[3], 5);	    // hash MAC last string value, use 5 chars to fit hash in uint16_t container
 		auto newmac = macs.insert(hashedmac);	// add hashed MAC to total container if new unique
         added = newmac.second ? true:false;     // true if hashed MAC is unique in container
 
@@ -67,13 +68,10 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
             rgb_set_color(COLOR_NONE);
         }
      
-        if (added) { // first time seen this WIFI or BLE MAC
-            ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
-                                typebuff, rssi, hashedmac, 
-                                (int) wifis.size(), (int) bles.size(), buff );
-        } else { // already seen WIFI or BLE MAC
-            ESP_LOGI(TAG, "%s RSSI %ddBi -> Hash %04X -> already seen", typebuff, rssi, hashedmac);
-        }
+        ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
+                        typebuff, rssi, buff, hashedmac, 
+                        (int) wifis.size(), (int) bles.size(),
+                        added ? "already seen" : "new");
 
     #ifdef VENDORFILTER
     } else {
