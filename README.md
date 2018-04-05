@@ -213,8 +213,8 @@ Description of the RGB LED color (LoPy/LoPy4 and Lolin32 only):
 
 - Yellow quick blink: joining LoRaWAN network in progress or pending
 - Blue blink: LoRaWAN data transmit (including waiting for receive windows) in progress or pending
-- Green each blink: seen a Wifi device, new or not, while Wifi scanning
-- Magenta each blink: seen a BLE device, new or not, while BLE scanning
+- Green each blink: seen a new Wifi device
+- Magenta each blink: seen a new BLE device
 
 # License
 
