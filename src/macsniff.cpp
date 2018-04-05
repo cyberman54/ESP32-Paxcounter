@@ -31,7 +31,6 @@ uint16_t salt_reset(void) {
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     char buff[16]; // temporary buffer for printf
-    char typebuff[8];
     bool added = false;
     uint32_t addr2int;
 	uint32_t vendor2int;
@@ -56,22 +55,25 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 		auto newmac = macs.insert(hashedmac);	// add hashed MAC to total container if new unique
         added = newmac.second ? true:false;     // true if hashed MAC is unique in container
 
-        if (sniff_type == MAC_SNIFF_WIFI ) {
-            rgb_set_color(COLOR_GREEN);
-            wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
-            strcpy(typebuff, "WiFi");
+        // Insert only if it was not found on global count
+        if (added) {
+            if (sniff_type == MAC_SNIFF_WIFI ) {
+                rgb_set_color(COLOR_GREEN);
+                wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
+            } else if (sniff_type == MAC_SNIFF_BLE ) {
+                rgb_set_color(COLOR_MAGENTA);
+                bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
+            }
+            // Not sure user will have time to see the LED
+            // TBD do light off further in the code
             rgb_set_color(COLOR_NONE);
-        } else if (sniff_type == MAC_SNIFF_BLE ) {
-            rgb_set_color(COLOR_MAGENTA);
-            bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
-            strcpy(typebuff, "BLE ");
-            rgb_set_color(COLOR_NONE);
-        }
-     
+        } 
+        
         ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
-                        typebuff, rssi, buff, hashedmac, 
+                        sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLE ", 
+                        rssi, buff, hashedmac, 
                         (int) wifis.size(), (int) bles.size(),
-                        added ? "already seen" : "new");
+                        added ? "New" : "Already seen");
 
     #ifdef VENDORFILTER
     } else {
