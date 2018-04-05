@@ -22,7 +22,6 @@ Refer to LICENSE.txt file in repository for more details.
 */
 
 // Basic Config
-#include "main.h"
 #include "globals.h"
 
 // std::set for unified array functions
@@ -254,13 +253,14 @@ void wifi_sniffer_init(void);
 void wifi_sniffer_set_channel(uint8_t channel);
 void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
-//WiFi Sniffer Task
-void wifi_sniffer_loop(void * pvParameters) {
+// Sniffer Task
+void sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
     uint8_t channel=0;
+    char buff[16];
     int nloop=0, lorawait=0;
-    
+   
   	while (true) {
 
         nloop++; // acutal number of wifi loops, controls cycle when data is sent
@@ -270,12 +270,23 @@ void wifi_sniffer_loop(void * pvParameters) {
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
         ESP_LOGI(TAG, "Wifi set channel %d", channel);
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
-        u8x8.setCursor(11,5);
-        u8x8.printf("ch:%02i", channel);
+
+        snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
+        u8x8.setCursor(0,0);
+        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
+        u8x8.clearLine(3);
+        u8x8.setCursor(0,3);
+        // We just state out of BLE scanning
+        if (currentScanDevice) {
+            u8x8.printf("BLE#: %-4d  %d", (int) bles.size(), currentScanDevice);
+        } else {
+            u8x8.printf("BLE#: %-4d", (int) bles.size());
+        }
         u8x8.setCursor(0,4);
         u8x8.printf("MAC#: %-5d", (int) wifis.size());
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
+        u8x8.printf(" ch:%02i", channel);
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
@@ -358,7 +369,6 @@ void init_display(const char *Productname, const char *Version) {
     u8x8.begin();
     u8x8.setFont(u8x8_font_chroma48medium8_r);
 #ifdef HAS_DISPLAY
-    Wire.setClock(100000); // experimental: reduce I2C bus speed to avoid display errors (must be done after begin)
     uint8_t buf[32];
     u8x8.clear();
     u8x8.setFlipMode(0);
@@ -503,7 +513,7 @@ salt_reset(); // get new 16bit for salting hashes
     ESP_LOGI(TAG, "Starting Lora task on core 1");
     xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
     ESP_LOGI(TAG, "Starting Wifi task on core 0");
-    xTaskCreatePinnedToCore(wifi_sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
+    xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
 #endif
     
 // Finally: kickoff first sendjob and join, then send initial payload "0000"
