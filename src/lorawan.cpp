@@ -1,5 +1,4 @@
 // Basic Config
-#include "main.h"
 #include "globals.h"
 
 // LMIC-Arduino LoRaWAN Stack
