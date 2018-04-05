@@ -36,7 +36,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 	uint32_t vendor2int;
 	uint16_t hashedmac;
 
-    // Only last 3 MAC Address bytes are used bay MAC Address Anonymization
+    // only last 3 MAC Address bytes are used for MAC Address Anonymization
     // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
     addr2int =  ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[3] << 8 ) | ( (uint32_t)paddr[4] << 16 ) | ( (uint32_t)paddr[5] << 24 );
 

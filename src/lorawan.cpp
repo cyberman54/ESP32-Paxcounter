@@ -7,7 +7,7 @@
 #include <hal/hal.h>
 
 #ifdef MCP_24AA02E64_I2C_ADDRESS
-#include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
+    #include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
 #endif
 
 // Local logging Tag
@@ -149,7 +149,7 @@ void onEvent (ev_t ev) {
     switch(ev) {
         case EV_SCAN_TIMEOUT:   strcpy_P(buff, PSTR("SCAN TIMEOUT"));   break;
         case EV_BEACON_FOUND:   strcpy_P(buff, PSTR("BEACON FOUND"));   break;
-        case EV_BEACON_MISSED:  strcpy_P(buff, PSTR( "BEACON MISSED")); break;
+        case EV_BEACON_MISSED:  strcpy_P(buff, PSTR("BEACON MISSED")); break;
         case EV_BEACON_TRACKED: strcpy_P(buff, PSTR("BEACON TRACKED")); break;
         case EV_JOINING:        strcpy_P(buff, PSTR("JOINING"));        break;
         case EV_LOST_TSYNC:     strcpy_P(buff, PSTR("LOST TSYNC"));     break;

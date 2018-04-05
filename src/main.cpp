@@ -263,7 +263,7 @@ void sniffer_loop(void * pvParameters) {
    
   	while (true) {
 
-        nloop++; // acutal number of wifi loops, controls cycle when data is sent
+        nloop++; // actual number of wifi loops, controls cycle when data is sent
 
         vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
         yield();
