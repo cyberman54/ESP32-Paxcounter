@@ -85,8 +85,8 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 FPort1:
 
-	byte 1:			16-bit Total Wifi+BLE counter, MSB
-	byte 2:			16-bit Total Wifi+BLE counter, LSB
+	byte 1:			16-bit WiFi counter, MSB
+	byte 2:			16-bit WiFi counter, LSB
 	byte 3:			16-bit BLE counter, MSB
 	byte 4:			16-bit BLE counter, LSB
 

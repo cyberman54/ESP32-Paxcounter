@@ -113,8 +113,8 @@ void printKeys(void) {
 void do_send(osjob_t* j){
     uint8_t mydata[4];
     uint16_t data;
-    // Total BLE+WIFI unique MACs seen
-    data = (uint16_t) macs.size();
+    // Sum of unique WIFI MACs seen
+    data = (uint16_t) wifis.size();
     mydata[0] = (data & 0xff00) >> 8;
     mydata[1] = data  & 0xff;
     
@@ -123,9 +123,9 @@ void do_send(osjob_t* j){
     mydata[2] = (data & 0xff00) >> 8;
     mydata[3] = data  & 0xff;
 
-    // Sum of unique WIFI MACs seen
+    // Total BLE+WIFI unique MACs seen
     // TBD ?
-    //data = (uint16_t) wifis.size();
+    //data = (uint16_t) macs.size();
     //mydata[4] = (data & 0xff00) >> 8;
     //mydata[5] = data  & 0xff;
 
