@@ -92,14 +92,12 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
         int lastcount = (int) macs.size();
         uint8_t *p = (uint8_t *) advertisedDevice.getAddress().getNative();
-
         // Current devices seen on this scan session
         currentScanDevice++;
         // add this device and refresh display if it was not previously added
         if ( mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE) ) {
             char buff[16];
             snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-            u8x8.setCursor(0,0);
             u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
         }
         u8x8.setCursor(11,3);

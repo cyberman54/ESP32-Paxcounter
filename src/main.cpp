@@ -272,9 +272,7 @@ void sniffer_loop(void * pvParameters) {
         ESP_LOGI(TAG, "Wifi set channel %d", channel);
 
         snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-        u8x8.setCursor(0,0);
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
-        // u8x8.clearLine(3); // not needed?
         u8x8.setCursor(0,3);
         // We just state out of BLE scanning
         if (currentScanDevice) {
