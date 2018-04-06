@@ -110,7 +110,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 void BLECount() {
     ESP_LOGI(TAG, "BLE scan started");
     currentScanDevice = 0; // Set 0 seen device on this scan session
-    //u8x8.clearLine(3); // causes little screen flicker, and seems not needed
+    //u8x8.clearLine(3); // not needed?
     u8x8.drawString(0,3,"BLE Scan...");
     BLEDevice::init(PROGNAME);
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
@@ -150,6 +150,6 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
     } else {
         ESP_LOGI(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi, cfg.rssilimit);
     }
-    yield();
+    //yield();
 }
 
