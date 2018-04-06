@@ -105,6 +105,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
         http://www.libelium.com/products/meshlium/smartphone-detection/
 
+        http://dev.ti.com/tirex/content/simplelink_academy_cc2640r2sdk_1_12_01_16/modules/ble_scan_adv_basic/ble_scan_adv_basic.html
+
         "The Class of Device (CoD) in case of Bluetooth which allows us to differentiate the type of 
         device (smartphone, handsfree, computer, LAN/network AP). With this parameter we can 
         differentiate among pedestrians and vehicles."
@@ -133,6 +135,8 @@ void BLECount() {
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
     pBLEScan->setActiveScan(false); // An active scan would mean that we will wish a scan response.
+    pBLEScan->setWindow(BLESCANWINDOW);
+    pBLEScan->setInterval(BLESCANINTERVAL);
     BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime); // note: this is a blocking call
     int blenum=foundDevices.getCount();
     ESP_LOGI(TAG, "BLE scan done, seen %d device(s)", blenum);

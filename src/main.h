@@ -1,7 +1,7 @@
 #pragma once
 
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.2.94"    // use max 10 chars here!
+#define PROGVERSION                     "1.2.95"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
@@ -11,19 +11,32 @@
 #define VENDORFILTER                    1       // comment out if you want to count things, not people
 #define BLECOUNTER                      1       // comment out if you don't want BLE count
 
-// BLE scan time
-#define BLESCANTIME                     10      // [seconds]
+// BLE scan parameters
 #define BLESCANCYCLE                    2       // BLE scan once after each <BLECYCLE> wifi scans
+#define BLESCANTIME                     11      // [seconds] scan duration, see above
+#define BLESCANWINDOW                   100     // [milliseconds] scan window, see above, 25 .. 10240
+#define BLESCANINTERVAL                 100     // [milliseconds] how long to wait between scans, 25 .. 10240
+/*
+*
+* |< Scan Window >       |< Scan Window >       |< Scan Window >       |
+* |<    Scan Interval   >|<    Scan Interval   >|<    Scan Interval   >|
+* |<                   Scan duration                                  >|
+* 
+* Scan duration sets how long scanning should be going on, interrupting a wifi scan cycle.
+* Scan window sets how much of the interval should be occupied by scanning.
+* Scan interval is how long scanning should be done on each channel. BLE uses 3 channels for advertising.
+* -> Adjust these values with power consumption in mind if power is limited.
+*/
 
-// WiFi Sniffer cycle interval
-#define SEND_SECS                       120     // [seconds/2] -> 240 sec.
-//#define SEND_SECS                       30    // [seconds/2] -> 60 sec.
-
-// WiFi sniffer config
+// WiFi scan parameters
 #define WIFI_CHANNEL_MIN                1       // start channel number where scan begings
 #define	WIFI_CHANNEL_MAX                13      // total channel number to scan
 #define WIFI_MY_COUNTRY                 "EU"    // select locale for Wifi RF settings
 #define	WIFI_CHANNEL_SWITCH_INTERVAL    50      // [seconds/100] -> 0,5 sec.
+
+// LoRa payload send cycle
+#define SEND_SECS                       120     // [seconds/2] -> 240 sec.
+//#define SEND_SECS                       30    // [seconds/2] -> 60 sec.
 
 // Default LoRa Spreadfactor
 #define LORASFDEFAULT                   9       // 7 ... 12 SF, according to LoRaWAN specs
