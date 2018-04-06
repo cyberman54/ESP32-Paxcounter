@@ -92,6 +92,26 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
         int lastcount = (int) macs.size();
         uint8_t *p = (uint8_t *) advertisedDevice.getAddress().getNative();
+
+        /* to be done here:
+        #ifdef VENDORFILTER
+        
+        filter BLE devices using their advertisements to get second filter additional to vendor OUI
+        if vendorfiltering is on, we ...
+        - want to count: mobile phones and tablets
+        - don't want to count: beacons, peripherals (earphones, headsets, printers), cars and machines
+        see
+        https://github.com/nkolban/ESP32_BLE_Arduino/blob/master/src/BLEAdvertisedDevice.cpp
+
+        http://www.libelium.com/products/meshlium/smartphone-detection/
+
+        "The Class of Device (CoD) in case of Bluetooth which allows us to differentiate the type of 
+        device (smartphone, handsfree, computer, LAN/network AP). With this parameter we can 
+        differentiate among pedestrians and vehicles."
+        #endif
+        
+        */
+        
         // Current devices seen on this scan session
         currentScanDevice++;
         u8x8.setCursor(11,3);
