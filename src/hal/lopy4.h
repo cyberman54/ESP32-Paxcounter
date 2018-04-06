@@ -1,7 +1,8 @@
 // Hardware related definitions for Pycom LoPy Board (not: LoPy4)
 
 #define CFG_sx1276_radio 1
-#define HAS_RGB_LED   0  // WS2812B RGB LED
+#define HAS_LED NOT_A_PIN // LoPy4 has no on board LED, so we use RGB LED on LoPy4
+#define HAS_RGB_LED   0  // WS2812B RGB LED on GPIO0
 
 // Hardware pin definitions for Pycom LoPy4 board
 #define PIN_SPI_SS    18

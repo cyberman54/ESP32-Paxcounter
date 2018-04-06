@@ -1,5 +1,4 @@
 // Basic Config
-#include "main.h"
 #include "globals.h"
 
 // LMIC-Arduino LoRaWAN Stack
@@ -7,7 +6,9 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
-uint8_t mydata[] = "0000";
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+    #include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
+#endif
 
 // Local logging Tag
 static const char *TAG = "lorawan";
@@ -31,9 +32,9 @@ void gen_lora_deveui(uint8_t *pdeveui) {
     *p++ = 0xFF;
     *p++ = 0xFE;
     // Then next 6 bytes are mac address reversed
-                for ( i=0; i<6 ; i++) {
-                  *p++ = dmac[5-i];
-                }
+    for ( i=0; i<6 ; i++) {
+        *p++ = dmac[5-i];
+    }
 }
 
 // Function to do a byte swap in a byte array
@@ -44,6 +45,37 @@ void RevBytes(unsigned char* b, size_t c)
   { unsigned char t = b[i];
     b[i] = b[c - 1 - i];
     b[c - 1 - i] = t; }
+}
+
+void get_hard_deveui(uint8_t *pdeveui) {
+    // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+    uint8_t i2c_ret;
+    // Init this just in case, no more to 100KHz
+    Wire.begin(OLED_SDA, OLED_SCL, 100000);
+    Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
+    Wire.write(MCP_24AA02E64_MAC_ADDRESS); 
+    i2c_ret = Wire.endTransmission();
+    // check if device seen on i2c bus
+    if (i2c_ret == 0) {
+        char deveui[32]="";
+        uint8_t data;
+        Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
+        Wire.write(MCP_24AA02E64_MAC_ADDRESS); 
+        Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8);
+        while (Wire.available()) {
+            data = Wire.read();
+            sprintf(deveui+strlen(deveui), "%02X ", data) ;
+            *pdeveui++ = data;
+        }
+        i2c_ret = Wire.endTransmission();
+        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 found, read DEVEUI %s", deveui);
+    } else {
+        ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 not found ret=%d", i2c_ret);
+    }
+    // Set back to 400KHz to speed up OLED
+    Wire.setClock(400000);
+#endif // MCP 24AA02E64    
 }
 
 #ifdef VERBOSE
@@ -79,9 +111,10 @@ void printKeys(void) {
 #endif // VERBOSE
 
 void do_send(osjob_t* j){
+    uint8_t mydata[4];
     uint16_t data;
-    // Total BLE+WIFI unique MACs seen
-    data = (uint16_t) macs.size();
+    // Sum of unique WIFI MACs seen
+    data = (uint16_t) wifis.size();
     mydata[0] = (data & 0xff00) >> 8;
     mydata[1] = data  & 0xff;
     
@@ -90,59 +123,47 @@ void do_send(osjob_t* j){
     mydata[2] = (data & 0xff00) >> 8;
     mydata[3] = data  & 0xff;
 
-    // Sum of unique WIFI MACs seen
+    // Total BLE+WIFI unique MACs seen
     // TBD ?
-    //data = (uint16_t) wifis.size();
+    //data = (uint16_t) macs.size();
     //mydata[4] = (data & 0xff00) >> 8;
     //mydata[5] = data  & 0xff;
 
     // Check if there is not a current TX/RX job running
+    u8x8.clearLine(7); 
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
-        u8x8.clearLine(7); 
         u8x8.drawString(0, 7, "LORA BUSY");
     } else {
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, mydata, sizeof(mydata)-1, (cfg.countermode & 0x02));
+        LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
         ESP_LOGI(TAG, "Packet queued");
-        u8x8.clearLine(7);
         u8x8.drawString(0, 7, "PACKET QUEUED");
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }
 
 void onEvent (ev_t ev) {
+    char buff[24]="";
+    
     switch(ev) {
-        case EV_SCAN_TIMEOUT:
-            ESP_LOGI(TAG, "EV_SCAN_TIMEOUT");
-            u8x8.clearLine(7); 
-            u8x8.drawString(0, 7, "SCAN TIMEOUT");
-            break;
-        case EV_BEACON_FOUND:
-            ESP_LOGI(TAG, "EV_BEACON_FOUND");
-            u8x8.clearLine(7); 
-            u8x8.drawString(0, 7, "BEACON FOUND");
-            break;
-        case EV_BEACON_MISSED:
-            ESP_LOGI(TAG, "EV_BEACON_MISSED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "BEACON MISSED");
-            break;
-        case EV_BEACON_TRACKED:
-            ESP_LOGI(TAG, "EV_BEACON_TRACKED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "BEACON TRACKED");
-            break;
-        case EV_JOINING:
-            ESP_LOGI(TAG, "EV_JOINING");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "JOINING");
-            break;
+        case EV_SCAN_TIMEOUT:   strcpy_P(buff, PSTR("SCAN TIMEOUT"));   break;
+        case EV_BEACON_FOUND:   strcpy_P(buff, PSTR("BEACON FOUND"));   break;
+        case EV_BEACON_MISSED:  strcpy_P(buff, PSTR("BEACON MISSED")); break;
+        case EV_BEACON_TRACKED: strcpy_P(buff, PSTR("BEACON TRACKED")); break;
+        case EV_JOINING:        strcpy_P(buff, PSTR("JOINING"));        break;
+        case EV_LOST_TSYNC:     strcpy_P(buff, PSTR("LOST TSYNC"));     break;
+        case EV_RESET:          strcpy_P(buff, PSTR("RESET"));          break;
+        case EV_RXCOMPLETE:     strcpy_P(buff, PSTR("RX COMPLETE"));    break;
+        case EV_LINK_DEAD:      strcpy_P(buff, PSTR("LINK DEAD"));      break;
+        case EV_LINK_ALIVE:     strcpy_P(buff, PSTR("LINK ALIVE"));     break;
+        case EV_RFU1:           strcpy_P(buff, PSTR("RFUI"));           break;
+        case EV_JOIN_FAILED:    strcpy_P(buff, PSTR("JOIN FAILED"));    break;
+        case EV_REJOIN_FAILED:  strcpy_P(buff, PSTR("REJOIN FAILED"));  break;
+        
         case EV_JOINED:
-            ESP_LOGI(TAG, "EV_JOINED");
+            strcpy_P(buff, PSTR("JOINED"));
             u8x8.clearLine(6); // erase "Join Wait" message from display, see main.cpp
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "JOINED");
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
             LMIC_setLinkCheckMode(0);
@@ -154,35 +175,20 @@ void onEvent (ev_t ev) {
             // show effective LoRa parameters after join
             ESP_LOGI(TAG, "ADR=%i, SF=%i, TXPOWER=%i", cfg.adrmode, cfg.lorasf, cfg.txpower);
             break;
-        case EV_RFU1:
-            ESP_LOGI(TAG, "EV_RFU1");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "RFUI");
-            break;
-        case EV_JOIN_FAILED:
-            ESP_LOGI(TAG, "EV_JOIN_FAILED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "JOIN FAILED");
-            break;
-        case EV_REJOIN_FAILED:
-            ESP_LOGI(TAG, "EV_REJOIN_FAILED");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "REJOIN FAILED");
-            break;
         case EV_TXCOMPLETE:
             ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
             u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "TX COMPLETE");
             if (LMIC.txrxFlags & TXRX_ACK) {
               ESP_LOGI(TAG, "Received ack");
-              u8x8.clearLine(7);
               u8x8.drawString(0, 7, "RECEIVED ACK");
-            }   
+            } else {
+              u8x8.drawString(0, 7, "TX COMPLETE");
+            }
             if (LMIC.dataLen) {
-                ESP_LOGI(TAG, "Received %i bytes of payload", LMIC.dataLen);
+                ESP_LOGI(TAG, "Received %d bytes of payload", LMIC.dataLen);
                 u8x8.clearLine(6); 
                 u8x8.setCursor(0, 6);
-                u8x8.printf("Rcvd %i bytes", LMIC.dataLen);
+                u8x8.printf("Rcvd %d bytes", LMIC.dataLen);
                 u8x8.clearLine(7);
                 u8x8.setCursor(0, 7);
                 // LMIC.snr = SNR twos compliment [dB] * 4
@@ -200,38 +206,16 @@ void onEvent (ev_t ev) {
                 }
             }
             break;
-        case EV_LOST_TSYNC:
-            ESP_LOGI(TAG, "EV_LOST_TSYNC");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "LOST TSYNC");
-            break;
-        case EV_RESET:
-            ESP_LOGI(TAG, "EV_RESET");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "RESET");
-            break;
-        case EV_RXCOMPLETE:
-            // data received in ping slot
-            ESP_LOGI(TAG, "EV_RXCOMPLETE");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "RX COMPLETE");
-            break;
-        case EV_LINK_DEAD:
-            ESP_LOGI(TAG, "EV_LINK_DEAD");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "LINK DEAD");
-            break;
-        case EV_LINK_ALIVE:
-            ESP_LOGI(TAG, "EV_LINK_ALIVE");
-            u8x8.clearLine(7);
-            u8x8.drawString(0, 7, "LINK ALIVE");
-            break;
-        default:
-            ESP_LOGI(TAG, "Unknown event");
-            u8x8.clearLine(7);
-            u8x8.setCursor(0, 7);
-            u8x8.printf("UNKNOWN EVENT %d", ev);
-            break;
+        default: sprintf_P(buff, PSTR("UNKNOWN EVENT %d"), ev);      break;
     }
+
+    // Log & Display if asked
+    if (*buff) {
+        ESP_LOGI(TAG, "EV_%s", buff);
+        u8x8.clearLine(7);
+        u8x8.drawString(0, 7, buff);
+    }
+
+    
 }
 

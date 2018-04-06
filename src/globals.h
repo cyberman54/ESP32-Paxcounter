@@ -13,9 +13,11 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
+// LED controls
 #ifdef HAS_RGB_LED
-#include <SmartLeds.h>
+    #include <SmartLeds.h>
 #endif
+
 #include "rgb_led.h"
 #include "macsniff.h"
 
@@ -42,7 +44,7 @@ extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
 extern osjob_t sendjob;
-extern int countermode, screensaver, adrmode, lorasf, txpower, rlim, salt;
+extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern bool joinstate;
 extern std::set<uint16_t> wifis; 
 extern std::set<uint16_t> macs; 

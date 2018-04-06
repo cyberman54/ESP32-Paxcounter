@@ -3,7 +3,6 @@
 // checks commands and executes each command with 1 argument per command
 
 // Basic Config
-#include "main.h"
 #include "globals.h"
 
 // LMIC-Arduino LoRaWAN Stack
@@ -70,7 +69,7 @@ void set_reset(int val) {
             macs.clear(); // clear all macs container
             wifis.clear(); // clear Wifi macs container
             bles.clear(); // clear BLE macs container
-            salt = random(65536); // get new 16bit random for salting hashes
+            salt_reset(); // get new 16bit salt
             u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             u8x8.clearLine(5);
             u8x8.setCursor(0, 5);

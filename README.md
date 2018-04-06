@@ -18,13 +18,15 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Currently supported IoT boards:
-- Heltec LoRa-32
-- TTGOv1
-- TTGOv2
-- Pycom LoPy
-- Pycom LoPy4
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+- Heltec LoRa-32 {1}
+- TTGOv1 {1}
+- TTGOv2 {1}
+- Pycom LoPy {2}
+- Pycom LoPy4 {2}
+- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
+- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
+
+{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -48,7 +50,13 @@ These results where metered with software version 1.2.0 during active wifi scan,
 
 Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
 
-Before compiling the code, create file loraconf.h in the /src directory from the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. Only OTAA join is supported, not ABP. The DEVEUI will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings. If you enter a DEVEUI in loraconf.h it will be used instead.
+Before compiling the code, **create file loraconf.h in your local /src directory** using the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. If you're using popular <A HREF="https://thethingsnetwork.org">TheThingsNetwork</A> you can copy&paste the keys from TTN console or output of ttnctl.
+
+To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings.
+
+If your device has a fixed DEVEUI enter this in your local loraconf.h file. During compile time this DEVEUI will be grabbed from loraconf.h and inserted in the code.
+
+If your device has silicon **Unique ID** which is stored in serial EEPROM Microchip 24AA02E64 you don't need to change anything. The Unique ID will be read during startup and DEVEUI will be generated from it, overriding settings in loraconf.h.
 
 # Uploading
 
@@ -77,8 +85,8 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 FPort1:
 
-	byte 1:			16-bit Wifi counter, MSB
-	byte 2:			16-bit Wifi counter, LSB
+	byte 1:			16-bit WiFi counter, MSB
+	byte 2:			16-bit WiFi counter, LSB
 	byte 3:			16-bit BLE counter, MSB
 	byte 4:			16-bit BLE counter, LSB
 
@@ -98,7 +106,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 	1 ... 255 used for wifi scan radius (greater values increase wifi scan radius, values 50...110 make sense)
 	0 = Wifi rssi limiter disabled [default]
-	
+
 0x02 set counter mode
 
 	0 = cyclic unconfirmed, mac counter reset after each wifi scan cycle, data is sent only once [default]
@@ -177,7 +185,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-	device answers with it's current configuration:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L24-L41) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -202,7 +210,16 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 0x82 get device cpu temperature
 
 	bytes 1-3:		chip temperature in celsius (little endian format)
-	
+
+# RGB Led color description
+
+Description of the RGB LED color (LoPy/LoPy4 and Lolin32 only):
+
+- Yellow quick blink: joining LoRaWAN network in progress or pending
+- Blue blink: LoRaWAN data transmit (including waiting for receive windows) in progress or pending
+- Green each blink: seen a new Wifi device
+- Magenta each blink: seen a new BLE device
+
 # License
 
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>

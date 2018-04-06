@@ -22,7 +22,6 @@ Refer to LICENSE.txt file in repository for more details.
 */
 
 // Basic Config
-#include "main.h"
 #include "globals.h"
 
 // std::set for unified array functions
@@ -30,6 +29,7 @@ Refer to LICENSE.txt file in repository for more details.
 
 // OLED driver
 #include <U8x8lib.h>
+#include <Wire.h> // Does nothing and avoid any compilation error with I2C
 
 // LMIC-Arduino LoRaWAN Stack
 #include "loraconf.h"
@@ -45,7 +45,7 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-int macnum = 0, salt;
+int macnum = 0;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
 
@@ -85,6 +85,8 @@ void loadConfig(void);
 // defined in lorawan.cpp
 void gen_lora_deveui(uint8_t * pdeveui);
 void RevBytes(unsigned char* b, size_t c);
+void get_hard_deveui(uint8_t *pdeveui);
+
 
 #ifdef VERBOSE
     void printKeys(void);
@@ -103,12 +105,20 @@ void os_getArtEui (u1_t *buf) {
 void os_getDevEui (u1_t* buf) {
     int i=0, k=0;
     memcpy(buf, DEVEUI, 8); // get fixed DEVEUI from loraconf.h 
-    for (i=0; i<8 ; i++)
+    for (i=0; i<8 ; i++) {
         k += buf[i];
-    if (k) 
+    }
+    if (k) {
         RevBytes(buf, 8); // use fixed DEVEUI and swap bytes to LSB format
-    else
+    } else {
         gen_lora_deveui(buf); // generate DEVEUI from device's MAC
+    }
+
+    // Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
+    #ifdef MCP_24AA02E64_I2C_ADDRESS
+        get_hard_deveui(buf); 
+        RevBytes(buf, 8); // swap bytes to LSB format
+    #endif
 }
 
 // LMIC enhanced Pin mapping
@@ -243,29 +253,40 @@ void wifi_sniffer_init(void);
 void wifi_sniffer_set_channel(uint8_t channel);
 void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
-//WiFi Sniffer Task
-void wifi_sniffer_loop(void * pvParameters) {
+// Sniffer Task
+void sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
     uint8_t channel=0;
+    char buff[16];
     int nloop=0, lorawait=0;
-    
+   
   	while (true) {
 
-        nloop++; // acutal number of wifi loops, controls cycle when data is sent
+        nloop++; // actual number of wifi loops, controls cycle when data is sent
 
         vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
         yield();
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
         ESP_LOGI(TAG, "Wifi set channel %d", channel);
-        
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: %4i", cfg.rssilimit);
-        u8x8.setCursor(11,5);
-        u8x8.printf("ch:%02i", channel);
+
+        snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
+        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
+        u8x8.setCursor(0,3);
+        // We just state out of BLE scanning
+        if (currentScanDevice) {
+            u8x8.printf("BLE:  %-4d %-4d", (int) bles.size(), currentScanDevice);
+        } else {
+            u8x8.printf("BLE:  %-4d", (int) bles.size());
+        }
         u8x8.setCursor(0,4);
-        u8x8.printf("MAC#: %-5i", wifis.size());
+        u8x8.printf("WIFI: %-4d", (int) wifis.size());
+        u8x8.setCursor(11,4);
+        u8x8.printf("ch:%02i", channel);
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
+        //u8x8.printf(" ch:%02i", channel);
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
@@ -282,14 +303,16 @@ void wifi_sniffer_loop(void * pvParameters) {
                 #ifdef BLECOUNTER
                   bles.clear();                         // clear BLE macs counter
                 #endif 
-                salt = random(65536);                   // get new 16bit random for salting hashes
-                u8x8.clearLine(0); u8x8.clearLine(1);   // clear Display counter
+                salt_reset(); // get new salt for salting hashes
+                u8x8.clearLine(0); // clear Display counter 
+                u8x8.clearLine(1); 
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
             lorawait = 0;
             while(LMIC.opmode & OP_TXRXPEND) {
-                if(!lorawait) u8x8.drawString(0,6,"LoRa wait       ");
+                if(!lorawait) 
+                    u8x8.drawString(0,6,"LoRa wait       ");
                 lorawait++;
                 // in case sending really fails: reset and rejoin network
                 if( (lorawait % MAXLORARETRY ) == 0) {
@@ -302,12 +325,14 @@ void wifi_sniffer_loop(void * pvParameters) {
 
             u8x8.clearLine(6);
 
+            // TBD: need to check if long 2000ms pause causes stack problems while scanning continues
             if (cfg.screenon && cfg.screensaver) {
-              vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
-            }
-            yield();
-            u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
+                vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
+                yield();
+                u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
+            }          
         } // end of send data cycle
+        
         else {
             #ifdef BLECOUNTER
                 if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 )   // once after cfg.blescancycle Wifi scans, do a BLE scan
@@ -344,7 +369,7 @@ void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
 void init_display(const char *Productname, const char *Version) {
     u8x8.begin();
     u8x8.setFont(u8x8_font_chroma48medium8_r);
-#ifdef HAS_DISPLAY  
+#ifdef HAS_DISPLAY
     uint8_t buf[32];
     u8x8.clear();
     u8x8.setFlipMode(0);
@@ -363,6 +388,10 @@ void init_display(const char *Productname, const char *Version) {
 
     u8x8.setFlipMode(0);
     u8x8.clear();
+
+    #ifdef DISPLAY_FLIP
+        u8x8.setFlipMode(1);
+    #endif
 
     // Display chip information
     #ifdef VERBOSE
@@ -392,9 +421,9 @@ void init_display(const char *Productname, const char *Version) {
 
 void setup() {
 
-  // disable brownout detection
+    // disable brownout detection
 #ifdef DISABLE_BROWNOUT
-  // Register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
+    // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((volatile uint32_t *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE+0xd4)))) = 0;
 #endif
 
@@ -410,11 +439,11 @@ void setup() {
     
     ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
     rgb_set_color(COLOR_NONE);
-                
-    // system event handler for wifi task, needed for wifi_sniffer_init()
+    
+    // initialize system event handler for wifi task, needed for wifi_sniffer_init()
     esp_event_loop_init(NULL, NULL);
 
-    // Print chip information on startup
+    // print chip information on startup if in verbose mode
 #ifdef VERBOSE
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
@@ -427,16 +456,16 @@ void setup() {
     ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
 #endif
 
-    // Read settings from NVRAM
+    // read settings from NVRAM
     loadConfig(); // includes initialize if necessary
 
-    // initialize hardware
+    // initialize led if needed
 #ifdef HAS_LED
-    // initialize LED
     pinMode(HAS_LED, OUTPUT);
     digitalWrite(HAS_LED, LOW);
 #endif
 
+    // initialize button handling if needed
 #ifdef HAS_BUTTON
     #ifdef BUTTON_PULLUP
         // install button interrupt (pullup mode)
@@ -449,31 +478,32 @@ void setup() {
     #endif
 #endif
 
-    // initialize wifi antenna
+    // initialize wifi antenna if needed
 #ifdef HAS_ANTENNA_SWITCH
     antenna_init();
 #endif
 
-    // initialize salt value using esp_random() called by random() in arduino-esp32 core
-    salt = random(65536); // get new 16bit random for salting hashes
-
-    // initialize display
+// initialize display  
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.setCursor(0,5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %4i", cfg.rssilimit);
+    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
     u8x8.drawString(0,6,"Join Wait       ");
-    
-    // output LoRaWAN keys to console
+
+// output LoRaWAN keys to console
 #ifdef VERBOSE
     printKeys();
-#endif // VERBOSE
+#endif
 
-    os_init(); // setup LMIC
-    os_setCallback(&initjob, lora_init); // setup initial job & join network 
-    wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
+os_init(); // setup LMIC
+os_setCallback(&initjob, lora_init); // setup initial job & join network 
+wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
+
+// initialize salt value using esp_random() called by random() in arduino-esp32 core
+// note: do this *after* wifi has started, since gets it's seed from RF noise
+salt_reset(); // get new 16bit for salting hashes
  
-    // Start FreeRTOS tasks
+// Start FreeRTOS tasks
 #if CONFIG_FREERTOS_UNICORE // run all tasks on core 0 and switch off core 1
     ESP_LOGI(TAG, "Starting Lora task on core 0");
     xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 0);  
@@ -484,12 +514,12 @@ void setup() {
     ESP_LOGI(TAG, "Starting Lora task on core 1");
     xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
     ESP_LOGI(TAG, "Starting Wifi task on core 0");
-    xTaskCreatePinnedToCore(wifi_sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
+    xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
 #endif
     
-    // Kickoff first sendjob, use payload "0000"
-    uint8_t mydata[] = "0000";
-    do_send(&sendjob);
+// Finally: kickoff first sendjob and join, then send initial payload "0000"
+uint8_t mydata[] = "0000";
+do_send(&sendjob);
 }
 
 /* end Aruino SETUP ------------------------------------------------------------ */
