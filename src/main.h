@@ -13,10 +13,11 @@
 
 // BLE scan parameters
 #define BLESCANCYCLE                    2       // BLE scan once after each <BLECYCLE> wifi scans
-#define BLESCANTIME                     11      // [seconds] scan duration, see above
-#define BLESCANWINDOW                   100     // [milliseconds] scan window, see above, 25 .. 10240
-#define BLESCANINTERVAL                 100     // [milliseconds] how long to wait between scans, 25 .. 10240
-/*
+#define BLESCANTIME                     11      // [seconds] scan duration, see note below
+#define BLESCANWINDOW                   100     // [milliseconds] scan window, see below, 3 .. 10240, default 10
+#define BLESCANINTERVAL                 100     // [milliseconds] how long to wait between scans, 3 .. 10240, default 10
+
+/* Note: guide for setting bluetooth parameters
 *
 * |< Scan Window >       |< Scan Window >       |< Scan Window >       |
 * |<    Scan Interval   >|<    Scan Interval   >|<    Scan Interval   >|

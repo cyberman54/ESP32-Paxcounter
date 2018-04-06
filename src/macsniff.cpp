@@ -107,11 +107,15 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
         http://dev.ti.com/tirex/content/simplelink_academy_cc2640r2sdk_1_12_01_16/modules/ble_scan_adv_basic/ble_scan_adv_basic.html
 
+        http://microchipdeveloper.com/wireless:ble-link-layer-packet-types
+
+        http://microchipdeveloper.com/wireless:ble-link-layer-address
+
         "The Class of Device (CoD) in case of Bluetooth which allows us to differentiate the type of 
         device (smartphone, handsfree, computer, LAN/network AP). With this parameter we can 
         differentiate among pedestrians and vehicles."
+
         #endif
-        
         */
         
         // Current devices seen on this scan session
