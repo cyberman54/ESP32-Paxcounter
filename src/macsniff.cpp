@@ -94,14 +94,14 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         uint8_t *p = (uint8_t *) advertisedDevice.getAddress().getNative();
         // Current devices seen on this scan session
         currentScanDevice++;
-        // add this device and refresh display if it was not previously added
+        u8x8.setCursor(11,3);
+        u8x8.printf("%-4d", currentScanDevice);
+        // add this device and show new count total if it was not previously added
         if ( mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE) ) {
             char buff[16];
             snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
             u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
         }
-        u8x8.setCursor(11,3);
-        u8x8.printf("%-4d", currentScanDevice);
     }
 };
 
@@ -112,8 +112,8 @@ void BLECount() {
     BLEDevice::init(""); // we don't want to be seen by a name
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-    pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
-    BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime);
+    pBLEScan->setActiveScan(false); // An active scan would mean that we will wish a scan response.
+    BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime); // note: this is a blocking call
     int blenum=foundDevices.getCount();
     ESP_LOGI(TAG, "BLE scan done, seen %d device(s)", blenum);
 }
