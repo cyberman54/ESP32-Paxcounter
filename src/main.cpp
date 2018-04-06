@@ -278,15 +278,17 @@ void sniffer_loop(void * pvParameters) {
         u8x8.setCursor(0,3);
         // We just state out of BLE scanning
         if (currentScanDevice) {
-            u8x8.printf("BLE#: %-4d  %d", (int) bles.size(), currentScanDevice);
+            u8x8.printf("BLE:  %-4d %-4d", (int) bles.size(), currentScanDevice);
         } else {
-            u8x8.printf("BLE#: %-4d", (int) bles.size());
+            u8x8.printf("BLE:  %-4d", (int) bles.size());
         }
         u8x8.setCursor(0,4);
-        u8x8.printf("MAC#: %-5d", (int) wifis.size());
+        u8x8.printf("WIFI: %-4d", (int) wifis.size());
+        u8x8.setCursor(11,4);
+        u8x8.printf("ch:%02i", channel);
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
-        u8x8.printf(" ch:%02i", channel);
+        //u8x8.printf(" ch:%02i", channel);
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
@@ -325,6 +327,7 @@ void sniffer_loop(void * pvParameters) {
 
             u8x8.clearLine(6);
 
+            // TBD: need to check if long 2000ms pause causes stack problems while scanning continues
             if (cfg.screenon && cfg.screensaver) {
                 vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
                 yield();
