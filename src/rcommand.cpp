@@ -68,7 +68,9 @@ void set_reset(int val) {
             ESP_LOGI(TAG, "Remote command: reset MAC counter");
             macs.clear(); // clear all macs container
             wifis.clear(); // clear Wifi macs container
-            bles.clear(); // clear BLE macs container
+            #ifdef BLECOUNTER
+                bles.clear(); // clear BLE macs container
+            #endif
             salt_reset(); // get new 16bit salt
             u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
             u8x8.clearLine(5);

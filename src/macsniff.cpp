@@ -60,10 +60,13 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
             if (sniff_type == MAC_SNIFF_WIFI ) {
                 rgb_set_color(COLOR_GREEN);
                 wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
-            } else if (sniff_type == MAC_SNIFF_BLE ) {
+            } 
+            #ifdef BLECOUNTER
+            else if (sniff_type == MAC_SNIFF_BLE ) {
                 rgb_set_color(COLOR_MAGENTA);
                 bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
             }
+            #endif
             // Not sure user will have time to see the LED
             // TBD do light off further in the code
             rgb_set_color(COLOR_NONE);
@@ -72,7 +75,12 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
                         sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLE ", 
                         rssi, buff, hashedmac, 
-                        (int) wifis.size(), (int) bles.size(),
+                        (int) wifis.size(), 
+                        #ifdef BLECOUNTER
+                            (int) bles.size(),
+                        #else
+                            0,
+                        #endif
                         added ? "New" : "Already seen");
 
     #ifdef VENDORFILTER
@@ -96,7 +104,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         /* to be done here:
         #ifdef VENDORFILTER
         
-        filter BLE devices using their advertisements to get second filter additional to vendor OUI
+        filter BLE devices using their advertisements to get filter alternative to vendor OUI
         if vendorfiltering is on, we ...
         - want to count: mobile phones and tablets
         - don't want to count: beacons, peripherals (earphones, headsets, printers), cars and machines
@@ -105,11 +113,9 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
         http://www.libelium.com/products/meshlium/smartphone-detection/
 
-        http://dev.ti.com/tirex/content/simplelink_academy_cc2640r2sdk_1_12_01_16/modules/ble_scan_adv_basic/ble_scan_adv_basic.html
+        https://www.question-defense.com/2013/01/12/bluetooth-cod-bluetooth-class-of-deviceclass-of-service-explained
 
-        http://microchipdeveloper.com/wireless:ble-link-layer-packet-types
-
-        http://microchipdeveloper.com/wireless:ble-link-layer-address
+        https://www.bluetooth.com/specifications/assigned-numbers/baseband
 
         "The Class of Device (CoD) in case of Bluetooth which allows us to differentiate the type of 
         device (smartphone, handsfree, computer, LAN/network AP). With this parameter we can 
