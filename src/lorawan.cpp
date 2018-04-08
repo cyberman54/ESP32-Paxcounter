@@ -118,10 +118,15 @@ void do_send(osjob_t* j){
     mydata[0] = (data & 0xff00) >> 8;
     mydata[1] = data  & 0xff;
     
+    #ifdef BLECOUNTER
     // Sum of unique BLE MACs seen
     data = (uint16_t) bles.size();
     mydata[2] = (data & 0xff00) >> 8;
     mydata[3] = data  & 0xff;
+    #else
+    mydata[2] = 0;
+    mydata[3] = 0;
+    #endif
 
     // Total BLE+WIFI unique MACs seen
     // TBD ?

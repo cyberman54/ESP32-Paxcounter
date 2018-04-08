@@ -218,7 +218,7 @@ void lorawan_loop(void * pvParameters) {
 #ifdef BLECOUNTER
     void BLECount(void);
 #else
-    btStop();
+    bool btstop = btStop();
 #endif
 
 void set_onboard_led(int st){
@@ -272,24 +272,27 @@ void sniffer_loop(void * pvParameters) {
         ESP_LOGI(TAG, "Wifi set channel %d", channel);
 
         snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
-        u8x8.setCursor(0,3);
-        // We just state out of BLE scanning
-        if (currentScanDevice) {
-            u8x8.printf("BLE:  %-4d %-4d", (int) bles.size(), currentScanDevice);
-        } else {
-            u8x8.printf("BLE:  %-4d", (int) bles.size());
-        }
+        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total
+
+        #ifdef BLECOUNTER
+            // We just state out of BLE scanning
+            u8x8.setCursor(0,3);
+            if (currentScanDevice) {
+                u8x8.printf("BLE:  %-4d %-4d", (int) bles.size(), currentScanDevice);
+            } else {
+                u8x8.printf("BLE:  %-4d", (int) bles.size());
+            }
+        #endif
+
         u8x8.setCursor(0,4);
         u8x8.printf("WIFI: %-4d", (int) wifis.size());
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02i", channel);
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
-        //u8x8.printf(" ch:%02i", channel);
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
-        if( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
+        if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
             u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
             nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
             do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
@@ -301,7 +304,7 @@ void sniffer_loop(void * pvParameters) {
                 macs.clear();                           // clear all macs container
                 wifis.clear();                          // clear Wifi macs couner
                 #ifdef BLECOUNTER
-                  bles.clear();                         // clear BLE macs counter
+                    bles.clear();                         // clear BLE macs counter
                 #endif 
                 salt_reset(); // get new salt for salting hashes
                 u8x8.clearLine(0); // clear Display counter 
@@ -336,8 +339,9 @@ void sniffer_loop(void * pvParameters) {
         else {
             #ifdef BLECOUNTER
                 if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 )   // once after cfg.blescancycle Wifi scans, do a BLE scan
-                    if (cfg.blescan)                 // execute BLE count if BLE function is enabled
-                        BLECount();           
+                    if (cfg.blescan) {              // execute BLE count if BLE function is enabled
+                        BLECount();                 // start BLE scan, this is a blocking call
+                    }
             #endif
         } // end of channel rotation loop
     } // end of infinite wifi scan loop
