@@ -142,14 +142,14 @@ void BLECount() {
     currentScanDevice = 0; // Set 0 seen device on this scan session
     u8x8.drawString(0,3,"Scanning->");
     BLEDevice::init(""); // we don't want to be seen by a name
+    BLEScanResults foundDevices; // instance for getting count
     BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-    pBLEScan->setActiveScan(false); // An active scan would mean that we will wish a scan response.
+    pBLEScan->setActiveScan(false); // An active scan would mean that we will wish unneeeded scan responses
     pBLEScan->setWindow(BLESCANWINDOW);
     pBLEScan->setInterval(BLESCANINTERVAL);
-    BLEScanResults foundDevices = pBLEScan->start(cfg.blescantime); // note: this is a blocking call
-    int blenum=foundDevices.getCount();
-    ESP_LOGI(TAG, "BLE scan done, seen %d device(s)", blenum);
+    pBLEScan->start(cfg.blescantime); // note: this is a blocking call
+    ESP_LOGI(TAG, "BLE scan done, seen %d device(s)", foundDevices.getCount());
 }
 #endif
 
