@@ -36,15 +36,15 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 
 <b>Power consumption</b>:
 
-- Heltec ~650mW
-- TTGOv1 ~650mW
-- TTGOv2 ~670mW
-- LoPy with expansion board: ~530mW
-- LoPy pure, without expansion board: ~460mW
+- Heltec ~720mW
+- TTGOv1 TBD
+- TTGOv2 ~990mW
+- LoPy with expansion board: ~690mW
+- LoPy pure, without expansion board: TBD
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora): TBD
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora): TBD
 
-These results where metered with software version 1.2.0 during active wifi scan, no LoRa TX’ing, OLED display off, 5V USB powered.
+These results where metered with software version 1.2.97 while continuously scanning wifi and ble, no LoRa TX’ing, OLED display (if present) on, 5V USB powered.
 
 # Building
 
