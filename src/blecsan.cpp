@@ -264,17 +264,6 @@ esp_err_t register_ble_functionality(void)
 
 	ESP_LOGI(TAG, "Set GAP scan parameters");
 	
-	// This function is called to set scan parameters.	
-	status = esp_ble_gap_set_scan_params(&ble_scan_params);
-	if (status != ESP_OK) 
-	{
-		ESP_LOGE(TAG, "esp_ble_gap_set_scan_params: rc=%d", status);
-		return ESP_FAIL;
-	}
-
-
-	ESP_LOGD(TAG, "We have registered what we need!");
-
 	return ESP_OK ;
 }
 
@@ -283,10 +272,9 @@ esp_err_t register_ble_functionality(void)
 void bt_loop(void *ignore)
 {
 	esp_err_t status;
-
-	ESP_LOGI(TAG, "Enabling Bluetooth Controller");
 	
 	// Initialize BT controller to allocate task and other resource. 
+	ESP_LOGI(TAG, "Enabling Bluetooth Controller...");
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 	if (esp_bt_controller_init(&bt_cfg) != ESP_OK) 
 	{
@@ -300,12 +288,9 @@ void bt_loop(void *ignore)
 		ESP_LOGE(TAG, "Bluetooth controller enable failed");
 		goto end; 
 	}
-
-	ESP_LOGI(TAG, "Bluetooth Controller Enabled");
-
-	ESP_LOGI(TAG, "Init Bluetooth stack");
 	
 	// Init and alloc the resource for bluetooth, must be prior to every bluetooth stuff
+	ESP_LOGI(TAG, "Init Bluetooth stack...");
 	status = esp_bluedroid_init(); 
 	if (status != ESP_OK)
 	{ 
@@ -321,9 +306,7 @@ void bt_loop(void *ignore)
 		goto end;
 	} 
 
-	ESP_LOGI(TAG, "Bluetooth stack initialized");
-
-	ESP_LOGI(TAG, "Register BLE functionality");
+	ESP_LOGI(TAG, "Register BLE functionality...");
 	status = register_ble_functionality();
 	if (status != ESP_OK)
 	{
@@ -333,7 +316,7 @@ void bt_loop(void *ignore)
 
 	while(1)
     {
-        vTaskDelay(1000);
+        vTaskDelay(500);
         yield();
     }
 
