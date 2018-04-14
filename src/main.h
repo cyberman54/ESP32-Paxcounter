@@ -9,7 +9,7 @@
 
 // set this to include BLE counting and vendor filter functions
 #define VENDORFILTER                    1       // comment out if you want to count things, not people
-#define BLECOUNTER                      1       // comment out if you don't want BLE count
+//#define BLECOUNTER                      1       // comment out if you don't want BLE count
 
 // BLE scan parameters
 #define BLESCANCYCLE                    2       // BLE scan once after each <BLECYCLE> wifi scans

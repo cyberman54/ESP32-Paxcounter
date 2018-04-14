@@ -57,5 +57,5 @@ extern std::set<uint16_t> macs;
 
 #ifdef BLECOUNTER
     extern int scanTime;
-    extern std::set<uint16_t> bles; 
+    extern std::set<uint16_t> bles;
 #endif
