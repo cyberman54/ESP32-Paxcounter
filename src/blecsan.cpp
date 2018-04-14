@@ -11,6 +11,8 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 #include <esp_bt.h>
 #include <esp_bt_main.h>
 #include <esp_gap_ble_api.h>
+#include <esp_blufi_api.h>
+#include <bt_types.h>
 
 // defined in macsniff.cpp
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
@@ -23,6 +25,7 @@ static const char *bt_event_type_to_string(uint32_t eventType);
 static const char *bt_gap_search_event_type_to_string(uint32_t searchEvt);
 static const char *bt_addr_t_to_string(esp_ble_addr_type_t type);
 static const char *bt_dev_type_to_string(esp_bt_dev_type_t type);
+static const char *btsig_gap_type(uint32_t gap_type);
 static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 
 // local Tag for logging
