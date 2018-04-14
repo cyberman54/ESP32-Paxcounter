@@ -215,9 +215,7 @@ void lorawan_loop(void * pvParameters) {
     void antenna_select(const int8_t _ant);
 #endif
 
-#ifdef BLECOUNTER
-    void BLECount(void);
-#else
+#ifndef BLECOUNTER
     bool btstop = btStop();
 #endif
 
@@ -276,19 +274,7 @@ void sniffer_loop(void * pvParameters) {
 
         snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total
-
-        #ifdef BLECOUNTER
-            // We just state out of BLE scanning
-            u8x8.setCursor(0,3);
-            if (currentScanDevice) {
-                u8x8.printf("BLE:  %-4d %-4d", (int) bles.size(), currentScanDevice);
-            } else {
-                u8x8.printf("BLE:  %-4d", (int) bles.size());
-            }
-        #endif
-
-        u8x8.setCursor(0,4);
-        u8x8.printf("WIFI: %-4d", (int) wifis.size());
+       
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02i", channel);
         u8x8.setCursor(0,5);
@@ -340,12 +326,14 @@ void sniffer_loop(void * pvParameters) {
         } // end of send data cycle
         
         else {
+            /*
             #ifdef BLECOUNTER
                 if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 )   // once after cfg.blescancycle Wifi scans, do a BLE scan
                     if (cfg.blescan) {              // execute BLE count if BLE function is enabled
                         BLECount();                 // start BLE scan, this is a blocking call
                     }
             #endif
+            */
         } // end of channel rotation loop
     } // end of infinite wifi scan loop
 }
@@ -493,6 +481,13 @@ void setup() {
 // initialize display  
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
+    u8x8.draw2x2String(0, 0, "PAX:0");
+    u8x8.setCursor(0,4);
+    u8x8.printf("WIFI: 0");
+    #ifdef BLECOUNTER
+        u8x8.setCursor(0,3);
+        u8x8.printf("BLE:  0");
+    #endif
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
     u8x8.drawString(0,6,"Join Wait       ");
@@ -516,16 +511,20 @@ salt_reset(); // get new 16bit for salting hashes
     xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 0);  
     ESP_LOGI(TAG, "Starting Wifi task on core 0");
     xTaskCreatePinnedToCore(wifi_sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
-    ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-    xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 0);
+    #ifdef BLECOUNTER
+        ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 0);
+    #endif
     // to come here: code for switching off core 1
 #else // run wifi task on core 0 and lora task on core 1 and bt task on core 1
     ESP_LOGI(TAG, "Starting Lora task on core 1");
     xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
     ESP_LOGI(TAG, "Starting Wifi task on core 0");
     xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
-    ESP_LOGI(TAG, "Starting Bluetooth task on core 1");
-    xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 1);
+    #ifdef BLECOUNTER
+        ESP_LOGI(TAG, "Starting Bluetooth task on core 1");
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 1);
+    #endif
 #endif
     
 // Finally: kickoff first sendjob and join, then send initial payload "0000"
