@@ -263,6 +263,14 @@ esp_err_t register_ble_functionality(void)
 	};
 
 	ESP_LOGI(TAG, "Set GAP scan parameters");
+
+	// This function is called to set scan parameters.			
+ 	status = esp_ble_gap_set_scan_params(&ble_scan_params);		
+ 	if (status != ESP_OK) 		
+ 	{		
+ 		ESP_LOGE(TAG, "esp_ble_gap_set_scan_params: rc=%d", status);		
+ 		return ESP_FAIL;		
+ 	}		
 	
 	return ESP_OK ;
 }
@@ -316,7 +324,7 @@ void bt_loop(void *ignore)
 
 	while(1)
     {
-        vTaskDelay(500);
+        vTaskDelay(1000);
         yield();
     }
 
