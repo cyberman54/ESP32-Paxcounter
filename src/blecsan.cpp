@@ -23,16 +23,13 @@ static const char *TAG = "bt_loop";
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
 
 // Prototypes
-static const char *bt_event_type_to_string(uint32_t eventType);
 static const char *bt_gap_search_event_type_to_string(uint32_t searchEvt);
 static const char *bt_addr_t_to_string(esp_ble_addr_type_t type);
 static const char *bt_dev_type_to_string(esp_bt_dev_type_t type);
 static const char *btsig_gap_type(uint32_t gap_type);
 
-
 static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
-	ESP_LOGD(TAG, "Received a GAP event: %s", bt_event_type_to_string(event));
 	esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 	esp_err_t status;	
 
@@ -53,7 +50,6 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 		
 		case ESP_GAP_BLE_SCAN_RESULT_EVT:
 		{	
-		
 			ESP_LOGI(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x", BT_BD_ADDR_HEX(p->scan_rst.bda));
 			ESP_LOGI(TAG, "Device type         : %s", bt_dev_type_to_string(p->scan_rst.dev_type));
 			ESP_LOGI(TAG, "Search_evt          : %s", bt_gap_search_event_type_to_string(p->scan_rst.search_evt));
@@ -189,23 +185,6 @@ static const char *bt_gap_search_event_type_to_string(uint32_t searchEvt) {
 } // bt_gap_search_event_type_to_string
 
 /*
- * Convert a BT GAP event type to a string representation.
- */
-static const char *bt_event_type_to_string(uint32_t eventType) {
-	switch(eventType) {
-		case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-			return "ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT";
-		case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
-			return "ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT";
-		case ESP_GAP_BLE_SCAN_RESULT_EVT:
-			return "ESP_GAP_BLE_SCAN_RESULT_EVT";
-		case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
-			return "ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT";
-		default:
-			return "Unknown event type";
-	}
-} // bt_event_type_to_string
-
 static const char *btsig_gap_type(uint32_t gap_type) {
 	switch (gap_type)
 	{
@@ -251,6 +230,7 @@ static const char *btsig_gap_type(uint32_t gap_type) {
 			return "Unknown type";
 	}
 }
+*/
 	
 esp_err_t register_ble_functionality(void)
 {
