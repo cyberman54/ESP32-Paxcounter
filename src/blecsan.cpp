@@ -324,7 +324,7 @@ void bt_loop(void *ignore)
 
 	while(1)
     {
-        vTaskDelay(1000);
+        vTaskDelay(500);
         yield();
     }
 
