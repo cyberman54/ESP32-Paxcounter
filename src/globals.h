@@ -33,7 +33,6 @@ typedef struct {
   int8_t wifiscancycle;                // wifi scan cycle [seconds/2]
   int8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
   int8_t blescantime;                  // BLE scan cycle duration [seconds]
-  int8_t blescancycle;                 // BLE scan frequency, once after [blescancycle] full wifi scans
   int8_t blescan;                      // 0=disabled, 1=enabled
   int8_t wifiant;                      // 0=internal, 1=external (for LoPy/LoPy4)
   int8_t rgblum;                       // RGB Led luminosity (0..100%)

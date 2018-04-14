@@ -163,10 +163,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 ... 255 duration of a BLE scan cycle in seconds
 	e.g. 15 -> 1 cycle runs for 15 seconds [default]
 
-0x0D set BLE scan cycle frequency
-
-	run BLE scan once after 0 ... 255 full wifi scans
-	e.g. 2 -> BLE scan runs once after each 2nd wifi scan [default]
+0x0D (unused)
 
 0x0E set BLE scan mode
 
@@ -197,11 +194,10 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 9:			Wifi scan cycle duration in seconds/2 (0..255)
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
 	byte 11:		BLE scan cycle duration in seconds (0..255)
-	byte 12:		BLE scan frequency, do once after (0..255) full wifi scans
-	byte 13:		BLE scan mode (1=on, 0=0ff)
-	byte 14:		Wifi antenna switch (0=internal, 1=external)
-	byte 15:		RGB LED luminosity (0..100 %)
-	bytes 16-25:		Software version (ASCII format)
+	byte 12:		BLE scan mode (1=on, 0=0ff)
+	byte 13:		Wifi antenna switch (0=internal, 1=external)
+	byte 14:		RGB LED luminosity (0..100 %)
+	bytes 15-24:		Software version (ASCII format)
 
 0x81 get device uptime
 

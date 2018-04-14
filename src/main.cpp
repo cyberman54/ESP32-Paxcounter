@@ -325,17 +325,7 @@ void sniffer_loop(void * pvParameters) {
             }          
         } // end of send data cycle
         
-        else {
-            /*
-            #ifdef BLECOUNTER
-                if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 )   // once after cfg.blescancycle Wifi scans, do a BLE scan
-                    if (cfg.blescan) {              // execute BLE count if BLE function is enabled
-                        BLECount();                 // start BLE scan, this is a blocking call
-                    }
-            #endif
-            */
-        } // end of channel rotation loop
-    } // end of infinite wifi scan loop
+    } // end of infinite wifi channel rotation loop
 }
 
 /* end wifi specific parts ------------------------------------------------------------ */
@@ -512,8 +502,10 @@ salt_reset(); // get new 16bit for salting hashes
     ESP_LOGI(TAG, "Starting Wifi task on core 0");
     xTaskCreatePinnedToCore(wifi_sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
     #ifdef BLECOUNTER
-        ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 0);
+        if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
+            ESP_LOGI(TAG, "Starting Bluetooth task on core 1");
+            xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 0);
+        }
     #endif
     // to come here: code for switching off core 1
 #else // run wifi task on core 0 and lora task on core 1 and bt task on core 1
@@ -522,8 +514,10 @@ salt_reset(); // get new 16bit for salting hashes
     ESP_LOGI(TAG, "Starting Wifi task on core 0");
     xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
     #ifdef BLECOUNTER
-        ESP_LOGI(TAG, "Starting Bluetooth task on core 1");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 1);
+        if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
+            ESP_LOGI(TAG, "Starting Bluetooth task on core 1");
+            xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, NULL, 5, NULL, 1);
+        }
     #endif
 #endif
     

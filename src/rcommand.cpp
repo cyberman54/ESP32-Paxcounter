@@ -110,11 +110,6 @@ void set_blescantime(int val) {
     ESP_LOGI(TAG, "Remote command: set BLE scan time to %i seconds", cfg.blescantime);
 };
 
-void set_blescancycle(int val) {
-    cfg.blescancycle = val;
-    ESP_LOGI(TAG, "Remote command: set BLE scan cycle to %i", cfg.blescancycle);
-};  
-
 void set_countmode(int val) {
     switch (val) {
         case 0: // cyclic unconfirmed
@@ -251,7 +246,7 @@ cmd_t table[] = {
                 {0x0a, set_wifiscancycle, true},
                 {0x0b, set_wifichancycle, true},
                 {0x0c, set_blescantime, true},
-                {0x0d, set_blescancycle, true},
+                {0x0d, set_noop, false},
                 {0x0e, set_blescan, true},
                 {0x0f, set_wifiant, true},
                 {0x10, set_rgblum, true},
