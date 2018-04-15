@@ -292,7 +292,7 @@ void sniffer_loop(void * pvParameters) {
                 salt_reset(); // get new salt for salting hashes
             }      
 
-            // wait until payload is sent, while wifi scanning and mac counting task continues
+            // check if payload is sent
             lorawait = 0;
             while(LMIC.opmode & OP_TXRXPEND) {
                 if(!lorawait) 
@@ -306,8 +306,7 @@ void sniffer_loop(void * pvParameters) {
                 vTaskDelay(1000/portTICK_PERIOD_MS);
                 yield();
             }
-
-            u8x8.clearLine(6);
+            sprintf(display_lora, " "); // clear LoRa wait message fromd display
 
             // TBD: need to check if long 2000ms pause causes stack problems while scanning continues
             if (cfg.screenon && cfg.screensaver) {
@@ -524,7 +523,10 @@ void loop() {
     
     #ifdef HAS_DISPLAY
 
-        // display counters (lines 0-4)
+        // set display on/off according to current device configuration
+        u8x8.setPowerSave(!cfg.screenon);
+
+        // write counters (lines 0-4)
         char buff[16];
         snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
@@ -535,19 +537,19 @@ void loop() {
             u8x8.printf("BLTH: %-4d", (int) bles.size());
         #endif
 
-        // display actual wifi channel (line 4)
+        // write actual wifi channel (line 4)
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02i", channel);
 
-        // display RSSI status (line 5)
+        // write RSSI status (line 5)
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
 
-        // display LoRa status (line 6)
+        // write LoRa status (line 6)
         u8x8.setCursor(0,6);
         u8x8.printf("%-16s", display_lora);
 
-        // display LMiC event (line 7)
+        // write LMiC event (line 7)
         u8x8.setCursor(0,7);
         u8x8.printf("%-16s", display_lmic);
         
