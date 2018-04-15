@@ -530,7 +530,7 @@ void loop() {
         }
     else 
 #endif
-    {   vTaskDelay(1000/portTICK_PERIOD_MS);
+    {   vTaskDelay(500/portTICK_PERIOD_MS);
         uptimecounter = uptime() / 1000; // count uptime seconds
         }
     }
