@@ -495,30 +495,16 @@ wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
 // note: do this *after* wifi has started, since gets it's seed from RF noise
 salt_reset(); // get new 16bit for salting hashes
  
-// Start FreeRTOS tasks
-#if CONFIG_FREERTOS_UNICORE // run all tasks on core 0 and switch off core 1
-    ESP_LOGI(TAG, "Starting Lora task on core 0");
-    xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 0);  
-    ESP_LOGI(TAG, "Starting Wifi task on core 0");
-    xTaskCreatePinnedToCore(wifi_sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
-    #ifdef BLECOUNTER
-        if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
-            ESP_LOGI(TAG, "Starting Bluetooth task on core 1");
-            xTaskCreatePinnedToCore(bt_loop, "btscan", 8192, NULL, 5, NULL, 0);
-        }
-    #endif
-    // to come here: code for switching off core 1
-#else // run wifi task on core 0 and lora task on core 1 and bt task on core 0
-    ESP_LOGI(TAG, "Starting Lora task on core 1");
-    xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
-    ESP_LOGI(TAG, "Starting Wifi task on core 0");
-    xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
-    #ifdef BLECOUNTER
-        if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
-            ESP_LOGI(TAG, "Starting Bluetooth task on core 1");
-            xTaskCreatePinnedToCore(bt_loop, "btscan", 8192, NULL, 5, NULL, 0);
-        }
-    #endif
+// run wifi task on core 0 and lora task on core 1 and bt task on core 0
+ESP_LOGI(TAG, "Starting Lora task on core 1");
+xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
+ESP_LOGI(TAG, "Starting Wifi task on core 0");
+xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
+#ifdef BLECOUNTER
+    if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
+        ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 8192, NULL, 5, NULL, 0);
+    }
 #endif
     
 // Finally: kickoff first sendjob and join, then send initial payload "0000"
