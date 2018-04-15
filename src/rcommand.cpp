@@ -182,6 +182,14 @@ void set_wifiant(int val) {
     #endif
 };
 
+void set_vendorfilter(int val) {
+    ESP_LOGI(TAG, "Remote command: set vendorfilter mode to %s", val ? "on" : "off");
+    switch (val) {
+        case 1: cfg.vendorfilter = val; break;
+        default: cfg.vendorfilter = 0; break;
+        }
+};
+
 void set_rgblum(int val) {
     // Avoid wrong parameters
     cfg.rgblum = (val>=0 && val<=100) ? (uint8_t) val : RGBLUMINOSITY;
@@ -246,7 +254,7 @@ cmd_t table[] = {
                 {0x0a, set_wifiscancycle, true},
                 {0x0b, set_wifichancycle, true},
                 {0x0c, set_blescantime, true},
-                {0x0d, set_noop, false},
+                {0x0d, set_vendorfilter, false},
                 {0x0e, set_blescan, true},
                 {0x0f, set_wifiant, true},
                 {0x10, set_rgblum, true},

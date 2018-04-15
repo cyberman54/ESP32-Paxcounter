@@ -102,10 +102,10 @@ Multiple command/parameter pairs can be concatenated and sent in one single payl
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
 
-0x01 set Wifi scan RSSI limit
+0x01 set scan RSSI limit
 
-	1 ... 255 used for wifi scan radius (greater values increase wifi scan radius, values 50...110 make sense)
-	0 = Wifi rssi limiter disabled [default]
+	1 ... 255 used for wifi and bluetooth scan radius (greater values increase scan radius, values 50...110 make sense)
+	0 = RSSI limiter disabled [default]
 
 0x02 set counter mode
 
@@ -163,7 +163,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 ... 255 duration of a BLE scan cycle in seconds
 	e.g. 15 -> 1 cycle runs for 15 seconds [default]
 
-0x0D (unused)
+0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
+
+	0 = disabled (use to count devices, not people)
+	1 = enabled [default]
 
 0x0E set BLE scan mode
 
@@ -196,8 +199,9 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 11:		BLE scan cycle duration in seconds (0..255)
 	byte 12:		BLE scan mode (1=on, 0=0ff)
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
-	byte 14:		RGB LED luminosity (0..100 %)
-	bytes 15-24:		Software version (ASCII format)
+	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
+	byte 15:		RGB LED luminosity (0..100 %)
+	bytes 16-25:		Software version (ASCII format)
 
 0x81 get device uptime
 

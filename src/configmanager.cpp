@@ -30,6 +30,7 @@ void defaultConfig() {
     cfg.blescantime   = BLESCANTIME;    // BLE scan cycle duration [seconds]
     cfg.blescan       = 1;              // 0=disabled, 1=enabled
     cfg.wifiant       = 0;              // 0=internal, 1=external (for LoPy/LoPy4)
+    cfg.vendorfilter  = 1;              // 0=disabled, 1=enabled
     cfg.rgblum        = RGBLUMINOSITY;  // RGB Led luminosity (0..100%)
 
     strncpy( cfg.version, PROGVERSION, sizeof(cfg.version)-1 );
@@ -112,6 +113,9 @@ void saveConfig() {
 
       if( nvs_get_i8(my_handle, "wifiant", &flash8) != ESP_OK || flash8 != cfg.wifiant )
         nvs_set_i8(my_handle, "wifiant", cfg.wifiant);
+
+      if( nvs_get_i8(my_handle, "vendorfilter", &flash8) != ESP_OK || flash8 != cfg.vendorfilter )
+        nvs_set_i8(my_handle, "vendorfilter", cfg.vendorfilter);
 
       if( nvs_get_i8(my_handle, "rgblum", &flash8) != ESP_OK || flash8 != cfg.rgblum )
           nvs_set_i8(my_handle, "rgblum", cfg.rgblum);
@@ -237,6 +241,14 @@ void loadConfig() {
       ESP_LOGI(TAG, "wifiantenna = %i", flash8);
     } else {
       ESP_LOGI(TAG, "WIFI antenna switch set to default %i", cfg.wifiant);
+      saveConfig();
+    }
+
+    if( nvs_get_i8(my_handle, "vendorfilter", &flash8) == ESP_OK ) {
+      cfg.vendorfilter = flash8;
+      ESP_LOGI(TAG, "vendorfilter = %i", flash8);
+    } else {
+      ESP_LOGI(TAG, "Vendorfilter mode set to default %i", cfg.vendorfilter);
       saveConfig();
     }
 

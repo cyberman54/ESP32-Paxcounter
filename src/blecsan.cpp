@@ -23,130 +23,9 @@ static const char *TAG = "bt_loop";
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
 
 // Prototypes
-static const char *bt_gap_search_event_type_to_string(uint32_t searchEvt);
 static const char *bt_addr_t_to_string(esp_ble_addr_type_t type);
-static const char *bt_dev_type_to_string(esp_bt_dev_type_t type);
 static const char *btsig_gap_type(uint32_t gap_type);
-
-static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
-{
-	esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
-	esp_err_t status;	
-
-	switch (event) 
-	{
-		case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
-		{
-			ESP_LOGD(TAG, "Start Scan, status: %d", p->scan_param_cmpl.status);
-		
-			// This procedure keep the device scanning the peer device which advertising on the air.
-			status = esp_ble_gap_start_scanning(BLESCANTIME); 
-			if (status != ESP_OK) 
-			{
-				ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
-			}
-		}
-		break;
-		
-		case ESP_GAP_BLE_SCAN_RESULT_EVT:
-		{	
-			ESP_LOGI(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x", BT_BD_ADDR_HEX(p->scan_rst.bda));
-			ESP_LOGI(TAG, "Device type         : %s", bt_dev_type_to_string(p->scan_rst.dev_type));
-			ESP_LOGI(TAG, "Search_evt          : %s", bt_gap_search_event_type_to_string(p->scan_rst.search_evt));
-			ESP_LOGI(TAG, "Addr_type           : %s", bt_addr_t_to_string(p->scan_rst.ble_addr_type));
-			ESP_LOGI(TAG, "RSSI                : %d", p->scan_rst.rssi);
-			ESP_LOGI(TAG, "Flag                : %d", p->scan_rst.flag);
-			  
-			//bit 0 (OFF) LE Limited Discoverable Mode
-   			//bit 1 (OFF) LE General Discoverable Mode
-   			//bit 2 (ON) BR/EDR Not Supported
-   			//bit 3 (OFF) Simultaneous LE and BR/EDR to Same Device Capable (controller)
-   			//bit 4 (OFF) Simultaneous LE and BR/EDR to Same Device Capable (Host)
-			
-		  	ESP_LOGI(TAG, "num_resps           : %d", p->scan_rst.num_resps);
-
-			if ( p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_CMPL_EVT) // Inquiry complete, scan is done
-			{	// restart scan
-				status = esp_ble_gap_start_scanning	(BLESCANTIME); 
-				if (status != ESP_OK) 
-				{
-					ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
-				}
-				return;
-			}
-			
-			if (p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_RES_EVT) // Inquiry result for a peer device
-			{
-
-				#ifdef VENDORFILTER
-					if ( 	(p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_PUBLIC) ||
-							(p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_PUBLIC)
-						)
-					 {
-				#endif
-
-					// add this device and show new count total if it was not previously added
-            		mac_add((uint8_t *) p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);	
-
-				#ifdef VENDORFILTER
-					}
-					else
-					{
-						ESP_LOGI(TAG, "BLE device filtered");	
-					}
-				#endif
-					
-
-				/* to be improved in vendorfilter if:
-				
-				// you can search for elements in the payload using the
-				// function esp_ble_resolve_adv_data()
-				//
-				// Like this, that scans for the "Complete name" (looking inside the payload buffer)
-				// uint8_t len;
-				// uint8_t *data = esp_ble_resolve_adv_data(p->scan_rst.ble_adv, ESP_BLE_AD_TYPE_NAME_CMPL, &len);
-
-				filter BLE devices using their advertisements to get filter alternative to vendor OUI
-				if vendorfiltering is on, we ...
-				- want to count: mobile phones and tablets
-				- don't want to count: beacons, peripherals (earphones, headsets, printers), cars and machines
-				see
-				https://github.com/nkolban/ESP32_BLE_Arduino/blob/master/src/BLEAdvertisedDevice.cpp
-
-				http://www.libelium.com/products/meshlium/smartphone-detection/
-
-				https://www.question-defense.com/2013/01/12/bluetooth-cod-bluetooth-class-of-deviceclass-of-service-explained
-
-				https://www.bluetooth.com/specifications/assigned-numbers/baseband
-
-				"The Class of Device (CoD) in case of Bluetooth which allows us to differentiate the type of 
-				device (smartphone, handsfree, computer, LAN/network AP). With this parameter we can 
-				differentiate among pedestrians and vehicles."
-
-				*/
-
-			}
-
-		}
-		break;
-
-		default:
-        break;
-	}
-} // gap_callback_handler
-
-static const char *bt_dev_type_to_string(esp_bt_dev_type_t type) {
-	switch(type) {
-	case ESP_BT_DEVICE_TYPE_BREDR:
-		return "ESP_BT_DEVICE_TYPE_BREDR";
-	case ESP_BT_DEVICE_TYPE_BLE:
-		return "ESP_BT_DEVICE_TYPE_BLE";
-	case ESP_BT_DEVICE_TYPE_DUMO:
-		return "ESP_BT_DEVICE_TYPE_DUMO";
-	default:
-		return "Unknown";
-	}
-} // bt_dev_type_to_string
+static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 
 static const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
 	switch(type) {
@@ -163,28 +42,6 @@ static const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
 	}
 } // bt_addr_t_to_string
 
-static const char *bt_gap_search_event_type_to_string(uint32_t searchEvt) {
-	switch(searchEvt) {
-		case ESP_GAP_SEARCH_INQ_RES_EVT:
-			return "ESP_GAP_SEARCH_INQ_RES_EVT";
-		case ESP_GAP_SEARCH_INQ_CMPL_EVT:
-			return "ESP_GAP_SEARCH_INQ_CMPL_EVT";
-		case ESP_GAP_SEARCH_DISC_RES_EVT:
-			return "ESP_GAP_SEARCH_DISC_RES_EVT";
-		case ESP_GAP_SEARCH_DISC_BLE_RES_EVT:
-			return "ESP_GAP_SEARCH_DISC_BLE_RES_EVT";
-		case ESP_GAP_SEARCH_DISC_CMPL_EVT:
-			return "ESP_GAP_SEARCH_DISC_CMPL_EVT";
-		case ESP_GAP_SEARCH_DI_DISC_CMPL_EVT:
-			return "ESP_GAP_SEARCH_DI_DISC_CMPL_EVT";
-		case ESP_GAP_SEARCH_SEARCH_CANCEL_CMPL_EVT:
-			return "ESP_GAP_SEARCH_SEARCH_CANCEL_CMPL_EVT";
-		default:
-			return "Unknown event type";
-	}
-} // bt_gap_search_event_type_to_string
-
-/*
 static const char *btsig_gap_type(uint32_t gap_type) {
 	switch (gap_type)
 	{
@@ -229,9 +86,107 @@ static const char *btsig_gap_type(uint32_t gap_type) {
 		default: 
 			return "Unknown type";
 	}
-}
-*/
-	
+} // btsig_gap_type
+
+
+static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+{
+	esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
+	esp_err_t status;	
+
+	ESP_LOGD(tag, "BT payload sniffed -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv, btsig_gap_type(*p->scan_rst.ble_adv));		
+
+
+	switch (event) 
+	{
+		case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
+		{	// restart scan
+			status = esp_ble_gap_start_scanning(BLESCANTIME); 
+			if (status != ESP_OK) 
+			{
+				ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
+			}
+		}
+		break;
+		
+		case ESP_GAP_BLE_SCAN_RESULT_EVT:
+		{		
+			if ( p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_CMPL_EVT) // Inquiry complete, scan is done
+			{	// restart scan
+				status = esp_ble_gap_start_scanning	(BLESCANTIME); 
+				if (status != ESP_OK) 
+				{
+					ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
+				}
+				return;
+			}
+			
+			if (p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_RES_EVT) // Inquiry result for a peer device
+			{	// evaluate sniffed packet
+				ESP_LOGD(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x", BT_BD_ADDR_HEX(p->scan_rst.bda));
+				ESP_LOGD(TAG, "Addr_type           : %s", bt_addr_t_to_string(p->scan_rst.ble_addr_type));
+				ESP_LOGD(TAG, "RSSI                : %d", p->scan_rst.rssi);
+
+				if (!( cfg.rssilimit == 0 ) || (p->scan_rst.rssi > cfg.rssilimit )) { // rssi is negative value
+     				ESP_LOGI(TAG, "BLTH RSSI %d -> ignoring (limit: %d)", p->scan_rst.rssi, cfg.rssilimit);
+					break;
+    			}
+
+				#ifdef VENDORFILTER
+					
+					if (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) goto skip;
+					if (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM) goto skip;
+							
+				#endif
+
+				// add this device and show new count total if it was not previously added
+            	mac_add((uint8_t *) p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);	
+				break;
+
+				skip:
+				ESP_LOGD(TAG, "BT device filtered");	
+				break;
+					
+
+				/* to be improved in vendorfilter if:
+				
+				// you can search for elements in the payload using the
+				// function esp_ble_resolve_adv_data()
+				//
+				// Like this, that scans for the "Complete name" (looking inside the payload buffer)
+				// uint8_t len;
+				// uint8_t *data = esp_ble_resolve_adv_data(p->scan_rst.ble_adv, ESP_BLE_AD_TYPE_NAME_CMPL, &len);
+
+				filter BLE devices using their advertisements to get filter alternative to vendor OUI
+				if vendorfiltering is on, we ...
+				- want to count: mobile phones and tablets
+				- don't want to count: beacons, peripherals (earphones, headsets, printers), cars and machines
+				see
+				https://github.com/nkolban/ESP32_BLE_Arduino/blob/master/src/BLEAdvertisedDevice.cpp
+
+				http://www.libelium.com/products/meshlium/smartphone-detection/
+
+				https://www.question-defense.com/2013/01/12/bluetooth-cod-bluetooth-class-of-deviceclass-of-service-explained
+
+				https://www.bluetooth.com/specifications/assigned-numbers/baseband
+
+				"The Class of Device (CoD) in case of Bluetooth which allows us to differentiate the type of 
+				device (smartphone, handsfree, computer, LAN/network AP). With this parameter we can 
+				differentiate among pedestrians and vehicles."
+
+				*/
+
+			}
+
+		}
+		break;
+
+		default:
+        break;
+	}
+} // gap_callback_handler
+
+
 esp_err_t register_ble_functionality(void)
 {
 	esp_err_t status;	
@@ -250,14 +205,20 @@ esp_err_t register_ble_functionality(void)
 	static esp_ble_scan_params_t ble_scan_params = 
 	{	
 		.scan_type              = BLE_SCAN_TYPE_PASSIVE,
-		.own_addr_type          = BLE_ADDR_TYPE_PUBLIC,
-		.scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_UND_RPA_DIR,
-		// .scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_ALL,
+		.own_addr_type          = BLE_ADDR_TYPE_RANDOM,
+		
+		#ifdef VENDORFILTER
+			.scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
+			// ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for broadcasting 
+			// data in broadcast applications (e.g., Beacons), so we don't want them in vendorfilter mode
+		#else
+			.scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_ALL,
+		#endif
 		.scan_interval          = (uint16_t) (BLESCANINTERVAL / 0.625),		// Time = N * 0.625 msec
 		.scan_window            = (uint16_t) (BLESCANWINDOW / 0.625)		// Time = N * 0.625 msec	
 	};
 
-	ESP_LOGI(TAG, "Set GAP scan parameters");
+		ESP_LOGI(TAG, "Set GAP scan parameters");
 
 	// This function is called to set scan parameters.			
  	status = esp_ble_gap_set_scan_params(&ble_scan_params);		

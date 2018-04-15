@@ -34,7 +34,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     #ifdef VENDORFILTER
         vendor2int = ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[1] << 8 ) | ( (uint32_t)paddr[0] << 16 );
-        // No vendor filter for BLE
+        // use OUI vendor filter list only on Wifi, not on BLE
         if ( (sniff_type==MAC_SNIFF_BLE) || std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
     #endif
 
@@ -65,7 +65,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
                 rgb_set_color(COLOR_MAGENTA);
                 bles.insert(hashedmac);    // add hashed MAC to BLE container
                 u8x8.setCursor(0,3);
-                u8x8.printf("BLE:  %-4d", (int) bles.size());
+                u8x8.printf("BLTH: %-4d", (int) bles.size());
             }
         #endif
         
@@ -74,8 +74,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         rgb_set_color(COLOR_NONE);
     } 
         
-        ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
-                        sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLE ", 
+        ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d  %s", 
+                        sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLTH", 
                         rssi, buff, hashedmac, 
                         (int) wifis.size(), 
                         #ifdef BLECOUNTER
@@ -83,12 +83,12 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
                         #else
                             0,
                         #endif
-                        added ? "New" : "Already seen");
+                        added ? "new" : "known");
 
     #ifdef VENDORFILTER
     } else {
         // Very noisy
-        //ESP_LOGI(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X", paddr[0],paddr[1],paddr[2],paddr[3],paddr[5],paddr[5]);
+        ESP_LOGD(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X", paddr[0],paddr[1],paddr[2],paddr[3],paddr[5],paddr[5]);
     }
     #endif
 

@@ -270,7 +270,7 @@ void sniffer_loop(void * pvParameters) {
         yield();
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
-        ESP_LOGI(TAG, "Wifi set channel %d", channel);
+        ESP_LOGD(TAG, "Wifi set channel %d", channel);
 
         snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total
@@ -476,7 +476,7 @@ void setup() {
     u8x8.printf("WIFI: 0");
     #ifdef BLECOUNTER
         u8x8.setCursor(0,3);
-        u8x8.printf("BLE:  0");
+        u8x8.printf("BLTH: 0");
     #endif
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
