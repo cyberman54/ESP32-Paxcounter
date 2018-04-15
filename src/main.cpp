@@ -520,20 +520,22 @@ do_send(&sendjob);
 // Arduino main moop, runs on core 1
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
+    
     while(1) {
-#ifdef HAS_BUTTON
-    if (ButtonTriggered) {
-        ButtonTriggered = false;
-        ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
-        eraseConfig();
-        esp_restart();
-        }
-    else 
-#endif
-    {   vTaskDelay(500/portTICK_PERIOD_MS);
-        uptimecounter = uptime() / 1000; // count uptime seconds
-        }
+    
+        #ifdef HAS_BUTTON
+            if (ButtonTriggered) {
+                ButtonTriggered = false;
+                ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
+                eraseConfig();
+                esp_restart();
+            }
+        #endif
+    
+    vTaskDelay(500/portTICK_PERIOD_MS);
+    uptimecounter = uptime() / 1000; // count uptime seconds
     }
+
 }
 
 /* end Aruino LOOP ------------------------------------------------------------ */
