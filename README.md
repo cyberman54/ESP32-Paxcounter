@@ -1,6 +1,8 @@
 # ESP32-Paxcounter
 **Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 boards**
 
+---> check branch "development" for latest alpha version <---
+
 <img src="img/Paxcounter-title.jpg">
 
 # Use case
@@ -20,13 +22,13 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 Currently supported IoT boards:
 - Heltec LoRa-32 {1}
 - TTGOv1 {1}
-- TTGOv2 {1}
+- TTGOv2 {1}{4}
 - Pycom LoPy {2}
 - Pycom LoPy4 {2}
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported
+{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in /hal/ttgov2.h
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
