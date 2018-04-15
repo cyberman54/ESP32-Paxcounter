@@ -50,22 +50,14 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // Insert only if it was not found on global count
     if (added) {
 
-        //char buff[16];
-        //snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-        //u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
-
         if (sniff_type == MAC_SNIFF_WIFI ) {
             rgb_set_color(COLOR_GREEN);
             wifis.insert(hashedmac);   // add hashed MAC to wifi container
-            //u8x8.setCursor(0,4);
-            //u8x8.printf("WIFI: %-4d", (int) wifis.size());
-        } 
+            }   
         #ifdef BLECOUNTER
-            else if (sniff_type == MAC_SNIFF_BLE ) {
-                rgb_set_color(COLOR_MAGENTA);
-                bles.insert(hashedmac);    // add hashed MAC to BLE container
-                //u8x8.setCursor(0,3);
-                //u8x8.printf("BLTH: %-4d", (int) bles.size());
+        else if (sniff_type == MAC_SNIFF_BLE ) {
+            rgb_set_color(COLOR_MAGENTA);
+            bles.insert(hashedmac);    // add hashed MAC to BLE container
             }
         #endif
         

@@ -272,15 +272,7 @@ void sniffer_loop(void * pvParameters) {
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
         ESP_LOGD(TAG, "Wifi set channel %d", channel);
-/*
-        snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total
-       
-        u8x8.setCursor(11,4);
-        u8x8.printf("ch:%02i", channel);
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
-*/
+
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
             u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
@@ -538,8 +530,10 @@ void loop() {
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
         u8x8.setCursor(0,4);
         u8x8.printf("WIFI: %-4d", (int) wifis.size());
-        u8x8.setCursor(0,3);
-        u8x8.printf("BLTH: %-4d", (int) bles.size());
+        #ifdef BLECOUNTER
+            u8x8.setCursor(0,3);
+            u8x8.printf("BLTH: %-4d", (int) bles.size());
+        #endif
         // display actual wifi channel (line 4)
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02i", channel);
