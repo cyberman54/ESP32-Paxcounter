@@ -11,7 +11,7 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 #include <esp_bt.h>
 #include <esp_bt_main.h>
 #include <esp_gap_ble_api.h>
-#include <esp_blufi_api.h>
+#include <esp_blufi_api.h> // needed for BLE_ADDR types, do not remove
 #include <bt_types.h>
 
 #define BT_BD_ADDR_HEX(addr)   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
@@ -94,8 +94,7 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 	esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 	esp_err_t status;	
 
-	ESP_LOGD(tag, "BT payload sniffed -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv, btsig_gap_type(*p->scan_rst.ble_adv));		
-
+	ESP_LOGD(tag, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv, btsig_gap_type(*p->scan_rst.ble_adv));		
 
 	switch (event) 
 	{
