@@ -45,6 +45,7 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
+char display_lora[16], display_lmic[16];
 uint8_t channel = 0;
 int macnum = 0;
 uint64_t uptimecounter = 0;
@@ -289,15 +290,13 @@ void sniffer_loop(void * pvParameters) {
                     bles.clear();                         // clear BLE macs counter
                 #endif 
                 salt_reset(); // get new salt for salting hashes
-                u8x8.clearLine(0); // clear Display counter 
-                u8x8.clearLine(1); 
             }      
 
             // wait until payload is sent, while wifi scanning and mac counting task continues
             lorawait = 0;
             while(LMIC.opmode & OP_TXRXPEND) {
                 if(!lorawait) 
-                    u8x8.drawString(0,6,"LoRa wait       ");
+                    sprintf(display_lora, "LoRa wait");
                 lorawait++;
                 // in case sending really fails: reset and rejoin network
                 if( (lorawait % MAXLORARETRY ) == 0) {
@@ -473,7 +472,7 @@ void setup() {
     #endif
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
-    u8x8.drawString(0,6,"Join Wait       ");
+    sprintf(display_lora, "Join wait");
 
 // output LoRaWAN keys to console
 #ifdef VERBOSE
@@ -524,7 +523,8 @@ void loop() {
     #endif
     
     #ifdef HAS_DISPLAY
-        // display counters(lines 0-4)
+
+        // display counters (lines 0-4)
         char buff[16];
         snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
@@ -534,12 +534,23 @@ void loop() {
             u8x8.setCursor(0,3);
             u8x8.printf("BLTH: %-4d", (int) bles.size());
         #endif
+
         // display actual wifi channel (line 4)
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02i", channel);
+
         // display RSSI status (line 5)
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
+
+        // display LoRa status (line 6)
+        u8x8.setCursor(0,6);
+        u8x8.printf("%-16s", display_lora);
+
+        // display LMiC event (line 7)
+        u8x8.setCursor(0,7);
+        u8x8.printf("%-16s", display_lmic);
+        
     #endif
 
     vTaskDelay(DISPLAYREFRESH/portTICK_PERIOD_MS);
