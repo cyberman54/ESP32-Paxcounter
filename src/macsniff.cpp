@@ -88,7 +88,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     #ifdef VENDORFILTER
     } else {
         // Very noisy
-        ESP_LOGD(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X", paddr[0],paddr[1],paddr[2],paddr[3],paddr[5],paddr[5]);
+        // ESP_LOGD(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X", paddr[0],paddr[1],paddr[2],paddr[3],paddr[5],paddr[5]);
     }
     #endif
 
