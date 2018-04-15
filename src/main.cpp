@@ -276,7 +276,6 @@ void sniffer_loop(void * pvParameters) {
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
-            u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
             nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
             do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
             vTaskDelay(500/portTICK_PERIOD_MS);
