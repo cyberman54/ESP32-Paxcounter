@@ -280,7 +280,7 @@ void bt_loop(void *ignore)
 
 	while(1)
     {
-        vTaskDelay(500);
+        //vTaskDelay(500);
         yield();
     }
 
