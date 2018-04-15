@@ -510,8 +510,10 @@ do_send(&sendjob);
 // Arduino main moop, runs on core 1
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
+
+    uptimecounter = uptime() / 1000; // count uptime seconds
     
-    #ifdef HAS_BUTTON
+    #ifdef HAS_BUTTON // ...then check if pressed
         if (ButtonTriggered) {
             ButtonTriggered = false;
             ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
@@ -520,12 +522,12 @@ void loop() {
         }
     #endif
     
-    #ifdef HAS_DISPLAY
+    #ifdef HAS_DISPLAY // ...then update mask
 
         // set display on/off according to current device configuration
         u8x8.setPowerSave(!cfg.screenon);
 
-        // write counters (lines 0-4)
+        // update counter display (lines 0-4)
         char buff[16];
         snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
@@ -536,26 +538,25 @@ void loop() {
             u8x8.printf("BLTH: %-4d", (int) bles.size());
         #endif
 
-        // write actual wifi channel (line 4)
+        // update wifi channel display (line 4)
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02i", channel);
 
-        // write RSSI status (line 5)
+        // update RSSI limiter status display (line 5)
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
 
-        // write LoRa status (line 6)
+        // update LoRa status display (line 6)
         u8x8.setCursor(0,6);
         u8x8.printf("%-16s", display_lora);
 
-        // write LMiC event (line 7)
+        // update LMiC event display (line 7)
         u8x8.setCursor(0,7);
         u8x8.printf("%-16s", display_lmic);
         
     #endif
 
     vTaskDelay(DISPLAYREFRESH/portTICK_PERIOD_MS);
-    uptimecounter = uptime() / 1000; // count uptime seconds
 
 }
 
