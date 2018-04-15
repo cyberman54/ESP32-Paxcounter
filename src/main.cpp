@@ -45,6 +45,7 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
+uint8_t channel = 0;
 int macnum = 0;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
@@ -258,7 +259,7 @@ void bt_loop(void *ignore);
 void sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
-    uint8_t channel=0;
+    channel=0;
     char buff[16];
     int nloop=0, lorawait=0;
    
@@ -271,7 +272,7 @@ void sniffer_loop(void * pvParameters) {
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
         ESP_LOGD(TAG, "Wifi set channel %d", channel);
-
+/*
         snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total
        
@@ -279,7 +280,7 @@ void sniffer_loop(void * pvParameters) {
         u8x8.printf("ch:%02i", channel);
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
-
+*/
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
             u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
@@ -499,11 +500,11 @@ salt_reset(); // get new 16bit for salting hashes
 ESP_LOGI(TAG, "Starting Lora task on core 1");
 xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
 ESP_LOGI(TAG, "Starting Wifi task on core 0");
-xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
+xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 16384, ( void * ) 1, 1, NULL, 0);
 #ifdef BLECOUNTER
     if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
         ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 8192, NULL, 5, NULL, 0);
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 16384, NULL, 5, NULL, 0);
     }
 #endif
     
@@ -521,20 +522,34 @@ do_send(&sendjob);
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
     
-    while(1) {
+    #ifdef HAS_BUTTON
+        if (ButtonTriggered) {
+            ButtonTriggered = false;
+            ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
+            eraseConfig();
+            esp_restart();
+        }
+    #endif
     
-        #ifdef HAS_BUTTON
-            if (ButtonTriggered) {
-                ButtonTriggered = false;
-                ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
-                eraseConfig();
-                esp_restart();
-            }
-        #endif
-    
-    vTaskDelay(500/portTICK_PERIOD_MS);
+    #ifdef HAS_DISPLAY
+        // display counters(lines 0-4)
+        char buff[16];
+        snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
+        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
+        u8x8.setCursor(0,4);
+        u8x8.printf("WIFI: %-4d", (int) wifis.size());
+        u8x8.setCursor(0,3);
+        u8x8.printf("BLTH: %-4d", (int) bles.size());
+        // display actual wifi channel (line 4)
+        u8x8.setCursor(11,4);
+        u8x8.printf("ch:%02i", channel);
+        // display RSSI status (line 5)
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
+    #endif
+
+    vTaskDelay(DISPLAYREFRESH/portTICK_PERIOD_MS);
     uptimecounter = uptime() / 1000; // count uptime seconds
-    }
 
 }
 

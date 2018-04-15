@@ -46,6 +46,9 @@
 // Default RGB LED luminosity (in %)
 #define RGBLUMINOSITY                   30      // 30%
 
+// OLED Display refresh cycle (in Milliseconds)
+#define DISPLAYREFRESH                  200     // 200ms
+
 // LMIC settings
 // define hardware independent LMIC settings here, settings of standard library in /lmic/config.h will be ignored
 // define hardware specifics settings in platformio.ini as build_flag for hardware environment
