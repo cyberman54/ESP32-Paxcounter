@@ -163,7 +163,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 0x0C set BLE scan cycle timer
 
 	0 ... 255 duration of a BLE scan cycle in seconds
-	e.g. 15 -> 1 cycle runs for 15 seconds [default]
+	e.g. 11 -> 1 cycle runs for 11 seconds [default]
 
 0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
 
