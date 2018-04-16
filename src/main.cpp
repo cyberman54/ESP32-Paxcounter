@@ -27,9 +27,8 @@ Refer to LICENSE.txt file in repository for more details.
 // std::set for unified array functions
 #include <set>
 
-// OLED driver
-#include <U8x8lib.h>
-#include <Wire.h> // Does nothing and avoid any compilation error with I2C
+// Does nothing and avoid any compilation error with I2C
+#include <Wire.h> 
 
 // LMIC-Arduino LoRaWAN Stack
 #include "loraconf.h"
@@ -207,8 +206,6 @@ void lorawan_loop(void * pvParameters) {
 
 #ifdef HAS_DISPLAY
     HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
-#else
-    U8X8_NULL u8x8;
 #endif
 
 #ifdef HAS_ANTENNA_SWITCH
@@ -332,6 +329,7 @@ uint64_t uptime() {
     return (uint64_t) high32 << 32 | low32;
 }
 
+#ifdef HAS_DISPLAY
 // Print a key on display
 void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
   uint8_t start=lsb?len:0;
@@ -345,10 +343,9 @@ void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
 }
 
 void init_display(const char *Productname, const char *Version) {
+    uint8_t buf[32];
     u8x8.begin();
     u8x8.setFont(u8x8_font_chroma48medium8_r);
-#ifdef HAS_DISPLAY
-    uint8_t buf[32];
     u8x8.clear();
     u8x8.setFlipMode(0);
     u8x8.setInverseFont(1);
@@ -392,8 +389,8 @@ void init_display(const char *Productname, const char *Version) {
     DisplayKey(buf, 8, true);
     delay(5000);
     u8x8.clear();
-#endif // HAS_DISPLAY
 }
+#endif // HAS_DISPLAY
 
 /* begin Aruino SETUP ------------------------------------------------------------ */
 
@@ -461,6 +458,7 @@ void setup() {
     antenna_init();
 #endif
 
+#ifdef HAS_DISPLAY
 // initialize display  
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
@@ -474,6 +472,7 @@ void setup() {
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
     sprintf(display_lora, "Join wait");
+#endif
 
 // output LoRaWAN keys to console
 #ifdef VERBOSE
