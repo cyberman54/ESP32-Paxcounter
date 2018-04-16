@@ -47,7 +47,7 @@
 #define RGBLUMINOSITY                   30      // 30%
 
 // OLED Display refresh cycle (in Milliseconds)
-#define DISPLAYREFRESH                  200     // 200ms
+#define DISPLAYFPS                      5       // [fps] -> 5 Frames per second ps = 200ms refreseh cycle
 
 // LMIC settings
 // define hardware independent LMIC settings here, settings of standard library in /lmic/config.h will be ignored

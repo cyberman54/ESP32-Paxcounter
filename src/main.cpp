@@ -306,13 +306,16 @@ void sniffer_loop(void * pvParameters) {
                 yield();
             }
             sprintf(display_lora, " "); // clear LoRa wait message fromd display
-
+            
+            /*
             // TBD: need to check if long 2000ms pause causes stack problems while scanning continues
             if (cfg.screenon && cfg.screensaver) {
                 vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
                 yield();
                 u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
-            }          
+            } 
+            */
+                    
         } // end of send data cycle
         
     } // end of infinite wifi channel rotation loop
@@ -534,8 +537,10 @@ void loop() {
         u8x8.setCursor(0,4);
         u8x8.printf("WIFI: %-4d", (int) wifis.size());
         #ifdef BLECOUNTER
+            if (cfg.blescan) {
             u8x8.setCursor(0,3);
             u8x8.printf("BLTH: %-4d", (int) bles.size());
+            }
         #endif
 
         // update wifi channel display (line 4)
@@ -544,7 +549,7 @@ void loop() {
 
         // update RSSI limiter status display (line 5)
         u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
+        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-4d", cfg.rssilimit);
 
         // update LoRa status display (line 6)
         u8x8.setCursor(0,6);
@@ -556,7 +561,7 @@ void loop() {
         
     #endif
 
-    vTaskDelay(DISPLAYREFRESH/portTICK_PERIOD_MS);
+    vTaskDelay(1000/DISPLAYFPS/portTICK_PERIOD_MS);
 
 }
 

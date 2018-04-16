@@ -58,9 +58,7 @@ void set_reset(int val) {
     switch (val) {
         case 0: // restart device
             ESP_LOGI(TAG, "Remote command: restart device");
-            u8x8.clearLine(5);
-            u8x8.setCursor(0, 5);
-            u8x8.printf("Reset pending   ");
+            sprintf(display_lora, "Reset pending");
             vTaskDelay(10000/portTICK_PERIOD_MS); // wait for LMIC to confirm LoRa downlink to server
             esp_restart();
             break;
@@ -72,16 +70,11 @@ void set_reset(int val) {
                 bles.clear(); // clear BLE macs container
             #endif
             salt_reset(); // get new 16bit salt
-            u8x8.clearLine(0); u8x8.clearLine(1); // clear Display counter
-            u8x8.clearLine(5);
-            u8x8.setCursor(0, 5);
-            u8x8.printf("Reset counter   ");
+            sprintf(display_lora, "Reset counter");
             break;
         case 2: // reset device to factory settings
             ESP_LOGI(TAG, "Remote command: reset device to factory settings");
-            u8x8.clearLine(5);
-            u8x8.setCursor(0, 5);
-            u8x8.printf("Factory reset   ");
+            sprintf(display_lora, "Factory reset");
             eraseConfig();
             break;
         }
@@ -90,9 +83,6 @@ void set_reset(int val) {
 void set_rssi(int val) {
     cfg.rssilimit = val * -1;
     ESP_LOGI(TAG, "Remote command: set RSSI limit to %i", cfg.rssilimit);
-    u8x8.clearLine(5);
-    u8x8.setCursor(0, 5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM:  off" : "RLIM: -%4i", cfg.rssilimit);
 };    
 
 void set_wifiscancycle(int val) {
@@ -133,7 +123,6 @@ void set_screensaver(int val) {
         case 1: cfg.screensaver = val; break;
         default: cfg.screensaver = 0; break;
         }
-    u8x8.setPowerSave(cfg.screensaver); // set display 0=on / 1=off
 };
 
 void set_display(int val) {
@@ -142,7 +131,6 @@ void set_display(int val) {
         case 1: cfg.screenon = val; break;
         default: cfg.screenon = 0; break;
         }
-    u8x8.setPowerSave(!cfg.screenon); // set display 0=on / 1=off
 };
 
 void set_lorasf(int val) {
@@ -166,7 +154,6 @@ void set_blescan(int val) {
         default:
             cfg.blescan = 0;
             btStop();
-            u8x8.clearLine(3); // clear BLE results from display
             break;
         }
 };
@@ -244,12 +231,12 @@ void get_cputemp (int val) {
 cmd_t table[] = {
                 {0x01, set_rssi, true},
                 {0x02, set_countmode, true},
-                {0x03, set_screensaver, true},
+                {0x03, set_noop, false},
                 {0x04, set_display, true},
                 {0x05, set_lorasf, true},
                 {0x06, set_lorapower, true},
                 {0x07, set_loraadr, true},
-                {0x08, set_noop, false},
+                {0x08, set_screensaver, true},
                 {0x09, set_reset, false},
                 {0x0a, set_wifiscancycle, true},
                 {0x0b, set_wifichancycle, true},
