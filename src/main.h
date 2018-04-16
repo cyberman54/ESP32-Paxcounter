@@ -1,7 +1,7 @@
 #pragma once
 
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.2.95"    // use max 10 chars here!
+#define PROGVERSION                     "1.3.0"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 // Verbose enables serial output
@@ -12,7 +12,6 @@
 #define BLECOUNTER                      1       // comment out if you don't want BLE count
 
 // BLE scan parameters
-#define BLESCANCYCLE                    2       // BLE scan once after each <BLECYCLE> wifi scans
 #define BLESCANTIME                     11      // [seconds] scan duration, see note below
 #define BLESCANWINDOW                   10      // [milliseconds] scan window, see below, 3 .. 10240, default 10
 #define BLESCANINTERVAL                 10      // [milliseconds] how long to wait between scans, 3 .. 10240, default 10
@@ -46,6 +45,9 @@
 
 // Default RGB LED luminosity (in %)
 #define RGBLUMINOSITY                   30      // 30%
+
+// OLED Display refresh cycle (in Milliseconds)
+#define DISPLAYFPS                      5       // [fps] -> 5 Frames per second ps = 200ms refreseh cycle
 
 // LMIC settings
 // define hardware independent LMIC settings here, settings of standard library in /lmic/config.h will be ignored

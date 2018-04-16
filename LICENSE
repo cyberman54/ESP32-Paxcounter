@@ -228,13 +228,13 @@ under this Licence:
 Most source files in this repository are made available under the Eclipse Public License v1.0. The examples which use a more liberal license. Some of the AES code is available under the LGPL. Refer to each individual source file for more details."
 
 ------------------------------------------------------------------------------------------------
-blecount.cpp
+blescan.cpp
 
-Parts of blecount.cpp were derived or taken from
+Parts of blescan.cpp were derived or taken from
 
 nkolban esp32 snippets
-BLE Scan
-https://github.com/nkolban/esp32-snippets/tree/master/cpp_utils/tests/BLETests/Arduino/BLE_scan
+BLE GAP DUMP
+https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
 under this Licence:
 

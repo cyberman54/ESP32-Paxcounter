@@ -1,6 +1,8 @@
 # ESP32-Paxcounter
 **Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 boards**
 
+---> check branch "development" for latest alpha version <---
+
 <img src="img/Paxcounter-title.jpg">
 
 # Use case
@@ -20,13 +22,13 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 Currently supported IoT boards:
 - Heltec LoRa-32 {1}
 - TTGOv1 {1}
-- TTGOv2 {1}
+- TTGOv2 {1}{4}
 - Pycom LoPy {2}
 - Pycom LoPy4 {2}
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported
+{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in /hal/ttgov2.h
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -36,15 +38,15 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 
 <b>Power consumption</b>:
 
-- Heltec ~650mW
-- TTGOv1 ~650mW
-- TTGOv2 ~670mW
-- LoPy with expansion board: ~530mW
-- LoPy pure, without expansion board: ~460mW
+- Heltec ~720mW
+- TTGOv1 TBD
+- TTGOv2 ~990mW
+- LoPy with expansion board: ~690mW
+- LoPy pure, without expansion board: TBD
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora): TBD
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora): TBD
 
-These results where metered with software version 1.2.0 during active wifi scan, no LoRa TX’ing, OLED display off, 5V USB powered.
+These results where metered with software version 1.2.97 while continuously scanning wifi and ble, no LoRa TX’ing, OLED display (if present) on, 5V USB powered.
 
 # Building
 
@@ -102,10 +104,10 @@ Multiple command/parameter pairs can be concatenated and sent in one single payl
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
 
-0x01 set Wifi scan RSSI limit
+0x01 set scan RSSI limit
 
-	1 ... 255 used for wifi scan radius (greater values increase wifi scan radius, values 50...110 make sense)
-	0 = Wifi rssi limiter disabled [default]
+	1 ... 255 used for wifi and bluetooth scan radius (greater values increase scan radius, values 50...110 make sense)
+	0 = RSSI limiter disabled [default]
 
 0x02 set counter mode
 
@@ -113,7 +115,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 set screen saver mode
+0x03 (NOT YET IMPLEMENTED) set screen saver mode
 
 	0 = screen saver off [default]
 	1 = screen saver on
@@ -163,10 +165,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 ... 255 duration of a BLE scan cycle in seconds
 	e.g. 15 -> 1 cycle runs for 15 seconds [default]
 
-0x0D set BLE scan cycle frequency
+0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
 
-	run BLE scan once after 0 ... 255 full wifi scans
-	e.g. 2 -> BLE scan runs once after each 2nd wifi scan [default]
+	0 = disabled (use to count devices, not people)
+	1 = enabled [default]
 
 0x0E set BLE scan mode
 
@@ -197,9 +199,9 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 9:			Wifi scan cycle duration in seconds/2 (0..255)
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
 	byte 11:		BLE scan cycle duration in seconds (0..255)
-	byte 12:		BLE scan frequency, do once after (0..255) full wifi scans
-	byte 13:		BLE scan mode (1=on, 0=0ff)
-	byte 14:		Wifi antenna switch (0=internal, 1=external)
+	byte 12:		BLE scan mode (1=on, 0=0ff)
+	byte 13:		Wifi antenna switch (0=internal, 1=external)
+	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
 	byte 15:		RGB LED luminosity (0..100 %)
 	bytes 16-25:		Software version (ASCII format)
 
