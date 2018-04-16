@@ -150,11 +150,15 @@ void set_loraadr(int val) {
 void set_blescan(int val) {
     ESP_LOGI(TAG, "Remote command: set BLE scan mode to %s", val ? "on" : "off");
     switch (val) {
-        case 1: cfg.blescan = val; break;
-        default:
-            cfg.blescan = 0;
-            btStop();
-            break;
+        case 0:
+            cfg.blescan = 0; 
+            #ifdef BLECOUNTER
+                bles.clear(); // clear BLE macs container
+            #endif          
+            break; 
+        default: 
+            cfg.blescan = 1;
+            break; 
         }
 };
 

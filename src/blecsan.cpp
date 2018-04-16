@@ -139,7 +139,8 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 				#endif
 
 				// add this device and show new count total if it was not previously added
-            	mac_add((uint8_t *) p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);	
+				if (cfg.blescan) // count only if BLE scan is enabled
+            		mac_add((uint8_t *) p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);	
 				break;
 
 				skip:

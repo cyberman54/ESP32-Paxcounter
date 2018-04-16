@@ -536,10 +536,11 @@ void loop() {
         u8x8.setCursor(0,4);
         u8x8.printf("WIFI: %-4d", (int) wifis.size());
         #ifdef BLECOUNTER
-            if (cfg.blescan) {
             u8x8.setCursor(0,3);
-            u8x8.printf("BLTH: %-4d", (int) bles.size());
-            }
+            if (cfg.blescan)
+                u8x8.printf("BLTH: %-4d", (int) bles.size());
+            else
+                u8x8.printf("%-16s", "BLTH: off");
         #endif
 
         // update wifi channel display (line 4)
