@@ -64,8 +64,8 @@ If your device has silicon **Unique ID** which is stored in serial EEPROM Microc
 
 To upload the code to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
 The LoPy/LoPy4 board needs to be set manually. See these 
-<A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it.<p>
-For the LoPy/LoPy4 the original Pycom firmware is not needed here, so there is no need to update it before flashing Paxcounter. Just flash the paxcounter code on your LoPy/LoPy4. If you want to go back to the Pycom firmware, no problem. Download the firmware from Pycom and flash it over.
+<A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it. Don't forget to press on board reset button after switching between run and bootloader mode.<p>
+The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
 
 # Legal note
 
