@@ -6,8 +6,10 @@
 #include <array>
 #include <algorithm>
 
-// OLED Display
-#include <U8x8lib.h>
+#ifdef HAS_DISPLAY
+    // OLED Display
+    #include <U8x8lib.h>
+#endif
 
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
@@ -52,8 +54,6 @@ extern std::set<uint16_t> macs;
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;
-#else
-    extern U8X8_NULL u8x8;
 #endif
 
 #ifdef BLECOUNTER
