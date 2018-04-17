@@ -424,11 +424,9 @@ uint64_t uptime() {
             #endif
 
             #ifdef HAS_RGB_LED
-                if (LEDState)
-                    rgb_set_color(color);       // LED on
-                else
-                    rgb_set_color(COLOR_NONE);  // LED off
+                rgb_set_color(LEDState ? color : COLOR_NONE);
             #endif
+
             previousLEDState = LEDState;
             LEDcount--;        // decrement blink counter
         }
