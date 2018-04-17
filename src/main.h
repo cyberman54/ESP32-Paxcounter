@@ -35,8 +35,8 @@
 #define	WIFI_CHANNEL_SWITCH_INTERVAL    50      // [seconds/100] -> 0,5 sec.
 
 // LoRa payload send cycle
-#define SEND_SECS                       120     // [seconds/2] -> 240 sec.
-//#define SEND_SECS                       30    // [seconds/2] -> 60 sec.
+//#define SEND_SECS                       120     // [seconds/2] -> 240 sec.
+#define SEND_SECS                       30    // [seconds/2] -> 60 sec.
 
 // Default LoRa Spreadfactor
 #define LORASFDEFAULT                   9       // 7 ... 12 SF, according to LoRaWAN specs

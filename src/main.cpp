@@ -385,7 +385,7 @@ uint64_t uptime() {
     }    
 
     void updateDisplay() {
-        // timed display refresh according to frames per second setting
+        // timed display refresh according to refresh cycle setting
         if (currentMillis - previousDisplaymillis >= DISPLAYREFRESH_MS) {
             refreshDisplay();
             previousDisplaymillis += DISPLAYREFRESH_MS;
@@ -580,10 +580,9 @@ do_send(&sendjob);
 void loop() {
 
     uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
-    
-    // state machine for central control of all timimg based features
-
     currentMillis = millis(); // timebase for state machine in milliseconds (32bit)
+
+    // simple state machine for controlling display, LED, button, etc.
     
     #ifdef HAS_BUTTON
         readButton();
@@ -598,9 +597,7 @@ void loop() {
         refreshLED();
     #endif
 
-    //sendPayload();
-  
-    
+    //sendPayload();  
 
 }
 
