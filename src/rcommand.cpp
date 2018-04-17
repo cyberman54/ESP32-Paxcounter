@@ -210,9 +210,9 @@ void get_config (int val) {
 
 void get_uptime (int val) {
     ESP_LOGI(TAG, "Remote command: get uptime");
-    int size = sizeof(currentMillis );
+    int size = sizeof(uptimecounter);
     unsigned char *sendData = new unsigned char[size];
-    memcpy(sendData, (unsigned char*)&currentMillis , size);
+    memcpy(sendData, (unsigned char*)&uptimecounter , size);
     LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
     delete sendData; // free memory
     ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);

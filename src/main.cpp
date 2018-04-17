@@ -44,9 +44,9 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-#define DISPLAYREFRESH_MS (1 / DISPLAYFPS * (1000/portTICK_PERIOD_MS)) // calculate ms from fps
 char display_lora[16], display_lmic[16]; // display buffers
-uint64_t currentMillis  = 0, previousLEDmillis = 0, previousDisplaymillis = 0;
+uint64_t uptimecounter = 0;
+uint32_t currentMillis = 0, previousLEDmillis = 0, previousDisplaymillis = 0;
 uint8_t DisplayState, LEDState;
 uint16_t LEDBlinkduration = 500, LEDInterval = 1000, color = COLOR_NONE;
 uint8_t channel = 0; // wifi channel counter
@@ -579,9 +579,11 @@ do_send(&sendjob);
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
 
+    uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
+    
     // state machine for central control of all timimg based features
 
-    currentMillis  = uptime() / 1000; // count uptime seconds
+    currentMillis = millis(); // timebase for state machine in milliseconds (32bit)
     
     #ifdef HAS_BUTTON
         readButton();
