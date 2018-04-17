@@ -53,12 +53,12 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // Insert only if it was not found on global count
     if (added) {
         if (sniff_type == MAC_SNIFF_WIFI ) {
-            set_LED(COLOR_GREEN, 20, 0, 1);
+            set_LED(COLOR_GREEN, 50, 0, 1); 
             wifis.insert(hashedmac);   // add hashed MAC to wifi container
             }   
         #ifdef BLECOUNTER
         else if (sniff_type == MAC_SNIFF_BLE ) {
-            set_LED(COLOR_MAGENTA, 20, 0, 1);
+            set_LED(COLOR_MAGENTA, 50, 0, 1);
             bles.insert(hashedmac);    // add hashed MAC to BLE container
             }
         #endif
