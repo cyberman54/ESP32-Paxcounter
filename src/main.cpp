@@ -46,9 +46,9 @@ osjob_t sendjob, initjob; // LMIC
 // Initialize global variables
 char display_lora[16], display_lmic[16]; // display buffers
 uint64_t uptimecounter = 0;
-uint32_t currentMillis = 0, previousLEDmillis = 0, previousDisplaymillis = 0;
-uint8_t DisplayState, LEDState;
-uint16_t LEDBlinkduration = 500, LEDInterval = 1000, color = COLOR_NONE;
+uint32_t currentMillis = 0, previousDisplaymillis = 0;
+uint8_t DisplayState, LEDState = 0, LEDcount = 0;
+uint16_t LEDBlinkduration = 0, LEDInterval = 0, color=COLOR_NONE;
 uint8_t channel = 0; // wifi channel counter
 bool joinstate = false;
 
@@ -78,6 +78,14 @@ int redirect_log(const char * fmt, va_list args) {
 void eraseConfig(void);
 void saveConfig(void);
 void loadConfig(void);
+
+void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_count) {
+    color = set_color;                      // set color for RGB LED
+    LEDBlinkduration = set_blinkduration;   // duration on
+    LEDInterval = set_interval;             // duration off - on - off
+    LEDcount = set_count * 2;               // number of blinks before LED off
+    LEDState = set_count ? 1 : 0;           // sets LED to off if 0 blinks
+}
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
 
@@ -144,13 +152,6 @@ static void lora_init (osjob_t* j) {
     LMIC_startJoining();
 }
 
-void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_state) {
-    color = set_color;
-    LEDBlinkduration = set_blinkduration;
-    LEDInterval = set_interval;
-    LEDState = set_state;       
-}
-
 // LMIC FreeRTos Task
 void lorawan_loop(void * pvParameters) {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
@@ -161,16 +162,16 @@ void lorawan_loop(void * pvParameters) {
 
         // LED indicators for viusalizing LoRaWAN state
         if ( LMIC.opmode & (OP_JOINING | OP_REJOIN) )  {
-            // quick blink 20ms on each 1/5 second
-            set_LED(COLOR_YELLOW, 20, 200, 1);      
+            // 5 quick blinks 20ms on each 1/5 second while joining
+            set_LED(COLOR_YELLOW, 20, 200, 5);      
         // TX data pending
         } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
-            // small blink 10ms on each 1/2sec (not when joining)
-            set_LED(COLOR_BLUE, 10, 500, 1);
+            // 3 small blink 10ms on each 1/2sec (not when joining)
+            set_LED(COLOR_BLUE, 10, 500, 3);
         // This should not happen so indicate a problem
         } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
-            // heartbeat long blink 200ms on each 2 seconds
-            set_LED(COLOR_RED, 200, 2000, 1);
+            // 5 heartbeat long blink 200ms on each 2 seconds
+            set_LED(COLOR_RED, 200, 2000, 5);
         } else {
             // led off
             set_LED(COLOR_NONE, 0, 0, 0);
@@ -270,7 +271,7 @@ void sniffer_loop(void * pvParameters) {
                 vTaskDelay(1000/portTICK_PERIOD_MS);
                 yield();
             }
-            sprintf(display_lora, " "); // clear LoRa wait message fromd display
+            sprintf(display_lora, ""); // clear LoRa wait message fromd display
                     
         } // end of send data cycle
         
@@ -412,39 +413,30 @@ uint64_t uptime() {
 #endif
 
 #ifdef HAS_LED
-    void updateLEDstatus() {
-
-        if (LEDState == 0) {
-            if (currentMillis - previousLEDmillis >= LEDInterval) {
-                LEDState = 1;
-                previousLEDmillis += LEDInterval;
-            }
-        }
-        else {
-            if (currentMillis - previousLEDmillis >= LEDBlinkduration) {
-                LEDState = 0;
-                previousLEDmillis += LEDBlinkduration;
-            }    
-        }    
-
-    }; // updateLEDstatus()
-
-    void refreshLED() {
+    void switchLED() {
         static bool previousLEDState;
         // led need to change state? avoid digitalWrite() for nothing
         if (LEDState != previousLEDState) {
             #ifdef LED_ACTIVE_LOW
-                digitalWrite(HAS_LED, LEDState);
-            #else
                 digitalWrite(HAS_LED, !LEDState);
+            #else
+                digitalWrite(HAS_LED, LEDState);
             #endif
 
             #ifdef HAS_RGB_LED
                 rgb_set_color(color);
             #endif
             previousLEDState = LEDState;
+            LEDcount--;        // decrement blink counter
         }
-    }; // refreshLED()
+    }; // switchLED()
+
+    void switchLEDstate() {
+        if (!LEDcount)         // no more blinks? -> switch off LED
+            LEDState = 0;
+        else if (LEDInterval)   // blinks left? -> toggle LED and decrement blinks
+            LEDState = ((currentMillis % LEDInterval) < LEDBlinkduration) ? 1 : 0;
+    } // switchLEDstate()
 #endif
 
 
@@ -469,7 +461,6 @@ void setup() {
 #endif
     
     ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
-    rgb_set_color(COLOR_NONE);
     
     // initialize system event handler for wifi task, needed for wifi_sniffer_init()
     esp_event_loop_init(NULL, NULL);
@@ -492,17 +483,8 @@ void setup() {
 
     // initialize led if needed
 #ifdef HAS_LED
-    LEDState = 0;
-    color = COLOR_NONE;
     pinMode(HAS_LED, OUTPUT);
-    #ifdef LED_ACTIVE_LOW
-            digitalWrite(HAS_LED, LEDState);
-        #else
-            digitalWrite(HAS_LED, !LEDState);
-    #endif
-    #ifdef HAS_RBG_LED
-        rgb_set_color (color);
-    #endif
+    set_LED(COLOR_NONE, 0, 0, 0); // LED off
 #endif
 
     // initialize button handling if needed
@@ -593,8 +575,8 @@ void loop() {
     #endif
 
     #ifdef HAS_LED
-        updateLEDstatus();
-        refreshLED();
+        switchLEDstate();
+        switchLED();
     #endif
 
     //sendPayload();  

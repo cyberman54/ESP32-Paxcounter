@@ -11,6 +11,9 @@
 // Local logging tag
 static const char *TAG = "macsniff";
 
+// defined in main.cpp
+void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_count);
+
 static wifi_country_t wifi_country = {.cc=WIFI_MY_COUNTRY, .schan=WIFI_CHANNEL_MIN, .nchan=WIFI_CHANNEL_MAX, .policy=WIFI_COUNTRY_POLICY_MANUAL};
 
 uint16_t salt;
@@ -49,21 +52,16 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     // Insert only if it was not found on global count
     if (added) {
-
         if (sniff_type == MAC_SNIFF_WIFI ) {
-            rgb_set_color(COLOR_GREEN);
+            set_LED(COLOR_GREEN, 20, 0, 1);
             wifis.insert(hashedmac);   // add hashed MAC to wifi container
             }   
         #ifdef BLECOUNTER
         else if (sniff_type == MAC_SNIFF_BLE ) {
-            rgb_set_color(COLOR_MAGENTA);
+            set_LED(COLOR_MAGENTA, 20, 0, 1);
             bles.insert(hashedmac);    // add hashed MAC to BLE container
             }
         #endif
-        
-        // Not sure user will have time to see the LED
-        // TBD do light off further in the code
-        rgb_set_color(COLOR_NONE);
     } 
         
         ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d  %s", 

@@ -116,13 +116,13 @@ void do_send(osjob_t* j){
     mydata[1] = data  & 0xff;
     
     #ifdef BLECOUNTER
-    // Sum of unique BLE MACs seen
-    data = (uint16_t) bles.size();
-    mydata[2] = (data & 0xff00) >> 8;
-    mydata[3] = data  & 0xff;
+        // Sum of unique BLE MACs seen
+        data = (uint16_t) bles.size();
+        mydata[2] = (data & 0xff00) >> 8;
+        mydata[3] = data  & 0xff;
     #else
-    mydata[2] = 0;
-    mydata[3] = 0;
+        mydata[2] = 0;
+        mydata[3] = 0;
     #endif
 
     // Total BLE+WIFI unique MACs seen
@@ -164,7 +164,7 @@ void onEvent (ev_t ev) {
         
         case EV_JOINED:
             strcpy_P(buff, PSTR("JOINED"));
-            sprintf(display_lora, " "); // erase "Join Wait" message from display
+            sprintf(display_lora, ""); // erase "Join Wait" message from display
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
             LMIC_setLinkCheckMode(0);
