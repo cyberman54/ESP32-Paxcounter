@@ -44,13 +44,13 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
-char display_lora[16], display_lmic[16];
-uint8_t channel = 0;
-int macnum = 0;
+#define DISPLAYREFRESH_MS (1 / DISPLAYFPS * (1000/portTICK_PERIOD_MS)) // calculate ms from fps
+char display_lora[16], display_lmic[16]; // display buffers
 uint64_t currentMillis  = 0, previousLEDmillis = 0, previousDisplaymillis = 0;
-bool joinstate = false;
 uint8_t DisplayState, LEDState;
 uint16_t LEDBlinkduration = 500, LEDInterval = 1000, color = COLOR_NONE;
+uint8_t channel = 0; // wifi channel counter
+bool joinstate = false;
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 std::set<uint16_t> wifis; // associative container holds unique Wifi MAC adress hashes
@@ -85,7 +85,6 @@ void loadConfig(void);
 void gen_lora_deveui(uint8_t * pdeveui);
 void RevBytes(unsigned char* b, size_t c);
 void get_hard_deveui(uint8_t *pdeveui);
-
 
 #ifdef VERBOSE
     void printKeys(void);
@@ -145,6 +144,13 @@ static void lora_init (osjob_t* j) {
     LMIC_startJoining();
 }
 
+void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_state) {
+    color = set_color;
+    LEDBlinkduration = set_blinkduration;
+    LEDInterval = set_interval;
+    LEDState = set_state;       
+}
+
 // LMIC FreeRTos Task
 void lorawan_loop(void * pvParameters) {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
@@ -153,31 +159,21 @@ void lorawan_loop(void * pvParameters) {
         
         os_runloop_once();
 
-        // LED management for viusalizing LoRaWAN state
+        // LED indicators for viusalizing LoRaWAN state
         if ( LMIC.opmode & (OP_JOINING | OP_REJOIN) )  {
             // quick blink 20ms on each 1/5 second
-            color = COLOR_YELLOW;
-            LEDBlinkduration = 20;
-            LEDInterval = 200;
-            LEDState = 1;        
+            set_LED(COLOR_YELLOW, 20, 200, 1);      
         // TX data pending
         } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
             // small blink 10ms on each 1/2sec (not when joining)
-            color = COLOR_BLUE;
-            LEDBlinkduration = 10;
-            LEDInterval = 500;
-            LEDState =1;           
+            set_LED(COLOR_BLUE, 10, 500, 1);
         // This should not happen so indicate a problem
         } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
             // heartbeat long blink 200ms on each 2 seconds
-            color = COLOR_RED;
-            LEDBlinkduration = 200;
-            LEDInterval = 2000;
-            LEDState = 1;           
+            set_LED(COLOR_RED, 200, 2000, 1);
         } else {
             // led off
-            color = COLOR_NONE;
-            LEDState = 0;
+            set_LED(COLOR_NONE, 0, 0, 0);
         }
         
         vTaskDelay(10/portTICK_PERIOD_MS);
@@ -390,9 +386,9 @@ uint64_t uptime() {
 
     void updateDisplay() {
         // timed display refresh according to frames per second setting
-        if (currentMillis - previousDisplaymillis >= ( 1 / DISPLAYFPS * (1000/portTICK_PERIOD_MS))) {
+        if (currentMillis - previousDisplaymillis >= DISPLAYREFRESH_MS) {
             refreshDisplay();
-            previousDisplaymillis += ( 1 / DISPLAYFPS * (1000/portTICK_PERIOD_MS));
+            previousDisplaymillis += DISPLAYREFRESH_MS;
         }
         // set display on/off according to current device configuration
         if (DisplayState != cfg.screenon) {
@@ -418,15 +414,15 @@ uint64_t uptime() {
 #ifdef HAS_LED
     void updateLEDstatus() {
 
-        if (LEDState == LOW) {
+        if (LEDState == 0) {
             if (currentMillis - previousLEDmillis >= LEDInterval) {
-                LEDState = HIGH;
+                LEDState = 1;
                 previousLEDmillis += LEDInterval;
             }
         }
         else {
             if (currentMillis - previousLEDmillis >= LEDBlinkduration) {
-                LEDState = LOW;
+                LEDState = 0;
                 previousLEDmillis += LEDBlinkduration;
             }    
         }    
