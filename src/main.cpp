@@ -47,8 +47,10 @@ osjob_t sendjob, initjob; // LMIC
 char display_lora[16], display_lmic[16];
 uint8_t channel = 0;
 int macnum = 0;
-uint64_t uptimecounter = 0;
+uint64_t currentMillis  = 0, previousLEDmillis = 0, previousDisplaymillis = 0;
 bool joinstate = false;
+uint8_t DisplayState, LEDState;
+uint16_t LEDBlinkduration = 500, LEDInterval = 1000, color = COLOR_NONE;
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 std::set<uint16_t> wifis; // associative container holds unique Wifi MAC adress hashes
@@ -76,10 +78,6 @@ int redirect_log(const char * fmt, va_list args) {
 void eraseConfig(void);
 void saveConfig(void);
 void loadConfig(void);
-
-#ifdef HAS_LED
-    void set_onboard_led(int st);
-#endif
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
 
@@ -151,48 +149,37 @@ static void lora_init (osjob_t* j) {
 void lorawan_loop(void * pvParameters) {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    static bool led_state;
-    bool new_led_state;
-
     while(1) {
-        uint16_t color;
+        
         os_runloop_once();
 
-        // All follow is Led management
-        // Let join at the begining of if sequence,
-        // is prior to send because joining state send data
+        // LED management for viusalizing LoRaWAN state
         if ( LMIC.opmode & (OP_JOINING | OP_REJOIN) )  {
-            color = COLOR_YELLOW;
             // quick blink 20ms on each 1/5 second
-            new_led_state = ((millis() % 200) < 20) ? HIGH : LOW;
-            
+            color = COLOR_YELLOW;
+            LEDBlinkduration = 20;
+            LEDInterval = 200;
+            LEDState = 1;        
         // TX data pending
         } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
-            color = COLOR_BLUE;
             // small blink 10ms on each 1/2sec (not when joining)
-            new_led_state = ((millis() % 500) < 20) ? HIGH : LOW;
-        
+            color = COLOR_BLUE;
+            LEDBlinkduration = 10;
+            LEDInterval = 500;
+            LEDState =1;           
         // This should not happen so indicate a problem
         } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
-            color = COLOR_RED;
             // heartbeat long blink 200ms on each 2 seconds
-            new_led_state = ((millis() % 2000) < 200) ? HIGH : LOW;
+            color = COLOR_RED;
+            LEDBlinkduration = 200;
+            LEDInterval = 2000;
+            LEDState = 1;           
         } else {
             // led off
-            rgb_set_color(COLOR_NONE);
+            color = COLOR_NONE;
+            LEDState = 0;
         }
-        // led need to change state? avoid digitalWrite() for nothing
-        if (led_state != new_led_state) {
-            if (new_led_state == HIGH) {
-                set_onboard_led(1);
-                rgb_set_color(color);
-            } else {
-                set_onboard_led(0);
-                rgb_set_color(COLOR_NONE);
-            }
-            led_state = new_led_state;
-        }
-
+        
         vTaskDelay(10/portTICK_PERIOD_MS);
         yield();
     }    
@@ -217,21 +204,6 @@ void lorawan_loop(void * pvParameters) {
 #ifndef BLECOUNTER
     bool btstop = btStop();
 #endif
-
-void set_onboard_led(int st){
-#ifdef HAS_LED
-    switch (st) {
-        #ifdef LED_ACTIVE_LOW
-          case 1: digitalWrite(HAS_LED, LOW); break;
-          case 0: digitalWrite(HAS_LED, HIGH); break;
-        #else
-          case 1: digitalWrite(HAS_LED, HIGH); break;
-          case 0: digitalWrite(HAS_LED, LOW); break;
-        #endif
-    }
-#endif
-};
-
 
 #ifdef HAS_BUTTON
     // Button Handling, board dependent -> perhaps to be moved to hal/<$board.h>
@@ -303,15 +275,6 @@ void sniffer_loop(void * pvParameters) {
                 yield();
             }
             sprintf(display_lora, " "); // clear LoRa wait message fromd display
-            
-            /*
-            // TBD: need to check if long 2000ms pause causes stack problems while scanning continues
-            if (cfg.screenon && cfg.screensaver) {
-                vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
-                yield();
-                u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
-            } 
-            */
                     
         } // end of send data cycle
         
@@ -330,67 +293,164 @@ uint64_t uptime() {
 }
 
 #ifdef HAS_DISPLAY
-// Print a key on display
-void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
-  uint8_t start=lsb?len:0;
-  uint8_t end = lsb?0:len;
-  const uint8_t * p ;
-  for (uint8_t i=0; i<len ; i++) {
-    p = lsb ? key+len-i-1 : key+i;
-    u8x8.printf("%02X", *p);
-  }
-  u8x8.printf("\n");
-}
 
-void init_display(const char *Productname, const char *Version) {
-    uint8_t buf[32];
-    u8x8.begin();
-    u8x8.setFont(u8x8_font_chroma48medium8_r);
-    u8x8.clear();
-    u8x8.setFlipMode(0);
-    u8x8.setInverseFont(1);
-    u8x8.draw2x2String(0, 0, Productname);
-    u8x8.setInverseFont(0);
-    u8x8.draw2x2String(2, 2, Productname);
-    delay(1500);
-    u8x8.clear();
-    u8x8.setFlipMode(1);
-    u8x8.setInverseFont(1);
-    u8x8.draw2x2String(0, 0, Productname);
-    u8x8.setInverseFont(0);
-    u8x8.draw2x2String(2, 2, Productname);
-    delay(1500);
+    // Print a key on display
+    void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
+        uint8_t start=lsb?len:0;
+        uint8_t end = lsb?0:len;
+        const uint8_t * p ;
+        for (uint8_t i=0; i<len ; i++) {
+            p = lsb ? key+len-i-1 : key+i;
+            u8x8.printf("%02X", *p);
+        }
+        u8x8.printf("\n");
+    }
 
-    u8x8.setFlipMode(0);
-    u8x8.clear();
-
-    #ifdef DISPLAY_FLIP
+    void init_display(const char *Productname, const char *Version) {
+        uint8_t buf[32];
+        u8x8.begin();
+        u8x8.setFont(u8x8_font_chroma48medium8_r);
+        u8x8.clear();
+        u8x8.setFlipMode(0);
+        u8x8.setInverseFont(1);
+        u8x8.draw2x2String(0, 0, Productname);
+        u8x8.setInverseFont(0);
+        u8x8.draw2x2String(2, 2, Productname);
+        delay(1500);
+        u8x8.clear();
         u8x8.setFlipMode(1);
-    #endif
+        u8x8.setInverseFont(1);
+        u8x8.draw2x2String(0, 0, Productname);
+        u8x8.setInverseFont(0);
+        u8x8.draw2x2String(2, 2, Productname);
+        delay(1500);
 
-    // Display chip information
-    #ifdef VERBOSE
-        esp_chip_info_t chip_info;
-        esp_chip_info(&chip_info);
-        u8x8.printf("ESP32 %d cores\nWiFi%s%s\n",
-            chip_info.cores,
-            (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-            (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-        u8x8.printf("ESP Rev.%d\n", chip_info.revision);
-        u8x8.printf("%dMB %s Flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
-    #endif // VERBOSE
+        u8x8.setFlipMode(0);
+        u8x8.clear();
 
-    u8x8.print(Productname);
-    u8x8.print(" v");
-    u8x8.println(PROGVERSION);
-    u8x8.println("DEVEUI:");
-	os_getDevEui((u1_t*) buf);
-    DisplayKey(buf, 8, true);
-    delay(5000);
-    u8x8.clear();
-}
+        #ifdef DISPLAY_FLIP
+            u8x8.setFlipMode(1);
+        #endif
+
+        // Display chip information
+        #ifdef VERBOSE
+            esp_chip_info_t chip_info;
+            esp_chip_info(&chip_info);
+            u8x8.printf("ESP32 %d cores\nWiFi%s%s\n",
+                chip_info.cores,
+                (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+                (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+            u8x8.printf("ESP Rev.%d\n", chip_info.revision);
+            u8x8.printf("%dMB %s Flash\n", spi_flash_get_chip_size() / (1024 * 1024),
+                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
+        #endif // VERBOSE
+
+        u8x8.print(Productname);
+        u8x8.print(" v");
+        u8x8.println(PROGVERSION);
+        u8x8.println("DEVEUI:");
+        os_getDevEui((u1_t*) buf);
+        DisplayKey(buf, 8, true);
+        delay(5000);
+        u8x8.clear();
+    }
+
+    void refreshDisplay() {
+        // update counter display (lines 0-4)
+        char buff[16];
+        snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
+        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
+        u8x8.setCursor(0,4);
+        u8x8.printf("WIFI: %-4d", (int) wifis.size());
+
+        #ifdef BLECOUNTER
+            u8x8.setCursor(0,3);
+            if (cfg.blescan)
+                u8x8.printf("BLTH: %-4d", (int) bles.size());
+            else
+                u8x8.printf("%-16s", "BLTH: off");
+        #endif
+
+        // update wifi channel display (line 4)
+        u8x8.setCursor(11,4);
+        u8x8.printf("ch:%02i", channel);
+
+        // update RSSI limiter status display (line 5)
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-4d", cfg.rssilimit);
+
+        // update LoRa status display (line 6)
+        u8x8.setCursor(0,6);
+        u8x8.printf("%-16s", display_lora);
+
+        // update LMiC event display (line 7)
+        u8x8.setCursor(0,7);
+        u8x8.printf("%-16s", display_lmic);
+    }    
+
+    void updateDisplay() {
+        // timed display refresh according to frames per second setting
+        if (currentMillis - previousDisplaymillis >= ( 1 / DISPLAYFPS * (1000/portTICK_PERIOD_MS))) {
+            refreshDisplay();
+            previousDisplaymillis += ( 1 / DISPLAYFPS * (1000/portTICK_PERIOD_MS));
+        }
+        // set display on/off according to current device configuration
+        if (DisplayState != cfg.screenon) {
+            DisplayState = cfg.screenon;
+            u8x8.setPowerSave(!cfg.screenon);
+        }
+    } // updateDisplay()
+
+
 #endif // HAS_DISPLAY
+
+#ifdef HAS_BUTTON
+    void readButton() {
+        if (ButtonTriggered) {
+            ButtonTriggered = false;
+            ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
+            eraseConfig();
+            esp_restart();
+        }
+    }
+#endif
+
+#ifdef HAS_LED
+    void updateLEDstatus() {
+
+        if (LEDState == LOW) {
+            if (currentMillis - previousLEDmillis >= LEDInterval) {
+                LEDState = HIGH;
+                previousLEDmillis += LEDInterval;
+            }
+        }
+        else {
+            if (currentMillis - previousLEDmillis >= LEDBlinkduration) {
+                LEDState = LOW;
+                previousLEDmillis += LEDBlinkduration;
+            }    
+        }    
+
+    }; // updateLEDstatus()
+
+    void refreshLED() {
+        static bool previousLEDState;
+        // led need to change state? avoid digitalWrite() for nothing
+        if (LEDState != previousLEDState) {
+            #ifdef LED_ACTIVE_LOW
+                digitalWrite(HAS_LED, LEDState);
+            #else
+                digitalWrite(HAS_LED, !LEDState);
+            #endif
+
+            #ifdef HAS_RGB_LED
+                rgb_set_color(color);
+            #endif
+            previousLEDState = LEDState;
+        }
+    }; // refreshLED()
+#endif
+
 
 /* begin Aruino SETUP ------------------------------------------------------------ */
 
@@ -436,8 +496,17 @@ void setup() {
 
     // initialize led if needed
 #ifdef HAS_LED
+    LEDState = 0;
+    color = COLOR_NONE;
     pinMode(HAS_LED, OUTPUT);
-    digitalWrite(HAS_LED, LOW);
+    #ifdef LED_ACTIVE_LOW
+            digitalWrite(HAS_LED, LEDState);
+        #else
+            digitalWrite(HAS_LED, !LEDState);
+    #endif
+    #ifdef HAS_RBG_LED
+        rgb_set_color (color);
+    #endif
 #endif
 
     // initialize button handling if needed
@@ -460,7 +529,8 @@ void setup() {
 
 #ifdef HAS_DISPLAY
 // initialize display  
-    init_display(PROGNAME, PROGVERSION);     
+    init_display(PROGNAME, PROGVERSION);  
+    DisplayState = cfg.screenon;   
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.draw2x2String(0, 0, "PAX:0");
     u8x8.setCursor(0,4);
@@ -513,55 +583,26 @@ do_send(&sendjob);
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
 
-    uptimecounter = uptime() / 1000; // count uptime seconds
+    // state machine for central control of all timimg based features
+
+    currentMillis  = uptime() / 1000; // count uptime seconds
     
-    #ifdef HAS_BUTTON // ...then check if pressed
-        if (ButtonTriggered) {
-            ButtonTriggered = false;
-            ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
-            eraseConfig();
-            esp_restart();
-        }
-    #endif
-    
-    #ifdef HAS_DISPLAY // ...then update mask
-
-        // set display on/off according to current device configuration
-        u8x8.setPowerSave(!cfg.screenon);
-
-        // update counter display (lines 0-4)
-        char buff[16];
-        snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
-        u8x8.setCursor(0,4);
-        u8x8.printf("WIFI: %-4d", (int) wifis.size());
-        #ifdef BLECOUNTER
-            u8x8.setCursor(0,3);
-            if (cfg.blescan)
-                u8x8.printf("BLTH: %-4d", (int) bles.size());
-            else
-                u8x8.printf("%-16s", "BLTH: off");
-        #endif
-
-        // update wifi channel display (line 4)
-        u8x8.setCursor(11,4);
-        u8x8.printf("ch:%02i", channel);
-
-        // update RSSI limiter status display (line 5)
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-4d", cfg.rssilimit);
-
-        // update LoRa status display (line 6)
-        u8x8.setCursor(0,6);
-        u8x8.printf("%-16s", display_lora);
-
-        // update LMiC event display (line 7)
-        u8x8.setCursor(0,7);
-        u8x8.printf("%-16s", display_lmic);
-        
+    #ifdef HAS_BUTTON
+        readButton();
     #endif
 
-    vTaskDelay(1000/DISPLAYFPS/portTICK_PERIOD_MS);
+    #ifdef HAS_DISPLAY
+        updateDisplay();
+    #endif
+
+    #ifdef HAS_LED
+        updateLEDstatus();
+        refreshLED();
+    #endif
+
+    //sendPayload();
+  
+    
 
 }
 

@@ -13,9 +13,6 @@
 // Local logging Tag
 static const char *TAG = "lorawan";
 
-// function defined in main.cpp
-void set_onboard_led(int state);
-
 // functions defined in rcommand.cpp
 void rcommand(int cmd, int arg);
 void switch_lora(int sf, int tx);
