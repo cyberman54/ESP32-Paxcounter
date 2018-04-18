@@ -27,9 +27,8 @@ Refer to LICENSE.txt file in repository for more details.
 // std::set for unified array functions
 #include <set>
 
-// OLED driver
-#include <U8x8lib.h>
-#include <Wire.h> // Does nothing and avoid any compilation error with I2C
+// Does nothing and avoid any compilation error with I2C
+#include <Wire.h> 
 
 // LMIC-Arduino LoRaWAN Stack
 #include "loraconf.h"
@@ -45,6 +44,8 @@ configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
 // Initialize global variables
+char display_lora[16], display_lmic[16];
+uint8_t channel = 0;
 int macnum = 0;
 uint64_t uptimecounter = 0;
 bool joinstate = false;
@@ -205,8 +206,6 @@ void lorawan_loop(void * pvParameters) {
 
 #ifdef HAS_DISPLAY
     HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
-#else
-    U8X8_NULL u8x8;
 #endif
 
 #ifdef HAS_ANTENNA_SWITCH
@@ -215,9 +214,7 @@ void lorawan_loop(void * pvParameters) {
     void antenna_select(const int8_t _ant);
 #endif
 
-#ifdef BLECOUNTER
-    void BLECount(void);
-#else
+#ifndef BLECOUNTER
     bool btstop = btStop();
 #endif
 
@@ -253,11 +250,14 @@ void wifi_sniffer_init(void);
 void wifi_sniffer_set_channel(uint8_t channel);
 void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
+// defined in blescan.cpp
+void bt_loop(void *ignore);
+
 // Sniffer Task
 void sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
-    uint8_t channel=0;
+    channel=0;
     char buff[16];
     int nloop=0, lorawait=0;
    
@@ -269,31 +269,10 @@ void sniffer_loop(void * pvParameters) {
         yield();
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
-        ESP_LOGI(TAG, "Wifi set channel %d", channel);
-
-        snprintf(buff, sizeof(buff), "PAX:%d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total
-
-        #ifdef BLECOUNTER
-            // We just state out of BLE scanning
-            u8x8.setCursor(0,3);
-            if (currentScanDevice) {
-                u8x8.printf("BLE:  %-4d %-4d", (int) bles.size(), currentScanDevice);
-            } else {
-                u8x8.printf("BLE:  %-4d", (int) bles.size());
-            }
-        #endif
-
-        u8x8.setCursor(0,4);
-        u8x8.printf("WIFI: %-4d", (int) wifis.size());
-        u8x8.setCursor(11,4);
-        u8x8.printf("ch:%02i", channel);
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-3d", cfg.rssilimit);
+        ESP_LOGD(TAG, "Wifi set channel %d", channel);
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
-            u8x8.setPowerSave(!cfg.screenon);           // set display on if enabled
             nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
             do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
             vTaskDelay(500/portTICK_PERIOD_MS);
@@ -307,15 +286,13 @@ void sniffer_loop(void * pvParameters) {
                     bles.clear();                         // clear BLE macs counter
                 #endif 
                 salt_reset(); // get new salt for salting hashes
-                u8x8.clearLine(0); // clear Display counter 
-                u8x8.clearLine(1); 
             }      
 
-            // wait until payload is sent, while wifi scanning and mac counting task continues
+            // check if payload is sent
             lorawait = 0;
             while(LMIC.opmode & OP_TXRXPEND) {
                 if(!lorawait) 
-                    u8x8.drawString(0,6,"LoRa wait       ");
+                    sprintf(display_lora, "LoRa wait");
                 lorawait++;
                 // in case sending really fails: reset and rejoin network
                 if( (lorawait % MAXLORARETRY ) == 0) {
@@ -325,26 +302,20 @@ void sniffer_loop(void * pvParameters) {
                 vTaskDelay(1000/portTICK_PERIOD_MS);
                 yield();
             }
-
-            u8x8.clearLine(6);
-
+            sprintf(display_lora, " "); // clear LoRa wait message fromd display
+            
+            /*
             // TBD: need to check if long 2000ms pause causes stack problems while scanning continues
             if (cfg.screenon && cfg.screensaver) {
                 vTaskDelay(2000/portTICK_PERIOD_MS);   // pause for displaying results
                 yield();
                 u8x8.setPowerSave(1 && cfg.screensaver); // set display off if screensaver is enabled
-            }          
+            } 
+            */
+                    
         } // end of send data cycle
         
-        else {
-            #ifdef BLECOUNTER
-                if (nloop % (WIFI_CHANNEL_MAX * cfg.blescancycle) == 0 )   // once after cfg.blescancycle Wifi scans, do a BLE scan
-                    if (cfg.blescan) {              // execute BLE count if BLE function is enabled
-                        BLECount();                 // start BLE scan, this is a blocking call
-                    }
-            #endif
-        } // end of channel rotation loop
-    } // end of infinite wifi scan loop
+    } // end of infinite wifi channel rotation loop
 }
 
 /* end wifi specific parts ------------------------------------------------------------ */
@@ -358,6 +329,7 @@ uint64_t uptime() {
     return (uint64_t) high32 << 32 | low32;
 }
 
+#ifdef HAS_DISPLAY
 // Print a key on display
 void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
   uint8_t start=lsb?len:0;
@@ -371,10 +343,9 @@ void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
 }
 
 void init_display(const char *Productname, const char *Version) {
+    uint8_t buf[32];
     u8x8.begin();
     u8x8.setFont(u8x8_font_chroma48medium8_r);
-#ifdef HAS_DISPLAY
-    uint8_t buf[32];
     u8x8.clear();
     u8x8.setFlipMode(0);
     u8x8.setInverseFont(1);
@@ -418,8 +389,8 @@ void init_display(const char *Productname, const char *Version) {
     DisplayKey(buf, 8, true);
     delay(5000);
     u8x8.clear();
-#endif // HAS_DISPLAY
 }
+#endif // HAS_DISPLAY
 
 /* begin Aruino SETUP ------------------------------------------------------------ */
 
@@ -487,12 +458,21 @@ void setup() {
     antenna_init();
 #endif
 
+#ifdef HAS_DISPLAY
 // initialize display  
     init_display(PROGNAME, PROGVERSION);     
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
+    u8x8.draw2x2String(0, 0, "PAX:0");
+    u8x8.setCursor(0,4);
+    u8x8.printf("WIFI: 0");
+    #ifdef BLECOUNTER
+        u8x8.setCursor(0,3);
+        u8x8.printf("BLTH: 0");
+    #endif
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
-    u8x8.drawString(0,6,"Join Wait       ");
+    sprintf(display_lora, "Join wait");
+#endif
 
 // output LoRaWAN keys to console
 #ifdef VERBOSE
@@ -507,18 +487,16 @@ wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
 // note: do this *after* wifi has started, since gets it's seed from RF noise
 salt_reset(); // get new 16bit for salting hashes
  
-// Start FreeRTOS tasks
-#if CONFIG_FREERTOS_UNICORE // run all tasks on core 0 and switch off core 1
-    ESP_LOGI(TAG, "Starting Lora task on core 0");
-    xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 0);  
-    ESP_LOGI(TAG, "Starting Wifi task on core 0");
-    xTaskCreatePinnedToCore(wifi_sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
-    // to come here: code for switching off core 1
-#else // run wifi task on core 0 and lora task on core 1
-    ESP_LOGI(TAG, "Starting Lora task on core 1");
-    xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
-    ESP_LOGI(TAG, "Starting Wifi task on core 0");
-    xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 4096, ( void * ) 1, 1, NULL, 0);
+// run wifi task on core 0 and lora task on core 1 and bt task on core 0
+ESP_LOGI(TAG, "Starting Lora task on core 1");
+xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
+ESP_LOGI(TAG, "Starting Wifi task on core 0");
+xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 16384, ( void * ) 1, 1, NULL, 0);
+#ifdef BLECOUNTER
+    if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
+        ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 16384, NULL, 5, NULL, 0);
+    }
 #endif
     
 // Finally: kickoff first sendjob and join, then send initial payload "0000"
@@ -534,20 +512,57 @@ do_send(&sendjob);
 // Arduino main moop, runs on core 1
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
-    while(1) {
-#ifdef HAS_BUTTON
-    if (ButtonTriggered) {
-        ButtonTriggered = false;
-        ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
-        eraseConfig();
-        esp_restart();
+
+    uptimecounter = uptime() / 1000; // count uptime seconds
+    
+    #ifdef HAS_BUTTON // ...then check if pressed
+        if (ButtonTriggered) {
+            ButtonTriggered = false;
+            ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
+            eraseConfig();
+            esp_restart();
         }
-    else 
-#endif
-    {   vTaskDelay(1000/portTICK_PERIOD_MS);
-        uptimecounter = uptime() / 1000; // count uptime seconds
-        }
-    }
+    #endif
+    
+    #ifdef HAS_DISPLAY // ...then update mask
+
+        // set display on/off according to current device configuration
+        u8x8.setPowerSave(!cfg.screenon);
+
+        // update counter display (lines 0-4)
+        char buff[16];
+        snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
+        u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
+        u8x8.setCursor(0,4);
+        u8x8.printf("WIFI: %-4d", (int) wifis.size());
+        #ifdef BLECOUNTER
+            u8x8.setCursor(0,3);
+            if (cfg.blescan)
+                u8x8.printf("BLTH: %-4d", (int) bles.size());
+            else
+                u8x8.printf("%-16s", "BLTH: off");
+        #endif
+
+        // update wifi channel display (line 4)
+        u8x8.setCursor(11,4);
+        u8x8.printf("ch:%02i", channel);
+
+        // update RSSI limiter status display (line 5)
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-4d", cfg.rssilimit);
+
+        // update LoRa status display (line 6)
+        u8x8.setCursor(0,6);
+        u8x8.printf("%-16s", display_lora);
+
+        // update LMiC event display (line 7)
+        u8x8.setCursor(0,7);
+        u8x8.printf("%-16s", display_lmic);
+        
+    #endif
+
+    vTaskDelay(1000/DISPLAYFPS/portTICK_PERIOD_MS);
+
 }
 
 /* end Aruino LOOP ------------------------------------------------------------ */

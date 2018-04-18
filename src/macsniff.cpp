@@ -2,13 +2,6 @@
 // Basic Config
 #include "globals.h"
 
-#ifdef BLECOUNTER
-    #include <BLEDevice.h>
-    #include <BLEUtils.h>
-    #include <BLEScan.h>
-    #include <BLEAdvertisedDevice.h>
-#endif
-
 #ifdef VENDORFILTER
     #include <array>
     #include <algorithm>
@@ -20,7 +13,6 @@ static const char *TAG = "macsniff";
 
 static wifi_country_t wifi_country = {.cc=WIFI_MY_COUNTRY, .schan=WIFI_CHANNEL_MIN, .nchan=WIFI_CHANNEL_MAX, .policy=WIFI_COUNTRY_POLICY_MANUAL};
 
-uint16_t currentScanDevice = 0;
 uint16_t salt;
 
 uint16_t salt_reset(void) {
@@ -42,38 +34,40 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     #ifdef VENDORFILTER
         vendor2int = ( (uint32_t)paddr[2] ) | ( (uint32_t)paddr[1] << 8 ) | ( (uint32_t)paddr[0] << 16 );
-        // No vendor filter for BLE
+        // use OUI vendor filter list only on Wifi, not on BLE
         if ( (sniff_type==MAC_SNIFF_BLE) || std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end() ) {
     #endif
 
-        // salt and hash MAC, and if new unique one, store identifier in container and increment counter on display
-		// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
+    // salt and hash MAC, and if new unique one, store identifier in container and increment counter on display
+	// https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 			
-		addr2int += (uint32_t) salt;		    // add 16-bit salt to pseudo MAC
-		snprintf(buff, sizeof(buff), "%08X", addr2int);	// convert unsigned 32-bit salted MAC to 8 digit hex string
-		hashedmac = rokkit(&buff[3], 5);	    // hash MAC last string value, use 5 chars to fit hash in uint16_t container
-		auto newmac = macs.insert(hashedmac);	// add hashed MAC to total container if new unique
-        added = newmac.second ? true:false;     // true if hashed MAC is unique in container
+	addr2int += (uint32_t) salt;		    // add 16-bit salt to pseudo MAC
+	snprintf(buff, sizeof(buff), "%08X", addr2int);	// convert unsigned 32-bit salted MAC to 8 digit hex string
+	hashedmac = rokkit(&buff[3], 5);	    // hash MAC last string value, use 5 chars to fit hash in uint16_t container
+	auto newmac = macs.insert(hashedmac);	// add hashed MAC to total container if new unique
+    added = newmac.second ? true:false;     // true if hashed MAC is unique in container
 
-        // Insert only if it was not found on global count
-        if (added) {
-            if (sniff_type == MAC_SNIFF_WIFI ) {
-                rgb_set_color(COLOR_GREEN);
-                wifis.insert(hashedmac);   // add hashed MAC to wifi container if new unique
-            } 
-            #ifdef BLECOUNTER
-            else if (sniff_type == MAC_SNIFF_BLE ) {
-                rgb_set_color(COLOR_MAGENTA);
-                bles.insert(hashedmac);    // add hashed MAC to BLE container if new unique
+    // Insert only if it was not found on global count
+    if (added) {
+
+        if (sniff_type == MAC_SNIFF_WIFI ) {
+            rgb_set_color(COLOR_GREEN);
+            wifis.insert(hashedmac);   // add hashed MAC to wifi container
+            }   
+        #ifdef BLECOUNTER
+        else if (sniff_type == MAC_SNIFF_BLE ) {
+            rgb_set_color(COLOR_MAGENTA);
+            bles.insert(hashedmac);    // add hashed MAC to BLE container
             }
-            #endif
-            // Not sure user will have time to see the LED
-            // TBD do light off further in the code
-            rgb_set_color(COLOR_NONE);
-        } 
+        #endif
         
-        ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLE:%d  %s", 
-                        sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLE ", 
+        // Not sure user will have time to see the LED
+        // TBD do light off further in the code
+        rgb_set_color(COLOR_NONE);
+    } 
+        
+        ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d  %s", 
+                        sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLTH", 
                         rssi, buff, hashedmac, 
                         (int) wifis.size(), 
                         #ifdef BLECOUNTER
@@ -81,77 +75,18 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
                         #else
                             0,
                         #endif
-                        added ? "New" : "Already seen");
+                        added ? "new" : "known");
 
     #ifdef VENDORFILTER
     } else {
         // Very noisy
-        //ESP_LOGI(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X", paddr[0],paddr[1],paddr[2],paddr[3],paddr[5],paddr[5]);
+        // ESP_LOGD(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X", paddr[0],paddr[1],paddr[2],paddr[3],paddr[5],paddr[5]);
     }
     #endif
 
     // True if MAC WiFi/BLE was new
     return added; // function returns bool if a new and unique Wifi or BLE mac was counted (true) or not (false)
 }
-
-#ifdef BLECOUNTER
-
-class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
-    void onResult(BLEAdvertisedDevice advertisedDevice) {
-        int lastcount = (int) macs.size();
-        uint8_t *p = (uint8_t *) advertisedDevice.getAddress().getNative();
-
-        /* to be done here:
-        #ifdef VENDORFILTER
-        
-        filter BLE devices using their advertisements to get filter alternative to vendor OUI
-        if vendorfiltering is on, we ...
-        - want to count: mobile phones and tablets
-        - don't want to count: beacons, peripherals (earphones, headsets, printers), cars and machines
-        see
-        https://github.com/nkolban/ESP32_BLE_Arduino/blob/master/src/BLEAdvertisedDevice.cpp
-
-        http://www.libelium.com/products/meshlium/smartphone-detection/
-
-        https://www.question-defense.com/2013/01/12/bluetooth-cod-bluetooth-class-of-deviceclass-of-service-explained
-
-        https://www.bluetooth.com/specifications/assigned-numbers/baseband
-
-        "The Class of Device (CoD) in case of Bluetooth which allows us to differentiate the type of 
-        device (smartphone, handsfree, computer, LAN/network AP). With this parameter we can 
-        differentiate among pedestrians and vehicles."
-
-        #endif
-        */
-        
-        // Current devices seen on this scan session
-        currentScanDevice++;
-        u8x8.setCursor(11,3);
-        u8x8.printf("%-4d", currentScanDevice);
-        // add this device and show new count total if it was not previously added
-        if ( mac_add(p, advertisedDevice.getRSSI(), MAC_SNIFF_BLE) ) {
-            char buff[16];
-            snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
-            u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
-        }
-    }
-};
-
-void BLECount() {
-    ESP_LOGI(TAG, "BLE scan started");
-    currentScanDevice = 0; // Set 0 seen device on this scan session
-    u8x8.drawString(0,3,"Scanning->");
-    BLEDevice::init(""); // we don't want to be seen by a name
-    BLEScanResults foundDevices; // instance for getting count
-    BLEScan* pBLEScan = BLEDevice::getScan(); //create new scan
-    pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-    pBLEScan->setActiveScan(false); // An active scan would mean that we will wish unneeeded scan responses
-    pBLEScan->setWindow(BLESCANWINDOW);
-    pBLEScan->setInterval(BLESCANINTERVAL);
-    pBLEScan->start(cfg.blescantime); // note: this is a blocking call
-    ESP_LOGI(TAG, "BLE scan done, seen %d device(s)", foundDevices.getCount());
-}
-#endif
 
 void wifi_sniffer_init(void) {
 		wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -181,6 +116,5 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
     } else {
         ESP_LOGI(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi, cfg.rssilimit);
     }
-    //yield();
 }
 

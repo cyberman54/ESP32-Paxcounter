@@ -65,7 +65,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
         Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8);
         while (Wire.available()) {
             data = Wire.read();
-            sprintf(deveui+strlen(deveui), "%02X ", data) ;
+            sprintf(deveui+strlen(deveui), "%02X ", data);
             *pdeveui++ = data;
         }
         i2c_ret = Wire.endTransmission();
@@ -135,15 +135,14 @@ void do_send(osjob_t* j){
     //mydata[5] = data  & 0xff;
 
     // Check if there is not a current TX/RX job running
-    u8x8.clearLine(7); 
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
-        u8x8.drawString(0, 7, "LORA BUSY");
+        sprintf(display_lmic, "LORA BUSY");
     } else {
         // Prepare upstream data transmission at the next possible time.
         LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
         ESP_LOGI(TAG, "Packet queued");
-        u8x8.drawString(0, 7, "PACKET QUEUED");
+        sprintf(display_lmic, "PACKET QUEUED");
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -168,7 +167,7 @@ void onEvent (ev_t ev) {
         
         case EV_JOINED:
             strcpy_P(buff, PSTR("JOINED"));
-            u8x8.clearLine(6); // erase "Join Wait" message from display, see main.cpp
+            sprintf(display_lora, " "); // erase "Join Wait" message from display
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
             LMIC_setLinkCheckMode(0);
@@ -182,23 +181,21 @@ void onEvent (ev_t ev) {
             break;
         case EV_TXCOMPLETE:
             ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
-            u8x8.clearLine(7);
             if (LMIC.txrxFlags & TXRX_ACK) {
               ESP_LOGI(TAG, "Received ack");
-              u8x8.drawString(0, 7, "RECEIVED ACK");
+              sprintf(display_lmic, "RECEIVED ACK");
+              
             } else {
-              u8x8.drawString(0, 7, "TX COMPLETE");
+              sprintf(display_lmic, "TX COMPLETE");
             }
             if (LMIC.dataLen) {
                 ESP_LOGI(TAG, "Received %d bytes of payload", LMIC.dataLen);
-                u8x8.clearLine(6); 
-                u8x8.setCursor(0, 6);
-                u8x8.printf("Rcvd %d bytes", LMIC.dataLen);
-                u8x8.clearLine(7);
-                u8x8.setCursor(0, 7);
+                sprintf(display_lora, "Rcvd %d bytes", LMIC.dataLen);
+
                 // LMIC.snr = SNR twos compliment [dB] * 4
                 // LMIC.rssi = RSSI [dBm] (-196...+63)
-                u8x8.printf("RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4);
+                sprintf(display_lmic, "RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4 );
+
                 // check if payload received on command port, then call remote command interpreter
                 if ( (LMIC.txrxFlags & TXRX_PORT) && (LMIC.frame[LMIC.dataBeg-1] == RCMDPORT ) ) {
                     // caution: buffering LMIC values here because rcommand() can modify LMIC.frame
@@ -217,8 +214,7 @@ void onEvent (ev_t ev) {
     // Log & Display if asked
     if (*buff) {
         ESP_LOGI(TAG, "EV_%s", buff);
-        u8x8.clearLine(7);
-        u8x8.drawString(0, 7, buff);
+        sprintf(display_lmic, buff);
     }
 
     

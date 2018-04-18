@@ -6,8 +6,10 @@
 #include <array>
 #include <algorithm>
 
-// OLED Display
-#include <U8x8lib.h>
+#ifdef HAS_DISPLAY
+    // OLED Display
+    #include <U8x8lib.h>
+#endif
 
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
@@ -33,9 +35,9 @@ typedef struct {
   int8_t wifiscancycle;                // wifi scan cycle [seconds/2]
   int8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
   int8_t blescantime;                  // BLE scan cycle duration [seconds]
-  int8_t blescancycle;                 // BLE scan frequency, once after [blescancycle] full wifi scans
   int8_t blescan;                      // 0=disabled, 1=enabled
   int8_t wifiant;                      // 0=internal, 1=external (for LoPy/LoPy4)
+  int8_t vendorfilter;                 // 0=disabled, 1=enabled
   int8_t rgblum;                       // RGB Led luminosity (0..100%)
   char version[10];                    // Firmware version
   } configData_t;
@@ -44,6 +46,7 @@ extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
 extern osjob_t sendjob;
+extern char display_lora[], display_lmic[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern bool joinstate;
 extern std::set<uint16_t> wifis; 
@@ -51,11 +54,9 @@ extern std::set<uint16_t> macs;
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;
-#else
-    extern U8X8_NULL u8x8;
 #endif
 
 #ifdef BLECOUNTER
     extern int scanTime;
-    extern std::set<uint16_t> bles; 
+    extern std::set<uint16_t> bles;
 #endif
