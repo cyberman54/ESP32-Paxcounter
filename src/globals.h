@@ -22,6 +22,7 @@
 
 #include "rgb_led.h"
 #include "macsniff.h"
+#include "main.h"
 
 // Struct holding devices's runtime configuration
 typedef struct {

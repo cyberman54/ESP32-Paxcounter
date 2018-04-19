@@ -19,10 +19,6 @@ typedef struct {
     const bool store;
 } cmd_t;
 
-// functions defined in configmanager.cpp
-void eraseConfig(void);
-void saveConfig(void);
-
 // function defined in antenna.cpp
 #ifdef HAS_ANTENNA_SWITCH
     void antenna_select(const int8_t _ant);
@@ -64,11 +60,8 @@ void set_reset(int val) {
             break;
         case 1: // reset MAC counter
             ESP_LOGI(TAG, "Remote command: reset MAC counter");
-            macs.clear(); // clear all macs container
-            macs_total = 0; // reset all counters
-            macs_wifi = 0;
-            macs_ble = 0;
-            salt_reset(); // get new 16bit salt
+            reset_counters();   // clear macs
+            reset_salt();       // get new salt
             sprintf(display_lora, "Reset counter");
             break;
         case 2: // reset device to factory settings

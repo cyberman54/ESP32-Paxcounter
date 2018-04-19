@@ -233,8 +233,10 @@ esp_err_t register_ble_functionality(void)
 
 
 // Main start code running in its own Xtask
-void bt_loop(void *ignore)
+void bt_loop(void * pvParameters)
 {
+	configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
+
 	esp_err_t status;
 	
 	// Initialize BT controller to allocate task and other resource. 

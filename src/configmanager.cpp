@@ -18,7 +18,7 @@ esp_err_t err;
 
 // populate cfg vars with factory settings
 void defaultConfig() {
-    cfg.lorasf        = LORASFDEFAULT;  // 7-12, initial lora spreadfactor defined in main.h
+    cfg.lorasf        = LORASFDEFAULT;  // 7-12, initial lora spreadfactor defined in paxcounter.conf
     cfg.txpower       = 15;             // 2-15, lora tx power
     cfg.adrmode       = 1;              // 0=disabled, 1=enabled
     cfg.screensaver   = 0;              // 0=disabled, 1=enabled

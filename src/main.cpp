@@ -32,18 +32,13 @@ Refer to LICENSE.txt file in repository for more details.
 #include <lmic.h>
 #include <hal/hal.h>
 
-// ESP32 Functions
-#include <esp_event_loop.h> // needed for Wifi event handler
-#include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
-#include <esp32-hal-log.h> // needed for ESP_LOGx on arduino framework
+// ESP32 lib Functions
+#include <esp_event_loop.h>         // needed for Wifi event handler
+#include <esp_spi_flash.h>          // needed for reading ESP32 chip attributes
+#include <esp32-hal-log.h>          // needed for ESP_LOGx on arduino framework
 
-configData_t cfg; // struct holds current device configuration
-osjob_t sendjob, initjob; // LMIC
-
-enum states { 
-  LED_ON,
-  LED_OFF
-};
+configData_t cfg;                   // struct holds current device configuration
+osjob_t sendjob, initjob;           // LMIC jobs
 
 // Initialize global variables
 char display_lora[16], display_lmic[16]; // display buffers
@@ -65,6 +60,7 @@ static volatile bool ButtonTriggered = false;
 static const char *TAG = "paxcnt";
 // Note: Log level control seems not working during runtime,
 // so we need to switch loglevel by compiler build option in platformio.ini
+
 #ifndef VERBOSE
 int redirect_log(const char * fmt, va_list args) {
    //do nothing
@@ -72,36 +68,19 @@ int redirect_log(const char * fmt, va_list args) {
 }
 #endif
 
-//--- Prototypes ---
-
-// defined in configmanager.cpp
-void eraseConfig(void);
-void saveConfig(void);
-void loadConfig(void);
-
-// defined in lorawan.cpp
-void onEvent(ev_t ev);
-void do_send(osjob_t* j);
-void gen_lora_deveui(uint8_t * pdeveui);
-void RevBytes(unsigned char* b, size_t c);
-void get_hard_deveui(uint8_t *pdeveui);
-
-// defined in wifisniffer.cpp
-void wifi_sniffer_init(void);
-void wifi_sniffer_set_channel(uint8_t channel);
-void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
-
-// defined in blescan.cpp
-void bt_loop(void *ignore);
-
-//--- 
-
 void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_count) {
     color = set_color;                      // set color for RGB LED
     LEDBlinkduration = set_blinkduration;   // duration on
     LEDInterval = set_interval;             // duration off - on - off
     LEDcount = set_count * 2;               // number of on/off cycles before LED off
     LEDState = set_count ? LED_ON : LED_OFF;           // sets LED to off if 0 blinks
+}
+
+void reset_counters() {
+    macs.clear();                           // clear all macs container
+    macs_total = 0;                         // reset all counters
+    macs_wifi = 0;
+    macs_ble = 0;
 }
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
@@ -163,6 +142,7 @@ static void lora_init (osjob_t* j) {
 
 // LMIC FreeRTos Task
 void lorawan_loop(void * pvParameters) {
+
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
     while(1) {
@@ -227,34 +207,31 @@ void lorawan_loop(void * pvParameters) {
 void sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
-    channel=0;
+
     char buff[16];
     int nloop=0, lorawait=0;
    
-  	while (true) {
+  	while (1) {
 
         nloop++; // actual number of wifi loops, controls cycle when data is sent
 
-        vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
-        yield();
         channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
         wifi_sniffer_set_channel(channel);
         ESP_LOGD(TAG, "Wifi set channel %d", channel);
 
         // duration of one wifi scan loop reached? then send data and begin new scan cycle
         if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
+
             nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
             do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
-            vTaskDelay(500/portTICK_PERIOD_MS);
-            yield();
+            
+            //vTaskDelay(500/portTICK_PERIOD_MS);       // tbd - is this delay really needed here?
+            //yield();
 
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
-                macs.clear();                           // clear all macs container
-                macs_total = 0;                         // reset all counters
-                macs_wifi = 0;
-                macs_ble = 0;
-                salt_reset(); // get new salt for salting hashes
+                reset_counters();                       // clear macs container and reset all counters
+                reset_salt();                           // get new salt for salting hashes
             }      
 
             // check if payload is sent
@@ -275,6 +252,9 @@ void sniffer_loop(void * pvParameters) {
                     
         } // end of send data cycle
         
+        vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
+        yield();
+
     } // end of infinite wifi channel rotation loop
 }
 
@@ -536,7 +516,7 @@ wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
 
 // initialize salt value using esp_random() called by random() in arduino-esp32 core
 // note: do this *after* wifi has started, since gets it's seed from RF noise
-salt_reset(); // get new 16bit for salting hashes
+reset_salt(); // get new 16bit for salting hashes
  
 // run wifi task on core 0 and lora task on core 1 and bt task on core 0
 ESP_LOGI(TAG, "Starting Lora task on core 1");
