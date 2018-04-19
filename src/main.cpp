@@ -519,9 +519,11 @@ reset_salt(); // get new 16bit for salting hashes
  
 // run wifi task on core 0 and lora task on core 1 and bt task on core 0
 ESP_LOGI(TAG, "Starting Lora task on core 1");
-xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1);  
+xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1); 
+
 ESP_LOGI(TAG, "Starting Wifi task on core 0");
 xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 16384, ( void * ) 1, 1, NULL, 0);
+
 #ifdef BLECOUNTER
     if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
         ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
