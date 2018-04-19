@@ -65,7 +65,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // Log scan result
     ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d  %s", 
         sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLTH", 
-        rssi, buff, hashedmac, macs_wifi, 
+        rssi, buff, hashedmac, macs_wifi, macs_ble,
         added ? "new" : "known");
 
     #ifdef VENDORFILTER

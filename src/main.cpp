@@ -366,7 +366,7 @@ uint64_t uptime() {
 
     void updateDisplay() {
         // timed display refresh according to refresh cycle setting
-        uint32_t previousDisplaymillis = currentMillis;
+        uint32_t previousDisplaymillis;
 
         if (currentMillis - previousDisplaymillis >= DISPLAYREFRESH_MS) {
             refreshDisplay();
@@ -527,7 +527,7 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 16384, ( void * ) 1, 1, NUL
 #ifdef BLECOUNTER
     if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
         ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 16384, NULL, 5, NULL, 0);
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 16384, ( void * ) 1, 1, NULL, 0);
     }
 #endif
     
