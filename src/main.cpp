@@ -24,9 +24,6 @@ Refer to LICENSE.txt file in repository for more details.
 // Basic Config
 #include "globals.h"
 
-// std::set for unified array functions
-#include <set>
-
 // Does nothing and avoid any compilation error with I2C
 #include <Wire.h> 
 
@@ -43,22 +40,23 @@ Refer to LICENSE.txt file in repository for more details.
 configData_t cfg; // struct holds current device configuration
 osjob_t sendjob, initjob; // LMIC
 
+enum states { 
+  LED_ON,
+  LED_OFF
+};
+
 // Initialize global variables
 char display_lora[16], display_lmic[16]; // display buffers
-uint64_t uptimecounter = 0;
-uint32_t currentMillis = 0, previousDisplaymillis = 0;
-uint8_t DisplayState, LEDState = 0, LEDcount = 0;
-uint16_t LEDBlinkduration = 0, LEDInterval = 0, color=COLOR_NONE;
-uint8_t channel = 0; // wifi channel counter
-bool joinstate = false;
+uint64_t uptimecounter = 0;         // timer global for uptime counter
+uint32_t currentMillis = 0;         // timer global for state machine
+uint8_t DisplayState, LEDcount = 0; // globals for state machine
+uint16_t LEDBlinkduration = 0, LEDInterval = 0, color=COLOR_NONE; // state machine variables
+uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0; // MAC counters globals for display
+uint8_t channel = 0;                // wifi channel rotation counter global for display
+enum states LEDState = LED_OFF;     // LED state global for state machine
+bool joinstate = false;             // LoRa network joined? global flag
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
-std::set<uint16_t> wifis; // associative container holds unique Wifi MAC adress hashes
-
-#ifdef BLECOUNTER
-    std::set<uint16_t> bles; // associative container holds unique BLE MAC adresses hashes
-    int scanTime;
-#endif
 
 // this variable will be changed in the ISR, and read in main loop
 static volatile bool ButtonTriggered = false;
@@ -83,8 +81,8 @@ void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_inter
     color = set_color;                      // set color for RGB LED
     LEDBlinkduration = set_blinkduration;   // duration on
     LEDInterval = set_interval;             // duration off - on - off
-    LEDcount = set_count * 2;               // number of blinks before LED off
-    LEDState = set_count ? 1 : 0;           // sets LED to off if 0 blinks
+    LEDcount = set_count * 2;               // number of on/off cycles before LED off
+    LEDState = set_count ? LED_ON : LED_OFF;           // sets LED to off if 0 blinks
 }
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
@@ -250,10 +248,9 @@ void sniffer_loop(void * pvParameters) {
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
                 macs.clear();                           // clear all macs container
-                wifis.clear();                          // clear Wifi macs couner
-                #ifdef BLECOUNTER
-                    bles.clear();                         // clear BLE macs counter
-                #endif 
+                macs_total = 0;                         // reset all counters
+                macs_wifi = 0;
+                macs_ble = 0;
                 salt_reset(); // get new salt for salting hashes
             }      
 
@@ -358,12 +355,12 @@ uint64_t uptime() {
         snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
         u8x8.setCursor(0,4);
-        u8x8.printf("WIFI: %-4d", (int) wifis.size());
+        u8x8.printf("WIFI: %-4d", macs_wifi);
 
         #ifdef BLECOUNTER
             u8x8.setCursor(0,3);
             if (cfg.blescan)
-                u8x8.printf("BLTH: %-4d", (int) bles.size());
+                u8x8.printf("BLTH: %-4d", macs_ble);
             else
                 u8x8.printf("%-16s", "BLTH: off");
         #endif
@@ -387,6 +384,8 @@ uint64_t uptime() {
 
     void updateDisplay() {
         // timed display refresh according to refresh cycle setting
+        uint32_t previousDisplaymillis = currentMillis;
+
         if (currentMillis - previousDisplaymillis >= DISPLAYREFRESH_MS) {
             refreshDisplay();
             previousDisplaymillis += DISPLAYREFRESH_MS;
@@ -414,7 +413,7 @@ uint64_t uptime() {
 
 #ifdef HAS_LED
     void switchLED() {
-        static bool previousLEDState;
+        enum states previousLEDState;
         // led need to change state? avoid digitalWrite() for nothing
         if (LEDState != previousLEDState) {
             #ifdef LED_ACTIVE_LOW
@@ -434,9 +433,9 @@ uint64_t uptime() {
 
     void switchLEDstate() {
         if (!LEDcount)         // no more blinks? -> switch off LED
-            LEDState = 0;
+            LEDState = LED_OFF;
         else if (LEDInterval)   // blinks left? -> toggle LED and decrement blinks
-            LEDState = ((currentMillis % LEDInterval) < LEDBlinkduration) ? 1 : 0;
+            LEDState = ((currentMillis % LEDInterval) < LEDBlinkduration) ? LED_ON : LED_OFF;
     } // switchLEDstate()
 #endif
 

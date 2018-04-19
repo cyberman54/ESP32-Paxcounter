@@ -65,10 +65,9 @@ void set_reset(int val) {
         case 1: // reset MAC counter
             ESP_LOGI(TAG, "Remote command: reset MAC counter");
             macs.clear(); // clear all macs container
-            wifis.clear(); // clear Wifi macs container
-            #ifdef BLECOUNTER
-                bles.clear(); // clear BLE macs container
-            #endif
+            macs_total = 0; // reset all counters
+            macs_wifi = 0;
+            macs_ble = 0;
             salt_reset(); // get new 16bit salt
             sprintf(display_lora, "Reset counter");
             break;
@@ -151,10 +150,8 @@ void set_blescan(int val) {
     ESP_LOGI(TAG, "Remote command: set BLE scan mode to %s", val ? "on" : "off");
     switch (val) {
         case 0:
-            cfg.blescan = 0; 
-            #ifdef BLECOUNTER
-                bles.clear(); // clear BLE macs container
-            #endif          
+            cfg.blescan = 0;
+            macs_ble = 0; // clear BLE counter
             break; 
         default: 
             cfg.blescan = 1;

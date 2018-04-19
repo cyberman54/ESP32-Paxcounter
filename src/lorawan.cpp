@@ -111,15 +111,13 @@ void do_send(osjob_t* j){
     uint8_t mydata[4];
     uint16_t data;
     // Sum of unique WIFI MACs seen
-    data = (uint16_t) wifis.size();
-    mydata[0] = (data & 0xff00) >> 8;
-    mydata[1] = data  & 0xff;
+    mydata[0] = (macs_wifi & 0xff00) >> 8;
+    mydata[1] = macs_wifi  & 0xff;
     
     #ifdef BLECOUNTER
         // Sum of unique BLE MACs seen
-        data = (uint16_t) bles.size();
-        mydata[2] = (data & 0xff00) >> 8;
-        mydata[3] = data  & 0xff;
+        mydata[2] = (macs_ble & 0xff00) >> 8;
+        mydata[3] = macs_ble  & 0xff;
     #else
         mydata[2] = 0;
         mydata[3] = 0;
@@ -128,8 +126,8 @@ void do_send(osjob_t* j){
     // Total BLE+WIFI unique MACs seen
     // TBD ?
     //data = (uint16_t) macs.size();
-    //mydata[4] = (data & 0xff00) >> 8;
-    //mydata[5] = data  & 0xff;
+    //mydata[4] = (macs_total & 0xff00) >> 8;
+    //mydata[5] = macs_total  & 0xff;
 
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
