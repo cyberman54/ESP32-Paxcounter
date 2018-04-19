@@ -41,12 +41,12 @@ Refer to LICENSE.txt file in repository for more details.
 configData_t cfg;                   // struct holds current device configuration
 osjob_t sendjob, initjob;           // LMIC jobs
 uint64_t uptimecounter = 0;         // timer global for uptime counter
-uint32_t currentMillis = 0;         // timer global for state machine
+uint32_t currentMillis = 0, previousDisplaymillis = 0   // timer globals for state machine
 uint8_t DisplayState, LEDcount = 0; // globals for state machine
 uint16_t LEDBlinkduration = 0, LEDInterval = 0, color=COLOR_NONE; // state machine variables
-uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0; // MAC counters globals for display
+uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
-char display_lora[16], display_lmic[16]; // display buffers
+char display_lora[16], display_lmic[16];                // display buffers
 enum states LEDState = LED_OFF;     // LED state global for state machine
 bool joinstate = false;             // LoRa network joined? global flag
 
@@ -224,9 +224,6 @@ void sniffer_loop(void * pvParameters) {
             nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
             do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
             
-            //vTaskDelay(500/portTICK_PERIOD_MS);       // tbd - is this delay really needed here?
-            //yield();
-
             // clear counter if not in cumulative counter mode
             if (cfg.countermode != 1) {
                 reset_counters();                       // clear macs container and reset all counters
@@ -366,8 +363,7 @@ uint64_t uptime() {
 
     void updateDisplay() {
         // timed display refresh according to refresh cycle setting
-        uint32_t previousDisplaymillis;
-
+        
         if (currentMillis - previousDisplaymillis >= DISPLAYREFRESH_MS) {
             refreshDisplay();
             previousDisplaymillis += DISPLAYREFRESH_MS;
