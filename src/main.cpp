@@ -72,10 +72,31 @@ int redirect_log(const char * fmt, va_list args) {
 }
 #endif
 
+//--- Prototypes ---
+
+// LMIC functions, defined in this main.cpp
+void onEvent(ev_t ev);
+void do_send(osjob_t* j);
+
 // defined in configmanager.cpp
 void eraseConfig(void);
 void saveConfig(void);
 void loadConfig(void);
+
+// defined in lorawan.cpp
+void gen_lora_deveui(uint8_t * pdeveui);
+void RevBytes(unsigned char* b, size_t c);
+void get_hard_deveui(uint8_t *pdeveui);
+
+// defined in wifisniffer.cpp
+void wifi_sniffer_init(void);
+void wifi_sniffer_set_channel(uint8_t channel);
+void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
+
+// defined in blescan.cpp
+void bt_loop(void *ignore);
+
+//--- 
 
 void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_count) {
     color = set_color;                      // set color for RGB LED
@@ -87,10 +108,6 @@ void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_inter
 
 /* begin LMIC specific parts ------------------------------------------------------------ */
 
-// defined in lorawan.cpp
-void gen_lora_deveui(uint8_t * pdeveui);
-void RevBytes(unsigned char* b, size_t c);
-void get_hard_deveui(uint8_t *pdeveui);
 
 #ifdef VERBOSE
     void printKeys(void);
@@ -135,10 +152,6 @@ const lmic_pinmap lmic_pins = {
     .rst = RST,
     .dio = {DIO0, DIO1, DIO2}
 };
-
-// LMIC functions
-void onEvent(ev_t ev);
-void do_send(osjob_t* j);
 
 // LoRaWAN Initjob
 static void lora_init (osjob_t* j) {
@@ -211,14 +224,6 @@ void lorawan_loop(void * pvParameters) {
 
 
 /* begin wifi specific parts ---------------------------------------------------------- */
-
-// defined in wifisniffer.cpp
-void wifi_sniffer_init(void);
-void wifi_sniffer_set_channel(uint8_t channel);
-void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
-
-// defined in blescan.cpp
-void bt_loop(void *ignore);
 
 // Sniffer Task
 void sniffer_loop(void * pvParameters) {
