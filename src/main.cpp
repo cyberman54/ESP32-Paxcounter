@@ -37,17 +37,16 @@ Refer to LICENSE.txt file in repository for more details.
 #include <esp_spi_flash.h>          // needed for reading ESP32 chip attributes
 #include <esp32-hal-log.h>          // needed for ESP_LOGx on arduino framework
 
+// Initialize global variables
 configData_t cfg;                   // struct holds current device configuration
 osjob_t sendjob, initjob;           // LMIC jobs
-
-// Initialize global variables
-char display_lora[16], display_lmic[16]; // display buffers
 uint64_t uptimecounter = 0;         // timer global for uptime counter
 uint32_t currentMillis = 0;         // timer global for state machine
 uint8_t DisplayState, LEDcount = 0; // globals for state machine
 uint16_t LEDBlinkduration = 0, LEDInterval = 0, color=COLOR_NONE; // state machine variables
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0; // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
+char display_lora[16], display_lmic[16]; // display buffers
 enum states LEDState = LED_OFF;     // LED state global for state machine
 bool joinstate = false;             // LoRa network joined? global flag
 

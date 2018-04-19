@@ -1,4 +1,3 @@
-#pragma once
 
 // program version - note: increment version after modifications to configData_t struct!!
 #define PROGVERSION                     "1.3.2"    // use max 10 chars here!
