@@ -402,8 +402,6 @@ uint64_t uptime() {
                 rgb_set_color(LEDState ? color : COLOR_NONE);
             #endif
 
-            ESP_LOGI(TAG, "switched LED: %d -> %d", previousLEDState, LEDState);
-            
             previousLEDState = LEDState;
         }
 
@@ -419,8 +417,6 @@ uint64_t uptime() {
         else                // only one blink
             LEDState = (currentMillis < LEDBlinkduration) ? LED_ON : LED_OFF;
        
-        ESP_LOGI(TAG, "current LEDState %d", LEDState);
-
     } // switchLEDstate()
 #endif
 
