@@ -19,10 +19,6 @@ typedef struct {
     const bool store;
 } cmd_t;
 
-// functions defined in configmanager.cpp
-void eraseConfig(void);
-void saveConfig(void);
-
 // function defined in antenna.cpp
 #ifdef HAS_ANTENNA_SWITCH
     void antenna_select(const int8_t _ant);
@@ -64,12 +60,8 @@ void set_reset(int val) {
             break;
         case 1: // reset MAC counter
             ESP_LOGI(TAG, "Remote command: reset MAC counter");
-            macs.clear(); // clear all macs container
-            wifis.clear(); // clear Wifi macs container
-            #ifdef BLECOUNTER
-                bles.clear(); // clear BLE macs container
-            #endif
-            salt_reset(); // get new 16bit salt
+            reset_counters();   // clear macs
+            reset_salt();       // get new salt
             sprintf(display_lora, "Reset counter");
             break;
         case 2: // reset device to factory settings
@@ -151,10 +143,8 @@ void set_blescan(int val) {
     ESP_LOGI(TAG, "Remote command: set BLE scan mode to %s", val ? "on" : "off");
     switch (val) {
         case 0:
-            cfg.blescan = 0; 
-            #ifdef BLECOUNTER
-                bles.clear(); // clear BLE macs container
-            #endif          
+            cfg.blescan = 0;
+            macs_ble = 0; // clear BLE counter
             break; 
         default: 
             cfg.blescan = 1;
@@ -212,7 +202,7 @@ void get_uptime (int val) {
     ESP_LOGI(TAG, "Remote command: get uptime");
     int size = sizeof(uptimecounter);
     unsigned char *sendData = new unsigned char[size];
-    memcpy(sendData, (unsigned char*)&uptimecounter, size);
+    memcpy(sendData, (unsigned char*)&uptimecounter , size);
     LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
     delete sendData; // free memory
     ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);

@@ -13,9 +13,6 @@
 // Local logging Tag
 static const char *TAG = "lorawan";
 
-// function defined in main.cpp
-void set_onboard_led(int state);
-
 // functions defined in rcommand.cpp
 void rcommand(int cmd, int arg);
 void switch_lora(int sf, int tx);
@@ -114,25 +111,23 @@ void do_send(osjob_t* j){
     uint8_t mydata[4];
     uint16_t data;
     // Sum of unique WIFI MACs seen
-    data = (uint16_t) wifis.size();
-    mydata[0] = (data & 0xff00) >> 8;
-    mydata[1] = data  & 0xff;
+    mydata[0] = (macs_wifi & 0xff00) >> 8;
+    mydata[1] = macs_wifi  & 0xff;
     
     #ifdef BLECOUNTER
-    // Sum of unique BLE MACs seen
-    data = (uint16_t) bles.size();
-    mydata[2] = (data & 0xff00) >> 8;
-    mydata[3] = data  & 0xff;
+        // Sum of unique BLE MACs seen
+        mydata[2] = (macs_ble & 0xff00) >> 8;
+        mydata[3] = macs_ble  & 0xff;
     #else
-    mydata[2] = 0;
-    mydata[3] = 0;
+        mydata[2] = 0;
+        mydata[3] = 0;
     #endif
 
     // Total BLE+WIFI unique MACs seen
     // TBD ?
     //data = (uint16_t) macs.size();
-    //mydata[4] = (data & 0xff00) >> 8;
-    //mydata[5] = data  & 0xff;
+    //mydata[4] = (macs_total & 0xff00) >> 8;
+    //mydata[5] = macs_total  & 0xff;
 
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
@@ -167,7 +162,7 @@ void onEvent (ev_t ev) {
         
         case EV_JOINED:
             strcpy_P(buff, PSTR("JOINED"));
-            sprintf(display_lora, " "); // erase "Join Wait" message from display
+            sprintf(display_lora, ""); // erase "Join Wait" message from display
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
             LMIC_setLinkCheckMode(0);

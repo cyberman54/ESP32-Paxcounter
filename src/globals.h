@@ -3,8 +3,8 @@
 
 // std::set for unified array functions
 #include <set>
-#include <array>
-#include <algorithm>
+//#include <array>
+//#include <algorithm>
 
 #ifdef HAS_DISPLAY
     // OLED Display
@@ -22,6 +22,7 @@
 
 #include "rgb_led.h"
 #include "macsniff.h"
+#include "main.h"
 
 // Struct holding devices's runtime configuration
 typedef struct {
@@ -45,18 +46,14 @@ typedef struct {
 extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
+extern uint32_t currentMillis ;
 extern osjob_t sendjob;
 extern char display_lora[], display_lmic[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
+extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
 extern bool joinstate;
-extern std::set<uint16_t> wifis; 
 extern std::set<uint16_t> macs; 
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;
-#endif
-
-#ifdef BLECOUNTER
-    extern int scanTime;
-    extern std::set<uint16_t> bles;
 #endif
