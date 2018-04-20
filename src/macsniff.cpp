@@ -52,12 +52,14 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     if (added) {
         if (sniff_type == MAC_SNIFF_WIFI ) {
             macs_wifi++; // increment Wifi MACs counter
-            set_LED(COLOR_GREEN, 50, 0, 1); 
+            if (joinstate)
+                blink_LED(COLOR_GREEN, 50, 0); 
             }   
         #ifdef BLECOUNTER
         else if (sniff_type == MAC_SNIFF_BLE ) {
             macs_ble++; // increment BLE Macs counter
-            set_LED(COLOR_MAGENTA, 50, 0, 1);
+            if (joinstate)
+                blink_LED(COLOR_MAGENTA, 50, 0);
             }
         #endif
     } 

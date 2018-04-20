@@ -6,14 +6,14 @@
 //--- Declarations ---
 
 enum states { 
-  LED_ON,
-  LED_OFF
+  LED_OFF,
+  LED_ON
 };
 
 //--- Prototypes ---
 
 // defined in main.cpp
-void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_count);
+void blink_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval);
 void reset_counters();
 
 // defined in configmanager.cpp

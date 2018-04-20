@@ -41,13 +41,14 @@ Refer to LICENSE.txt file in repository for more details.
 configData_t cfg;                   // struct holds current device configuration
 osjob_t sendjob, initjob;           // LMIC jobs
 uint64_t uptimecounter = 0;         // timer global for uptime counter
-uint32_t currentMillis = 0, previousDisplaymillis = 0   // timer globals for state machine
-uint8_t DisplayState, LEDcount = 0; // globals for state machine
-uint16_t LEDBlinkduration = 0, LEDInterval = 0, color=COLOR_NONE; // state machine variables
+uint32_t currentMillis = millis();  // timer global for state machine
+uint32_t previousDisplaymillis = currentMillis; // Display refresh for state machine
+uint8_t DisplayState = 0;           // globals for state machine
+uint16_t LEDBlinkduration = 0, LEDInterval = 0, color = COLOR_NONE; // state machine variables
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
 char display_lora[16], display_lmic[16];                // display buffers
-enum states LEDState = LED_OFF;     // LED state global for state machine
+enum states LEDState = LED_OFF, previousLEDState = LED_OFF;     // LED state global for state machine
 bool joinstate = false;             // LoRa network joined? global flag
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
@@ -67,12 +68,11 @@ int redirect_log(const char * fmt, va_list args) {
 }
 #endif
 
-void set_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval, uint8_t set_count) {
+void blink_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval) {
     color = set_color;                      // set color for RGB LED
     LEDBlinkduration = set_blinkduration;   // duration on
     LEDInterval = set_interval;             // duration off - on - off
-    LEDcount = set_count * 2;               // number of on/off cycles before LED off
-    LEDState = set_count ? LED_ON : LED_OFF;           // sets LED to off if 0 blinks
+    LEDState = LED_ON;                      // start blink
 }
 
 void reset_counters() {
@@ -151,18 +151,18 @@ void lorawan_loop(void * pvParameters) {
         // LED indicators for viusalizing LoRaWAN state
         if ( LMIC.opmode & (OP_JOINING | OP_REJOIN) )  {
             // 5 quick blinks 20ms on each 1/5 second while joining
-            set_LED(COLOR_YELLOW, 20, 200, 5);      
+            blink_LED(COLOR_YELLOW, 20, 200);      
         // TX data pending
         } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
             // 3 small blink 10ms on each 1/2sec (not when joining)
-            set_LED(COLOR_BLUE, 10, 500, 3);
+            blink_LED(COLOR_BLUE, 10, 500);
         // This should not happen so indicate a problem
         } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
             // 5 heartbeat long blink 200ms on each 2 seconds
-            set_LED(COLOR_RED, 200, 2000, 5);
+            blink_LED(COLOR_RED, 200, 2000);
         } else {
             // led off
-            set_LED(COLOR_NONE, 0, 0, 0);
+            blink_LED(COLOR_NONE, 0, 0);
         }
         
         vTaskDelay(10/portTICK_PERIOD_MS);
@@ -334,23 +334,21 @@ uint64_t uptime() {
         snprintf(buff, sizeof(buff), "PAX:%-4d", (int) macs.size()); // convert 16-bit MAC counter to decimal counter value
         u8x8.draw2x2String(0, 0, buff);          // display number on unique macs total Wifi + BLE
         u8x8.setCursor(0,4);
-        u8x8.printf("WIFI: %-4d", macs_wifi);
+        u8x8.printf("WIFI:%-4d", macs_wifi);
 
         #ifdef BLECOUNTER
             u8x8.setCursor(0,3);
             if (cfg.blescan)
-                u8x8.printf("BLTH: %-4d", macs_ble);
+                u8x8.printf("BLTH:%-4d", macs_ble);
             else
-                u8x8.printf("%-16s", "BLTH: off");
+                u8x8.printf("%-16s", "BLTH:off");
         #endif
 
-        // update wifi channel display (line 4)
-        u8x8.setCursor(11,4);
-        u8x8.printf("ch:%02i", channel);
-
-        // update RSSI limiter status display (line 5)
+        // update RSSI limiter status & wifi channel display (line 5)
         u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %-4d", cfg.rssilimit);
+        u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
+        u8x8.setCursor(11,5);
+        u8x8.printf("ch:%02i", channel);
 
         // update LoRa status display (line 6)
         u8x8.setCursor(0,6);
@@ -391,7 +389,7 @@ uint64_t uptime() {
 
 #ifdef HAS_LED
     void switchLED() {
-        enum states previousLEDState;
+        
         // led need to change state? avoid digitalWrite() for nothing
         if (LEDState != previousLEDState) {
             #ifdef LED_ACTIVE_LOW
@@ -404,16 +402,25 @@ uint64_t uptime() {
                 rgb_set_color(LEDState ? color : COLOR_NONE);
             #endif
 
+            ESP_LOGI(TAG, "switched LED: %d -> %d", previousLEDState, LEDState);
+            
             previousLEDState = LEDState;
-            LEDcount--;        // decrement blink counter
         }
+
     }; // switchLED()
 
     void switchLEDstate() {
-        if (!LEDcount)         // no more blinks? -> switch off LED
-            LEDState = LED_OFF;
-        else if (LEDInterval)   // blinks left? -> toggle LED and decrement blinks
+
+        // LEDInterval != 0 -> LED is currently blinking -> toggle if interval cycle time elapsed
+        // LEDInterval = 0  -> do one blink then turn off LED
+
+        if (LEDInterval)    // LED is blinking, wait until time elapsed, then toggle
             LEDState = ((currentMillis % LEDInterval) < LEDBlinkduration) ? LED_ON : LED_OFF;
+        else                // only one blink
+            LEDState = (currentMillis < LEDBlinkduration) ? LED_ON : LED_OFF;
+       
+        ESP_LOGI(TAG, "current LEDState %d", LEDState);
+
     } // switchLEDstate()
 #endif
 
@@ -462,7 +469,7 @@ void setup() {
     // initialize led if needed
 #ifdef HAS_LED
     pinMode(HAS_LED, OUTPUT);
-    set_LED(COLOR_NONE, 0, 0, 0); // LED off
+    blink_LED(COLOR_NONE, 0, 0); // LED off
 #endif
 
     // initialize button handling if needed
@@ -490,13 +497,13 @@ void setup() {
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.draw2x2String(0, 0, "PAX:0");
     u8x8.setCursor(0,4);
-    u8x8.printf("WIFI: 0");
+    u8x8.printf("WIFI:0");
     #ifdef BLECOUNTER
         u8x8.setCursor(0,3);
-        u8x8.printf("BLTH: 0");
+        u8x8.printf("BLTH:0");
     #endif
     u8x8.setCursor(0,5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM: off" : "RLIM: %d", cfg.rssilimit);
+    u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
     sprintf(display_lora, "Join wait");
 #endif
 
@@ -541,11 +548,16 @@ do_send(&sendjob);
 // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
 
-    uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
-    currentMillis = millis(); // timebase for state machine in milliseconds (32bit)
-
     // simple state machine for controlling display, LED, button, etc.
     
+    uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
+    currentMillis = millis();           // timebase for state machine in milliseconds (32bit)
+    
+    #ifdef HAS_LED
+        switchLEDstate();
+        switchLED();  
+    #endif
+
     #ifdef HAS_BUTTON
         readButton();
     #endif
@@ -554,13 +566,6 @@ void loop() {
         updateDisplay();
     #endif
 
-    #ifdef HAS_LED
-        switchLEDstate();
-        switchLED();
-    #endif
-
-    //sendPayload();  
-
-}
+ }
 
 /* end Aruino LOOP ------------------------------------------------------------ */
