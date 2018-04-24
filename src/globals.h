@@ -3,11 +3,11 @@
 
 // std::set for unified array functions
 #include <set>
-//#include <array>
-//#include <algorithm>
+#include <array>
+#include <algorithm>
 
+// OLED Display
 #ifdef HAS_DISPLAY
-    // OLED Display
     #include <U8x8lib.h>
 #endif
 

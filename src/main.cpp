@@ -553,7 +553,7 @@ void loop() {
     // simple state machine for controlling display, LED, button, etc.
     
     uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
-     currentMillis = millis();           // timebase for state machine in milliseconds (32bit)
+    currentMillis = millis();           // timebase for state machine in milliseconds (32bit)
         
     #ifdef HAS_LED
         switchLEDstate();
