@@ -47,9 +47,10 @@ uint8_t DisplayState = 0;           // globals for state machine
 uint16_t LEDBlinkduration = 0, LEDInterval = 0, color = COLOR_NONE; // state machine variables
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
-char display_lora[16], display_lmic[16];                // display buffers
+char display_lora[16], display_lmic[16], display_mem[16];        // display buffers
 enum states LEDState = LED_OFF, previousLEDState = LED_OFF;     // LED state global for state machine
 bool joinstate = false;             // LoRa network joined? global flag
+const uint32_t heapmem = ESP.getFreeHeap();   // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
@@ -310,7 +311,7 @@ uint64_t uptime() {
             esp_chip_info_t chip_info;
             esp_chip_info(&chip_info);
             u8x8.printf("ESP32 %d cores\nWiFi%s%s\n",
-                chip_info.cores,
+               chip_info.cores,
                 (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
                 (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
             u8x8.printf("ESP Rev.%d\n", chip_info.revision);
@@ -343,6 +344,10 @@ uint64_t uptime() {
             else
                 u8x8.printf("%-16s", "BLTH:off");
         #endif
+
+        // update free heap memory display (line 4)
+        u8x8.setCursor(11,4);
+        u8x8.printf("%-5s", display_mem);
 
         // update RSSI limiter status & wifi channel display (line 5)
         u8x8.setCursor(0,5);
@@ -500,6 +505,7 @@ void setup() {
     #endif
     u8x8.setCursor(0,5);
     u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
+    
     sprintf(display_lora, "Join wait");
 #endif
 
@@ -521,12 +527,12 @@ ESP_LOGI(TAG, "Starting Lora task on core 1");
 xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1); 
 
 ESP_LOGI(TAG, "Starting Wifi task on core 0");
-xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 16384, ( void * ) 1, 1, NULL, 0);
+xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL, 0);
 
 #ifdef BLECOUNTER
     if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
         ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 16384, ( void * ) 1, 1, NULL, 0);
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, ( void * ) 1, 1, NULL, 0);
     }
 #endif
     
@@ -547,8 +553,8 @@ void loop() {
     // simple state machine for controlling display, LED, button, etc.
     
     uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
-    currentMillis = millis();           // timebase for state machine in milliseconds (32bit)
-    
+     currentMillis = millis();           // timebase for state machine in milliseconds (32bit)
+        
     #ifdef HAS_LED
         switchLEDstate();
         switchLED();  
