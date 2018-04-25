@@ -409,17 +409,21 @@ uint64_t uptime() {
             #endif
 
             previousLEDState = LEDState;
-            blinkdone = LEDState ? true : false;
+            blinkdone = LEDState ? true : false; // if LED was turned on, a blink was done
         }
 
     }; // switchLED()
 
     void switchLEDstate() {
+        
         if (LEDInterval)    // LED is blinking, wait until time elapsed, then toggle LED
             LEDState = ((currentMillis % LEDInterval) < LEDBlinkduration) ? LED_ON : LED_OFF;
+        
         else                // check if in oneblink mode
-            if (!blinkdone) {  // keep LED on until one blink is done
+        
+            if (!blinkdone) // keep LED on until one blink is done
                 LEDState = (currentMillis % LEDBlinkduration) > 0 ? LED_ON : LED_OFF;
+
     } // switchLEDstate()
 #endif
 
