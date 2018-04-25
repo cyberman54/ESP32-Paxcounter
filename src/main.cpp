@@ -50,7 +50,7 @@ uint8_t channel = 0;                // wifi channel rotation counter global for 
 char display_lora[16], display_lmic[16], display_mem[16];        // display buffers
 enum states LEDState = LED_OFF, previousLEDState = LED_OFF;     // LED state global for state machine
 bool joinstate = false;             // LoRa network joined? global flag
-bool oneblink = false, blinkdone = false;     // flags for state machine for blinking LED once
+bool blinkdone = false;             // flag for state machine for blinking LED once
 const uint32_t heapmem = ESP.getFreeHeap();   // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
@@ -71,11 +71,10 @@ int redirect_log(const char * fmt, va_list args) {
 #endif
 
 void blink_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval) {
-    ESP_LOGI(TAG, "blink_LED color: %d, duration: %d, interval: %d", set_color, set_blinkduration, set_interval);
     color = set_color;                      // set color for RGB LED
     LEDBlinkduration = set_blinkduration;   // duration on
     LEDInterval = set_interval;             // duration off - on - off
-    oneblink = set_interval ? false : true; // set blinking mode: continuous or single blink
+    blinkdone = false;
 }
 
 void reset_counters() {
@@ -410,23 +409,17 @@ uint64_t uptime() {
             #endif
 
             previousLEDState = LEDState;
+            blinkdone = LEDState ? true : false;
         }
 
     }; // switchLED()
 
     void switchLEDstate() {
-
-        if (oneblink && !blinkdone) {  // keep LED on until one blink is done
-            LEDState = (currentMillis % LEDBlinkduration) > 0 ? LED_ON : LED_OFF;
-            blinkdone = LEDState ? false : true;
-            }
-        
-        else
-                
         if (LEDInterval)    // LED is blinking, wait until time elapsed, then toggle LED
             LEDState = ((currentMillis % LEDInterval) < LEDBlinkduration) ? LED_ON : LED_OFF;
-        
-
+        else                // check if in oneblink mode
+            if (!blinkdone) {  // keep LED on until one blink is done
+                LEDState = (currentMillis % LEDBlinkduration) > 0 ? LED_ON : LED_OFF;
     } // switchLEDstate()
 #endif
 
