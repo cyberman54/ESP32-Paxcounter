@@ -50,6 +50,7 @@ uint8_t channel = 0;                // wifi channel rotation counter global for 
 char display_lora[16], display_lmic[16], display_mem[16];        // display buffers
 enum states LEDState = LED_OFF, previousLEDState = LED_OFF;     // LED state global for state machine
 bool joinstate = false;             // LoRa network joined? global flag
+bool oneblink = false, blinkdone = false;     // flags for state machine for blinking LED once
 const uint32_t heapmem = ESP.getFreeHeap();   // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
@@ -70,10 +71,11 @@ int redirect_log(const char * fmt, va_list args) {
 #endif
 
 void blink_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval) {
+    ESP_LOGI(TAG, "blink_LED color: %d, duration: %d, interval: %d", set_color, set_blinkduration, set_interval);
     color = set_color;                      // set color for RGB LED
     LEDBlinkduration = set_blinkduration;   // duration on
     LEDInterval = set_interval;             // duration off - on - off
-    LEDState = LED_ON;                      // start blink
+    oneblink = set_interval ? false : true; // set blinking mode: continuous or single blink
 }
 
 void reset_counters() {
@@ -151,15 +153,15 @@ void lorawan_loop(void * pvParameters) {
 
         // LED indicators for viusalizing LoRaWAN state
         if ( LMIC.opmode & (OP_JOINING | OP_REJOIN) )  {
-            // 5 quick blinks 20ms on each 1/5 second while joining
+            // quick blink 20ms on each 1/5 second while joining
             blink_LED(COLOR_YELLOW, 20, 200);      
         // TX data pending
         } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
-            // 3 small blink 10ms on each 1/2sec (not when joining)
+            // small blink 10ms on each 1/2sec (not when joining)
             blink_LED(COLOR_BLUE, 10, 500);
         // This should not happen so indicate a problem
         } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
-            // 5 heartbeat long blink 200ms on each 2 seconds
+            // heartbeat long blink 200ms on each 2 seconds
             blink_LED(COLOR_RED, 200, 2000);
         } else {
             // led off
@@ -414,14 +416,17 @@ uint64_t uptime() {
 
     void switchLEDstate() {
 
-        // LEDInterval != 0 -> LED is currently blinking -> toggle if interval cycle time elapsed
-        // LEDInterval = 0  -> do one blink then turn off LED
-
-        if (LEDInterval)    // LED is blinking, wait until time elapsed, then toggle
+        if (oneblink && !blinkdone) {  // keep LED on until one blink is done
+            LEDState = (currentMillis % LEDBlinkduration) > 0 ? LED_ON : LED_OFF;
+            blinkdone = LEDState ? false : true;
+            }
+        
+        else
+                
+        if (LEDInterval)    // LED is blinking, wait until time elapsed, then toggle LED
             LEDState = ((currentMillis % LEDInterval) < LEDBlinkduration) ? LED_ON : LED_OFF;
-        else                // only one blink
-            LEDState = (currentMillis < LEDBlinkduration) ? LED_ON : LED_OFF;
-       
+        
+
     } // switchLEDstate()
 #endif
 
