@@ -409,7 +409,7 @@ uint64_t uptime() {
             #endif
 
             previousLEDState = LEDState;
-            blinkdone = LEDState ? true : false; // if LED was turned on, a blink was done
+            blinkdone = LEDState ? false : true; // if LED was turned off, a blink was done
         }
 
     }; // switchLED()
