@@ -50,7 +50,7 @@ uint8_t channel = 0;                // wifi channel rotation counter global for 
 char display_lora[16], display_lmic[16], display_mem[16];        // display buffers
 enum states LEDState = LED_OFF, previousLEDState = LED_OFF;     // LED state global for state machine
 bool joinstate = false;             // LoRa network joined? global flag
-bool blinkdone = false;             // flag for state machine for blinking LED once
+bool blinkdone = true;             // flag for state machine for blinking LED once
 const uint32_t heapmem = ESP.getFreeHeap();   // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
