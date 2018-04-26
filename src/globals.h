@@ -46,7 +46,7 @@ typedef struct {
 extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
-extern uint32_t currentMillis ;
+extern unsigned long currentMillis ;
 extern osjob_t sendjob;
 extern char display_lora[], display_lmic[], display_mem[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
