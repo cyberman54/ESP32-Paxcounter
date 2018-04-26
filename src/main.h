@@ -1,11 +1,11 @@
 
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.3.2"    // use max 10 chars here!
+#define PROGVERSION                     "1.3.21"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 //--- Declarations ---
 
-enum states { 
+enum led_states { 
   LED_OFF,
   LED_ON
 };
@@ -13,8 +13,10 @@ enum states {
 //--- Prototypes ---
 
 // defined in main.cpp
-void blink_LED (uint16_t set_color, uint16_t set_blinkduration, uint16_t set_interval);
 void reset_counters();
+void reset_counters(void);
+void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
+void led_loop(void);
 
 // defined in configmanager.cpp
 void eraseConfig(void);
@@ -35,6 +37,3 @@ void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
 // defined in blescan.cpp
 void bt_loop(void *ignore);
-
-// defined in main.cpp
-void reset_counters(void);
