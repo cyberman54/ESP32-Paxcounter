@@ -257,7 +257,7 @@ void bt_loop(void * pvParameters)
 		goto end; 
 	}
 
-	esp_bt_controller_mem_release(ESP_BT_MODE_BTDM); // gives 30KB more RAM for heap
+	//esp_bt_controller_mem_release(ESP_BT_MODE_BTDM); // gives 30KB more RAM for heap
 
 	// Init and alloc the resource for bluetooth, must be prior to every bluetooth stuff
 	ESP_LOGI(TAG, "Init Bluetooth stack");

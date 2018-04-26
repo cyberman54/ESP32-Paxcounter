@@ -1,6 +1,6 @@
 
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.3.21"    // use max 10 chars here!
+#define PROGVERSION                     "1.3.22"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 //--- Declarations ---
@@ -13,7 +13,6 @@ enum led_states {
 //--- Prototypes ---
 
 // defined in main.cpp
-void reset_counters();
 void reset_counters(void);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
 void led_loop(void);

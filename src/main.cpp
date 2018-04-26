@@ -47,14 +47,13 @@ uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
 char display_lora[16], display_lmic[16], display_mem[16];        // display buffers
-led_states LEDState = LED_OFF;  // LED state global for state machine
-led_states previousLEDState = LED_ON;     // This will force LED to be off at boot since State is OFF
-unsigned long LEDBlinkSarted = 0; // When (in millis() led blink started)
-uint16_t LEDBlinkDuration = 0;  // How long the blink need to be
-//uint16_t LEDBlinkduration = 0, LEDInterval = 0, color = COLOR_NONE; // state machine variables
-uint16_t LEDColor = COLOR_NONE; // state machine variables
+led_states LEDState = LED_OFF;      // LED state global for state machine
+led_states previousLEDState = LED_ON;    // This will force LED to be off at boot since State is OFF
+unsigned long LEDBlinkStarted = 0;  // When (in millis() led blink started)
+uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
+uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 bool joinstate = false;             // LoRa network joined? global flag
-bool blinkdone = true;             // flag for state machine for blinking LED once
+bool blinkdone = true;              // flag for state machine for blinking LED once
 const uint32_t heapmem = ESP.getFreeHeap();   // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
@@ -381,21 +380,21 @@ uint64_t uptime() {
     void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
         LEDColor = set_color;                   // set color for RGB LED
         LEDBlinkDuration = set_blinkduration;   // duration 
-        LEDBlinkSarted = millis();              // Time Start here
+        LEDBlinkStarted = millis();             // Time Start here
         LEDState = LED_ON;                      // Let main set LED on
     }
 
     void led_loop() {
         // Custom blink running always have priority other LoRaWAN led management
-        if ( LEDBlinkSarted && LEDBlinkDuration) {
+        if ( LEDBlinkStarted && LEDBlinkDuration) {
 
-            //ESP_LOGI(TAG, "Start=%ld for %g",LEDBlinkSarted, LEDBlinkDuration );
+            //ESP_LOGI(TAG, "Start=%ld for %g",LEDBlinkStarted, LEDBlinkDuration );
 
             // Custom blink is finished, let this order, avoid millis() overflow
-            if ( (millis() - LEDBlinkSarted) >= LEDBlinkDuration) {
-                // Led besomes off, and stop blink 
+            if ( (millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
+                // Led becomes off, and stop blink 
                 LEDState = LED_OFF;
-                LEDBlinkSarted = 0;
+                LEDBlinkStarted = 0;
                 LEDBlinkDuration = 0;
                 LEDColor = COLOR_NONE ;
             } else {
@@ -574,7 +573,7 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
 #ifdef BLECOUNTER
     if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
         ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 2048, ( void * ) 1, 1, NULL, 0);
+        xTaskCreatePinnedToCore(bt_loop, "btscan", 4096, ( void * ) 1, 1, NULL, 0);
     }
 #endif
     
