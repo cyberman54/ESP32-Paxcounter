@@ -3,11 +3,11 @@
 
 // std::set for unified array functions
 #include <set>
-//#include <array>
-//#include <algorithm>
+#include <array>
+#include <algorithm>
 
+// OLED Display
 #ifdef HAS_DISPLAY
-    // OLED Display
     #include <U8x8lib.h>
 #endif
 
@@ -46,13 +46,14 @@ typedef struct {
 extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
-extern uint32_t currentMillis ;
+extern unsigned long currentMillis ;
 extern osjob_t sendjob;
-extern char display_lora[], display_lmic[];
+extern char display_lora[], display_lmic[], display_mem[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
 extern bool joinstate;
 extern std::set<uint16_t> macs; 
+extern const uint32_t heapmem;
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;

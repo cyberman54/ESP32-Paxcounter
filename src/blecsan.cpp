@@ -242,6 +242,8 @@ void bt_loop(void * pvParameters)
 	// Initialize BT controller to allocate task and other resource. 
 	ESP_LOGI(TAG, "Enabling Bluetooth Controller");
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+	bt_cfg.controller_task_stack_size = 8192; // double BT stack size
+
 	if (esp_bt_controller_init(&bt_cfg) != ESP_OK) 
 	{
 		ESP_LOGE(TAG, "Bluetooth controller initialize failed");
@@ -254,7 +256,9 @@ void bt_loop(void * pvParameters)
 		ESP_LOGE(TAG, "Bluetooth controller enable failed");
 		goto end; 
 	}
-	
+
+	//esp_bt_controller_mem_release(ESP_BT_MODE_BTDM); // gives 30KB more RAM for heap
+
 	// Init and alloc the resource for bluetooth, must be prior to every bluetooth stuff
 	ESP_LOGI(TAG, "Init Bluetooth stack");
 	status = esp_bluedroid_init(); 
@@ -282,7 +286,7 @@ void bt_loop(void * pvParameters)
 
 	while(1)
     {
-        vTaskDelay(500/portTICK_PERIOD_MS);
+		vTaskDelay(10/portTICK_PERIOD_MS);
         yield();
     }
 
