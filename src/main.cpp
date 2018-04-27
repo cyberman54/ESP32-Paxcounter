@@ -167,11 +167,9 @@ void lorawan_loop(void * pvParameters) {
                 LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
             };
             vTaskDelay(1000/portTICK_PERIOD_MS);
-            yield();
         }
 */
-        vTaskDelay(10/portTICK_PERIOD_MS);
-        yield();
+        vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
     }    
 }
 
@@ -233,6 +231,8 @@ void sniffer_loop(void * pvParameters) {
             channel = (channel % WIFI_CHANNEL_MAX) + 1;
             wifi_sniffer_set_channel(channel);
             ESP_LOGD(TAG, "Wifi set channel %d", channel);
+
+            vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
         }
 
     } // end of infinite wifi channel rotation loop
@@ -626,6 +626,8 @@ void loop() {
         reset_counters();   // clear macs container and reset all counters
         reset_salt();       // get new salt for salting hashes
     }
+
+    vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
 
  }
 

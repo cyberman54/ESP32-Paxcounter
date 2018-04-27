@@ -286,8 +286,7 @@ void bt_loop(void * pvParameters)
 
 	while(1)
     {
-		vTaskDelay(10/portTICK_PERIOD_MS);
-        yield();
+		vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
     }
 
 end:
