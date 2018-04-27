@@ -54,7 +54,7 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 bool joinstate = false;             // LoRa network joined? global flag
 bool blinkdone = true;              // flag for state machine for blinking LED once
-const uint32_t heapmem = ESP.getFreeHeap();   // free heap memory after start (:= 100%)
+const uint32_t heapmem = ESP.getFreeHeap(); // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
