@@ -142,14 +142,33 @@ void lorawan_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
+    static uint16_t lorawait = 0;
+
     while(1) {
         
+        // execute LMIC jobs
         os_runloop_once();
 
+        // indicate LMIC state on LEDs if present
         #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
             led_loop();
         #endif
-        
+/*
+        // check if payload is sent
+        while(LMIC.opmode & OP_TXRXPEND) {
+            if(!lorawait) 
+                sprintf(display_lora, "LoRa wait");
+            lorawait++;
+            // in case sending really fails: reset LMIC and rejoin network
+            if( (lorawait % MAXLORARETRY ) == 0) {
+                ESP_LOGI(TAG, "Payload not sent, resetting LMIC and rejoin");
+                lorawait = 0;                
+                LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
+            };
+            vTaskDelay(1000/portTICK_PERIOD_MS);
+            yield();
+        }
+*/
         vTaskDelay(10/portTICK_PERIOD_MS);
         yield();
     }    
@@ -192,49 +211,15 @@ void sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    char buff[16];
-    int nloop=0, lorawait=0;
-   
   	while (1) {
 
-        nloop++; // actual number of wifi loops, controls cycle when data is sent
-
-        channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
-        wifi_sniffer_set_channel(channel);
-        ESP_LOGD(TAG, "Wifi set channel %d", channel);
-
-        // duration of one wifi scan loop reached? then send data and begin new scan cycle
-        if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
-
-            nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
-            do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
-            
-            // clear counter if not in cumulative counter mode
-            if (cfg.countermode != 1) {
-                reset_counters();                       // clear macs container and reset all counters
-                reset_salt();                           // get new salt for salting hashes
-            }      
-
-            // check if payload is sent
-            lorawait = 0;
-            while(LMIC.opmode & OP_TXRXPEND) {
-                if(!lorawait) 
-                    sprintf(display_lora, "LoRa wait");
-                lorawait++;
-                // in case sending really fails: reset and rejoin network
-                if( (lorawait % MAXLORARETRY ) == 0) {
-                    ESP_LOGI(TAG, "Payload not sent, trying reset and rejoin");
-                    esp_restart();
-                };
-                vTaskDelay(1000/portTICK_PERIOD_MS);
-                yield();
-            }
-            sprintf(display_lora, ""); // clear LoRa wait message fromd display
-                    
-        } // end of send data cycle
-        
-        vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
-        yield();
+        for (channel = 1; channel <= WIFI_CHANNEL_MAX; channel++) {
+        // rotates variable channel 1..WIFI_CHANNEL_MAX
+            wifi_sniffer_set_channel(channel);
+            ESP_LOGD(TAG, "Wifi set channel %d", channel);
+            vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
+            yield();
+        }
 
     } // end of infinite wifi channel rotation loop
 }
@@ -556,7 +541,9 @@ ESP_LOGI(TAG, "Features %s", features);
 #endif
 
 os_init(); // setup LMIC
+LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
 os_setCallback(&initjob, lora_init); // setup initial job & join network 
+
 wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
 
 // initialize salt value using esp_random() called by random() in arduino-esp32 core
