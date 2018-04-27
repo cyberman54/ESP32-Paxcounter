@@ -109,7 +109,7 @@ void printKeys(void) {
 
 void do_send(osjob_t* j){
     uint8_t mydata[4];
-    uint16_t data;
+
     // Sum of unique WIFI MACs seen
     mydata[0] = (macs_wifi & 0xff00) >> 8;
     mydata[1] = macs_wifi  & 0xff;
@@ -123,12 +123,6 @@ void do_send(osjob_t* j){
         mydata[3] = 0;
     #endif
 
-    // Total BLE+WIFI unique MACs seen
-    // TBD ?
-    //data = (uint16_t) macs.size();
-    //mydata[4] = (macs_total & 0xff00) >> 8;
-    //mydata[5] = macs_total  & 0xff;
-
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
@@ -138,9 +132,17 @@ void do_send(osjob_t* j){
         LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
         ESP_LOGI(TAG, "Packet queued");
         sprintf(display_lmic, "PACKET QUEUED");
+        // clear counter if not in cumulative counter mode
+        if (cfg.countermode != 1) {
+            reset_counters();                       // clear macs container and reset all counters
+            reset_salt();                           // get new salt for salting hashes
+        }
     }
-    // Next TX is scheduled after TX_COMPLETE event.
-}
+
+    // Schedule next transmission
+    os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(SEND_SECS * 2), do_send);
+
+} // do_send()
 
 void onEvent (ev_t ev) {
     char buff[24]="";
@@ -161,8 +163,10 @@ void onEvent (ev_t ev) {
         case EV_REJOIN_FAILED:  strcpy_P(buff, PSTR("REJOIN FAILED"));  break;
         
         case EV_JOINED:
+
+            joinstate=true;
             strcpy_P(buff, PSTR("JOINED"));
-            sprintf(display_lora, ""); // erase "Join Wait" message from display
+
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
             LMIC_setLinkCheckMode(0);
@@ -170,26 +174,21 @@ void onEvent (ev_t ev) {
             LMIC_setAdrMode(cfg.adrmode);
             // Set data rate and transmit power (note: txpower seems to be ignored by the library)
             switch_lora(cfg.lorasf,cfg.txpower);
-            joinstate=true;
+            
             // show effective LoRa parameters after join
-            ESP_LOGI(TAG, "ADR=%i, SF=%i, TXPOWER=%i", cfg.adrmode, cfg.lorasf, cfg.txpower);
+            ESP_LOGI(TAG, "ADR=%d, SF=%d, TXPOWER=%d", cfg.adrmode, cfg.lorasf, cfg.txpower);
             break;
-        case EV_TXCOMPLETE:
-            ESP_LOGI(TAG, "EV_TXCOMPLETE (includes waiting for RX windows)");
-            if (LMIC.txrxFlags & TXRX_ACK) {
-              ESP_LOGI(TAG, "Received ack");
-              sprintf(display_lmic, "RECEIVED ACK");
-              
-            } else {
-              sprintf(display_lmic, "TX COMPLETE");
-            }
-            if (LMIC.dataLen) {
-                ESP_LOGI(TAG, "Received %d bytes of payload", LMIC.dataLen);
-                sprintf(display_lora, "Rcvd %d bytes", LMIC.dataLen);
 
+        case EV_TXCOMPLETE:
+
+            strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK") : PSTR("TX COMPLETE")); 
+            sprintf(display_lora, ""); // erase previous LoRa message from display
+            
+            if (LMIC.dataLen) {
+                ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d", LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);
                 // LMIC.snr = SNR twos compliment [dB] * 4
                 // LMIC.rssi = RSSI [dBm] (-196...+63)
-                sprintf(display_lmic, "RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4 );
+                sprintf(display_lora, "RSSI %d SNR %d", LMIC.rssi, (signed char)LMIC.snr / 4 );
 
                 // check if payload received on command port, then call remote command interpreter
                 if ( (LMIC.txrxFlags & TXRX_PORT) && (LMIC.frame[LMIC.dataBeg-1] == RCMDPORT ) ) {
@@ -203,6 +202,7 @@ void onEvent (ev_t ev) {
                 }
             }
             break;
+
         default: sprintf_P(buff, PSTR("UNKNOWN EVENT %d"), ev);      break;
     }
 
@@ -211,7 +211,6 @@ void onEvent (ev_t ev) {
         ESP_LOGI(TAG, "EV_%s", buff);
         sprintf(display_lmic, buff);
     }
-
-    
-}
+ 
+} // onEvent()
 

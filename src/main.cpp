@@ -46,7 +46,7 @@ unsigned long previousDisplaymillis = currentMillis; // Display refresh for stat
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
-char display_lora[16], display_lmic[16], display_mem[16];        // display buffers
+char display_lora[16], display_lmic[16]; // display buffers
 led_states LEDState = LED_OFF;      // LED state global for state machine
 led_states previousLEDState = LED_ON;    // This will force LED to be off at boot since State is OFF
 unsigned long LEDBlinkStarted = 0;  // When (in millis() led blink started)
@@ -54,7 +54,6 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 bool joinstate = false;             // LoRa network joined? global flag
 bool blinkdone = true;              // flag for state machine for blinking LED once
-const uint32_t heapmem = ESP.getFreeHeap();   // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
@@ -142,14 +141,33 @@ void lorawan_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
+    static uint16_t lorawait = 0;
+
     while(1) {
         
+        // execute LMIC jobs
         os_runloop_once();
 
+        // indicate LMIC state on LEDs if present
         #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
             led_loop();
         #endif
-        
+/*
+        // check if payload is sent
+        while(LMIC.opmode & OP_TXRXPEND) {
+            if(!lorawait) 
+                sprintf(display_lora, "LoRa wait");
+            lorawait++;
+            // in case sending really fails: reset LMIC and rejoin network
+            if( (lorawait % MAXLORARETRY ) == 0) {
+                ESP_LOGI(TAG, "Payload not sent, resetting LMIC and rejoin");
+                lorawait = 0;                
+                LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
+            };
+            vTaskDelay(1000/portTICK_PERIOD_MS);
+            yield();
+        }
+*/
         vTaskDelay(10/portTICK_PERIOD_MS);
         yield();
     }    
@@ -192,49 +210,15 @@ void sniffer_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    char buff[16];
-    int nloop=0, lorawait=0;
-   
   	while (1) {
 
-        nloop++; // actual number of wifi loops, controls cycle when data is sent
-
-        channel = (channel % WIFI_CHANNEL_MAX) + 1;     // rotates variable channel 1..WIFI_CHANNEL_MAX
-        wifi_sniffer_set_channel(channel);
-        ESP_LOGD(TAG, "Wifi set channel %d", channel);
-
-        // duration of one wifi scan loop reached? then send data and begin new scan cycle
-        if ( nloop >= ( (100 / cfg.wifichancycle) * (cfg.wifiscancycle * 2)) +1 ) {
-
-            nloop=0; channel=0;                         // reset wifi scan + channel loop counter           
-            do_send(&sendjob);                          // Prepare and execute LoRaWAN data upload
-            
-            // clear counter if not in cumulative counter mode
-            if (cfg.countermode != 1) {
-                reset_counters();                       // clear macs container and reset all counters
-                reset_salt();                           // get new salt for salting hashes
-            }      
-
-            // check if payload is sent
-            lorawait = 0;
-            while(LMIC.opmode & OP_TXRXPEND) {
-                if(!lorawait) 
-                    sprintf(display_lora, "LoRa wait");
-                lorawait++;
-                // in case sending really fails: reset and rejoin network
-                if( (lorawait % MAXLORARETRY ) == 0) {
-                    ESP_LOGI(TAG, "Payload not sent, trying reset and rejoin");
-                    esp_restart();
-                };
-                vTaskDelay(1000/portTICK_PERIOD_MS);
-                yield();
-            }
-            sprintf(display_lora, ""); // clear LoRa wait message fromd display
-                    
-        } // end of send data cycle
-        
-        vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
-        yield();
+        for (channel = 1; channel <= WIFI_CHANNEL_MAX; channel++) {
+        // rotates variable channel 1..WIFI_CHANNEL_MAX
+            wifi_sniffer_set_channel(channel);
+            ESP_LOGD(TAG, "Wifi set channel %d", channel);
+            vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
+            yield();
+        }
 
     } // end of infinite wifi channel rotation loop
 }
@@ -329,15 +313,15 @@ uint64_t uptime() {
                 u8x8.printf("%-16s", "BLTH:off");
         #endif
 
-        // update free heap memory display (line 4)
-        u8x8.setCursor(11,4);
-        u8x8.printf("%-5s", display_mem);
+        // update free memory display (line 4)
+        u8x8.setCursor(10,4);
+        u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
 
         // update RSSI limiter status & wifi channel display (line 5)
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
         u8x8.setCursor(11,5);
-        u8x8.printf("ch:%02i", channel);
+        u8x8.printf("ch:%02d", channel);
 
         // update LoRa status display (line 6)
         u8x8.setCursor(0,6);
@@ -556,7 +540,9 @@ ESP_LOGI(TAG, "Features %s", features);
 #endif
 
 os_init(); // setup LMIC
+LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
 os_setCallback(&initjob, lora_init); // setup initial job & join network 
+
 wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
 
 // initialize salt value using esp_random() called by random() in arduino-esp32 core
@@ -606,6 +592,13 @@ void loop() {
     #ifdef HAS_DISPLAY
         updateDisplay();
     #endif
+
+    // check free memory
+    if (ESP.getFreeHeap() <= MEM_LOW) {
+        do_send(&sendjob);  // send count
+        reset_counters();   // clear macs container and reset all counters
+        reset_salt();       // get new salt for salting hashes
+    }
 
  }
 

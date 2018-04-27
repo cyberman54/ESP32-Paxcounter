@@ -74,22 +74,22 @@ void set_reset(int val) {
 
 void set_rssi(int val) {
     cfg.rssilimit = val * -1;
-    ESP_LOGI(TAG, "Remote command: set RSSI limit to %i", cfg.rssilimit);
+    ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
 };    
 
 void set_wifiscancycle(int val) {
     cfg.wifiscancycle = val;
-    ESP_LOGI(TAG, "Remote command: set Wifi scan cycle duration to %i seconds", cfg.wifiscancycle*2);
+    ESP_LOGI(TAG, "Remote command: set Wifi scan cycle duration to %d seconds", cfg.wifiscancycle*2);
 };    
 
 void set_wifichancycle(int val) {
     cfg.wifichancycle = val;
-    ESP_LOGI(TAG, "Remote command: set Wifi channel switch interval to %i seconds", cfg.wifichancycle/100);
+    ESP_LOGI(TAG, "Remote command: set Wifi channel switch interval to %d seconds", cfg.wifichancycle/100);
 };    
 
 void set_blescantime(int val) {
     cfg.blescantime = val;
-    ESP_LOGI(TAG, "Remote command: set BLE scan time to %i seconds", cfg.blescantime);
+    ESP_LOGI(TAG, "Remote command: set BLE scan time to %d seconds", cfg.blescantime);
 };
 
 void set_countmode(int val) {
@@ -126,7 +126,7 @@ void set_display(int val) {
 };
 
 void set_lorasf(int val) {
-    ESP_LOGI(TAG, "Remote command: set LoRa SF to %i", val);
+    ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val);
     switch_lora(val, cfg.txpower);
 };
 
@@ -178,7 +178,7 @@ void set_rgblum(int val) {
 };
 
 void set_lorapower(int val) {
-    ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %i", val);
+    ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val);
     switch_lora(cfg.lorasf, val);
 };
 
@@ -195,7 +195,7 @@ void get_config (int val) {
     memcpy(sendData, &cfg, size);
     LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
     delete sendData; // free memory
-    ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
 };
 
 void get_uptime (int val) {
@@ -205,7 +205,7 @@ void get_uptime (int val) {
     memcpy(sendData, (unsigned char*)&uptimecounter , size);
     LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
     delete sendData; // free memory
-    ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
 };
 
 void get_cputemp (int val) {
@@ -216,7 +216,7 @@ void get_cputemp (int val) {
     memcpy(sendData, (unsigned char*)&temp, size);
     LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
     delete sendData; // free memory
-    ESP_LOGI(TAG, "%i bytes queued in send queue", size-1);
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
 };
 
 // assign previously defined functions to set of numeric remote commands

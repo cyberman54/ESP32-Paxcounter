@@ -48,12 +48,11 @@ extern uint8_t mydata[];
 extern uint64_t uptimecounter;
 extern unsigned long currentMillis ;
 extern osjob_t sendjob;
-extern char display_lora[], display_lmic[], display_mem[];
+extern char display_lora[], display_lmic[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
 extern bool joinstate;
 extern std::set<uint16_t> macs; 
-extern const uint32_t heapmem;
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;
