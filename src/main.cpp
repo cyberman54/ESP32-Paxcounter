@@ -41,8 +41,7 @@ Refer to LICENSE.txt file in repository for more details.
 configData_t cfg;                   // struct holds current device configuration
 osjob_t sendjob, initjob;           // LMIC jobs
 uint64_t uptimecounter = 0;         // timer global for uptime counter
-unsigned long currentMillis = millis();  // timer global for state machine
-unsigned long previousDisplaymillis = currentMillis; // Display refresh for state machine
+unsigned long previousDisplaymillis = millis(); // Display refresh for state machine
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
@@ -335,7 +334,7 @@ uint64_t uptime() {
     void updateDisplay() {
         // timed display refresh according to refresh cycle setting
         
-        if (currentMillis - previousDisplaymillis >= DISPLAYREFRESH_MS) {
+        if (millis() - previousDisplaymillis >= DISPLAYREFRESH_MS) {
             refreshDisplay();
             previousDisplaymillis += DISPLAYREFRESH_MS;
         }
@@ -579,7 +578,6 @@ void loop() {
 
     // simple state machine for controlling display, LED, button, etc.
     uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
-    currentMillis = millis();           // timebase for state machine in milliseconds (32bit)
 
     #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
         led_loop();
