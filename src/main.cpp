@@ -208,7 +208,9 @@ void lorawan_loop(void * pvParameters) {
 #endif
 
 void IRAM_ATTR ChannelSwitchIRQ() {
+    portENTER_CRITICAL(&timerMux);
     ChannelTimerIRQ++;
+    portEXIT_CRITICAL(&timerMux);
 }
 
 /* end hardware specific parts -------------------------------------------------------- */
