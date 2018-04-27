@@ -52,13 +52,15 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 bool joinstate = false;             // LoRa network joined? global flag
 bool blinkdone = true;              // flag for state machine for blinking LED once
-hw_timer_t * timer = NULL;          // configure hardware timer used for cyclic display refresh
+hw_timer_t * displaytimer = NULL;   // configure hardware timer used for cyclic display refresh
+hw_timer_t * channelSwitch = NULL;  // configure hardware timer used for wifi channel switching
+
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying shared variable DisplayIRQ
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
 // this variables will be changed in the ISR, and read in main loop
-static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0;
+static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
 static const char *TAG = "paxcnt";
@@ -207,6 +209,10 @@ void lorawan_loop(void * pvParameters) {
     }
 #endif
 
+void IRAM_ATTR ChannelSwitchIRQ() {
+    ChannelTimerIRQ++;
+}
+
 /* end hardware specific parts -------------------------------------------------------- */
 
 
@@ -219,12 +225,14 @@ void sniffer_loop(void * pvParameters) {
 
   	while (1) {
 
-        for (channel = 1; channel <= WIFI_CHANNEL_MAX; channel++) {
-        // rotates variable channel 1..WIFI_CHANNEL_MAX
+        if (ChannelTimerIRQ) {
+            portENTER_CRITICAL(&timerMux);
+            ChannelTimerIRQ--;
+            portEXIT_CRITICAL(&timerMux);
+            // rotates variable channel 1..WIFI_CHANNEL_MAX
+            channel = (channel % WIFI_CHANNEL_MAX) + 1;
             wifi_sniffer_set_channel(channel);
             ESP_LOGD(TAG, "Wifi set channel %d", channel);
-            vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
-            yield();
         }
 
     } // end of infinite wifi channel rotation loop
@@ -539,11 +547,17 @@ void setup() {
     sprintf(display_lora, "Join wait");
 
     // setup Display IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-    timer = timerBegin(0, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
-    timerAttachInterrupt(timer, &DisplayIRQ, true);         // interrupt handler DisplayIRQ, triggered by edge
-    timerAlarmWrite(timer, DISPLAYREFRESH_MS * 1000, true); // reload interrupt after each trigger of display refresh cycle
-    timerAlarmEnable(timer);                                // enable display interrupt
+    displaytimer = timerBegin(0, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+    timerAttachInterrupt(displaytimer, &DisplayIRQ, true);         // interrupt handler DisplayIRQ, triggered by edge
+    timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true); // reload interrupt after each trigger of display refresh cycle
+    timerAlarmEnable(displaytimer);                                // enable display interrupt
 #endif
+
+// setup channel rotation IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+channelSwitch = timerBegin(1, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 1, count up
+timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);   // interrupt handler, triggered by edge
+timerAlarmWrite(channelSwitch, WIFI_CHANNEL_SWITCH_INTERVAL * 10000, true); // reload interrupt after each trigger of channel switch cycle
+timerAlarmEnable(channelSwitch);                                // enable channel switching interrupt
 
 // show compiled features
 ESP_LOGI(TAG, "Features %s", features);
