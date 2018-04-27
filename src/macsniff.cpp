@@ -27,7 +27,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     bool added = false;
     uint32_t addr2int, vendor2int;          // temporary buffer for MAC and Vendor OUI
 	uint16_t hashedmac;                     // temporary buffer for generated hash value
-    uint8_t memlevel;                         // % of used heap mem
 
     // only last 3 MAC Address bytes are used for MAC address anonymization
     // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
@@ -51,9 +50,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     // Count only if MAC was not yet seen
     if (added) {
-        // Display heap memory left
-        memlevel = ESP.getFreeHeap() / heapmem * 100;
-        sprintf(display_mem, "%i%%", memlevel);
         // increment counter and one blink led
         if (sniff_type == MAC_SNIFF_WIFI ) {
             macs_wifi++; // increment Wifi MACs counter
@@ -72,10 +68,10 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     } 
 
     // Log scan result
-    ESP_LOGI(TAG, "%s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d  %s -> %d Bytes left", 
+    ESP_LOGI(TAG, "%s %s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d -> %d Bytes left",
+        added ? "new  " : "known", 
         sniff_type==MAC_SNIFF_WIFI ? "WiFi":"BLTH", 
         rssi, buff, hashedmac, macs_wifi, macs_ble,
-        added ? "new  " : "known",
         ESP.getFreeHeap());
 
     #ifdef VENDORFILTER

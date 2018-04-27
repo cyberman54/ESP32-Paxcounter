@@ -176,7 +176,7 @@ void onEvent (ev_t ev) {
             switch_lora(cfg.lorasf,cfg.txpower);
             
             // show effective LoRa parameters after join
-            ESP_LOGI(TAG, "ADR=%i, SF=%i, TXPOWER=%i", cfg.adrmode, cfg.lorasf, cfg.txpower);
+            ESP_LOGI(TAG, "ADR=%d, SF=%d, TXPOWER=%d", cfg.adrmode, cfg.lorasf, cfg.txpower);
             break;
 
         case EV_TXCOMPLETE:

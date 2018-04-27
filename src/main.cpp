@@ -46,7 +46,7 @@ unsigned long previousDisplaymillis = currentMillis; // Display refresh for stat
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
-char display_lora[16], display_lmic[16], display_mem[16];        // display buffers
+char display_lora[16], display_lmic[16]; // display buffers
 led_states LEDState = LED_OFF;      // LED state global for state machine
 led_states previousLEDState = LED_ON;    // This will force LED to be off at boot since State is OFF
 unsigned long LEDBlinkStarted = 0;  // When (in millis() led blink started)
@@ -54,7 +54,6 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 bool joinstate = false;             // LoRa network joined? global flag
 bool blinkdone = true;              // flag for state machine for blinking LED once
-const uint32_t heapmem = ESP.getFreeHeap(); // free heap memory after start (:= 100%)
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
@@ -314,15 +313,15 @@ uint64_t uptime() {
                 u8x8.printf("%-16s", "BLTH:off");
         #endif
 
-        // update free heap memory display (line 4)
-        u8x8.setCursor(11,4);
-        u8x8.printf("%-5s", display_mem);
+        // update free memory display (line 4)
+        u8x8.setCursor(10,4);
+        u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
 
         // update RSSI limiter status & wifi channel display (line 5)
         u8x8.setCursor(0,5);
         u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
         u8x8.setCursor(11,5);
-        u8x8.printf("ch:%02i", channel);
+        u8x8.printf("ch:%02d", channel);
 
         // update LoRa status display (line 6)
         u8x8.setCursor(0,6);
@@ -593,6 +592,13 @@ void loop() {
     #ifdef HAS_DISPLAY
         updateDisplay();
     #endif
+
+    // check free memory
+    if (ESP.getFreeHeap() <= MEM_LOW) {
+        do_send(&sendjob);  // send count
+        reset_counters();   // clear macs container and reset all counters
+        reset_salt();       // get new salt for salting hashes
+    }
 
  }
 
