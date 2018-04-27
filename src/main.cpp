@@ -41,7 +41,6 @@ Refer to LICENSE.txt file in repository for more details.
 configData_t cfg;                   // struct holds current device configuration
 osjob_t sendjob, initjob;           // LMIC jobs
 uint64_t uptimecounter = 0;         // timer global for uptime counter
-unsigned long previousDisplaymillis = millis(); // Display refresh for state machine
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
@@ -53,11 +52,13 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 bool joinstate = false;             // LoRa network joined? global flag
 bool blinkdone = true;              // flag for state machine for blinking LED once
+hw_timer_t * timer = NULL;          // configure hardware timer used for cyclic display refresh
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying shared variable DisplayIRQ
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
-// this variable will be changed in the ISR, and read in main loop
-static volatile bool ButtonTriggered = false;
+// this variables will be changed in the ISR, and read in main loop
+static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0;
 
 // local Tag for logging
 static const char *TAG = "paxcnt";
@@ -180,6 +181,12 @@ void lorawan_loop(void * pvParameters) {
 
 #ifdef HAS_DISPLAY
     HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
+    // Display Refresh IRQ
+    void IRAM_ATTR DisplayIRQ() {
+        portENTER_CRITICAL_ISR(&timerMux);
+        DisplayTimerIRQ++;
+        portEXIT_CRITICAL_ISR(&timerMux);
+    }
 #endif
 
 #ifdef HAS_ANTENNA_SWITCH
@@ -193,10 +200,11 @@ void lorawan_loop(void * pvParameters) {
 #endif
 
 #ifdef HAS_BUTTON
-    // Button Handling, board dependent -> perhaps to be moved to hal/<$board.h>
+    // Button IRQ
     // IRAM_ATTR necessary here, see https://github.com/espressif/arduino-esp32/issues/855
-    void IRAM_ATTR isr_button_pressed(void) {
-        ButtonTriggered = true; }
+    void IRAM_ATTR ButtonIRQ() {
+        ButtonPressed++;
+    }
 #endif
 
 /* end hardware specific parts -------------------------------------------------------- */
@@ -332,26 +340,27 @@ uint64_t uptime() {
     }    
 
     void updateDisplay() {
-        // timed display refresh according to refresh cycle setting
-        
-        if (millis() - previousDisplaymillis >= DISPLAYREFRESH_MS) {
+        // refresh display according to refresh cycle setting
+        if (DisplayTimerIRQ) {
+            portENTER_CRITICAL(&timerMux);
+            DisplayTimerIRQ--;
+            portEXIT_CRITICAL(&timerMux);
+
             refreshDisplay();
-            previousDisplaymillis += DISPLAYREFRESH_MS;
-        }
-        // set display on/off according to current device configuration
-        if (DisplayState != cfg.screenon) {
-            DisplayState = cfg.screenon;
-            u8x8.setPowerSave(!cfg.screenon);
+        
+            // set display on/off according to current device configuration
+            if (DisplayState != cfg.screenon) {
+                DisplayState = cfg.screenon;
+                u8x8.setPowerSave(!cfg.screenon);
+            }
         }
     } // updateDisplay()
-
-
 #endif // HAS_DISPLAY
 
 #ifdef HAS_BUTTON
     void readButton() {
-        if (ButtonTriggered) {
-            ButtonTriggered = false;
+        if (ButtonPressed) {
+            ButtonPressed--;
             ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
             eraseConfig();
             esp_restart();
@@ -496,12 +505,12 @@ void setup() {
         strcat(features, "PU");
         // install button interrupt (pullup mode)
         pinMode(HAS_BUTTON, INPUT_PULLUP);
-        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, RISING); 
+        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING); 
     #else
         strcat(features, "PD");
         // install button interrupt (pulldown mode)
         pinMode(HAS_BUTTON, INPUT_PULLDOWN);
-        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, FALLING); 
+        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING); 
     #endif
 #endif
 
@@ -528,9 +537,15 @@ void setup() {
     u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
     
     sprintf(display_lora, "Join wait");
+
+    // setup Display IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+    timer = timerBegin(0, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+    timerAttachInterrupt(timer, &DisplayIRQ, true);         // interrupt handler DisplayIRQ, triggered by edge
+    timerAlarmWrite(timer, DISPLAYREFRESH_MS * 1000, true); // reload interrupt after each trigger of display refresh cycle
+    timerAlarmEnable(timer);                                // enable display interrupt
 #endif
 
-// Display features compiled for
+// show compiled features
 ESP_LOGI(TAG, "Features %s", features);
 
 // output LoRaWAN keys to console
