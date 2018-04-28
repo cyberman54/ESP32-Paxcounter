@@ -202,7 +202,7 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 5:			Display status (1=on, 0=off)
 	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed)
 	bytes 7-8:		RSSI limiter threshold value (negative)
-	byte 9:			Wifi scan cycle duration in seconds/2 (0..255)
+	byte 9:			Payload send cycle in seconds/2 (0..255)
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
 	byte 11:		BLE scan cycle duration in seconds (0..255)
 	byte 12:		BLE scan mode (1=on, 0=0ff)
