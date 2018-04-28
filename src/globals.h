@@ -33,7 +33,7 @@ typedef struct {
   int8_t screenon;                     // 0=disabled, 1=enabled
   int8_t countermode;                  // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
   int16_t rssilimit;                   // threshold for rssilimiter, negative value!
-  int8_t wifiscancycle;                // wifi scan cycle [seconds/2]
+  int8_t sendcycle;                    // payload send cycle [seconds/2]
   int8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
   int8_t blescantime;                  // BLE scan cycle duration [seconds]
   int8_t blescan;                      // 0=disabled, 1=enabled

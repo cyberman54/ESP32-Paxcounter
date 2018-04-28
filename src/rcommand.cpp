@@ -77,9 +77,9 @@ void set_rssi(int val) {
     ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
 };    
 
-void set_wifiscancycle(int val) {
-    cfg.wifiscancycle = val;
-    ESP_LOGI(TAG, "Remote command: set Wifi scan cycle duration to %d seconds", cfg.wifiscancycle*2);
+void set_sendcycle(int val) {
+    cfg.sendcycle = val;
+    ESP_LOGI(TAG, "Remote command: set payload send cycle to %d seconds", cfg.sendcycle*2);
 };    
 
 void set_wifichancycle(int val) {
@@ -232,7 +232,7 @@ cmd_t table[] = {
                 {0x07, set_loraadr, true},
                 {0x08, set_screensaver, true},
                 {0x09, set_reset, false},
-                {0x0a, set_wifiscancycle, true},
+                {0x0a, set_sendcycle, true},
                 {0x0b, set_wifichancycle, true},
                 {0x0c, set_blescantime, true},
                 {0x0d, set_vendorfilter, false},

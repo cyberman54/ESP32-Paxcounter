@@ -140,7 +140,7 @@ void do_send(osjob_t* j){
     }
 
     // Schedule next transmission
-    os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(SEND_SECS * 2), do_send);
+    os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(cfg.sendcycle * 2), do_send);
 
 } // do_send()
 

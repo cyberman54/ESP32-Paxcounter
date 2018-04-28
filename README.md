@@ -156,10 +156,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 
-0x0A set Wifi scan cycle and payload transmit cycle
+0x0A set payload send cycle
 
-	0 ... 255 duration of a wifi scan cycle in seconds/2, after this payload is sent
-	e.g. 120 -> 1 cycle runs for 240 seconds [default]
+	0 ... 255 payload send cycle in seconds/2
+	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
 0x0B set Wifi channel switch interval timer
 
