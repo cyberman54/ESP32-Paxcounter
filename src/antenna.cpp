@@ -21,7 +21,7 @@ void antenna_init(void) {
         gpio_config(&gpioconf);
 }
 
-void antenna_select (const int8_t _ant) {
+void antenna_select (const uint8_t _ant) {
         if (HAS_ANTENNA_SWITCH < 32) {
             if (_ant == ANTENNA_EXT) {
                 GPIO_REG_WRITE(GPIO_OUT_W1TS_REG, 1 << HAS_ANTENNA_SWITCH);

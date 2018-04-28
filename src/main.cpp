@@ -192,7 +192,7 @@ void lorawan_loop(void * pvParameters) {
 #ifdef HAS_ANTENNA_SWITCH
     // defined in antenna.cpp
     void antenna_init();
-    void antenna_select(const int8_t _ant);
+    void antenna_select(const uint8_t _ant);
 #endif
 
 #ifndef BLECOUNTER
@@ -562,7 +562,7 @@ void setup() {
 // setup channel rotation IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
 channelSwitch = timerBegin(1, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 1, count up
 timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);   // interrupt handler, triggered by edge
-timerAlarmWrite(channelSwitch, WIFI_CHANNEL_SWITCH_INTERVAL * 10000, true); // reload interrupt after each trigger of channel switch cycle
+timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true); // reload interrupt after each trigger of channel switch cycle
 timerAlarmEnable(channelSwitch);                                // enable channel switching interrupt
 
 // show compiled features

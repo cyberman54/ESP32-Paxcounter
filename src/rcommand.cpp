@@ -14,18 +14,18 @@ static const char *TAG = "rcommand";
 
 // table of remote commands and assigned functions
 typedef struct {
-    const int nam;
-    void (*func)(int);
+    const uint8_t nam;
+    void (*func)(uint8_t);
     const bool store;
 } cmd_t;
 
 // function defined in antenna.cpp
 #ifdef HAS_ANTENNA_SWITCH
-    void antenna_select(const int8_t _ant);
+    void antenna_select(const uint8_t _ant);
 #endif
 
 // help function to assign LoRa datarates to numeric spreadfactor values
-void switch_lora (int sf, int tx) {
+void switch_lora (uint8_t sf, uint8_t tx) {
     if ( tx > 20 ) return;
     cfg.txpower = tx;
     switch (sf) {
@@ -50,7 +50,7 @@ void switch_lora (int sf, int tx) {
 }
 
 // set of functions that can be triggered by remote commands
-void set_reset(int val) {
+void set_reset(uint8_t val) {
     switch (val) {
         case 0: // restart device
             ESP_LOGI(TAG, "Remote command: restart device");
@@ -72,27 +72,29 @@ void set_reset(int val) {
         }
 };
 
-void set_rssi(int val) {
+void set_rssi(uint8_t val) {
     cfg.rssilimit = val * -1;
     ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
 };    
 
-void set_sendcycle(int val) {
+void set_sendcycle(uint8_t val) {
     cfg.sendcycle = val;
     ESP_LOGI(TAG, "Remote command: set payload send cycle to %d seconds", cfg.sendcycle*2);
 };    
 
-void set_wifichancycle(int val) {
+void set_wifichancycle(uint8_t val) {
     cfg.wifichancycle = val;
-    ESP_LOGI(TAG, "Remote command: set Wifi channel switch interval to %d seconds", cfg.wifichancycle/100);
+    // modify wifi channel rotation IRQ
+    timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true); // reload interrupt after each trigger of channel switch cycle
+    ESP_LOGI(TAG, "Remote command: set Wifi channel switch interval to %.1f seconds", cfg.wifichancycle/float(100));
 };    
 
-void set_blescantime(int val) {
+void set_blescantime(uint8_t val) {
     cfg.blescantime = val;
     ESP_LOGI(TAG, "Remote command: set BLE scan time to %d seconds", cfg.blescantime);
 };
 
-void set_countmode(int val) {
+void set_countmode(uint8_t val) {
     switch (val) {
         case 0: // cyclic unconfirmed
             cfg.countermode = 0; 
@@ -109,7 +111,7 @@ void set_countmode(int val) {
         }
 };
 
-void set_screensaver(int val) {
+void set_screensaver(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set screen saver to %s ", val ? "on" : "off");
     switch (val) {
         case 1: cfg.screensaver = val; break;
@@ -117,7 +119,7 @@ void set_screensaver(int val) {
         }
 };
 
-void set_display(int val) {
+void set_display(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set screen to %s", val ? "on" : "off");
     switch (val) {
         case 1: cfg.screenon = val; break;
@@ -125,12 +127,12 @@ void set_display(int val) {
         }
 };
 
-void set_lorasf(int val) {
+void set_lorasf(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val);
     switch_lora(val, cfg.txpower);
 };
 
-void set_loraadr(int val) {
+void set_loraadr(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s", val ? "on" : "off");
     switch (val) {
         case 1: cfg.adrmode = val; break;
@@ -139,7 +141,7 @@ void set_loraadr(int val) {
     LMIC_setAdrMode(cfg.adrmode); 
 };
 
-void set_blescan(int val) {
+void set_blescan(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set BLE scan mode to %s", val ? "on" : "off");
     switch (val) {
         case 0:
@@ -152,7 +154,7 @@ void set_blescan(int val) {
         }
 };
 
-void set_wifiant(int val) {
+void set_wifiant(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set Wifi antenna to %s", val ? "external" : "internal");
     switch (val) {
         case 1: cfg.wifiant = val; break;
@@ -163,7 +165,7 @@ void set_wifiant(int val) {
     #endif
 };
 
-void set_vendorfilter(int val) {
+void set_vendorfilter(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set vendorfilter mode to %s", val ? "on" : "off");
     switch (val) {
         case 1: cfg.vendorfilter = val; break;
@@ -171,22 +173,22 @@ void set_vendorfilter(int val) {
         }
 };
 
-void set_rgblum(int val) {
+void set_rgblum(uint8_t val) {
     // Avoid wrong parameters
     cfg.rgblum = (val>=0 && val<=100) ? (uint8_t) val : RGBLUMINOSITY;
     ESP_LOGI(TAG, "Remote command: set RGB Led luminosity %d", cfg.rgblum);
 };
 
-void set_lorapower(int val) {
+void set_lorapower(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val);
     switch_lora(cfg.lorasf, val);
 };
 
-void set_noop (int val) { 
+void set_noop (uint8_t val) { 
     ESP_LOGI(TAG, "Remote command: noop - doing nothing");
 };
 
-void get_config (int val) {
+void get_config (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get configuration");
     int size = sizeof(configData_t);
     // declare send buffer (char byte array)
@@ -198,7 +200,7 @@ void get_config (int val) {
     ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
 };
 
-void get_uptime (int val) {
+void get_uptime (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get uptime");
     int size = sizeof(uptimecounter);
     unsigned char *sendData = new unsigned char[size];
@@ -208,7 +210,7 @@ void get_uptime (int val) {
     ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
 };
 
-void get_cputemp (int val) {
+void get_cputemp (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get cpu temperature");
     float temp = temperatureRead();
     int size = sizeof(temp);
@@ -245,7 +247,7 @@ cmd_t table[] = {
                 };
 
 // check and execute remote command
-void rcommand(int cmd, int arg) {
+void rcommand(uint8_t cmd, uint8_t arg) {
     int i = sizeof(table) / sizeof(table[0]); // number of commands in command table
     bool store_flag = false;
     while(i--) { 

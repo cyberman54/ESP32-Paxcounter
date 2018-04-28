@@ -13,7 +13,7 @@ esp_err_t err;
 
 // defined in antenna.cpp
 #ifdef HAS_ANTENNA_SWITCH
-    void antenna_select(const int8_t _ant);
+    void antenna_select(const uint8_t _ant);
 #endif
 
 // populate cfg vars with factory settings

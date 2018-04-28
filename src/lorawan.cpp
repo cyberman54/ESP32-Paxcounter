@@ -14,8 +14,8 @@
 static const char *TAG = "lorawan";
 
 // functions defined in rcommand.cpp
-void rcommand(int cmd, int arg);
-void switch_lora(int sf, int tx);
+void rcommand(uint8_t cmd, uint8_t arg);
+void switch_lora(uint8_t sf, uint8_t tx);
 
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
