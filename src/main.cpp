@@ -330,16 +330,20 @@ uint64_t uptime() {
                 u8x8.printf("%-16s", "BLTH:off");
         #endif
 
-        // update free memory display (line 4)
-        u8x8.setCursor(10,4);
-        u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
+        // update LoRa SF display (line 3)
+        u8x8.setCursor(11,3);
+        u8x8.printf("SF:%c%c", lora_datarate[LMIC.datarate * 2], lora_datarate[LMIC.datarate * 2 + 1]);
 
-        // update RSSI limiter status & wifi channel display (line 5)
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-        u8x8.setCursor(11,5);
+        // update wifi channel display (line 4)
+        u8x8.setCursor(11,4);
         u8x8.printf("ch:%02d", channel);
 
+        // update RSSI limiter status & free memory display (line 5)
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
+        u8x8.setCursor(10,5);
+        u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
+        
         // update LoRa status display (line 6)
         u8x8.setCursor(0,6);
         u8x8.printf("%-16s", display_lora);
