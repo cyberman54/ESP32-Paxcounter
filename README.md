@@ -156,10 +156,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 
-0x0A set Wifi scan cycle and payload transmit cycle
+0x0A set payload send cycle
 
-	0 ... 255 duration of a wifi scan cycle in seconds/2, after this payload is sent
-	e.g. 120 -> 1 cycle runs for 240 seconds [default]
+	0 ... 255 payload send cycle in seconds/2
+	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
 0x0B set Wifi channel switch interval timer
 
@@ -193,7 +193,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L24-L41) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L27-L44) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -202,7 +202,7 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 5:			Display status (1=on, 0=off)
 	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed)
 	bytes 7-8:		RSSI limiter threshold value (negative)
-	byte 9:			Wifi scan cycle duration in seconds/2 (0..255)
+	byte 9:			Payload send cycle in seconds/2 (0..255)
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
 	byte 11:		BLE scan cycle duration in seconds (0..255)
 	byte 12:		BLE scan mode (1=on, 0=0ff)

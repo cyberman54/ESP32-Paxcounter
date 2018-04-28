@@ -1,6 +1,6 @@
 
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.3.3"    // use max 10 chars here!
+#define PROGVERSION                     "1.3.4"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 //--- Declarations ---
@@ -9,6 +9,12 @@ enum led_states {
   LED_OFF,
   LED_ON
 };
+
+#if defined(CFG_eu868)
+  const char lora_datarate[] = {"1211100908077BFSNA"};
+#elif defined(CFG_us915)  
+  const char lora_datarate[] = {"100908078CNA121110090807"};
+#endif
 
 //--- Prototypes ---
 

@@ -17,7 +17,7 @@
 #define RST   14 // ESP32 GPIO14 (Pin14) -- SX1276 NRESET (Pin7) Reset Trigger Input
 #define DIO0  26 // ESP32 GPIO26 (Pin15) -- SX1276 DIO0 (Pin8) used by LMIC for detecting LoRa RX_Done & TX_Done
 #define DIO1  33 // ESP32 GPIO33 (Pin13) -- SX1276 DIO1 (Pin9) used by LMIC for detecting LoRa RX_Timeout
-#define DIO2  32 // ESP32 GPIO32 (Pin12) -- SX1276 DIO2 (Pin10) not used by LMIC for LoRa (Timeout for FSK only)
+#define DIO2  LMIC_UNUSED_PIN // 32 ESP32 GPIO32 (Pin12) -- SX1276 DIO2 (Pin10) not used by LMIC for LoRa (Timeout for FSK only)
 
 // Hardware pin definitions for Heltec LoRa-32 Board with OLED SSD1306 I2C Display
 #define OLED_RST 16 // ESP32 GPIO16 (Pin16) -- SD1306 RST

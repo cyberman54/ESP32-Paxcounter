@@ -41,8 +41,6 @@ Refer to LICENSE.txt file in repository for more details.
 configData_t cfg;                   // struct holds current device configuration
 osjob_t sendjob, initjob;           // LMIC jobs
 uint64_t uptimecounter = 0;         // timer global for uptime counter
-unsigned long currentMillis = millis();  // timer global for state machine
-unsigned long previousDisplaymillis = currentMillis; // Display refresh for state machine
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
 uint8_t channel = 0;                // wifi channel rotation counter global for display
@@ -54,11 +52,15 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 bool joinstate = false;             // LoRa network joined? global flag
 bool blinkdone = true;              // flag for state machine for blinking LED once
+hw_timer_t * displaytimer = NULL;   // configure hardware timer used for cyclic display refresh
+hw_timer_t * channelSwitch = NULL;  // configure hardware timer used for wifi channel switching
+
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying shared variable DisplayIRQ
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
-// this variable will be changed in the ISR, and read in main loop
-static volatile bool ButtonTriggered = false;
+// this variables will be changed in the ISR, and read in main loop
+static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
 static const char *TAG = "paxcnt";
@@ -165,11 +167,9 @@ void lorawan_loop(void * pvParameters) {
                 LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
             };
             vTaskDelay(1000/portTICK_PERIOD_MS);
-            yield();
         }
 */
-        vTaskDelay(10/portTICK_PERIOD_MS);
-        yield();
+        vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
     }    
 }
 
@@ -181,12 +181,18 @@ void lorawan_loop(void * pvParameters) {
 
 #ifdef HAS_DISPLAY
     HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
+    // Display Refresh IRQ
+    void IRAM_ATTR DisplayIRQ() {
+        portENTER_CRITICAL_ISR(&timerMux);
+        DisplayTimerIRQ++;
+        portEXIT_CRITICAL_ISR(&timerMux);
+    }
 #endif
 
 #ifdef HAS_ANTENNA_SWITCH
     // defined in antenna.cpp
     void antenna_init();
-    void antenna_select(const int8_t _ant);
+    void antenna_select(const uint8_t _ant);
 #endif
 
 #ifndef BLECOUNTER
@@ -194,11 +200,18 @@ void lorawan_loop(void * pvParameters) {
 #endif
 
 #ifdef HAS_BUTTON
-    // Button Handling, board dependent -> perhaps to be moved to hal/<$board.h>
+    // Button IRQ
     // IRAM_ATTR necessary here, see https://github.com/espressif/arduino-esp32/issues/855
-    void IRAM_ATTR isr_button_pressed(void) {
-        ButtonTriggered = true; }
+    void IRAM_ATTR ButtonIRQ() {
+        ButtonPressed++;
+    }
 #endif
+
+void IRAM_ATTR ChannelSwitchIRQ() {
+    portENTER_CRITICAL(&timerMux);
+    ChannelTimerIRQ++;
+    portEXIT_CRITICAL(&timerMux);
+}
 
 /* end hardware specific parts -------------------------------------------------------- */
 
@@ -212,12 +225,16 @@ void sniffer_loop(void * pvParameters) {
 
   	while (1) {
 
-        for (channel = 1; channel <= WIFI_CHANNEL_MAX; channel++) {
-        // rotates variable channel 1..WIFI_CHANNEL_MAX
+        if (ChannelTimerIRQ) {
+            portENTER_CRITICAL(&timerMux);
+            ChannelTimerIRQ--;
+            portEXIT_CRITICAL(&timerMux);
+            // rotates variable channel 1..WIFI_CHANNEL_MAX
+            channel = (channel % WIFI_CHANNEL_MAX) + 1;
             wifi_sniffer_set_channel(channel);
             ESP_LOGD(TAG, "Wifi set channel %d", channel);
-            vTaskDelay(cfg.wifichancycle*10 / portTICK_PERIOD_MS);
-            yield();
+
+            vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
         }
 
     } // end of infinite wifi channel rotation loop
@@ -313,16 +330,20 @@ uint64_t uptime() {
                 u8x8.printf("%-16s", "BLTH:off");
         #endif
 
-        // update free memory display (line 4)
-        u8x8.setCursor(10,4);
-        u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
+        // update LoRa SF display (line 3)
+        u8x8.setCursor(11,3);
+        u8x8.printf("SF:%c%c", lora_datarate[LMIC.datarate * 2], lora_datarate[LMIC.datarate * 2 + 1]);
 
-        // update RSSI limiter status & wifi channel display (line 5)
-        u8x8.setCursor(0,5);
-        u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-        u8x8.setCursor(11,5);
+        // update wifi channel display (line 4)
+        u8x8.setCursor(11,4);
         u8x8.printf("ch:%02d", channel);
 
+        // update RSSI limiter status & free memory display (line 5)
+        u8x8.setCursor(0,5);
+        u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
+        u8x8.setCursor(10,5);
+        u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
+        
         // update LoRa status display (line 6)
         u8x8.setCursor(0,6);
         u8x8.printf("%-16s", display_lora);
@@ -333,26 +354,27 @@ uint64_t uptime() {
     }    
 
     void updateDisplay() {
-        // timed display refresh according to refresh cycle setting
-        
-        if (currentMillis - previousDisplaymillis >= DISPLAYREFRESH_MS) {
+        // refresh display according to refresh cycle setting
+        if (DisplayTimerIRQ) {
+            portENTER_CRITICAL(&timerMux);
+            DisplayTimerIRQ--;
+            portEXIT_CRITICAL(&timerMux);
+
             refreshDisplay();
-            previousDisplaymillis += DISPLAYREFRESH_MS;
-        }
-        // set display on/off according to current device configuration
-        if (DisplayState != cfg.screenon) {
-            DisplayState = cfg.screenon;
-            u8x8.setPowerSave(!cfg.screenon);
+        
+            // set display on/off according to current device configuration
+            if (DisplayState != cfg.screenon) {
+                DisplayState = cfg.screenon;
+                u8x8.setPowerSave(!cfg.screenon);
+            }
         }
     } // updateDisplay()
-
-
 #endif // HAS_DISPLAY
 
 #ifdef HAS_BUTTON
     void readButton() {
-        if (ButtonTriggered) {
-            ButtonTriggered = false;
+        if (ButtonPressed) {
+            ButtonPressed--;
             ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
             eraseConfig();
             esp_restart();
@@ -497,12 +519,12 @@ void setup() {
         strcat(features, "PU");
         // install button interrupt (pullup mode)
         pinMode(HAS_BUTTON, INPUT_PULLUP);
-        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, RISING); 
+        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING); 
     #else
         strcat(features, "PD");
         // install button interrupt (pulldown mode)
         pinMode(HAS_BUTTON, INPUT_PULLDOWN);
-        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), isr_button_pressed, FALLING); 
+        attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING); 
     #endif
 #endif
 
@@ -529,9 +551,21 @@ void setup() {
     u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
     
     sprintf(display_lora, "Join wait");
+
+    // setup Display IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+    displaytimer = timerBegin(0, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+    timerAttachInterrupt(displaytimer, &DisplayIRQ, true);         // interrupt handler DisplayIRQ, triggered by edge
+    timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true); // reload interrupt after each trigger of display refresh cycle
+    timerAlarmEnable(displaytimer);                                // enable display interrupt
 #endif
 
-// Display features compiled for
+// setup channel rotation IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+channelSwitch = timerBegin(1, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 1, count up
+timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);   // interrupt handler, triggered by edge
+timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true); // reload interrupt after each trigger of channel switch cycle
+timerAlarmEnable(channelSwitch);                                // enable channel switching interrupt
+
+// show compiled features
 ESP_LOGI(TAG, "Features %s", features);
 
 // output LoRaWAN keys to console
@@ -579,7 +613,6 @@ void loop() {
 
     // simple state machine for controlling display, LED, button, etc.
     uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
-    currentMillis = millis();           // timebase for state machine in milliseconds (32bit)
 
     #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
         led_loop();
@@ -599,6 +632,8 @@ void loop() {
         reset_counters();   // clear macs container and reset all counters
         reset_salt();       // get new salt for salting hashes
     }
+
+    vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
 
  }
 

@@ -19,7 +19,7 @@
 #define RST   LMIC_UNUSED_PIN // connected to ESP32 RST/EN
 #define DIO0  26 // ESP32 GPIO26 wired on PCB to HPD13A
 #define DIO1  33 // HPDIO1 on pcb, needs to be wired external to GPIO33
-#define DIO2  32 // HPDIO2 on pcb, needs to be wired external to GPIO32 (not necessary for LoRa, only FSK)
+#define DIO2  LMIC_UNUSED_PIN // 32 HPDIO2 on pcb, needs to be wired external to GPIO32 (not necessary for LoRa, only FSK)
 
 // Hardware pin definitions for TTGO V2 Board with OLED SSD1306 0,96" I2C Display
 #define OLED_RST U8X8_PIN_NONE // connected to CPU RST/EN

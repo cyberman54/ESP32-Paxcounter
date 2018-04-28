@@ -26,33 +26,33 @@
 
 // Struct holding devices's runtime configuration
 typedef struct {
-  int8_t lorasf;                       // 7-12, lora spreadfactor
-  int8_t txpower;                      // 2-15, lora tx power
-  int8_t adrmode;                      // 0=disabled, 1=enabled
-  int8_t screensaver;                  // 0=disabled, 1=enabled
-  int8_t screenon;                     // 0=disabled, 1=enabled
-  int8_t countermode;                  // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
+  uint8_t lorasf;                       // 7-12, lora spreadfactor
+  uint8_t txpower;                      // 2-15, lora tx power
+  uint8_t adrmode;                      // 0=disabled, 1=enabled
+  uint8_t screensaver;                  // 0=disabled, 1=enabled
+  uint8_t screenon;                     // 0=disabled, 1=enabled
+  uint8_t countermode;                  // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
   int16_t rssilimit;                   // threshold for rssilimiter, negative value!
-  int8_t wifiscancycle;                // wifi scan cycle [seconds/2]
-  int8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
-  int8_t blescantime;                  // BLE scan cycle duration [seconds]
-  int8_t blescan;                      // 0=disabled, 1=enabled
-  int8_t wifiant;                      // 0=internal, 1=external (for LoPy/LoPy4)
-  int8_t vendorfilter;                 // 0=disabled, 1=enabled
-  int8_t rgblum;                       // RGB Led luminosity (0..100%)
+  uint8_t sendcycle;                    // payload send cycle [seconds/2]
+  uint8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
+  uint8_t blescantime;                  // BLE scan cycle duration [seconds]
+  uint8_t blescan;                      // 0=disabled, 1=enabled
+  uint8_t wifiant;                      // 0=internal, 1=external (for LoPy/LoPy4)
+  uint8_t vendorfilter;                 // 0=disabled, 1=enabled
+  uint8_t rgblum;                       // RGB Led luminosity (0..100%)
   char version[10];                    // Firmware version
   } configData_t;
 
 extern configData_t cfg;
 extern uint8_t mydata[];
 extern uint64_t uptimecounter;
-extern unsigned long currentMillis ;
 extern osjob_t sendjob;
 extern char display_lora[], display_lmic[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
 extern bool joinstate;
-extern std::set<uint16_t> macs; 
+extern std::set<uint16_t> macs;
+extern hw_timer_t * channelSwitch;      // hardware timer used for wifi channel switching
 
 #ifdef HAS_DISPLAY
     extern HAS_DISPLAY u8x8;

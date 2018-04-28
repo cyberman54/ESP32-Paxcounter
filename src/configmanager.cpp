@@ -13,7 +13,7 @@ esp_err_t err;
 
 // defined in antenna.cpp
 #ifdef HAS_ANTENNA_SWITCH
-    void antenna_select(const int8_t _ant);
+    void antenna_select(const uint8_t _ant);
 #endif
 
 // populate cfg vars with factory settings
@@ -25,7 +25,7 @@ void defaultConfig() {
     cfg.screenon      = 1;              // 0=disbaled, 1=enabled
     cfg.countermode   = 0;              // 0=cyclic, 1=cumulative, 2=cyclic confirmed
     cfg.rssilimit     = 0;              // threshold for rssilimiter, negative value!
-    cfg.wifiscancycle = SEND_SECS;      // wifi scan cycle [seconds/2]
+    cfg.sendcycle     = SEND_SECS;      // payload send cycle [seconds/2]
     cfg.wifichancycle = WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
     cfg.blescantime   = BLESCANTIME;    // BLE scan cycle duration [seconds]
     cfg.blescan       = 1;              // 0=disabled, 1=enabled
@@ -99,8 +99,8 @@ void saveConfig() {
       if( nvs_get_i8(my_handle, "countermode", &flash8) != ESP_OK || flash8 != cfg.countermode )
         nvs_set_i8(my_handle, "countermode", cfg.countermode);
 
-      if( nvs_get_i8(my_handle, "wifiscancycle", &flash8) != ESP_OK || flash8 != cfg.wifiscancycle )
-        nvs_set_i8(my_handle, "wifiscancycle", cfg.wifiscancycle);
+      if( nvs_get_i8(my_handle, "sendcycle", &flash8) != ESP_OK || flash8 != cfg.sendcycle )
+        nvs_set_i8(my_handle, "sendcycle", cfg.sendcycle);
 
       if( nvs_get_i8(my_handle, "wifichancycle", &flash8) != ESP_OK || flash8 != cfg.wifichancycle )
         nvs_set_i8(my_handle, "wifichancycle", cfg.wifichancycle);
@@ -220,11 +220,11 @@ void loadConfig() {
       saveConfig();
     }
 
-    if( nvs_get_i8(my_handle, "wifiscancycle", &flash8) == ESP_OK ) {
-      cfg.wifiscancycle = flash8;
-      ESP_LOGI(TAG, "wifiscancycle = %d", flash8);
+    if( nvs_get_i8(my_handle, "sendcycle", &flash8) == ESP_OK ) {
+      cfg.sendcycle = flash8;
+      ESP_LOGI(TAG, "sendcycle = %d", flash8);
     } else {
-      ESP_LOGI(TAG, "WIFI scan cycle set to default %d", cfg.wifiscancycle);
+      ESP_LOGI(TAG, "Payload send cycle set to default %d", cfg.sendcycle);
       saveConfig();
     }
 
