@@ -100,7 +100,7 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 	{
 		case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
 		{	// restart scan
-			status = esp_ble_gap_start_scanning(BLESCANTIME); 
+			status = esp_ble_gap_start_scanning(cfg.blescantime); 
 			if (status != ESP_OK) 
 			{
 				ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
@@ -112,7 +112,7 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 		{		
 			if ( p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_CMPL_EVT) // Inquiry complete, scan is done
 			{	// restart scan
-				status = esp_ble_gap_start_scanning	(BLESCANTIME); 
+				status = esp_ble_gap_start_scanning	(cfg.blescantime); 
 				if (status != ESP_OK) 
 				{
 					ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
@@ -233,13 +233,17 @@ esp_err_t register_ble_functionality(void)
 
 
 // Main start code running in its own Xtask
-void bt_loop(void *ignore)
+void bt_loop(void * pvParameters)
 {
+	configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
+
 	esp_err_t status;
 	
 	// Initialize BT controller to allocate task and other resource. 
 	ESP_LOGI(TAG, "Enabling Bluetooth Controller");
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+	bt_cfg.controller_task_stack_size = 8192; // double BT stack size
+
 	if (esp_bt_controller_init(&bt_cfg) != ESP_OK) 
 	{
 		ESP_LOGE(TAG, "Bluetooth controller initialize failed");
@@ -252,7 +256,9 @@ void bt_loop(void *ignore)
 		ESP_LOGE(TAG, "Bluetooth controller enable failed");
 		goto end; 
 	}
-	
+
+	//esp_bt_controller_mem_release(ESP_BT_MODE_BTDM); // gives 30KB more RAM for heap
+
 	// Init and alloc the resource for bluetooth, must be prior to every bluetooth stuff
 	ESP_LOGI(TAG, "Init Bluetooth stack");
 	status = esp_bluedroid_init(); 
@@ -280,8 +286,7 @@ void bt_loop(void *ignore)
 
 	while(1)
     {
-        vTaskDelay(500/portTICK_PERIOD_MS);
-        yield();
+		vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
     }
 
 end:

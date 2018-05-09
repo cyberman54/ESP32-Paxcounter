@@ -48,17 +48,23 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 
 These results where metered with software version 1.2.97 while continuously scanning wifi and ble, no LoRa TX’ing, OLED display (if present) on, 5V USB powered.
 
-# Building
+# Preparing
 
-Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
+Before compiling the code,
 
-Before compiling the code, **create file loraconf.h in your local /src directory** using the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. If you're using popular <A HREF="https://thethingsnetwork.org">TheThingsNetwork</A> you can copy&paste the keys from TTN console or output of ttnctl.
+- **edit paxcounter.conf** and taylor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use.
+
+- **create file loraconf.h in your local /src directory** using the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. If you're using popular <A HREF="https://thethingsnetwork.org">TheThingsNetwork</A> you can copy&paste the keys from TTN console or output of ttnctl.
 
 To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings.
 
 If your device has a fixed DEVEUI enter this in your local loraconf.h file. During compile time this DEVEUI will be grabbed from loraconf.h and inserted in the code.
 
 If your device has silicon **Unique ID** which is stored in serial EEPROM Microchip 24AA02E64 you don't need to change anything. The Unique ID will be read during startup and DEVEUI will be generated from it, overriding settings in loraconf.h.
+
+# Building
+
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
 
 # Uploading
 
@@ -150,10 +156,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 
-0x0A set Wifi scan cycle and payload transmit cycle
+0x0A set payload send cycle
 
-	0 ... 255 duration of a wifi scan cycle in seconds/2, after this payload is sent
-	e.g. 120 -> 1 cycle runs for 240 seconds [default]
+	0 ... 255 payload send cycle in seconds/2
+	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
 0x0B set Wifi channel switch interval timer
 
@@ -187,7 +193,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L24-L41) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L27-L44) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -196,7 +202,7 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 5:			Display status (1=on, 0=off)
 	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed)
 	bytes 7-8:		RSSI limiter threshold value (negative)
-	byte 9:			Wifi scan cycle duration in seconds/2 (0..255)
+	byte 9:			Payload send cycle in seconds/2 (0..255)
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
 	byte 11:		BLE scan cycle duration in seconds (0..255)
 	byte 12:		BLE scan mode (1=on, 0=0ff)

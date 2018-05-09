@@ -1,131 +1,44 @@
-#pragma once
 
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.3.01"    // use max 10 chars here!
+#define PROGVERSION                     "1.3.4"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
-// Verbose enables serial output
-#define VERBOSE                         1       // comment out to silence the device, for mute use build option
+//--- Declarations ---
 
-// set this to include BLE counting and vendor filter functions
-#define VENDORFILTER                    1       // comment out if you want to count things, not people
-#define BLECOUNTER                      1       // comment out if you don't want BLE count
+enum led_states { 
+  LED_OFF,
+  LED_ON
+};
 
-// BLE scan parameters
-#define BLESCANTIME                     11      // [seconds] scan duration, see note below
-#define BLESCANWINDOW                   10      // [milliseconds] scan window, see below, 3 .. 10240, default 10
-#define BLESCANINTERVAL                 10      // [milliseconds] how long to wait between scans, 3 .. 10240, default 10
+#if defined(CFG_eu868)
+  const char lora_datarate[] = {"1211100908077BFSNA"};
+#elif defined(CFG_us915)  
+  const char lora_datarate[] = {"100908078CNA121110090807"};
+#endif
 
-/* Note: guide for setting bluetooth parameters
-*
-* |< Scan Window >       |< Scan Window >       |< Scan Window >       |
-* |<    Scan Interval   >|<    Scan Interval   >|<    Scan Interval   >|
-* |<                   Scan duration                                  >|
-* 
-* Scan duration sets how long scanning should be going on, interrupting a wifi scan cycle.
-* Scan window sets how much of the interval should be occupied by scanning.
-* Scan interval is how long scanning should be done on each channel. BLE uses 3 channels for advertising.
-* -> Adjust these values with power consumption in mind if power is limited.
-*/
+//--- Prototypes ---
 
-// WiFi scan parameters
-#define WIFI_CHANNEL_MIN                1       // start channel number where scan begings
-#define	WIFI_CHANNEL_MAX                13      // total channel number to scan
-#define WIFI_MY_COUNTRY                 "EU"    // select locale for Wifi RF settings
-#define	WIFI_CHANNEL_SWITCH_INTERVAL    50      // [seconds/100] -> 0,5 sec.
+// defined in main.cpp
+void reset_counters(void);
+void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
+void led_loop(void);
 
-// LoRa payload send cycle
-#define SEND_SECS                       120     // [seconds/2] -> 240 sec.
-//#define SEND_SECS                       30    // [seconds/2] -> 60 sec.
+// defined in configmanager.cpp
+void eraseConfig(void);
+void saveConfig(void);
+void loadConfig(void);
 
-// Default LoRa Spreadfactor
-#define LORASFDEFAULT                   9       // 7 ... 12 SF, according to LoRaWAN specs
-#define MAXLORARETRY                    500     // maximum count of TX retries if LoRa busy
-#define RCMDPORT                        2       // LoRaWAN Port on which device listenes for remote commands
+// defined in lorawan.cpp
+void onEvent(ev_t ev);
+void do_send(osjob_t* j);
+void gen_lora_deveui(uint8_t * pdeveui);
+void RevBytes(unsigned char* b, size_t c);
+void get_hard_deveui(uint8_t *pdeveui);
 
-// Default RGB LED luminosity (in %)
-#define RGBLUMINOSITY                   30      // 30%
+// defined in wifisniffer.cpp
+void wifi_sniffer_init(void);
+void wifi_sniffer_set_channel(uint8_t channel);
+void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
-// OLED Display refresh cycle (in Milliseconds)
-#define DISPLAYFPS                      5       // [fps] -> 5 Frames per second ps = 200ms refreseh cycle
-
-// LMIC settings
-// define hardware independent LMIC settings here, settings of standard library in /lmic/config.h will be ignored
-// define hardware specifics settings in platformio.ini as build_flag for hardware environment
-
-// Select frequency band here according to national regulations
-#define CFG_eu868 1
-//#define CFG_us915 1
-
-// This is the SX1272/SX1273 radio, which is also used on the HopeRF
-// RFM92 boards.
-//#define CFG_sx1272_radio 1
-// This is the SX1276/SX1277/SX1278/SX1279 radio, which is also used on
-// the HopeRF RFM95 boards.
-//#define CFG_sx1276_radio 1
-
-// 16 μs per tick
-// LMIC requires ticks to be 15.5μs - 100 μs long
-#define US_PER_OSTICK_EXPONENT 4
-#define US_PER_OSTICK (1 << US_PER_OSTICK_EXPONENT)
-#define OSTICKS_PER_SEC (1000000 / US_PER_OSTICK)
-
-// Set this to 1 to enable some basic debug output (using printf) about
-// RF settings used during transmission and reception. Set to 2 to
-// enable more verbose output. Make sure that printf is actually
-// configured (e.g. on AVR it is not by default), otherwise using it can
-// cause crashing.
-//#define LMIC_DEBUG_LEVEL 1
-
-// Enable this to allow using printf() to print to the given serial port
-// (or any other Print object). This can be easy for debugging. The
-// current implementation only works on AVR, though.
-//#define LMIC_PRINTF_TO Serial
-
-// Any runtime assertion failures are printed to this serial port (or
-// any other Print object). If this is unset, any failures just silently
-// halt execution.
-#define LMIC_FAILURE_TO Serial
-
-// Uncomment this to disable all code related to joining
-//#define DISABLE_JOIN
-// Uncomment this to disable all code related to ping
-#define DISABLE_PING
-// Uncomment this to disable all code related to beacon tracking.
-// Requires ping to be disabled too
-#define DISABLE_BEACONS
-
-// Uncomment these to disable the corresponding MAC commands.
-// Class A
-//#define DISABLE_MCMD_DCAP_REQ // duty cycle cap
-//#define DISABLE_MCMD_DN2P_SET // 2nd DN window param
-//#define DISABLE_MCMD_SNCH_REQ // set new channel
-// Class B
-//#define DISABLE_MCMD_PING_SET // set ping freq, automatically disabled by DISABLE_PING
-//#define DISABLE_MCMD_BCNI_ANS // next beacon start, automatical disabled by DISABLE_BEACON
-
-// In LoRaWAN, a gateway applies I/Q inversion on TX, and nodes do the
-// same on RX. This ensures that gateways can talk to nodes and vice
-// versa, but gateways will not hear other gateways and nodes will not
-// hear other nodes. By uncommenting this macro, this inversion is
-// disabled and this node can hear other nodes. If two nodes both have
-// this macro set, they can talk to each other (but they can no longer
-// hear gateways). This should probably only be used when debugging
-// and/or when talking to the radio directly (e.g. like in the "raw"
-// example).
-//#define DISABLE_INVERT_IQ_ON_RX
-
-// This allows choosing between multiple included AES implementations.
-// Make sure exactly one of these is uncommented.
-//
-// This selects the original AES implementation included LMIC. This
-// implementation is optimized for speed on 32-bit processors using
-// fairly big lookup tables, but it takes up big amounts of flash on the
-// AVR architecture.
-#define USE_ORIGINAL_AES
-//
-// This selects the AES implementation written by Ideetroon for their
-// own LoRaWAN library. It also uses lookup tables, but smaller
-// byte-oriented ones, making it use a lot less flash space (but it is
-// also about twice as slow as the original).
-// #define USE_IDEETRON_AES
+// defined in blescan.cpp
+void bt_loop(void *ignore);
