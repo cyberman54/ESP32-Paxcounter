@@ -99,17 +99,16 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 	switch (event) 
 	{
 		case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
-		{	// restart scan
+			// restart scan
 			status = esp_ble_gap_start_scanning(cfg.blescantime); 
 			if (status != ESP_OK) 
 			{
 				ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
 			}
-		}
 		break;
 		
 		case ESP_GAP_BLE_SCAN_RESULT_EVT:
-		{		
+			// evaluate scan results	
 			if ( p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_CMPL_EVT) // Inquiry complete, scan is done
 			{	// restart scan
 				status = esp_ble_gap_start_scanning	(cfg.blescantime); 
@@ -177,8 +176,6 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 				*/
 
 			}
-
-		}
 		break;
 
 		default:

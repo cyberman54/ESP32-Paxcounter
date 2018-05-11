@@ -136,6 +136,7 @@ void do_send(osjob_t* j){
         if (cfg.countermode != 1) {
             reset_counters();                       // clear macs container and reset all counters
             reset_salt();                           // get new salt for salting hashes
+            ESP_LOGI(TAG, "Counter cleared (countermode = %d)", cfg.countermode);
         }
     }
 

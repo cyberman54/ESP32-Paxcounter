@@ -627,7 +627,10 @@ void loop() {
     #endif
 
     // check free memory
-    if (ESP.getFreeHeap() <= MEM_LOW) {
+    //if (ESP.getFreeHeap() <= MEM_LOW) {
+    if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
+    //  ESP_LOGI(TAG, "Counter cleared (memory low = %d Bytes)", ESP.getFreeHeap());
+        ESP_LOGI(TAG, "Counter cleared (memory low water mark = %d Bytes)", esp_get_minimum_free_heap_size());
         do_send(&sendjob);  // send count
         reset_counters();   // clear macs container and reset all counters
         reset_salt();       // get new salt for salting hashes
