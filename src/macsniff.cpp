@@ -107,11 +107,11 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
     const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
     
-    if (( cfg.rssilimit == 0 ) || (ppkt->rx_ctrl.rssi > cfg.rssilimit )) { // rssi is negative value
-        uint8_t *p = (uint8_t *) hdr->addr2;
-        mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI) ;
-    } else {
+    if ((cfg.rssilimit) && (ppkt->rx_ctrl.rssi < cfg.rssilimit )) { // rssi is negative value
         ESP_LOGI(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi, cfg.rssilimit);
+    } else {
+        uint8_t *p = (uint8_t *) hdr->addr2;
+        mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI) ;       
     }
 }
 

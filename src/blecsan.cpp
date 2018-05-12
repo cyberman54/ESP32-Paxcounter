@@ -125,28 +125,24 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 				ESP_LOGD(TAG, "Addr_type           : %s", bt_addr_t_to_string(p->scan_rst.ble_addr_type));
 				ESP_LOGD(TAG, "RSSI                : %d", p->scan_rst.rssi);
 
-				if (!( cfg.rssilimit == 0 ) || (p->scan_rst.rssi > cfg.rssilimit )) { // rssi is negative value
+				if ((cfg.rssilimit) && (p->scan_rst.rssi < cfg.rssilimit )) { // rssi is negative value
      				ESP_LOGI(TAG, "BLTH RSSI %d -> ignoring (limit: %d)", p->scan_rst.rssi, cfg.rssilimit);
 					break;
     			}
 
 				#ifdef VENDORFILTER
 					
-					if (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) goto skip;
-					if (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM) goto skip;
-							
+					if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) || (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
+						ESP_LOGD(TAG, "BT device filtered");	
+						break;
+					}
+
 				#endif
 
 				// add this device and show new count total if it was not previously added
 				if (cfg.blescan) // count only if BLE scan is enabled
             		mac_add((uint8_t *) p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);	
-				break;
-
-				skip:
-				ESP_LOGD(TAG, "BT device filtered");	
-				break;
-					
-
+				
 				/* to be improved in vendorfilter if:
 				
 				// you can search for elements in the payload using the
@@ -175,7 +171,7 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 
 				*/
 
-			}
+			} // evaluate sniffed packet
 		break;
 
 		default:
