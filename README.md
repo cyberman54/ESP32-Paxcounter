@@ -36,17 +36,7 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
 <A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A> and <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, for example.<br>
 
-<b>Power consumption</b>:
-
-- Heltec ~720mW
-- TTGOv1 TBD
-- TTGOv2 ~990mW
-- LoPy with expansion board: ~690mW
-- LoPy pure, without expansion board: TBD
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora): TBD
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora): TBD
-
-These results where metered with software version 1.2.97 while continuously scanning wifi and ble, no LoRa TX’ing, OLED display (if present) on, 5V USB powered.
+<b>Power consumption</b> was metered at around 1000mW, depending on board (i.e. has display or not) and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
 
 # Preparing
 
