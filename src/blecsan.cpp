@@ -235,7 +235,7 @@ void bt_loop(void * pvParameters)
 	// Initialize BT controller to allocate task and other resource. 
 	ESP_LOGI(TAG, "Enabling Bluetooth Controller");
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-	bt_cfg.controller_task_stack_size = 8192; // double BT stack size
+	bt_cfg.controller_task_stack_size = BLESTACKSIZE; // set BT stack size to value configured in paxcounter.conf
 
 	if (esp_bt_controller_init(&bt_cfg) != ESP_OK) 
 	{
