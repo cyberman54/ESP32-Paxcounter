@@ -12,7 +12,7 @@
 #define RST   LMIC_UNUSED_PIN
 #define DIO0  23 // LoRa IRQ
 #define DIO1  23 // workaround
-#define DIO2  LMIC_UNUSED_PIN // 23 workaround 
+#define DIO2  LMIC_UNUSED_PIN
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define HAS_ANTENNA_SWITCH  21      // pin for switching wifi antenna
