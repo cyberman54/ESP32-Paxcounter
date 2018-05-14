@@ -25,6 +25,7 @@ Currently supported IoT boards:
 - TTGOv2 {1}{4}
 - Pycom LoPy {2}
 - Pycom LoPy4 {2}
+- Pycom FiPy {2}
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
 
@@ -69,9 +70,9 @@ Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for
 # Uploading
 
 To upload the code to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
-The LoPy/LoPy4 board needs to be set manually. See these 
+The LoPy/LoPy4/FiPy board needs to be set manually. See these 
 <A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it. Don't forget to press on board reset button after switching between run and bootloader mode.<p>
-The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
+The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
 
 # Legal note
 
@@ -181,12 +182,12 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 = disabled
 	1 = enabled [default]
 
-0x0F set WIFI antenna switch (works on LoPy/LoPy4 only)
+0x0F set WIFI antenna switch (works on LoPy/LoPy4/FiPy only)
 
 	0 = internal antenna [default]
 	1 = external antenna
 
-0x10 set RGB led luminosity (works on LoPy/LoPy4 and LoRaNode32 shield only)
+0x10 set RGB led luminosity (works on LoPy/LoPy4/FiPy and LoRaNode32 shield only)
 
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
@@ -221,7 +222,7 @@ device answers with it's current configuration. The configuration is a C structu
 
 # RGB Led color description
 
-Description of the RGB LED color (LoPy/LoPy4 and Lolin32 only):
+Description of the RGB LED color (LoPy/LoPy4/FiPy and Lolin32 only):
 
 - Yellow quick blink: joining LoRaWAN network in progress or pending
 - Blue blink: LoRaWAN data transmit (including waiting for receive windows) in progress or pending
