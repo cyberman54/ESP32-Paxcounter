@@ -5,7 +5,7 @@
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define DISPLAY_FLIP  1 // rotated display
-#define HAS_LED 23
+#define HAS_LED 23 // green on board LED G3 D0
 
 // disable brownout detection (needed on TTGOv2 for battery powered operation)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
@@ -18,9 +18,9 @@
 
 // non arduino pin definitions
 #define RST   LMIC_UNUSED_PIN // connected to ESP32 RST/EN
-#define DIO0  26 // ESP32 GPIO26 wired on PCB to HPD13A
-#define DIO1  32 
-#define DIO2  33
+#define DIO0  26 // ESP32 GPIO26 <-> HPD13A IO0
+#define DIO1  33 // ESP32 GPIO33 <-> HPDIO1 <-> HPD13A IO1
+#define DIO2  32 // ESP32 GPIO32 <-> HPDIO2 <-> HPD13A IO2
 
 // Hardware pin definitions for TTGO V2 Board with OLED SSD1306 0,96" I2C Display
 #define OLED_RST U8X8_PIN_NONE // connected to CPU RST/EN
