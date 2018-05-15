@@ -23,7 +23,7 @@ Currently supported IoT boards:
 - Heltec LoRa-32 {1}
 - TTGOv1 {1}
 - TTGOv2 {1}{4}
-- TTGOv2.1 not yet, coming soon
+- TTGOv2.1 (not yet tested) {1}
 - Pycom LoPy {2}
 - Pycom LoPy4 {2}
 - Pycom FiPy {2}
