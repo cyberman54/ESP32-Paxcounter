@@ -100,7 +100,7 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 	{
 		case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
 			// restart scan
-			status = esp_ble_gap_start_scanning(cfg.blescantime); 
+			status = esp_ble_gap_start_scanning(BLESCANTIME); 
 			if (status != ESP_OK) 
 			{
 				ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
@@ -111,7 +111,7 @@ static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_pa
 			// evaluate scan results	
 			if ( p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_CMPL_EVT) // Inquiry complete, scan is done
 			{	// restart scan
-				status = esp_ble_gap_start_scanning	(cfg.blescantime); 
+				status = esp_ble_gap_start_scanning	(BLESCANTIME); 
 				if (status != ESP_OK) 
 				{
 					ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
@@ -207,7 +207,7 @@ esp_err_t register_ble_functionality(void)
 		#else
 			.scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_ALL,
 		#endif
-		.scan_interval          = (uint16_t) (BLESCANINTERVAL / 0.625),		// Time = N * 0.625 msec
+		.scan_interval          = (uint16_t) (cfg.blescantime * 10 / 0.625), // Time = N * 0.625 msec
 		.scan_window            = (uint16_t) (BLESCANWINDOW / 0.625)		// Time = N * 0.625 msec	
 	};
 

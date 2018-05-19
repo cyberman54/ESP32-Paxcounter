@@ -148,27 +148,27 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 
-0x0A set payload send cycle
+0x0A set LoRaWAN payload send cycle
 
 	0 ... 255 payload send cycle in seconds/2
 	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
 0x0B set Wifi channel switch interval timer
 
-	0 ... 255 timeout for scanning 1 wifi channel in seconds/100
+	0 ... 255 duration for scanning one wifi channel in seconds/100
 	e.g. 50 -> each channel is scanned for 0,5 seconds [default]
 
-0x0C set BLE scan cycle timer
+0x0C set Bluetooth channel switch interval timer
 
-	0 ... 255 duration of a BLE scan cycle in seconds
-	e.g. 11 -> 1 cycle runs for 11 seconds [default]
+	0 ... 255 duration for scanning one bluetooth channel in seconds/100
+	e.g. 1 -> each channel is scanned for 10 milliseconds [default]
 
 0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
 
 	0 = disabled (use to count devices, not people)
 	1 = enabled [default]
 
-0x0E set BLE scan mode
+0x0E set Bluetooth scanner
 
 	0 = disabled
 	1 = enabled [default]
@@ -194,10 +194,10 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 5:			Display status (1=on, 0=off)
 	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed)
 	bytes 7-8:		RSSI limiter threshold value (negative)
-	byte 9:			Payload send cycle in seconds/2 (0..255)
+	byte 9:			Lora Payload send cycle in seconds/2 (0..255)
 	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
-	byte 11:		BLE scan cycle duration in seconds (0..255)
-	byte 12:		BLE scan mode (1=on, 0=0ff)
+	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255)
+	byte 12:		Bluetooth scanner status (1=on, 0=0ff)
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
 	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
 	byte 15:		RGB LED luminosity (0..100 %)

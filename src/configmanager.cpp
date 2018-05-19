@@ -27,7 +27,7 @@ void defaultConfig() {
     cfg.rssilimit     = 0;              // threshold for rssilimiter, negative value!
     cfg.sendcycle     = SEND_SECS;      // payload send cycle [seconds/2]
     cfg.wifichancycle = WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
-    cfg.blescantime   = BLESCANTIME;    // BLE scan cycle duration [seconds]
+    cfg.blescantime   = BLESCANINTERVAL / 10;         // BT channel scan cycle duration [seconds/100], default 1 (= 10ms)
     cfg.blescan       = 1;              // 0=disabled, 1=enabled
     cfg.wifiant       = 0;              // 0=internal, 1=external (for LoPy/LoPy4)
     cfg.vendorfilter  = 1;              // 0=disabled, 1=enabled
