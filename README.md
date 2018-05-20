@@ -155,13 +155,13 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x0B set Wifi channel switch interval timer
 
-	0 ... 255 duration for scanning one wifi channel in seconds/100
-	e.g. 50 -> each channel is scanned for 0,5 seconds [default]
+	0 ... 255 duration for scanning a wifi channel in seconds/100
+	e.g. 50 -> each channel is scanned for 500 milliseconds [default]
 
 0x0C set Bluetooth channel switch interval timer
 
-	0 ... 255 duration for scanning one bluetooth channel in seconds/100
-	e.g. 3 -> each channel is scanned for 30 milliseconds [default]
+	0 ... 255 duration for scanning a bluetooth advertising channel in seconds/100
+	e.g. 8 -> each channel is scanned for 80 milliseconds [default]
 
 0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
 
