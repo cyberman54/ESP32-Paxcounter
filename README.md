@@ -161,7 +161,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 0x0C set Bluetooth channel switch interval timer
 
 	0 ... 255 duration for scanning one bluetooth channel in seconds/100
-	e.g. 1 -> each channel is scanned for 10 milliseconds [default]
+	e.g. 3 -> each channel is scanned for 30 milliseconds [default]
 
 0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
 

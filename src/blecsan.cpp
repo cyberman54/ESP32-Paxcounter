@@ -88,8 +88,8 @@ static const char *btsig_gap_type(uint32_t gap_type) {
 	}
 } // btsig_gap_type
 
-
-static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+// using IRAM_:ATTR here to speed up callback function
+IRAM_ATTR static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
 	esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 	esp_err_t status;	
@@ -188,7 +188,7 @@ esp_err_t register_ble_functionality(void)
 	
 	// This function is called to occur gap event, such as scan result.
 	//register the scan callback function to the gap module
-	status = esp_ble_gap_register_callback(gap_callback_handler);
+	status = esp_ble_gap_register_callback(&gap_callback_handler);
 	if (status != ESP_OK) 
 	{
 		ESP_LOGE(TAG, "esp_ble_gap_register_callback: rc=%d", status);
@@ -226,11 +226,11 @@ esp_err_t register_ble_functionality(void)
 
 void stop_BLEscan(void){
 	ESP_LOGI(TAG, "Shutting BT Down ...");
-	esp_ble_gap_register_callback(NULL);
-	esp_bluedroid_disable(); 
-	esp_bluedroid_deinit(); 
-	esp_bt_controller_disable();
-	esp_bt_controller_deinit();
+	ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
+	ESP_ERROR_CHECK(esp_bluedroid_disable());
+	ESP_ERROR_CHECK(esp_bluedroid_deinit());
+	ESP_ERROR_CHECK(esp_bt_controller_disable());
+	ESP_ERROR_CHECK(esp_bt_controller_deinit());
 }
 
 void start_BLEscan(void){

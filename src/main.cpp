@@ -327,7 +327,7 @@ uint64_t uptime() {
             if (cfg.blescan)
                 u8x8.printf("BLTH:%-4d", macs_ble);
             else
-                u8x8.printf("%-16s", "BLTH:off");
+                u8x8.printf("%s", "BLTH:off");
         #endif
 
         // update LoRa SF display (line 3)

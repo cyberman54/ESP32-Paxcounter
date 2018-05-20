@@ -102,7 +102,8 @@ void wifi_sniffer_set_channel(uint8_t channel) {
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
-void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
+// using IRAM_:ATTR here to speed up callback function
+IRAM_ATTR void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
     const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
     const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;

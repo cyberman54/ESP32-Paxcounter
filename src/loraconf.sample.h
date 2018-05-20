@@ -3,6 +3,9 @@
  * 
  * Read the values from TTN console (or whatever applies), insert them here,
  * and rename this file to src/loraconf.h
+ * 
+ * Note that DEVEUI, APPEUI and APPKEY should all be specified in MSB format.
+ * (This is different from standard LMIC-Arduino which expects DEVEUI and APPEUI in LSB format.)
 
  * Set your DEVEUI here, if you have one. You can leave this untouched, 
  * then the DEVEUI will be generated during runtime from device's MAC adress
