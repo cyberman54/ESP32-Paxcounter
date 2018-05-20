@@ -113,7 +113,7 @@ void do_send(osjob_t* j){
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
         sprintf(display_lmic, "LORA BUSY");
-        return;
+        goto end;
     }
 
     uint8_t mydata[4];
@@ -144,6 +144,7 @@ void do_send(osjob_t* j){
     }
 
     // Schedule next transmission
+    end:
     os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(cfg.sendcycle * 2), do_send);
 
 } // do_send()
