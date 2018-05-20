@@ -17,7 +17,7 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 #define BT_BD_ADDR_HEX(addr)   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
 
 // local Tag for logging
-static const char *TAG = "bt_loop";
+static const char *TAG = "blescan";
 
 // defined in macsniff.cpp
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
@@ -100,22 +100,14 @@ IRAM_ATTR static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble
 	{
 		case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
 			// restart scan
-			status = esp_ble_gap_start_scanning(BLESCANTIME); 
-			if (status != ESP_OK) 
-			{
-				ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
-			}
+			ESP_ERROR_CHECK(esp_ble_gap_start_scanning(BLESCANTIME));
 		break;
 		
 		case ESP_GAP_BLE_SCAN_RESULT_EVT:
 			// evaluate scan results	
 			if ( p->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_CMPL_EVT) // Inquiry complete, scan is done
 			{	// restart scan
-				status = esp_ble_gap_start_scanning	(BLESCANTIME); 
-				if (status != ESP_OK) 
-				{
-					ESP_LOGE(TAG, "esp_ble_gap_start_scanning: rc=%d", status);
-				}
+				ESP_ERROR_CHECK(esp_ble_gap_start_scanning(BLESCANTIME));
 				return;
 			}
 			
@@ -140,8 +132,7 @@ IRAM_ATTR static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble
 				#endif
 
 				// add this device and show new count total if it was not previously added
-				if (cfg.blescan) // count only if BLE scan is enabled
-            		mac_add((uint8_t *) p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);	
+           		mac_add((uint8_t *) p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);	
 				
 				/* to be improved in vendorfilter if:
 				
@@ -180,20 +171,12 @@ IRAM_ATTR static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble
 } // gap_callback_handler
 
 
-esp_err_t register_ble_functionality(void)
-{
-	esp_err_t status;	
-	
+esp_err_t register_ble_callback(void) {
 	ESP_LOGI(TAG, "Register GAP callback");
 	
 	// This function is called to occur gap event, such as scan result.
 	//register the scan callback function to the gap module
-	status = esp_ble_gap_register_callback(&gap_callback_handler);
-	if (status != ESP_OK) 
-	{
-		ESP_LOGE(TAG, "esp_ble_gap_register_callback: rc=%d", status);
-		return ESP_FAIL;
-	}
+	ESP_ERROR_CHECK(esp_ble_gap_register_callback(&gap_callback_handler));
 
 	static esp_ble_scan_params_t ble_scan_params = 
 	{	
@@ -207,85 +190,47 @@ esp_err_t register_ble_functionality(void)
 		#else
 			.scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_ALL,
 		#endif
+
 		.scan_interval          = (uint16_t) (cfg.blescantime * 10 / 0.625), // Time = N * 0.625 msec
 		.scan_window            = (uint16_t) (BLESCANWINDOW / 0.625)		// Time = N * 0.625 msec	
 	};
 
-		ESP_LOGI(TAG, "Set GAP scan parameters");
+	ESP_LOGI(TAG, "Set GAP scan parameters");
 
 	// This function is called to set scan parameters.			
- 	status = esp_ble_gap_set_scan_params(&ble_scan_params);		
- 	if (status != ESP_OK) 		
- 	{		
- 		ESP_LOGE(TAG, "esp_ble_gap_set_scan_params: rc=%d", status);		
- 		return ESP_FAIL;		
- 	}		
+ 	ESP_ERROR_CHECK(esp_ble_gap_set_scan_params(&ble_scan_params));
 	
-	return ESP_OK ;
-}
+	return ESP_OK;
+
+} // register_ble_callback
+
+void start_BLEscan(void){
+	ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
+
+	// Initialize BT controller to allocate task and other resource. 
+	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+	bt_cfg.controller_task_stack_size = BLESTACKSIZE; // set BT stack size to value configured in paxcounter.conf
+	ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
+	ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_BTDM));
+
+	// Init and alloc the resource for bluetooth stack, must be done prior to every bluetooth stuff
+	ESP_ERROR_CHECK(esp_bluedroid_init());
+	ESP_ERROR_CHECK(esp_bluedroid_enable()); 
+
+	// Register callback function for capturing bluetooth packets
+	ESP_ERROR_CHECK(register_ble_callback());
+
+	ESP_LOGI(TAG, "Bluetooth scanner started");
+} // start_BLEscan
 
 void stop_BLEscan(void){
-	ESP_LOGI(TAG, "Shutting BT Down ...");
+	ESP_LOGI(TAG, "Shutting down bluetooth scanner ...");
 	ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
 	ESP_ERROR_CHECK(esp_bluedroid_disable());
 	ESP_ERROR_CHECK(esp_bluedroid_deinit());
 	ESP_ERROR_CHECK(esp_bt_controller_disable());
 	ESP_ERROR_CHECK(esp_bt_controller_deinit());
-}
-
-void start_BLEscan(void){
-	ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
-
-	esp_err_t status;
-	
-	// Initialize BT controller to allocate task and other resource. 
-	ESP_LOGI(TAG, "Enabling Bluetooth Controller");
-	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-	bt_cfg.controller_task_stack_size = BLESTACKSIZE; // set BT stack size to value configured in paxcounter.conf
-
-	if (esp_bt_controller_init(&bt_cfg) != ESP_OK) 
-	{
-		ESP_LOGE(TAG, "Bluetooth controller initialize failed");
-		goto end; 
-	}
-
-	// Enable BT controller
-	if (esp_bt_controller_enable(ESP_BT_MODE_BTDM) != ESP_OK) 
-	{
-		ESP_LOGE(TAG, "Bluetooth controller enable failed");
-		goto end; 
-	}
-
-	//esp_bt_controller_mem_release(ESP_BT_MODE_BTDM); // gives 30KB more RAM for heap
-
-	// Init and alloc the resource for bluetooth, must be prior to every bluetooth stuff
-	ESP_LOGI(TAG, "Init Bluetooth stack");
-	status = esp_bluedroid_init(); 
-	if (status != ESP_OK)
-	{ 
-		ESP_LOGE(TAG, "%s init bluetooth failed\n", __func__); 
-		goto end; 
-	} 
-	
-	// Enable bluetooth, must after esp_bluedroid_init()
-	status = esp_bluedroid_enable(); 
-	if (status != ESP_OK) 
-	{ 
-		ESP_LOGE(TAG, "%s enable bluetooth failed\n", __func__); 
-		goto end;
-	} 
-
-	ESP_LOGI(TAG, "Register BLE functionality");
-	status = register_ble_functionality();
-	if (status != ESP_OK)
-	{
-		ESP_LOGE(TAG, "Register BLE functionality failed");
-		goto end;
-	}
-
-end:
-ESP_LOGI(TAG, "Bluetooth scanner initialization finished");
-
-} // start_BLEscan
+	ESP_LOGI(TAG, "Bluetooth scanner stopped");
+} // stop_BLEscan
 
 #endif // BLECOUNTER
