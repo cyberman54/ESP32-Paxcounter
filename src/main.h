@@ -41,4 +41,7 @@ void wifi_sniffer_set_channel(uint8_t channel);
 void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
 // defined in blescan.cpp
-void bt_loop(void *ignore);
+#ifdef BLECOUNTER
+    void start_BLEscan(void);
+    void stop_BLEscan(void);
+#endif

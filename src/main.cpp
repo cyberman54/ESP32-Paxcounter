@@ -583,17 +583,17 @@ wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
 // note: do this *after* wifi has started, since gets it's seed from RF noise
 reset_salt(); // get new 16bit for salting hashes
  
-// run wifi task on core 0 and lora task on core 1 and bt task on core 0
+// run wifi channel switching task on core 0 and lora lmic task on core 1 (arduino main loop runs on core 1)
 ESP_LOGI(TAG, "Starting Lora task on core 1");
 xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1); 
 
 ESP_LOGI(TAG, "Starting Wifi task on core 0");
 xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL, 0);
 
+// start BLE scan callback if BLE function is enabled in NVRAM configuration
 #ifdef BLECOUNTER
-    if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
-        ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 4096, ( void * ) 1, 1, NULL, 0);
+    if (cfg.blescan) { 
+        start_BLEscan();
     }
 #endif
     

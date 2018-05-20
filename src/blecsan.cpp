@@ -224,11 +224,17 @@ esp_err_t register_ble_functionality(void)
 	return ESP_OK ;
 }
 
+void stop_BLEscan(void){
+	ESP_LOGI(TAG, "Shutting BT Down ...");
+	esp_ble_gap_register_callback(NULL);
+	esp_bluedroid_disable(); 
+	esp_bluedroid_deinit(); 
+	esp_bt_controller_disable();
+	esp_bt_controller_deinit();
+}
 
-// Main start code running in its own Xtask
-void bt_loop(void * pvParameters)
-{
-	configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
+void start_BLEscan(void){
+	ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
 
 	esp_err_t status;
 	
@@ -277,15 +283,9 @@ void bt_loop(void * pvParameters)
 		goto end;
 	}
 
-	while(1)
-    {
-		vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
-    }
-
 end:
-	ESP_LOGI(TAG, "Terminating BT logging task");
-	vTaskDelete(NULL);
-		
-} // bt_loop
+ESP_LOGI(TAG, "Bluetooth scanner initialization finished");
+
+} // start_BLEscan
 
 #endif // BLECOUNTER

@@ -9,12 +9,6 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
-// Bluetooth specific includes
-#ifdef BLECOUNTER
-    #include <esp_gap_ble_api.h>                // needed for switching interval parameter by rcommand
-    esp_err_t register_ble_functionality(void); // defined in blescan.cpp
-#endif
-
 // Local logging tag
 static const char *TAG = "rcommand";
 
@@ -97,25 +91,14 @@ void set_wifichancycle(uint8_t val) {
 
 void set_blescantime(uint8_t val) {
     cfg.blescantime = val;
-    ESP_LOGI(TAG, "Remote command: set BLE scan time to %d seconds", cfg.blescantime);
+    ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds", cfg.blescantime/float(100));
     #ifdef BLECOUNTER
-
-        // stop scan
-        ESP_LOGI(TAG, "Stopping BLE scan");
-		if (esp_ble_gap_stop_scanning() != ESP_OK) 
-			ESP_LOGE(TAG, "Stopping BLE scan failed");
-		
-        // modify parameters
-        ESP_LOGI(TAG, "Re-register BLE functionality");
-        if (register_ble_functionality() != ESP_OK)
-            ESP_LOGE(TAG, "Re-register BLE functionality failed");
-
-        // restart scan
-        ESP_LOGI(TAG, "Restarting BLE scan");
-		if (esp_ble_gap_start_scanning(BLESCANTIME) != ESP_OK) 
-			ESP_LOGE(TAG, "Restarting BLE scan failed");
-		
-
+        // stop & restart BLE scan task to apply new parameter
+        if (cfg.blescan)
+        {
+            stop_BLEscan();
+            start_BLEscan();
+        }
     #endif
 };
 
@@ -167,14 +150,20 @@ void set_loraadr(uint8_t val) {
 };
 
 void set_blescan(uint8_t val) {
-    ESP_LOGI(TAG, "Remote command: set BLE scan mode to %s", val ? "on" : "off");
+    ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val ? "on" : "off");
     switch (val) {
         case 0:
             cfg.blescan = 0;
             macs_ble = 0; // clear BLE counter
+            #ifdef BLECOUNTER
+                stop_BLEscan();
+            #endif
             break; 
         default: 
             cfg.blescan = 1;
+             #ifdef BLECOUNTER
+                start_BLEscan();
+            #endif
             break; 
         }
 };
