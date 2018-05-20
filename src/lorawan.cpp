@@ -108,36 +108,39 @@ void printKeys(void) {
 #endif // VERBOSE
 
 void do_send(osjob_t* j){
-    uint8_t mydata[4];
 
-    // Sum of unique WIFI MACs seen
-    mydata[0] = (macs_wifi & 0xff00) >> 8;
-    mydata[1] = macs_wifi  & 0xff;
-    
-    #ifdef BLECOUNTER
-        // Sum of unique BLE MACs seen
-        mydata[2] = (macs_ble & 0xff00) >> 8;
-        mydata[3] = macs_ble  & 0xff;
-    #else
-        mydata[2] = 0;
-        mydata[3] = 0;
-    #endif
-
-    // Check if there is not a current TX/RX job running
+    // Check if there is a pending TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
         sprintf(display_lmic, "LORA BUSY");
+        return;
+    }
+
+    uint8_t mydata[4];
+
+    // prepare payload with sum of unique WIFI MACs seen
+    mydata[0] = (macs_wifi & 0xff00) >> 8;
+    mydata[1] = macs_wifi  & 0xff;
+    
+    if (cfg.blescan) {
+        // append sum of unique BLE MACs seen to payload
+        mydata[2] = (macs_ble & 0xff00) >> 8;
+        mydata[3] = macs_ble  & 0xff; 
     } else {
-        // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
-        ESP_LOGI(TAG, "Packet queued");
-        sprintf(display_lmic, "PACKET QUEUED");
-        // clear counter if not in cumulative counter mode
-        if (cfg.countermode != 1) {
-            reset_counters();                       // clear macs container and reset all counters
-            reset_salt();                           // get new salt for salting hashes
-            ESP_LOGI(TAG, "Counter cleared (countermode = %d)", cfg.countermode);
-        }
+        mydata[2] = 0;
+        mydata[3] = 0;
+    }
+
+    // Prepare upstream data transmission at the next possible time.
+    LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
+    ESP_LOGI(TAG, "Packet queued");
+    sprintf(display_lmic, "PACKET QUEUED");
+
+    // clear counter if not in cumulative counter mode
+    if (cfg.countermode != 1) {
+        reset_counters();                       // clear macs container and reset all counters
+        reset_salt();                           // get new salt for salting hashes
+        ESP_LOGI(TAG, "Counter cleared (countermode = %d)", cfg.countermode);
     }
 
     // Schedule next transmission
