@@ -151,7 +151,7 @@ void do_send(osjob_t* j){
 
 void onEvent (ev_t ev) {
     char buff[24]="";
-    
+
     switch(ev) {
         case EV_SCAN_TIMEOUT:   strcpy_P(buff, PSTR("SCAN TIMEOUT"));   break;
         case EV_BEACON_FOUND:   strcpy_P(buff, PSTR("BEACON FOUND"));   break;
@@ -171,10 +171,12 @@ void onEvent (ev_t ev) {
 
             joinstate=true;
             strcpy_P(buff, PSTR("JOINED"));
+            sprintf(display_lora, ""); // clear previous lmic status message from display
 
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
-            LMIC_setLinkCheckMode(0);
+            // LMIC_setLinkCheckMode(0); -> do we need this?
+            
             // set data rate adaptation
             LMIC_setAdrMode(cfg.adrmode);
             // Set data rate and transmit power (note: txpower seems to be ignored by the library)
@@ -187,7 +189,7 @@ void onEvent (ev_t ev) {
         case EV_TXCOMPLETE:
 
             strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK") : PSTR("TX COMPLETE")); 
-            sprintf(display_lora, ""); // erase previous LoRa message from display
+            sprintf(display_lora, ""); // clear previous lmic status message from display
             
             if (LMIC.dataLen) {
                 ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d", LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);

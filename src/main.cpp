@@ -134,8 +134,9 @@ static void lora_init (osjob_t* j) {
     LMIC_reset();
     // This tells LMIC to make the receive windows bigger, in case your clock is 1% faster or slower.
     LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); 
-    // start joining
-    LMIC_startJoining();
+    // start joining -> will happen automatically after first do_send job
+    // LMIC_startJoining();
+    // lmic init done - onEvent() callback will be invoked when events occur
 }
 
 // LMIC FreeRTos Task
@@ -552,18 +553,19 @@ void setup() {
     
     sprintf(display_lora, "Join wait");
 
-    // setup Display IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+    // setup display refresh trigger IRQ using esp32 hardware timer 0 
+    // for explanation see https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
     displaytimer = timerBegin(0, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
     timerAttachInterrupt(displaytimer, &DisplayIRQ, true);         // interrupt handler DisplayIRQ, triggered by edge
     timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true); // reload interrupt after each trigger of display refresh cycle
     timerAlarmEnable(displaytimer);                                // enable display interrupt
 #endif
 
-// setup channel rotation IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-channelSwitch = timerBegin(1, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 1, count up
-timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);   // interrupt handler, triggered by edge
-timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true); // reload interrupt after each trigger of channel switch cycle
-timerAlarmEnable(channelSwitch);                                // enable channel switching interrupt
+// setup channel rotation trigger IRQ using esp32 hardware timer 1
+channelSwitch = timerBegin(1, 80, true);                        
+timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
+timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
+timerAlarmEnable(channelSwitch);
 
 // show compiled features
 ESP_LOGI(TAG, "Features %s", features);
@@ -573,21 +575,19 @@ ESP_LOGI(TAG, "Features %s", features);
     printKeys();
 #endif
 
-os_init(); // setup LMIC
-LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
-os_setCallback(&initjob, lora_init); // setup initial job & join network 
+os_init(); // initialize lmic run-time environment
+os_setCallback(&initjob, lora_init); // setup initial job & join LoRaWAN network 
 
-wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
-
-// initialize salt value using esp_random() called by random() in arduino-esp32 core
-// note: do this *after* wifi has started, since gets it's seed from RF noise
-reset_salt(); // get new 16bit for salting hashes
- 
-// run wifi channel switching task on core 0 and lora lmic task on core 1 (arduino main loop runs on core 1)
+// start lmic runloop in rtos task on core 1 (arduino main loop runs on core 1)
 ESP_LOGI(TAG, "Starting Lora task on core 1");
 xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1); 
 
+// start wifi in monitor mode and start channel rotation task on core 0
 ESP_LOGI(TAG, "Starting Wifi task on core 0");
+wifi_sniffer_init(); 
+// initialize salt value using esp_random() called by random() in arduino-esp32 core
+// note: do this *after* wifi has started, since function gets it's seed from RF noise
+reset_salt(); // get new 16bit for salting hashes
 xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL, 0);
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
@@ -597,7 +597,7 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
     }
 #endif
     
-// Finally: kickoff first sendjob and join, then send initial payload "0000"
+// kickoff first sendjob -> joins network and transmits initial payload "0000"
 uint8_t mydata[] = "0000";
 do_send(&sendjob);
 }
