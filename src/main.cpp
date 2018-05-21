@@ -39,7 +39,7 @@ Refer to LICENSE.txt file in repository for more details.
 
 // Initialize global variables
 configData_t cfg;                   // struct holds current device configuration
-osjob_t sendjob, initjob;           // LMIC jobs
+osjob_t sendjob;                    // LMIC job handler
 uint64_t uptimecounter = 0;         // timer global for uptime counter
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
@@ -50,8 +50,6 @@ led_states previousLEDState = LED_ON;    // This will force LED to be off at boo
 unsigned long LEDBlinkStarted = 0;  // When (in millis() led blink started)
 uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
-bool joinstate = false;             // LoRa network joined? global flag
-bool blinkdone = true;              // flag for state machine for blinking LED once
 hw_timer_t * displaytimer = NULL;   // configure hardware timer used for cyclic display refresh
 hw_timer_t * channelSwitch = NULL;  // configure hardware timer used for wifi channel switching
 
@@ -128,34 +126,20 @@ const lmic_pinmap lmic_pins = {
     .dio = {DIO0, DIO1, DIO2}
 };
 
-// LoRaWAN Initjob
-static void lora_init (osjob_t* j) {
-    // reset MAC state
-    LMIC_reset();
-    // This tells LMIC to make the receive windows bigger, in case your clock is 1% faster or slower.
-    LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); 
-    // start joining -> will happen automatically after first do_send job
-    // LMIC_startJoining();
-    // lmic init done - onEvent() callback will be invoked when events occur
-}
 
 // LMIC FreeRTos Task
 void lorawan_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    static uint16_t lorawait = 0;
+    //static uint16_t lorawait = 0;
 
     while(1) {
         
         // execute LMIC jobs
         os_runloop_once();
 
-        // indicate LMIC state on LEDs if present
-        #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
-            led_loop();
-        #endif
-/*
+        /*
         // check if payload is sent
         while(LMIC.opmode & OP_TXRXPEND) {
             if(!lorawait) 
@@ -169,13 +153,14 @@ void lorawan_loop(void * pvParameters) {
             };
             vTaskDelay(1000/portTICK_PERIOD_MS);
         }
-*/
+        */
+
         vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
     }    
 }
 
-/* end LMIC specific parts --------------------------------------------------------------- */
 
+/* end LMIC specific parts --------------------------------------------------------------- */
 
 
 /* beginn hardware specific parts -------------------------------------------------------- */
@@ -384,6 +369,7 @@ uint64_t uptime() {
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
+
     void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
         LEDColor = set_color;                   // set color for RGB LED
         LEDBlinkDuration = set_blinkduration;   // duration 
@@ -456,7 +442,6 @@ uint64_t uptime() {
     }; // led_loop()
 
  #endif
-
 
 /* begin Aruino SETUP ------------------------------------------------------------ */
 
@@ -575,10 +560,16 @@ ESP_LOGI(TAG, "Features %s", features);
     printKeys();
 #endif
 
-os_init(); // initialize lmic run-time environment
-os_setCallback(&initjob, lora_init); // setup initial job & join LoRaWAN network 
+// initialize LoRaWAN LMIC run-time environment
+os_init(); 
+// reset LMIC MAC state
+LMIC_reset();
+// This tells LMIC to make the receive windows bigger, in case your clock is 1% faster or slower.
+LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); 
 
-// start lmic runloop in rtos task on core 1 (arduino main loop runs on core 1)
+// start lmic runloop in rtos task on core 1 (note: arduino main loop runs on core 1, too)
+// https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
+
 ESP_LOGI(TAG, "Starting Lora task on core 1");
 xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1); 
 
@@ -597,46 +588,47 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
     }
 #endif
     
-// kickoff first sendjob -> joins network and transmits initial payload "0000"
-uint8_t mydata[] = "0000";
+// kickoff sendjob -> joins network and rescedules sendjob for cyclic transmitting payload
 do_send(&sendjob);
+
 }
 
-/* end Aruino SETUP ------------------------------------------------------------ */
+/* end Arduino SETUP ------------------------------------------------------------ */
 
+/* begin Arduino main loop ------------------------------------------------------ */
 
-/* begin Aruino LOOP ------------------------------------------------------------ */
-
-// Arduino main moop, runs on core 1
-// https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
 
-    // simple state machine for controlling display, LED, button, etc.
-    uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
+  	while (1) {
 
-    #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
-        led_loop();
-    #endif
+        // simple state machine for controlling uptime, display, LED, button, memory.
+
+        uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
+
+        #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
+            led_loop();
+        #endif
     
-    #ifdef HAS_BUTTON
-        readButton();
-    #endif
+        #ifdef HAS_BUTTON
+            readButton();
+        #endif
 
-    #ifdef HAS_DISPLAY
-        updateDisplay();
-    #endif
+        #ifdef HAS_DISPLAY
+            updateDisplay();
+        #endif
 
-    // check free memory
-    if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
-        ESP_LOGI(TAG, "Memory full, counter cleared (heap low water mark = %d Bytes / free heap = %d bytes)", \
-             esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-        do_send(&sendjob);  // send count
-        reset_counters();   // clear macs container and reset all counters
-        reset_salt();       // get new salt for salting hashes
-    }
+        // check free memory
+        if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
+            ESP_LOGI(TAG, "Memory full, counter cleared (heap low water mark = %d Bytes / free heap = %d bytes)", \
+                esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
+            do_send(&sendjob);  // send count
+            reset_counters();   // clear macs container and reset all counters
+            reset_salt();       // get new salt for salting hashes
+        }
 
-    vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
+        vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
 
- }
+    } // end of infinite main loop
+}
 
-/* end Aruino LOOP ------------------------------------------------------------ */
+/* end Arduino main loop ------------------------------------------------------------ */

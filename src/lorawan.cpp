@@ -116,9 +116,9 @@ void do_send(osjob_t* j){
         goto end;
     }
 
-    uint8_t mydata[4];
-
     // prepare payload with sum of unique WIFI MACs seen
+    static uint8_t mydata[4];
+  
     mydata[0] = (macs_wifi & 0xff00) >> 8;
     mydata[1] = macs_wifi  & 0xff;
     
@@ -169,13 +169,12 @@ void onEvent (ev_t ev) {
         
         case EV_JOINED:
 
-            joinstate=true;
             strcpy_P(buff, PSTR("JOINED"));
             sprintf(display_lora, ""); // clear previous lmic status message from display
 
             // Disable link check validation (automatically enabled
-            // during join, but not supported by TTN at this time).
-            // LMIC_setLinkCheckMode(0); -> do we need this?
+            // during join, but not supported by TTN at this time).  -> do we need this?
+            LMIC_setLinkCheckMode(0);
             
             // set data rate adaptation
             LMIC_setAdrMode(cfg.adrmode);
