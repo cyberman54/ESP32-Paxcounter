@@ -318,8 +318,13 @@ uint64_t uptime() {
 
         // update LoRa SF display (line 3)
         u8x8.setCursor(11,3);
-        u8x8.printf("SF:%c%c", lora_datarate[LMIC.datarate * 2], lora_datarate[LMIC.datarate * 2 + 1]);
-
+        u8x8.printf("SF:");
+        if (cfg.adrmode)   // if ADR=on then display SF value inverse
+            u8x8.setInverseFont(1);
+        u8x8.printf("%c%c", lora_datarate[LMIC.datarate * 2], lora_datarate[LMIC.datarate * 2 + 1]);
+        if (cfg.adrmode)   // switch off inverse if it was turned on
+            u8x8.setInverseFont(0);
+        
         // update wifi channel display (line 4)
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02d", channel);

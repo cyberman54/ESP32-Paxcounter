@@ -153,7 +153,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 = ADR off
 	1 = ADR on [default]
 
-	note: set ADR to off, if device is moving, set to on, if not.
+	Note: set ADR to off, if device is moving, set to on, if not.
+	If ADR is set to on, SF value is shown inverted on display.
 
 0x08 do nothing
 
