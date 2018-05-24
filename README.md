@@ -1,5 +1,5 @@
 # ESP32-Paxcounter
-**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 boards**
+**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 LoRa IoT boards**
 
 <img src="img/Paxcounter-title.jpg">
 
@@ -17,7 +17,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 
 # Hardware
 
-Currently supported IoT boards:
+Supported ESP32 based LoRa IoT boards:
 - Heltec LoRa-32 {1}
 - TTGOv1 {1}
 - TTGOv2 {1}{4}
