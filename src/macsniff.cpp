@@ -3,13 +3,11 @@
 #include "globals.h"
 
 #ifdef VENDORFILTER
-    #include <array>
-    #include <algorithm>
     #include "vendor_array.h"
 #endif
 
 // Local logging tag
-static const char *TAG = "macsniff";
+static const char* TAG = "wifi";
 
 static wifi_country_t wifi_country = {.cc=WIFI_MY_COUNTRY, .schan=WIFI_CHANNEL_MIN, .nchan=WIFI_CHANNEL_MAX, .policy=WIFI_COUNTRY_POLICY_MANUAL};
 

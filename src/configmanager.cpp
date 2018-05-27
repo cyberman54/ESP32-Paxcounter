@@ -5,7 +5,7 @@
 #include <nvs_flash.h>
 
 // Local logging tag
-static const char *TAG = "configmanager";
+static const char* TAG = "flash";
 
 nvs_handle my_handle;
 
