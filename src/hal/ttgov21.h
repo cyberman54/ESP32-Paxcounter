@@ -1,11 +1,10 @@
 // Hardware related definitions for TTGO V2.1 Board
-// NOT YET TESTED
 
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define DISPLAY_FLIP  1 // rotated display
-#define HAS_LED 23 // green on board LED_G3
+#define HAS_LED 23 // green on board LED_G3 (not in initial board version)
 
 // disable brownout detection (needed on TTGOv2 for battery powered operation)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
