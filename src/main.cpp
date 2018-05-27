@@ -61,9 +61,7 @@ std::set<uint16_t> macs; // associative container holds total of unique MAC adre
 static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
-static const char *TAG = "paxcnt";
-// Note: Log level control seems not working during runtime,
-// so we need to switch loglevel by compiler build option in platformio.ini
+static const char* TAG = "main";
 
 #ifndef VERBOSE
 int redirect_log(const char * fmt, va_list args) {
@@ -241,8 +239,6 @@ uint64_t uptime() {
 
     // Print a key on display
     void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
-        uint8_t start=lsb?len:0;
-        uint8_t end = lsb?0:len;
         const uint8_t * p ;
         for (uint8_t i=0; i<len ; i++) {
             p = lsb ? key+len-i-1 : key+i;
@@ -413,7 +409,7 @@ uint64_t uptime() {
                 // small blink 10ms on each 1/2sec (not when joining)
                 LEDState = ((millis() % 500) < 20) ? LED_ON : LED_OFF;
             // This should not happen so indicate a problem
-            } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
+            } else  if ( LMIC.opmode & ((OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) ) {
                 LEDColor = COLOR_RED;
                 // heartbeat long blink 200ms on each 2 seconds
                 LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;

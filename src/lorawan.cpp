@@ -11,7 +11,7 @@
 #endif
 
 // Local logging Tag
-static const char *TAG = "lorawan";
+static const char* TAG = "lora";
 
 // functions defined in rcommand.cpp
 void rcommand(uint8_t cmd, uint8_t arg);
@@ -79,8 +79,6 @@ void get_hard_deveui(uint8_t *pdeveui) {
 
 // Display a key
 void printKey(const char * name, const uint8_t * key, uint8_t len, bool lsb) {
-  uint8_t start=lsb?len:0;
-  uint8_t end = lsb?0:len;
   const uint8_t * p ;
   char keystring[len+1] = "", keybyte[3];
   for (uint8_t i=0; i<len ; i++) {
@@ -170,7 +168,7 @@ void onEvent (ev_t ev) {
         case EV_JOINED:
 
             strcpy_P(buff, PSTR("JOINED"));
-            sprintf(display_lora, ""); // clear previous lmic status message from display
+            sprintf(display_lora, " "); // clear previous lmic status message from display
 
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).  -> do we need this?
@@ -188,7 +186,7 @@ void onEvent (ev_t ev) {
         case EV_TXCOMPLETE:
 
             strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK") : PSTR("TX COMPLETE")); 
-            sprintf(display_lora, ""); // clear previous lmic status message from display
+            sprintf(display_lora, " "); // clear previous lmic status message from display
             
             if (LMIC.dataLen) {
                 ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d", LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);

@@ -17,7 +17,7 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 #define BT_BD_ADDR_HEX(addr)   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
 
 // local Tag for logging
-static const char *TAG = "blescan";
+static const char* TAG = "bluetooth";
 
 // defined in macsniff.cpp
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
@@ -92,9 +92,8 @@ static const char *btsig_gap_type(uint32_t gap_type) {
 IRAM_ATTR static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
 	esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
-	esp_err_t status;	
-
-	ESP_LOGD(tag, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv, btsig_gap_type(*p->scan_rst.ble_adv));		
+	
+	ESP_LOGD(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv, btsig_gap_type(*p->scan_rst.ble_adv));		
 
 	switch (event) 
 	{
