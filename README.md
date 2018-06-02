@@ -221,11 +221,15 @@ device answers with it's current configuration. The configuration is a C structu
 
 0x81 get device uptime
 
-	bytes 1-7:		Uptime in seconds (little endian format)
+	bytes 1-7:		uptime in seconds (little endian format)
 
 0x82 get device cpu temperature
 
-	bytes 1-3:		chip temperature in celsius (little endian format)
+	bytes 1-3:		chip temperature in degrees celsius (little endian format)
+
+0x83 get device battery voltage
+
+	bytes 1-4:		battery voltage in millivolt, 0 if unreadable (little endian format)
 
 # License
 

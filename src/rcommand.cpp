@@ -24,6 +24,12 @@ typedef struct {
     void antenna_select(const uint8_t _ant);
 #endif
 
+// function defined in adcread.cpp
+#ifdef HAS_BATTERY_PROBE
+    uint32_t read_voltage(void);
+#endif
+
+
 // help function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora (uint8_t sf, uint8_t tx) {
     if ( tx > 20 ) return;
@@ -235,6 +241,21 @@ void get_cputemp (uint8_t val) {
     ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
 };
 
+void get_voltage (uint8_t val) {
+    ESP_LOGI(TAG, "Remote command: get battery voltage");
+    #ifdef HAS_BATTERY_PROBE
+        uint32_t voltage = read_voltage();
+    #else
+        uint32_t voltage = 0;
+    #endif
+    int size = sizeof(voltage);
+    unsigned char *sendData = new unsigned char[size];
+    memcpy(sendData, (unsigned char*)&voltage, size);
+    LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
+    delete sendData; // free memory
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
+};
+
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, flag (1 = do make settings persistent / 0 = don't)
 // 
@@ -257,7 +278,8 @@ cmd_t table[] = {
                 {0x10, set_rgblum, true},
                 {0x80, get_config, false},
                 {0x81, get_uptime, false},
-                {0x82, get_cputemp, false}
+                {0x82, get_cputemp, false},
+                {0x83, get_voltage, false}
                 };
 
 // check and execute remote command
