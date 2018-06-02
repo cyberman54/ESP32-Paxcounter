@@ -11,7 +11,7 @@
 #endif
 
 // Local logging Tag
-static const char *TAG = "lorawan";
+static const char* TAG = "lora";
 
 // functions defined in rcommand.cpp
 void rcommand(uint8_t cmd, uint8_t arg);
@@ -79,8 +79,6 @@ void get_hard_deveui(uint8_t *pdeveui) {
 
 // Display a key
 void printKey(const char * name, const uint8_t * key, uint8_t len, bool lsb) {
-  uint8_t start=lsb?len:0;
-  uint8_t end = lsb?0:len;
   const uint8_t * p ;
   char keystring[len+1] = "", keybyte[3];
   for (uint8_t i=0; i<len ; i++) {
@@ -108,45 +106,50 @@ void printKeys(void) {
 #endif // VERBOSE
 
 void do_send(osjob_t* j){
-    uint8_t mydata[4];
 
-    // Sum of unique WIFI MACs seen
-    mydata[0] = (macs_wifi & 0xff00) >> 8;
-    mydata[1] = macs_wifi  & 0xff;
-    
-    #ifdef BLECOUNTER
-        // Sum of unique BLE MACs seen
-        mydata[2] = (macs_ble & 0xff00) >> 8;
-        mydata[3] = macs_ble  & 0xff;
-    #else
-        mydata[2] = 0;
-        mydata[3] = 0;
-    #endif
-
-    // Check if there is not a current TX/RX job running
+    // Check if there is a pending TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
         ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
         sprintf(display_lmic, "LORA BUSY");
+        goto end;
+    }
+
+    // prepare payload with sum of unique WIFI MACs seen
+    static uint8_t mydata[4];
+  
+    mydata[0] = (macs_wifi & 0xff00) >> 8;
+    mydata[1] = macs_wifi  & 0xff;
+    
+    if (cfg.blescan) {
+        // append sum of unique BLE MACs seen to payload
+        mydata[2] = (macs_ble & 0xff00) >> 8;
+        mydata[3] = macs_ble  & 0xff; 
     } else {
-        // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
-        ESP_LOGI(TAG, "Packet queued");
-        sprintf(display_lmic, "PACKET QUEUED");
-        // clear counter if not in cumulative counter mode
-        if (cfg.countermode != 1) {
-            reset_counters();                       // clear macs container and reset all counters
-            reset_salt();                           // get new salt for salting hashes
-        }
+        mydata[2] = 0;
+        mydata[3] = 0;
+    }
+
+    // Prepare upstream data transmission at the next possible time.
+    LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
+    ESP_LOGI(TAG, "Packet queued");
+    sprintf(display_lmic, "PACKET QUEUED");
+
+    // clear counter if not in cumulative counter mode
+    if (cfg.countermode != 1) {
+        reset_counters();                       // clear macs container and reset all counters
+        reset_salt();                           // get new salt for salting hashes
+        ESP_LOGI(TAG, "Counter cleared (countermode = %d)", cfg.countermode);
     }
 
     // Schedule next transmission
+    end:
     os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(cfg.sendcycle * 2), do_send);
 
 } // do_send()
 
 void onEvent (ev_t ev) {
     char buff[24]="";
-    
+
     switch(ev) {
         case EV_SCAN_TIMEOUT:   strcpy_P(buff, PSTR("SCAN TIMEOUT"));   break;
         case EV_BEACON_FOUND:   strcpy_P(buff, PSTR("BEACON FOUND"));   break;
@@ -164,12 +167,13 @@ void onEvent (ev_t ev) {
         
         case EV_JOINED:
 
-            joinstate=true;
             strcpy_P(buff, PSTR("JOINED"));
+            sprintf(display_lora, " "); // clear previous lmic status message from display
 
             // Disable link check validation (automatically enabled
-            // during join, but not supported by TTN at this time).
+            // during join, but not supported by TTN at this time).  -> do we need this?
             LMIC_setLinkCheckMode(0);
+            
             // set data rate adaptation
             LMIC_setAdrMode(cfg.adrmode);
             // Set data rate and transmit power (note: txpower seems to be ignored by the library)
@@ -182,7 +186,7 @@ void onEvent (ev_t ev) {
         case EV_TXCOMPLETE:
 
             strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK") : PSTR("TX COMPLETE")); 
-            sprintf(display_lora, ""); // erase previous LoRa message from display
+            sprintf(display_lora, " "); // clear previous lmic status message from display
             
             if (LMIC.dataLen) {
                 ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d", LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);

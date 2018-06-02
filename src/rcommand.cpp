@@ -10,7 +10,7 @@
 #include <hal/hal.h>
 
 // Local logging tag
-static const char *TAG = "rcommand";
+static const char* TAG = "main";
 
 // table of remote commands and assigned functions
 typedef struct {
@@ -91,7 +91,15 @@ void set_wifichancycle(uint8_t val) {
 
 void set_blescantime(uint8_t val) {
     cfg.blescantime = val;
-    ESP_LOGI(TAG, "Remote command: set BLE scan time to %d seconds", cfg.blescantime);
+    ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds", cfg.blescantime/float(100));
+    #ifdef BLECOUNTER
+        // stop & restart BLE scan task to apply new parameter
+        if (cfg.blescan)
+        {
+            stop_BLEscan();
+            start_BLEscan();
+        }
+    #endif
 };
 
 void set_countmode(uint8_t val) {
@@ -142,14 +150,20 @@ void set_loraadr(uint8_t val) {
 };
 
 void set_blescan(uint8_t val) {
-    ESP_LOGI(TAG, "Remote command: set BLE scan mode to %s", val ? "on" : "off");
+    ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val ? "on" : "off");
     switch (val) {
         case 0:
             cfg.blescan = 0;
             macs_ble = 0; // clear BLE counter
+            #ifdef BLECOUNTER
+                stop_BLEscan();
+            #endif
             break; 
         default: 
             cfg.blescan = 1;
+             #ifdef BLECOUNTER
+                start_BLEscan();
+            #endif
             break; 
         }
 };

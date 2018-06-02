@@ -39,7 +39,7 @@ Refer to LICENSE.txt file in repository for more details.
 
 // Initialize global variables
 configData_t cfg;                   // struct holds current device configuration
-osjob_t sendjob, initjob;           // LMIC jobs
+osjob_t sendjob;                    // LMIC job handler
 uint64_t uptimecounter = 0;         // timer global for uptime counter
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
@@ -50,8 +50,6 @@ led_states previousLEDState = LED_ON;    // This will force LED to be off at boo
 unsigned long LEDBlinkStarted = 0;  // When (in millis() led blink started)
 uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
-bool joinstate = false;             // LoRa network joined? global flag
-bool blinkdone = true;              // flag for state machine for blinking LED once
 hw_timer_t * displaytimer = NULL;   // configure hardware timer used for cyclic display refresh
 hw_timer_t * channelSwitch = NULL;  // configure hardware timer used for wifi channel switching
 
@@ -63,9 +61,7 @@ std::set<uint16_t> macs; // associative container holds total of unique MAC adre
 static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
-static const char *TAG = "paxcnt";
-// Note: Log level control seems not working during runtime,
-// so we need to switch loglevel by compiler build option in platformio.ini
+static const char* TAG = "main";
 
 #ifndef VERBOSE
 int redirect_log(const char * fmt, va_list args) {
@@ -128,33 +124,20 @@ const lmic_pinmap lmic_pins = {
     .dio = {DIO0, DIO1, DIO2}
 };
 
-// LoRaWAN Initjob
-static void lora_init (osjob_t* j) {
-    // reset MAC state
-    LMIC_reset();
-    // This tells LMIC to make the receive windows bigger, in case your clock is 1% faster or slower.
-    LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); 
-    // start joining
-    LMIC_startJoining();
-}
 
 // LMIC FreeRTos Task
 void lorawan_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    static uint16_t lorawait = 0;
+    //static uint16_t lorawait = 0;
 
     while(1) {
         
         // execute LMIC jobs
         os_runloop_once();
 
-        // indicate LMIC state on LEDs if present
-        #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
-            led_loop();
-        #endif
-/*
+        /*
         // check if payload is sent
         while(LMIC.opmode & OP_TXRXPEND) {
             if(!lorawait) 
@@ -168,13 +151,14 @@ void lorawan_loop(void * pvParameters) {
             };
             vTaskDelay(1000/portTICK_PERIOD_MS);
         }
-*/
+        */
+
         vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
     }    
 }
 
-/* end LMIC specific parts --------------------------------------------------------------- */
 
+/* end LMIC specific parts --------------------------------------------------------------- */
 
 
 /* beginn hardware specific parts -------------------------------------------------------- */
@@ -255,8 +239,6 @@ uint64_t uptime() {
 
     // Print a key on display
     void DisplayKey(const uint8_t * key, uint8_t len, bool lsb) {
-        uint8_t start=lsb?len:0;
-        uint8_t end = lsb?0:len;
         const uint8_t * p ;
         for (uint8_t i=0; i<len ; i++) {
             p = lsb ? key+len-i-1 : key+i;
@@ -327,13 +309,18 @@ uint64_t uptime() {
             if (cfg.blescan)
                 u8x8.printf("BLTH:%-4d", macs_ble);
             else
-                u8x8.printf("%-16s", "BLTH:off");
+                u8x8.printf("%s", "BLTH:off");
         #endif
 
         // update LoRa SF display (line 3)
         u8x8.setCursor(11,3);
-        u8x8.printf("SF:%c%c", lora_datarate[LMIC.datarate * 2], lora_datarate[LMIC.datarate * 2 + 1]);
-
+        u8x8.printf("SF:");
+        if (cfg.adrmode)   // if ADR=on then display SF value inverse
+            u8x8.setInverseFont(1);
+        u8x8.printf("%c%c", lora_datarate[LMIC.datarate * 2], lora_datarate[LMIC.datarate * 2 + 1]);
+        if (cfg.adrmode)   // switch off inverse if it was turned on
+            u8x8.setInverseFont(0);
+        
         // update wifi channel display (line 4)
         u8x8.setCursor(11,4);
         u8x8.printf("ch:%02d", channel);
@@ -383,6 +370,7 @@ uint64_t uptime() {
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
+
     void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
         LEDColor = set_color;                   // set color for RGB LED
         LEDBlinkDuration = set_blinkduration;   // duration 
@@ -421,7 +409,7 @@ uint64_t uptime() {
                 // small blink 10ms on each 1/2sec (not when joining)
                 LEDState = ((millis() % 500) < 20) ? LED_ON : LED_OFF;
             // This should not happen so indicate a problem
-            } else  if ( LMIC.opmode & (OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) {
+            } else  if ( LMIC.opmode & ((OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0 ) ) {
                 LEDColor = COLOR_RED;
                 // heartbeat long blink 200ms on each 2 seconds
                 LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;
@@ -455,7 +443,6 @@ uint64_t uptime() {
     }; // led_loop()
 
  #endif
-
 
 /* begin Aruino SETUP ------------------------------------------------------------ */
 
@@ -552,18 +539,19 @@ void setup() {
     
     sprintf(display_lora, "Join wait");
 
-    // setup Display IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+    // setup display refresh trigger IRQ using esp32 hardware timer 0 
+    // for explanation see https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
     displaytimer = timerBegin(0, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
     timerAttachInterrupt(displaytimer, &DisplayIRQ, true);         // interrupt handler DisplayIRQ, triggered by edge
     timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true); // reload interrupt after each trigger of display refresh cycle
     timerAlarmEnable(displaytimer);                                // enable display interrupt
 #endif
 
-// setup channel rotation IRQ, thanks to https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-channelSwitch = timerBegin(1, 80, true);                        // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 1, count up
-timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);   // interrupt handler, triggered by edge
-timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true); // reload interrupt after each trigger of channel switch cycle
-timerAlarmEnable(channelSwitch);                                // enable channel switching interrupt
+// setup channel rotation trigger IRQ using esp32 hardware timer 1
+channelSwitch = timerBegin(1, 80, true);                        
+timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
+timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
+timerAlarmEnable(channelSwitch);
 
 // show compiled features
 ESP_LOGI(TAG, "Features %s", features);
@@ -573,68 +561,75 @@ ESP_LOGI(TAG, "Features %s", features);
     printKeys();
 #endif
 
-os_init(); // setup LMIC
-LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
-os_setCallback(&initjob, lora_init); // setup initial job & join network 
+// initialize LoRaWAN LMIC run-time environment
+os_init(); 
+// reset LMIC MAC state
+LMIC_reset();
+// This tells LMIC to make the receive windows bigger, in case your clock is 1% faster or slower.
+LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); 
 
-wifi_sniffer_init(); // setup wifi in monitor mode and start MAC counting
+// start lmic runloop in rtos task on core 1 (note: arduino main loop runs on core 1, too)
+// https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
-// initialize salt value using esp_random() called by random() in arduino-esp32 core
-// note: do this *after* wifi has started, since gets it's seed from RF noise
-reset_salt(); // get new 16bit for salting hashes
- 
-// run wifi task on core 0 and lora task on core 1 and bt task on core 0
 ESP_LOGI(TAG, "Starting Lora task on core 1");
 xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, ( void * ) 1,  ( 5 | portPRIVILEGE_BIT ), NULL, 1); 
 
+// start wifi in monitor mode and start channel rotation task on core 0
 ESP_LOGI(TAG, "Starting Wifi task on core 0");
+wifi_sniffer_init(); 
+// initialize salt value using esp_random() called by random() in arduino-esp32 core
+// note: do this *after* wifi has started, since function gets it's seed from RF noise
+reset_salt(); // get new 16bit for salting hashes
 xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL, 0);
 
+// start BLE scan callback if BLE function is enabled in NVRAM configuration
 #ifdef BLECOUNTER
-    if (cfg.blescan) { // start BLE task only if BLE function is enabled in NVRAM configuration
-        ESP_LOGI(TAG, "Starting Bluetooth task on core 0");
-        xTaskCreatePinnedToCore(bt_loop, "btscan", 4096, ( void * ) 1, 1, NULL, 0);
+    if (cfg.blescan) { 
+        start_BLEscan();
     }
 #endif
     
-// Finally: kickoff first sendjob and join, then send initial payload "0000"
-uint8_t mydata[] = "0000";
+// kickoff sendjob -> joins network and rescedules sendjob for cyclic transmitting payload
 do_send(&sendjob);
+
 }
 
-/* end Aruino SETUP ------------------------------------------------------------ */
+/* end Arduino SETUP ------------------------------------------------------------ */
 
+/* begin Arduino main loop ------------------------------------------------------ */
 
-/* begin Aruino LOOP ------------------------------------------------------------ */
-
-// Arduino main moop, runs on core 1
-// https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 void loop() {
 
-    // simple state machine for controlling display, LED, button, etc.
-    uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
+  	while (1) {
 
-    #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
-        led_loop();
-    #endif
+        // simple state machine for controlling uptime, display, LED, button, memory.
+
+        uptimecounter = uptime() / 1000;    // counts uptime in seconds (64bit)
+
+        #if (HAS_LED != NOT_A_PIN) || defined (HAS_RGB_LED)
+            led_loop();
+        #endif
     
-    #ifdef HAS_BUTTON
-        readButton();
-    #endif
+        #ifdef HAS_BUTTON
+            readButton();
+        #endif
 
-    #ifdef HAS_DISPLAY
-        updateDisplay();
-    #endif
+        #ifdef HAS_DISPLAY
+            updateDisplay();
+        #endif
 
-    // check free memory
-    if (ESP.getFreeHeap() <= MEM_LOW) {
-        do_send(&sendjob);  // send count
-        reset_counters();   // clear macs container and reset all counters
-        reset_salt();       // get new salt for salting hashes
-    }
+        // check free memory
+        if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
+            ESP_LOGI(TAG, "Memory full, counter cleared (heap low water mark = %d Bytes / free heap = %d bytes)", \
+                esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
+            do_send(&sendjob);  // send count
+            reset_counters();   // clear macs container and reset all counters
+            reset_salt();       // get new salt for salting hashes
+        }
 
-    vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
+        vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
 
- }
+    } // end of infinite main loop
+}
 
-/* end Aruino LOOP ------------------------------------------------------------ */
+/* end Arduino main loop ------------------------------------------------------------ */

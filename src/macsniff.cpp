@@ -3,13 +3,11 @@
 #include "globals.h"
 
 #ifdef VENDORFILTER
-    #include <array>
-    #include <algorithm>
     #include "vendor_array.h"
 #endif
 
 // Local logging tag
-static const char *TAG = "macsniff";
+static const char* TAG = "wifi";
 
 static wifi_country_t wifi_country = {.cc=WIFI_MY_COUNTRY, .schan=WIFI_CHANNEL_MIN, .nchan=WIFI_CHANNEL_MAX, .policy=WIFI_COUNTRY_POLICY_MANUAL};
 
@@ -102,16 +100,17 @@ void wifi_sniffer_set_channel(uint8_t channel) {
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
-void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
+// using IRAM_:ATTR here to speed up callback function
+IRAM_ATTR void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type) {
     const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
     const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
     
-    if (( cfg.rssilimit == 0 ) || (ppkt->rx_ctrl.rssi > cfg.rssilimit )) { // rssi is negative value
-        uint8_t *p = (uint8_t *) hdr->addr2;
-        mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI) ;
-    } else {
+    if ((cfg.rssilimit) && (ppkt->rx_ctrl.rssi < cfg.rssilimit )) { // rssi is negative value
         ESP_LOGI(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi, cfg.rssilimit);
+    } else {
+        uint8_t *p = (uint8_t *) hdr->addr2;
+        mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI) ;       
     }
 }
 
