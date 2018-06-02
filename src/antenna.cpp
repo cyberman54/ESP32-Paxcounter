@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 // Local logging tag
-static const char* TAG = "wifi";
+static const char TAG[] = "wifi";
 
 typedef enum {
     ANTENNA_INT = 0,

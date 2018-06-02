@@ -10,7 +10,7 @@
 #include <hal/hal.h>
 
 // Local logging tag
-static const char* TAG = "main";
+static const char TAG[] = "main";
 
 // table of remote commands and assigned functions
 typedef struct {

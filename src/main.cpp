@@ -61,7 +61,7 @@ std::set<uint16_t> macs; // associative container holds total of unique MAC adre
 static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
-static const char* TAG = "main";
+static const char TAG[] = "main";
 
 #ifndef VERBOSE
 int redirect_log(const char * fmt, va_list args) {

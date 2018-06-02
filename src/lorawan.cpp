@@ -11,7 +11,7 @@
 #endif
 
 // Local logging Tag
-static const char* TAG = "lora";
+static const char TAG[] = "lora";
 
 // functions defined in rcommand.cpp
 void rcommand(uint8_t cmd, uint8_t arg);

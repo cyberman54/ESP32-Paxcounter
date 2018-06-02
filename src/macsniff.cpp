@@ -7,7 +7,7 @@
 #endif
 
 // Local logging tag
-static const char* TAG = "wifi";
+static const char TAG[] = "wifi";
 
 static wifi_country_t wifi_country = {.cc=WIFI_MY_COUNTRY, .schan=WIFI_CHANNEL_MIN, .nchan=WIFI_CHANNEL_MAX, .policy=WIFI_COUNTRY_POLICY_MANUAL};
 
@@ -90,7 +90,7 @@ void wifi_sniffer_init(void) {
     	ESP_ERROR_CHECK(esp_wifi_init(&cfg));						// configure Wifi with cfg
     	ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));		// set locales for RF and channels
 		ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));	// we don't need NVRAM
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+		//ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter));	// set MAC frame filter
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
     	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));			// now switch on monitor mode

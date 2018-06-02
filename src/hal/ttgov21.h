@@ -6,9 +6,6 @@
 #define DISPLAY_FLIP  1 // rotated display
 #define HAS_LED 23 // green on board LED_G3 (not in initial board version)
 
-// disable brownout detection (needed on TTGOv2 for battery powered operation)
-#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
-
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    18 // ESP32 GPIO18 (Pin18) -- HPD13A NSS/SEL (Pin4) SPI Chip Select Input
 #define PIN_SPI_MOSI  27 // ESP32 GPIO27 (Pin27) -- HPD13A MOSI/DSI (Pin6) SPI Data Input
