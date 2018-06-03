@@ -153,7 +153,7 @@ void lorawan_loop(void * pvParameters) {
         }
         */
 
-        vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
+        vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
     }    
 }
 
