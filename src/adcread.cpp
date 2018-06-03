@@ -11,18 +11,16 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-#ifdef VERBOSE
-    static void print_char_val_type(esp_adc_cal_value_t val_type)
-    {
-        if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-            ESP_LOGI(TAG,"ADC characterization based on Two Point values stored in eFuse");
-        } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-            ESP_LOGI(TAG,"ADC characterization based on reference voltage stored in eFuse");
-        } else {
-            ESP_LOGI(TAG,"ADC characterization based on default reference voltage");
-        }
+static void print_char_val_type(esp_adc_cal_value_t val_type)
+{
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+        ESP_LOGI(TAG,"ADC characterization based on Two Point values stored in eFuse");
+    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+        ESP_LOGI(TAG,"ADC characterization based on reference voltage stored in eFuse");
+    } else {
+        ESP_LOGI(TAG,"ADC characterization based on default reference voltage");
     }
-#endif
+}
 
 uint16_t read_voltage(void)
 {
