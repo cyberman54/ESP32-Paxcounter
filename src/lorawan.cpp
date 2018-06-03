@@ -172,7 +172,7 @@ void onEvent (ev_t ev) {
 
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).  -> do we need this?
-            LMIC_setLinkCheckMode(0);
+           // LMIC_setLinkCheckMode(0);
             
             // set data rate adaptation
             LMIC_setAdrMode(cfg.adrmode);
