@@ -55,9 +55,13 @@ uint16_t read_voltage(void)
     //Check if Two Point or Vref are burned into eFuse
     check_efuse();
 
+    //Configure GPIO used fpr ADC1
+    gpio_set_direction(GPIO_NUM_35, GPIO_MODE_INPUT);
+
     //Configure ADC1
-    adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten(channel, atten);
+    ESP_ERROR_CHECK(adc_gpio_init(unit, (adc_channel_t) channel));
+    ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
+    ESP_ERROR_CHECK(adc1_config_channel_atten(channel, atten));
 
     //Characterize ADC1
     esp_adc_cal_characteristics_t *adc_chars = (esp_adc_cal_characteristics_t *) calloc(1, sizeof(esp_adc_cal_characteristics_t));
