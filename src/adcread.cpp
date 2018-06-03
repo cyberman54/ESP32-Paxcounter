@@ -1,6 +1,7 @@
 #ifdef HAS_BATTERY_PROBE
 
 #include "globals.h"
+
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
 
