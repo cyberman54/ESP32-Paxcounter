@@ -211,50 +211,37 @@ void set_noop (uint8_t val) {
 void get_config (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get configuration");
     int size = sizeof(configData_t);
-    // declare send buffer (char byte array)
-    unsigned char *sendData = new unsigned char[size];
-    // copy current configuration (struct) to send buffer
-    memcpy(sendData, &cfg, size);
-    LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
-    delete sendData; // free memory
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
+    LMIC_setTxData2(RCMDPORT, (byte*)&cfg, size, 0); // send data unconfirmed on RCMD Port
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
 };
 
 void get_uptime (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get uptime");
     int size = sizeof(uptimecounter);
-    unsigned char *sendData = new unsigned char[size];
-    memcpy(sendData, (unsigned char*)&uptimecounter , size);
-    LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
-    delete sendData; // free memory
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
+    LMIC_setTxData2(RCMDPORT, (byte*)&uptimecounter, size, 0); // send data unconfirmed on RCMD Port
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
 };
 
 void get_cputemp (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get cpu temperature");
     float temp = temperatureRead();
     int size = sizeof(temp);
-    unsigned char *sendData = new unsigned char[size];
-    memcpy(sendData, (unsigned char*)&temp, size);
-    LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
-    delete sendData; // free memory
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
+    LMIC_setTxData2(RCMDPORT, (byte*)&temp, size, 0); // send data unconfirmed on RCMD Port
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
 };
 
 void get_voltage (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get battery voltage");
     #ifdef HAS_BATTERY_PROBE
-        uint32_t voltage = read_voltage();
+        uint16_t voltage = read_voltage();
     #else
-        uint32_t voltage = 0;
+        uint16_t voltage = 0;
     #endif
     int size = sizeof(voltage);
-    unsigned char *sendData = new unsigned char[size];
-    memcpy(sendData, (unsigned char*)&voltage, size);
-    LMIC_setTxData2(RCMDPORT, sendData, size-1, 0); // send data unconfirmed on RCMD Port
-    delete sendData; // free memory
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size-1);
+    LMIC_setTxData2(RCMDPORT, (byte*)&voltage, size, 0); // send data unconfirmed on RCMD Port
+    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
 };
+
 
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, flag (1 = do make settings persistent / 0 = don't)

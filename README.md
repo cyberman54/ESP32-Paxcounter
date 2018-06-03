@@ -218,19 +218,19 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
 	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
 	byte 15:		RGB LED luminosity (0..100 %)
-	bytes 16-25:		Software version (ASCII format)
+	bytes 16-26:		Software version (ASCII format, terminating with zero)
 
 0x81 get device uptime
 
-	bytes 1-7:		uptime in seconds (little endian format)
+	bytes 1-8:		uptime in seconds (little endian format)
 
 0x82 get device cpu temperature
 
-	bytes 1-3:		chip temperature in degrees celsius (little endian format)
+	bytes 1-4:		chip temperature in degrees celsius (little endian format)
 
 0x83 get device battery voltage
 
-	bytes 1-3:		battery voltage in millivolt, 0 if unreadable (little endian format)
+	bytes 1-2:		battery voltage in millivolt, 0 if unreadable (little endian format)
 
 # License
 
