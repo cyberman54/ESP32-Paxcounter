@@ -18,33 +18,37 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-static void check_efuse()
-{
-    //Check if two point calibration values are burned into eFuse
-    if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP) == ESP_OK) {
-        ESP_LOGI(TAG,"eFuse Two Point: Supported");
-    } else {
-        ESP_LOGI(TAG,"eFuse Two Point: NOT supported");
+#ifdef VERBOSE
+
+    static void check_efuse()
+    {
+        //Check if two point calibration values are burned into eFuse
+        if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP) == ESP_OK) {
+            ESP_LOGI(TAG,"eFuse Two Point: Supported");
+        } else {
+            ESP_LOGI(TAG,"eFuse Two Point: NOT supported");
+        }
+
+        //Check Vref is burned into eFuse
+        if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_VREF) == ESP_OK) {
+            ESP_LOGI(TAG,"eFuse Vref: Supported");
+        } else {
+            ESP_LOGI(TAG,"eFuse Vref: NOT supported");
+        }
     }
 
-    //Check Vref is burned into eFuse
-    if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_VREF) == ESP_OK) {
-        ESP_LOGI(TAG,"eFuse Vref: Supported");
-    } else {
-        ESP_LOGI(TAG,"eFuse Vref: NOT supported");
+    static void print_char_val_type(esp_adc_cal_value_t val_type)
+    {
+        if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+            ESP_LOGI(TAG,"Characterized using Two Point Value");
+        } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+            ESP_LOGI(TAG,"Characterized using eFuse Vref");
+        } else {
+            ESP_LOGI(TAG,"Characterized using Default Vref");
+        }
     }
-}
 
-static void print_char_val_type(esp_adc_cal_value_t val_type)
-{
-    if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-        ESP_LOGI(TAG,"Characterized using Two Point Value");
-    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-        ESP_LOGI(TAG,"Characterized using eFuse Vref");
-    } else {
-        ESP_LOGI(TAG,"Characterized using Default Vref");
-    }
-}
+#endif // verbose
 
 uint16_t read_voltage(void)
 {
@@ -52,21 +56,23 @@ uint16_t read_voltage(void)
     static const adc_atten_t atten = ADC_ATTEN_DB_11;
     static const adc_unit_t unit = ADC_UNIT_1;
 
-    //Check if Two Point or Vref are burned into eFuse
-    check_efuse();
-
-    //Configure GPIO used fpr ADC1
-    //gpio_set_direction(GPIO_NUM_35, GPIO_MODE_INPUT);
+    #ifdef VERBOSE
+        //show if Two Point or Vref are burned into eFuse
+        check_efuse();
+    #endif
 
     //Configure ADC1
-    //ESP_ERROR_CHECK(adc_gpio_init(unit, (adc_channel_t) channel));
     ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
     ESP_ERROR_CHECK(adc1_config_channel_atten(channel, atten));
 
     //Characterize ADC1
     esp_adc_cal_characteristics_t *adc_chars = (esp_adc_cal_characteristics_t *) calloc(1, sizeof(esp_adc_cal_characteristics_t));
     esp_adc_cal_value_t val_type = esp_adc_cal_characterize(unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
-    print_char_val_type(val_type);
+    
+    #ifdef VERBOSE
+        //show calibration source
+        print_char_val_type(val_type);
+    #endif
 
     //sample ADC1
     uint32_t adc_reading = 0;
@@ -82,7 +88,7 @@ uint16_t read_voltage(void)
     #ifdef BATT_FACTOR
         voltage *= BATT_FACTOR;
     #endif
-    ESP_LOGI(TAG,"Raw: %d\tVoltage: %dmV", adc_reading, voltage);
+    ESP_LOGI(TAG,"Raw: %d / Voltage: %dmV", adc_reading, voltage);
     return voltage;
 }
 #endif // HAS_BATTERY_PROBE
