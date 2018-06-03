@@ -230,7 +230,7 @@ device answers with it's current configuration. The configuration is a C structu
 
 0x83 get device battery voltage
 
-	bytes 1-4:		battery voltage in millivolt, 0 if unreadable (little endian format)
+	bytes 1-3:		battery voltage in millivolt, 0 if unreadable (little endian format)
 
 # License
 
