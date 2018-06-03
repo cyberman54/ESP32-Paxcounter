@@ -11,22 +11,23 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-static void print_char_val_type(esp_adc_cal_value_t val_type)
-{
-    if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-        ESP_LOGI(TAG,"ADC calibration using efuse Two Point Value");
-    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-        ESP_LOGI(TAG,"ADC calibration using eFuse Vref");
-    } else {
-        ESP_LOGI(TAG,"ADC calibration using default Vref");
+#ifdef VERBOSE
+    static void print_char_val_type(esp_adc_cal_value_t val_type)
+    {
+        if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+            ESP_LOGI(TAG,"ADC characterization based on Two Point values stored in eFuse");
+        } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+            ESP_LOGI(TAG,"ADC characterization based on reference voltage stored in eFuse");
+        } else {
+            ESP_LOGI(TAG,"ADC characterization based on default reference voltage");
+        }
     }
-}
+#endif
 
 uint16_t read_voltage(void)
 {
     static const adc1_channel_t channel = HAS_BATTERY_PROBE;
     static const adc_atten_t atten = ADC_ATTEN_DB_11;
-    static const adc_unit_t unit = ADC_UNIT_1;
 
     //configure ADC1
     ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
@@ -34,9 +35,10 @@ uint16_t read_voltage(void)
 
     //calibrate ADC1
     esp_adc_cal_characteristics_t *adc_chars = (esp_adc_cal_characteristics_t *) calloc(1, sizeof(esp_adc_cal_characteristics_t));
-    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
-    print_char_val_type(val_type);
-    
+    #ifdef VERBOSE
+        print_char_val_type(esp_adc_cal_characterize(ADC_UNIT_1, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars));
+    #endif
+
     //multisample ADC1
     uint32_t adc_reading = 0;
     for (int i = 0; i < NO_OF_SAMPLES; i++) {
