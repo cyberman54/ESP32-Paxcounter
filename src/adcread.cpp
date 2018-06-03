@@ -12,7 +12,7 @@
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
 
-#define DEFAULT_VREF    1100        // we use adc2_vref_to_gpio() to obtain a better estimate
+#define DEFAULT_VREF    1100    // optional use adc2_vref_to_gpio() to obtain a better estimate
 #define NO_OF_SAMPLES   64          // we do multisampling
 
 // Local logging tag
@@ -49,17 +49,17 @@ static void print_char_val_type(esp_adc_cal_value_t val_type)
 uint16_t read_voltage(void)
 {
     static const adc1_channel_t channel = HAS_BATTERY_PROBE;
-    static const adc_atten_t atten = ADC_ATTEN_DB_0;
+    static const adc_atten_t atten = ADC_ATTEN_DB_11;
     static const adc_unit_t unit = ADC_UNIT_1;
 
     //Check if Two Point or Vref are burned into eFuse
     check_efuse();
 
     //Configure GPIO used fpr ADC1
-    gpio_set_direction(GPIO_NUM_35, GPIO_MODE_INPUT);
+    //gpio_set_direction(GPIO_NUM_35, GPIO_MODE_INPUT);
 
     //Configure ADC1
-    ESP_ERROR_CHECK(adc_gpio_init(unit, (adc_channel_t) channel));
+    //ESP_ERROR_CHECK(adc_gpio_init(unit, (adc_channel_t) channel));
     ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
     ESP_ERROR_CHECK(adc1_config_channel_atten(channel, atten));
 
@@ -79,6 +79,9 @@ uint16_t read_voltage(void)
 
     //Convert adc_reading to voltage in mV
     uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+    #ifdef BATT_FACTOR
+        voltage *= BATT_FACTOR;
+    #endif
     ESP_LOGI(TAG,"Raw: %d\tVoltage: %dmV", adc_reading, voltage);
     return voltage;
 }
