@@ -279,4 +279,6 @@ see file <A HREF="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/LIC
 
 # Credits
 
-Thanks to Charles Hallard (https://github.com/hallard) for major contributions to this project.
+Thanks to 
+- [Charles Hallard](https://github.com/hallard) for major code contributions to this project
+- [robbi5](https://github.com/robbi5) for the payload converter
