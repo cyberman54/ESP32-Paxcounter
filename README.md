@@ -110,28 +110,28 @@ FPort2:
 
 	see remote command set
 
-If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter in console. For this purpose go to Application - Payload Formats and copy the code below to the tabs Decoder and Converter. Take care that your application matches the fields pax, ble and wifi.
+If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter. For this purpose go to TTN Console - Application - Payload Formats and copy the code example below to the tabs Decoder and Converter. Make sure that your parsing application matches the fields `pax`, `ble` and `wifi`.
 
 *Decoder*
 
-function Decoder(bytes, port) {
-  var decoded = {};
-  if (port === 1) {
-    decoded.wifi = (bytes[0] << 8) | bytes[1];
-    decoded.ble = (bytes[2] << 8) | bytes[3];
-  }
-  return decoded;
-}
+    function Decoder(bytes, port) {
+      var decoded = {};
+      if (port === 1) {
+        decoded.wifi = (bytes[0] << 8) | bytes[1];
+        decoded.ble = (bytes[2] << 8) | bytes[3];
+      }
+      return decoded;
+    }
 
 *Converter*
 
-function Converter(decoded, port) {
-  var converted = decoded;
-  if (port === 1) {
-    converted.pax = converted.ble + converted.wifi;
-  }
-  return converted;
-}
+    function Converter(decoded, port) {
+      var converted = decoded;
+      if (port === 1) {
+        converted.pax = converted.ble + converted.wifi;
+      }
+      return converted;
+    }
 
 # Remote command set
 
