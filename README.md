@@ -99,7 +99,7 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 - Blue blink: LoRaWAN data transmit in progress or pending
 - Red long blink: LoRaWAN stack error
 
-# Payload format description
+# Payload
 
 FPort1:
 
@@ -111,6 +111,29 @@ FPort1:
 FPort2:
 
 	see remote command set
+
+If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
+
+Decoder:
+
+    function Decoder(bytes, port) {
+      var decoded = {};
+      if (port === 1) {
+        decoded.wifi = (bytes[0] << 8) | bytes[1];
+        decoded.ble = (bytes[2] << 8) | bytes[3];
+      }
+      return decoded;
+    }
+
+Converter:
+
+    function Converter(decoded, port) {
+      var converted = decoded;
+      if (port === 1) {
+        converted.pax = converted.ble + converted.wifi;
+      }
+      return converted;
+    }
 
 # Remote command set
 
@@ -258,4 +281,7 @@ see file <A HREF="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/LIC
 
 # Credits
 
-Thanks to Charles Hallard (https://github.com/hallard) for major contributions to this project.
+Thanks to 
+- [Oliver Brandmüller](https://github.com/spmrider) for idea and initial setup of this project
+- [Charles Hallard](https://github.com/hallard) for major code contributions to this project
+- [robbi5](https://github.com/robbi5) for the payload converter
