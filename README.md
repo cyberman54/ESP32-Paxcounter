@@ -23,14 +23,14 @@ Supported ESP32 based LoRa IoT boards:
 - Heltec LoRa-32 {1}
 - TTGOv1 {1}
 - TTGOv2 {1}{4}
-- TTGOv2.1 {1}
+- TTGOv2.1 {1}{5}
 - Pycom LoPy {2}
 - Pycom LoPy4 {2}
 - Pycom FiPy {2}
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in /hal/ttgov2.h
+{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in /hal/ttgov2.h; {5} battery voltage monitoring supported
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -56,7 +56,8 @@ If your device has silicon **Unique ID** which is stored in serial EEPROM Microc
 
 # Building
 
-Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version, at least 
+<A HREF="https://community.platformio.org/t/platformio-core-3-5-3/4238?utm_source=platformio&utm_medium=piohome">v3.5.3</A>.
 
 # Uploading
 
@@ -219,15 +220,19 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
 	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
 	byte 15:		RGB LED luminosity (0..100 %)
-	bytes 16-25:		Software version (ASCII format)
+	bytes 16-26:		Software version (ASCII format, terminating with zero)
 
 0x81 get device uptime
 
-	bytes 1-7:		Uptime in seconds (little endian format)
+	bytes 1-8:		uptime in seconds (little endian format)
 
 0x82 get device cpu temperature
 
-	bytes 1-3:		chip temperature in celsius (little endian format)
+	bytes 1-4:		chip temperature in degrees celsius (little endian format)
+
+0x83 get device battery voltage
+
+	bytes 1-2:		battery voltage in millivolt, 0 if unreadable (little endian format)
 
 # License
 

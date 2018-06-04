@@ -17,17 +17,12 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 #define BT_BD_ADDR_HEX(addr)   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
 
 // local Tag for logging
-static const char* TAG = "bluetooth";
+static const char TAG[] = "bluetooth";
 
 // defined in macsniff.cpp
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
 
-// Prototypes
-static const char *bt_addr_t_to_string(esp_ble_addr_type_t type);
-static const char *btsig_gap_type(uint32_t gap_type);
-static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
-
-static const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
+const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
 	switch(type) {
 		case BLE_ADDR_TYPE_PUBLIC:
 			return "BLE_ADDR_TYPE_PUBLIC";
@@ -42,7 +37,7 @@ static const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
 	}
 } // bt_addr_t_to_string
 
-static const char *btsig_gap_type(uint32_t gap_type) {
+const char *btsig_gap_type(uint32_t gap_type) {
 	switch (gap_type)
 	{
 		case 0x01: return "Flags";
@@ -89,7 +84,7 @@ static const char *btsig_gap_type(uint32_t gap_type) {
 } // btsig_gap_type
 
 // using IRAM_:ATTR here to speed up callback function
-IRAM_ATTR static void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
 	esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 	

@@ -61,7 +61,7 @@ std::set<uint16_t> macs; // associative container holds total of unique MAC adre
 static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
-static const char* TAG = "main";
+static const char TAG[] = "main";
 
 #ifndef VERBOSE
 int redirect_log(const char * fmt, va_list args) {
@@ -153,7 +153,7 @@ void lorawan_loop(void * pvParameters) {
         }
         */
 
-        vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
+        vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
     }    
 }
 
@@ -218,7 +218,7 @@ void sniffer_loop(void * pvParameters) {
             wifi_sniffer_set_channel(channel);
             ESP_LOGD(TAG, "Wifi set channel %d", channel);
 
-            vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
+            vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
         }
 
     } // end of infinite wifi channel rotation loop
@@ -627,7 +627,7 @@ void loop() {
             reset_salt();       // get new salt for salting hashes
         }
 
-        vTaskDelay(10/portTICK_PERIOD_MS); // reset watchdog
+        vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 
     } // end of infinite main loop
 }

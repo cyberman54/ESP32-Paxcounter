@@ -5,9 +5,8 @@
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define DISPLAY_FLIP  1 // rotated display
 #define HAS_LED 23 // green on board LED_G3 (not in initial board version)
-
-// disable brownout detection (needed on TTGOv2 for battery powered operation)
-#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
+#define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
+#define BATT_FACTOR 2 // voltage divider 100k/100k on board
 
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    18 // ESP32 GPIO18 (Pin18) -- HPD13A NSS/SEL (Pin4) SPI Chip Select Input
