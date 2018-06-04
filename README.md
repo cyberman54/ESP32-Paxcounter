@@ -97,7 +97,7 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 - Blue blink: LoRaWAN data transmit in progress or pending
 - Red long blink: LoRaWAN stack error
 
-# Payload format description
+# Payload
 
 FPort1:
 
