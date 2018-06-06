@@ -17,5 +17,5 @@
 // non arduino pin definitions
 #define RST   LMIC_UNUSED_PIN // connected to ESP32 RST/EN
 #define DIO0  26 // ESP32 GPIO26 <-> HPD13A IO0
-#define DIO1  33 // Lora1 <-> HPD13A IO1 // !!needs external wiring!!
-#define DIO2  32 // Lora2 <-> HPD13A IO2 // needs external wiring, but not needed for LoRa
+#define DIO1  33 // Lora1 <-> HPD13A IO1 // !! NEEDS EXTERNAL WIRING !!
+#define DIO2  32 // Lora2 <-> HPD13A IO2 // needs external wiring, but not necessary for LoRa, only FSK
