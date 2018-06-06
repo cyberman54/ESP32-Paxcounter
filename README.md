@@ -24,13 +24,14 @@ Supported ESP32 based LoRa IoT boards:
 - TTGOv1 {1}
 - TTGOv2 {1}{4}
 - TTGOv2.1 {1}{5}
+- TTGO T-Beam {4}{5}
 - Pycom LoPy {2}
 - Pycom LoPy4 {2}
 - Pycom FiPy {2}
 - LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
 - LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in /hal/ttgov2.h; {5} battery voltage monitoring supported
+{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in file /hal/<board>.h; {5} battery voltage monitoring supported
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
