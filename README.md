@@ -1,6 +1,8 @@
 # ESP32-Paxcounter
 **Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 LoRa IoT boards**
 
+--> see development branch of this repository for latest alpha version <--
+
 <img src="img/Paxcounter-title.jpg">
 
 # Use case
@@ -114,24 +116,28 @@ If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may wa
 
 Decoder:
 
-    function Decoder(bytes, port) {
-      var decoded = {};
-      if (port === 1) {
-        decoded.wifi = (bytes[0] << 8) | bytes[1];
-        decoded.ble = (bytes[2] << 8) | bytes[3];
-      }
-      return decoded;
+```javascript
+function Decoder(bytes, port) {
+    var decoded = {};
+    if (port === 1) {
+      decoded.wifi = (bytes[0] << 8) | bytes[1];
+      decoded.ble = (bytes[2] << 8) | bytes[3];
     }
+    return decoded;
+}
+```
 
 Converter:
 
-    function Converter(decoded, port) {
-      var converted = decoded;
-      if (port === 1) {
-        converted.pax = converted.ble + converted.wifi;
-      }
-      return converted;
-    }
+```javascript
+function Converter(decoded, port) {
+  var converted = decoded;
+  if (port === 1) {
+    converted.pax = converted.ble + converted.wifi;
+  }
+  return converted;
+}
+```
 
 # Remote command set
 
