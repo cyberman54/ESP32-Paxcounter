@@ -140,11 +140,11 @@ function Converter(decoded, port) {
 }
 ```
 
-# Remote command set
+# Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2.
 Each command is followed by exactly one parameter.
-For "set" commands, multiple command/parameter pairs can be concatenated and sent in one downlink, all commands are executed. For "get" commands, only one command/parameter pair is processed per downlink.
+For "set" commands, multiple command/parameter pairs can be concatenated and sent in one downlink, all commands are executed. For "get" commands, only one command/parameter pair per downlink is processed.
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
 
