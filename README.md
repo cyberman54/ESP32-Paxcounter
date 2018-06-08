@@ -159,10 +159,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 set GPS on/off
+0x03 set GPS on/off (NOT YET IMPLEMENTED)
 
 	0 = GPS off [default]
-	1 = GPS on, GPS data set (if present) added to payload
+	1 = GPS on, GPS data set (if present) is added to payload
 
 0x04 set display on/off
 
