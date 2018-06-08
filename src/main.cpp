@@ -39,7 +39,7 @@ Refer to LICENSE.txt file in repository for more details.
 
 // Initialize global variables
 configData_t cfg;                   // struct holds current device configuration
-osjob_t sendjob;                    // LMIC job handler
+osjob_t sendjob, rcmdjob;           // LMIC job handler
 uint64_t uptimecounter = 0;         // timer global for uptime counter
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
@@ -52,6 +52,13 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 hw_timer_t * displaytimer = NULL;   // configure hardware timer used for cyclic display refresh
 hw_timer_t * channelSwitch = NULL;  // configure hardware timer used for wifi channel switching
+xref2u1_t rcmd_data;                // buffer for rcommand results size
+u1_t rcmd_data_size;                // buffer for rcommand results size
+
+#ifdef HAS_GPS
+    gpsStatus_t gps_status;         // struct for storing gps data
+    TinyGPSPlus my_gps;             // create TinyGPS++ instance
+#endif
 
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying shared variable DisplayIRQ
 
@@ -130,36 +137,13 @@ void lorawan_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    //static uint16_t lorawait = 0;
-
     while(1) {
-        
-        // execute LMIC jobs
-        os_runloop_once();
-
-        /*
-        // check if payload is sent
-        while(LMIC.opmode & OP_TXRXPEND) {
-            if(!lorawait) 
-                sprintf(display_lora, "LoRa wait");
-            lorawait++;
-            // in case sending really fails: reset LMIC and rejoin network
-            if( (lorawait % MAXLORARETRY ) == 0) {
-                ESP_LOGI(TAG, "Payload not sent, resetting LMIC and rejoin");
-                lorawait = 0;                
-                LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
-            };
-            vTaskDelay(1000/portTICK_PERIOD_MS);
-        }
-        */
-
-        vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
+        os_runloop_once();                  // execute LMIC jobs
+        vTaskDelay(1/portTICK_PERIOD_MS);   // reset watchdog
     }    
 }
 
-
 /* end LMIC specific parts --------------------------------------------------------------- */
-
 
 /* beginn hardware specific parts -------------------------------------------------------- */
 
@@ -498,7 +482,6 @@ void setup() {
     delay(1000);
 #endif
 
-
     // initialize button handling if needed
 #ifdef HAS_BUTTON
     strcat(features, " BTN_");
@@ -519,6 +502,11 @@ void setup() {
 #ifdef HAS_ANTENNA_SWITCH
     strcat(features, " ANT");
     antenna_init();
+#endif
+
+// initialize gps if present
+#ifdef HAS_GPS
+    strcat(features, " GPS");
 #endif
 
 #ifdef HAS_DISPLAY
@@ -588,7 +576,15 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
         start_BLEscan();
     }
 #endif
-    
+
+// if device has GPS and GPS function is enabled, start GPS reader task on core 0
+#ifdef HAS_GPS
+    if (cfg.gpsmode) {
+    ESP_LOGI(TAG, "Starting GPS task on core 0");
+    xTaskCreatePinnedToCore(gps_loop, "gpsreader", 2048, ( void * ) 1, 1, NULL, 0);
+    }
+#endif
+
 // kickoff sendjob -> joins network and rescedules sendjob for cyclic transmitting payload
 do_send(&sendjob);
 

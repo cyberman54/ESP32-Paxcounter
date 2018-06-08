@@ -159,10 +159,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 (NOT YET IMPLEMENTED) set screen saver mode
+0x03 set GPS on/off
 
-	0 = screen saver off [default]
-	1 = screen saver on
+	0 = GPS off [default]
+	1 = GPS on, GPS data set (if present) added to payload
 
 0x04 set display on/off
 
@@ -232,7 +232,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L27-L44) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L27-L45) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -248,7 +248,8 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
 	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
 	byte 15:		RGB LED luminosity (0..100 %)
-	bytes 16-26:		Software version (ASCII format, terminating with zero)
+	byte 16:		GPS status (1=on, 0=off)
+	bytes 17-27:		Software version (ASCII format, terminating with zero)
 
 0x81 get device uptime
 
@@ -261,6 +262,14 @@ device answers with it's current configuration. The configuration is a C structu
 0x83 get device battery voltage
 
 	bytes 1-2:		battery voltage in millivolt, 0 if unreadable (little endian format)
+
+0x84 get device GPS status (NOT YET IMPLEMENTED)
+
+	bytes 1-4:		latitude
+	bytes 5-8:		longitude
+	byte 9:			number of satellites
+	byte 10:		HDOP
+	bytes 11-12:	altidute [meter]
 
 # License
 

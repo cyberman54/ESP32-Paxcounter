@@ -1,6 +1,6 @@
 
 // program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.3.71"    // use max 10 chars here!
+#define PROGVERSION                     "1.3.8"    // use max 10 chars here!
 #define PROGNAME                        "PAXCNT"
 
 //--- Declarations ---
@@ -42,6 +42,11 @@ void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
 // defined in blescan.cpp
 #ifdef BLECOUNTER
-    void start_BLEscan(void);
-    void stop_BLEscan(void);
+  void start_BLEscan(void);
+  void stop_BLEscan(void);
+#endif
+
+//defined in gpsread.cpp
+#ifdef HAS_GPS
+  void gps_loop(void * pvParameters);
 #endif

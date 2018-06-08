@@ -29,6 +29,25 @@ typedef struct {
     uint32_t read_voltage(void);
 #endif
 
+// function sends result of get commands to LoRaWAN network
+void do_transmit(osjob_t* j){
+    // check if there is a pending TX/RX job running, if yes then reschedule transmission
+    if (LMIC.opmode & OP_TXRXPEND) {
+        ESP_LOGI(TAG, "LoRa busy, rescheduling");
+        sprintf(display_lmic, "LORA BUSY");
+        os_setTimedCallback(&rcmdjob, os_getTime()+sec2osticks(RETRANSMIT_RCMD), do_transmit);
+    }
+    LMIC_setTxData2(RCMDPORT, rcmd_data, rcmd_data_size, 0); // send data unconfirmed on RCMD Port
+    ESP_LOGI(TAG, "%d bytes queued to send", rcmd_data_size);
+    sprintf(display_lmic, "PACKET QUEUED");
+}
+
+// help function to transmit result of get commands, since callback function do_transmit() cannot have params
+void transmit(xref2u1_t mydata, u1_t mydata_size){
+    rcmd_data = mydata;
+    rcmd_data_size = mydata_size;
+    do_transmit(&rcmdjob);
+}
 
 // help function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora (uint8_t sf, uint8_t tx) {
@@ -141,6 +160,14 @@ void set_display(uint8_t val) {
         }
 };
 
+void set_gps(uint8_t val) {
+    ESP_LOGI(TAG, "Remote command: set GPS to %s", val ? "on" : "off");
+    switch (val) {
+        case 1: cfg.gpsmode = val; break;
+        default: cfg.gpsmode = 0; break;
+        }
+};
+
 void set_lorasf(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val);
     switch_lora(val, cfg.txpower);
@@ -204,30 +231,20 @@ void set_lorapower(uint8_t val) {
     switch_lora(cfg.lorasf, val);
 };
 
-void set_noop (uint8_t val) { 
-    ESP_LOGI(TAG, "Remote command: noop - doing nothing");
-};
-
 void get_config (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get configuration");
-    int size = sizeof(configData_t);
-    LMIC_setTxData2(RCMDPORT, (byte*)&cfg, size, 0); // send data unconfirmed on RCMD Port
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
+    transmit((byte*)&cfg, sizeof(cfg));
 };
 
 void get_uptime (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get uptime");
-    int size = sizeof(uptimecounter);
-    LMIC_setTxData2(RCMDPORT, (byte*)&uptimecounter, size, 0); // send data unconfirmed on RCMD Port
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
+    transmit((byte*)&uptimecounter, sizeof(uptimecounter));
 };
 
 void get_cputemp (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get cpu temperature");
     float temp = temperatureRead();
-    int size = sizeof(temp);
-    LMIC_setTxData2(RCMDPORT, (byte*)&temp, size, 0); // send data unconfirmed on RCMD Port
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
+    transmit((byte*)&temp, sizeof(temp));
 };
 
 void get_voltage (uint8_t val) {
@@ -237,9 +254,20 @@ void get_voltage (uint8_t val) {
     #else
         uint16_t voltage = 0;
     #endif
-    int size = sizeof(voltage);
-    LMIC_setTxData2(RCMDPORT, (byte*)&voltage, size, 0); // send data unconfirmed on RCMD Port
-    ESP_LOGI(TAG, "%d bytes queued in send queue", size);
+    transmit((byte*)&voltage, sizeof(voltage));
+};
+
+void get_gps (uint8_t val) {
+    ESP_LOGI(TAG, "Remote command: get gps status");
+    #ifdef HAS_GPS
+        gps_status.latitude = my_gps.location.lat();
+        gps_status.longitude = my_gps.location.lng();
+        gps_status.satellites = my_gps.satellites.value();
+        gps_status.hdop = my_gps.hdop.value();
+        gps_status.altitude = my_gps.altitude.meters(); 
+        transmit((byte*)&gps_status, sizeof(gps_status));
+        ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%d, LON=%d", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
+    #endif
 };
 
 
@@ -249,7 +277,7 @@ void get_voltage (uint8_t val) {
 cmd_t table[] = {
                 {0x01, set_rssi, true},
                 {0x02, set_countmode, true},
-                {0x03, set_noop, false},
+                {0x03, set_gps, true},
                 {0x04, set_display, true},
                 {0x05, set_lorasf, true},
                 {0x06, set_lorapower, true},
@@ -266,7 +294,8 @@ cmd_t table[] = {
                 {0x80, get_config, false},
                 {0x81, get_uptime, false},
                 {0x82, get_cputemp, false},
-                {0x83, get_voltage, false}
+                {0x83, get_voltage, false},
+                {0x84, get_gps, false}
                 };
 
 // check and execute remote command

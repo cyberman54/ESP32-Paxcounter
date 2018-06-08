@@ -11,6 +11,11 @@
     #include <U8x8lib.h>
 #endif
 
+//GPS
+#ifdef HAS_GPS
+    #include <TinyGPS++.h>
+#endif
+
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
 #include <hal/hal.h>
@@ -32,7 +37,7 @@ typedef struct {
   uint8_t screensaver;                  // 0=disabled, 1=enabled
   uint8_t screenon;                     // 0=disabled, 1=enabled
   uint8_t countermode;                  // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
-  int16_t rssilimit;                   // threshold for rssilimiter, negative value!
+  int16_t rssilimit;                    // threshold for rssilimiter, negative value!
   uint8_t sendcycle;                    // payload send cycle [seconds/2]
   uint8_t wifichancycle;                // wifi channel switch cycle [seconds/100]
   uint8_t blescantime;                  // BLE scan cycle duration [seconds]
@@ -40,14 +45,29 @@ typedef struct {
   uint8_t wifiant;                      // 0=internal, 1=external (for LoPy/LoPy4)
   uint8_t vendorfilter;                 // 0=disabled, 1=enabled
   uint8_t rgblum;                       // RGB Led luminosity (0..100%)
-  char version[10];                    // Firmware version
+  uint8_t gpsmode;                      // 0=disabled, 1=enabled
+  char version[10];                     // Firmware version
   } configData_t;
+
+#ifdef HAS_GPS
+  typedef struct {
+    uint32_t latitude;
+    uint32_t longitude;
+    uint8_t hdop;
+    uint8_t satellites;
+    uint16_t altitude;
+    } gpsStatus_t;
+  extern gpsStatus_t gps_status;        // struct for storing gps data
+  extern TinyGPSPlus my_gps;            // Make TinyGPS++ instance globally availabe
+#endif
 
 extern configData_t cfg;
 extern uint64_t uptimecounter;
-extern osjob_t sendjob;
+extern osjob_t sendjob, rcmdjob;
 extern char display_lora[], display_lmic[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
 extern std::set<uint16_t> macs;
-extern hw_timer_t * channelSwitch;      // hardware timer used for wifi channel switching
+extern hw_timer_t * channelSwitch; // hardware timer used for wifi channel switching
+extern xref2u1_t rcmd_data;        // buffer for rcommand results size
+extern u1_t rcmd_data_size;        // buffer for rcommand results size

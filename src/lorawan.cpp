@@ -109,7 +109,7 @@ void do_send(osjob_t* j){
 
     // Check if there is a pending TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
-        ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
+        ESP_LOGI(TAG, "LoRa busy, rescheduling");
         sprintf(display_lmic, "LORA BUSY");
         goto end;
     }
@@ -129,11 +129,25 @@ void do_send(osjob_t* j){
         mydata[3] = 0;
     }
 
-    // Prepare upstream data transmission at the next possible time.
-    LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
-    ESP_LOGI(TAG, "Packet queued");
-    sprintf(display_lmic, "PACKET QUEUED");
+    
 
+    // Prepare upstream data transmission at the next possible time.
+    LMIC_setTxData2(COUNTERPORT, mydata, sizeof(mydata), (cfg.countermode & 0x02));
+    ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));
+    sprintf(display_lmic, "PACKET QUEUED");
+    
+    #ifdef HAS_GPS
+        if (cfg.gpsmode && my_gps.location.isValid()) {
+            gps_status.latitude = my_gps.location.lat();
+            gps_status.longitude = my_gps.location.lng();
+            gps_status.satellites = my_gps.satellites.value();
+            gps_status.hdop = my_gps.hdop.value();
+            gps_status.altitude = my_gps.altitude.meters();
+            LMIC_setTxData2(GPSPORT, (byte*)&gps_status, sizeof(gps_status), (cfg.countermode & 0x02));
+            ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%d, LON=%d", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
+        }
+    #endif
+    
     // clear counter if not in cumulative counter mode
     if (cfg.countermode != 1) {
         reset_counters();                       // clear macs container and reset all counters
@@ -200,8 +214,9 @@ void onEvent (ev_t ev) {
                     unsigned char* buffer = new unsigned char[MAX_LEN_FRAME];
                     memcpy(buffer, LMIC.frame, MAX_LEN_FRAME); //Copy data from cfg to char*
                     int i, k = LMIC.dataBeg, l = LMIC.dataBeg+LMIC.dataLen-2;
-                    for (i=k; i<=l; i+=2)
+                    for (i=k; i<=l; i+=2) {
                         rcommand(buffer[i], buffer[i+1]);
+                    }
                     delete[] buffer; //free memory
                 }
             }

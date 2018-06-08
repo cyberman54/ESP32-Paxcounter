@@ -22,7 +22,7 @@ void defaultConfig() {
     cfg.txpower       = 15;             // 2-15, lora tx power
     cfg.adrmode       = 1;              // 0=disabled, 1=enabled
     cfg.screensaver   = 0;              // 0=disabled, 1=enabled
-    cfg.screenon      = 1;              // 0=disbaled, 1=enabled
+    cfg.screenon      = 1;              // 0=disabled, 1=enabled
     cfg.countermode   = 0;              // 0=cyclic, 1=cumulative, 2=cyclic confirmed
     cfg.rssilimit     = 0;              // threshold for rssilimiter, negative value!
     cfg.sendcycle     = SEND_SECS;      // payload send cycle [seconds/2]
@@ -32,6 +32,7 @@ void defaultConfig() {
     cfg.wifiant       = 0;              // 0=internal, 1=external (for LoPy/LoPy4)
     cfg.vendorfilter  = 1;              // 0=disabled, 1=enabled
     cfg.rgblum        = RGBLUMINOSITY;  // RGB Led luminosity (0..100%)
+    cfg.gpsmode       = 1;              // 0=disabled, 1=enabled
 
     strncpy( cfg.version, PROGVERSION, sizeof(cfg.version)-1 );
 }
@@ -119,6 +120,9 @@ void saveConfig() {
 
       if( nvs_get_i8(my_handle, "rgblum", &flash8) != ESP_OK || flash8 != cfg.rgblum )
           nvs_set_i8(my_handle, "rgblum", cfg.rgblum);
+
+      if( nvs_get_i8(my_handle, "gpsmode", &flash8) != ESP_OK || flash8 != cfg.gpsmode )
+      nvs_set_i8(my_handle, "gpsmode", cfg.gpsmode);
 
       if( nvs_get_i16(my_handle, "rssilimit", &flash16) != ESP_OK || flash16 != cfg.rssilimit )
         nvs_set_i16(my_handle, "rssilimit", cfg.rssilimit);
@@ -281,6 +285,14 @@ void loadConfig() {
       ESP_LOGI(TAG, "rssilimit = %d", flash16);
     } else {
       ESP_LOGI(TAG, "rssilimit set to default %d", cfg.rssilimit);
+      saveConfig();
+    }
+
+    if( nvs_get_i8(my_handle, "gpsmode", &flash8) == ESP_OK ) {
+      cfg.gpsmode = flash8;
+      ESP_LOGI(TAG, "GPSmode = %d", flash8);
+    } else {
+      ESP_LOGI(TAG, "GPSmode set to default %d", cfg.gpsmode);
       saveConfig();
     }
 
