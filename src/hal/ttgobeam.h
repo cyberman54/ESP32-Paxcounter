@@ -2,8 +2,8 @@
 
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
-#define HAS_LED 21 // on board green LED_G1
-#define HAS_BUTTON GPIO_NUM_39 // button on board next to battery indicator LED (other one is reset)
+#define HAS_LED 21 // on board green LED_G1 
+// #define HAS_BUTTON GPIO_NUM_39 // button on board next to battery indicator LED (other one is reset) -> not tested yet
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
 // #define HAS_GPS // to be done
