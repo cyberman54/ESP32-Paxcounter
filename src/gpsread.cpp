@@ -7,11 +7,13 @@ static const char TAG[] = "main";
 
 // GPS read data to global struct
 void gps_read(){
-    gps_status.latitude = gps.location.lat();
-    gps_status.longitude = gps.location.lng();
-    gps_status.satellites = gps.satellites.value();
-    gps_status.hdop = gps.hdop.value();
-    gps_status.altitude = gps.altitude.meters(); 
+    gps_status.latitude = (float) gps.location.lat();
+    gps_status.longitude = (float) gps.location.lng();
+    gps_status.satellites = (uint8_t) gps.satellites.value();
+    gps_status.hdop = (float) gps.hdop.value();
+    gps_status.altitude = (uint16_t) gps.altitude.meters(); 
+    ESP_LOGI(TAG, "Lat: %f / Lon: %f", gps_status.latitude, gps_status.longitude);
+    ESP_LOGI(TAG, "Sats: %d / HDOP: %f / Alti: %d", gps_status.satellites, gps_status.hdop, gps_status.altitude);
 }
 
 /// GPS serial feed FreeRTos Task

@@ -260,12 +260,13 @@ void get_voltage (uint8_t val) {
 void get_gps (uint8_t val) {
     ESP_LOGI(TAG, "Remote command: get gps status");
     #ifdef HAS_GPS
-    if (gps.location.isValid()) {
         gps_read();
         transmit((byte*)&gps_status, sizeof(gps_status));
         ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%d, LON=%d", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
-    }
+    #else
+        ESP_LOGE(TAG, "No GPS device present");
     #endif
+
 };
 
 
