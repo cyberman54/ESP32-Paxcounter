@@ -1,3 +1,6 @@
+#ifndef MACSNIFF_H
+#define MACSNIFF_H
+
 // ESP32 Functions
 #include <esp_wifi.h>
 
@@ -26,3 +29,5 @@ void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
 // function defined in rokkithash.cpp
 uint32_t rokkit(const char * , int );
+
+#endif
