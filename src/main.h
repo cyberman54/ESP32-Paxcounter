@@ -48,5 +48,6 @@ void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
 //defined in gpsread.cpp
 #ifdef HAS_GPS
+  void gps_read(void);
   void gps_loop(void * pvParameters);
 #endif

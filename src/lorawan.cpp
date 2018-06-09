@@ -137,12 +137,8 @@ void do_send(osjob_t* j){
     sprintf(display_lmic, "PACKET QUEUED");
     
     #ifdef HAS_GPS
-        if (cfg.gpsmode && my_gps.location.isValid()) {
-            gps_status.latitude = my_gps.location.lat();
-            gps_status.longitude = my_gps.location.lng();
-            gps_status.satellites = my_gps.satellites.value();
-            gps_status.hdop = my_gps.hdop.value();
-            gps_status.altitude = my_gps.altitude.meters();
+        if (cfg.gpsmode && gps.location.isValid()) {
+            gps_read();
             LMIC_setTxData2(GPSPORT, (byte*)&gps_status, sizeof(gps_status), (cfg.countermode & 0x02));
             ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%d, LON=%d", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
         }

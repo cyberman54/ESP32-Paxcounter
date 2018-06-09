@@ -54,11 +54,11 @@ typedef struct {
     uint32_t latitude;
     uint32_t longitude;
     uint8_t hdop;
-    uint8_t satellites;
+    uint32_t satellites;
     uint16_t altitude;
     } gpsStatus_t;
   extern gpsStatus_t gps_status;        // struct for storing gps data
-  extern TinyGPSPlus my_gps;            // Make TinyGPS++ instance globally availabe
+  extern TinyGPSPlus gps;            // Make TinyGPS++ instance globally availabe
 #endif
 
 extern configData_t cfg;

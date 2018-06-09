@@ -57,15 +57,15 @@ u1_t rcmd_data_size;                // buffer for rcommand results size
 
 #ifdef HAS_GPS
     gpsStatus_t gps_status;         // struct for storing gps data
-    TinyGPSPlus my_gps;             // create TinyGPS++ instance
+    TinyGPSPlus gps;             // create TinyGPS++ instance
 #endif
 
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying shared variable DisplayIRQ
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ handler shared variables
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
 // this variables will be changed in the ISR, and read in main loop
-static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
+static volatile int ButtonPressedIRQ = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
 static const char TAG[] = "main";
@@ -167,14 +167,14 @@ void lorawan_loop(void * pvParameters) {
     bool btstop = btStop();
 #endif
 
+// Button IRQ Handler Routine, IRAM_ATTR necessary here, see https://github.com/espressif/arduino-esp32/issues/855
 #ifdef HAS_BUTTON
-    // Button IRQ
-    // IRAM_ATTR necessary here, see https://github.com/espressif/arduino-esp32/issues/855
     void IRAM_ATTR ButtonIRQ() {
-        ButtonPressed++;
+        ButtonPressedIRQ++;
     }
 #endif
 
+// Wifi Channel Rotation Timer IRQ Handler Routine
 void IRAM_ATTR ChannelSwitchIRQ() {
     portENTER_CRITICAL(&timerMux);
     ChannelTimerIRQ++;
@@ -344,11 +344,14 @@ uint64_t uptime() {
 
 #ifdef HAS_BUTTON
     void readButton() {
-        if (ButtonPressed) {
-            ButtonPressed--;
+        if (ButtonPressedIRQ) {
+            portENTER_CRITICAL(&timerMux);
+            ButtonPressedIRQ--;
+            portEXIT_CRITICAL(&timerMux);
+            ESP_LOGI(TAG, "Button pressed");
             ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
             eraseConfig();
-            esp_restart();
+            esp_restart();  
         }
     }
 #endif
@@ -622,6 +625,9 @@ void loop() {
             reset_counters();   // clear macs container and reset all counters
             reset_salt();       // get new salt for salting hashes
         }
+
+        if ( (uptime() % 10000) == 0 )
+            ESP_LOGI(TAG, "GPS NMEA data passed %d / failed: %d / with fix: %d || Sats: %d / HDOP: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix(), gps.satellites.value(), gps.hdop.value());
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 
