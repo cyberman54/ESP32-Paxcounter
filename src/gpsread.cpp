@@ -7,8 +7,8 @@ static const char TAG[] = "main";
 
 // read GPS data and cast to global struct
 void gps_read(){
-    gps_status.latitude     =   (uint32_t) gps.location.lat() * 100;
-    gps_status.longitude    =   (uint32_t) gps.location.lng() * 100;
+    gps_status.latitude     =   (uint32_t) (gps.location.lat() * 1000000);
+    gps_status.longitude    =   (uint32_t) (gps.location.lng() * 1000000);
     gps_status.satellites   =   (uint8_t) gps.satellites.value();
     gps_status.hdop         =   (uint16_t) gps.hdop.value();
     gps_status.altitude     =   (uint16_t) gps.altitude.meters(); 
@@ -19,7 +19,13 @@ void gps_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    HardwareSerial GPS_Serial(1);  
+    #ifdef GPS_SERIAL
+        HardwareSerial GPS_Serial(1);  
+    #endif
+
+    #ifdef GPS_I2C
+        // to be done
+    #endif
 
     while(1) {
 

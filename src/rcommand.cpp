@@ -262,7 +262,7 @@ void get_gps (uint8_t val) {
     #ifdef HAS_GPS
         gps_read();
         transmit((byte*)&gps_status, sizeof(gps_status));
-        ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%f, LON=%f", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
+        ESP_LOGI(TAG, "lat=%f / lon=%f | Sats=%u | HDOP=%u | Alti=%u", gps_status.latitude / 1000000, gps_status.longitude / 1000000, gps_status.satellites, gps_status.hdop, gps_status.altitude);
     #else
         ESP_LOGE(TAG, "GPS not present");
     #endif
