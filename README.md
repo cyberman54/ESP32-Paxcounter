@@ -118,8 +118,8 @@ LoRaWAN Port #3: GPS data
 	bytes 1-4:		Latitude
 	bytes 4-8:		Longitude
 	bytes 9-10:		Satellites
-	bytes 11-12:	HDOP
-	bytes 13-14:	Altitude
+	bytes 11-12:		HDOP
+	bytes 13-14:		Altitude
 
 If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
 
