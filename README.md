@@ -111,7 +111,7 @@ LoRaWAN Port #1: Counter data
 
 LoRaWAN Port #2: Remote commands
 
-	see remote command set
+	*see remote control*
 
 LoRaWAN Port #3: GPS data
 
