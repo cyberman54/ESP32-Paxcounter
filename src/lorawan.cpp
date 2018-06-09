@@ -129,8 +129,6 @@ void do_send(osjob_t* j){
         mydata[3] = 0;
     }
 
-    
-
     // Prepare upstream data transmission at the next possible time.
     LMIC_setTxData2(COUNTERPORT, mydata, sizeof(mydata), (cfg.countermode & 0x02));
     ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));

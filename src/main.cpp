@@ -598,9 +598,6 @@ do_send(&sendjob);
 
 void loop() {
 
-    HardwareSerial GPS_Serial(1);                 
-    GPS_Serial.begin(9600, SERIAL_8N1, 12, 15 );
-
   	while (1) {
 
         // simple state machine for controlling uptime, display, LED, button, memory.
@@ -629,7 +626,7 @@ void loop() {
         }
 
         if ( (uptime() % 10000) == 0 )
-            ESP_LOGI(TAG, "GPS NMEA data passed %d / failed: %d / with fix: %d || Sats: %d / HDOP: %d || m/s: %d / %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix(), gps.satellites.value(), gps.hdop.value(), gps.time.minute(), gps.time.second() );
+            ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 
