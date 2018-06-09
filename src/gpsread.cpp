@@ -4,7 +4,7 @@
 
 // Local logging tag
 static const char TAG[] = "main";
-/*
+
 // GPS read data to global struct
 void gps_read(){
     gps_status.latitude = gps.location.lat();
@@ -32,5 +32,4 @@ void gps_loop(void * pvParameters) {
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
     }    
 }
-*/
 #endif // HAS_GPS
