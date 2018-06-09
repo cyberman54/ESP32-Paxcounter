@@ -119,8 +119,7 @@ Decoder:
 
 ```javascript
 function Decoder(bytes, port) {
-  // Decode an uplink message from a buffer
-  // (array) of bytes to an object of fields.
+  // decode counter messages
   var decoded = {};
 
   if (port === 1) {
@@ -128,7 +127,8 @@ function Decoder(bytes, port) {
     decoded.ble = (bytes[2] << 8) | bytes[3];
   }
 
-  if (port === 2) {
+  // decode GPS messages
+  if (port === 3) {
     decoded.latitude = (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0];
     decoded.longitude = (bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4];
     decoded.satellites = (bytes[9] << 8) | bytes[8];
@@ -145,10 +145,12 @@ Converter:
 ```javascript
 function Converter(decoded, port) {
   var converted = decoded;
+  // sum up ble + wifi counters
   if (port === 1) {
     converted.pax = converted.ble + converted.wifi;
   }
-  if (port === 2) {
+  // convert some GPS values
+  if (port === 3) {
     converted.latitude = converted.latitude / 100000;
 	converted.longitude = converted.longitude / 100000;
 	converted.hdop = converted.hdop / 100;
