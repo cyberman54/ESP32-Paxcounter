@@ -51,8 +51,8 @@ typedef struct {
 
 #ifdef HAS_GPS
   typedef struct {
-    float latitude;
-    float longitude;
+    uint32_t latitude;
+    uint32_t longitude;
     uint8_t satellites;
     uint16_t hdop;
     uint16_t altitude;
