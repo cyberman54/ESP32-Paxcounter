@@ -119,12 +119,24 @@ Decoder:
 
 ```javascript
 function Decoder(bytes, port) {
-    var decoded = {};
-    if (port === 1) {
-      decoded.wifi = (bytes[0] << 8) | bytes[1];
-      decoded.ble = (bytes[2] << 8) | bytes[3];
-    }
-    return decoded;
+  // Decode an uplink message from a buffer
+  // (array) of bytes to an object of fields.
+  var decoded = {};
+
+  if (port === 1) {
+    decoded.wifi = (bytes[0] << 8) | bytes[1];
+    decoded.ble = (bytes[2] << 8) | bytes[3];
+  }
+
+  if (port === 2) {
+    decoded.latitude = (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0];
+    decoded.longitude = (bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4];
+    decoded.satellites = (bytes[9] << 8) | bytes[8];
+    decoded.hdop = (bytes[11] << 8) | bytes[10];
+    decoded.altitude = (bytes[13] << 8) | bytes[12];
+  }
+
+  return decoded;
 }
 ```
 
@@ -136,6 +148,10 @@ function Converter(decoded, port) {
   if (port === 1) {
     converted.pax = converted.ble + converted.wifi;
   }
+  if (port === 2) {
+    converted.latitude = converted.latitude / 100000;
+	converted.longitude = converted.longitude / 100000;
+	converted.hdop = converted.hdop / 100;
   return converted;
 }
 ```
