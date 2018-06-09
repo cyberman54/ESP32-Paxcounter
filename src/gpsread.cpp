@@ -5,18 +5,16 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-// GPS read data to global struct
+// read GPS data and cast to global struct
 void gps_read(){
-    gps_status.latitude = (float) gps.location.lat();
-    gps_status.longitude = (float) gps.location.lng();
-    gps_status.satellites = (uint8_t) gps.satellites.value();
-    gps_status.hdop = (float) gps.hdop.value();
-    gps_status.altitude = (uint16_t) gps.altitude.meters(); 
-    ESP_LOGI(TAG, "Lat: %f / Lon: %f", gps_status.latitude, gps_status.longitude);
-    ESP_LOGI(TAG, "Sats: %d / HDOP: %f / Alti: %d", gps_status.satellites, gps_status.hdop, gps_status.altitude);
+    gps_status.latitude     =   (float) gps.location.lat();
+    gps_status.longitude    =   (float) gps.location.lng();
+    gps_status.satellites   =   (uint8_t) gps.satellites.value();
+    gps_status.hdop         =   (uint16_t) gps.hdop.value();
+    gps_status.altitude     =   (uint16_t) gps.altitude.meters(); 
 }
 
-/// GPS serial feed FreeRTos Task
+// GPS serial feed FreeRTos Task
 void gps_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check

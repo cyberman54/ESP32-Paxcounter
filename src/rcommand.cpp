@@ -262,13 +262,11 @@ void get_gps (uint8_t val) {
     #ifdef HAS_GPS
         gps_read();
         transmit((byte*)&gps_status, sizeof(gps_status));
-        ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%d, LON=%d", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
+        ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%f, LON=%f", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
     #else
-        ESP_LOGE(TAG, "No GPS device present");
+        ESP_LOGE(TAG, "GPS not present");
     #endif
-
 };
-
 
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, flag (1 = do make settings persistent / 0 = don't)

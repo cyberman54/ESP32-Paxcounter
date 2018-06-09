@@ -53,8 +53,8 @@ typedef struct {
   typedef struct {
     float latitude;
     float longitude;
-    float hdop;
     uint8_t satellites;
+    uint16_t hdop;
     uint16_t altitude;
     } gpsStatus_t;
   extern gpsStatus_t gps_status;        // struct for storing gps data

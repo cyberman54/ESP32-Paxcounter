@@ -138,7 +138,7 @@ void do_send(osjob_t* j){
         if (cfg.gpsmode && gps.location.isValid()) {
             gps_read();
             LMIC_setTxData2(GPSPORT, (byte*)&gps_status, sizeof(gps_status), (cfg.countermode & 0x02));
-            ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%d, LON=%d", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
+            ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%f, LON=%f", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
         }
     #endif
     

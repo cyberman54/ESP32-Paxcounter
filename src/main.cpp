@@ -470,6 +470,10 @@ void setup() {
     ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
 #endif
 
+#ifdef HAS_GPS
+    ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
+#endif
+
     // read settings from NVRAM
     loadConfig(); // includes initialize if necessary
 
@@ -583,7 +587,7 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
 #ifdef HAS_GPS
     if (cfg.gpsmode) {
     ESP_LOGI(TAG, "Starting GPS task on core 0");
-    xTaskCreatePinnedToCore(gps_loop, "gpsreader", 2048, ( void * ) 1, 1, NULL, 0);
+    xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, ( void * ) 1, 1, NULL, 0);
     }
 #endif
 
