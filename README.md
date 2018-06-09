@@ -102,16 +102,24 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 # Payload
 
-FPort1:
+LoRaWAN Port #1: Counter data
 
-	byte 1:			16-bit WiFi counter, MSB
-	byte 2:			16-bit WiFi counter, LSB
-	byte 3:			16-bit BLE counter, MSB
-	byte 4:			16-bit BLE counter, LSB
+	byte 1:			WiFi counter, MSB
+	byte 2:			WiFi counter, LSB
+	byte 3:			BLE counter, MSB
+	byte 4:			BLE counter, LSB
 
-FPort2:
+LoRaWAN Port #2: Remote commands
 
 	see remote command set
+
+LoRaWAN Port #3: GPS data
+
+	bytes 1-4:			Latitude
+	bytes 4-8:			Longitude
+	bytes 9-10:			Satellites
+	bytes 11-12:		HDOP
+	bytes 13-14:		Altitude
 
 If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
 
