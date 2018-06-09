@@ -57,7 +57,7 @@ u1_t rcmd_data_size;                // buffer for rcommand results size
 
 #ifdef HAS_GPS
     gpsStatus_t gps_status;         // struct for storing gps data
-    TinyGPSPlus gps;             // create TinyGPS++ instance
+    TinyGPSPlus gps;                // create TinyGPS++ instance
 #endif
 
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ handler shared variables
@@ -482,7 +482,6 @@ void setup() {
 #ifdef HAS_RGB_LED
     rgb_set_color(COLOR_PINK);
     strcat(features, " RGB");
-    delay(1000);
 #endif
 
     // initialize button handling if needed
@@ -582,10 +581,10 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
 
 // if device has GPS and GPS function is enabled, start GPS reader task on core 0
 #ifdef HAS_GPS
-    if (cfg.gpsmode) {
-    ESP_LOGI(TAG, "Starting GPS task on core 0");
-    xTaskCreatePinnedToCore(gps_loop, "gpsreader", 2048, ( void * ) 1, 1, NULL, 0);
-    }
+    //if (cfg.gpsmode) {
+    //ESP_LOGI(TAG, "Starting GPS task on core 0");
+    //xTaskCreatePinnedToCore(gps_loop, "gpsreader", 2048, ( void * ) 1, 1, NULL, 0);
+    //}
 #endif
 
 // kickoff sendjob -> joins network and rescedules sendjob for cyclic transmitting payload
@@ -598,6 +597,9 @@ do_send(&sendjob);
 /* begin Arduino main loop ------------------------------------------------------ */
 
 void loop() {
+
+    HardwareSerial GPS_Serial(1);                 
+    GPS_Serial.begin(9600, SERIAL_8N1, 12, 15 );
 
   	while (1) {
 
@@ -626,8 +628,13 @@ void loop() {
             reset_salt();       // get new salt for salting hashes
         }
 
+        // read gps
+        while (GPS_Serial.available()) {
+            gps.encode(GPS_Serial.read());
+        }
+
         if ( (uptime() % 10000) == 0 )
-            ESP_LOGI(TAG, "GPS NMEA data passed %d / failed: %d / with fix: %d || Sats: %d / HDOP: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix(), gps.satellites.value(), gps.hdop.value());
+            ESP_LOGI(TAG, "GPS NMEA data passed %d / failed: %d / with fix: %d || Sats: %d / HDOP: %d || m/s: %d / %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix(), gps.satellites.value(), gps.hdop.value(), gps.time.minute(), gps.time.second() );
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 

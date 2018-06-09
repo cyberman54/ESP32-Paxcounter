@@ -6,7 +6,8 @@
 //#define HAS_BUTTON GPIO_NUM_39 // on board button "BOOT" (next to reset button) !! seems not to work!!
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
-#define HAS_GPS 9600, SERIAL_8N1, 12, 15
+//#define HAS_GPS 9600, SERIAL_8N1, 12, 15
+#define HAS_GPS 1
 
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    GPIO_NUM_18 // ESP32 GPIO18 (Pin18) -- HPD13A NSS/SEL (Pin4) SPI Chip Select Input

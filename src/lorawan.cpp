@@ -136,6 +136,7 @@ void do_send(osjob_t* j){
     ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));
     sprintf(display_lmic, "PACKET QUEUED");
     
+    /*
     #ifdef HAS_GPS
         if (cfg.gpsmode && gps.location.isValid()) {
             gps_read();
@@ -143,6 +144,7 @@ void do_send(osjob_t* j){
             ESP_LOGI(TAG, "HDOP=%d, SATS=%d, LAT=%d, LON=%d", gps_status.hdop, gps_status.satellites, gps_status.latitude, gps_status.longitude );
         }
     #endif
+    */
     
     // clear counter if not in cumulative counter mode
     if (cfg.countermode != 1) {
