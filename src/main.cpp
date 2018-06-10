@@ -1,5 +1,7 @@
 /*
- 
+ 
+
+
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
 Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
 
@@ -92,8 +94,8 @@ void reset_counters() {
   macs_ble = 0;
 }
 
-  /* begin LMIC specific parts
-   * ------------------------------------------------------------ */
+/* begin LMIC specific parts
+ * ------------------------------------------------------------ */
 
 #ifdef VERBOSE
 void printKeys(void);
@@ -146,11 +148,11 @@ void lorawan_loop(void *pvParameters) {
   }
 }
 
-  /* end LMIC specific parts
-   * --------------------------------------------------------------- */
+/* end LMIC specific parts
+ * --------------------------------------------------------------- */
 
-  /* beginn hardware specific parts
-   * -------------------------------------------------------- */
+/* beginn hardware specific parts
+ * -------------------------------------------------------- */
 
 #ifdef HAS_DISPLAY
 HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
@@ -287,16 +289,27 @@ void init_display(const char *Productname, const char *Version) {
 }
 
 void refreshDisplay() {
-  // update counter display (lines 0-4)
+  // update counter (lines 0-1)
   char buff[16];
   snprintf(
       buff, sizeof(buff), "PAX:%-4d",
       (int)macs.size()); // convert 16-bit MAC counter to decimal counter value
   u8x8.draw2x2String(0, 0,
                      buff); // display number on unique macs total Wifi + BLE
-  u8x8.setCursor(0, 4);
-  u8x8.printf("WIFI:%-4d", macs_wifi);
 
+  // update GPS status (line 2)
+#ifdef HAS_GPS
+  u8x8.setCursor(8, 2);
+  if (!gps.location.isvalid()) // if no fix then display Sats value inverse
+  {
+    u8x8.setInverseFont(1);
+    u8x8.printf("Sats: %.3d", gps.satellites.value());
+    u8x8.setInverseFont(0);
+  } else
+    u8x8.printf("Sats: %.3d", gps.satellites.value());
+#endif
+
+    // update bluetooth counter + LoRa SF (line 3)
 #ifdef BLECOUNTER
   u8x8.setCursor(0, 3);
   if (cfg.blescan)
@@ -304,8 +317,6 @@ void refreshDisplay() {
   else
     u8x8.printf("%s", "BLTH:off");
 #endif
-
-  // update LoRa SF display (line 3)
   u8x8.setCursor(11, 3);
   u8x8.printf("SF:");
   if (cfg.adrmode) // if ADR=on then display SF value inverse
@@ -315,7 +326,9 @@ void refreshDisplay() {
   if (cfg.adrmode) // switch off inverse if it was turned on
     u8x8.setInverseFont(0);
 
-  // update wifi channel display (line 4)
+  // update wifi counter + channel display (line 4)
+  u8x8.setCursor(0, 4);
+  u8x8.printf("WIFI:%-4d", macs_wifi);
   u8x8.setCursor(11, 4);
   u8x8.printf("ch:%02d", channel);
 
@@ -537,13 +550,13 @@ void setup() {
   init_display(PROGNAME, PROGVERSION);
   DisplayState = cfg.screenon;
   u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
-  u8x8.draw2x2String(0, 0, "PAX:0");
-  u8x8.setCursor(0, 4);
-  u8x8.printf("WIFI:0");
+  u8x8.draw2x2String(0, 0, "PAX:0")
 #ifdef BLECOUNTER
-  u8x8.setCursor(0, 3);
+      u8x8.setCursor(0, 3);
   u8x8.printf("BLTH:0");
 #endif
+  u8x8.setCursor(0, 4);
+  u8x8.printf("WIFI:0");
   u8x8.setCursor(0, 5);
   u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
 
