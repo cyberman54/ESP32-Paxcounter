@@ -550,9 +550,9 @@ void setup() {
   init_display(PROGNAME, PROGVERSION);
   DisplayState = cfg.screenon;
   u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
-  u8x8.draw2x2String(0, 0, "PAX:0")
+  u8x8.draw2x2String(0, 0, "PAX:0");
 #ifdef BLECOUNTER
-      u8x8.setCursor(0, 3);
+  u8x8.setCursor(0, 3);
   u8x8.printf("BLTH:0");
 #endif
   u8x8.setCursor(0, 4);
