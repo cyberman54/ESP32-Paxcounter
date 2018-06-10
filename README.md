@@ -141,7 +141,7 @@ function Decoder(bytes, port) {
     decoded.ble = (bytes[2] << 8) | bytes[3];
     decoded.latitude = ((bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4]);
     decoded.longitude = ((bytes[11] << 24) | (bytes[10] << 16) | (bytes[9] << 8) | bytes[8]);
-    decoded.satellites = (bytes[13] << 8) | bytes[12];
+    decoded.sats = (bytes[13] << 8) | bytes[12];
     decoded.hdop = (bytes[15] << 8) | bytes[14];
     decoded.altitude = (bytes[17] << 8) | bytes[16];
   }
