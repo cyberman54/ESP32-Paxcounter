@@ -172,7 +172,7 @@ function Converter(decoded, port) {
 }
 ```
 
-# Remote command set
+# Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2.
 Each command is followed by exactly one parameter.
