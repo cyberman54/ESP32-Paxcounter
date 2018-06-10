@@ -133,9 +133,14 @@ void do_send(osjob_t* j){
         static uint8_t gpsdata[18];
         if (cfg.gpsmode && gps.location.isValid()) {
             gps_read();
-            memcpy (gpsdata+4, &gps_status, sizeof(gps_status));
             memcpy (gpsdata, mydata, 4);
-            ESP_LOGI(TAG, "lat=%f / lon=%f | Sats=%u | HDOP=%u | Alti=%u", gps_status.latitude / 1000000, gps_status.longitude / 1000000, gps_status.satellites, gps_status.hdop, gps_status.altitude);
+            memcpy (gpsdata+4, &gps_status, sizeof(gps_status));
+            ESP_LOGI(TAG, "lat=%.6f / lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%u m", \
+                gps_status.latitude / (float) 1000000, \
+                gps_status.longitude / (float) 1000000, \
+                gps_status.satellites, \
+                gps_status.hdop / (float) 100, \
+                gps_status.altitude);
             LMIC_setTxData2(COUNTERPORT, gpsdata, sizeof(gpsdata), (cfg.countermode & 0x02));
             ESP_LOGI(TAG, "%d bytes queued to send", sizeof(gpsdata));
         }

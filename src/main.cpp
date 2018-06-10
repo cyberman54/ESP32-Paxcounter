@@ -630,7 +630,7 @@ void loop() {
         }
 
         if ( (uptime() % 10000) == 0 )
-            ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
+            ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 

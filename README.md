@@ -104,15 +104,13 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 LoRaWAN Port #1:
 
-	byte 1:			Paxcount Wifi, MSB
-	byte 2:			Paxcount WiFi, LSB
-	byte 3:			Paxcount Bluetooth, MSB
-	byte 4:			Paxcount Bluetooth, LSB
-	bytes 5-8:		GPS latitude
+	byte 1-2:	Number of unique pax, first seen on Wifi
+	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
+	bytes 5-8:	GPS latitude
 	bytes 9-12:		GPS longitude
-	bytes 13-14:	GPS satellites
+	bytes 13-14:	GPS number of satellites
 	bytes 15-16:	GPS HDOP
-	bytes 17-18:	GPS altitude
+	bytes 17-18:	GPS altitude [meter]
 
 LoRaWAN Port #2:
 
@@ -281,13 +279,13 @@ device answers with it's current configuration. The configuration is a C structu
 
 	bytes 1-2:		battery voltage in millivolt, 0 if unreadable (little endian format)
 
-0x84 get device GPS status (NOT YET IMPLEMENTED)
+0x84 get device GPS status
 
 	bytes 1-4:		latitude
 	bytes 5-8:		longitude
-	byte 9:			number of satellites
-	byte 10:		HDOP
-	bytes 11-12:	altidute [meter]
+	byte 9-10:		number of satellites
+	byte 11-12:		HDOP
+	bytes 13-14:	altidute [meter]
 
 # License
 
