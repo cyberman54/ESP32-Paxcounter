@@ -629,8 +629,11 @@ void loop() {
             reset_salt();       // get new salt for salting hashes
         }
 
-        if ( (uptime() % 10000) == 0 )
-            ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
+        #ifdef HAS_GPS
+            // log NMEA status every 30 seconds, useful for debugging GPS connection
+            if ( (uptime() % 30000) == 0 )
+                ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
+        #endif
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 
