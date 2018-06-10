@@ -162,7 +162,7 @@ function Converter(decoded, port) {
 
   if (port === 1) {
     converted.pax = converted.ble + converted.wifi;
-    if (converted.length > 4){
+    if (converted.hdop) {
       converted.hdop /= 100;
       converted.latitude /= 1000000;
       converted.longitude /= 1000000;
