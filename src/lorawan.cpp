@@ -153,6 +153,7 @@ void do_send(osjob_t *j) {
   }
 #endif
 
+end:
   // clear counter if not in cumulative counter mode
   if (cfg.countermode != 1) {
     reset_counters(); // clear macs container and reset all counters
@@ -161,7 +162,6 @@ void do_send(osjob_t *j) {
   }
 
 // Schedule next transmission
-end:
   os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(cfg.sendcycle * 2),
                       do_send);
 
