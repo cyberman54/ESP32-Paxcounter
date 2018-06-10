@@ -191,10 +191,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 (NOT YET IMPLEMENTED) set screen saver mode
+0x03 set GPS data on/off
 
-	0 = screen saver off [default]
-	1 = screen saver on
+	0 = GPS data off
+	1 = GPS data on, appends GPS data to payload, if GPS is present and has a fix [default]
 
 0x04 set display on/off
 
