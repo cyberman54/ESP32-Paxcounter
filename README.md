@@ -102,24 +102,21 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 # Payload
 
-LoRaWAN Port #1: Counter data
+LoRaWAN Port #1:
 
-	byte 1:			WiFi counter, MSB
-	byte 2:			WiFi counter, LSB
-	byte 3:			BLE counter, MSB
-	byte 4:			BLE counter, LSB
+	byte 1:			Paxcount Wifi, MSB
+	byte 2:			Paxcount WiFi, LSB
+	byte 3:			Paxcount Bluetooth, MSB
+	byte 4:			Paxcount Bluetooth, LSB
+	bytes 5-8:		GPS latitude
+	bytes 9-12:		GPS longitude
+	bytes 13-14:	GPS satellites
+	bytes 15-16:	GPS HDOP
+	bytes 17-18:	GPS altitude
 
-LoRaWAN Port #2: Remote commands
+LoRaWAN Port #2:
 
 	see remote control
-
-LoRaWAN Port #3: GPS data
-
-	bytes 1-4:		Latitude
-	bytes 4-8:		Longitude
-	bytes 9-10:		Satellites
-	bytes 11-12:		HDOP
-	bytes 13-14:		Altitude
 
 If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
 
@@ -127,24 +124,20 @@ Decoder:
 
 ```javascript
 function Decoder(bytes, port) {
-  // decode counter messages
   var decoded = {};
 
   if (port === 1) {
     decoded.wifi = (bytes[0] << 8) | bytes[1];
     decoded.ble = (bytes[2] << 8) | bytes[3];
-  }
-
-  // decode GPS messages
-  if (port === 3) {
-    decoded.latitude = (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0];
-    decoded.longitude = (bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4];
-    decoded.satellites = (bytes[9] << 8) | bytes[8];
-    decoded.hdop = (bytes[11] << 8) | bytes[10];
-    decoded.altitude = (bytes[13] << 8) | bytes[12];
+    decoded.latitude = ((bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4]);
+    decoded.longitude = ((bytes[11] << 24) | (bytes[10] << 16) | (bytes[9] << 8) | bytes[8]);
+    decoded.satellites = (bytes[13] << 8) | bytes[12];
+    decoded.hdop = (bytes[15] << 8) | bytes[14];
+    decoded.altitude = (bytes[17] << 8) | bytes[16];
   }
 
   return decoded;
+}
 }
 ```
 
@@ -153,24 +146,24 @@ Converter:
 ```javascript
 function Converter(decoded, port) {
   var converted = decoded;
-  // sum up ble + wifi counters
+
   if (port === 1) {
     converted.pax = converted.ble + converted.wifi;
+    converted.hdop /= 100;
+    converted.latitude /= 1000000;
+    converted.longitude /= 1000000;
   }
-  // convert some GPS values
-  if (port === 3) {
-    converted.latitude = converted.latitude / 100000;
-	converted.longitude = converted.longitude / 100000;
-	converted.hdop = converted.hdop / 100;
+
   return converted;
+}
 }
 ```
 
-# Remote control
+# Remote command set
 
 The device listenes for remote control commands on LoRaWAN Port 2.
 Each command is followed by exactly one parameter.
-For "set" commands, multiple command/parameter pairs can be concatenated and sent in one downlink, all commands are executed. For "get" commands, only one command/parameter pair per downlink is processed.
+Multiple command/parameter pairs can be concatenated and sent in one single payload downlink.
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
 
@@ -185,10 +178,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 set GPS on/off (NOT YET IMPLEMENTED)
+0x03 (NOT YET IMPLEMENTED) set screen saver mode
 
-	0 = GPS off [default]
-	1 = GPS on, GPS data set (if present) is added to payload
+	0 = screen saver off [default]
+	1 = screen saver on
 
 0x04 set display on/off
 
@@ -258,7 +251,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L32-L50) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L27-L44) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -274,8 +267,7 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
 	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
 	byte 15:		RGB LED luminosity (0..100 %)
-	byte 16:		GPS status (1=on, 0=off)
-	bytes 17-27:		Software version (ASCII format, terminating with zero)
+	bytes 16-26:		Software version (ASCII format, terminating with zero)
 
 0x81 get device uptime
 

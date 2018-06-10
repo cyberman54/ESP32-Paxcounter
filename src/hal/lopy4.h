@@ -4,9 +4,13 @@
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board LED, so we use RGB LED on LoPy4
 #define HAS_RGB_LED   GPIO_NUM_0  // WS2812B RGB LED on GPIO0
 
-// use only if your LoPy lives on a Pytrack expansion board
+// !!EXPERIMENTAL - not tested yet!!f
+// uncomment this only if your LoPy lives on a Pytrack expansion board with GPS
+// see http://www.quectel.com/UploadImage/Downlad/Quectel_L76-L_I2C_Application_Note_V1.0.pdf
 //#define HAS_GPS 1
-//#define GPS_I2C GPIO_NUM_9, GPIO_NUM_8 // SDA, SCL
+//#define GPS_I2C_PINS GPIO_NUM_9, GPIO_NUM_8 // SDA, SCL
+//#define GPS_I2C_ADDRESS_READ 0x21
+//#define GPS_I2C_ADDRESS_WRITE 0x20
 //#define HAS_BUTTON GPIO_NUM_4
 
 // Hardware pin definitions for Pycom LoPy4 board

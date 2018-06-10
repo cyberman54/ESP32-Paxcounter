@@ -586,8 +586,8 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
 // if device has GPS and GPS function is enabled, start GPS reader task on core 0
 #ifdef HAS_GPS
     if (cfg.gpsmode) {
-    ESP_LOGI(TAG, "Starting GPS task on core 0");
-    xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, ( void * ) 1, 1, NULL, 0);
+        ESP_LOGI(TAG, "Starting GPS task on core 0");
+        xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, ( void * ) 1, 1, NULL, 0);
     }
 #endif
 

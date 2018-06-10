@@ -116,7 +116,7 @@ void do_send(osjob_t* j){
 
     // prepare payload with sum of unique WIFI MACs seen
     static uint8_t mydata[4];
-  
+
     mydata[0] = (macs_wifi & 0xff00) >> 8;
     mydata[1] = macs_wifi  & 0xff;
     
@@ -129,19 +129,26 @@ void do_send(osjob_t* j){
         mydata[3] = 0;
     }
 
-    // Prepare upstream data transmission at the next possible time.
-    LMIC_setTxData2(COUNTERPORT, mydata, sizeof(mydata), (cfg.countermode & 0x02));
-    ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));
-    sprintf(display_lmic, "PACKET QUEUED");
-    
     #ifdef HAS_GPS
+        static uint8_t gpsdata[18];
         if (cfg.gpsmode && gps.location.isValid()) {
             gps_read();
-            LMIC_setTxData2(GPSPORT, (byte*)&gps_status, sizeof(gps_status), (cfg.countermode & 0x02));
+            memcpy (gpsdata+4, &gps_status, sizeof(gps_status));
+            memcpy (gpsdata, mydata, 4);
             ESP_LOGI(TAG, "lat=%f / lon=%f | Sats=%u | HDOP=%u | Alti=%u", gps_status.latitude / 1000000, gps_status.longitude / 1000000, gps_status.satellites, gps_status.hdop, gps_status.altitude);
+            LMIC_setTxData2(COUNTERPORT, gpsdata, sizeof(gpsdata), (cfg.countermode & 0x02));
+            ESP_LOGI(TAG, "%d bytes queued to send", sizeof(gpsdata));
         }
+        else {
     #endif
-    
+            LMIC_setTxData2(COUNTERPORT, mydata, sizeof(mydata), (cfg.countermode & 0x02));
+            ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));
+            sprintf(display_lmic, "PACKET QUEUED");    
+
+    #ifdef HAS_GPS
+            }
+    #endif
+   
     // clear counter if not in cumulative counter mode
     if (cfg.countermode != 1) {
         reset_counters();                       // clear macs container and reset all counters
@@ -178,10 +185,6 @@ void onEvent (ev_t ev) {
             strcpy_P(buff, PSTR("JOINED"));
             sprintf(display_lora, " "); // clear previous lmic status message from display
 
-            // Disable link check validation (automatically enabled
-            // during join, but not supported by TTN at this time).  -> do we need this?
-           // LMIC_setLinkCheckMode(0);
-            
             // set data rate adaptation
             LMIC_setAdrMode(cfg.adrmode);
             // Set data rate and transmit power (note: txpower seems to be ignored by the library)
