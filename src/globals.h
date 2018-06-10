@@ -17,8 +17,8 @@
 #endif
 
 // LMIC-Arduino LoRaWAN Stack
-#include <hal/hal.h>
 #include <lmic.h>
+#include <hal/hal.h>
 
 // LED controls
 #ifdef HAS_RGB_LED
