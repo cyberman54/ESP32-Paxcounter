@@ -137,13 +137,16 @@ function Decoder(bytes, port) {
   var decoded = {};
 
   if (port === 1) {
-    decoded.wifi = (bytes[0] << 8) | bytes[1];
-    decoded.ble = (bytes[2] << 8) | bytes[3];
-    decoded.latitude = ((bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4]);
-    decoded.longitude = ((bytes[11] << 24) | (bytes[10] << 16) | (bytes[9] << 8) | bytes[8]);
-    decoded.sats = (bytes[13] << 8) | bytes[12];
-    decoded.hdop = (bytes[15] << 8) | bytes[14];
-    decoded.altitude = (bytes[17] << 8) | bytes[16];
+    var i = 0;
+    decoded.wifi = (bytes[i++] << 8) | bytes[i++];
+    decoded.ble =  (bytes[i++] << 8) | bytes[i++];
+    if (bytes.length > 4) {
+      decoded.latitude = 	( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
+      decoded.longitude = ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
+      decoded.sats = 		  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.hdop = 		  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.altitude = 	(  bytes[i++]  | (bytes[i++] << 8) );
+    }
   }
 
   return decoded;
@@ -154,13 +157,16 @@ Converter:
 
 ```javascript
 function Converter(decoded, port) {
+  
   var converted = decoded;
 
   if (port === 1) {
     converted.pax = converted.ble + converted.wifi;
-    converted.hdop /= 100;
-    converted.latitude /= 1000000;
-    converted.longitude /= 1000000;
+    if (converted.length > 4){
+      converted.hdop /= 100;
+      converted.latitude /= 1000000;
+      converted.longitude /= 1000000;
+    }
   }
 
   return converted;
