@@ -109,14 +109,14 @@ void do_send(osjob_t* j){
 
     // Check if there is a pending TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
-        ESP_LOGI(TAG, "OP_TXRXPEND, not sending");
+        ESP_LOGI(TAG, "LoRa busy, rescheduling");
         sprintf(display_lmic, "LORA BUSY");
         goto end;
     }
 
     // prepare payload with sum of unique WIFI MACs seen
     static uint8_t mydata[4];
-  
+
     mydata[0] = (macs_wifi & 0xff00) >> 8;
     mydata[1] = macs_wifi  & 0xff;
     
@@ -129,11 +129,31 @@ void do_send(osjob_t* j){
         mydata[3] = 0;
     }
 
-    // Prepare upstream data transmission at the next possible time.
-    LMIC_setTxData2(1, mydata, sizeof(mydata), (cfg.countermode & 0x02));
-    ESP_LOGI(TAG, "Packet queued");
-    sprintf(display_lmic, "PACKET QUEUED");
+    #ifdef HAS_GPS
+        static uint8_t gpsdata[18];
+        if (cfg.gpsmode && gps.location.isValid()) {
+            gps_read();
+            memcpy (gpsdata, mydata, 4);
+            memcpy (gpsdata+4, &gps_status, sizeof(gps_status));
+            ESP_LOGI(TAG, "lat=%.6f / lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%u m", \
+                gps_status.latitude / (float) 1000000, \
+                gps_status.longitude / (float) 1000000, \
+                gps_status.satellites, \
+                gps_status.hdop / (float) 100, \
+                gps_status.altitude);
+            LMIC_setTxData2(COUNTERPORT, gpsdata, sizeof(gpsdata), (cfg.countermode & 0x02));
+            ESP_LOGI(TAG, "%d bytes queued to send", sizeof(gpsdata));
+        }
+        else {
+    #endif
+            LMIC_setTxData2(COUNTERPORT, mydata, sizeof(mydata), (cfg.countermode & 0x02));
+            ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));
+            sprintf(display_lmic, "PACKET QUEUED");    
 
+    #ifdef HAS_GPS
+            }
+    #endif
+   
     // clear counter if not in cumulative counter mode
     if (cfg.countermode != 1) {
         reset_counters();                       // clear macs container and reset all counters
@@ -170,10 +190,6 @@ void onEvent (ev_t ev) {
             strcpy_P(buff, PSTR("JOINED"));
             sprintf(display_lora, " "); // clear previous lmic status message from display
 
-            // Disable link check validation (automatically enabled
-            // during join, but not supported by TTN at this time).  -> do we need this?
-           // LMIC_setLinkCheckMode(0);
-            
             // set data rate adaptation
             LMIC_setAdrMode(cfg.adrmode);
             // Set data rate and transmit power (note: txpower seems to be ignored by the library)
@@ -200,8 +216,9 @@ void onEvent (ev_t ev) {
                     unsigned char* buffer = new unsigned char[MAX_LEN_FRAME];
                     memcpy(buffer, LMIC.frame, MAX_LEN_FRAME); //Copy data from cfg to char*
                     int i, k = LMIC.dataBeg, l = LMIC.dataBeg+LMIC.dataLen-2;
-                    for (i=k; i<=l; i+=2)
+                    for (i=k; i<=l; i+=2) {
                         rcommand(buffer[i], buffer[i+1]);
+                    }
                     delete[] buffer; //free memory
                 }
             }

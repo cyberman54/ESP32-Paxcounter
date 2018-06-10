@@ -20,18 +20,23 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Supported ESP32 based LoRa IoT boards:
-- Heltec LoRa-32 {1}
-- TTGOv1 {1}
-- TTGOv2 {1}{4}
-- TTGOv2.1 {1}{5}
-- TTGO T-Beam {4}{5}
-- Pycom LoPy {2}
-- Pycom LoPy4 {2}
-- Pycom FiPy {2}
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
+- **Heltec LoRa-32**  a)
+- **TTGOv1**  a)
+- **TTGOv2**  a,d)
+- **TTGOv2.1**  a),e)
+- **TTGO T-Beam**  d),e),f)
+- **Pycom LoPy**  b),f)*
+- **Pycom LoPy4**  b),f)*
+- **Pycom FiPy**  b),f)*
+- **LoLin32** with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)  b),c)
+- **LoLin32 Lite** with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)  b),c)
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in file /hal/<board>.h; {5} battery voltage monitoring supported
+a) on board OLED Display supported;
+b) on board RGB LED supported;
+c) on board Hardware unique DEVEUI supported;
+d) external wiring needed, see instructions in file /hal/<board>.h;
+e) battery voltage monitoring supported;
+f) on board GPS supported, *for Pycom devices with additional PyTrack board
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -102,40 +107,68 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 # Payload
 
-FPort1:
+**LoRaWAN Port #1:**
 
-	byte 1:			16-bit WiFi counter, MSB
-	byte 2:			16-bit WiFi counter, LSB
-	byte 3:			16-bit BLE counter, MSB
-	byte 4:			16-bit BLE counter, LSB
+	Paxcounter data
 
-FPort2:
+	byte 1-2:	Number of unique pax, first seen on Wifi
+	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
+	
+	GPS data (only, if GPS is present and has a fix)
+	
+	bytes 5-8:	GPS latitude
+	bytes 9-12:	GPS longitude
+	bytes 13-14:	GPS number of satellites
+	bytes 15-16:	GPS HDOP
+	bytes 17-18:	GPS altitude [meter]
 
-	see remote command set
+**LoRaWAN Port #2:**
 
-If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
+	- see remote control -
 
-Decoder:
+If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
+
+To map a GPS capable paxcounter device and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Paxcounter generates ttnmapper compatible data fields.
+
+**Decoder:**
 
 ```javascript
 function Decoder(bytes, port) {
-    var decoded = {};
-    if (port === 1) {
-      decoded.wifi = (bytes[0] << 8) | bytes[1];
-      decoded.ble = (bytes[2] << 8) | bytes[3];
+  var decoded = {};
+
+  if (port === 1) {
+    var i = 0;
+    decoded.wifi = (bytes[i++] << 8) | bytes[i++];
+    decoded.ble =  (bytes[i++] << 8) | bytes[i++];
+    if (bytes.length > 4) {
+      decoded.latitude =  ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
+      decoded.longitude = ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
+      decoded.sats = 	  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.hdop = 	  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.altitude =  (  bytes[i++]  | (bytes[i++] << 8) );
     }
-    return decoded;
+  }
+
+  return decoded;
 }
 ```
 
-Converter:
+**Converter:**
 
 ```javascript
 function Converter(decoded, port) {
+  
   var converted = decoded;
+
   if (port === 1) {
     converted.pax = converted.ble + converted.wifi;
+    if (converted.hdop) {
+      converted.hdop /= 100;
+      converted.latitude /= 1000000;
+      converted.longitude /= 1000000;
+    }
   }
+
   return converted;
 }
 ```
@@ -261,6 +294,14 @@ device answers with it's current configuration. The configuration is a C structu
 0x83 get device battery voltage
 
 	bytes 1-2:		battery voltage in millivolt, 0 if unreadable (little endian format)
+
+0x84 get device GPS status
+
+	bytes 1-4:		latitude
+	bytes 5-8:		longitude
+	byte 9-10:		number of satellites
+	byte 11-12:		HDOP
+	bytes 13-14:		altidute [meter]
 
 # License
 

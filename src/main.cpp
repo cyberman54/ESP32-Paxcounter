@@ -39,7 +39,7 @@ Refer to LICENSE.txt file in repository for more details.
 
 // Initialize global variables
 configData_t cfg;                   // struct holds current device configuration
-osjob_t sendjob;                    // LMIC job handler
+osjob_t sendjob, rcmdjob;           // LMIC job handler
 uint64_t uptimecounter = 0;         // timer global for uptime counter
 uint8_t DisplayState = 0;           // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0;   // MAC counters globals for display
@@ -52,13 +52,20 @@ uint16_t LEDBlinkDuration = 0;      // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE;     // state machine variable to set RGB LED color
 hw_timer_t * displaytimer = NULL;   // configure hardware timer used for cyclic display refresh
 hw_timer_t * channelSwitch = NULL;  // configure hardware timer used for wifi channel switching
+xref2u1_t rcmd_data;                // buffer for rcommand results size
+u1_t rcmd_data_size;                // buffer for rcommand results size
 
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying shared variable DisplayIRQ
+#ifdef HAS_GPS
+    gpsStatus_t gps_status;         // struct for storing gps data
+    TinyGPSPlus gps;                // create TinyGPS++ instance
+#endif
+
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ handler shared variables
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC adress hashes (Wifi + BLE)
 
 // this variables will be changed in the ISR, and read in main loop
-static volatile int ButtonPressed = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
+static volatile int ButtonPressedIRQ = 0, DisplayTimerIRQ = 0, ChannelTimerIRQ = 0;
 
 // local Tag for logging
 static const char TAG[] = "main";
@@ -130,36 +137,13 @@ void lorawan_loop(void * pvParameters) {
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 ); // FreeRTOS check
 
-    //static uint16_t lorawait = 0;
-
     while(1) {
-        
-        // execute LMIC jobs
-        os_runloop_once();
-
-        /*
-        // check if payload is sent
-        while(LMIC.opmode & OP_TXRXPEND) {
-            if(!lorawait) 
-                sprintf(display_lora, "LoRa wait");
-            lorawait++;
-            // in case sending really fails: reset LMIC and rejoin network
-            if( (lorawait % MAXLORARETRY ) == 0) {
-                ESP_LOGI(TAG, "Payload not sent, resetting LMIC and rejoin");
-                lorawait = 0;                
-                LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
-            };
-            vTaskDelay(1000/portTICK_PERIOD_MS);
-        }
-        */
-
-        vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
+        os_runloop_once();                  // execute LMIC jobs
+        vTaskDelay(1/portTICK_PERIOD_MS);   // reset watchdog
     }    
 }
 
-
 /* end LMIC specific parts --------------------------------------------------------------- */
-
 
 /* beginn hardware specific parts -------------------------------------------------------- */
 
@@ -183,14 +167,14 @@ void lorawan_loop(void * pvParameters) {
     bool btstop = btStop();
 #endif
 
+// Button IRQ Handler Routine, IRAM_ATTR necessary here, see https://github.com/espressif/arduino-esp32/issues/855
 #ifdef HAS_BUTTON
-    // Button IRQ
-    // IRAM_ATTR necessary here, see https://github.com/espressif/arduino-esp32/issues/855
     void IRAM_ATTR ButtonIRQ() {
-        ButtonPressed++;
+        ButtonPressedIRQ++;
     }
 #endif
 
+// Wifi Channel Rotation Timer IRQ Handler Routine
 void IRAM_ATTR ChannelSwitchIRQ() {
     portENTER_CRITICAL(&timerMux);
     ChannelTimerIRQ++;
@@ -360,11 +344,14 @@ uint64_t uptime() {
 
 #ifdef HAS_BUTTON
     void readButton() {
-        if (ButtonPressed) {
-            ButtonPressed--;
+        if (ButtonPressedIRQ) {
+            portENTER_CRITICAL(&timerMux);
+            ButtonPressedIRQ--;
+            portEXIT_CRITICAL(&timerMux);
+            ESP_LOGI(TAG, "Button pressed");
             ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
             eraseConfig();
-            esp_restart();
+            esp_restart();  
         }
     }
 #endif
@@ -483,6 +470,10 @@ void setup() {
     ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
 #endif
 
+#ifdef HAS_GPS
+    ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
+#endif
+
     // read settings from NVRAM
     loadConfig(); // includes initialize if necessary
 
@@ -495,9 +486,7 @@ void setup() {
 #ifdef HAS_RGB_LED
     rgb_set_color(COLOR_PINK);
     strcat(features, " RGB");
-    delay(1000);
 #endif
-
 
     // initialize button handling if needed
 #ifdef HAS_BUTTON
@@ -519,6 +508,11 @@ void setup() {
 #ifdef HAS_ANTENNA_SWITCH
     strcat(features, " ANT");
     antenna_init();
+#endif
+
+// initialize gps if present
+#ifdef HAS_GPS
+    strcat(features, " GPS");
 #endif
 
 #ifdef HAS_DISPLAY
@@ -588,7 +582,15 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
         start_BLEscan();
     }
 #endif
-    
+
+// if device has GPS and GPS function is enabled, start GPS reader task on core 0
+#ifdef HAS_GPS
+    if (cfg.gpsmode) {
+        ESP_LOGI(TAG, "Starting GPS task on core 0");
+        xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, ( void * ) 1, 1, NULL, 0);
+    }
+#endif
+
 // kickoff sendjob -> joins network and rescedules sendjob for cyclic transmitting payload
 do_send(&sendjob);
 
@@ -626,6 +628,12 @@ void loop() {
             reset_counters();   // clear macs container and reset all counters
             reset_salt();       // get new salt for salting hashes
         }
+
+        #ifdef HAS_GPS
+            // log NMEA status every 30 seconds, useful for debugging GPS connection
+            if ( (uptime() % 30000) == 0 )
+                ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
+        #endif
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 
