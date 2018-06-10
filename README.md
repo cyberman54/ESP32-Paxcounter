@@ -20,18 +20,23 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Supported ESP32 based LoRa IoT boards:
-- Heltec LoRa-32 {1}
-- TTGOv1 {1}
-- TTGOv2 {1}{4}
-- TTGOv2.1 {1}{5}
-- TTGO T-Beam {4}{5}
-- Pycom LoPy {2}
-- Pycom LoPy4 {2}
-- Pycom FiPy {2}
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
+- Heltec LoRa-32 a)
+- TTGOv1 a)
+- TTGOv2 a,d)
+- TTGOv2.1 a),e)
+- TTGO T-Beam d),e),f)
+- Pycom LoPy b)
+- Pycom LoPy4 b)
+- Pycom FiPy b)
+- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) b),c)
+- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) b),c)
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in file /hal/<board>.h; {5} battery voltage monitoring supported
+a) on board OLED Display supported;
+b) on board RGB LED supported;
+c) on board Hardware unique DEVEUI supported;
+d) external wiring needed, see instructions in file /hal/<board>.h;
+e) battery voltage monitoring supported;
+f) on board GPS supported
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -136,7 +141,6 @@ function Decoder(bytes, port) {
 
   return decoded;
 }
-}
 ```
 
 Converter:
@@ -153,7 +157,6 @@ function Converter(decoded, port) {
   }
 
   return converted;
-}
 }
 ```
 
