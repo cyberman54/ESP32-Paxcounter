@@ -62,8 +62,7 @@ If your device has silicon **Unique ID** which is stored in serial EEPROM Microc
 
 # Building
 
-Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version, at least 
-<A HREF="https://community.platformio.org/t/platformio-core-3-5-3/4238?utm_source=platformio&utm_medium=piohome">v3.5.3</A>.
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version.
 
 # Uploading
 
