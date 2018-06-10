@@ -629,8 +629,10 @@ void loop() {
             reset_salt();       // get new salt for salting hashes
         }
 
+        #ifdef HAS_GPS
         if ( (uptime() % 10000) == 0 )
             ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
+        #endif
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
 
