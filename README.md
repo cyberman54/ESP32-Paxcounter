@@ -62,8 +62,7 @@ If your device has silicon **Unique ID** which is stored in serial EEPROM Microc
 
 # Building
 
-Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version, at least 
-<A HREF="https://community.platformio.org/t/platformio-core-3-5-3/4238?utm_source=platformio&utm_medium=piohome">v3.5.3</A>.
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version.
 
 # Uploading
 
@@ -192,10 +191,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 (NOT YET IMPLEMENTED) set screen saver mode
+0x03 set GPS data on/off
 
-	0 = screen saver off [default]
-	1 = screen saver on
+	0 = GPS data off
+	1 = GPS data on, appends GPS data to payload, if GPS is present and has a fix [default]
 
 0x04 set display on/off
 
