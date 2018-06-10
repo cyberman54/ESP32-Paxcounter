@@ -20,18 +20,23 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Supported ESP32 based LoRa IoT boards:
-- Heltec LoRa-32 {1}
-- TTGOv1 {1}
-- TTGOv2 {1}{4}
-- TTGOv2.1 {1}{5}
-- TTGO T-Beam {4}{5}
-- Pycom LoPy {2}
-- Pycom LoPy4 {2}
-- Pycom FiPy {2}
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
+- **Heltec LoRa-32**  a)
+- **TTGOv1**  a)
+- **TTGOv2**  a,d)
+- **TTGOv2.1**  a),e)
+- **TTGO T-Beam**  d),e),f)
+- **Pycom LoPy**  b),f)*
+- **Pycom LoPy4**  b),f)*
+- **Pycom FiPy**  b),f)*
+- **LoLin32** with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)  b),c)
+- **LoLin32 Lite** with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)  b),c)
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in file /hal/<board>.h; {5} battery voltage monitoring supported
+a) on board OLED Display supported;
+b) on board RGB LED supported;
+c) on board Hardware unique DEVEUI supported;
+d) external wiring needed, see instructions in file /hal/<board>.h;
+e) battery voltage monitoring supported;
+f) on board GPS supported, *for Pycom devices with additional PyTrack board
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -102,46 +107,43 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 # Payload
 
-LoRaWAN Port #1: Counter data
+**LoRaWAN Port #1:**
 
-	byte 1:			WiFi counter, MSB
-	byte 2:			WiFi counter, LSB
-	byte 3:			BLE counter, MSB
-	byte 4:			BLE counter, LSB
+	Paxcounter data
 
-LoRaWAN Port #2: Remote commands
+	byte 1-2:	Number of unique pax, first seen on Wifi
+	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
+	
+	GPS data (only, if GPS is present and has a fix)
+	
+	bytes 5-8:	GPS latitude
+	bytes 9-12:	GPS longitude
+	bytes 13-14:	GPS number of satellites
+	bytes 15-16:	GPS HDOP
+	bytes 17-18:	GPS altitude [meter]
 
-	see remote control
+**LoRaWAN Port #2:**
 
-LoRaWAN Port #3: GPS data
+	- see remote control -
 
-	bytes 1-4:		Latitude
-	bytes 4-8:		Longitude
-	bytes 9-10:		Satellites
-	bytes 11-12:		HDOP
-	bytes 13-14:		Altitude
+If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
 
-If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
+To map a GPS capable paxcounter device and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Paxcounter generates ttnmapper compatible data fields.
 
 Decoder:
 
 ```javascript
 function Decoder(bytes, port) {
-  // decode counter messages
   var decoded = {};
 
   if (port === 1) {
     decoded.wifi = (bytes[0] << 8) | bytes[1];
     decoded.ble = (bytes[2] << 8) | bytes[3];
-  }
-
-  // decode GPS messages
-  if (port === 3) {
-    decoded.latitude = (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0];
-    decoded.longitude = (bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4];
-    decoded.satellites = (bytes[9] << 8) | bytes[8];
-    decoded.hdop = (bytes[11] << 8) | bytes[10];
-    decoded.altitude = (bytes[13] << 8) | bytes[12];
+    decoded.latitude = ((bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4]);
+    decoded.longitude = ((bytes[11] << 24) | (bytes[10] << 16) | (bytes[9] << 8) | bytes[8]);
+    decoded.sats = (bytes[13] << 8) | bytes[12];
+    decoded.hdop = (bytes[15] << 8) | bytes[14];
+    decoded.altitude = (bytes[17] << 8) | bytes[16];
   }
 
   return decoded;
@@ -153,24 +155,23 @@ Converter:
 ```javascript
 function Converter(decoded, port) {
   var converted = decoded;
-  // sum up ble + wifi counters
+
   if (port === 1) {
     converted.pax = converted.ble + converted.wifi;
+    converted.hdop /= 100;
+    converted.latitude /= 1000000;
+    converted.longitude /= 1000000;
   }
-  // convert some GPS values
-  if (port === 3) {
-    converted.latitude = converted.latitude / 100000;
-	converted.longitude = converted.longitude / 100000;
-	converted.hdop = converted.hdop / 100;
+
   return converted;
 }
 ```
 
-# Remote control
+# Remote command set
 
 The device listenes for remote control commands on LoRaWAN Port 2.
 Each command is followed by exactly one parameter.
-For "set" commands, multiple command/parameter pairs can be concatenated and sent in one downlink, all commands are executed. For "get" commands, only one command/parameter pair per downlink is processed.
+Multiple command/parameter pairs can be concatenated and sent in one single payload downlink.
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
 
@@ -185,10 +186,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 set GPS on/off (NOT YET IMPLEMENTED)
+0x03 (NOT YET IMPLEMENTED) set screen saver mode
 
-	0 = GPS off [default]
-	1 = GPS on, GPS data set (if present) is added to payload
+	0 = screen saver off [default]
+	1 = screen saver on
 
 0x04 set display on/off
 
@@ -258,7 +259,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L32-L50) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L27-L44) with the following definition:
 
 	byte 1:			Lora SF (7..12)
 	byte 2:			Lora TXpower (2..15)
@@ -274,8 +275,7 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 13:		Wifi antenna switch (0=internal, 1=external)
 	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
 	byte 15:		RGB LED luminosity (0..100 %)
-	byte 16:		GPS status (1=on, 0=off)
-	bytes 17-27:		Software version (ASCII format, terminating with zero)
+	bytes 16-26:		Software version (ASCII format, terminating with zero)
 
 0x81 get device uptime
 
@@ -289,13 +289,13 @@ device answers with it's current configuration. The configuration is a C structu
 
 	bytes 1-2:		battery voltage in millivolt, 0 if unreadable (little endian format)
 
-0x84 get device GPS status (NOT YET IMPLEMENTED)
+0x84 get device GPS status
 
 	bytes 1-4:		latitude
 	bytes 5-8:		longitude
-	byte 9:			number of satellites
-	byte 10:		HDOP
-	bytes 11-12:	altidute [meter]
+	byte 9-10:		number of satellites
+	byte 11-12:		HDOP
+	bytes 13-14:		altidute [meter]
 
 # License
 

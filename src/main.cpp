@@ -586,8 +586,8 @@ xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, ( void * ) 1, 1, NULL
 // if device has GPS and GPS function is enabled, start GPS reader task on core 0
 #ifdef HAS_GPS
     if (cfg.gpsmode) {
-    ESP_LOGI(TAG, "Starting GPS task on core 0");
-    xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, ( void * ) 1, 1, NULL, 0);
+        ESP_LOGI(TAG, "Starting GPS task on core 0");
+        xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, ( void * ) 1, 1, NULL, 0);
     }
 #endif
 
@@ -630,8 +630,9 @@ void loop() {
         }
 
         #ifdef HAS_GPS
-        if ( (uptime() % 10000) == 0 )
-            ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
+            // log NMEA status every 30 seconds, useful for debugging GPS connection
+            if ( (uptime() % 30000) == 0 )
+                ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d", gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
         #endif
 
         vTaskDelay(1/portTICK_PERIOD_MS); // reset watchdog
