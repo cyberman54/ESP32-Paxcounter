@@ -141,11 +141,11 @@ function Decoder(bytes, port) {
     decoded.wifi = (bytes[i++] << 8) | bytes[i++];
     decoded.ble =  (bytes[i++] << 8) | bytes[i++];
     if (bytes.length > 4) {
-      decoded.latitude = 	( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
+      decoded.latitude =  ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
       decoded.longitude = ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
-      decoded.sats = 		  (  bytes[i++]  | (bytes[i++] << 8) );
-      decoded.hdop = 		  (  bytes[i++]  | (bytes[i++] << 8) );
-      decoded.altitude = 	(  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.sats = 	  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.hdop = 	  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.altitude =  (  bytes[i++]  | (bytes[i++] << 8) );
     }
   }
 
