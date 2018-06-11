@@ -150,11 +150,10 @@ void do_send(osjob_t *j) {
     LMIC_setTxData2(COUNTERPORT, mydata, sizeof(mydata),
                     (cfg.countermode & 0x02));
     ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));
-    sprintf(display_lmic, "PACKET QUEUED");
-
 #ifdef HAS_GPS
   }
 #endif
+  sprintf(display_lmic, "PACKET QUEUED");
 
   // clear counter if not in cumulative counter mode
   if (cfg.countermode != 1) {
