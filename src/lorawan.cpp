@@ -106,12 +106,15 @@ void printKeys(void) {
 #endif // VERBOSE
 
 void do_send(osjob_t *j) {
+  // Schedule next transmission
+  os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(cfg.sendcycle * 2),
+                      do_send);
 
   // Check if there is a pending TX/RX job running
   if (LMIC.opmode & OP_TXRXPEND) {
     ESP_LOGI(TAG, "LoRa busy, rescheduling");
     sprintf(display_lmic, "LORA BUSY");
-    goto end;
+    return;
   }
 
   // prepare payload with sum of unique WIFI MACs seen
@@ -153,7 +156,6 @@ void do_send(osjob_t *j) {
   }
 #endif
 
-end:
   // clear counter if not in cumulative counter mode
   if (cfg.countermode != 1) {
     reset_counters(); // clear macs container and reset all counters
@@ -161,9 +163,6 @@ end:
     ESP_LOGI(TAG, "Counter cleared (countermode = %d)", cfg.countermode);
   }
 
-  // Schedule next transmission
-  os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(cfg.sendcycle * 2),
-                      do_send);
 } // do_send()
 
 void onEvent(ev_t ev) {
