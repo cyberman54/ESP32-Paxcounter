@@ -676,7 +676,7 @@ void loop() {
 
 #ifdef HAS_GPS
     // log NMEA status every 30 seconds, useful for debugging GPS connection
-    if (uptimecounter %30 == 0)
+    if ((uptime() % 30000) == 0)
       ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
                gps.passedChecksum(), gps.failedChecksum(),
                gps.sentencesWithFix());
