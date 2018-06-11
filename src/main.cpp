@@ -299,8 +299,8 @@ void refreshDisplay() {
 
   // update GPS status (line 2)
 #ifdef HAS_GPS
-  u8x8.setCursor(8, 2);
-  if (!gps.location.isvalid()) // if no fix then display Sats value inverse
+  u8x8.setCursor(7, 2);
+  if (!gps.location.isValid()) // if no fix then display Sats value inverse
   {
     u8x8.setInverseFont(1);
     u8x8.printf("Sats: %.3d", gps.satellites.value());
@@ -676,8 +676,8 @@ void loop() {
 
 #ifdef HAS_GPS
     // log NMEA status every 30 seconds, useful for debugging GPS connection
-    if ((uptime() % 30000) == 0)
-      ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+    if (uptimecounter %30 == 0)
+      ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
                gps.passedChecksum(), gps.failedChecksum(),
                gps.sentencesWithFix());
 #endif
