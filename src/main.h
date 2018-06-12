@@ -37,12 +37,6 @@ void led_loop(void);
 
 //defined in gpsread.cpp
 #ifdef HAS_GPS
-<<<<<<< HEAD
 void gps_read(void);
 void gps_loop(void *pvParameters);
 #endif
-=======
-  void gps_read(void);
-  void gps_loop(void * pvParameters);
-#endif
->>>>>>> master
