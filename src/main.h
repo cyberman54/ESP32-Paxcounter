@@ -10,15 +10,12 @@
 
 //--- Declarations ---
 
-enum led_states { 
-  LED_OFF,
-  LED_ON
-};
+enum led_states { LED_OFF, LED_ON };
 
 #if defined(CFG_eu868)
-  const char lora_datarate[] = {"1211100908077BFSNA"};
-#elif defined(CFG_us915)  
-  const char lora_datarate[] = {"100908078CNA121110090807"};
+const char lora_datarate[] = {"1211100908077BFSNA"};
+#elif defined(CFG_us915)
+const char lora_datarate[] = {"100908078CNA121110090807"};
 #endif
 
 //--- Prototypes ---
@@ -28,14 +25,13 @@ void reset_counters(void);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
 void led_loop(void);
 
-
 // defined in blescan.cpp
 #ifdef BLECOUNTER
-  void start_BLEscan(void);
-  void stop_BLEscan(void);
+void start_BLEscan(void);
+void stop_BLEscan(void);
 #endif
 
-//defined in gpsread.cpp
+// defined in gpsread.cpp
 #ifdef HAS_GPS
 void gps_read(void);
 void gps_loop(void *pvParameters);

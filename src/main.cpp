@@ -1,6 +1,5 @@
 /*
- 
-
+ESP32-Paxcounter
 
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
 Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>

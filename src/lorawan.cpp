@@ -211,8 +211,7 @@ void onEvent(ev_t ev) {
   case EV_JOINED:
 
     strcpy_P(buff, PSTR("JOINED"));
-    sprintf(display_lora,
-            " "); // clear previous lmic status message from display
+    sprintf(display_lora, " "); // clear previous lmic status
 
     // set data rate adaptation
     LMIC_setAdrMode(cfg.adrmode);
@@ -229,8 +228,7 @@ void onEvent(ev_t ev) {
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
                                                : PSTR("TX COMPLETE"));
-    sprintf(display_lora,
-            " "); // clear previous lmic status message from display
+    sprintf(display_lora, " "); // clear previous lmic status
 
     if (LMIC.dataLen) {
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
