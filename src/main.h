@@ -3,9 +3,10 @@
 #include "lorawan.h"
 #include "macsniff.h"
 
-// program version - note: increment version after modifications to configData_t struct!!
-#define PROGVERSION                     "1.3.8"    // use max 10 chars here!
-#define PROGNAME                        "PAXCNT"
+// program version - note: increment version after modifications to configData_t
+// struct!!
+#define PROGVERSION "1.3.81" // use max 10 chars here!
+#define PROGNAME "PAXCNT"
 
 //--- Declarations ---
 
@@ -36,6 +37,12 @@ void led_loop(void);
 
 //defined in gpsread.cpp
 #ifdef HAS_GPS
+<<<<<<< HEAD
+void gps_read(void);
+void gps_loop(void *pvParameters);
+#endif
+=======
   void gps_read(void);
   void gps_loop(void * pvParameters);
 #endif
+>>>>>>> master
