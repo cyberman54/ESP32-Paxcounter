@@ -5,6 +5,20 @@
 #include <Arduino.h>
 #include "LoraEncoder.h"
 
+// MyDevices CayenneLPP channels
+#define LPP_GPS_CHANNEL 20
+#define LPP_COUNT_WIFI_CHANNEL 21
+#define LPP_COUNT_BLE_CHANNEL 22
+#define LPP_BATT_CHANNEL 23
+#define LPP_ADR_CHANNEL 25
+#define LPP_TEMP_CHANNEL 26
+// MyDevices CayenneLPP types
+#define LPP_GPS 136          // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01m
+#define LPP_TEMPERATURE 103  // 2 bytes, 0.1°C signed
+#define LPP_DIGITAL_INPUT 0  // 1 byte
+#define LPP_DIGITAL_OUTPUT 1 // 1 byte
+#define LPP_ANALOG_INPUT 2   // 2 bytes, 0.01 signed
+
 class TTNplain {
 public:
   TTNplain(uint8_t size);
@@ -44,21 +58,6 @@ private:
   LoraEncoder message(byte *buffer);
 };
 
-#ifdef CAYENNE_LPP
-// LPP channels
-#define LPP_GPS_CHANNEL 20
-#define LPP_COUNT_WIFI_CHANNEL 21
-#define LPP_COUNT_BLE_CHANNEL 22
-#define LPP_BATT_CHANNEL 23
-#define LPP_ADR_CHANNEL 25
-#define LPP_TEMP_CHANNEL 26
-// LPP types
-#define LPP_GPS 136          // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01m
-#define LPP_TEMPERATURE 103  // 2 bytes, 0.1°C signed
-#define LPP_DIGITAL_INPUT 0  // 1 byte
-#define LPP_DIGITAL_OUTPUT 1 // 1 byte
-#define LPP_ANALOG_INPUT 2   // 2 bytes, 0.01 signed
-
 class CayenneLPP {
 public:
   CayenneLPP(uint8_t size);
@@ -78,7 +77,5 @@ private:
   uint8_t maxsize;
   uint8_t cursor;
 };
-
-#endif // CAYENNE_LPP
 
 #endif // _PAYLOAD_H_

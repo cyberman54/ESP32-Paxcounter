@@ -130,8 +130,6 @@ void TTNserialized::addStatus(uint16_t voltage, uint64_t uptime,
 
 /* ---------------- Cayenne LPP format ---------- */
 
-#ifdef CAYENNE_LPP
-
 CayenneLPP::CayenneLPP(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
   cursor = 0;
@@ -191,5 +189,3 @@ void CayenneLPP::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   buffer[cursor++] = (uint16_t) cputemp >> 8;
   buffer[cursor++] = (uint16_t) cputemp;
 }
-
-#endif // CAYENNE_LPP
