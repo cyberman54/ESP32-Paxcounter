@@ -106,6 +106,8 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 # Payload
 
+All data is represented in big-endian-format, as long not otherwise stated.
+
 **LoRaWAN Port #1:**
 
 	Paxcounter data
@@ -140,11 +142,11 @@ function Decoder(bytes, port) {
     decoded.wifi = (bytes[i++] << 8) | bytes[i++];
     decoded.ble =  (bytes[i++] << 8) | bytes[i++];
     if (bytes.length > 4) {
-      decoded.latitude =  ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
-      decoded.longitude = ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
-      decoded.sats = 	  (  bytes[i++]  | (bytes[i++] << 8) );
-      decoded.hdop = 	  (  bytes[i++]  | (bytes[i++] << 8) );
-      decoded.altitude =  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.latitude =  ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
+      decoded.longitude = ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
+	  decoded.sats = 	  (  bytes[i++] );
+      decoded.hdop = 	  (  bytes[i++] << 8)  | (bytes[i++] );
+      decoded.altitude =  (  bytes[i++] << 8)  | (bytes[i++] );
     }
   }
 
@@ -264,7 +266,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L32-L50) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [main.h](src/main.h#L13-L31) with the following definition:
 
 	byte 1:			Lora SF (7..12) [default 9]
 	byte 2:			Lora TXpower (2..15) [default 15]
@@ -283,25 +285,19 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 16:		GPS send data mode (1=on, 0=ff) [default 1]
 	bytes 17-27:		Software version (ASCII format, terminating with zero)
 
-0x81 get device uptime
+0x81 get device status
 
-	bytes 1-8:		Uptime in seconds (little endian format)
-
-0x82 get device cpu temperature
-
-	bytes 1-4:		Chip temperature in degrees celsius (little endian format)
-
-0x83 get device battery voltage
-
-	bytes 1-2:		Battery voltage in millivolt, 0 if unreadable (little endian format)
+	bytes 1-2:		Battery voltage in millivolt, 0 if unreadable
+	bytes 3-10:		Uptime in seconds
+	bytes 11-14:		Chip temperature in degrees celsius
 
 0x84 get device GPS status
 
 	bytes 1-4:		Latitude
 	bytes 5-8:		Longitude
-	byte 9-10:		Number of satellites
-	byte 11-12:		HDOP
-	bytes 13-14:		altidute [meter]
+	byte 9:			Number of satellites
+	byte 10-11:		HDOP
+	bytes 12-13:		altidute [meter]
 
 # License
 

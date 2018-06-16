@@ -27,7 +27,7 @@ void antenna_select(const uint8_t _ant);
 
 // function defined in adcread.cpp
 #ifdef HAS_BATTERY_PROBE
-uint32_t read_voltage(void);
+uint16_t read_voltage(void);
 #endif
 
 // function sends result of get commands to LoRaWAN network
@@ -40,18 +40,11 @@ void do_transmit(osjob_t *j) {
     os_setTimedCallback(&rcmdjob, os_getTime() + sec2osticks(RETRANSMIT_RCMD),
                         do_transmit);
   }
-  LMIC_setTxData2(RCMDPORT, rcmd_data, rcmd_data_size,
-                  0); // send data unconfirmed on RCMD Port
-  ESP_LOGI(TAG, "%d bytes queued to send", rcmd_data_size);
+  // send payload
+  LMIC_setTxData2(RCMDPORT, payload.getBuffer(), payload.getSize(),
+                  (cfg.countermode & 0x02));
+  ESP_LOGI(TAG, "%d bytes queued to send", payload.getSize());
   sprintf(display_lmic, "PACKET QUEUED");
-}
-
-// help function to transmit result of get commands, since callback function
-// do_transmit() cannot have params
-void transmit(xref2u1_t mydata, u1_t mydata_size) {
-  rcmd_data = mydata;
-  rcmd_data_size = mydata_size;
-  do_transmit(&rcmdjob);
 }
 
 // help function to assign LoRa datarates to numeric spreadfactor values
@@ -292,41 +285,33 @@ void set_lorapower(uint8_t val) {
 };
 
 void get_config(uint8_t val) {
-  ESP_LOGI(TAG, "Remote command: get configuration");
-  transmit((byte *)&cfg, sizeof(cfg));
+  ESP_LOGI(TAG, "Remote command: get device configuration");
+  payload.reset();
+  payload.addConfig(cfg);
+  do_transmit(&rcmdjob);
 };
 
-void get_uptime(uint8_t val) {
-  ESP_LOGI(TAG, "Remote command: get uptime");
-  transmit((byte *)&uptimecounter, sizeof(uptimecounter));
-};
-
-void get_cputemp(uint8_t val) {
-  ESP_LOGI(TAG, "Remote command: get cpu temperature");
-  float temp = temperatureRead();
-  transmit((byte *)&temp, sizeof(temp));
-};
-
-void get_voltage(uint8_t val) {
-  ESP_LOGI(TAG, "Remote command: get battery voltage");
+void get_status(uint8_t val) {
+  ESP_LOGI(TAG, "Remote command: get device status");
 #ifdef HAS_BATTERY_PROBE
   uint16_t voltage = read_voltage();
 #else
   uint16_t voltage = 0;
 #endif
-  transmit((byte *)&voltage, sizeof(voltage));
+  payload.reset();
+  payload.addStatus(voltage, uptimecounter, temperatureRead());
+  do_transmit(&rcmdjob);
 };
 
 void get_gps(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: get gps status");
 #ifdef HAS_GPS
   gps_read();
-  transmit((byte *)&gps_status, sizeof(gps_status));
-  ESP_LOGI(TAG, "lat=%f / lon=%f | Sats=%u | HDOP=%u | Alti=%u",
-           gps_status.latitude / 1000000, gps_status.longitude / 1000000,
-           gps_status.satellites, gps_status.hdop, gps_status.altitude);
+  payload.reset();
+  payload.addGPS(gps_status);
+  do_transmit(&rcmdjob);
 #else
-  ESP_LOGE(TAG, "GPS not present");
+  ESP_LOGW(TAG, "GPS function not supported");
 #endif
 };
 
@@ -341,8 +326,7 @@ cmd_t table[] = {{0x01, set_rssi, true},          {0x02, set_countmode, true},
                  {0x0b, set_wifichancycle, true}, {0x0c, set_blescantime, true},
                  {0x0d, set_vendorfilter, false}, {0x0e, set_blescan, true},
                  {0x0f, set_wifiant, true},       {0x10, set_rgblum, true},
-                 {0x80, get_config, false},       {0x81, get_uptime, false},
-                 {0x82, get_cputemp, false},      {0x83, get_voltage, false},
+                 {0x80, get_config, false},       {0x81, get_status, false},
                  {0x84, get_gps, false}};
 
 // check and execute remote command

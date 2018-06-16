@@ -56,9 +56,7 @@ uint16_t LEDColor = COLOR_NONE; // state machine variable to set RGB LED color
 hw_timer_t *displaytimer =
     NULL; // configure hardware timer used for cyclic display refresh
 hw_timer_t *channelSwitch =
-    NULL;            // configure hardware timer used for wifi channel switching
-xref2u1_t rcmd_data; // buffer for rcommand results size
-u1_t rcmd_data_size; // buffer for rcommand results size
+    NULL; // configure hardware timer used for wifi channel switching
 
 #ifdef HAS_GPS
 gpsStatus_t gps_status; // struct for storing gps data
@@ -71,6 +69,19 @@ portMUX_TYPE timerMux =
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC
                          // adress hashes (Wifi + BLE)
+
+// select payload encoder
+#if (PAYLOAD_ENCODER == 3)
+// CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
+#elif (PAYLOAD_ENCODER == 2)
+TTNserialized payload(PAYLOAD_BUFFER_SIZE);
+#elif (PAYLOAD_ENCODER == 1)
+TTNplain payload(PAYLOAD_BUFFER_SIZE);
+#else
+#error "No valid payload converter defined"
+#endif
+
+// TTNplain payload(PAYLOAD_BUFFER_SIZE);
 
 // this variables will be changed in the ISR, and read in main loop
 static volatile int ButtonPressedIRQ = 0, DisplayTimerIRQ = 0,
@@ -674,11 +685,22 @@ void loop() {
     }
 
 #ifdef HAS_GPS
-    // log NMEA status every 30 seconds, useful for debugging GPS connection
-    if ((uptime() % 30000) == 0)
+    // log NMEA status every 60 seconds, useful for debugging GPS connection
+    if ((uptime() % 60000) == 0) {
       ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
                gps.passedChecksum(), gps.failedChecksum(),
                gps.sentencesWithFix());
+      if ((cfg.gpsmode) && (gps.location.isValid())) {
+        gps_read();
+        ESP_LOGI(TAG,
+                 "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
+                 gps_status.latitude / (float)1000000,
+                 gps_status.longitude / (float)1000000, gps_status.satellites,
+                 gps_status.hdop / (float)100, gps_status.altitude);
+      } else {
+        ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
+      }
+    }
 #endif
 
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
