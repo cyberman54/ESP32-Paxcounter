@@ -48,7 +48,6 @@ public:
 private:
   uint8_t *buffer;
   LoraEncoder message(byte *buffer);
-  //LoraEncoder(byte *buffer);
 };
 
 #endif

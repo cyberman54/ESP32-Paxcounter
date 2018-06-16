@@ -130,8 +130,6 @@ void do_send(osjob_t *j) {
   if ((cfg.gpsmode) && (gps.location.isValid())) {
     gps_read();
     payload.addGPS(gps_status);
-  } else {
-    ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
   }
 #endif
 

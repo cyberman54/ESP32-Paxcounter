@@ -81,12 +81,12 @@ void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
 
 TTNserialized::TTNserialized(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
-  LoraEncoder message(buffer);
+  //LoraEncoder message(buffer);
 }
 
 TTNserialized::~TTNserialized(void) { free(buffer); }
 
-void TTNserialized::reset(void) { }
+void TTNserialized::reset(void) { delete buffer; }
 
 uint8_t TTNserialized::getSize(void) { return sizeof(buffer); }
 
