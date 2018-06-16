@@ -76,7 +76,7 @@ TTNplain payload(PAYLOAD_BUFFER_SIZE);
 #elif (PAYLOAD_ENCODER == 2)
 TTNserialized payload(PAYLOAD_BUFFER_SIZE);
 #elif (PAYLOAD_ENCODER == 3)
-//CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
+CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
 #else
 #error "No valid payload converter defined"
 #endif

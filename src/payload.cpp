@@ -81,7 +81,7 @@ void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
 
 TTNserialized::TTNserialized(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
-  //LoraEncoder message(buffer);
+  // LoraEncoder message(buffer);
 }
 
 TTNserialized::~TTNserialized(void) { free(buffer); }
@@ -130,3 +130,67 @@ void TTNserialized::addStatus(uint16_t voltage, uint64_t uptime,
 }
 
 /* ---------------- Cayenne LPP format ---------- */
+
+#ifdef CAYENNE_LPP
+
+CayenneLPP::CayenneLPP(uint8_t size) {
+  buffer = (uint8_t *)malloc(size);
+  cursor = 0;
+}
+
+CayenneLPP::~CayenneLPP(void) { free(buffer); }
+
+void CayenneLPP::reset(void) { cursor = 0; }
+
+uint8_t CayenneLPP::getSize(void) { return cursor; }
+
+uint8_t *CayenneLPP::getBuffer(void) { return buffer; }
+
+void CayenneLPP::addCount(uint16_t value1, uint16_t value2) {
+  buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
+  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = value1 >> 8;
+  buffer[cursor++] = value1;
+  buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
+  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = value2 >> 8;
+  buffer[cursor++] = value2;
+}
+
+void CayenneLPP::addGPS(gpsStatus_t value) {
+  int32_t lat = value.latitude * (int32_t) 10000;
+  int32_t lon = value.longitude * (int32_t) 10000;
+  int32_t alt = value.altitude * (int32_t) 100;
+
+  buffer[cursor++] = LPP_GPS_CHANNEL;
+  buffer[cursor++] = LPP_GPS;
+  buffer[cursor++] = lat >> 16;
+  buffer[cursor++] = lat >> 8;
+  buffer[cursor++] = lat;
+  buffer[cursor++] = lon >> 16;
+  buffer[cursor++] = lon >> 8;
+  buffer[cursor++] = lon;
+  buffer[cursor++] = alt >> 16;
+  buffer[cursor++] = alt >> 8;
+  buffer[cursor++] = alt;
+}
+
+void CayenneLPP::addConfig(configData_t value) {
+  buffer[cursor++] = LPP_ADR_CHANNEL;
+  buffer[cursor++] = LPP_DIGITAL_INPUT;
+  buffer[cursor++] = value.adrmode;
+}
+
+void CayenneLPP::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+  buffer[cursor++] = LPP_BATT_CHANNEL;
+  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = voltage >> 8;
+  buffer[cursor++] = voltage;
+
+  buffer[cursor++] = LPP_TEMP_CHANNEL;
+  buffer[cursor++] = LPP_TEMPERATURE;
+  buffer[cursor++] = (uint16_t) cputemp >> 8;
+  buffer[cursor++] = (uint16_t) cputemp;
+}
+
+#endif // CAYENNE_LPP

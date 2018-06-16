@@ -51,7 +51,7 @@ extern TTNplain payload;
 #elif (PAYLOAD_ENCODER == 2)
 extern TTNserialized payload;
 #elif (PAYLOAD_ENCODER == 3)
-//extern CayenneLPP payload;
+extern CayenneLPP payload;
 #else
 #error "No valid payload converter defined"
 #endif
