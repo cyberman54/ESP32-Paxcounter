@@ -45,6 +45,7 @@ extern gpsStatus_t gps_status; // struct for storing gps data
 extern TinyGPSPlus gps;        // Make TinyGPS++ instance globally availabe
 #endif
 
+/*
 // payload encoder
 #if (PAYLOAD_ENCODER == 1)
 extern TTNplain payload;
@@ -55,3 +56,6 @@ extern CayenneLPP payload;
 #else
 #error "No valid payload converter defined"
 #endif
+*/
+
+extern TTNplain payload;
