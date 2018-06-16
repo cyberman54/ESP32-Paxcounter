@@ -46,12 +46,12 @@ extern TinyGPSPlus gps;        // Make TinyGPS++ instance globally availabe
 #endif
 
 // payload encoder
-#if (PAYLOAD_ENCODER == 3)
-// externe CayenneLPP payload;
+#if (PAYLOAD_ENCODER == 1)
+extern TTNplain payload;
 #elif (PAYLOAD_ENCODER == 2)
 extern TTNserialized payload;
-#elif (PAYLOAD_ENCODER == 1)
-extern TTNplain payload;
+#elif (PAYLOAD_ENCODER == 3)
+//extern CayenneLPP payload;
 #else
 #error "No valid payload converter defined"
 #endif

@@ -70,18 +70,16 @@ portMUX_TYPE timerMux =
 std::set<uint16_t> macs; // associative container holds total of unique MAC
                          // adress hashes (Wifi + BLE)
 
-// select payload encoder
-#if (PAYLOAD_ENCODER == 3)
-// CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
+// initialize payload encoder
+#if (PAYLOAD_ENCODER == 1)
+TTNplain payload(PAYLOAD_BUFFER_SIZE);
 #elif (PAYLOAD_ENCODER == 2)
 TTNserialized payload(PAYLOAD_BUFFER_SIZE);
-#elif (PAYLOAD_ENCODER == 1)
-TTNplain payload(PAYLOAD_BUFFER_SIZE);
+#elif (PAYLOAD_ENCODER == 3)
+//CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
 #else
 #error "No valid payload converter defined"
 #endif
-
-// TTNplain payload(PAYLOAD_BUFFER_SIZE);
 
 // this variables will be changed in the ISR, and read in main loop
 static volatile int ButtonPressedIRQ = 0, DisplayTimerIRQ = 0,
