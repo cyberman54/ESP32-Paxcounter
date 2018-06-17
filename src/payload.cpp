@@ -24,6 +24,7 @@ void TTNplain::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = value2;
 }
 
+#ifdef HAS_GPS
 void TTNplain::addGPS(gpsStatus_t value) {
   buffer[cursor++] = value.latitude >> 24;
   buffer[cursor++] = value.latitude >> 16;
@@ -39,6 +40,7 @@ void TTNplain::addGPS(gpsStatus_t value) {
   buffer[cursor++] = value.altitude >> 8;
   buffer[cursor++] = value.altitude;
 }
+#endif
 
 void TTNplain::addConfig(configData_t value) {
   buffer[cursor++] = value.lorasf;
@@ -99,6 +101,7 @@ void TTNserialized::addCount(uint16_t value1, uint16_t value2) {
   message.writeUint16(value2);
 }
 
+#ifdef HAS_GPS
 void TTNserialized::addGPS(gpsStatus_t value) {
   LoraEncoder message(buffer);
   message.writeLatLng(value.latitude, value.longitude);
@@ -106,6 +109,7 @@ void TTNserialized::addGPS(gpsStatus_t value) {
   message.writeUint16(value.hdop);
   message.writeUint16(value.altitude);
 }
+#endif
 
 void TTNserialized::addConfig(configData_t value) {
   LoraEncoder message(buffer);
@@ -156,6 +160,7 @@ void CayenneLPP::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = value2;
 }
 
+#ifdef HAS_GPS
 void CayenneLPP::addGPS(gpsStatus_t value) {
   int32_t lat = value.latitude / 100;
   int32_t lon = value.longitude / 100;
@@ -172,6 +177,7 @@ void CayenneLPP::addGPS(gpsStatus_t value) {
   buffer[cursor++] = alt >> 8;
   buffer[cursor++] = alt;
 }
+#endif
 
 void CayenneLPP::addConfig(configData_t value) {
   buffer[cursor++] = LPP_ADR_CHANNEL;

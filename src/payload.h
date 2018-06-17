@@ -30,9 +30,11 @@ public:
   uint8_t *getBuffer(void);
 
   void addCount(uint16_t value1, uint16_t value2);
-  void addGPS(gpsStatus_t value);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
+#ifdef HAS_GPS
+  void addGPS(gpsStatus_t value);
+#endif
 
 private:
   uint8_t *buffer;
@@ -50,9 +52,11 @@ public:
   uint8_t *getBuffer(void);
 
   void addCount(uint16_t value1, uint16_t value2);
-  void addGPS(gpsStatus_t value);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
+#ifdef HAS_GPS
+  void addGPS(gpsStatus_t value);
+#endif
 
 private:
   uint8_t *buffer;
@@ -69,9 +73,11 @@ public:
   uint8_t *getBuffer(void);
 
   void addCount(uint16_t value1, uint16_t value2);
-  void addGPS(gpsStatus_t value);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
+#ifdef HAS_GPS
+  void addGPS(gpsStatus_t value);
+#endif
 
 private:
   uint8_t *buffer;
