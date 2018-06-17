@@ -1,7 +1,7 @@
 # ESP32-Paxcounter
-**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 boards**
+**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 LoRa IoT boards**
 
----> check branch "development" for latest alpha version <---
+--> see development branch of this repository for latest alpha version <--
 
 <img src="img/Paxcounter-title.jpg">
 
@@ -19,16 +19,24 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 
 # Hardware
 
-Currently supported IoT boards:
-- Heltec LoRa-32 {1}
-- TTGOv1 {1}
-- TTGOv2 {1}{4}
-- Pycom LoPy {2}
-- Pycom LoPy4 {2}
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora) {2}{3}
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora) {2}{3}
+Supported ESP32 based LoRa IoT boards:
+- **Heltec LoRa-32**  *a)*
+- **TTGOv1**  *a)*
+- **TTGOv2**  *a,d)*
+- **TTGOv2.1**  *a),e)*
+- **TTGO T-Beam**  *d),e),f)*
+- **Pycom LoPy**  *b),f)*
+- **Pycom LoPy4**  *b),f)*
+- **Pycom FiPy**  *b),f)*
+- **LoLin32** with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)  *b),c)*
+- **LoLin32 Lite** with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)  *b),c)*
 
-{1} on board OLED Display supported; {2} on board RGB LED supported; {3} on board Hardware unique DEVEUI supported; {4} special wiring needed, see instructions in /hal/ttgov2.h
+a) on board OLED Display supported;
+b) on board RGB LED supported;
+c) on board Hardware unique DEVEUI supported;
+d) external wiring needed, see instructions in board.h file;
+e) battery voltage monitoring supported;
+f) on board GPS supported (for Pycom PyTrack expansion needed)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -36,17 +44,7 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
 <A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A> and <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, for example.<br>
 
-<b>Power consumption</b>:
-
-- Heltec ~720mW
-- TTGOv1 TBD
-- TTGOv2 ~990mW
-- LoPy with expansion board: ~690mW
-- LoPy pure, without expansion board: TBD
-- LoLin32 with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora): TBD
-- LoLin32 Lite with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora): TBD
-
-These results where metered with software version 1.2.97 while continuously scanning wifi and ble, no LoRa TX’ing, OLED display (if present) on, 5V USB powered.
+<b>Power consumption</b> was metered at around 1000mW, depending on board (i.e. has display or not) and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
 
 # Preparing
 
@@ -64,14 +62,14 @@ If your device has silicon **Unique ID** which is stored in serial EEPROM Microc
 
 # Building
 
-Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code.
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version.
 
 # Uploading
 
 To upload the code to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
-The LoPy/LoPy4 board needs to be set manually. See these 
+The LoPy/LoPy4/FiPy board needs to be set manually. See these 
 <A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it. Don't forget to press on board reset button after switching between run and bootloader mode.<p>
-The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
+The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
 
 # Legal note
 
@@ -81,7 +79,7 @@ The original Pycom firmware is not needed, so there is no need to update it befo
 
 (e.g. UK citizens may want to check [Data Protection Act 1998](https://ico.org.uk/media/1560691/wi-fi-location-analytics-guidance.pdf) and [GDPR 2018](https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/key-definitions/))
 
-(e.g. Citizens in the the Netherlands may want to read [this article](https://www.ivir.nl/publicaties/download/PrivacyInformatie_2016_6.pdf)) 
+(e.g. Citizens in the the Netherlands may want to read [this article](https://www.ivir.nl/publicaties/download/PrivacyInformatie_2016_6.pdf) and [this article](https://autoriteitpersoonsgegevens.nl/nl/nieuws/europese-privacytoezichthouders-publiceren-opinie-eprivacyverordening)) 
 
 Note: If you use this software you do this at your own risk. That means that you alone - not the authors of this software - are responsible for the legal compliance of an application using this or build from this software and/or usage of a device created using this software. You should take special care and get prior legal advice if you plan metering passengers in public areas and/or publish data drawn from doing so.
 
@@ -89,20 +87,92 @@ Note: If you use this software you do this at your own risk. That means that you
 
 Paxcounter generates identifiers for sniffed MAC adresses and collects them temporary in the device's RAM for a configurable scan cycle time (default 240 seconds). After each scan cycle the collected identifiers are cleared. Identifiers are generated by salting and hashing MAC adresses. The random salt value changes after each scan cycle. Identifiers and MAC adresses are never transferred to the LoRaWAN network. No persistent storing of MAC adresses, identifiers or timestamps and no other kind of analytics than counting are implemented in this code. Wireless networks are not touched by this code, but MAC adresses from wireless devices as well within as not within wireless networks, regardless if encrypted or unencrypted, are sniffed and processed by this code. If the bluetooth option in the code is enabled, bluetooth MACs are scanned and processed by the included BLE stack, then hashed and counted by this code.
 
-# Payload format description
+# LED
 
-FPort1:
+Legend for mono color on board LED:
 
-	byte 1:			16-bit WiFi counter, MSB
-	byte 2:			16-bit WiFi counter, LSB
-	byte 3:			16-bit BLE counter, MSB
-	byte 4:			16-bit BLE counter, LSB
+- Single Flash (50ms): seen a new Wifi or BLE device
+- Quick blink (20ms on each 1/5 second): joining LoRaWAN network in progress or pending
+- Small blink (10ms on each 1/2 second): LoRaWAN data transmit in progress or pending
+- Long blink (200ms on each 2 seconds): LoRaWAN stack error
 
-FPort2:
+Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
-	see remote command set
+- Green each blink: seen a new Wifi device
+- Magenta each blink: seen a new BLE device
+- Yellow quick blink: joining LoRaWAN network in progress or pending
+- Blue blink: LoRaWAN data transmit in progress or pending
+- Red long blink: LoRaWAN stack error
 
-# Remote command set
+# Payload
+
+**LoRaWAN Port #1:**
+
+	Paxcounter data
+
+	byte 1-2:	Number of unique pax, first seen on Wifi
+	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
+	
+	GPS data (only, if GPS is present and has a fix)
+	
+	bytes 5-8:	GPS latitude
+	bytes 9-12:	GPS longitude
+	bytes 13-14:	GPS number of satellites
+	bytes 15-16:	GPS HDOP
+	bytes 17-18:	GPS altitude [meter]
+
+**LoRaWAN Port #2:**
+
+	- see remote control -
+
+If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
+
+To map a GPS capable paxcounter device and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Paxcounter generates ttnmapper compatible data fields.
+
+**Decoder:**
+
+```javascript
+function Decoder(bytes, port) {
+  var decoded = {};
+
+  if (port === 1) {
+    var i = 0;
+    decoded.wifi = (bytes[i++] << 8) | bytes[i++];
+    decoded.ble =  (bytes[i++] << 8) | bytes[i++];
+    if (bytes.length > 4) {
+      decoded.latitude =  ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
+      decoded.longitude = ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
+      decoded.sats = 	  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.hdop = 	  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.altitude =  (  bytes[i++]  | (bytes[i++] << 8) );
+    }
+  }
+
+  return decoded;
+}
+```
+
+**Converter:**
+
+```javascript
+function Converter(decoded, port) {
+  
+  var converted = decoded;
+
+  if (port === 1) {
+    converted.pax = converted.ble + converted.wifi;
+    if (converted.hdop) {
+      converted.hdop /= 100;
+      converted.latitude /= 1000000;
+      converted.longitude /= 1000000;
+    }
+  }
+
+  return converted;
+}
+```
+
+# Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2.
 Each command is followed by exactly one parameter.
@@ -121,10 +191,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = cumulative counter, mac counter is never reset
 	2 = cyclic confirmed, like 0 but data is resent until confirmation by network received
   
-0x03 (NOT YET IMPLEMENTED) set screen saver mode
+0x03 set GPS data on/off
 
-	0 = screen saver off [default]
-	1 = screen saver on
+	0 = GPS data off
+	1 = GPS data on, appends GPS data to payload, if GPS is present and has a fix [default]
 
 0x04 set display on/off
 
@@ -144,7 +214,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 = ADR off
 	1 = ADR on [default]
 
-	note: set ADR to off, if device is moving, set to on, if not.
+	Note: set ADR to off, if device is moving, set to on, if not.
+	If ADR is set to on, SF value is shown inverted on display.
 
 0x08 do nothing
 
@@ -156,77 +227,81 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 
-0x0A set payload send cycle
+0x0A set LoRaWAN payload send cycle
 
 	0 ... 255 payload send cycle in seconds/2
 	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
 0x0B set Wifi channel switch interval timer
 
-	0 ... 255 timeout for scanning 1 wifi channel in seconds/100
-	e.g. 50 -> each channel is scanned for 0,5 seconds [default]
+	0 ... 255 duration for scanning a wifi channel in seconds/100
+	e.g. 50 -> each channel is scanned for 500 milliseconds [default]
 
-0x0C set BLE scan cycle timer
+0x0C set Bluetooth channel switch interval timer
 
-	0 ... 255 duration of a BLE scan cycle in seconds
-	e.g. 11 -> 1 cycle runs for 11 seconds [default]
+	0 ... 255 duration for scanning a bluetooth advertising channel in seconds/100
+	e.g. 8 -> each channel is scanned for 80 milliseconds [default]
 
 0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
 
 	0 = disabled (use to count devices, not people)
 	1 = enabled [default]
 
-0x0E set BLE scan mode
+0x0E set Bluetooth scanner
 
 	0 = disabled
 	1 = enabled [default]
 
-0x0F set WIFI antenna switch (works on LoPy/LoPy4 only)
+0x0F set WIFI antenna switch (works on LoPy/LoPy4/FiPy only)
 
 	0 = internal antenna [default]
 	1 = external antenna
 
-0x10 set RGB led luminosity (works on LoPy/LoPy4 and LoRaNode32 shield only)
+0x10 set RGB led luminosity (works on LoPy/LoPy4/FiPy and LoRaNode32 shield only)
 
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L27-L44) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L32-L50) with the following definition:
 
-	byte 1:			Lora SF (7..12)
-	byte 2:			Lora TXpower (2..15)
-	byte 3:			Lora ADR (1=on, 0=off)
-	byte 4:			Screensaver status (1=on, 0=off)
-	byte 5:			Display status (1=on, 0=off)
-	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed)
-	bytes 7-8:		RSSI limiter threshold value (negative)
-	byte 9:			Payload send cycle in seconds/2 (0..255)
-	byte 10:		Wifi channel switch interval in seconds/100 (0..255)
-	byte 11:		BLE scan cycle duration in seconds (0..255)
-	byte 12:		BLE scan mode (1=on, 0=0ff)
-	byte 13:		Wifi antenna switch (0=internal, 1=external)
-	byte 14:		Vendorfilter mode (0=disabled, 1=enabled)
-	byte 15:		RGB LED luminosity (0..100 %)
-	bytes 16-25:		Software version (ASCII format)
+	byte 1:			Lora SF (7..12) [default 9]
+	byte 2:			Lora TXpower (2..15) [default 15]
+	byte 3:			Lora ADR (1=on, 0=off) [default 1]
+	byte 4:			Screensaver status (1=on, 0=off) [default 0]
+	byte 5:			Display status (1=on, 0=off) [default 0]
+	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
+	bytes 7-8:		RSSI limiter threshold value (negative) [default 0]
+	byte 9:			Lora Payload send cycle in seconds/2 (0..255) [default 120]
+	byte 10:		Wifi channel switch interval in seconds/100 (0..255) [default 50]
+	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
+	byte 12:		Bluetooth scanner status (1=on, 0=0ff) [default 1]
+	byte 13:		Wifi antenna switch (0=internal, 1=external) [default 0]
+	byte 14:		Vendorfilter mode (0=disabled, 1=enabled) [default 0]
+	byte 15:		RGB LED luminosity (0..100 %) [default 30]
+	byte 16:		GPS send data mode (1=on, 0=ff) [default 1]
+	bytes 17-27:		Software version (ASCII format, terminating with zero)
 
 0x81 get device uptime
 
-	bytes 1-7:		Uptime in seconds (little endian format)
+	bytes 1-8:		Uptime in seconds (little endian format)
 
 0x82 get device cpu temperature
 
-	bytes 1-3:		chip temperature in celsius (little endian format)
+	bytes 1-4:		Chip temperature in degrees celsius (little endian format)
 
-# RGB Led color description
+0x83 get device battery voltage
 
-Description of the RGB LED color (LoPy/LoPy4 and Lolin32 only):
+	bytes 1-2:		Battery voltage in millivolt, 0 if unreadable (little endian format)
 
-- Yellow quick blink: joining LoRaWAN network in progress or pending
-- Blue blink: LoRaWAN data transmit (including waiting for receive windows) in progress or pending
-- Green each blink: seen a new Wifi device
-- Magenta each blink: seen a new BLE device
+0x84 get device GPS status
+
+	bytes 1-4:		Latitude
+	bytes 5-8:		Longitude
+	byte 9-10:		Number of satellites
+	byte 11-12:		HDOP
+	bytes 13-14:		altidute [meter]
 
 # License
 
@@ -252,4 +327,7 @@ see file <A HREF="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/LIC
 
 # Credits
 
-Thanks to Charles Hallard (https://github.com/hallard) for major contributions to this project.
+Thanks to 
+- [Oliver Brandmüller](https://github.com/spmrider) for idea and initial setup of this project
+- [Charles Hallard](https://github.com/hallard) for major code contributions to this project
+- [robbi5](https://github.com/robbi5) for the payload converter
