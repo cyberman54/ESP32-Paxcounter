@@ -170,9 +170,8 @@ void TTNpacked::writeTemperature(float temperature) {
     t = ~-t;
     t = t + 1;
   }
-  buffer[cursor] = (byte)((t >> 8) & 0xFF);
-  buffer[cursor+1] = (byte)t & 0xFF;
-  cursor += 2;
+  buffer[cursor++] = (byte)((t >> 8) & 0xFF);
+  buffer[cursor++] = (byte)t & 0xFF;
 }
 
 void TTNpacked::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
