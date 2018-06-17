@@ -468,6 +468,7 @@ void led_loop() {
  * ------------------------------------------------------------ */
 
 void setup() {
+
   char features[64] = "";
 
   // disable brownout detection
@@ -517,24 +518,24 @@ void setup() {
   // initialize led if needed
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
-  strcat(features, " LED");
+  strcat_P(features, " LED");
 #endif
 
 #ifdef HAS_RGB_LED
   rgb_set_color(COLOR_PINK);
-  strcat(features, " RGB");
+  strcat_P(features, " RGB");
 #endif
 
   // initialize button handling if needed
 #ifdef HAS_BUTTON
-  strcat(features, " BTN_");
+  strcat_P(features, " BTN_");
 #ifdef BUTTON_PULLUP
-  strcat(features, "PU");
+  strcat_P(features, "PU");
   // install button interrupt (pullup mode)
   pinMode(HAS_BUTTON, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
 #else
-  strcat(features, "PD");
+  strcat_P(features, "PD");
   // install button interrupt (pulldown mode)
   pinMode(HAS_BUTTON, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
@@ -543,17 +544,17 @@ void setup() {
 
   // initialize wifi antenna if needed
 #ifdef HAS_ANTENNA_SWITCH
-  strcat(features, " ANT");
+  strcat_P(features, " ANT");
   antenna_init();
 #endif
 
 // initialize gps if present
 #ifdef HAS_GPS
-  strcat(features, " GPS");
+  strcat_P(features, " GPS");
 #endif
 
 #ifdef HAS_DISPLAY
-  strcat(features, " OLED");
+  strcat_P(features, " OLED");
   // initialize display
   init_display(PROGNAME, PROGVERSION);
   DisplayState = cfg.screenon;
@@ -589,8 +590,17 @@ void setup() {
   timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
   timerAlarmEnable(channelSwitch);
 
+// show payload encoder
+#if PAYLOAD_ENCODER == 1
+  strcat_P(features, " PAYLOAD_PLAIN");
+#elif PAYLOAD_ENCODER == 2
+  strcat_P(features, " PAYLOAD_SERIALIZED");
+#elif PAYLOAD_ENCODER == 3
+  strcat_P(features, " PAYLOAD_CAYENNE");
+#endif
+
   // show compiled features
-  ESP_LOGI(TAG, "Features %s", features);
+  ESP_LOGI(TAG, "Features: %s", features);
 
 // output LoRaWAN keys to console
 #ifdef VERBOSE
@@ -630,8 +640,7 @@ void setup() {
   }
 #endif
 
-// if device has GPS and GPS function is enabled, start GPS reader task on core
-// 0
+// if device has GPS and it is enabled, start GPS reader task on core 0
 #ifdef HAS_GPS
   if (cfg.gpsmode) {
     ESP_LOGI(TAG, "Starting GPS task on core 0");
@@ -639,8 +648,7 @@ void setup() {
   }
 #endif
 
-  // kickoff sendjob -> joins network and rescedules sendjob for cyclic
-  // transmitting payload
+  // joins network and rescedules sendjob for cyclic transmitting payload
   do_send(&sendjob);
 }
 
