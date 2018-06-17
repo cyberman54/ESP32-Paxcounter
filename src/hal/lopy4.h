@@ -8,7 +8,7 @@
 // uncomment this only if your LoPy runs on a Pytrack expansion board with GPS
 // see http://www.quectel.com/UploadImage/Downlad/Quectel_L76-L_I2C_Application_Note_V1.0.pdf
 //#define HAS_GPS 1
-//#define GPS_I2C_PINS GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
+//#define GPS_QUECTEL_L76 GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
 //#define GPS_I2C_ADDRESS_READ 0x21
 //#define GPS_I2C_ADDRESS_WRITE 0x20
 //#define HAS_BUTTON GPIO_NUM_37 // (P14)
