@@ -12,7 +12,7 @@
 //#define GPS_I2C_ADDRESS_READ 0x21
 //#define GPS_I2C_ADDRESS_WRITE 0x20
 //#define HAS_BUTTON GPIO_NUM_37 // (P14)
-#//define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
+//define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
 
 // Hardware pin definitions for Pycom LoPy board
 #define PIN_SPI_SS    GPIO_NUM_17
