@@ -79,11 +79,15 @@ void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
 
 /* ---------------- packed format with LoRa serialization Encoder ---------- */
 
-TTNserialized::TTNserialized(uint8_t size) { buffer = (uint8_t *)malloc(size); }
+TTNserialized::TTNserialized(uint8_t size) {
+  buffer = (uint8_t *)malloc(size);
+  //LoraEncoder message(buffer);
+}
 
 TTNserialized::~TTNserialized(void) { free(buffer); }
 
-void TTNserialized::reset(void) { } // buggy! to be done, we need to clear the buffer here, but how? 
+void TTNserialized::reset(void) {
+} // buggy! to be done, we need to clear the buffer here, but how?
 
 uint8_t TTNserialized::getSize(void) { return sizeof(buffer); }
 
@@ -143,12 +147,12 @@ uint8_t *CayenneLPP::getBuffer(void) { return buffer; }
 
 void CayenneLPP::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
-  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
+  buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
   buffer[cursor++] = value1 >> 8;
   buffer[cursor++] = value1;
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
-  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
-  buffer[cursor++] = value2 >> 8;
+  buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
+  buffer[cursor++] = value1 >> 8;
   buffer[cursor++] = value2;
 }
 
