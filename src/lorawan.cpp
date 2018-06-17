@@ -119,12 +119,7 @@ void do_send(osjob_t *j) {
 
   // Prepare payload with counter and, if applicable, gps data
   payload.reset();
-
-  if (cfg.blescan) {
-    payload.addCount(macs_wifi, macs_ble);
-  } else {
-    payload.addCount(macs_wifi, 0);
-  }
+  payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
 
 #ifdef HAS_GPS
   if ((cfg.gpsmode) && (gps.location.isValid())) {

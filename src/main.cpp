@@ -692,8 +692,8 @@ void loop() {
         gps_read();
         ESP_LOGI(TAG,
                  "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
-                 gps_status.latitude / (float)1000000,
-                 gps_status.longitude / (float)1000000, gps_status.satellites,
+                 gps_status.latitude / (float)1e6,
+                 gps_status.longitude / (float)1e6, gps_status.satellites,
                  gps_status.hdop / (float)100, gps_status.altitude);
       } else {
         ESP_LOGI(TAG, "No valid GPS position or GPS disabled");

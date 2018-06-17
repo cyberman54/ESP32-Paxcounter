@@ -79,13 +79,11 @@ void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
 
 /* ---------------- packed format with LoRa serialization Encoder ---------- */
 
-TTNserialized::TTNserialized(uint8_t size) {
-  buffer = (uint8_t *)malloc(size);
-}
+TTNserialized::TTNserialized(uint8_t size) { buffer = (uint8_t *)malloc(size); }
 
 TTNserialized::~TTNserialized(void) { free(buffer); }
 
-void TTNserialized::reset(void) { }
+void TTNserialized::reset(void) { } // buggy! to be done, we need to clear the buffer here, but how? 
 
 uint8_t TTNserialized::getSize(void) { return sizeof(buffer); }
 
@@ -145,20 +143,19 @@ uint8_t *CayenneLPP::getBuffer(void) { return buffer; }
 
 void CayenneLPP::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
-  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
   buffer[cursor++] = value1 >> 8;
   buffer[cursor++] = value1;
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
-  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
   buffer[cursor++] = value2 >> 8;
   buffer[cursor++] = value2;
 }
 
 void CayenneLPP::addGPS(gpsStatus_t value) {
-  int32_t lat = value.latitude * (int32_t) 10000;
-  int32_t lon = value.longitude * (int32_t) 10000;
-  int32_t alt = value.altitude * (int32_t) 100;
-
+  int32_t lat = value.latitude / 100;
+  int32_t lon = value.longitude / 100;
+  int32_t alt = value.altitude;
   buffer[cursor++] = LPP_GPS_CHANNEL;
   buffer[cursor++] = LPP_GPS;
   buffer[cursor++] = lat >> 16;
@@ -183,9 +180,8 @@ void CayenneLPP::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = voltage >> 8;
   buffer[cursor++] = voltage;
-
   buffer[cursor++] = LPP_TEMP_CHANNEL;
   buffer[cursor++] = LPP_TEMPERATURE;
-  buffer[cursor++] = (uint16_t) cputemp >> 8;
-  buffer[cursor++] = (uint16_t) cputemp;
+  buffer[cursor++] = (uint16_t)cputemp >> 8;
+  buffer[cursor++] = (uint16_t)cputemp;
 }
