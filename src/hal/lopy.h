@@ -9,8 +9,7 @@
 // see http://www.quectel.com/UploadImage/Downlad/Quectel_L76-L_I2C_Application_Note_V1.0.pdf
 //#define HAS_GPS 1
 //#define GPS_QUECTEL_L76 GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
-//#define GPS_I2C_ADDRESS_READ 0x21
-//#define GPS_I2C_ADDRESS_WRITE 0x20
+//#define GPS_ADDR 0x10
 //#define HAS_BUTTON GPIO_NUM_37 // (P14)
 //#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
 

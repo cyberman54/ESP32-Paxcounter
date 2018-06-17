@@ -24,7 +24,7 @@ void gps_loop(void *pvParameters) {
 #if defined GPS_SERIAL
   HardwareSerial GPS_Serial(1);
 #elif defined GPS_QUECTEL_L76
-  Wire.begin(GPS_QUECTEL_L76, 400000); // I2C connect to GPS device with 400
+  Wire.begin(GPS_QUECTEL_L76, 400000); // I2C connect to GPS device with 400 KHz
 #endif
 
   while (1) {
@@ -47,16 +47,16 @@ void gps_loop(void *pvParameters) {
 
 #elif defined GPS_QUECTEL_L76
 
-      Wire.beginTransmission(GPS_I2C_ADDRESS_WRITE);
+      Wire.beginTransmission(GPS_ADDR);
       Wire.write(0x00); // dummy write to start read
       Wire.endTransmission();
 
-      Wire.beginTransmission(GPS_I2C_ADDRESS_READ);
+      Wire.beginTransmission(GPS_ADDR);
       while (cfg.gpsmode) {
-        Wire.requestFrom(GPS_I2C_ADDRESS_READ, 32);
+        Wire.requestFrom(GPS_ADDR | 0x01, 32);
         while (Wire.available()) {
           gps.encode(Wire.read());
-          vTaskDelay(500 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
+          vTaskDelay(1 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
         }
 
         ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
