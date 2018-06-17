@@ -80,58 +80,116 @@ void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
 }
 
 /* ---------------- packed format with LoRa serialization Encoder ---------- */
+// derived from
+// https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
-TTNserialized::TTNserialized(uint8_t size) {
-  buffer = (uint8_t *)malloc(size);
-  //LoraEncoder message(buffer);
-}
+TTNpacked::TTNpacked(uint8_t size) { buffer = (uint8_t *)malloc(size); }
 
-TTNserialized::~TTNserialized(void) { free(buffer); }
+TTNpacked::~TTNpacked(void) { free(buffer); }
 
-void TTNserialized::reset(void) {
-} // buggy! to be done, we need to clear the buffer here, but how?
+void TTNpacked::reset(void) { buffer = 0; }
 
-uint8_t TTNserialized::getSize(void) { return sizeof(buffer); }
+uint8_t TTNpacked::getSize(void) { return sizeof(buffer); }
 
-uint8_t *TTNserialized::getBuffer(void) { return buffer; }
+uint8_t *TTNpacked::getBuffer(void) { return buffer; }
 
-void TTNserialized::addCount(uint16_t value1, uint16_t value2) {
-  LoraEncoder message(buffer);
-  message.writeUint16(value1);
-  message.writeUint16(value2);
+void TTNpacked::addCount(uint16_t value1, uint16_t value2) {
+  writeUint16(value1);
+  writeUint16(value2);
 }
 
 #ifdef HAS_GPS
-void TTNserialized::addGPS(gpsStatus_t value) {
-  LoraEncoder message(buffer);
-  message.writeLatLng(value.latitude, value.longitude);
-  message.writeUint8(value.satellites);
-  message.writeUint16(value.hdop);
-  message.writeUint16(value.altitude);
+void TTNpacked::addGPS(gpsStatus_t value) {
+  writeLatLng(value.latitude, value.longitude);
+  writeUint8(value.satellites);
+  writeUint16(value.hdop);
+  writeUint16(value.altitude);
 }
 #endif
 
-void TTNserialized::addConfig(configData_t value) {
-  LoraEncoder message(buffer);
-  message.writeUint8(value.lorasf);
-  message.writeUint16(value.rssilimit);
-  message.writeUint8(value.sendcycle);
-  message.writeUint8(value.wifichancycle);
-  message.writeUint8(value.blescantime);
-  message.writeUint8(value.rgblum);
-  message.writeBitmap(
-      value.adrmode ? true : false, value.screensaver ? true : false,
-      value.screenon ? true : false, value.countermode ? true : false,
-      value.blescan ? true : false, value.wifiant ? true : false,
-      value.vendorfilter ? true : false, value.gpsmode ? true : false);
+void TTNpacked::addConfig(configData_t value) {
+  writeUint8(value.lorasf);
+  writeUint16(value.rssilimit);
+  writeUint8(value.sendcycle);
+  writeUint8(value.wifichancycle);
+  writeUint8(value.blescantime);
+  writeUint8(value.rgblum);
+  writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
+              value.screenon ? true : false, value.countermode ? true : false,
+              value.blescan ? true : false, value.wifiant ? true : false,
+              value.vendorfilter ? true : false, value.gpsmode ? true : false);
 }
 
-void TTNserialized::addStatus(uint16_t voltage, uint64_t uptime,
-                              float cputemp) {
-  LoraEncoder message(buffer);
-  message.writeUint16(voltage);
-  message.writeUnixtime(uptime);
-  message.writeTemperature(cputemp);
+void TTNpacked::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+  writeUint16(voltage);
+  writeUnixtime(uptime);
+  writeTemperature(cputemp);
+}
+
+void TTNpacked::_intToBytes(byte *buf, int32_t i, uint8_t byteSize) {
+  for (uint8_t x = 0; x < byteSize; x++) {
+    buf[x] = (byte)(i >> (x * 8));
+  }
+}
+
+void TTNpacked::writeUnixtime(uint32_t unixtime) {
+  _intToBytes(buffer, unixtime, 4);
+  buffer += 4;
+}
+
+void TTNpacked::writeLatLng(double latitude, double longitude) {
+  int32_t lat = latitude * 1e6;
+  int32_t lng = longitude * 1e6;
+
+  _intToBytes(buffer, lat, 4);
+  _intToBytes(buffer + 4, lng, 4);
+  buffer += 8;
+}
+
+void TTNpacked::writeUint16(uint16_t i) {
+  _intToBytes(buffer, i, 2);
+  buffer += 2;
+}
+
+void TTNpacked::writeUint8(uint8_t i) {
+  _intToBytes(buffer, i, 1);
+  buffer += 1;
+}
+
+void TTNpacked::writeHumidity(float humidity) {
+  int16_t h = (int16_t)(humidity * 100);
+  _intToBytes(buffer, h, 2);
+  buffer += 2;
+}
+
+/**
+ * Uses a 16bit two's complement with two decimals, so the range is
+ * -327.68 to +327.67 degrees
+ */
+void TTNpacked::writeTemperature(float temperature) {
+  int16_t t = (int16_t)(temperature * 100);
+  if (temperature < 0) {
+    t = ~-t;
+    t = t + 1;
+  }
+  buffer[0] = (byte)((t >> 8) & 0xFF);
+  buffer[1] = (byte)t & 0xFF;
+  buffer += 2;
+}
+
+void TTNpacked::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
+                            bool g, bool h) {
+  uint8_t bitmap = 0;
+  // LSB first
+  bitmap |= (a & 1) << 7;
+  bitmap |= (b & 1) << 6;
+  bitmap |= (c & 1) << 5;
+  bitmap |= (d & 1) << 4;
+  bitmap |= (e & 1) << 3;
+  bitmap |= (f & 1) << 2;
+  bitmap |= (g & 1) << 1;
+  bitmap |= (h & 1) << 0;
+  writeUint8(bitmap);
 }
 
 /* ---------------- Cayenne LPP format ---------- */

@@ -74,7 +74,7 @@ std::set<uint16_t> macs; // associative container holds total of unique MAC
 #if PAYLOAD_ENCODER == 1
 TTNplain payload(PAYLOAD_BUFFER_SIZE);
 #elif PAYLOAD_ENCODER == 2
-TTNserialized payload(PAYLOAD_BUFFER_SIZE);
+TTNpacked payload(PAYLOAD_BUFFER_SIZE);
 #elif PAYLOAD_ENCODER == 3
 CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
 #else
@@ -594,7 +594,7 @@ void setup() {
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PAYLOAD_PLAIN");
 #elif PAYLOAD_ENCODER == 2
-  strcat_P(features, " PAYLOAD_SERIALIZED");
+  strcat_P(features, " PAYLOAD_PACKED");
 #elif PAYLOAD_ENCODER == 3
   strcat_P(features, " PAYLOAD_CAYENNE");
 #endif

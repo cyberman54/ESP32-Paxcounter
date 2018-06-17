@@ -3,7 +3,6 @@
 #define _PAYLOAD_H_
 
 #include <Arduino.h>
-#include "LoraEncoder.h"
 
 // MyDevices CayenneLPP channels
 #define LPP_GPS_CHANNEL 20
@@ -42,10 +41,10 @@ private:
   uint8_t cursor;
 };
 
-class TTNserialized {
+class TTNpacked {
 public:
-  TTNserialized(uint8_t size);
-  ~TTNserialized();
+  TTNpacked(uint8_t size);
+  ~TTNpacked();
 
   void reset(void);
   uint8_t getSize(void);
@@ -60,7 +59,15 @@ public:
 
 private:
   uint8_t *buffer;
-  LoraEncoder message(byte *buffer);
+  void _intToBytes(byte *buf, int32_t i, uint8_t byteSize);
+  void writeUnixtime(uint32_t unixtime);
+  void writeLatLng(double latitude, double longitude);
+  void writeUint16(uint16_t i);
+  void writeUint8(uint8_t i);
+  void writeHumidity(float humidity);
+  void writeTemperature(float temperature);
+  void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
+                   bool h);
 };
 
 class CayenneLPP {

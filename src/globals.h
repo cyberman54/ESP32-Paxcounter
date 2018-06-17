@@ -49,7 +49,7 @@ extern TinyGPSPlus gps;        // Make TinyGPS++ instance globally availabe
 #if PAYLOAD_ENCODER == 1
 extern TTNplain payload;
 #elif PAYLOAD_ENCODER == 2
-extern TTNserialized payload;
+extern TTNpacked payload;
 #elif PAYLOAD_ENCODER == 3
 extern CayenneLPP payload;
 #else

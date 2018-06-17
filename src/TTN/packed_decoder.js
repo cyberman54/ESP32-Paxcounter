@@ -1,4 +1,4 @@
-// Decoder for device payload encoder "SERIALIZED"
+// Decoder for device payload encoder "PACKED"
 // copy&paste to TTN Console -> Applications -> PayloadFormat -> Decoder
 
 function Decoder(bytes, port) {

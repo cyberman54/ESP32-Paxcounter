@@ -1,4 +1,4 @@
-// Converter for device payload encoder "SERIALIZED"
+// Converter for device payload encoder "PACKED"
 // copy&paste to TTN Console -> Applications -> PayloadFormat -> Converter
 
 function Converter(decoded, port) {
