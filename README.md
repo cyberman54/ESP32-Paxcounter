@@ -114,7 +114,7 @@ You can select between different payload formats in [paxcounter.conf](src/paxcou
 
 - *Packed* generates packed json fiels, e.g. useful for own backends
 
-- *[CayenneLPP] (https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation)* generates MyDevices Cayenne readable fields
+- [*CayenneLPP*] (https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
 
 Hereafter described is the *Plain* format. All data is represented in big-endian-format.
 
