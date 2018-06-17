@@ -83,13 +83,16 @@ void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
 // derived from
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
-TTNpacked::TTNpacked(uint8_t size) { buffer = (uint8_t *)malloc(size); }
+TTNpacked::TTNpacked(uint8_t size) {
+  buffer = (uint8_t *)malloc(size);
+  cursor = 0;
+}
 
 TTNpacked::~TTNpacked(void) { free(buffer); }
 
-void TTNpacked::reset(void) { buffer = 0; }
+void TTNpacked::reset(void) { cursor = 0; }
 
-uint8_t TTNpacked::getSize(void) { return sizeof(buffer); }
+uint8_t TTNpacked::getSize(void) { return cursor; }
 
 uint8_t *TTNpacked::getBuffer(void) { return buffer; }
 
@@ -126,40 +129,35 @@ void TTNpacked::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   writeTemperature(cputemp);
 }
 
-void TTNpacked::_intToBytes(byte *buf, int32_t i, uint8_t byteSize) {
+void TTNpacked::_intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
-    buf[x] = (byte)(i >> (x * 8));
+    buffer[x + pos] = (byte)(i >> (x * 8));
   }
+  cursor += byteSize;
 }
 
 void TTNpacked::writeUnixtime(uint32_t unixtime) {
-  _intToBytes(buffer, unixtime, 4);
-  buffer += 4;
+  _intToBytes(cursor, unixtime, 4);
 }
 
 void TTNpacked::writeLatLng(double latitude, double longitude) {
   int32_t lat = latitude * 1e6;
   int32_t lng = longitude * 1e6;
-
-  _intToBytes(buffer, lat, 4);
-  _intToBytes(buffer + 4, lng, 4);
-  buffer += 8;
+  _intToBytes(cursor, lat, 4);
+  _intToBytes(cursor, lng, 4);
 }
 
 void TTNpacked::writeUint16(uint16_t i) {
-  _intToBytes(buffer, i, 2);
-  buffer += 2;
+  _intToBytes(cursor, i, 2);
 }
 
 void TTNpacked::writeUint8(uint8_t i) {
-  _intToBytes(buffer, i, 1);
-  buffer += 1;
+  _intToBytes(cursor, i, 1);
 }
 
 void TTNpacked::writeHumidity(float humidity) {
   int16_t h = (int16_t)(humidity * 100);
-  _intToBytes(buffer, h, 2);
-  buffer += 2;
+  _intToBytes(cursor, h, 2);
 }
 
 /**
@@ -172,9 +170,9 @@ void TTNpacked::writeTemperature(float temperature) {
     t = ~-t;
     t = t + 1;
   }
-  buffer[0] = (byte)((t >> 8) & 0xFF);
-  buffer[1] = (byte)t & 0xFF;
-  buffer += 2;
+  buffer[cursor] = (byte)((t >> 8) & 0xFF);
+  buffer[cursor+1] = (byte)t & 0xFF;
+  cursor += 2;
 }
 
 void TTNpacked::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,

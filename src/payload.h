@@ -37,7 +37,6 @@ public:
 
 private:
   uint8_t *buffer;
-  uint8_t maxsize;
   uint8_t cursor;
 };
 
@@ -59,7 +58,8 @@ public:
 
 private:
   uint8_t *buffer;
-  void _intToBytes(byte *buf, int32_t i, uint8_t byteSize);
+  uint8_t cursor;
+  void _intToBytes(uint8_t pos, int32_t i, uint8_t byteSize);
   void writeUnixtime(uint32_t unixtime);
   void writeLatLng(double latitude, double longitude);
   void writeUint16(uint16_t i);
