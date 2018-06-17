@@ -108,11 +108,13 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 # Payload
 
-You can select between different payload formats in [paxcounter.conf](src/paxounter.conf#L40):
+You can select between different payload formats in [paxcounter.conf](src/paxcounter.conf#L40):
 
-*Plain* generates human readable json fields, e.g. useful for TTN console
-*Packed* generates packed json fiels, e.g. useful for own backends
-*[CayenneLPP]*(https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation)
+- *Plain* generates human readable json fields, e.g. useful for TTN console
+
+- *Packed* generates packed json fiels, e.g. useful for own backends
+
+- *[CayenneLPP] (https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation)* generates MyDevices Cayenne readable fields
 
 Hereafter described is the *Plain* format. All data is represented in big-endian-format.
 
