@@ -20,6 +20,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Supported ESP32 based LoRa IoT boards:
+
 - **Heltec LoRa-32**
 - **TTGOv1** 
 - **TTGOv2** 
