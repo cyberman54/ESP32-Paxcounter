@@ -7,22 +7,22 @@ function Decoder(bytes, port) {
 
     if (port === 1) {
         // only counter data, no gps
-        if (bytes.length == 4) {
+        if (bytes.length === 4) {
             return decode(bytes, [uint16, uint16], ['wifi', 'ble']);
         }
         // combined counter and gps data
-        if (bytes.length > 4) {
-            return decode(bytes, [uint16, uint16, latlng, uint8, uint16, uint16], ['wifi', 'ble', 'coords', 'sats', 'hdop', 'altitude']);
+        if (bytes.length === 17) {
+            return decode(bytes, [uint16, uint16, latLng, latLng, uint8, hdop, uint16], ['wifi', 'ble', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
         }
     }
 
     if (port === 2) {
         // device status data
-        if (bytes.length == 12) {
+        if (bytes.length === 12) {
             return decode(bytes, [uint16, uptime, temperature], ['voltage', 'uptime', 'cputemp']);
         }
         // device config data
-        if (bytes.length == 8) {
+        if (bytes.length === 8) {
             return decode(bytes, [uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
         }
     }
@@ -67,15 +67,19 @@ uint16.BYTES = 2;
 
 var latLng = function (bytes) {
     if (bytes.length !== latLng.BYTES) {
-        throw new Error('Lat/Long must have exactly 8 bytes');
+        throw new Error('Lat/Long must have exactly 4 bytes');
     }
-
-    var lat = bytesToInt(bytes.slice(0, latLng.BYTES / 2));
-    var lng = bytesToInt(bytes.slice(latLng.BYTES / 2, latLng.BYTES));
-
-    return [lat / 1e6, lng / 1e6];
+    return bytesToInt(bytes) / 1e6;
 };
-latLng.BYTES = 8;
+latLng.BYTES = 4;
+
+var hdop = function (bytes) {
+    if (bytes.length !== hdop.BYTES) {
+        throw new Error('hdop must have exactly 2 bytes');
+    }
+    return bytesToInt(bytes) / 100;
+};
+hdop.BYTES = 2;
 
 var temperature = function (bytes) {
     if (bytes.length !== temperature.BYTES) {
@@ -118,7 +122,7 @@ var bitmap = function (byte) {
     }
     var i = bytesToInt(byte);
     var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
-    return ['adr', 'screensaver', 'display', 'countermode', 'blescan', 'antenna', 'filter', 'gpsmode']
+    return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'filter', 'gpsmode']
         .reduce(function (obj, pos, index) {
             obj[pos] = bm[index];
             return obj;
@@ -156,6 +160,7 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         temperature: temperature,
         humidity: humidity,
         latLng: latLng,
+        hdop: hdop,
         bitmap: bitmap,
         decode: decode
     };

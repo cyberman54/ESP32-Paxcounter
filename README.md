@@ -110,13 +110,13 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 You can select between different payload formats in [paxcounter.conf](src/paxcounter.conf#L40):
 
-- *Plain* generates human readable json fields, e.g. useful for TTN console
+- ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 
-- *Packed* generates packed json fiels, e.g. useful for own backends
+- ***Packed*** uses little endian format and generates json fields
 
-- [*CayenneLPP*](https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
+- [***CayenneLPP***](https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
 
-Hereafter described is the *Plain* format. All data is represented in big-endian-format.
+Hereafter described is the default *Plain* format.
 
 **LoRaWAN Port #1:**
 
@@ -144,6 +144,8 @@ To map a GPS capable paxcounter device and at the same time contribute to TTN co
 **Decoder:**
 
 ```javascript
+<object data="TTN/packed_decoder.js" type="text/plain" width="200" height="100"> 
+ </object> 
 function Decoder(bytes, port) {
   var decoded = {};
 
