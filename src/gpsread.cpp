@@ -8,8 +8,8 @@ static const char TAG[] = "main";
 
 // read GPS data and cast to global struct
 void gps_read() {
-  gps_status.latitude = (uint32_t)(gps.location.lat() * 1000000);
-  gps_status.longitude = (uint32_t)(gps.location.lng() * 1000000);
+  gps_status.latitude = (uint32_t)(gps.location.lat() * 1e6);
+  gps_status.longitude = (uint32_t)(gps.location.lng() * 1e6);
   gps_status.satellites = (uint8_t)gps.satellites.value();
   gps_status.hdop = (uint16_t)gps.hdop.value();
   gps_status.altitude = (uint16_t)gps.altitude.meters();

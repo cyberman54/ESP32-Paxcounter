@@ -18,12 +18,12 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        if (bytes.length == 10) {
-            return decode(bytes, [uint16, unixtime, temperature], ['voltage', 'uptime', 'cputemp']);
+        if (bytes.length == 12) {
+            return decode(bytes, [uint16, uptime, temperature], ['voltage', 'uptime', 'cputemp']);
         }
         // device config data
         if (bytes.length == 8) {
-            return decode(bytes, [uint8, uint16, uint8, uint8, uint8, bitmap], ['lorasf', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
+            return decode(bytes, [uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
         }
     }
 
@@ -41,13 +41,13 @@ var bytesToInt = function (bytes) {
     return i;
 };
 
-var unixtime = function (bytes) {
-    if (bytes.length !== unixtime.BYTES) {
-        throw new Error('Unix time must have exactly 4 bytes');
+var uptime = function (bytes) {
+    if (bytes.length !== uptime.BYTES) {
+        throw new Error('uptime must have exactly 8 bytes');
     }
     return bytesToInt(bytes);
 };
-unixtime.BYTES = 4;
+uptime.BYTES = 4;
 
 var uint8 = function (bytes) {
     if (bytes.length !== uint8.BYTES) {
@@ -150,7 +150,7 @@ var decode = function (bytes, mask, names) {
 
 if (typeof module === 'object' && typeof module.exports !== 'undefined') {
     module.exports = {
-        unixtime: unixtime,
+        uptime: uptime,
         uint8: uint8,
         uint16: uint16,
         temperature: temperature,

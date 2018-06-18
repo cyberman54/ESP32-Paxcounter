@@ -125,39 +125,33 @@ void TTNpacked::addConfig(configData_t value) {
 
 void TTNpacked::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   writeUint16(voltage);
-  writeUnixtime(uptime);
+  writeUptime(uptime);
   writeTemperature(cputemp);
 }
 
-void TTNpacked::_intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
+void TTNpacked::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
     buffer[x + pos] = (byte)(i >> (x * 8));
   }
   cursor += byteSize;
 }
 
-void TTNpacked::writeUnixtime(uint32_t unixtime) {
-  _intToBytes(cursor, unixtime, 4);
+void TTNpacked::writeUptime(uint64_t uptime) {
+  intToBytes(cursor, uptime, 8);
 }
 
 void TTNpacked::writeLatLng(double latitude, double longitude) {
-  int32_t lat = latitude * 1e6;
-  int32_t lng = longitude * 1e6;
-  _intToBytes(cursor, lat, 4);
-  _intToBytes(cursor, lng, 4);
+  intToBytes(cursor, latitude, 4);
+  intToBytes(cursor, longitude, 4);
 }
 
-void TTNpacked::writeUint16(uint16_t i) {
-  _intToBytes(cursor, i, 2);
-}
+void TTNpacked::writeUint16(uint16_t i) { intToBytes(cursor, i, 2); }
 
-void TTNpacked::writeUint8(uint8_t i) {
-  _intToBytes(cursor, i, 1);
-}
+void TTNpacked::writeUint8(uint8_t i) { intToBytes(cursor, i, 1); }
 
 void TTNpacked::writeHumidity(float humidity) {
   int16_t h = (int16_t)(humidity * 100);
-  _intToBytes(cursor, h, 2);
+  intToBytes(cursor, h, 2);
 }
 
 /**
