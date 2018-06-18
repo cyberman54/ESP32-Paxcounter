@@ -1,14 +1,15 @@
 #ifdef HAS_GPS
 
 #include "globals.h"
+#include <Wire.h>
 
 // Local logging tag
 static const char TAG[] = "main";
 
 // read GPS data and cast to global struct
 void gps_read() {
-  gps_status.latitude = (uint32_t)(gps.location.lat() * 1000000);
-  gps_status.longitude = (uint32_t)(gps.location.lng() * 1000000);
+  gps_status.latitude = (uint32_t)(gps.location.lat() * 1e6);
+  gps_status.longitude = (uint32_t)(gps.location.lng() * 1e6);
   gps_status.satellites = (uint8_t)gps.satellites.value();
   gps_status.hdop = (uint16_t)gps.hdop.value();
   gps_status.altitude = (uint16_t)gps.altitude.meters();
@@ -22,8 +23,8 @@ void gps_loop(void *pvParameters) {
 // initialize and, if needed, configure, GPS
 #if defined GPS_SERIAL
   HardwareSerial GPS_Serial(1);
-#elif defined GPS_I2C
-                                               // to be done
+#elif defined GPS_QUECTEL_L76
+  Wire.begin(GPS_QUECTEL_L76, 400000); // I2C connect to GPS device with 400 KHz
 #endif
 
   while (1) {
@@ -44,30 +45,29 @@ void gps_loop(void *pvParameters) {
       // after GPS function was disabled, close connect to GPS device
       GPS_Serial.end();
 
-#elif defined GPS_I2C
+#elif defined GPS_QUECTEL_L76
 
-      // I2C connect to GPS device with 100 kHz
-      Wire.begin(GPS_I2C_PINS, 100000);
-      Wire.beginTransmission(GPS_I2C_ADDRESS_WRITE);
-      Wire.write(0x00);
+      Wire.beginTransmission(GPS_ADDR);
+      Wire.write(0x00); // dummy write to start read
+      Wire.endTransmission();
 
-      i2c_ret == Wire.beginTransmission(GPS_I2C_ADDRESS_READ);
-      if (i2c_ret == 0) { // check if device seen on i2c bus
-        while (cfg.gpsmode) {
-          // feed GPS decoder with serial NMEA data from GPS device
-          while (Wire.available()) {
-            Wire.requestFrom(GPS_I2C_ADDRESS_READ, 255);
-            gps.encode(Wire.read());
-            vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
-          }
+      Wire.beginTransmission(GPS_ADDR);
+      while (cfg.gpsmode) {
+        Wire.requestFrom(GPS_ADDR | 0x01, 32);
+        while (Wire.available()) {
+          gps.encode(Wire.read());
+          vTaskDelay(1 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
         }
-        // after GPS function was disabled, close connect to GPS device
 
-        Wire.endTransmission();
-        Wire.setClock(400000); // Set back to 400KHz to speed up OLED
+        ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+                 gps.passedChecksum(), gps.failedChecksum(),
+                 gps.sentencesWithFix());
       }
+      // after GPS function was disabled, close connect to GPS device
 
-#endif
+      Wire.endTransmission();
+
+#endif // GPS Type
     }
 
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog

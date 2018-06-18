@@ -20,23 +20,26 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 # Hardware
 
 Supported ESP32 based LoRa IoT boards:
-- **Heltec LoRa-32**  *a)*
-- **TTGOv1**  *a)*
-- **TTGOv2**  *a,d)*
-- **TTGOv2.1**  *a),e)*
-- **TTGO T-Beam**  *d),e),f)*
-- **Pycom LoPy**  *b),f)*
-- **Pycom LoPy4**  *b),f)*
-- **Pycom FiPy**  *b),f)*
-- **LoLin32** with [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)  *b),c)*
-- **LoLin32 Lite** with [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)  *b),c)*
 
-a) on board OLED Display supported;
-b) on board RGB LED supported;
-c) on board Hardware unique DEVEUI supported;
-d) external wiring needed, see instructions in board.h file;
-e) battery voltage monitoring supported;
-f) on board GPS supported (for Pycom PyTrack expansion needed)
+- **Heltec LoRa-32**
+- **TTGOv1** 
+- **TTGOv2** 
+- **TTGOv2.1**
+- **TTGO T-Beam**
+- **Pycom LoPy**
+- **Pycom LoPy4**
+- **Pycom FiPy**
+- **LoLin32** + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)
+- **LoLin32 Lite** + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+
+Depending on board hardware following features are supported:
+- LED
+- OLED Display
+- RGB LED
+- button
+- silicon unique ID
+- battery voltage monitoring
+- GPS
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
@@ -106,6 +109,20 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 # Payload
 
+You can select between different payload formats in [paxcounter.conf](src/paxcounter.conf#L40):
+
+- ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
+
+- ***Packed*** uses little endian format and generates json fields
+
+- [***CayenneLPP***](https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
+
+If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
+
+To map a GPS capable paxcounter device and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Paxcounter generates ttnmapper compatible data fields.
+
+Hereafter described is the default *Plain* format.
+
 **LoRaWAN Port #1:**
 
 	Paxcounter data
@@ -125,11 +142,7 @@ Legend for RGB LED (LoPy/LoPy4/FiPy/Lolin32 only):
 
 	- see remote control -
 
-If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. Make sure that your application parses the fields `pax`, `ble` and `wifi`.
-
-To map a GPS capable paxcounter device and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Paxcounter generates ttnmapper compatible data fields.
-
-**Decoder:**
+[**plain_decoder.js**](src/TTN/plain_decoder.js)
 
 ```javascript
 function Decoder(bytes, port) {
@@ -140,11 +153,11 @@ function Decoder(bytes, port) {
     decoded.wifi = (bytes[i++] << 8) | bytes[i++];
     decoded.ble =  (bytes[i++] << 8) | bytes[i++];
     if (bytes.length > 4) {
-      decoded.latitude =  ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
-      decoded.longitude = ( (bytes[i++]) | (bytes[i++] << 8) | (bytes[i++] << 16) | bytes[i++] << 24 );
-      decoded.sats = 	  (  bytes[i++]  | (bytes[i++] << 8) );
-      decoded.hdop = 	  (  bytes[i++]  | (bytes[i++] << 8) );
-      decoded.altitude =  (  bytes[i++]  | (bytes[i++] << 8) );
+      decoded.latitude =  ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
+      decoded.longitude = ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
+      decoded.sats = 	  (  bytes[i++] );
+      decoded.hdop = 	  (  bytes[i++] << 8)  | (bytes[i++] );
+      decoded.altitude =  (  bytes[i++] << 8)  | (bytes[i++] );
     }
   }
 
@@ -152,7 +165,7 @@ function Decoder(bytes, port) {
 }
 ```
 
-**Converter:**
+[**plain_converter.js**](src/TTN/plain_converter.js)
 
 ```javascript
 function Converter(decoded, port) {
@@ -264,7 +277,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [globals.h](src/globals.h#L32-L50) with the following definition:
+device answers with it's current configuration. The configuration is a C structure declared in file [main.h](src/main.h#L13-L31) with the following definition:
 
 	byte 1:			Lora SF (7..12) [default 9]
 	byte 2:			Lora TXpower (2..15) [default 15]
@@ -283,25 +296,19 @@ device answers with it's current configuration. The configuration is a C structu
 	byte 16:		GPS send data mode (1=on, 0=ff) [default 1]
 	bytes 17-27:		Software version (ASCII format, terminating with zero)
 
-0x81 get device uptime
+0x81 get device status
 
-	bytes 1-8:		Uptime in seconds (little endian format)
-
-0x82 get device cpu temperature
-
-	bytes 1-4:		Chip temperature in degrees celsius (little endian format)
-
-0x83 get device battery voltage
-
-	bytes 1-2:		Battery voltage in millivolt, 0 if unreadable (little endian format)
+	bytes 1-2:		Battery voltage in millivolt, 0 if unreadable
+	bytes 3-10:		Uptime in seconds
+	bytes 11-14:		Chip temperature in degrees celsius
 
 0x84 get device GPS status
 
 	bytes 1-4:		Latitude
 	bytes 5-8:		Longitude
-	byte 9-10:		Number of satellites
-	byte 11-12:		HDOP
-	bytes 13-14:		altidute [meter]
+	byte 9:			Number of satellites
+	byte 10-11:		HDOP
+	bytes 12-13:		altidute [meter]
 
 # License
 

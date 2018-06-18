@@ -76,7 +76,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     }
 
     // Log scan result
-    ESP_LOGI(TAG,
+    ESP_LOGD(TAG,
              "%s %s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d -> "
              "%d Bytes left",
              added ? "new  " : "known",
