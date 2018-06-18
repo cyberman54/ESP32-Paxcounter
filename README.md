@@ -141,7 +141,7 @@ If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you 
 
 To map a GPS capable paxcounter device and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Paxcounter generates ttnmapper compatible data fields.
 
-**Decoder:** [TTN/plain_decoder.js](TTN/plain_decoder.js)
+[**plain_decoder.js**](src/TTN/plain_decoder.js)
 
 ```javascript
 function Decoder(bytes, port) {
@@ -164,7 +164,7 @@ function Decoder(bytes, port) {
 }
 ```
 
-**Converter:** [TTN/plain_converter.js](TTN/plain_converter.js)
+[**plain_converter.js**](src/TTN/plain_converter.js)
 
 ```javascript
 function Converter(decoded, port) {
