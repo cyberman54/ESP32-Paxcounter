@@ -22,9 +22,9 @@
 #define PIN_SPI_SCK   GPIO_NUM_5  // ESP32 GPIO5 (Pin5)   -- HPD13A SCK (Pin5) SPI Clock Input
 
 // non arduino pin definitions
-#define RST   LMIC_UNUSED_PIN // connected to ESP32 RST/EN (old board)
-//#define RST   GPIO_NUM_12 // connected to ESP32 RST/EN (old board v1.5)
-//#define RST   GPIO_NUM_19 // connected to ESP32 RST/EN (new board)
+#define RST   LMIC_UNUSED_PIN   // connected to ESP32 RST/EN (old board)
+//#define RST   GPIO_NUM_12     // (old board v1.5)
+//#define RST   GPIO_NUM_19     //(new board)
 #define DIO0  GPIO_NUM_26 // ESP32 GPIO26 <-> HPD13A IO0
 #define DIO1  GPIO_NUM_33 // ESP32 GPIO33 <-> HPDIO1 <-> HPD13A IO1
 #define DIO2  GPIO_NUM_32 // ESP32 GPIO32 <-> HPDIO2 <-> HPD13A IO2
