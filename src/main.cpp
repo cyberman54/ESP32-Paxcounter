@@ -56,9 +56,7 @@ uint16_t LEDColor = COLOR_NONE; // state machine variable to set RGB LED color
 hw_timer_t *displaytimer =
     NULL; // configure hardware timer used for cyclic display refresh
 hw_timer_t *channelSwitch =
-    NULL;            // configure hardware timer used for wifi channel switching
-xref2u1_t rcmd_data; // buffer for rcommand results size
-u1_t rcmd_data_size; // buffer for rcommand results size
+    NULL; // configure hardware timer used for wifi channel switching
 
 #ifdef HAS_GPS
 gpsStatus_t gps_status; // struct for storing gps data
@@ -71,6 +69,17 @@ portMUX_TYPE timerMux =
 
 std::set<uint16_t> macs; // associative container holds total of unique MAC
                          // adress hashes (Wifi + BLE)
+
+// initialize payload encoder
+#if PAYLOAD_ENCODER == 1
+TTNplain payload(PAYLOAD_BUFFER_SIZE);
+#elif PAYLOAD_ENCODER == 2
+TTNpacked payload(PAYLOAD_BUFFER_SIZE);
+#elif PAYLOAD_ENCODER == 3
+CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
+#else
+#error "No valid payload converter defined"
+#endif
 
 // this variables will be changed in the ISR, and read in main loop
 static volatile int ButtonPressedIRQ = 0, DisplayTimerIRQ = 0,
@@ -459,6 +468,7 @@ void led_loop() {
  * ------------------------------------------------------------ */
 
 void setup() {
+
   char features[64] = "";
 
   // disable brownout detection
@@ -508,24 +518,24 @@ void setup() {
   // initialize led if needed
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
-  strcat(features, " LED");
+  strcat_P(features, " LED");
 #endif
 
 #ifdef HAS_RGB_LED
   rgb_set_color(COLOR_PINK);
-  strcat(features, " RGB");
+  strcat_P(features, " RGB");
 #endif
 
   // initialize button handling if needed
 #ifdef HAS_BUTTON
-  strcat(features, " BTN_");
+  strcat_P(features, " BTN_");
 #ifdef BUTTON_PULLUP
-  strcat(features, "PU");
+  strcat_P(features, "PU");
   // install button interrupt (pullup mode)
   pinMode(HAS_BUTTON, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
 #else
-  strcat(features, "PD");
+  strcat_P(features, "PD");
   // install button interrupt (pulldown mode)
   pinMode(HAS_BUTTON, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
@@ -534,17 +544,17 @@ void setup() {
 
   // initialize wifi antenna if needed
 #ifdef HAS_ANTENNA_SWITCH
-  strcat(features, " ANT");
+  strcat_P(features, " ANT");
   antenna_init();
 #endif
 
 // initialize gps if present
 #ifdef HAS_GPS
-  strcat(features, " GPS");
+  strcat_P(features, " GPS");
 #endif
 
 #ifdef HAS_DISPLAY
-  strcat(features, " OLED");
+  strcat_P(features, " OLED");
   // initialize display
   init_display(PROGNAME, PROGVERSION);
   DisplayState = cfg.screenon;
@@ -580,8 +590,17 @@ void setup() {
   timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
   timerAlarmEnable(channelSwitch);
 
+// show payload encoder
+#if PAYLOAD_ENCODER == 1
+  strcat_P(features, " PAYLOAD_PLAIN");
+#elif PAYLOAD_ENCODER == 2
+  strcat_P(features, " PAYLOAD_PACKED");
+#elif PAYLOAD_ENCODER == 3
+  strcat_P(features, " PAYLOAD_CAYENNE");
+#endif
+
   // show compiled features
-  ESP_LOGI(TAG, "Features %s", features);
+  ESP_LOGI(TAG, "Features: %s", features);
 
 // output LoRaWAN keys to console
 #ifdef VERBOSE
@@ -621,8 +640,7 @@ void setup() {
   }
 #endif
 
-// if device has GPS and GPS function is enabled, start GPS reader task on core
-// 0
+// if device has GPS and it is enabled, start GPS reader task on core 0
 #ifdef HAS_GPS
   if (cfg.gpsmode) {
     ESP_LOGI(TAG, "Starting GPS task on core 0");
@@ -630,8 +648,7 @@ void setup() {
   }
 #endif
 
-  // kickoff sendjob -> joins network and rescedules sendjob for cyclic
-  // transmitting payload
+  // joins network and rescedules sendjob for cyclic transmitting payload
   do_send(&sendjob);
 }
 
@@ -674,11 +691,22 @@ void loop() {
     }
 
 #ifdef HAS_GPS
-    // log NMEA status every 30 seconds, useful for debugging GPS connection
-    if ((uptime() % 30000) == 0)
+    // log NMEA status every 60 seconds, useful for debugging GPS connection
+    if ((uptime() % 60000) == 0) {
       ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
                gps.passedChecksum(), gps.failedChecksum(),
                gps.sentencesWithFix());
+      if ((cfg.gpsmode) && (gps.location.isValid())) {
+        gps_read();
+        ESP_LOGI(TAG,
+                 "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
+                 gps_status.latitude / (float)1e6,
+                 gps_status.longitude / (float)1e6, gps_status.satellites,
+                 gps_status.hdop / (float)100, gps_status.altitude);
+      } else {
+        ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
+      }
+    }
 #endif
 
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog

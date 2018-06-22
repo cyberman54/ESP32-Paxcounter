@@ -117,42 +117,21 @@ void do_send(osjob_t *j) {
     return;
   }
 
-  // prepare payload with sum of unique WIFI MACs seen
-  static uint8_t mydata[4];
-
-  mydata[0] = (macs_wifi & 0xff00) >> 8;
-  mydata[1] = macs_wifi & 0xff;
-
-  if (cfg.blescan) {
-    // append sum of unique BLE MACs seen to payload
-    mydata[2] = (macs_ble & 0xff00) >> 8;
-    mydata[3] = macs_ble & 0xff;
-  } else {
-    mydata[2] = 0;
-    mydata[3] = 0;
-  }
+  // Prepare payload with counter and, if applicable, gps data
+  payload.reset();
+  payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
 
 #ifdef HAS_GPS
-  static uint8_t gpsdata[18];
-  if (cfg.gpsmode && gps.location.isValid()) {
+  if ((cfg.gpsmode) && (gps.location.isValid())) {
     gps_read();
-    memcpy(gpsdata, mydata, 4);
-    memcpy(gpsdata + 4, &gps_status, sizeof(gps_status));
-    ESP_LOGI(TAG, "lat=%.6f / lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%u m",
-             gps_status.latitude / (float)1000000,
-             gps_status.longitude / (float)1000000, gps_status.satellites,
-             gps_status.hdop / (float)100, gps_status.altitude);
-    LMIC_setTxData2(COUNTERPORT, gpsdata, sizeof(gpsdata),
-                    (cfg.countermode & 0x02));
-    ESP_LOGI(TAG, "%d bytes queued to send", sizeof(gpsdata));
-  } else {
-#endif
-    LMIC_setTxData2(COUNTERPORT, mydata, sizeof(mydata),
-                    (cfg.countermode & 0x02));
-    ESP_LOGI(TAG, "%d bytes queued to send", sizeof(mydata));
-#ifdef HAS_GPS
+    payload.addGPS(gps_status);
   }
 #endif
+
+  // send payload
+  LMIC_setTxData2(COUNTERPORT, payload.getBuffer(), payload.getSize(),
+                  (cfg.countermode & 0x02));
+  ESP_LOGI(TAG, "%d bytes queued to send", payload.getSize());
   sprintf(display_lmic, "PACKET QUEUED");
 
   // clear counter if not in cumulative counter mode
