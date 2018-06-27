@@ -36,7 +36,7 @@ function Decoder(bytes, port) {
 var bytesToInt = function (bytes) {
     var i = 0;
     for (var x = 0; x < bytes.length; x++) {
-        i |= +(bytes[x] << (x * 8));
+        i |= (bytes[x] << (x * 8));
     }
     return i;
 };
@@ -124,7 +124,7 @@ var bitmap = function (byte) {
     var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
     return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'filter', 'gpsmode']
         .reduce(function (obj, pos, index) {
-            obj[pos] = bm[index];
+            obj[pos] = +bm[index];
             return obj;
         }, {});
 };
