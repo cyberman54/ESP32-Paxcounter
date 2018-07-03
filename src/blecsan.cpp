@@ -12,7 +12,6 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 #include <esp_bt_main.h>
 #include <esp_gap_ble_api.h>
 #include <esp_blufi_api.h> // needed for BLE_ADDR types, do not remove
-#include <bt_types.h>
 
 #define BT_BD_ADDR_HEX(addr)                                                   \
   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
