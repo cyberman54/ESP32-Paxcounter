@@ -249,14 +249,7 @@ void start_BLEscan(void) {
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
 
   // Initialize BT controller to allocate task and other resource.
-  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-  bt_cfg.controller_task_stack_size =
-      BLESTACKSIZE; // set BT stack size to value configured in paxcounter.conf
-  ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
-  ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_BTDM));
-
-  // Init and alloc the resource for bluetooth stack, must be done prior to
-  // every bluetooth stuff
+  btStart();
   ESP_ERROR_CHECK(esp_bluedroid_init());
   ESP_ERROR_CHECK(esp_bluedroid_enable());
 
@@ -271,8 +264,7 @@ void stop_BLEscan(void) {
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
-  ESP_ERROR_CHECK(esp_bt_controller_disable());
-  ESP_ERROR_CHECK(esp_bt_controller_deinit());
+  btStop(); // disable & deinit bt_controller
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
 } // stop_BLEscan
 

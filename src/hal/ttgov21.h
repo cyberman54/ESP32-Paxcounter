@@ -11,9 +11,9 @@
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define DISPLAY_FLIP  1 // rotated display
-#define HAS_LED GPIO_NUM_23 // green on board LED (new board  ONLY)
-#define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // uses GPIO7 (new board ONLY)
-#define BATT_FACTOR 2 // voltage divider 100k/100k on board (new board  ONLY)
+#define HAS_LED GPIO_NUM_23 // green on board LED (new board ONLY)
+#define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // uses GPIO7
+#define BATT_FACTOR 2 // voltage divider 100k/100k on board
 
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    GPIO_NUM_18 // ESP32 GPIO18 (Pin18) -- HPD13A NSS/SEL (Pin4) SPI Chip Select Input
