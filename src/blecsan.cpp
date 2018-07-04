@@ -124,7 +124,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
                                     esp_ble_gap_cb_param_t *param) {
   esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 
-  ESP_LOGD(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
+  ESP_LOGV(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
            btsig_gap_type(*p->scan_rst.ble_adv));
 
   switch (event) {
@@ -145,11 +145,11 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
     if (p->scan_rst.search_evt ==
         ESP_GAP_SEARCH_INQ_RES_EVT) // Inquiry result for a peer device
     {                               // evaluate sniffed packet
-      ESP_LOGD(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x",
+      ESP_LOGV(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x",
                BT_BD_ADDR_HEX(p->scan_rst.bda));
-      ESP_LOGD(TAG, "Addr_type           : %s",
+      ESP_LOGV(TAG, "Addr_type           : %s",
                bt_addr_t_to_string(p->scan_rst.ble_addr_type));
-      ESP_LOGD(TAG, "RSSI                : %d", p->scan_rst.rssi);
+      ESP_LOGV(TAG, "RSSI                : %d", p->scan_rst.rssi);
 
       if ((cfg.rssilimit) &&
           (p->scan_rst.rssi < cfg.rssilimit)) { // rssi is negative value
@@ -162,7 +162,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
 
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
-        ESP_LOGD(TAG, "BT device filtered");
+        ESP_LOGV(TAG, "BT device filtered");
         break;
       }
 
