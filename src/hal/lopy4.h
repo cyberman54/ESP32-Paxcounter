@@ -28,10 +28,10 @@
 //#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
 
 // uncomment this only if your LoPy runs on a expansion board 3.0
-//#define HAS_BATTERY_PROBE ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
-//#define BATT_FACTOR 2 // voltage divider 1MOhm/1MOhm on board
-//#define HAS_BUTTON GPIO_NUM_37 // (P14)
-//#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
+#define HAS_BATTERY_PROBE ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
+#define BATT_FACTOR 2 // voltage divider 1MOhm/1MOhm on board
+#define HAS_BUTTON GPIO_NUM_37 // (P14)
+#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
 
 // uncomment this only if your LoPy runs on a expansion board 2.0
 //#define HAS_BATTERY_PROBE ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
