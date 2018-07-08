@@ -487,7 +487,7 @@ void setup() {
   esp_log_set_vprintf(redirect_log);
 #endif
 
-  ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
+  ESP_LOGI(TAG, "Starting %s v%s", PROGNAME, PROGVERSION);
 
   // initialize system event handler for wifi task, needed for
   // wifi_sniffer_init()
@@ -509,7 +509,7 @@ void setup() {
   ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
 
 #ifdef HAS_GPS
-  ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
+  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
 #endif
 
 #endif // verbose
