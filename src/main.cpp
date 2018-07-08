@@ -646,7 +646,7 @@ void setup() {
 #ifdef HAS_GPS
   if (cfg.gpsmode) {
     ESP_LOGI(TAG, "Starting GPS task on core 0");
-    xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, (void *)1, 1, NULL, 0);
+    xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, (void *)1, 2, NULL, 0);
   }
 #endif
 
