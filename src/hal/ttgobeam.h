@@ -1,6 +1,7 @@
 // Hardware related definitions for TTGO T-Beam board
 
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
+#define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
 #define HAS_LED GPIO_NUM_21 // on board green LED_G1
 //#define HAS_BUTTON GPIO_NUM_39 // on board button "BOOT" (next to reset button) !! seems not to work!!

@@ -3,6 +3,7 @@
 #define CFG_sx1276_radio 1
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board LED, so we use RGB LED on LoPy4
 #define HAS_RGB_LED   GPIO_NUM_0  // WS2812B RGB LED on GPIO0
+#define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
 // Hardware pin definitions for Pycom LoPy4 board
 #define PIN_SPI_SS    GPIO_NUM_18
