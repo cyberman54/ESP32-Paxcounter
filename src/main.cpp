@@ -506,11 +506,13 @@ void setup() {
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                          : "external");
   ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
-#endif
+  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
 
 #ifdef HAS_GPS
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
+
+#endif // verbose
 
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
