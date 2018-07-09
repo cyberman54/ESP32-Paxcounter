@@ -643,6 +643,8 @@ void setup() {
 #endif
 
 // if device has GPS and it is enabled, start GPS reader task on core 0
+// higher priority than wifi channel rotation task since we process serial
+// streaming NMEA data
 #ifdef HAS_GPS
   if (cfg.gpsmode) {
     ESP_LOGI(TAG, "Starting GPS task on core 0");
