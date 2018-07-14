@@ -6,10 +6,6 @@
 // Basic Config
 #include "globals.h"
 
-// LMIC-Arduino LoRaWAN Stack
-//#include <lmic.h>
-//#include <hal/hal.h>
-
 // Local logging tag
 static const char TAG[] = "main";
 
@@ -213,10 +209,10 @@ void set_loraadr(uint8_t val) {
     break;
   }
   LMIC_setAdrMode(cfg.adrmode);
-};
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
+};
 
 void set_blescan(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val ? "on" : "off");

@@ -1,8 +1,11 @@
 
 #include "configmanager.h"
-#include "lorawan.h"
 #include "macsniff.h"
 #include "senddata.h"
+
+#ifdef HAS_LORA
+#include "lorawan.h"
+#endif
 
 // program version - note: increment version after modifications to configData_t
 // struct!!

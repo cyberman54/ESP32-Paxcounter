@@ -54,10 +54,8 @@ led_states previousLEDState =
 unsigned long LEDBlinkStarted = 0; // When (in millis() led blink started)
 uint16_t LEDBlinkDuration = 0;     // How long the blink need to be
 uint16_t LEDColor = COLOR_NONE; // state machine variable to set RGB LED color
-hw_timer_t *displaytimer =
-    NULL; // configure hardware timer used for cyclic display refresh
-hw_timer_t *channelSwitch =
-    NULL; // configure hardware timer used for wifi channel switching
+hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
+           *sendCycle = NULL; // configure hardware timer for cyclic tasks
 
 #ifdef HAS_GPS
 gpsStatus_t gps_status; // struct for storing gps data
@@ -84,7 +82,7 @@ CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
 
 // this variables will be changed in the ISR, and read in main loop
 static volatile int ButtonPressedIRQ = 0, DisplayTimerIRQ = 0,
-                    ChannelTimerIRQ = 0;
+                    ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0;
 
 // local Tag for logging
 static const char TAG[] = "main";
@@ -168,7 +166,9 @@ void lorawan_loop(void *pvParameters) {
  * -------------------------------------------------------- */
 
 #ifdef HAS_DISPLAY
+
 HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
+
 // Display Refresh IRQ
 void IRAM_ATTR DisplayIRQ() {
   portENTER_CRITICAL_ISR(&timerMux);
@@ -200,6 +200,13 @@ void IRAM_ATTR ChannelSwitchIRQ() {
   portEXIT_CRITICAL(&timerMux);
 }
 
+// Send Cycle Timer IRQ Handler Routine
+void IRAM_ATTR SendCycleIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  SendCycleTimerIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}
+
 /* end hardware specific parts
  * -------------------------------------------------------- */
 
@@ -215,7 +222,7 @@ void sniffer_loop(void *pvParameters) {
 
     if (ChannelTimerIRQ) {
       portENTER_CRITICAL(&timerMux);
-      ChannelTimerIRQ--;
+      ChannelTimerIRQ = 0;
       portEXIT_CRITICAL(&timerMux);
       // rotates variable channel 1..WIFI_CHANNEL_MAX
       channel = (channel % WIFI_CHANNEL_MAX) + 1;
@@ -375,7 +382,7 @@ void updateDisplay() {
   // refresh display according to refresh cycle setting
   if (DisplayTimerIRQ) {
     portENTER_CRITICAL(&timerMux);
-    DisplayTimerIRQ--;
+    DisplayTimerIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
 
     refreshDisplay();
@@ -393,7 +400,7 @@ void updateDisplay() {
 void readButton() {
   if (ButtonPressedIRQ) {
     portENTER_CRITICAL(&timerMux);
-    ButtonPressedIRQ--;
+    ButtonPressedIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
     ESP_LOGI(TAG, "Button pressed");
     ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
@@ -415,9 +422,6 @@ void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
 void led_loop() {
   // Custom blink running always have priority other LoRaWAN led management
   if (LEDBlinkStarted && LEDBlinkDuration) {
-
-    // ESP_LOGI(TAG, "Start=%ld for %g",LEDBlinkStarted, LEDBlinkDuration );
-
     // Custom blink is finished, let this order, avoid millis() overflow
     if ((millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
       // Led becomes off, and stop blink
@@ -429,7 +433,6 @@ void led_loop() {
       // In case of LoRaWAN led management blinked off
       LEDState = LED_ON;
     }
-
     // No custom blink, check LoRaWAN state
   } else {
 
@@ -449,17 +452,14 @@ void led_loop() {
       LEDColor = COLOR_RED;
       // heartbeat long blink 200ms on each 2 seconds
       LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;
-    } else {
+    } else
 #endif // HAS_LORA
-
+    {
       // led off
       LEDColor = COLOR_NONE;
       LEDState = LED_OFF;
     }
   }
-
-  // ESP_LOGI(TAG, "state=%d previous=%d Color=%d",LEDState, previousLEDState,
-  // LEDColor );
   // led need to change state? avoid digitalWrite() for nothing
   if (LEDState != previousLEDState) {
     if (LEDState == LED_ON) {
@@ -468,7 +468,7 @@ void led_loop() {
 #ifdef LED_ACTIVE_LOW
       digitalWrite(HAS_LED, LOW);
 #else
-    digitalWrite(HAS_LED, HIGH);
+      digitalWrite(HAS_LED, HIGH);
 #endif
 
     } else {
@@ -477,7 +477,7 @@ void led_loop() {
 #ifdef LED_ACTIVE_LOW
       digitalWrite(HAS_LED, HIGH);
 #else
-    digitalWrite(HAS_LED, LOW);
+      digitalWrite(HAS_LED, LOW);
 #endif
     }
     previousLEDState = LEDState;
@@ -486,19 +486,42 @@ void led_loop() {
 
 #endif // #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
-void sendpayload() {
-  // append counter data to payload
-  payload.reset();
-  payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
-  // append GPS data, if present
+void updatePayload() {
+
+  if (SendCycleTimerIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    SendCycleTimerIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
+
+    // append counter data to payload
+    payload.reset();
+    payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
+    // append GPS data, if present
+
 #ifdef HAS_GPS
-  if ((cfg.gpsmode) && (gps.location.isValid())) {
-    gps_read();
-    payload.addGPS(gps_status);
-  }
+    if ((cfg.gpsmode) && (gps.location.isValid())) {
+      gps_read();
+      payload.addGPS(gps_status);
+    }
+    // log NMEA status, useful for debugging GPS connection
+    ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+             gps.passedChecksum(), gps.failedChecksum(),
+             gps.sentencesWithFix());
+    // log GPS position if we have a fix
+    if ((cfg.gpsmode) && (gps.location.isValid())) {
+      gps_read();
+      ESP_LOGI(TAG, "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
+               gps_status.latitude / (float)1e6,
+               gps_status.longitude / (float)1e6, gps_status.satellites,
+               gps_status.hdop / (float)100, gps_status.altitude);
+    } else {
+      ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
+    }
 #endif
-  senddata(PAYLOADPORT);
-}
+
+    senddata(PAYLOADPORT);
+  }
+} // updatePayload()
 
 /* begin Aruino SETUP
  * ------------------------------------------------------------ */
@@ -625,10 +648,16 @@ void setup() {
 #endif
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  channelSwitch = timerBegin(1, 80, true);
+  channelSwitch = timerBegin(1, 800, true);
   timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
-  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
+  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
   timerAlarmEnable(channelSwitch);
+
+  // setup send cycle trigger IRQ using esp32 hardware timer 2
+  sendCycle = timerBegin(2, 8000, true);
+  timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
+  timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
+  timerAlarmEnable(sendCycle);
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
@@ -656,9 +685,11 @@ void setup() {
   // This tells LMIC to make the receive windows bigger, in case your clock is
   // 1% faster or slower.
   LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
+  // join network
+  LMIC_startJoining();
 
-  // start lmic runloop in rtos task on core 1 (note: arduino main loop runs on
-  // core 1, too)
+  // start lmic runloop in rtos task on core 1 (note: arduino main loop runs
+  // on core 1, too)
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
   ESP_LOGI(TAG, "Starting Lora task on core 1");
@@ -692,9 +723,6 @@ void setup() {
     xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, (void *)1, 2, NULL, 0);
   }
 #endif
-
-  // send initial payload to open transfer interfaces
-  sendpayload();
 }
 
 /* end Arduino SETUP
@@ -707,14 +735,9 @@ void loop() {
 
   while (1) {
 
-    // simple state machine for controlling uptime, display, LED, button,
-    // memory.
+    // state machine for uptime, display, LED, button, lowmemory, senddata
 
     uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
-
-    // send data every x seconds, x/2 is configured in cfg.sendcycle
-    if ((uptime() % (cfg.sendcycle * 2000)) < 1)
-      sendpayload();
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();
@@ -739,24 +762,8 @@ void loop() {
       reset_salt();          // get new salt for salting hashes
     }
 
-#ifdef HAS_GPS
-    // log NMEA status every 60 seconds, useful for debugging GPS connection
-    if ((uptime() % 60000) < 1) {
-      ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
-               gps.passedChecksum(), gps.failedChecksum(),
-               gps.sentencesWithFix());
-      if ((cfg.gpsmode) && (gps.location.isValid())) {
-        gps_read();
-        ESP_LOGI(TAG,
-                 "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
-                 gps_status.latitude / (float)1e6,
-                 gps_status.longitude / (float)1e6, gps_status.satellites,
-                 gps_status.hdop / (float)100, gps_status.altitude);
-      } else {
-        ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
-      }
-    }
-#endif
+    // check send cycle and send payload if cycle is expired
+    updatePayload();
 
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
 
