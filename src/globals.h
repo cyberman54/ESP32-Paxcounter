@@ -16,9 +16,11 @@
 #include <TinyGPS++.h>
 #endif
 
+#ifdef HAS_LORA
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
 #include <hal/hal.h>
+#endif
 
 // LED controls
 #ifdef HAS_RGB_LED
@@ -31,9 +33,8 @@
 #include "payload.h"
 
 extern configData_t cfg;
+extern char display_line6[], display_line7[];
 extern uint64_t uptimecounter;
-extern osjob_t sendjob, rcmdjob;
-extern char display_lora[], display_lmic[];
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
 extern std::set<uint16_t> macs;

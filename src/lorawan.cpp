@@ -1,3 +1,5 @@
+#ifdef HAS_LORA
+
 // Basic Config
 #include "globals.h"
 
@@ -152,7 +154,7 @@ void onEvent(ev_t ev) {
   case EV_JOINED:
 
     strcpy_P(buff, PSTR("JOINED"));
-    sprintf(display_lora, " "); // clear previous lmic status
+    sprintf(display_line6, " "); // clear previous lmic status
 
     // set data rate adaptation
     LMIC_setAdrMode(cfg.adrmode);
@@ -169,14 +171,14 @@ void onEvent(ev_t ev) {
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
                                                : PSTR("TX COMPLETE"));
-    sprintf(display_lora, " "); // clear previous lmic status
+    sprintf(display_line6, " "); // clear previous lmic status
 
     if (LMIC.dataLen) {
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
                LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);
       // LMIC.snr = SNR twos compliment [dB] * 4
       // LMIC.rssi = RSSI [dBm] (-196...+63)
-      sprintf(display_lora, "RSSI %d SNR %d", LMIC.rssi,
+      sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi,
               (signed char)LMIC.snr / 4);
 
       // check if payload received on command port, then call remote command
@@ -205,7 +207,9 @@ void onEvent(ev_t ev) {
   // Log & Display if asked
   if (*buff) {
     ESP_LOGI(TAG, "EV_%s", buff);
-    sprintf(display_lmic, buff);
+    sprintf(display_line7, buff);
   }
 
 } // onEvent()
+
+#endif // HAS_LORA

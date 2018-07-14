@@ -28,10 +28,12 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 // Does nothing and avoid any compilation error with I2C
 #include <Wire.h>
 
+#ifdef HAS_LORA
 // LMIC-Arduino LoRaWAN Stack
 #include "loraconf.h"
 #include <hal/hal.h>
 #include <lmic.h>
+#endif
 
 // ESP32 lib Functions
 #include <esp32-hal-log.h>  // needed for ESP_LOGx on arduino framework
@@ -39,15 +41,14 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include <esp_spi_flash.h>  // needed for reading ESP32 chip attributes
 
 // Initialize global variables
-configData_t cfg;           // struct holds current device configuration
-osjob_t sendjob, rcmdjob;   // LMIC job handler
-uint64_t uptimecounter = 0; // timer global for uptime counter
-uint8_t DisplayState = 0;   // globals for state machine
+configData_t cfg; // struct holds current device configuration
+char display_line6[16], display_line7[16]; // display buffers
+uint64_t uptimecounter = 0;                // timer global for uptime counter
+uint8_t DisplayState = 0;                  // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0,
          macs_ble = 0; // MAC counters globals for display
 uint8_t channel = 0;   // wifi channel rotation counter global for display
-char display_lora[16], display_lmic[16]; // display buffers
-led_states LEDState = LED_OFF;           // LED state global for state machine
+led_states LEDState = LED_OFF; // LED state global for state machine
 led_states previousLEDState =
     LED_ON; // This will force LED to be off at boot since State is OFF
 unsigned long LEDBlinkStarted = 0; // When (in millis() led blink started)
@@ -105,6 +106,8 @@ void reset_counters() {
 /* begin LMIC specific parts
  * ------------------------------------------------------------ */
 
+#ifdef HAS_LORA
+
 #ifdef VERBOSE
 void printKeys(void);
 #endif // VERBOSE
@@ -155,6 +158,8 @@ void lorawan_loop(void *pvParameters) {
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
   }
 }
+
+#endif // HAS_LORA
 
 /* end LMIC specific parts
  * --------------------------------------------------------------- */
@@ -238,6 +243,7 @@ uint64_t uptime() {
 
 #ifdef HAS_DISPLAY
 
+#ifdef HAS_LORA
 // Print a key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   const uint8_t *p;
@@ -247,6 +253,7 @@ void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   }
   u8x8.printf("\n");
 }
+#endif // HAS_LORA
 
 void init_display(const char *Productname, const char *Version) {
   uint8_t buf[32];
@@ -289,9 +296,13 @@ void init_display(const char *Productname, const char *Version) {
   u8x8.print(Productname);
   u8x8.print(" v");
   u8x8.println(PROGVERSION);
+
+#ifdef HAS_LORA
   u8x8.println("DEVEUI:");
   os_getDevEui((u1_t *)buf);
   DisplayKey(buf, 8, true);
+#endif // HAS_LORA
+
   delay(5000);
   u8x8.clear();
 }
@@ -325,6 +336,8 @@ void refreshDisplay() {
   else
     u8x8.printf("%s", "BLTH:off");
 #endif
+
+#ifdef HAS_LORA
   u8x8.setCursor(11, 3);
   u8x8.printf("SF:");
   if (cfg.adrmode) // if ADR=on then display SF value inverse
@@ -333,6 +346,7 @@ void refreshDisplay() {
               lora_datarate[LMIC.datarate * 2 + 1]);
   if (cfg.adrmode) // switch off inverse if it was turned on
     u8x8.setInverseFont(0);
+#endif // HAS_LORA
 
   // update wifi counter + channel display (line 4)
   u8x8.setCursor(0, 4);
@@ -346,13 +360,15 @@ void refreshDisplay() {
   u8x8.setCursor(10, 5);
   u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
 
+#ifdef HAS_LORA
   // update LoRa status display (line 6)
   u8x8.setCursor(0, 6);
-  u8x8.printf("%-16s", display_lora);
+  u8x8.printf("%-16s", display_line6);
 
   // update LMiC event display (line 7)
   u8x8.setCursor(0, 7);
-  u8x8.printf("%-16s", display_lmic);
+  u8x8.printf("%-16s", display_line7);
+#endif // HAS_LORA
 }
 
 void updateDisplay() {
@@ -417,6 +433,7 @@ void led_loop() {
     // No custom blink, check LoRaWAN state
   } else {
 
+#ifdef HAS_LORA
     // LED indicators for viusalizing LoRaWAN state
     if (LMIC.opmode & (OP_JOINING | OP_REJOIN)) {
       LEDColor = COLOR_YELLOW;
@@ -425,7 +442,7 @@ void led_loop() {
     } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
       LEDColor = COLOR_BLUE;
       // small blink 10ms on each 1/2sec (not when joining)
-      LEDState = ((millis() % 500) < 20) ? LED_ON : LED_OFF;
+      LEDState = ((millis() % 500) < 10) ? LED_ON : LED_OFF;
       // This should not happen so indicate a problem
     } else if (LMIC.opmode &
                ((OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0)) {
@@ -433,6 +450,7 @@ void led_loop() {
       // heartbeat long blink 200ms on each 2 seconds
       LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;
     } else {
+#endif // HAS_LORA
       // led off
       LEDColor = COLOR_NONE;
       LEDState = LED_OFF;
@@ -448,14 +466,14 @@ void led_loop() {
 #ifdef LED_ACTIVE_LOW
       digitalWrite(HAS_LED, LOW);
 #else
-      digitalWrite(HAS_LED, HIGH);
+    digitalWrite(HAS_LED, HIGH);
 #endif
     } else {
       rgb_set_color(COLOR_NONE);
 #ifdef LED_ACTIVE_LOW
       digitalWrite(HAS_LED, HIGH);
 #else
-      digitalWrite(HAS_LED, LOW);
+    digitalWrite(HAS_LED, LOW);
 #endif
     }
     previousLEDState = LEDState;
@@ -571,7 +589,9 @@ void setup() {
   u8x8.setCursor(0, 5);
   u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
 
-  sprintf(display_lora, "Join wait");
+#ifdef HAS_LORA
+  sprintf(display_line6, "Join wait");
+#endif // HAS_LORA
 
   // setup display refresh trigger IRQ using esp32 hardware timer 0
   // for explanation see
@@ -604,7 +624,9 @@ void setup() {
   // show compiled features
   ESP_LOGI(TAG, "Features: %s", features);
 
-// output LoRaWAN keys to console
+#ifdef HAS_LORA
+
+  // output LoRaWAN keys to console
 #ifdef VERBOSE
   printKeys();
 #endif
@@ -624,6 +646,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting Lora task on core 1");
   xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, (void *)1,
                           (5 | portPRIVILEGE_BIT), NULL, 1);
+#endif
 
   // start wifi in monitor mode and start channel rotation task on core 0
   ESP_LOGI(TAG, "Starting Wifi task on core 0");
@@ -672,7 +695,7 @@ void loop() {
     uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
 
     // send data every x seconds, x/2 is configured in cfg.sendcycle
-    if (uptime() % (cfg.sendcycle * 20000) == 0)
+    if (uptime() % (cfg.sendcycle * 20000) < cfg.sendcycle * 2)
       senddata(PAYLOADPORT);
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
@@ -694,13 +717,13 @@ void loop() {
                "free heap = %d bytes)",
                esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
       senddata(PAYLOADPORT); // send data before clearing counters
-      reset_counters(); // clear macs container and reset all counters
-      reset_salt();     // get new salt for salting hashes
+      reset_counters();      // clear macs container and reset all counters
+      reset_salt();          // get new salt for salting hashes
     }
 
 #ifdef HAS_GPS
     // log NMEA status every 60 seconds, useful for debugging GPS connection
-    if ((uptime() % 60000) == 0) {
+    if ((uptime() % 60000) < 60) {
       ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
                gps.passedChecksum(), gps.failedChecksum(),
                gps.sentencesWithFix());

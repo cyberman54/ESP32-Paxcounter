@@ -7,8 +7,8 @@
 #include "globals.h"
 
 // LMIC-Arduino LoRaWAN Stack
-#include <lmic.h>
-#include <hal/hal.h>
+//#include <lmic.h>
+//#include <hal/hal.h>
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -30,23 +30,7 @@ void antenna_select(const uint8_t _ant);
 uint16_t read_voltage(void);
 #endif
 
-// function sends result of get commands to LoRaWAN network
-void do_transmit(osjob_t *j) {
-  // check if there is a pending TX/RX job running, if yes then reschedule
-  // transmission
-  if (LMIC.opmode & OP_TXRXPEND) {
-    ESP_LOGI(TAG, "LoRa busy, rescheduling");
-    sprintf(display_lmic, "LORA BUSY");
-    os_setTimedCallback(&rcmdjob, os_getTime() + sec2osticks(RETRANSMIT_RCMD),
-                        do_transmit);
-  }
-  // send payload
-  LMIC_setTxData2(RCMDPORT, payload.getBuffer(), payload.getSize(),
-                  (cfg.countermode & 0x02));
-  ESP_LOGI(TAG, "%d bytes queued to send", payload.getSize());
-  sprintf(display_lmic, "PACKET QUEUED");
-}
-
+#ifdef HAS_LORA
 // help function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora(uint8_t sf, uint8_t tx) {
   if (tx > 20)
@@ -93,13 +77,14 @@ void switch_lora(uint8_t sf, uint8_t tx) {
     break;
   }
 }
+#endif // HAS_LORA
 
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val) {
   switch (val) {
   case 0: // restart device
     ESP_LOGI(TAG, "Remote command: restart device");
-    sprintf(display_lora, "Reset pending");
+    sprintf(display_line6, "Reset pending");
     vTaskDelay(
         10000 /
         portTICK_PERIOD_MS); // wait for LMIC to confirm LoRa downlink to server
@@ -109,11 +94,11 @@ void set_reset(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
     reset_counters(); // clear macs
     reset_salt();     // get new salt
-    sprintf(display_lora, "Reset counter");
+    sprintf(display_line6, "Reset counter");
     break;
   case 2: // reset device to factory settings
     ESP_LOGI(TAG, "Remote command: reset device to factory settings");
-    sprintf(display_lora, "Factory reset");
+    sprintf(display_line6, "Factory reset");
     eraseConfig();
     break;
   }
@@ -208,11 +193,16 @@ void set_gps(uint8_t val) {
 };
 
 void set_lorasf(uint8_t val) {
+#ifdef HAS_LORA
   ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val);
   switch_lora(val, cfg.txpower);
+#else
+  ESP_LOGW(TAG, "Remote command: LoRa not implemented");
+#endif // HAS_LORA
 };
 
 void set_loraadr(uint8_t val) {
+#ifdef HAS_LORA
   ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s", val ? "on" : "off");
   switch (val) {
   case 1:
@@ -224,6 +214,9 @@ void set_loraadr(uint8_t val) {
   }
   LMIC_setAdrMode(cfg.adrmode);
 };
+#else
+  ESP_LOGW(TAG, "Remote command: LoRa not implemented");
+#endif // HAS_LORA
 
 void set_blescan(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val ? "on" : "off");
@@ -280,15 +273,19 @@ void set_rgblum(uint8_t val) {
 };
 
 void set_lorapower(uint8_t val) {
+#ifdef HAS_LORA
   ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val);
   switch_lora(cfg.lorasf, val);
+#else
+    ESP_LOGW(TAG, "Remote command: LoRa not implemented");
+#endif // HAS_LORA
 };
 
 void get_config(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  do_transmit(&rcmdjob);
+  senddata(STATUSPORT);
 };
 
 void get_status(uint8_t val) {
@@ -296,11 +293,11 @@ void get_status(uint8_t val) {
 #ifdef HAS_BATTERY_PROBE
   uint16_t voltage = read_voltage();
 #else
-  uint16_t voltage = 0;
+    uint16_t voltage = 0;
 #endif
   payload.reset();
   payload.addStatus(voltage, uptimecounter, temperatureRead());
-  do_transmit(&rcmdjob);
+  senddata(STATUSPORT);
 };
 
 void get_gps(uint8_t val) {
@@ -309,9 +306,9 @@ void get_gps(uint8_t val) {
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
-  do_transmit(&rcmdjob);
+  senddata(GPSPORT);
 #else
-  ESP_LOGW(TAG, "GPS function not supported");
+    ESP_LOGW(TAG, "GPS function not supported");
 #endif
 };
 

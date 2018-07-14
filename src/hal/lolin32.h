@@ -13,6 +13,8 @@
 #define HAS_BUTTON    15  // ESP32 GPIO15 (pin15) Button is on the LoraNode32 shield
 #define BUTTON_PULLUP  1  // Button need pullup instead of default pulldown
 
+#define HAS_LORA  1       // comment out if device shall not send data via LoRa
+#define HAS_SPI   1       // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // RFM95 module
 
 // re-define pin definitions of pins_arduino.h
