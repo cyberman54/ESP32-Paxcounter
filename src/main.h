@@ -2,6 +2,7 @@
 #include "configmanager.h"
 #include "lorawan.h"
 #include "macsniff.h"
+#include "senddata.h"
 
 // program version - note: increment version after modifications to configData_t
 // struct!!

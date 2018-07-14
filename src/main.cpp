@@ -652,8 +652,8 @@ void setup() {
   }
 #endif
 
-  // joins network and rescedules sendjob for cyclic transmitting payload
-  do_send(&sendjob);
+  // send initial payload to open transfer interfaces
+  senddata(PAYLOADPORT);
 }
 
 /* end Arduino SETUP
@@ -670,6 +670,10 @@ void loop() {
     // memory.
 
     uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
+
+    // send data every x seconds, x/2 is configured in cfg.sendcycle
+    if (uptime() % (cfg.sendcycle * 20000) == 0)
+      senddata(PAYLOADPORT);
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();
@@ -689,9 +693,9 @@ void loop() {
                "Memory full, counter cleared (heap low water mark = %d Bytes / "
                "free heap = %d bytes)",
                esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-      do_send(&sendjob); // send count
-      reset_counters();  // clear macs container and reset all counters
-      reset_salt();      // get new salt for salting hashes
+      senddata(PAYLOADPORT); // send data before clearing counters
+      reset_counters(); // clear macs container and reset all counters
+      reset_salt();     // get new salt for salting hashes
     }
 
 #ifdef HAS_GPS
