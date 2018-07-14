@@ -12,8 +12,8 @@
 #define PIN_SPI_SCK   GPIO_NUM_5
 #define RST   LMIC_UNUSED_PIN
 #define DIO0  GPIO_NUM_23 // LoRa IRQ
-#define DIO1  GPIO_NUM_23 // workaround
-#define DIO2  LMIC_UNUSED_PIN
+#define DIO1  GPIO_NUM_23 // Pin tied via diode to DIO0
+#define DIO1  GPIO_NUM_23 // Pin tied via diode to DIO0
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define HAS_ANTENNA_SWITCH  21      // pin for switching wifi antenna
