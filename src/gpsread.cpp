@@ -58,13 +58,8 @@ void gps_loop(void *pvParameters) {
           gps.encode(Wire.read());
           vTaskDelay(1 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
         }
-
-        ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
-                 gps.passedChecksum(), gps.failedChecksum(),
-                 gps.sentencesWithFix());
       }
       // after GPS function was disabled, close connect to GPS device
-
       Wire.endTransmission();
 
 #endif // GPS Type

@@ -451,6 +451,7 @@ void led_loop() {
       LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;
     } else {
 #endif // HAS_LORA
+
       // led off
       LEDColor = COLOR_NONE;
       LEDState = LED_OFF;
@@ -463,13 +464,16 @@ void led_loop() {
   if (LEDState != previousLEDState) {
     if (LEDState == LED_ON) {
       rgb_set_color(LEDColor);
+
 #ifdef LED_ACTIVE_LOW
       digitalWrite(HAS_LED, LOW);
 #else
     digitalWrite(HAS_LED, HIGH);
 #endif
+
     } else {
       rgb_set_color(COLOR_NONE);
+
 #ifdef LED_ACTIVE_LOW
       digitalWrite(HAS_LED, HIGH);
 #else
@@ -480,7 +484,21 @@ void led_loop() {
   }
 }; // led_loop()
 
+#endif // #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+
+void sendpayload() {
+  // append counter data to payload
+  payload.reset();
+  payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
+  // append GPS data, if present
+#ifdef HAS_GPS
+  if ((cfg.gpsmode) && (gps.location.isValid())) {
+    gps_read();
+    payload.addGPS(gps_status);
+  }
 #endif
+  senddata(PAYLOADPORT);
+}
 
 /* begin Aruino SETUP
  * ------------------------------------------------------------ */
@@ -559,8 +577,8 @@ void setup() {
   // install button interrupt (pulldown mode)
   pinMode(HAS_BUTTON, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
-#endif
-#endif
+#endif // BUTTON_PULLUP
+#endif // HAS_BUTTON
 
   // initialize wifi antenna if needed
 #ifdef HAS_ANTENNA_SWITCH
@@ -676,7 +694,7 @@ void setup() {
 #endif
 
   // send initial payload to open transfer interfaces
-  senddata(PAYLOADPORT);
+  sendpayload();
 }
 
 /* end Arduino SETUP
@@ -696,7 +714,7 @@ void loop() {
 
     // send data every x seconds, x/2 is configured in cfg.sendcycle
     if ((uptime() % (cfg.sendcycle * 2000)) < 1)
-      senddata(PAYLOADPORT);
+      sendpayload();
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();
@@ -724,7 +742,7 @@ void loop() {
 #ifdef HAS_GPS
     // log NMEA status every 60 seconds, useful for debugging GPS connection
     if ((uptime() % 60000) < 1) {
-      ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+      ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
                gps.passedChecksum(), gps.failedChecksum(),
                gps.sentencesWithFix());
       if ((cfg.gpsmode) && (gps.location.isValid())) {
