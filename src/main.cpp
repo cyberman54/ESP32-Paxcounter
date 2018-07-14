@@ -695,7 +695,7 @@ void loop() {
     uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
 
     // send data every x seconds, x/2 is configured in cfg.sendcycle
-    if (uptime() % (cfg.sendcycle * 20000) < cfg.sendcycle * 2)
+    if ((uptime() % (cfg.sendcycle * 2000)) < 1)
       senddata(PAYLOADPORT);
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
@@ -723,7 +723,7 @@ void loop() {
 
 #ifdef HAS_GPS
     // log NMEA status every 60 seconds, useful for debugging GPS connection
-    if ((uptime() % 60000) < 60) {
+    if ((uptime() % 60000) < 1) {
       ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
                gps.passedChecksum(), gps.failedChecksum(),
                gps.sentencesWithFix());
