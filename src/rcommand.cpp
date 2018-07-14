@@ -107,16 +107,18 @@ void set_rssi(uint8_t val) {
 
 void set_sendcycle(uint8_t val) {
   cfg.sendcycle = val;
+  // update send cycle interrupt
+  timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
+  // reload interrupt after each trigger of channel switch cycle
   ESP_LOGI(TAG, "Remote command: set payload send cycle to %d seconds",
            cfg.sendcycle * 2);
 };
 
 void set_wifichancycle(uint8_t val) {
   cfg.wifichancycle = val;
-  // modify wifi channel rotation IRQ
-  timerAlarmWrite(
-      channelSwitch, cfg.wifichancycle * 10000,
-      true); // reload interrupt after each trigger of channel switch cycle
+  // update channel rotation interrupt
+  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
+
   ESP_LOGI(TAG,
            "Remote command: set Wifi channel switch interval to %.1f seconds",
            cfg.wifichancycle / float(100));
@@ -273,7 +275,7 @@ void set_lorapower(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val);
   switch_lora(cfg.lorasf, val);
 #else
-    ESP_LOGW(TAG, "Remote command: LoRa not implemented");
+  ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
 };
 
@@ -289,7 +291,7 @@ void get_status(uint8_t val) {
 #ifdef HAS_BATTERY_PROBE
   uint16_t voltage = read_voltage();
 #else
-    uint16_t voltage = 0;
+  uint16_t voltage = 0;
 #endif
   payload.reset();
   payload.addStatus(voltage, uptimecounter, temperatureRead());
@@ -304,7 +306,7 @@ void get_gps(uint8_t val) {
   payload.addGPS(gps_status);
   senddata(GPSPORT);
 #else
-    ESP_LOGW(TAG, "GPS function not supported");
+  ESP_LOGW(TAG, "GPS function not supported");
 #endif
 };
 

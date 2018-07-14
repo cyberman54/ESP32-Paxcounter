@@ -38,8 +38,7 @@ extern uint64_t uptimecounter;
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
 extern std::set<uint16_t> macs;
-extern hw_timer_t
-    *channelSwitch; // hardware timer used for wifi channel switching
+extern hw_timer_t *channelSwitch, *sendCycle;
 
 #ifdef HAS_GPS
 extern gpsStatus_t gps_status; // struct for storing gps data
