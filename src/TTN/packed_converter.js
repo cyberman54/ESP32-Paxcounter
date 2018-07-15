@@ -11,7 +11,6 @@ function Converter(decoded, port) {
 
     if (port === 2) {
         converted.voltage /= 1000;
-        converted.uptime /= 60;
     }
 
 
