@@ -137,22 +137,22 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #3:** Device configuration query result
 
-	byte 1:			Lora SF (7..12) [default 9]
-	byte 2:			Lora TXpower (2..15) [default 15]
-	byte 3:			Lora ADR (1=on, 0=off) [default 1]
-	byte 4:			Screensaver status (1=on, 0=off) [default 0]
-	byte 5:			Display status (1=on, 0=off) [default 0]
-	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
-	bytes 7-8:		RSSI limiter threshold value (negative) [default 0]
-	byte 9:			Lora Payload send cycle in seconds/2 (0..255) [default 120]
-	byte 10:		Wifi channel switch interval in seconds/100 (0..255) [default 50]
-	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
-	byte 12:		Bluetooth scanner status (1=on, 0=0ff) [default 1]
-	byte 13:		Wifi antenna switch (0=internal, 1=external) [default 0]
-	byte 14:		Vendorfilter mode (0=disabled, 1=enabled) [default 0]
-	byte 15:		RGB LED luminosity (0..100 %) [default 30]
-	byte 16:		GPS send data mode (1=on, 0=ff) [default 1]
-	bytes 17-27:		Software version (ASCII format, terminating with zero)
+	byte 1:		Lora SF (7..12) [default 9]
+	byte 2:		Lora TXpower (2..15) [default 15]
+	byte 3:		Lora ADR (1=on, 0=off) [default 1]
+	byte 4:		Screensaver status (1=on, 0=off) [default 0]
+	byte 5:		Display status (1=on, 0=off) [default 0]
+	byte 6:		Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
+	bytes 7-8:	RSSI limiter threshold value (negative) [default 0]
+	byte 9:		Lora Payload send cycle in seconds/2 (0..255) [default 120]
+	byte 10:	Wifi channel switch interval in seconds/100 (0..255) [default 50]
+	byte 11:	Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
+	byte 12:	Bluetooth scanner status (1=on, 0=0ff) [default 1]
+	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
+	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
+	byte 15:	RGB LED luminosity (0..100 %) [default 30]
+	byte 16:	GPS send data mode (1=on, 0=ff) [default 1]
+	bytes 17-27:	Software version (ASCII format, terminating with zero)
 
 
 **Port #4:** GPS query result
