@@ -155,11 +155,11 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #4:** GPS query result
 
-	bytes 1-4:	GPS latitude
-	bytes 5-8:	GPS longitude
-	bytes 9-10:	GPS number of satellites
-	bytes 11-12:	GPS HDOP
-	bytes 13-14:	GPS altitude [meter]
+	bytes 1-4:	Latitude
+	bytes 5-8:	Longitude
+	bytes 9-10:	Number of satellites
+	bytes 11-12:	HDOP
+	bytes 13-14:	Altitude [meter]
 
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
