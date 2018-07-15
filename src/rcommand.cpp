@@ -284,7 +284,7 @@ void get_status(uint8_t val) {
   uint16_t voltage = 0;
 #endif
   payload.reset();
-  payload.addStatus(voltage, uptimecounter, temperatureRead());
+  payload.addStatus(voltage, uptime() / 1000, temperatureRead());
   senddata(STATUSPORT);
 };
 

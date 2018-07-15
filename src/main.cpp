@@ -32,7 +32,6 @@ char display_line6[16], display_line7[16]; // display buffers
 uint8_t DisplayState = 0, channel = 0;     // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0,
          macs_ble = 0;      // MAC counters globals for display
-uint64_t uptimecounter = 0; // timer global for uptime counter
 hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
            *sendCycle = NULL; // configure hardware timer for cyclic tasks
 
@@ -437,8 +436,6 @@ void loop() {
   while (1) {
 
     // state machine for uptime, display, LED, button, lowmemory, senddata
-
-    uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();

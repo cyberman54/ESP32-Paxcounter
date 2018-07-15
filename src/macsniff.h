@@ -4,6 +4,7 @@
 // ESP32 Functions
 #include <esp_wifi.h>
 
+// Hash function for scrambling MAC addresses
 #include "hash.h"
 
 #define MAC_SNIFF_WIFI 0
