@@ -25,43 +25,25 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 // Basic Config
 #include "globals.h"
 
-// Does nothing and avoid any compilation error with I2C
-#include <Wire.h>
-
-// LMIC-Arduino LoRaWAN Stack
-#include "loraconf.h"
-#include <hal/hal.h>
-#include <lmic.h>
-
-// ESP32 lib Functions
-#include <esp32-hal-log.h>  // needed for ESP_LOGx on arduino framework
-#include <esp_event_loop.h> // needed for Wifi event handler
-#include <esp_spi_flash.h>  // needed for reading ESP32 chip attributes
-
 // Initialize global variables
-configData_t cfg;           // struct holds current device configuration
-osjob_t sendjob, rcmdjob;   // LMIC job handler
-uint64_t uptimecounter = 0; // timer global for uptime counter
-uint8_t DisplayState = 0;   // globals for state machine
+configData_t cfg; // struct holds current device configuration
+char display_line6[16], display_line7[16]; // display buffers
+uint64_t uptimecounter = 0;                // timer global for uptime counter
+uint8_t DisplayState = 0;                  // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0,
          macs_ble = 0; // MAC counters globals for display
 uint8_t channel = 0;   // wifi channel rotation counter global for display
-char display_lora[16], display_lmic[16]; // display buffers
-led_states LEDState = LED_OFF;           // LED state global for state machine
-led_states previousLEDState =
-    LED_ON; // This will force LED to be off at boot since State is OFF
-unsigned long LEDBlinkStarted = 0; // When (in millis() led blink started)
-uint16_t LEDBlinkDuration = 0;     // How long the blink need to be
-uint16_t LEDColor = COLOR_NONE; // state machine variable to set RGB LED color
-hw_timer_t *displaytimer =
-    NULL; // configure hardware timer used for cyclic display refresh
-hw_timer_t *channelSwitch =
-    NULL; // configure hardware timer used for wifi channel switching
+hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
+           *sendCycle = NULL; // configure hardware timer for cyclic tasks
 
 #ifdef HAS_GPS
 gpsStatus_t gps_status; // struct for storing gps data
 TinyGPSPlus gps;        // create TinyGPS++ instance
 #endif
+
+// this variables will be changed in the ISR, and read in main loop
+static volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
+                    SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0;
 
 portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
@@ -80,10 +62,6 @@ CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
 #else
 #error "No valid payload converter defined"
 #endif
-
-// this variables will be changed in the ISR, and read in main loop
-static volatile int ButtonPressedIRQ = 0, DisplayTimerIRQ = 0,
-                    ChannelTimerIRQ = 0;
 
 // local Tag for logging
 static const char TAG[] = "main";
@@ -105,36 +83,7 @@ void reset_counters() {
 /* begin LMIC specific parts
  * ------------------------------------------------------------ */
 
-#ifdef VERBOSE
-void printKeys(void);
-#endif // VERBOSE
-
-// LMIC callback functions
-void os_getDevKey(u1_t *buf) { memcpy(buf, APPKEY, 16); }
-
-void os_getArtEui(u1_t *buf) {
-  memcpy(buf, APPEUI, 8);
-  RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
-}
-
-void os_getDevEui(u1_t *buf) {
-  int i = 0, k = 0;
-  memcpy(buf, DEVEUI, 8); // get fixed DEVEUI from loraconf.h
-  for (i = 0; i < 8; i++) {
-    k += buf[i];
-  }
-  if (k) {
-    RevBytes(buf, 8); // use fixed DEVEUI and swap bytes to LSB format
-  } else {
-    gen_lora_deveui(buf); // generate DEVEUI from device's MAC
-  }
-
-// Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
-#ifdef MCP_24AA02E64_I2C_ADDRESS
-  get_hard_deveui(buf);
-  RevBytes(buf, 8); // swap bytes to LSB format
-#endif
-}
+#ifdef HAS_LORA
 
 // LMIC enhanced Pin mapping
 const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
@@ -144,6 +93,16 @@ const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
                                .rxtx = LMIC_UNUSED_PIN,
                                .rst = RST,
                                .dio = {DIO0, DIO1, DIO2}};
+
+#ifdef VERBOSE
+void printKeys(void);
+#endif // VERBOSE
+
+// Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+get_hard_deveui(buf);
+RevBytes(buf, 8); // swap bytes to LSB format
+#endif
 
 // LMIC FreeRTos Task
 void lorawan_loop(void *pvParameters) {
@@ -156,53 +115,70 @@ void lorawan_loop(void *pvParameters) {
   }
 }
 
+#endif // HAS_LORA
+
 /* end LMIC specific parts
  * --------------------------------------------------------------- */
 
 /* beginn hardware specific parts
  * -------------------------------------------------------- */
 
-#ifdef HAS_DISPLAY
-HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
-// Display Refresh IRQ
-void IRAM_ATTR DisplayIRQ() {
-  portENTER_CRITICAL_ISR(&timerMux);
-  DisplayTimerIRQ++;
-  portEXIT_CRITICAL_ISR(&timerMux);
-}
-#endif
-
-#ifdef HAS_ANTENNA_SWITCH
-// defined in antenna.cpp
-void antenna_init();
-void antenna_select(const uint8_t _ant);
-#endif
-
-#ifndef BLECOUNTER
-bool btstop = btStop();
-#endif
-
-// Button IRQ Handler Routine, IRAM_ATTR necessary here, see
+// Setup IRQ handler routines for button, channel rotation, send cycle´, display
+// attention, enable cache:
 // https://github.com/espressif/arduino-esp32/issues/855
-#ifdef HAS_BUTTON
-void IRAM_ATTR ButtonIRQ() { ButtonPressedIRQ++; }
-#endif
 
-// Wifi Channel Rotation Timer IRQ Handler Routine
 void IRAM_ATTR ChannelSwitchIRQ() {
   portENTER_CRITICAL(&timerMux);
   ChannelTimerIRQ++;
   portEXIT_CRITICAL(&timerMux);
 }
 
+void IRAM_ATTR SendCycleIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  SendCycleTimerIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}
+
+#ifdef HAS_DISPLAY
+void IRAM_ATTR DisplayIRQ() {
+  portENTER_CRITICAL_ISR(&timerMux);
+  DisplayTimerIRQ++;
+  portEXIT_CRITICAL_ISR(&timerMux);
+}
+
+void updateDisplay() {
+  // refresh display according to refresh cycle setting
+  if (DisplayTimerIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    DisplayTimerIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
+    refreshDisplay();
+  }
+}
+
+#endif
+
+#ifdef HAS_BUTTON
+void IRAM_ATTR ButtonIRQ() { ButtonPressedIRQ++; }
+
+void readButton() {
+  if (ButtonPressedIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    ButtonPressedIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
+    ESP_LOGI(TAG, "Button pressed");
+    ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
+    eraseConfig();
+    esp_restart();
+  }
+}
+#endif
+
 /* end hardware specific parts
  * -------------------------------------------------------- */
 
-/* begin wifi specific parts
- * ---------------------------------------------------------- */
-
-// Sniffer Task
-void sniffer_loop(void *pvParameters) {
+// Wifi channel rotation task
+void wifi_channel_loop(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
@@ -210,7 +186,7 @@ void sniffer_loop(void *pvParameters) {
 
     if (ChannelTimerIRQ) {
       portENTER_CRITICAL(&timerMux);
-      ChannelTimerIRQ--;
+      ChannelTimerIRQ = 0;
       portEXIT_CRITICAL(&timerMux);
       // rotates variable channel 1..WIFI_CHANNEL_MAX
       channel = (channel % WIFI_CHANNEL_MAX) + 1;
@@ -223,9 +199,6 @@ void sniffer_loop(void *pvParameters) {
   } // end of infinite wifi channel rotation loop
 }
 
-/* end wifi specific parts
- * ------------------------------------------------------------ */
-
 // uptime counter 64bit to prevent millis() rollover after 49 days
 uint64_t uptime() {
   static uint32_t low32, high32;
@@ -236,233 +209,42 @@ uint64_t uptime() {
   return (uint64_t)high32 << 32 | low32;
 }
 
-#ifdef HAS_DISPLAY
+void sendPayload() {
 
-// Print a key on display
-void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
-  const uint8_t *p;
-  for (uint8_t i = 0; i < len; i++) {
-    p = lsb ? key + len - i - 1 : key + i;
-    u8x8.printf("%02X", *p);
-  }
-  u8x8.printf("\n");
-}
+  if (SendCycleTimerIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    SendCycleTimerIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
 
-void init_display(const char *Productname, const char *Version) {
-  uint8_t buf[32];
-  u8x8.begin();
-  u8x8.setFont(u8x8_font_chroma48medium8_r);
-  u8x8.clear();
-  u8x8.setFlipMode(0);
-  u8x8.setInverseFont(1);
-  u8x8.draw2x2String(0, 0, Productname);
-  u8x8.setInverseFont(0);
-  u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
-  u8x8.clear();
-  u8x8.setFlipMode(1);
-  u8x8.setInverseFont(1);
-  u8x8.draw2x2String(0, 0, Productname);
-  u8x8.setInverseFont(0);
-  u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
+    // append counter data to payload
+    payload.reset();
+    payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
+    // append GPS data, if present
 
-  u8x8.setFlipMode(0);
-  u8x8.clear();
-
-#ifdef DISPLAY_FLIP
-  u8x8.setFlipMode(1);
-#endif
-
-// Display chip information
-#ifdef VERBOSE
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  u8x8.printf("ESP32 %d cores\nWiFi%s%s\n", chip_info.cores,
-              (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-              (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-  u8x8.printf("ESP Rev.%d\n", chip_info.revision);
-  u8x8.printf("%dMB %s Flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
-#endif // VERBOSE
-
-  u8x8.print(Productname);
-  u8x8.print(" v");
-  u8x8.println(PROGVERSION);
-  u8x8.println("DEVEUI:");
-  os_getDevEui((u1_t *)buf);
-  DisplayKey(buf, 8, true);
-  delay(5000);
-  u8x8.clear();
-}
-
-void refreshDisplay() {
-  // update counter (lines 0-1)
-  char buff[16];
-  snprintf(
-      buff, sizeof(buff), "PAX:%-4d",
-      (int)macs.size()); // convert 16-bit MAC counter to decimal counter value
-  u8x8.draw2x2String(0, 0,
-                     buff); // display number on unique macs total Wifi + BLE
-
-  // update GPS status (line 2)
 #ifdef HAS_GPS
-  u8x8.setCursor(7, 2);
-  if (!gps.location.isValid()) // if no fix then display Sats value inverse
-  {
-    u8x8.setInverseFont(1);
-    u8x8.printf("Sats: %.3d", gps.satellites.value());
-    u8x8.setInverseFont(0);
-  } else
-    u8x8.printf("Sats: %.3d", gps.satellites.value());
-#endif
-
-    // update bluetooth counter + LoRa SF (line 3)
-#ifdef BLECOUNTER
-  u8x8.setCursor(0, 3);
-  if (cfg.blescan)
-    u8x8.printf("BLTH:%-4d", macs_ble);
-  else
-    u8x8.printf("%s", "BLTH:off");
-#endif
-  u8x8.setCursor(11, 3);
-  u8x8.printf("SF:");
-  if (cfg.adrmode) // if ADR=on then display SF value inverse
-    u8x8.setInverseFont(1);
-  u8x8.printf("%c%c", lora_datarate[LMIC.datarate * 2],
-              lora_datarate[LMIC.datarate * 2 + 1]);
-  if (cfg.adrmode) // switch off inverse if it was turned on
-    u8x8.setInverseFont(0);
-
-  // update wifi counter + channel display (line 4)
-  u8x8.setCursor(0, 4);
-  u8x8.printf("WIFI:%-4d", macs_wifi);
-  u8x8.setCursor(11, 4);
-  u8x8.printf("ch:%02d", channel);
-
-  // update RSSI limiter status & free memory display (line 5)
-  u8x8.setCursor(0, 5);
-  u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-  u8x8.setCursor(10, 5);
-  u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
-
-  // update LoRa status display (line 6)
-  u8x8.setCursor(0, 6);
-  u8x8.printf("%-16s", display_lora);
-
-  // update LMiC event display (line 7)
-  u8x8.setCursor(0, 7);
-  u8x8.printf("%-16s", display_lmic);
-}
-
-void updateDisplay() {
-  // refresh display according to refresh cycle setting
-  if (DisplayTimerIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    DisplayTimerIRQ--;
-    portEXIT_CRITICAL(&timerMux);
-
-    refreshDisplay();
-
-    // set display on/off according to current device configuration
-    if (DisplayState != cfg.screenon) {
-      DisplayState = cfg.screenon;
-      u8x8.setPowerSave(!cfg.screenon);
+    if ((cfg.gpsmode) && (gps.location.isValid())) {
+      gps_read();
+      payload.addGPS(gps_status);
     }
-  }
-} // updateDisplay()
-#endif // HAS_DISPLAY
-
-#ifdef HAS_BUTTON
-void readButton() {
-  if (ButtonPressedIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    ButtonPressedIRQ--;
-    portEXIT_CRITICAL(&timerMux);
-    ESP_LOGI(TAG, "Button pressed");
-    ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
-    eraseConfig();
-    esp_restart();
-  }
-}
-#endif
-
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-
-void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
-  LEDColor = set_color;                 // set color for RGB LED
-  LEDBlinkDuration = set_blinkduration; // duration
-  LEDBlinkStarted = millis();           // Time Start here
-  LEDState = LED_ON;                    // Let main set LED on
-}
-
-void led_loop() {
-  // Custom blink running always have priority other LoRaWAN led management
-  if (LEDBlinkStarted && LEDBlinkDuration) {
-
-    // ESP_LOGI(TAG, "Start=%ld for %g",LEDBlinkStarted, LEDBlinkDuration );
-
-    // Custom blink is finished, let this order, avoid millis() overflow
-    if ((millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
-      // Led becomes off, and stop blink
-      LEDState = LED_OFF;
-      LEDBlinkStarted = 0;
-      LEDBlinkDuration = 0;
-      LEDColor = COLOR_NONE;
+    // log NMEA status, useful for debugging GPS connection
+    ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+             gps.passedChecksum(), gps.failedChecksum(),
+             gps.sentencesWithFix());
+    // log GPS position if we have a fix
+    if ((cfg.gpsmode) && (gps.location.isValid())) {
+      gps_read();
+      ESP_LOGI(TAG, "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
+               gps_status.latitude / (float)1e6,
+               gps_status.longitude / (float)1e6, gps_status.satellites,
+               gps_status.hdop / (float)100, gps_status.altitude);
     } else {
-      // In case of LoRaWAN led management blinked off
-      LEDState = LED_ON;
+      ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
     }
+#endif
 
-    // No custom blink, check LoRaWAN state
-  } else {
-
-    // LED indicators for viusalizing LoRaWAN state
-    if (LMIC.opmode & (OP_JOINING | OP_REJOIN)) {
-      LEDColor = COLOR_YELLOW;
-      // quick blink 20ms on each 1/5 second
-      LEDState = ((millis() % 200) < 20) ? LED_ON : LED_OFF; // TX data pending
-    } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
-      LEDColor = COLOR_BLUE;
-      // small blink 10ms on each 1/2sec (not when joining)
-      LEDState = ((millis() % 500) < 20) ? LED_ON : LED_OFF;
-      // This should not happen so indicate a problem
-    } else if (LMIC.opmode &
-               ((OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0)) {
-      LEDColor = COLOR_RED;
-      // heartbeat long blink 200ms on each 2 seconds
-      LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;
-    } else {
-      // led off
-      LEDColor = COLOR_NONE;
-      LEDState = LED_OFF;
-    }
+    senddata(PAYLOADPORT);
   }
-
-  // ESP_LOGI(TAG, "state=%d previous=%d Color=%d",LEDState, previousLEDState,
-  // LEDColor );
-  // led need to change state? avoid digitalWrite() for nothing
-  if (LEDState != previousLEDState) {
-    if (LEDState == LED_ON) {
-      rgb_set_color(LEDColor);
-#ifdef LED_ACTIVE_LOW
-      digitalWrite(HAS_LED, LOW);
-#else
-      digitalWrite(HAS_LED, HIGH);
-#endif
-    } else {
-      rgb_set_color(COLOR_NONE);
-#ifdef LED_ACTIVE_LOW
-      digitalWrite(HAS_LED, HIGH);
-#else
-      digitalWrite(HAS_LED, LOW);
-#endif
-    }
-    previousLEDState = LEDState;
-  }
-}; // led_loop()
-
-#endif
+} // sendPayload()
 
 /* begin Aruino SETUP
  * ------------------------------------------------------------ */
@@ -487,7 +269,7 @@ void setup() {
   esp_log_set_vprintf(redirect_log);
 #endif
 
-  ESP_LOGI(TAG, "Starting %s %s", PROGNAME, PROGVERSION);
+  ESP_LOGI(TAG, "Starting %s v%s", PROGNAME, PROGVERSION);
 
   // initialize system event handler for wifi task, needed for
   // wifi_sniffer_init()
@@ -506,11 +288,13 @@ void setup() {
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                          : "external");
   ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
-#endif
+  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
 
 #ifdef HAS_GPS
-  ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
+  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
 #endif
+
+#endif // verbose
 
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
@@ -539,13 +323,21 @@ void setup() {
   // install button interrupt (pulldown mode)
   pinMode(HAS_BUTTON, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
-#endif
-#endif
+#endif // BUTTON_PULLUP
+#endif // HAS_BUTTON
 
   // initialize wifi antenna if needed
 #ifdef HAS_ANTENNA_SWITCH
   strcat_P(features, " ANT");
   antenna_init();
+  antenna_select(cfg.wifiant);
+#endif
+
+// switch off bluetooth on esp32 module, if not compiled
+#ifdef BLECOUNTER
+  strcat_P(features, " BLE");
+#else
+  bool btstop = btStop();
 #endif
 
 // initialize gps if present
@@ -553,26 +345,13 @@ void setup() {
   strcat_P(features, " GPS");
 #endif
 
+// initialize display if present
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
-  // initialize display
-  init_display(PROGNAME, PROGVERSION);
   DisplayState = cfg.screenon;
-  u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
-  u8x8.draw2x2String(0, 0, "PAX:0");
-#ifdef BLECOUNTER
-  u8x8.setCursor(0, 3);
-  u8x8.printf("BLTH:0");
-#endif
-  u8x8.setCursor(0, 4);
-  u8x8.printf("WIFI:0");
-  u8x8.setCursor(0, 5);
-  u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
+  init_display(PROGNAME, PROGVERSION);
 
-  sprintf(display_lora, "Join wait");
-
-  // setup display refresh trigger IRQ using esp32 hardware timer 0
-  // for explanation see
+  // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   displaytimer = timerBegin(0, 80, true); // prescaler 80 -> divides 80 MHz CPU
                                           // freq to 1 MHz, timer 0, count up
@@ -585,10 +364,16 @@ void setup() {
 #endif
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  channelSwitch = timerBegin(1, 80, true);
+  channelSwitch = timerBegin(1, 800, true);
   timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
-  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
+  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
   timerAlarmEnable(channelSwitch);
+
+  // setup send cycle trigger IRQ using esp32 hardware timer 2
+  sendCycle = timerBegin(2, 8000, true);
+  timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
+  timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
+  timerAlarmEnable(sendCycle);
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
@@ -602,7 +387,9 @@ void setup() {
   // show compiled features
   ESP_LOGI(TAG, "Features: %s", features);
 
-// output LoRaWAN keys to console
+#ifdef HAS_LORA
+
+  // output LoRaWAN keys to console
 #ifdef VERBOSE
   printKeys();
 #endif
@@ -614,14 +401,35 @@ void setup() {
   // This tells LMIC to make the receive windows bigger, in case your clock is
   // 1% faster or slower.
   LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
+  // join network
+  LMIC_startJoining();
 
-  // start lmic runloop in rtos task on core 1 (note: arduino main loop runs on
-  // core 1, too)
+  // start lmic runloop in rtos task on core 1 (note: arduino main loop runs
+  // on core 1, too)
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
   ESP_LOGI(TAG, "Starting Lora task on core 1");
-  xTaskCreatePinnedToCore(lorawan_loop, "loratask", 2048, (void *)1,
+  xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1,
                           (5 | portPRIVILEGE_BIT), NULL, 1);
+#endif
+
+// if device has GPS and it is enabled, start GPS reader task on core 0 with
+// higher priority than wifi channel rotation task since we process serial
+// streaming NMEA data
+#ifdef HAS_GPS
+  if (cfg.gpsmode) {
+    ESP_LOGI(TAG, "Starting GPS task on core 0");
+    xTaskCreatePinnedToCore(gps_loop, "gpsloop", 2048, (void *)1, 2, NULL, 0);
+  }
+#endif
+
+// start BLE scan callback if BLE function is enabled in NVRAM configuration
+#ifdef BLECOUNTER
+  if (cfg.blescan) {
+    ESP_LOGI(TAG, "Starting BLE task on core 1");
+    start_BLEscan();
+  }
+#endif
 
   // start wifi in monitor mode and start channel rotation task on core 0
   ESP_LOGI(TAG, "Starting Wifi task on core 0");
@@ -630,27 +438,9 @@ void setup() {
   // arduino-esp32 core note: do this *after* wifi has started, since function
   // gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
-  xTaskCreatePinnedToCore(sniffer_loop, "wifisniffer", 2048, (void *)1, 1, NULL,
-                          0);
-
-// start BLE scan callback if BLE function is enabled in NVRAM configuration
-#ifdef BLECOUNTER
-  if (cfg.blescan) {
-    start_BLEscan();
-  }
-#endif
-
-// if device has GPS and it is enabled, start GPS reader task on core 0
-#ifdef HAS_GPS
-  if (cfg.gpsmode) {
-    ESP_LOGI(TAG, "Starting GPS task on core 0");
-    xTaskCreatePinnedToCore(gps_loop, "gpsfeed", 2048, (void *)1, 1, NULL, 0);
-  }
-#endif
-
-  // joins network and rescedules sendjob for cyclic transmitting payload
-  do_send(&sendjob);
-}
+  xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
+                          NULL, 0);
+} // setup
 
 /* end Arduino SETUP
  * ------------------------------------------------------------ */
@@ -662,8 +452,7 @@ void loop() {
 
   while (1) {
 
-    // simple state machine for controlling uptime, display, LED, button,
-    // memory.
+    // state machine for uptime, display, LED, button, lowmemory, senddata
 
     uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
 
@@ -685,29 +474,13 @@ void loop() {
                "Memory full, counter cleared (heap low water mark = %d Bytes / "
                "free heap = %d bytes)",
                esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-      do_send(&sendjob); // send count
-      reset_counters();  // clear macs container and reset all counters
-      reset_salt();      // get new salt for salting hashes
+      senddata(PAYLOADPORT); // send data before clearing counters
+      reset_counters();      // clear macs container and reset all counters
+      reset_salt();          // get new salt for salting hashes
     }
 
-#ifdef HAS_GPS
-    // log NMEA status every 60 seconds, useful for debugging GPS connection
-    if ((uptime() % 60000) == 0) {
-      ESP_LOGI(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
-               gps.passedChecksum(), gps.failedChecksum(),
-               gps.sentencesWithFix());
-      if ((cfg.gpsmode) && (gps.location.isValid())) {
-        gps_read();
-        ESP_LOGI(TAG,
-                 "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
-                 gps_status.latitude / (float)1e6,
-                 gps_status.longitude / (float)1e6, gps_status.satellites,
-                 gps_status.hdop / (float)100, gps_status.altitude);
-      } else {
-        ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
-      }
-    }
-#endif
+    // check send cycle and send payload if cycle is expired
+    sendPayload();
 
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
 
