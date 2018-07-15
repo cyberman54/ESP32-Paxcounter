@@ -127,31 +127,31 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1-2:	Number of unique pax, first seen on Wifi
 	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
-	bytes 5-18: GPS data (only, if GPS is present and has a fix) format see Port #4
+	bytes 5-18: 	GPS data (only, if GPS is present and has a fix) format see Port #4
 
 **Port #2:** Device status query result
 
   	byte 1-2:	Voltage [mV]
 	byte 3-11:	Uptime [seconds]
-	bytes 12-16: CPU temperate [°C]
+	bytes 12-16: 	CPU temperate [°C]
 
 **Port #3:** Device configuration query result
 
-	byte 1: LoRa spread factor
-	byte 2:	ADR mode on/off
-	byte 3:	Screensaver on/off
-	byte 4:	Display on/off
-	byte 5:	Counter mode
-	bytes 6-7: RSSI limit
-	byte 8: Payload send cycle
-	byte 9: Wifi channel switch cycle
-	byte 10: Bluetooth scan duration
-	byte 11: Bluetooth scanning on/off
-	byte 12: Wifi antenna internal/external
-	byte 13: Vendortfilter on/off
-	byte 14: RGB Led luminosity [%]
-	byte 15: GPS data on/off
-	bytes 16-26: Software version in ASCII
+	byte 1: 	LoRa spread factor
+	byte 2:		ADR mode on/off
+	byte 3:		Screensaver on/off
+	byte 4:		Display on/off
+	byte 5:		Counter mode
+	bytes 6-7: 	RSSI limit
+	byte 8: 	Payload send cycle
+	byte 9: 	Wifi channel switch cycle
+	byte 10: 	Bluetooth scan duration
+	byte 11: 	Bluetooth scanning on/off
+	byte 12: 	Wifi antenna internal/external
+	byte 13: 	Vendorfilter on/off
+	byte 14: 	RGB Led luminosity [%]
+	byte 15: 	GPS data on/off
+	bytes 16-26: 	Software version in ASCII
 
 **Port #4:** GPS query result
 
