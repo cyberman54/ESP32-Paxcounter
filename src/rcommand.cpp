@@ -16,18 +16,8 @@ typedef struct {
   const bool store;
 } cmd_t;
 
-// function defined in antenna.cpp
-#ifdef HAS_ANTENNA_SWITCH
-void antenna_select(const uint8_t _ant);
-#endif
-
-// function defined in adcread.cpp
-#ifdef HAS_BATTERY_PROBE
-uint16_t read_voltage(void);
-#endif
-
 #ifdef HAS_LORA
-// help function to assign LoRa datarates to numeric spreadfactor values
+// helper function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora(uint8_t sf, uint8_t tx) {
   if (tx > 20)
     return;

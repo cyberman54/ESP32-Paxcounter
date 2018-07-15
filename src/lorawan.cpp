@@ -2,11 +2,7 @@
 
 // Basic Config
 #include "globals.h"
-
-// LMIC-Arduino LoRaWAN Stack
-#include "loraconf.h"
-#include <lmic.h>
-#include <hal/hal.h>
+#include "rcommand.h"
 
 #ifdef MCP_24AA02E64_I2C_ADDRESS
 #include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
@@ -14,10 +10,6 @@
 
 // Local logging Tag
 static const char TAG[] = "lora";
-
-// functions defined in rcommand.cpp
-void rcommand(uint8_t cmd, uint8_t arg);
-void switch_lora(uint8_t sf, uint8_t tx);
 
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
@@ -44,6 +36,33 @@ void RevBytes(unsigned char *b, size_t c) {
     b[i] = b[c - 1 - i];
     b[c - 1 - i] = t;
   }
+}
+
+// LMIC callback functions
+void os_getDevKey(u1_t *buf) { memcpy(buf, APPKEY, 16); }
+
+void os_getArtEui(u1_t *buf) {
+  memcpy(buf, APPEUI, 8);
+  RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
+}
+
+void os_getDevEui(u1_t *buf) {
+  int i = 0, k = 0;
+  memcpy(buf, DEVEUI, 8); // get fixed DEVEUI from loraconf.h
+  for (i = 0; i < 8; i++) {
+    k += buf[i];
+  }
+  if (k) {
+    RevBytes(buf, 8); // use fixed DEVEUI and swap bytes to LSB format
+  } else {
+    gen_lora_deveui(buf); // generate DEVEUI from device's MAC
+  }
+
+// Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+  get_hard_deveui(buf);
+  RevBytes(buf, 8); // swap bytes to LSB format
+#endif
 }
 
 void get_hard_deveui(uint8_t *pdeveui) {

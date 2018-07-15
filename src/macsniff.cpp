@@ -9,9 +9,14 @@
 // Local logging tag
 static const char TAG[] = "wifi";
 
+/* change for future Espressif v1.1.x
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX, 0,
                                       WIFI_COUNTRY_POLICY_MANUAL};
+*/
+
+static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
+                                      WIFI_CHANNEL_MAX, WIFI_COUNTRY_POLICY_MANUAL};
 
 // globals
 uint16_t salt;

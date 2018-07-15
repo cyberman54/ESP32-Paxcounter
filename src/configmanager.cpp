@@ -8,13 +8,7 @@
 static const char TAG[] = "flash";
 
 nvs_handle my_handle;
-
 esp_err_t err;
-
-// defined in antenna.cpp
-#ifdef HAS_ANTENNA_SWITCH
-void antenna_select(const uint8_t _ant);
-#endif
 
 // populate cfg vars with factory settings
 void defaultConfig() {
@@ -324,7 +318,7 @@ void loadConfig() {
 
     // put actions to be triggered after config loaded here
 
-#ifdef HAS_ANTENNA_SWITCH // set antenna type, if device has one
+#ifdef HAS_ANTENNA_SWITCH // set antenna type
     antenna_select(cfg.wifiant);
 #endif
   }

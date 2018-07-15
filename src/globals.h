@@ -6,39 +6,27 @@
 #include <array>
 #include <algorithm>
 
-// OLED Display
-#ifdef HAS_DISPLAY
-#include <U8x8lib.h>
-#endif
-
-// GPS
-#ifdef HAS_GPS
-#include <TinyGPS++.h>
-#endif
-
-#ifdef HAS_LORA
-// LMIC-Arduino LoRaWAN Stack
-#include <lmic.h>
-#include <hal/hal.h>
-#endif
-
-// LED controls
-#ifdef HAS_RGB_LED
-#include <SmartLeds.h>
-#endif
-
-#include "rgb_led.h"
-#include "macsniff.h"
+// basics
 #include "main.h"
+#include "led.h"
+#include "macsniff.h"
 #include "payload.h"
 
 extern configData_t cfg;
 extern char display_line6[], display_line7[];
-extern uint64_t uptimecounter;
 extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
+extern uint8_t channel, DisplayState;
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
+extern uint64_t uptimecounter;
 extern std::set<uint16_t> macs;
 extern hw_timer_t *channelSwitch, *sendCycle;
+extern portMUX_TYPE timerMux;
+
+#if defined(CFG_eu868)
+const char lora_datarate[] = {"1211100908077BFSNA"};
+#elif defined(CFG_us915)
+const char lora_datarate[] = {"100908078CNA121110090807"};
+#endif
 
 #ifdef HAS_GPS
 extern gpsStatus_t gps_status; // struct for storing gps data

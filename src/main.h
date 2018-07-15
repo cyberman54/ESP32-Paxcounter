@@ -1,15 +1,42 @@
 
 #include "configmanager.h"
-#include "macsniff.h"
 #include "senddata.h"
+
+// Does nothing and avoid any compilation error with I2C
+#include <Wire.h>
+
+// ESP32 lib Functions
+#include <esp32-hal-log.h>  // needed for ESP_LOGx on arduino framework
+#include <esp_event_loop.h> // needed for Wifi event handler
+#include <esp_spi_flash.h>  // needed for reading ESP32 chip attributes
 
 #ifdef HAS_LORA
 #include "lorawan.h"
 #endif
 
+#ifdef HAS_DISPLAY
+#include "display.h"
+#endif
+
+#ifdef HAS_GPS
+#include "gps.h"
+#endif
+
+#ifdef BLECOUNTER
+#include "blescan.h"
+#endif
+
+#ifdef HAS_BATTERY_PROBE
+#include "battery.h"
+#endif
+
+#ifdef HAS_ANTENNA_SWITCH
+#include "antenna.h"
+#endif
+
 // program version - note: increment version after modifications to configData_t
 // struct!!
-#define PROGVERSION "1.3.9" // use max 10 chars here!
+#define PROGVERSION "1.3.91" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 //--- Declarations ---
@@ -46,29 +73,6 @@ extern gpsStatus_t gps_status; // struct for storing gps data
 extern TinyGPSPlus gps;        // Make TinyGPS++ instance globally availabe
 #endif
 
-enum led_states { LED_OFF, LED_ON };
-
-#if defined(CFG_eu868)
-const char lora_datarate[] = {"1211100908077BFSNA"};
-#elif defined(CFG_us915)
-const char lora_datarate[] = {"100908078CNA121110090807"};
-#endif
-
-//--- Prototypes ---
-
-// defined in main.cpp
 void reset_counters(void);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
 void led_loop(void);
-
-// defined in blescan.cpp
-#ifdef BLECOUNTER
-void start_BLEscan(void);
-void stop_BLEscan(void);
-#endif
-
-// defined in gpsread.cpp
-#ifdef HAS_GPS
-void gps_read(void);
-void gps_loop(void *pvParameters);
-#endif

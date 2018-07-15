@@ -4,6 +4,8 @@
 // ESP32 Functions
 #include <esp_wifi.h>
 
+#include "hash.h"
+
 #define MAC_SNIFF_WIFI 0
 #define MAC_SNIFF_BLE 1
 
