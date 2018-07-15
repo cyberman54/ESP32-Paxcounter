@@ -328,7 +328,7 @@ device answers with it's current configuration. The configuration is a C structu
 	bytes 5-8:		Longitude
 	byte 9:			Number of satellites
 	byte 10-11:		HDOP
-	bytes 12-13:		altidute [meter]
+	bytes 12-13:		Altidute [meter]
 
 # License
 
