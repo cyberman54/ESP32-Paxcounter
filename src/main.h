@@ -39,8 +39,6 @@
 #define PROGVERSION "1.3.91" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
-//--- Declarations ---
-
 // Struct holding devices's runtime configuration
 typedef struct {
   uint8_t lorasf;      // 7-12, lora spreadfactor

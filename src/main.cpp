@@ -1,5 +1,6 @@
 /*
-ESP32-Paxcounter
+
+//////////////////////// ESP32-Paxcounter \\\\\\\\\\\\\\\\\\\\\\\\\\
 
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
 Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
@@ -28,11 +29,10 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 // Initialize global variables
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
-uint64_t uptimecounter = 0;                // timer global for uptime counter
-uint8_t DisplayState = 0;                  // globals for state machine
+uint8_t DisplayState = 0, channel = 0;     // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0,
-         macs_ble = 0; // MAC counters globals for display
-uint8_t channel = 0;   // wifi channel rotation counter global for display
+         macs_ble = 0;      // MAC counters globals for display
+uint64_t uptimecounter = 0; // timer global for uptime counter
 hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
            *sendCycle = NULL; // configure hardware timer for cyclic tasks
 

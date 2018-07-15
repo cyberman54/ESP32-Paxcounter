@@ -131,35 +131,37 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #2:** Device status query result
 
-  	byte 1-2:	Voltage [mV]
-	byte 3-11:	Uptime [seconds]
-	bytes 12-16: 	CPU temperature [°C]
+  	byte 1-2:	Battery or USB Voltage [mV], 0 if unreadable
+	byte 3-10:	Uptime [seconds]
+	bytes 11-14: 	CPU temperature [°C]
 
 **Port #3:** Device configuration query result
 
-	byte 1: 	LoRa spread factor
-	byte 2:		ADR mode on/off
-	byte 3:		Screensaver on/off
-	byte 4:		Display on/off
-	byte 5:		Counter mode
-	bytes 6-7: 	RSSI limit
-	byte 8: 	Payload send cycle [sec/2]
-	byte 9: 	Wifi channel switch cycle [sec/100]
-	byte 10: 	Bluetooth scan duration [sec/100]
-	byte 11: 	Bluetooth scanning on/off
-	byte 12: 	Wifi antenna internal/external
-	byte 13: 	Vendorfilter on/off
-	byte 14: 	RGB Led luminosity [%]
-	byte 15: 	GPS data on/off
-	bytes 16-26: 	Software version [ASCII]
+	byte 1:			Lora SF (7..12) [default 9]
+	byte 2:			Lora TXpower (2..15) [default 15]
+	byte 3:			Lora ADR (1=on, 0=off) [default 1]
+	byte 4:			Screensaver status (1=on, 0=off) [default 0]
+	byte 5:			Display status (1=on, 0=off) [default 0]
+	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
+	bytes 7-8:		RSSI limiter threshold value (negative) [default 0]
+	byte 9:			Lora Payload send cycle in seconds/2 (0..255) [default 120]
+	byte 10:		Wifi channel switch interval in seconds/100 (0..255) [default 50]
+	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
+	byte 12:		Bluetooth scanner status (1=on, 0=0ff) [default 1]
+	byte 13:		Wifi antenna switch (0=internal, 1=external) [default 0]
+	byte 14:		Vendorfilter mode (0=disabled, 1=enabled) [default 0]
+	byte 15:		RGB LED luminosity (0..100 %) [default 30]
+	byte 16:		GPS send data mode (1=on, 0=ff) [default 1]
+	bytes 17-27:		Software version (ASCII format, terminating with zero)
+
 
 **Port #4:** GPS query result
 
 	bytes 1-4:	Latitude
 	bytes 5-8:	Longitude
-	bytes 9-10:	Number of satellites
-	bytes 11-12:	HDOP
-	bytes 13-14:	Altitude [meter]
+	byte 9:		Number of satellites
+	bytes 10-11:	HDOP
+	bytes 12-13:	Altitude [meter]
 
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
@@ -297,39 +299,17 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [main.h](src/main.h#L13-L31) with the following definition:
-
-	byte 1:			Lora SF (7..12) [default 9]
-	byte 2:			Lora TXpower (2..15) [default 15]
-	byte 3:			Lora ADR (1=on, 0=off) [default 1]
-	byte 4:			Screensaver status (1=on, 0=off) [default 0]
-	byte 5:			Display status (1=on, 0=off) [default 0]
-	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
-	bytes 7-8:		RSSI limiter threshold value (negative) [default 0]
-	byte 9:			Lora Payload send cycle in seconds/2 (0..255) [default 120]
-	byte 10:		Wifi channel switch interval in seconds/100 (0..255) [default 50]
-	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
-	byte 12:		Bluetooth scanner status (1=on, 0=0ff) [default 1]
-	byte 13:		Wifi antenna switch (0=internal, 1=external) [default 0]
-	byte 14:		Vendorfilter mode (0=disabled, 1=enabled) [default 0]
-	byte 15:		RGB LED luminosity (0..100 %) [default 30]
-	byte 16:		GPS send data mode (1=on, 0=ff) [default 1]
-	bytes 17-27:		Software version (ASCII format, terminating with zero)
+	Device answers with it's current configuration on Port 3. 
 
 0x81 get device status
 
-	bytes 1-2:		Battery voltage in millivolt, 0 if unreadable
-	bytes 3-10:		Uptime in seconds
-	bytes 11-14:		Chip temperature in degrees celsius
-
+	Device answers with it's current status on Port 2. 
+	
 0x84 get device GPS status
 
-	bytes 1-4:		Latitude
-	bytes 5-8:		Longitude
-	byte 9:			Number of satellites
-	byte 10-11:		HDOP
-	bytes 12-13:		Altidute [meter]
+	Device answers with it's current status on Port 4. 
 
+	
 # License
 
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>

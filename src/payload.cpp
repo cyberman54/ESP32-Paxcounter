@@ -44,6 +44,7 @@ void TTNplain::addGPS(gpsStatus_t value) {
 
 void TTNplain::addConfig(configData_t value) {
   buffer[cursor++] = value.lorasf;
+  buffer[cursor++] = value.txpower;
   buffer[cursor++] = value.adrmode;
   buffer[cursor++] = value.screensaver;
   buffer[cursor++] = value.screenon;
@@ -112,6 +113,7 @@ void TTNpacked::addGPS(gpsStatus_t value) {
 
 void TTNpacked::addConfig(configData_t value) {
   writeUint8(value.lorasf);
+  writeUint8(value.txpower);
   writeUint16(value.rssilimit);
   writeUint8(value.sendcycle);
   writeUint8(value.wifichancycle);

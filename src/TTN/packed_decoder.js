@@ -24,7 +24,7 @@ function Decoder(bytes, port) {
 
     if (port === 3) {
         // device config data      
-        return decode(bytes, [uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
+        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
     }
 
     if (port === 4) {
