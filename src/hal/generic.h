@@ -2,6 +2,7 @@
 
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no LoRa
 #define HAS_SPI  1 // comment out if device shall not send data via SPI
+
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
 #define BOARD_HAS_PSRAM // use if board has external PSRAM
@@ -11,9 +12,8 @@
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // uses GPIO7
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
 
-#define HAS_LED GPIO_NUM_21 // on board green LED_G1
-
-#define HAS_BUTTON GPIO_NUM_39 // use if board has button
+#define HAS_LED GPIO_NUM_21 // on board  LED
+#define HAS_BUTTON GPIO_NUM_39 // on board button
 
 #define HAS_GPS 1 // use if board has GPS
 #define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M or 7M with default configuration
