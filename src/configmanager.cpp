@@ -316,10 +316,5 @@ void loadConfig() {
     nvs_close(my_handle);
     ESP_LOGI(TAG, "Done");
 
-    // put actions to be triggered after config loaded here
-
-#ifdef HAS_ANTENNA_SWITCH // set antenna type
-    antenna_select(cfg.wifiant);
-#endif
   }
-}
+} // loadConfig()
