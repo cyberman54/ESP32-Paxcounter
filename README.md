@@ -26,7 +26,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 - Heltec: LoRa-32
 - TTGO: T3_v1, T3_v2, T3_v2.1, T-Beam
 - Pycom: LoPy, LoPy4, FiPy
-- Wemos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+- Wemos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), LoLin32lite[LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 
 *SPI only*:
 
@@ -46,7 +46,7 @@ Target platform must be selected in [platformio.ini](https://github.com/cyberman
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
 
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
-<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A> and <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, for example.<br>
+<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A> and <A HREF="https://www.thingiverse.com/thing:2811127">TTGO</A>, for example.<br>
 
 <b>Power consumption</b> was metered at around 1000mW, depending on board (i.e. has display or not) and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
 
