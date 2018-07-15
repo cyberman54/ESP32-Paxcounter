@@ -336,14 +336,15 @@ void setup() {
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-  displaytimer = timerBegin(0, 80, true); // prescaler 80 -> divides 80 MHz CPU
-                                          // freq to 1 MHz, timer 0, count up
-  timerAttachInterrupt(displaytimer, &DisplayIRQ,
-                       true); // interrupt handler DisplayIRQ, triggered by edge
-  timerAlarmWrite(
-      displaytimer, DISPLAYREFRESH_MS * 1000,
-      true); // reload interrupt after each trigger of display refresh cycle
-  timerAlarmEnable(displaytimer); // enable display interrupt
+
+  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+  displaytimer = timerBegin(0, 80, true);
+  // interrupt handler DisplayIRQ, triggered by edge
+  timerAttachInterrupt(displaytimer, &DisplayIRQ, true);
+  // reload interrupt after each trigger of display refresh cycle
+  timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
+  // enable display interrupt
+  timerAlarmEnable(displaytimer);
 #endif
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
