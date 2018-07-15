@@ -80,9 +80,6 @@ void reset_counters() {
   macs_ble = 0;
 }
 
-/* begin LMIC specific parts
- * ------------------------------------------------------------ */
-
 #ifdef HAS_LORA
 
 // LMIC enhanced Pin mapping
@@ -93,10 +90,6 @@ const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
                                .rxtx = LMIC_UNUSED_PIN,
                                .rst = RST,
                                .dio = {DIO0, DIO1, DIO2}};
-
-#ifdef VERBOSE
-void printKeys(void);
-#endif // VERBOSE
 
 // Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
 #ifdef MCP_24AA02E64_I2C_ADDRESS
@@ -117,15 +110,8 @@ void lorawan_loop(void *pvParameters) {
 
 #endif // HAS_LORA
 
-/* end LMIC specific parts
- * --------------------------------------------------------------- */
-
-/* beginn hardware specific parts
- * -------------------------------------------------------- */
-
-// Setup IRQ handler routines for button, channel rotation, send cycle´, display
-// attention, enable cache:
-// https://github.com/espressif/arduino-esp32/issues/855
+// Setup IRQ handler routines
+// attn see https://github.com/espressif/arduino-esp32/issues/855
 
 void IRAM_ATTR ChannelSwitchIRQ() {
   portENTER_CRITICAL(&timerMux);
@@ -173,9 +159,6 @@ void readButton() {
   }
 }
 #endif
-
-/* end hardware specific parts
- * -------------------------------------------------------- */
 
 // Wifi channel rotation task
 void wifi_channel_loop(void *pvParameters) {
@@ -404,8 +387,8 @@ void setup() {
   // join network
   LMIC_startJoining();
 
-  // start lmic runloop in rtos task on core 1 (note: arduino main loop runs
-  // on core 1, too)
+  // start lmic runloop in rtos task on core 1
+  // (note: arduino main loop runs on core 1, too)
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
   ESP_LOGI(TAG, "Starting Lora task on core 1");
