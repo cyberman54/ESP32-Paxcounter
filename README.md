@@ -26,10 +26,10 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 - Heltec: LoRa-32
 - TTGO: T3_v1, T3_v2, T3_v2.1, T-Beam
 - Pycom: LoPy, LoPy4, FiPy
-- Wemos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
+- WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 
-*SPI only*:
+*SPI only*: (coming soon)
 
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32
