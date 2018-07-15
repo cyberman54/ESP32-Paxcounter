@@ -1,11 +1,12 @@
-// Hardware related definitions for lolin32 (without LoRa shield)
+// Hardware related definitions for lolin32lite (without LoRa shield)
+
+#define CFG_sx1272_radio 1 // dummy
 
 // disable brownout detection (avoid unexpected reset on some boards)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-#define HAS_LED NOT_A_PIN // Led os on same pin as Lora SS pin, to avoid problems, we don't use it
+#define HAS_LED 22        // on board LED on GPIO22
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
-#define HAS_RGB_LED   13  // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
 
 #define HAS_SPI   1       // comment out if device shall not send data via SPI
 

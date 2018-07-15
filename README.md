@@ -11,7 +11,7 @@ Paxcounter is a proof-of-concept device for metering passenger flows in realtime
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
-Bonus of this project is that metered data is transferred via a LoRaWAN network, not via usual GSM/LTE or Wifi uplink. 
+Metered counts are transferred to a server via a LoRaWAN network, and/or a local SPI cable interface.
 
 You can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
 
@@ -19,26 +19,27 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 
 # Hardware
 
-Supported ESP32 based LoRa IoT boards:
+**Supported ESP32 based boards**:
 
-- **Heltec LoRa-32**
-- **TTGOv1** 
-- **TTGOv2** 
-- **TTGOv2.1**
-- **TTGO T-Beam**
-- **Pycom LoPy**
-- **Pycom LoPy4**
-- **Pycom FiPy**
-- **LoLin32** + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)
-- **LoLin32 Lite** + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+*LoRa & SPI*:
+
+- Heltec: LoRa-32
+- TTGO: T3_v1, T3_v2, T3_v2.1, T-Beam
+- Pycom: LoPy, LoPy4, FiPy
+- Wemos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+
+*SPI only*:
+
+- Pyom: WiPy
+- WeMos: LoLin32, LoLin32 Lite, WeMos D32
 
 Depending on board hardware following features are supported:
 - LED
 - OLED Display
 - RGB LED
-- button
-- silicon unique ID
-- battery voltage monitoring
+- Button
+- Silicon unique ID
+- Battery voltage monitoring
 - GPS
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
