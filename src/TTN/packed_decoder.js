@@ -18,15 +18,19 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        if (bytes.length === 12) {
-            return decode(bytes, [uint16, uptime, temperature], ['voltage', 'uptime', 'cputemp']);
-        }
-        // device config data
-        if (bytes.length === 8) {
-            return decode(bytes, [uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
-        }
+        return decode(bytes, [uint16, uptime, temperature], ['voltage', 'uptime', 'cputemp']);
     }
 
+
+    if (port === 3) {
+        // device config data      
+        return decode(bytes, [uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
+    }
+
+    if (port === 4) {
+        // gps data      
+        return decode(bytes, [latLng, latLng, uint8, hdop, uint16], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+    }
 }
 
 

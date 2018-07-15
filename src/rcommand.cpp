@@ -273,7 +273,7 @@ void get_config(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  senddata(STATUSPORT);
+  senddata(CONFIGPORT);
 };
 
 void get_status(uint8_t val) {
