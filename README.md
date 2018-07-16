@@ -4,6 +4,8 @@
 --> see development branch of this repository for latest alpha version <--
 
 <img src="img/Paxcounter-title.jpg">
+<img src="img/Paxcounter-ttgo.jpg">
+<img src="img/Paxcounter-lolin.jpg">
 
 # Use case
 
