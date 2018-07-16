@@ -5,7 +5,7 @@
 
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
-<img src="img/Paxcounter-lolin.jpg">
+<img src="img/Paxcounter-lolin.gif">
 
 # Use case
 
