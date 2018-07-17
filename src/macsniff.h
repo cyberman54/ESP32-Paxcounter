@@ -7,6 +7,8 @@
 // Hash function for scrambling MAC addresses
 #include "hash.h"
 
+#include "led.h"
+
 #define MAC_SNIFF_WIFI 0
 #define MAC_SNIFF_BLE 1
 
