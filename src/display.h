@@ -1,5 +1,5 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef _DISPLAY_H
+#define _DISPLAY_H
 
 #include <U8x8lib.h>
 

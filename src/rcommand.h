@@ -1,5 +1,5 @@
-#ifndef rcommand_H
-#define rcommand_H
+#ifndef _RCOMMAND_H
+#define _RCOMMAND_H
 
 #include "senddata.h"
 #include "configmanager.h"

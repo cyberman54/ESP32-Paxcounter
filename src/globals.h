@@ -1,3 +1,6 @@
+#ifndef _GLOBALS_H
+#define _GLOBALS_H
+
 // The mother of all embedded development...
 #include <Arduino.h>
 
@@ -42,26 +45,16 @@ extern std::set<uint16_t> macs;
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 
+#ifdef HAS_GPS
+#include "gps.h"
+#endif
+
 #ifdef HAS_LORA
 #include "lorawan.h"
 #endif
 
 #ifdef HAS_DISPLAY
 #include "display.h"
-#endif
-
-#ifdef HAS_GPS
-#include "gps.h"
-/*
-typedef struct {
-  uint32_t latitude;
-  uint32_t longitude;
-  uint8_t satellites;
-  uint16_t hdop;
-  uint16_t altitude;
-} gpsStatus_t;
-extern gpsStatus_t gps_status; // struct for storing gps data
-*/
 #endif
 
 #ifdef BLECOUNTER
@@ -95,3 +88,5 @@ void reset_counters(void);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
 void led_loop(void);
 uint64_t uptime();
+
+#endif

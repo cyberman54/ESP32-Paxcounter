@@ -1,5 +1,5 @@
-#ifndef main_H
-#define main_H
+#ifndef _MAIN_H
+#define _MAIN_H
 
 #include "led.h"
 #include "macsniff.h"

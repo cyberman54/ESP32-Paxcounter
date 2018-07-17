@@ -1,5 +1,5 @@
-#ifndef led_H
-#define led_H
+#ifndef _LED_H
+#define _LED_H
 
 #ifdef HAS_RGB_LED
 #include <SmartLeds.h>

@@ -1,5 +1,5 @@
-#ifndef LORAWAN_H
-#define LORAWAN_H
+#ifndef _LORAWAN_H
+#define _LORAWAN_H
 
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
