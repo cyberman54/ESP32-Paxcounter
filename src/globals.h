@@ -52,6 +52,7 @@ extern portMUX_TYPE timerMux;
 
 #ifdef HAS_GPS
 #include "gps.h"
+/*
 typedef struct {
   uint32_t latitude;
   uint32_t longitude;
@@ -60,6 +61,7 @@ typedef struct {
   uint16_t altitude;
 } gpsStatus_t;
 extern gpsStatus_t gps_status; // struct for storing gps data
+*/
 #endif
 
 #ifdef BLECOUNTER
