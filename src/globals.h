@@ -71,8 +71,6 @@ extern portMUX_TYPE timerMux;
 
 // class for preparing payload data
 #include "payload.h"
-
-// payload encoder
 #if PAYLOAD_ENCODER == 1
 extern TTNplain payload;
 #elif PAYLOAD_ENCODER == 2
@@ -82,7 +80,6 @@ extern CayenneLPP payload;
 #else
 #error "No valid payload converter defined"
 #endif
-
 
 void reset_counters(void);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);

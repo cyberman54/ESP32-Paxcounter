@@ -1,8 +1,6 @@
 #ifndef _PAYLOAD_H_
 #define _PAYLOAD_H_
 
-#include <Arduino.h>
-
 // MyDevices CayenneLPP channels
 #define LPP_GPS_CHANNEL 20
 #define LPP_COUNT_WIFI_CHANNEL 21
