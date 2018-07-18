@@ -5,6 +5,7 @@
 
 // Basic Config
 #include "globals.h"
+#include "rcommand.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -273,7 +274,7 @@ void get_config(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  senddata(STATUSPORT);
+  senddata(CONFIGPORT);
 };
 
 void get_status(uint8_t val) {
@@ -284,7 +285,7 @@ void get_status(uint8_t val) {
   uint16_t voltage = 0;
 #endif
   payload.reset();
-  payload.addStatus(voltage, uptimecounter, temperatureRead());
+  payload.addStatus(voltage, uptime() / 1000, temperatureRead());
   senddata(STATUSPORT);
 };
 

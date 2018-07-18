@@ -1,5 +1,5 @@
-
-//#pragma once
+#ifndef _LED_H
+#define _LED_H
 
 #ifdef HAS_RGB_LED
 #include <SmartLeds.h>
@@ -35,3 +35,5 @@ enum led_states { LED_OFF, LED_ON };
 void rgb_set_color(uint16_t hue);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
 void led_loop();
+
+#endif

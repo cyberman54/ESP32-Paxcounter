@@ -1,5 +1,5 @@
-#ifndef battery_H
-#define battery_H
+#ifndef _BATTERY_H
+#define _BATTERY_H
 
 #include <driver/adc.h>
 #include <esp_adc_cal.h>

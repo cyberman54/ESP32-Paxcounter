@@ -13,7 +13,7 @@ Paxcounter is a proof-of-concept device for metering passenger flows in realtime
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
-Bonus of this project is that metered data is transferred via a LoRaWAN network, not via usual GSM/LTE or Wifi uplink. 
+Metered counts are transferred to a server via a LoRaWAN network, and/or a local SPI cable interface.
 
 You can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
 
@@ -21,26 +21,28 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 
 # Hardware
 
-Supported ESP32 based LoRa IoT boards:
+**Supported ESP32 based boards**:
 
-- **Heltec LoRa-32**
-- **TTGOv1** 
-- **TTGOv2** 
-- **TTGOv2.1**
-- **TTGO T-Beam**
-- **Pycom LoPy**
-- **Pycom LoPy4**
-- **Pycom FiPy**
-- **LoLin32** + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora)
-- **LoLin32 Lite** + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+*LoRa & SPI*:
+
+- Heltec: LoRa-32
+- TTGO: T3_v1, T3_v2, T3_v2.1, T-Beam
+- Pycom: LoPy, LoPy4, FiPy
+- WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
+LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+
+*SPI only*: (coming soon)
+
+- Pyom: WiPy
+- WeMos: LoLin32, LoLin32 Lite, WeMos D32
 
 Depending on board hardware following features are supported:
 - LED
 - OLED Display
 - RGB LED
-- button
-- silicon unique ID
-- battery voltage monitoring
+- Button
+- Silicon unique ID
+- Battery voltage monitoring
 - GPS
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
@@ -49,7 +51,7 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
 <A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A> for example.<br>
 
-<b>Power consumption</b> was metered at around 1000mW, depending on board (i.e. has display or not) and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
+<b>Power consumption</b> was metered at around 750 - 1000mW, depending on board and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
 
 # Preparing
 
@@ -123,26 +125,48 @@ If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you 
 
 To track a paxcounter device with on board GPS and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. The formats *plain* and *packed* generate the fields `latitude`, `longitude` and `hdop` required by ttnmapper.
 
-Hereafter described is the default *plain* format.
+Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
-**LoRaWAN Port #1:**
-
-	Paxcounter data
+**Port #1:** Paxcount data
 
 	byte 1-2:	Number of unique pax, first seen on Wifi
 	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
-	
-	GPS data (only, if GPS is present and has a fix)
-	
-	bytes 5-8:	GPS latitude
-	bytes 9-12:	GPS longitude
-	bytes 13-14:	GPS number of satellites
-	bytes 15-16:	GPS HDOP
-	bytes 17-18:	GPS altitude [meter]
+	bytes 5-18: 	GPS data, format see Port #4 (appended only, if GPS is present and has a fix)
 
-**LoRaWAN Port #2:**
+**Port #2:** Device status query result
 
-	- see remote control -
+  	byte 1-2:	Battery or USB Voltage [mV], 0 if unreadable
+	byte 3-10:	Uptime [seconds]
+	bytes 11-14: 	CPU temperature [°C]
+
+**Port #3:** Device configuration query result
+
+	byte 1:		Lora SF (7..12) [default 9]
+	byte 2:		Lora TXpower (2..15) [default 15]
+	byte 3:		Lora ADR (1=on, 0=off) [default 1]
+	byte 4:		Screensaver status (1=on, 0=off) [default 0]
+	byte 5:		Display status (1=on, 0=off) [default 0]
+	byte 6:		Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
+	bytes 7-8:	RSSI limiter threshold value (negative) [default 0]
+	byte 9:		Lora Payload send cycle in seconds/2 (0..255) [default 120]
+	byte 10:	Wifi channel switch interval in seconds/100 (0..255) [default 50]
+	byte 11:	Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
+	byte 12:	Bluetooth scanner status (1=on, 0=0ff) [default 1]
+	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
+	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
+	byte 15:	RGB LED luminosity (0..100 %) [default 30]
+	byte 16:	GPS send data mode (1=on, 0=ff) [default 1]
+	bytes 17-27:	Software version (ASCII format, terminating with zero)
+
+
+**Port #4:** GPS query result
+
+	bytes 1-4:	Latitude
+	bytes 5-8:	Longitude
+	byte 9:		Number of satellites
+	bytes 10-11:	HDOP
+	bytes 12-13:	Altitude [meter]
+
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
 
@@ -279,39 +303,17 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x80 get device configuration
 
-device answers with it's current configuration. The configuration is a C structure declared in file [main.h](src/main.h#L13-L31) with the following definition:
-
-	byte 1:			Lora SF (7..12) [default 9]
-	byte 2:			Lora TXpower (2..15) [default 15]
-	byte 3:			Lora ADR (1=on, 0=off) [default 1]
-	byte 4:			Screensaver status (1=on, 0=off) [default 0]
-	byte 5:			Display status (1=on, 0=off) [default 0]
-	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
-	bytes 7-8:		RSSI limiter threshold value (negative) [default 0]
-	byte 9:			Lora Payload send cycle in seconds/2 (0..255) [default 120]
-	byte 10:		Wifi channel switch interval in seconds/100 (0..255) [default 50]
-	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
-	byte 12:		Bluetooth scanner status (1=on, 0=0ff) [default 1]
-	byte 13:		Wifi antenna switch (0=internal, 1=external) [default 0]
-	byte 14:		Vendorfilter mode (0=disabled, 1=enabled) [default 0]
-	byte 15:		RGB LED luminosity (0..100 %) [default 30]
-	byte 16:		GPS send data mode (1=on, 0=ff) [default 1]
-	bytes 17-27:		Software version (ASCII format, terminating with zero)
+	Device answers with it's current configuration on Port 3. 
 
 0x81 get device status
 
-	bytes 1-2:		Battery voltage in millivolt, 0 if unreadable
-	bytes 3-10:		Uptime in seconds
-	bytes 11-14:		Chip temperature in degrees celsius
-
+	Device answers with it's current status on Port 2. 
+	
 0x84 get device GPS status
 
-	bytes 1-4:		Latitude
-	bytes 5-8:		Longitude
-	byte 9:			Number of satellites
-	byte 10-11:		HDOP
-	bytes 12-13:		altidute [meter]
+	Device answers with it's current status on Port 4. 
 
+	
 # License
 
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>

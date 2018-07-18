@@ -6,6 +6,13 @@
 
 HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
 
+// helper string for converting LoRa spread factor values
+#if defined(CFG_eu868)
+const char lora_datarate[] = {"1211100908077BFSNA"};
+#elif defined(CFG_us915)
+const char lora_datarate[] = {"100908078CNA121110090807"};
+#endif
+
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   const uint8_t *p;

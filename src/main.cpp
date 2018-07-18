@@ -1,5 +1,6 @@
 /*
-ESP32-Paxcounter
+
+//////////////////////// ESP32-Paxcounter \\\\\\\\\\\\\\\\\\\\\\\\\\
 
 Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
 Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
@@ -24,15 +25,14 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 // Basic Config
 #include "globals.h"
+#include "main.h"
 
 // Initialize global variables
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
-uint64_t uptimecounter = 0;                // timer global for uptime counter
-uint8_t DisplayState = 0;                  // globals for state machine
+uint8_t DisplayState = 0, channel = 0;     // globals for state machine
 uint16_t macs_total = 0, macs_wifi = 0,
-         macs_ble = 0; // MAC counters globals for display
-uint8_t channel = 0;   // wifi channel rotation counter global for display
+         macs_ble = 0;      // MAC counters globals for display
 hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
            *sendCycle = NULL; // configure hardware timer for cyclic tasks
 
@@ -80,9 +80,6 @@ void reset_counters() {
   macs_ble = 0;
 }
 
-/* begin LMIC specific parts
- * ------------------------------------------------------------ */
-
 #ifdef HAS_LORA
 
 // LMIC enhanced Pin mapping
@@ -93,10 +90,6 @@ const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
                                .rxtx = LMIC_UNUSED_PIN,
                                .rst = RST,
                                .dio = {DIO0, DIO1, DIO2}};
-
-#ifdef VERBOSE
-void printKeys(void);
-#endif // VERBOSE
 
 // Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
 #ifdef MCP_24AA02E64_I2C_ADDRESS
@@ -117,15 +110,8 @@ void lorawan_loop(void *pvParameters) {
 
 #endif // HAS_LORA
 
-/* end LMIC specific parts
- * --------------------------------------------------------------- */
-
-/* beginn hardware specific parts
- * -------------------------------------------------------- */
-
-// Setup IRQ handler routines for button, channel rotation, send cycle´, display
-// attention, enable cache:
-// https://github.com/espressif/arduino-esp32/issues/855
+// Setup IRQ handler routines
+// attn see https://github.com/espressif/arduino-esp32/issues/855
 
 void IRAM_ATTR ChannelSwitchIRQ() {
   portENTER_CRITICAL(&timerMux);
@@ -173,9 +159,6 @@ void readButton() {
   }
 }
 #endif
-
-/* end hardware specific parts
- * -------------------------------------------------------- */
 
 // Wifi channel rotation task
 void wifi_channel_loop(void *pvParameters) {
@@ -353,14 +336,15 @@ void setup() {
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-  displaytimer = timerBegin(0, 80, true); // prescaler 80 -> divides 80 MHz CPU
-                                          // freq to 1 MHz, timer 0, count up
-  timerAttachInterrupt(displaytimer, &DisplayIRQ,
-                       true); // interrupt handler DisplayIRQ, triggered by edge
-  timerAlarmWrite(
-      displaytimer, DISPLAYREFRESH_MS * 1000,
-      true); // reload interrupt after each trigger of display refresh cycle
-  timerAlarmEnable(displaytimer); // enable display interrupt
+
+  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+  displaytimer = timerBegin(0, 80, true);
+  // interrupt handler DisplayIRQ, triggered by edge
+  timerAttachInterrupt(displaytimer, &DisplayIRQ, true);
+  // reload interrupt after each trigger of display refresh cycle
+  timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
+  // enable display interrupt
+  timerAlarmEnable(displaytimer);
 #endif
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
@@ -404,8 +388,8 @@ void setup() {
   // join network
   LMIC_startJoining();
 
-  // start lmic runloop in rtos task on core 1 (note: arduino main loop runs
-  // on core 1, too)
+  // start lmic runloop in rtos task on core 1
+  // (note: arduino main loop runs on core 1, too)
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
   ESP_LOGI(TAG, "Starting Lora task on core 1");
@@ -453,8 +437,6 @@ void loop() {
   while (1) {
 
     // state machine for uptime, display, LED, button, lowmemory, senddata
-
-    uptimecounter = uptime() / 1000; // counts uptime in seconds (64bit)
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();

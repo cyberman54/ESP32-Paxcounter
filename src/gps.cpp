@@ -1,7 +1,6 @@
 #ifdef HAS_GPS
 
 #include "globals.h"
-#include <Wire.h>
 
 // Local logging tag
 static const char TAG[] = "main";

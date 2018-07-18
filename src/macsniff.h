@@ -1,10 +1,13 @@
-#ifndef MACSNIFF_H
-#define MACSNIFF_H
+#ifndef _MACSNIFF_H
+#define _MACSNIFF_H
 
 // ESP32 Functions
 #include <esp_wifi.h>
 
+// Hash function for scrambling MAC addresses
 #include "hash.h"
+
+#include "led.h"
 
 #define MAC_SNIFF_WIFI 0
 #define MAC_SNIFF_BLE 1
