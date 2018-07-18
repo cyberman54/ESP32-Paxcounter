@@ -4,6 +4,8 @@
 --> see development branch of this repository for latest alpha version <--
 
 <img src="img/Paxcounter-title.jpg">
+<img src="img/Paxcounter-ttgo.jpg">
+<img src="img/Paxcounter-lolin.gif">
 
 # Use case
 
@@ -47,7 +49,7 @@ Target platform must be selected in [platformio.ini](https://github.com/cyberman
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
 
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
-<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A> and <A HREF="https://www.thingiverse.com/thing:2811127">TTGO</A>, for example.<br>
+<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A> for example.<br>
 
 <b>Power consumption</b> was metered at around 750 - 1000mW, depending on board and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
 
@@ -55,7 +57,7 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 
 Before compiling the code,
 
-- **edit paxcounter.conf** and taylor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use.
+- **edit paxcounter.conf** and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use.
 
 - **create file loraconf.h in your local /src directory** using the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. If you're using popular <A HREF="https://thethingsnetwork.org">TheThingsNetwork</A> you can copy&paste the keys from TTN console or output of ttnctl.
 
