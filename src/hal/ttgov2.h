@@ -44,12 +44,10 @@
    21  SDA                                    SDA
    22  LED  (useless, see note {3})
 
-   {1} Must be manually wired!
-       DIO1 is wired to a separate pin but is not wired on-board to pin/GPIO33.
-       Explicitly wire board pin labeled DIO1 to pin 33 (see TTGO V2.0 pinout).
-   {2} Must be manually wired!
-       DIO2 is wired to a separate pin but is not wired on-board to pin/GPIO32.
-       Explicitly wire board pin labeled DIO2 to pin 32 (see TTGO V2.0 pinout).
+   {1} Must be wired externally!
+       DIO1 is connected to a separate pin on pcb, but is not connected to GPIO33.
+       Solder a wire from pcb pin labeled "LORA_IRQ" to pin "GPIO33" (see TTGO V2.0 pinout).
+   {2} Is not wired, but not needed for LoRa.
    {3} The on-board LED is wired to SCL (used by display) therefore totally useless!
    */
 
