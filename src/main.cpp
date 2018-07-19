@@ -28,8 +28,6 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "main.h"
 
 configData_t cfg; // struct holds current device configuration
-
-// Initialize variables
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
 uint16_t macs_total = 0, macs_wifi = 0,
@@ -48,16 +46,8 @@ portMUX_TYPE timerMux =
 std::set<uint16_t> macs; // associative container holds total of unique MAC
                          // adress hashes (Wifi + BLE)
 
-// initialize payload encoder
-#if PAYLOAD_ENCODER == 1
-TTNplain payload(PAYLOAD_BUFFER_SIZE);
-#elif PAYLOAD_ENCODER == 2
-TTNpacked payload(PAYLOAD_BUFFER_SIZE);
-#elif PAYLOAD_ENCODER == 3
-CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
-#else
-#error "No valid payload converter defined"
-#endif
+// initialize payload ncoder
+PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
 // local Tag for logging
 static const char TAG[] = "main";

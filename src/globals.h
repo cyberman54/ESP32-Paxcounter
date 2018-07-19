@@ -41,13 +41,15 @@ extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t channel;                       // wifi channel rotation counter
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
-extern std::set<uint16_t> macs; // temp storeage for sniffed MACs
+extern std::set<uint16_t> macs;                  // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 
 #ifdef HAS_GPS
 #include "gps.h"
 #endif
+
+#include "payload.h"
 
 #ifdef HAS_LORA
 #include "lorawan.h"
@@ -67,20 +69,6 @@ extern portMUX_TYPE timerMux;
 
 #ifdef HAS_ANTENNA_SWITCH
 #include "antenna.h"
-#endif
-
-// class for preparing payload data
-#include "payload.h"
-
-// payload encoder
-#if PAYLOAD_ENCODER == 1
-extern TTNplain payload;
-#elif PAYLOAD_ENCODER == 2
-extern TTNpacked payload;
-#elif PAYLOAD_ENCODER == 3
-extern CayenneLPP payload;
-#else
-#error "No valid payload converter defined"
 #endif
 
 void reset_counters(void);

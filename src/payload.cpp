@@ -4,20 +4,22 @@
 
 /* ---------------- plain format without special encoding ---------- */
 
-TTNplain::TTNplain(uint8_t size) {
+#if PAYLOAD_ENCODER == 1
+
+PayloadConvert::PayloadConvert(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
   cursor = 0;
 }
 
-TTNplain::~TTNplain(void) { free(buffer); }
+PayloadConvert::~PayloadConvert(void) { free(buffer); }
 
-void TTNplain::reset(void) { cursor = 0; }
+void PayloadConvert::reset(void) { cursor = 0; }
 
-uint8_t TTNplain::getSize(void) { return cursor; }
+uint8_t PayloadConvert::getSize(void) { return cursor; }
 
-uint8_t *TTNplain::getBuffer(void) { return buffer; }
+uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
-void TTNplain::addCount(uint16_t value1, uint16_t value2) {
+void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = value1 >> 8;
   buffer[cursor++] = value1;
   buffer[cursor++] = value2 >> 8;
@@ -25,7 +27,7 @@ void TTNplain::addCount(uint16_t value1, uint16_t value2) {
 }
 
 #ifdef HAS_GPS
-void TTNplain::addGPS(gpsStatus_t value) {
+void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = value.latitude >> 24;
   buffer[cursor++] = value.latitude >> 16;
   buffer[cursor++] = value.latitude >> 8;
@@ -42,7 +44,7 @@ void TTNplain::addGPS(gpsStatus_t value) {
 }
 #endif
 
-void TTNplain::addConfig(configData_t value) {
+void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.lorasf;
   buffer[cursor++] = value.txpower;
   buffer[cursor++] = value.adrmode;
@@ -63,7 +65,7 @@ void TTNplain::addConfig(configData_t value) {
   cursor += 10;
 }
 
-void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   buffer[cursor++] = voltage >> 8;
   buffer[cursor++] = voltage;
   buffer[cursor++] = uptime >> 56;
@@ -80,30 +82,32 @@ void TTNplain::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   buffer[cursor++] = (uint32_t)cputemp;
 }
 
+#elif PAYLOAD_ENCODER == 2
+
 /* ---------------- packed format with LoRa serialization Encoder ---------- */
 // derived from
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
-TTNpacked::TTNpacked(uint8_t size) {
+PayloadConvert::PayloadConvert(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
   cursor = 0;
 }
 
-TTNpacked::~TTNpacked(void) { free(buffer); }
+PayloadConvert::~PayloadConvert(void) { free(buffer); }
 
-void TTNpacked::reset(void) { cursor = 0; }
+void PayloadConvert::reset(void) { cursor = 0; }
 
-uint8_t TTNpacked::getSize(void) { return cursor; }
+uint8_t PayloadConvert::getSize(void) { return cursor; }
 
-uint8_t *TTNpacked::getBuffer(void) { return buffer; }
+uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
-void TTNpacked::addCount(uint16_t value1, uint16_t value2) {
+void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   writeUint16(value1);
   writeUint16(value2);
 }
 
 #ifdef HAS_GPS
-void TTNpacked::addGPS(gpsStatus_t value) {
+void PayloadConvert::addGPS(gpsStatus_t value) {
   writeLatLng(value.latitude, value.longitude);
   writeUint8(value.satellites);
   writeUint16(value.hdop);
@@ -111,7 +115,7 @@ void TTNpacked::addGPS(gpsStatus_t value) {
 }
 #endif
 
-void TTNpacked::addConfig(configData_t value) {
+void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.lorasf);
   writeUint8(value.txpower);
   writeUint16(value.rssilimit);
@@ -125,33 +129,33 @@ void TTNpacked::addConfig(configData_t value) {
               value.vendorfilter ? true : false, value.gpsmode ? true : false);
 }
 
-void TTNpacked::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   writeUint16(voltage);
   writeUptime(uptime);
   writeTemperature(cputemp);
 }
 
-void TTNpacked::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
+void PayloadConvert::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
     buffer[x + pos] = (byte)(i >> (x * 8));
   }
   cursor += byteSize;
 }
 
-void TTNpacked::writeUptime(uint64_t uptime) {
+void PayloadConvert::writeUptime(uint64_t uptime) {
   intToBytes(cursor, uptime, 8);
 }
 
-void TTNpacked::writeLatLng(double latitude, double longitude) {
+void PayloadConvert::writeLatLng(double latitude, double longitude) {
   intToBytes(cursor, latitude, 4);
   intToBytes(cursor, longitude, 4);
 }
 
-void TTNpacked::writeUint16(uint16_t i) { intToBytes(cursor, i, 2); }
+void PayloadConvert::writeUint16(uint16_t i) { intToBytes(cursor, i, 2); }
 
-void TTNpacked::writeUint8(uint8_t i) { intToBytes(cursor, i, 1); }
+void PayloadConvert::writeUint8(uint8_t i) { intToBytes(cursor, i, 1); }
 
-void TTNpacked::writeHumidity(float humidity) {
+void PayloadConvert::writeHumidity(float humidity) {
   int16_t h = (int16_t)(humidity * 100);
   intToBytes(cursor, h, 2);
 }
@@ -160,7 +164,7 @@ void TTNpacked::writeHumidity(float humidity) {
  * Uses a 16bit two's complement with two decimals, so the range is
  * -327.68 to +327.67 degrees
  */
-void TTNpacked::writeTemperature(float temperature) {
+void PayloadConvert::writeTemperature(float temperature) {
   int16_t t = (int16_t)(temperature * 100);
   if (temperature < 0) {
     t = ~-t;
@@ -170,7 +174,7 @@ void TTNpacked::writeTemperature(float temperature) {
   buffer[cursor++] = (byte)t & 0xFF;
 }
 
-void TTNpacked::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
+void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
                             bool g, bool h) {
   uint8_t bitmap = 0;
   // LSB first
@@ -185,22 +189,24 @@ void TTNpacked::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
   writeUint8(bitmap);
 }
 
+#elif PAYLOAD_ENCODER == 3
+
 /* ---------------- Cayenne LPP format ---------- */
 
-CayenneLPP::CayenneLPP(uint8_t size) {
+PayloadConvert::PayloadConvert(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
   cursor = 0;
 }
 
-CayenneLPP::~CayenneLPP(void) { free(buffer); }
+PayloadConvert::~PayloadConvert(void) { free(buffer); }
 
-void CayenneLPP::reset(void) { cursor = 0; }
+void PayloadConvert::reset(void) { cursor = 0; }
 
-uint8_t CayenneLPP::getSize(void) { return cursor; }
+uint8_t PayloadConvert::getSize(void) { return cursor; }
 
-uint8_t *CayenneLPP::getBuffer(void) { return buffer; }
+uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
-void CayenneLPP::addCount(uint16_t value1, uint16_t value2) {
+void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
   buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
   buffer[cursor++] = value1 >> 8;
@@ -212,7 +218,7 @@ void CayenneLPP::addCount(uint16_t value1, uint16_t value2) {
 }
 
 #ifdef HAS_GPS
-void CayenneLPP::addGPS(gpsStatus_t value) {
+void PayloadConvert::addGPS(gpsStatus_t value) {
   int32_t lat = value.latitude / 100;
   int32_t lon = value.longitude / 100;
   int32_t alt = value.altitude;
@@ -230,13 +236,13 @@ void CayenneLPP::addGPS(gpsStatus_t value) {
 }
 #endif
 
-void CayenneLPP::addConfig(configData_t value) {
+void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = LPP_ADR_CHANNEL;
   buffer[cursor++] = LPP_DIGITAL_INPUT;
   buffer[cursor++] = value.adrmode;
 }
 
-void CayenneLPP::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   buffer[cursor++] = LPP_BATT_CHANNEL;
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = voltage >> 8;
@@ -246,3 +252,7 @@ void CayenneLPP::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
   buffer[cursor++] = (uint16_t)cputemp >> 8;
   buffer[cursor++] = (uint16_t)cputemp;
 }
+
+#else
+#error "No valid payload converter defined"
+#endif 

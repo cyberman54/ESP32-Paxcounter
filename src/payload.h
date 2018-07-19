@@ -18,42 +18,30 @@
 #define LPP_ANALOG_INPUT 2   // 2 bytes, 0.01 signed
 #define LPP_LUMINOSITY 101   // 2 bytes, 1 lux unsigned
 
-class TTNplain {
+class PayloadConvert {
+
 public:
-  TTNplain(uint8_t size);
-  ~TTNplain();
+  PayloadConvert(uint8_t size);
+  ~PayloadConvert();
 
   void reset(void);
   uint8_t getSize(void);
   uint8_t *getBuffer(void);
-
   void addCount(uint16_t value1, uint16_t value2);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
 #ifdef HAS_GPS
   void addGPS(gpsStatus_t value);
 #endif
+
+#if PAYLOAD_ENCODER == 1 // format plain
 
 private:
   uint8_t *buffer;
   uint8_t cursor;
 };
 
-class TTNpacked {
-public:
-  TTNpacked(uint8_t size);
-  ~TTNpacked();
-
-  void reset(void);
-  uint8_t getSize(void);
-  uint8_t *getBuffer(void);
-
-  void addCount(uint16_t value1, uint16_t value2);
-  void addConfig(configData_t value);
-  void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
-#ifdef HAS_GPS
-  void addGPS(gpsStatus_t value);
-#endif
+#elif PAYLOAD_ENCODER == 2 // format packed
 
 private:
   uint8_t *buffer;
@@ -69,26 +57,18 @@ private:
                    bool h);
 };
 
-class CayenneLPP {
-public:
-  CayenneLPP(uint8_t size);
-  ~CayenneLPP();
-
-  void reset(void);
-  uint8_t getSize(void);
-  uint8_t *getBuffer(void);
-
-  void addCount(uint16_t value1, uint16_t value2);
-  void addConfig(configData_t value);
-  void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
-#ifdef HAS_GPS
-  void addGPS(gpsStatus_t value);
-#endif
+#elif PAYLOAD_ENCODER == 3 // format cayenne lpp
 
 private:
   uint8_t *buffer;
   uint8_t maxsize;
   uint8_t cursor;
 };
+
+#else
+#error "No valid payload converter defined"
+#endif 
+
+extern PayloadConvert payload;
 
 #endif // _PAYLOAD_H_
