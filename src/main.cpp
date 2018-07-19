@@ -27,19 +27,15 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
-// Initialize global variables
 configData_t cfg; // struct holds current device configuration
+
+// Initialize variables
 char display_line6[16], display_line7[16]; // display buffers
-uint8_t DisplayState = 0, channel = 0;     // globals for state machine
+uint8_t channel = 0;                       // channel rotation counter
 uint16_t macs_total = 0, macs_wifi = 0,
-         macs_ble = 0;      // MAC counters globals for display
+         macs_ble = 0; // MAC counters globals for display
 hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
            *sendCycle = NULL; // configure hardware timer for cyclic tasks
-
-#ifdef HAS_GPS
-gpsStatus_t gps_status; // struct for storing gps data
-TinyGPSPlus gps;        // create TinyGPS++ instance
-#endif
 
 // this variables will be changed in the ISR, and read in main loop
 static volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,

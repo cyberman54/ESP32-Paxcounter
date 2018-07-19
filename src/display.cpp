@@ -13,6 +13,8 @@ const char lora_datarate[] = {"1211100908077BFSNA"};
 const char lora_datarate[] = {"100908078CNA121110090807"};
 #endif
 
+uint8_t DisplayState = 0;
+
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   const uint8_t *p;

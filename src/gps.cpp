@@ -5,6 +5,9 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+TinyGPSPlus gps;        
+gpsStatus_t gps_status;
+
 // read GPS data and cast to global struct
 void gps_read() {
   gps_status.latitude = (uint32_t)(gps.location.lat() * 1e6);
