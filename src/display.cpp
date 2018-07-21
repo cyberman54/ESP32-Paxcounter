@@ -13,6 +13,8 @@ const char lora_datarate[] = {"1211100908077BFSNA"};
 const char lora_datarate[] = {"100908078CNA121110090807"};
 #endif
 
+uint8_t DisplayState = 0;
+
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   const uint8_t *p;
@@ -107,16 +109,22 @@ void refreshDisplay() {
   u8x8.draw2x2String(0, 0,
                      buff); // display number on unique macs total Wifi + BLE
 
-  // update GPS status (line 2)
+// update Battery status (line 2)
+#ifdef HAS_BATTERY_PROBE
+  u8x8.setCursor(0, 2);
+  u8x8.printf("B:%.1fV", read_voltage() / 1000.0);
+#endif
+
+// update GPS status (line 2)
 #ifdef HAS_GPS
-  u8x8.setCursor(7, 2);
+  u8x8.setCursor(8, 2);
   if (!gps.location.isValid()) // if no fix then display Sats value inverse
   {
     u8x8.setInverseFont(1);
-    u8x8.printf("Sats: %.3d", gps.satellites.value());
+    u8x8.printf("Sat:%.3d", gps.satellites.value());
     u8x8.setInverseFont(0);
   } else
-    u8x8.printf("Sats: %.3d", gps.satellites.value());
+    u8x8.printf("Sat:%.3d", gps.satellites.value());
 #endif
 
     // update bluetooth counter + LoRa SF (line 3)

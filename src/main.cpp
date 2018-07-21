@@ -27,19 +27,13 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
-// Initialize global variables
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
-uint8_t DisplayState = 0, channel = 0;     // globals for state machine
+uint8_t channel = 0;                       // channel rotation counter
 uint16_t macs_total = 0, macs_wifi = 0,
-         macs_ble = 0;      // MAC counters globals for display
+         macs_ble = 0; // MAC counters globals for display
 hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
            *sendCycle = NULL; // configure hardware timer for cyclic tasks
-
-#ifdef HAS_GPS
-gpsStatus_t gps_status; // struct for storing gps data
-TinyGPSPlus gps;        // create TinyGPS++ instance
-#endif
 
 // this variables will be changed in the ISR, and read in main loop
 static volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
@@ -52,16 +46,8 @@ portMUX_TYPE timerMux =
 std::set<uint16_t> macs; // associative container holds total of unique MAC
                          // adress hashes (Wifi + BLE)
 
-// initialize payload encoder
-#if PAYLOAD_ENCODER == 1
-TTNplain payload(PAYLOAD_BUFFER_SIZE);
-#elif PAYLOAD_ENCODER == 2
-TTNpacked payload(PAYLOAD_BUFFER_SIZE);
-#elif PAYLOAD_ENCODER == 3
-CayenneLPP payload(PAYLOAD_BUFFER_SIZE);
-#else
-#error "No valid payload converter defined"
-#endif
+// initialize payload ncoder
+PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
 // local Tag for logging
 static const char TAG[] = "main";
@@ -153,9 +139,9 @@ void readButton() {
     ButtonPressedIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
     ESP_LOGI(TAG, "Button pressed");
-    ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
-    eraseConfig();
-    esp_restart();
+    payload.reset();
+    payload.addButton(0x01);
+    senddata(BUTTONPORT);
   }
 }
 #endif
@@ -225,7 +211,7 @@ void sendPayload() {
     }
 #endif
 
-    senddata(PAYLOADPORT);
+    senddata(COUNTERPORT);
   }
 } // sendPayload()
 
@@ -456,7 +442,7 @@ void loop() {
                "Memory full, counter cleared (heap low water mark = %d Bytes / "
                "free heap = %d bytes)",
                esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-      senddata(PAYLOADPORT); // send data before clearing counters
+      senddata(COUNTERPORT); // send data before clearing counters
       reset_counters();      // clear macs container and reset all counters
       reset_salt();          // get new salt for salting hashes
     }

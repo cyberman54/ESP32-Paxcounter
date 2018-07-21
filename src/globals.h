@@ -5,10 +5,10 @@
 #include <Arduino.h>
 
 // needed for ESP_LOGx on arduino framework
-#include <esp32-hal-log.h>  
+#include <esp32-hal-log.h>
 
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.3.91" // use max 10 chars here!
+#define PROGVERSION "1.3.92" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions
@@ -36,18 +36,20 @@ typedef struct {
   char version[10];      // Firmware version
 } configData_t;
 
-extern configData_t cfg;
-extern char display_line6[], display_line7[];
-extern int countermode, screensaver, adrmode, lorasf, txpower, rlim;
-extern uint8_t channel, DisplayState;
+// global variables
+extern configData_t cfg;                      // current device configuration
+extern char display_line6[], display_line7[]; // screen buffers
+extern uint8_t channel;                       // wifi channel rotation counter
 extern uint16_t macs_total, macs_wifi, macs_ble; // MAC counters
-extern std::set<uint16_t> macs;
+extern std::set<uint16_t> macs;                  // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 
 #ifdef HAS_GPS
 #include "gps.h"
 #endif
+
+#include "payload.h"
 
 #ifdef HAS_LORA
 #include "lorawan.h"
@@ -67,18 +69,6 @@ extern portMUX_TYPE timerMux;
 
 #ifdef HAS_ANTENNA_SWITCH
 #include "antenna.h"
-#endif
-
-// class for preparing payload data
-#include "payload.h"
-#if PAYLOAD_ENCODER == 1
-extern TTNplain payload;
-#elif PAYLOAD_ENCODER == 2
-extern TTNpacked payload;
-#elif PAYLOAD_ENCODER == 3
-extern CayenneLPP payload;
-#else
-#error "No valid payload converter defined"
 #endif
 
 void reset_counters(void);

@@ -167,6 +167,10 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	bytes 10-11:	HDOP
 	bytes 12-13:	Altitude [meter]
 
+**Port #5:** Button pressed signal
+
+	byte 1:		static value 0x01
+
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
 

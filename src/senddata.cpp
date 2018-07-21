@@ -9,9 +9,10 @@ void senddata(uint8_t port) {
     ESP_LOGI(TAG, "LoRa busy, data not sent");
     sprintf(display_line7, "LORA BUSY");
   } else {
-    // send payload via LoRa
-    LMIC_setTxData2(port, payload.getBuffer(), payload.getSize(),
+    LMIC_setTxData2(PAYLOAD_ENCODER == 4 ? CAYENNEPORT : port,
+                    payload.getBuffer(), payload.getSize(),
                     (cfg.countermode & 0x02));
+
     ESP_LOGI(TAG, "%d bytes queued to send on LoRa", payload.getSize());
     sprintf(display_line7, "PACKET QUEUED");
   }
@@ -23,10 +24,10 @@ void senddata(uint8_t port) {
 #endif
 
   // clear counter if not in cumulative counter mode
-  if ((port == PAYLOADPORT) && (cfg.countermode != 1)) {
+  if ((port == COUNTERPORT) && (cfg.countermode != 1)) {
     reset_counters(); // clear macs container and reset all counters
     reset_salt();     // get new salt for salting hashes
-    ESP_LOGI(TAG, "Counter cleared (countermode = %d)", cfg.countermode);
+    ESP_LOGI(TAG, "Counter cleared");
   }
 
 } // senddata
