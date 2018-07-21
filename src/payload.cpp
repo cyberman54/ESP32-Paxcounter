@@ -65,7 +65,8 @@ void PayloadConvert::addConfig(configData_t value) {
   cursor += 10;
 }
 
-void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
+                               float cputemp) {
   buffer[cursor++] = voltage >> 8;
   buffer[cursor++] = voltage;
   buffer[cursor++] = uptime >> 56;
@@ -81,7 +82,6 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp)
   buffer[cursor++] = (uint32_t)cputemp >> 8;
   buffer[cursor++] = (uint32_t)cputemp;
 }
-
 
 /* ---------------- packed format with LoRa serialization Encoder ---------- */
 // derived from
@@ -117,7 +117,8 @@ void PayloadConvert::addConfig(configData_t value) {
               value.vendorfilter ? true : false, value.gpsmode ? true : false);
 }
 
-void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
+                               float cputemp) {
   writeUint16(voltage);
   writeUptime(uptime);
   writeTemperature(cputemp);
@@ -163,7 +164,7 @@ void PayloadConvert::writeTemperature(float temperature) {
 }
 
 void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
-                            bool g, bool h) {
+                                 bool g, bool h) {
   uint8_t bitmap = 0;
   // LSB first
   bitmap |= (a & 1) << 7;
@@ -178,18 +179,22 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 }
 
 /* ---------------- Cayenne LPP format ---------- */
-//http://community.mydevices.com/t/cayenne-lpp-2-0/7510
+// http://community.mydevices.com/t/cayenne-lpp-2-0/7510
 
-#elif PAYLOAD_ENCODER == 3
+#elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
 void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   uint16_t val1 = value1 * 100;
   uint16_t val2 = value2 * 100;
+#if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
+#endif
   buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
   buffer[cursor++] = val1 >> 8;
   buffer[cursor++] = val1;
+#if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
+#endif
   buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
   buffer[cursor++] = val2 >> 8;
   buffer[cursor++] = val2;
@@ -200,7 +205,9 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   int32_t lat = value.latitude / 100;
   int32_t lon = value.longitude / 100;
   int32_t alt = value.altitude * 100;
+#if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_GPS_CHANNEL;
+#endif
   buffer[cursor++] = LPP_GPS;
   buffer[cursor++] = lat >> 16;
   buffer[cursor++] = lat >> 8;
@@ -215,18 +222,25 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 
 void PayloadConvert::addConfig(configData_t value) {
+#if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_ADR_CHANNEL;
+#endif
   buffer[cursor++] = LPP_DIGITAL_INPUT;
   buffer[cursor++] = value.adrmode;
 }
 
-void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
+                               float celsius) {
   int16_t val = celsius * 10;
+#if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BATT_CHANNEL;
+#endif
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = voltage >> 8;
   buffer[cursor++] = voltage;
+#if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMP_CHANNEL;
+#endif
   buffer[cursor++] = LPP_TEMPERATURE;
   buffer[cursor++] = (uint16_t)val >> 8;
   buffer[cursor++] = (uint16_t)val;
@@ -234,4 +248,4 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius)
 
 #else
 #error "No valid payload converter defined"
-#endif 
+#endif

@@ -1,13 +1,15 @@
 #ifndef _PAYLOAD_H_
 #define _PAYLOAD_H_
 
-// MyDevices CayenneLPP channels
+// MyDevices CayenneLPP channels for dynamic sensor payload format
+#if (PAYLOAD_ENCODER == 3)
 #define LPP_GPS_CHANNEL 20
 #define LPP_COUNT_WIFI_CHANNEL 21
 #define LPP_COUNT_BLE_CHANNEL 22
 #define LPP_BATT_CHANNEL 23
 #define LPP_ADR_CHANNEL 25
 #define LPP_TEMP_CHANNEL 26
+#endif
 
 // MyDevices CayenneLPP types
 #define LPP_GPS 136          // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01m
@@ -56,7 +58,7 @@ private:
                    bool h);
 };
 
-#elif PAYLOAD_ENCODER == 3 // format cayenne lpp
+#elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4) // format cayenne lpp
 
 private:
   uint8_t *buffer;
@@ -66,7 +68,7 @@ private:
 
 #else
 #error "No valid payload converter defined"
-#endif 
+#endif
 
 extern PayloadConvert payload;
 

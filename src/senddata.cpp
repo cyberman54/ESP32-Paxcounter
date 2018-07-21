@@ -9,7 +9,7 @@ void senddata(uint8_t port) {
     ESP_LOGI(TAG, "LoRa busy, data not sent");
     sprintf(display_line7, "LORA BUSY");
   } else {
-    LMIC_setTxData2(PAYLOAD_ENCODER == 3 ? CAYENNEPORT : port,
+    LMIC_setTxData2(PAYLOAD_ENCODER == 4 ? CAYENNEPORT : port,
                     payload.getBuffer(), payload.getSize(),
                     (cfg.countermode & 0x02));
 
