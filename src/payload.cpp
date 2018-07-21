@@ -183,14 +183,16 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 #elif PAYLOAD_ENCODER == 3
 
 void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
+  uint16_t val1 = value1 * 100;
+  uint16_t val2 = value2 * 100;
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
   buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
-  buffer[cursor++] = value1 >> 8;
-  buffer[cursor++] = value1;
+  buffer[cursor++] = val1 >> 8;
+  buffer[cursor++] = val1;
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
   buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
-  buffer[cursor++] = value1 >> 8;
-  buffer[cursor++] = value2;
+  buffer[cursor++] = val2 >> 8;
+  buffer[cursor++] = val2;
 }
 
 #ifdef HAS_GPS
