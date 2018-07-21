@@ -139,9 +139,9 @@ void readButton() {
     ButtonPressedIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
     ESP_LOGI(TAG, "Button pressed");
-    ESP_LOGI(TAG, "Button pressed, resetting device to factory defaults");
-    eraseConfig();
-    esp_restart();
+    payload.reset();
+    payload.addButton(0x01);
+    senddata(BUTTONPORT);
   }
 }
 #endif
@@ -211,7 +211,7 @@ void sendPayload() {
     }
 #endif
 
-    senddata(PAYLOADPORT);
+    senddata(COUNTERPORT);
   }
 } // sendPayload()
 
@@ -442,7 +442,7 @@ void loop() {
                "Memory full, counter cleared (heap low water mark = %d Bytes / "
                "free heap = %d bytes)",
                esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-      senddata(PAYLOADPORT); // send data before clearing counters
+      senddata(COUNTERPORT); // send data before clearing counters
       reset_counters();      // clear macs container and reset all counters
       reset_salt();          // get new salt for salting hashes
     }

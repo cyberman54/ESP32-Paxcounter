@@ -1,4 +1,4 @@
-/* switches wifi antenna, if board has switch  internal / external antenna */
+/* switches wifi antenna, if board has switch internal / external antenna */
 
 #ifdef HAS_ANTENNA_SWITCH
 

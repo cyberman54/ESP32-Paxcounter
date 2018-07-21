@@ -7,6 +7,7 @@
 #define LPP_COUNT_WIFI_CHANNEL 21
 #define LPP_COUNT_BLE_CHANNEL 22
 #define LPP_BATT_CHANNEL 23
+#define LPP_BUTTON_CHANNEL 24
 #define LPP_ADR_CHANNEL 25
 #define LPP_TEMP_CHANNEL 26
 #endif
@@ -34,6 +35,10 @@ public:
 #ifdef HAS_GPS
   void addGPS(gpsStatus_t value);
 #endif
+#ifdef HAS_BUTTON
+  void addButton(uint8_t value);
+#endif
+
 
 #if PAYLOAD_ENCODER == 1 // format plain
 

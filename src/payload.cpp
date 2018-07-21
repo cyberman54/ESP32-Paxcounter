@@ -26,24 +26,6 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = value2;
 }
 
-#ifdef HAS_GPS
-void PayloadConvert::addGPS(gpsStatus_t value) {
-  buffer[cursor++] = value.latitude >> 24;
-  buffer[cursor++] = value.latitude >> 16;
-  buffer[cursor++] = value.latitude >> 8;
-  buffer[cursor++] = value.latitude;
-  buffer[cursor++] = value.longitude >> 24;
-  buffer[cursor++] = value.longitude >> 16;
-  buffer[cursor++] = value.longitude >> 8;
-  buffer[cursor++] = value.longitude;
-  buffer[cursor++] = value.satellites;
-  buffer[cursor++] = value.hdop >> 8;
-  buffer[cursor++] = value.hdop;
-  buffer[cursor++] = value.altitude >> 8;
-  buffer[cursor++] = value.altitude;
-}
-#endif
-
 void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.lorasf;
   buffer[cursor++] = value.txpower;
@@ -83,6 +65,28 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
   buffer[cursor++] = (uint32_t)cputemp;
 }
 
+#ifdef HAS_GPS
+void PayloadConvert::addGPS(gpsStatus_t value) {
+  buffer[cursor++] = value.latitude >> 24;
+  buffer[cursor++] = value.latitude >> 16;
+  buffer[cursor++] = value.latitude >> 8;
+  buffer[cursor++] = value.latitude;
+  buffer[cursor++] = value.longitude >> 24;
+  buffer[cursor++] = value.longitude >> 16;
+  buffer[cursor++] = value.longitude >> 8;
+  buffer[cursor++] = value.longitude;
+  buffer[cursor++] = value.satellites;
+  buffer[cursor++] = value.hdop >> 8;
+  buffer[cursor++] = value.hdop;
+  buffer[cursor++] = value.altitude >> 8;
+  buffer[cursor++] = value.altitude;
+}
+#endif
+
+#ifdef HAS_BUTTON
+void PayloadConvert::addButton(uint8_t value) { buffer[cursor++] = value; }
+#endif
+
 /* ---------------- packed format with LoRa serialization Encoder ---------- */
 // derived from
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
@@ -93,15 +97,6 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   writeUint16(value1);
   writeUint16(value2);
 }
-
-#ifdef HAS_GPS
-void PayloadConvert::addGPS(gpsStatus_t value) {
-  writeLatLng(value.latitude, value.longitude);
-  writeUint8(value.satellites);
-  writeUint16(value.hdop);
-  writeUint16(value.altitude);
-}
-#endif
 
 void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.lorasf);
@@ -123,6 +118,19 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
   writeUptime(uptime);
   writeTemperature(cputemp);
 }
+
+#ifdef HAS_GPS
+void PayloadConvert::addGPS(gpsStatus_t value) {
+  writeLatLng(value.latitude, value.longitude);
+  writeUint8(value.satellites);
+  writeUint16(value.hdop);
+  writeUint16(value.altitude);
+}
+#endif
+
+#ifdef HAS_BUTTON
+void PayloadConvert::addButton(uint8_t value) { writeUint8(value); }
+#endif
 
 void PayloadConvert::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
@@ -200,27 +208,6 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = val2;
 }
 
-#ifdef HAS_GPS
-void PayloadConvert::addGPS(gpsStatus_t value) {
-  int32_t lat = value.latitude / 100;
-  int32_t lon = value.longitude / 100;
-  int32_t alt = value.altitude * 100;
-#if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_GPS_CHANNEL;
-#endif
-  buffer[cursor++] = LPP_GPS;
-  buffer[cursor++] = lat >> 16;
-  buffer[cursor++] = lat >> 8;
-  buffer[cursor++] = lat;
-  buffer[cursor++] = lon >> 16;
-  buffer[cursor++] = lon >> 8;
-  buffer[cursor++] = lon;
-  buffer[cursor++] = alt >> 16;
-  buffer[cursor++] = alt >> 8;
-  buffer[cursor++] = alt;
-}
-#endif
-
 void PayloadConvert::addConfig(configData_t value) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_ADR_CHANNEL;
@@ -245,6 +232,37 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
   buffer[cursor++] = (uint16_t)val >> 8;
   buffer[cursor++] = (uint16_t)val;
 }
+
+#ifdef HAS_GPS
+void PayloadConvert::addGPS(gpsStatus_t value) {
+  int32_t lat = value.latitude / 100;
+  int32_t lon = value.longitude / 100;
+  int32_t alt = value.altitude * 100;
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_GPS_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_GPS;
+  buffer[cursor++] = lat >> 16;
+  buffer[cursor++] = lat >> 8;
+  buffer[cursor++] = lat;
+  buffer[cursor++] = lon >> 16;
+  buffer[cursor++] = lon >> 8;
+  buffer[cursor++] = lon;
+  buffer[cursor++] = alt >> 16;
+  buffer[cursor++] = alt >> 8;
+  buffer[cursor++] = alt;
+}
+#endif
+
+#ifdef HAS_BUTTON
+void PayloadConvert::addButton(uint8_t value) {
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_BUTTON_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_DIGITAL_INPUT;
+  buffer[cursor++] = value;
+}
+#endif
 
 #else
 #error "No valid payload converter defined"
