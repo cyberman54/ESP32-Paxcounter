@@ -3,6 +3,7 @@
 
 // MyDevices CayenneLPP channels for dynamic sensor payload format
 #if (PAYLOAD_ENCODER == 3)
+
 #define LPP_GPS_CHANNEL 20
 #define LPP_COUNT_WIFI_CHANNEL 21
 #define LPP_COUNT_BLE_CHANNEL 22
