@@ -40,8 +40,8 @@ typedef struct {
 extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t channel;                       // wifi channel rotation counter
-extern uint16_t macs_total, macs_wifi, macs_ble, batt_volt; // display values
-extern std::set<uint16_t> macs; // temp storage for MACs
+extern uint16_t macs_total, macs_wifi, macs_ble; // display values
+extern std::set<uint16_t> macs;                  // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 

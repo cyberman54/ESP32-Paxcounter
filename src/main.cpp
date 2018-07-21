@@ -30,8 +30,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
-uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
-         batt_volt = 0; // globals for display
+uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0; // globals for display
 hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
            *sendCycle = NULL; // configure hardware timer for cyclic tasks
 
@@ -430,10 +429,6 @@ void loop() {
 
 #ifdef HAS_BUTTON
     readButton();
-#endif
-
-#ifdef HAS_BATTERY_PROBE
-    batt_volt = read_voltage();
 #endif
 
 #ifdef HAS_DISPLAY
