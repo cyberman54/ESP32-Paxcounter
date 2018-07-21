@@ -2,10 +2,6 @@
 #include "globals.h"
 #include "payload.h"
 
-/* ---------------- plain format without special encoding ---------- */
-
-#if PAYLOAD_ENCODER == 1
-
 PayloadConvert::PayloadConvert(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
   cursor = 0;
@@ -18,6 +14,10 @@ void PayloadConvert::reset(void) { cursor = 0; }
 uint8_t PayloadConvert::getSize(void) { return cursor; }
 
 uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
+
+/* ---------------- plain format without special encoding ---------- */
+
+#if PAYLOAD_ENCODER == 1
 
 void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = value1 >> 8;
@@ -82,24 +82,12 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp)
   buffer[cursor++] = (uint32_t)cputemp;
 }
 
-#elif PAYLOAD_ENCODER == 2
 
 /* ---------------- packed format with LoRa serialization Encoder ---------- */
 // derived from
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
-PayloadConvert::PayloadConvert(uint8_t size) {
-  buffer = (uint8_t *)malloc(size);
-  cursor = 0;
-}
-
-PayloadConvert::~PayloadConvert(void) { free(buffer); }
-
-void PayloadConvert::reset(void) { cursor = 0; }
-
-uint8_t PayloadConvert::getSize(void) { return cursor; }
-
-uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
+#elif PAYLOAD_ENCODER == 2
 
 void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   writeUint16(value1);
@@ -189,22 +177,10 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
   writeUint8(bitmap);
 }
 
-#elif PAYLOAD_ENCODER == 3
-
 /* ---------------- Cayenne LPP format ---------- */
+//http://community.mydevices.com/t/cayenne-lpp-2-0/7510
 
-PayloadConvert::PayloadConvert(uint8_t size) {
-  buffer = (uint8_t *)malloc(size);
-  cursor = 0;
-}
-
-PayloadConvert::~PayloadConvert(void) { free(buffer); }
-
-void PayloadConvert::reset(void) { cursor = 0; }
-
-uint8_t PayloadConvert::getSize(void) { return cursor; }
-
-uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
+#elif PAYLOAD_ENCODER == 3
 
 void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
@@ -221,7 +197,7 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
 void PayloadConvert::addGPS(gpsStatus_t value) {
   int32_t lat = value.latitude / 100;
   int32_t lon = value.longitude / 100;
-  int32_t alt = value.altitude;
+  int32_t alt = value.altitude * 100;
   buffer[cursor++] = LPP_GPS_CHANNEL;
   buffer[cursor++] = LPP_GPS;
   buffer[cursor++] = lat >> 16;
@@ -242,15 +218,16 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.adrmode;
 }
 
-void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius) {
+  int16_t val = celsius * 10;
   buffer[cursor++] = LPP_BATT_CHANNEL;
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = voltage >> 8;
   buffer[cursor++] = voltage;
   buffer[cursor++] = LPP_TEMP_CHANNEL;
   buffer[cursor++] = LPP_TEMPERATURE;
-  buffer[cursor++] = (uint16_t)cputemp >> 8;
-  buffer[cursor++] = (uint16_t)cputemp;
+  buffer[cursor++] = (uint16_t)val >> 8;
+  buffer[cursor++] = (uint16_t)val;
 }
 
 #else

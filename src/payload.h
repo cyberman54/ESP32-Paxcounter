@@ -1,8 +1,6 @@
 #ifndef _PAYLOAD_H_
 #define _PAYLOAD_H_
 
-#include <Arduino.h>
-
 // MyDevices CayenneLPP channels
 #define LPP_GPS_CHANNEL 20
 #define LPP_COUNT_WIFI_CHANNEL 21
@@ -10,6 +8,7 @@
 #define LPP_BATT_CHANNEL 23
 #define LPP_ADR_CHANNEL 25
 #define LPP_TEMP_CHANNEL 26
+
 // MyDevices CayenneLPP types
 #define LPP_GPS 136          // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01m
 #define LPP_TEMPERATURE 103  // 2 bytes, 0.1°C signed
