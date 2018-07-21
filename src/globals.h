@@ -8,7 +8,7 @@
 #include <esp32-hal-log.h>
 
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.3.91" // use max 10 chars here!
+#define PROGVERSION "1.3.92" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions

@@ -112,7 +112,7 @@ void refreshDisplay() {
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
   u8x8.setCursor(0, 2);
-  u8x8.printf("B=%.1fV", read_voltage() / 1000.0);
+  u8x8.printf("B:%.1fV", read_voltage() / 1000.0);
 #endif
 
 // update GPS status (line 2)
@@ -121,10 +121,10 @@ void refreshDisplay() {
   if (!gps.location.isValid()) // if no fix then display Sats value inverse
   {
     u8x8.setInverseFont(1);
-    u8x8.printf("Sat %.3d", gps.satellites.value());
+    u8x8.printf("Sat:%.3d", gps.satellites.value());
     u8x8.setInverseFont(0);
   } else
-    u8x8.printf("Sat %.3d", gps.satellites.value());
+    u8x8.printf("Sat:%.3d", gps.satellites.value());
 #endif
 
     // update bluetooth counter + LoRa SF (line 3)
