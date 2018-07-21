@@ -207,7 +207,7 @@ void CayenneLPP::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = value1;
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
   buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
-  buffer[cursor++] = value1 >> 8;
+  buffer[cursor++] = value2 >> 8;
   buffer[cursor++] = value2;
 }
 
