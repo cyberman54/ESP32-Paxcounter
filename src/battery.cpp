@@ -48,7 +48,7 @@ uint16_t read_voltage(void) {
 #ifdef BATT_FACTOR
   voltage *= BATT_FACTOR;
 #endif
-  ESP_LOGI(TAG, "Raw: %d / Voltage: %dmV", adc_reading, voltage);
+  ESP_LOGD(TAG, "Raw: %d / Voltage: %dmV", adc_reading, voltage);
   return voltage;
 }
 #endif // HAS_BATTERY_PROBE

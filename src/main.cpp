@@ -185,10 +185,6 @@ void sendPayload() {
     SendCycleTimerIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
 
-#ifdef HAS_BATTERY_PROBE
-    batt_volt = read_voltage();
-#endif
-
     // append counter data to payload
     payload.reset();
     payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
@@ -434,6 +430,10 @@ void loop() {
 
 #ifdef HAS_BUTTON
     readButton();
+#endif
+
+#ifdef HAS_BATTERY_PROBE
+    batt_volt = read_voltage();
 #endif
 
 #ifdef HAS_DISPLAY
