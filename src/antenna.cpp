@@ -2,8 +2,6 @@
 
 #ifdef HAS_ANTENNA_SWITCH
 
-#include <Arduino.h>
-
 // Local logging tag
 static const char TAG[] = "wifi";
 
