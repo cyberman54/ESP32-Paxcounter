@@ -112,7 +112,7 @@ void refreshDisplay() {
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
   u8x8.setCursor(0, 2);
-  u8x8.printf("B:%.1fV", read_voltage() / 1000.0);
+  u8x8.printf("B:%.1fV", batt_volt / 1000.0);
 #endif
 
 // update GPS status (line 2)
