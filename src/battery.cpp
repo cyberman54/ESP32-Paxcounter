@@ -7,13 +7,13 @@ static const char TAG[] = "main";
 
 static void print_char_val_type(esp_adc_cal_value_t val_type) {
   if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-    ESP_LOGI(TAG,
+    ESP_LOGD(TAG,
              "ADC characterization based on Two Point values stored in eFuse");
   } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-    ESP_LOGI(TAG,
+    ESP_LOGD(TAG,
              "ADC characterization based on reference voltage stored in eFuse");
   } else {
-    ESP_LOGI(TAG, "ADC characterization based on default reference voltage");
+    ESP_LOGD(TAG, "ADC characterization based on default reference voltage");
   }
 }
 
@@ -48,7 +48,7 @@ uint16_t read_voltage(void) {
 #ifdef BATT_FACTOR
   voltage *= BATT_FACTOR;
 #endif
-  ESP_LOGI(TAG, "Raw: %d / Voltage: %dmV", adc_reading, voltage);
+  ESP_LOGD(TAG, "Raw: %d / Voltage: %dmV", adc_reading, voltage);
   return voltage;
 }
 #endif // HAS_BATTERY_PROBE
