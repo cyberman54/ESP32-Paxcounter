@@ -219,19 +219,20 @@ void PayloadConvert::addConfig(configData_t value) {
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
                                float celsius) {
-  uint16_t val = celsius * 10;
+  uint16_t temp = celsius * 10;
+  uint16_t volt = voltage / 10;
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BATT_CHANNEL;
 #endif
   buffer[cursor++] = LPP_ANALOG_INPUT;
-  buffer[cursor++] = highByte(voltage);
-  buffer[cursor++] = lowByte(voltage);
+  buffer[cursor++] = highByte(volt);
+  buffer[cursor++] = lowByte(volt);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMP_CHANNEL;
 #endif
   buffer[cursor++] = LPP_TEMPERATURE;
-  buffer[cursor++] = highByte(val);
-  buffer[cursor++] = lowByte(val);
+  buffer[cursor++] = highByte(temp);
+  buffer[cursor++] = lowByte(temp);
 }
 
 #ifdef HAS_GPS
