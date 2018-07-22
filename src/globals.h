@@ -8,7 +8,7 @@
 #include <esp32-hal-log.h>
 
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.3.92" // use max 10 chars here!
+#define PROGVERSION "1.3.93" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions
@@ -44,6 +44,7 @@ extern uint16_t macs_total, macs_wifi, macs_ble, batt_voltage; // display values
 extern std::set<uint16_t> macs; // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
+extern volatile int SendCycleTimerIRQ;
 
 #ifdef HAS_GPS
 #include "gps.h"

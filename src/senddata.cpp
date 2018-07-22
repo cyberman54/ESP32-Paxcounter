@@ -32,3 +32,37 @@ void senddata(uint8_t port) {
   }
 
 } // senddata
+
+void sendPayload() {
+
+  if (SendCycleTimerIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    SendCycleTimerIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
+
+    // append counter data to payload
+    payload.reset();
+    payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
+    // append GPS data, if present
+
+#ifdef HAS_GPS
+    // show NMEA data in debug mode, useful for debugging GPS on board
+    // connection
+    ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+             gps.passedChecksum(), gps.failedChecksum(),
+             gps.sentencesWithFix());
+    // log GPS position if we have a fix and gps data mode is enabled
+    if ((cfg.gpsmode) && (gps.location.isValid())) {
+      gps_read();
+      payload.addGPS(gps_status);
+      ESP_LOGD(TAG, "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
+               gps_status.latitude / (float)1e6,
+               gps_status.longitude / (float)1e6, gps_status.satellites,
+               gps_status.hdop / (float)100, gps_status.altitude);
+    } else {
+      ESP_LOGD(TAG, "No valid GPS position or GPS data mode disabled");
+    }
+#endif
+    senddata(COUNTERPORT);
+  }
+} // sendpayload();
