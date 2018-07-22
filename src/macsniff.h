@@ -6,7 +6,6 @@
 
 // Hash function for scrambling MAC addresses
 #include "hash.h"
-
 #include "led.h"
 
 #define MAC_SNIFF_WIFI 0
@@ -31,8 +30,6 @@ uint16_t reset_salt(void);
 void wifi_sniffer_init(void);
 void wifi_sniffer_set_channel(uint8_t channel);
 void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
-
-// function defined in rokkithash.cpp
-uint32_t rokkit(const char *, int);
+bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
 
 #endif
