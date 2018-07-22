@@ -9,9 +9,10 @@ void senddata(uint8_t port) {
     ESP_LOGI(TAG, "LoRa busy, data not sent");
     sprintf(display_line7, "LORA BUSY");
   } else {
-    LMIC_setTxData2(PAYLOAD_ENCODER == 4 ? CAYENNEPORT : port,
-                    payload.getBuffer(), payload.getSize(),
-                    (cfg.countermode & 0x02));
+    LMIC_setTxData2(
+        PAYLOAD_ENCODER <= 2 ? port
+                             : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT),
+        payload.getBuffer(), payload.getSize(), (cfg.countermode & 0x02));
 
     ESP_LOGI(TAG, "%d bytes queued to send on LoRa", payload.getSize());
     sprintf(display_line7, "PACKET QUEUED");
