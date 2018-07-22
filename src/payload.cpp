@@ -52,30 +52,30 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
   uint32_t temp = (uint32_t)cputemp;
   buffer[cursor++] = highByte(voltage);
   buffer[cursor++] = lowByte(voltage);
-  buffer[cursor++] = (byte) ((uptime & 0xFF00000000000000) >> 56 );
-  buffer[cursor++] = (byte) ((uptime & 0x00FF000000000000) >> 48 );
-  buffer[cursor++] = (byte) ((uptime & 0x0000FF0000000000) >> 40 );
-  buffer[cursor++] = (byte) ((uptime & 0x000000FF00000000) >> 32 );
-  buffer[cursor++] = (byte) ((uptime & 0x00000000FF000000) >> 24 );
-  buffer[cursor++] = (byte) ((uptime & 0x0000000000FF0000) >> 16 );
-  buffer[cursor++] = (byte) ((uptime & 0x000000000000FF00) >> 8 );
-  buffer[cursor++] = (byte) ((uptime & 0x00000000000000FF) );
-  buffer[cursor++] = (byte) ((temp & 0xFF000000) >> 24 );
-  buffer[cursor++] = (byte) ((temp & 0x00FF0000) >> 16 );
-  buffer[cursor++] = (byte) ((temp & 0x0000FF00) >> 8 );
-  buffer[cursor++] = (byte) ((temp & 0x000000FF) );
+  buffer[cursor++] = (byte)((uptime & 0xFF00000000000000) >> 56);
+  buffer[cursor++] = (byte)((uptime & 0x00FF000000000000) >> 48);
+  buffer[cursor++] = (byte)((uptime & 0x0000FF0000000000) >> 40);
+  buffer[cursor++] = (byte)((uptime & 0x000000FF00000000) >> 32);
+  buffer[cursor++] = (byte)((uptime & 0x00000000FF000000) >> 24);
+  buffer[cursor++] = (byte)((uptime & 0x0000000000FF0000) >> 16);
+  buffer[cursor++] = (byte)((uptime & 0x000000000000FF00) >> 8);
+  buffer[cursor++] = (byte)((uptime & 0x00000000000000FF));
+  buffer[cursor++] = (byte)((temp & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((temp & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((temp & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((temp & 0x000000FF));
 }
 
 #ifdef HAS_GPS
 void PayloadConvert::addGPS(gpsStatus_t value) {
-  buffer[cursor++] = (byte) ((value.latitude & 0xFF000000) >> 24 );
-  buffer[cursor++] = (byte) ((value.latitude & 0x00FF0000) >> 16 );
-  buffer[cursor++] = (byte) ((value.latitude & 0x0000FF00) >> 8 );
-  buffer[cursor++] = (byte) ((value.latitude & 0x000000FF) );
-  buffer[cursor++] = (byte) ((value.longitude & 0xFF000000) >> 24 );
-  buffer[cursor++] = (byte) ((value.longitude & 0x00FF0000) >> 16 );
-  buffer[cursor++] = (byte) ((value.longitude & 0x0000FF00) >> 8 );
-  buffer[cursor++] = (byte) ((value.longitude & 0x000000FF) );
+  buffer[cursor++] = (byte)((value.latitude & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((value.latitude & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((value.latitude & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((value.latitude & 0x000000FF));
+  buffer[cursor++] = (byte)((value.longitude & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((value.longitude & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((value.longitude & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((value.longitude & 0x000000FF));
   buffer[cursor++] = value.satellites;
   buffer[cursor++] = highByte(value.hdop);
   buffer[cursor++] = lowByte(value.hdop);
@@ -221,12 +221,14 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
                                float celsius) {
   uint16_t temp = celsius * 10;
   uint16_t volt = voltage / 10;
+#ifdef HAS_BATTERY_PROBE
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BATT_CHANNEL;
 #endif
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = highByte(volt);
   buffer[cursor++] = lowByte(volt);
+#endif
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMP_CHANNEL;
 #endif
@@ -244,16 +246,15 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = LPP_GPS_CHANNEL;
 #endif
   buffer[cursor++] = LPP_GPS;
-  buffer[cursor++] = (byte) ((lat & 0xFF0000) >> 16 );
-  buffer[cursor++] = (byte) ((lat & 0x00FF00) >> 8 );
-  buffer[cursor++] = (byte) ((lat & 0x0000FF) );
-  buffer[cursor++] = (byte) ((lon & 0xFF0000) >> 16 );
-  buffer[cursor++] = (byte) ((lon & 0x00FF00) >> 8 );
-  buffer[cursor++] = (byte) ((lon & 0x0000FF) );
-  buffer[cursor++] = (byte) ((alt & 0xFF0000) >> 16 );
-  buffer[cursor++] = (byte) ((alt & 0x00FF00) >> 8 );
-  buffer[cursor++] = (byte) ((alt & 0x0000FF) );
-
+  buffer[cursor++] = (byte)((lat & 0xFF0000) >> 16);
+  buffer[cursor++] = (byte)((lat & 0x00FF00) >> 8);
+  buffer[cursor++] = (byte)((lat & 0x0000FF));
+  buffer[cursor++] = (byte)((lon & 0xFF0000) >> 16);
+  buffer[cursor++] = (byte)((lon & 0x00FF00) >> 8);
+  buffer[cursor++] = (byte)((lon & 0x0000FF));
+  buffer[cursor++] = (byte)((alt & 0xFF0000) >> 16);
+  buffer[cursor++] = (byte)((alt & 0x00FF00) >> 8);
+  buffer[cursor++] = (byte)((alt & 0x0000FF));
 }
 #endif
 
