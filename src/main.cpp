@@ -332,6 +332,7 @@ void setup() {
 // initialize battery status if present
 #ifdef HAS_BATTERY_PROBE
   strcat_P(features, " BATT");
+  calibrate_voltage();
   batt_voltage = read_voltage();
 #endif
 
@@ -370,7 +371,7 @@ void setup() {
 #ifdef HAS_BATTERY_PROBE
   battCycle = timerBegin(3, 8000, true);
   timerAttachInterrupt(battCycle, &BattCycleIRQ, true);
-  timerAlarmWrite(battCycle, 60 * 100, true);
+  timerAlarmWrite(battCycle, BATTREADCYCLE * 10000, true);
   timerAlarmEnable(battCycle);
 #endif
 
