@@ -35,11 +35,11 @@ uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
 
 // hardware timer for cyclic tasks
 hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
-           *battCycle = NULL;
+           *homeCycle = NULL;
 
 // this variables will be changed in the ISR, and read in main loop
-static volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
-                    SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, BattReadIRQ = 0;
+volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
+             DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
 portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
@@ -113,6 +113,12 @@ void IRAM_ATTR SendCycleIRQ() {
   portEXIT_CRITICAL(&timerMux);
 }
 
+void IRAM_ATTR homeCycleIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  HomeCycleIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}
+
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ() {
   portENTER_CRITICAL_ISR(&timerMux);
@@ -129,21 +135,14 @@ void updateDisplay() {
 }
 #endif
 
-#ifdef HAS_BATTERY_PROBE
-void IRAM_ATTR BattCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  BattReadIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-void readBattery() {
-  if (BattReadIRQ) {
+void checkHousekeeping() {
+  if (HomeCycleIRQ) {
     portENTER_CRITICAL(&timerMux);
-    BattReadIRQ = 0;
+    HomeCycleIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
-    batt_voltage = read_voltage();
+    doHomework();
   }
 }
-#endif
 
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ() { ButtonPressedIRQ++; }
@@ -192,43 +191,6 @@ uint64_t uptime() {
   low32 = new_low32;
   return (uint64_t)high32 << 32 | low32;
 }
-
-void sendPayload() {
-
-  if (SendCycleTimerIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    SendCycleTimerIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-
-    // append counter data to payload
-    payload.reset();
-    payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
-    // append GPS data, if present
-
-#ifdef HAS_GPS
-    if ((cfg.gpsmode) && (gps.location.isValid())) {
-      gps_read();
-      payload.addGPS(gps_status);
-    }
-    // log NMEA status, useful for debugging GPS connection
-    ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
-             gps.passedChecksum(), gps.failedChecksum(),
-             gps.sentencesWithFix());
-    // log GPS position if we have a fix
-    if ((cfg.gpsmode) && (gps.location.isValid())) {
-      gps_read();
-      ESP_LOGI(TAG, "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
-               gps_status.latitude / (float)1e6,
-               gps_status.longitude / (float)1e6, gps_status.satellites,
-               gps_status.hdop / (float)100, gps_status.altitude);
-    } else {
-      ESP_LOGI(TAG, "No valid GPS position or GPS disabled");
-    }
-#endif
-
-    senddata(COUNTERPORT);
-  }
-} // sendPayload()
 
 /* begin Aruino SETUP
  * ------------------------------------------------------------ */
@@ -367,13 +329,11 @@ void setup() {
   timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
   timerAlarmEnable(sendCycle);
 
-  // setup battery read cycle trigger IRQ using esp32 hardware timer 3
-#ifdef HAS_BATTERY_PROBE
-  battCycle = timerBegin(3, 8000, true);
-  timerAttachInterrupt(battCycle, &BattCycleIRQ, true);
-  timerAlarmWrite(battCycle, BATTREADCYCLE * 10000, true);
-  timerAlarmEnable(battCycle);
-#endif
+  // setup house keeping cycle trigger IRQ using esp32 hardware timer 3
+  homeCycle = timerBegin(3, 8000, true);
+  timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
+  timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
+  timerAlarmEnable(homeCycle);
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
@@ -464,24 +424,12 @@ void loop() {
     readButton();
 #endif
 
-#ifdef HAS_BATTERY_PROBE
-    readBattery();
-#endif
-
 #ifdef HAS_DISPLAY
     updateDisplay();
 #endif
 
-    // check free memory
-    if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
-      ESP_LOGI(TAG,
-               "Memory full, counter cleared (heap low water mark = %d Bytes / "
-               "free heap = %d bytes)",
-               esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-      senddata(COUNTERPORT); // send data before clearing counters
-      reset_counters();      // clear macs container and reset all counters
-      reset_salt();          // get new salt for salting hashes
-    }
+    // check housekeeping cycle and to homework if expired
+    checkHousekeeping();
 
     // check send cycle and send payload if cycle is expired
     sendPayload();
