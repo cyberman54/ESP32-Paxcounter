@@ -5,8 +5,9 @@
 #include <esp_adc_cal.h>
 
 #define DEFAULT_VREF 1100 // tbd: use adc2_vref_to_gpio() for better estimate
-#define NO_OF_SAMPLES 64  // we do multisampling
+#define NO_OF_SAMPLES 64  // we do some multisampling to get better values
 
 uint16_t read_voltage(void);
+void calibrate_voltage(void);
 
 #endif
