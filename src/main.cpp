@@ -30,13 +30,16 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
-uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0; // globals for display
-hw_timer_t *channelSwitch = NULL, *displaytimer = NULL,
-           *sendCycle = NULL; // configure hardware timer for cyclic tasks
+uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
+         batt_voltage = 0; // globals for display
+
+// hardware timer for cyclic tasks
+hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
+           *battCycle = NULL;
 
 // this variables will be changed in the ISR, and read in main loop
 static volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
-                    SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0;
+                    SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, BattReadIRQ = 0;
 
 portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
@@ -116,17 +119,30 @@ void IRAM_ATTR DisplayIRQ() {
   DisplayTimerIRQ++;
   portEXIT_CRITICAL_ISR(&timerMux);
 }
-
 void updateDisplay() {
-  // refresh display according to refresh cycle setting
   if (DisplayTimerIRQ) {
     portENTER_CRITICAL(&timerMux);
     DisplayTimerIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
-    refreshDisplay();
+    refreshtheDisplay();
   }
 }
+#endif
 
+#ifdef HAS_BATTERY_PROBE
+void IRAM_ATTR BattCycleIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  BattReadIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}
+void readBattery() {
+  if (BattReadIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    BattReadIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
+    batt_voltage = read_voltage();
+  }
+}
 #endif
 
 #ifdef HAS_BUTTON
@@ -313,6 +329,12 @@ void setup() {
   strcat_P(features, " GPS");
 #endif
 
+// initialize battery status if present
+#ifdef HAS_BATTERY_PROBE
+  strcat_P(features, " BATT");
+  batt_voltage = read_voltage();
+#endif
+
 // initialize display if present
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
@@ -343,6 +365,14 @@ void setup() {
   timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
   timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
   timerAlarmEnable(sendCycle);
+
+  // setup battery read cycle trigger IRQ using esp32 hardware timer 3
+#ifdef HAS_BATTERY_PROBE
+  battCycle = timerBegin(3, 8000, true);
+  timerAttachInterrupt(battCycle, &BattCycleIRQ, true);
+  timerAlarmWrite(battCycle, 60 * 100, true);
+  timerAlarmEnable(battCycle);
+#endif
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
@@ -429,6 +459,10 @@ void loop() {
 
 #ifdef HAS_BUTTON
     readButton();
+#endif
+
+#ifdef HAS_BATTERY_PROBE
+    readBattery();
 #endif
 
 #ifdef HAS_DISPLAY
