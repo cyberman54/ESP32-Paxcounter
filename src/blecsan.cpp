@@ -6,6 +6,7 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
 // Basic Config
 #include "globals.h"
+#include "macsniff.h"
 
 // Bluetooth specific includes
 #include <esp_bt.h>
@@ -18,9 +19,6 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
 // local Tag for logging
 static const char TAG[] = "bluetooth";
-
-// defined in macsniff.cpp
-bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
 
 const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
   switch (type) {

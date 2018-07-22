@@ -381,7 +381,9 @@ void setup() {
 #elif PAYLOAD_ENCODER == 2
   strcat_P(features, " PAYLOAD_PACKED");
 #elif PAYLOAD_ENCODER == 3
-  strcat_P(features, " PAYLOAD_CAYENNE");
+  strcat_P(features, " PAYLOAD_LPP_DYN");
+#elif PAYLOAD_ENCODER == 4
+  strcat_P(features, " PAYLOAD_LPP_PKD");
 #endif
 
   // show compiled features
