@@ -53,3 +53,27 @@ void IRAM_ATTR homeCycleIRQ() {
   HomeCycleIRQ++;
   portEXIT_CRITICAL(&timerMux);
 }
+
+// uptime counter 64bit to prevent millis() rollover after 49 days
+uint64_t uptime() {
+  static uint32_t low32, high32;
+  uint32_t new_low32 = millis();
+  if (new_low32 < low32)
+    high32++;
+  low32 = new_low32;
+  return (uint64_t)high32 << 32 | low32;
+}
+
+void reset_counters() {
+  macs.clear();   // clear all macs container
+  macs_total = 0; // reset all counters
+  macs_wifi = 0;
+  macs_ble = 0;
+}
+
+#ifndef VERBOSE
+int redirect_log(const char *fmt, va_list args) {
+  // do nothing
+  return 0;
+}
+#endif

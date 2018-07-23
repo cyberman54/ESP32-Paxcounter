@@ -14,5 +14,6 @@ void os_getDevKey(u1_t *buf);
 void os_getArtEui(u1_t *buf);
 void os_getDevEui(u1_t *buf);
 void printKeys(void);
+void lorawan_loop(void *pvParameters);
 
 #endif

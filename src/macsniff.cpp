@@ -145,3 +145,25 @@ void IRAM_ATTR ChannelSwitchIRQ() {
   ChannelTimerIRQ++;
   portEXIT_CRITICAL(&timerMux);
 }
+
+// Wifi channel rotation task
+void wifi_channel_loop(void *pvParameters) {
+
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+
+  while (1) {
+
+    if (ChannelTimerIRQ) {
+      portENTER_CRITICAL(&timerMux);
+      ChannelTimerIRQ = 0;
+      portEXIT_CRITICAL(&timerMux);
+      // rotates variable channel 1..WIFI_CHANNEL_MAX
+      channel = (channel % WIFI_CHANNEL_MAX) + 1;
+      wifi_sniffer_set_channel(channel);
+      ESP_LOGD(TAG, "Wifi set channel %d", channel);
+
+      vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+    }
+
+  } // end of infinite wifi channel rotation loop
+}
