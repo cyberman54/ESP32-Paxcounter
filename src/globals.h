@@ -79,7 +79,6 @@ extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
 
 void reset_counters(void);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
-void led_loop(void);
 uint64_t uptime();
 
 #endif
