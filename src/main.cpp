@@ -109,7 +109,7 @@ void setup() {
 
 // initialize LoRa
 #if HAS_LORA
-  strcat_P(features, "LORA");
+  strcat_P(features, " LORA");
 #endif
 
   // initialize led
@@ -214,7 +214,7 @@ void setup() {
 #endif
 
   // show compiled features
-  ESP_LOGI(TAG, "Features: %s", features);
+  ESP_LOGI(TAG, "Features:%s", features);
 
 #ifdef HAS_LORA
   // output LoRaWAN keys to console
