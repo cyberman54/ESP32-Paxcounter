@@ -31,5 +31,6 @@ void wifi_sniffer_init(void);
 void wifi_sniffer_set_channel(uint8_t channel);
 void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
+void ChannelSwitchIRQ(void);
 
 #endif

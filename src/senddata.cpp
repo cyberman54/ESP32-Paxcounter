@@ -66,3 +66,9 @@ void sendPayload() {
     senddata(COUNTERPORT);
   }
 } // sendpayload();
+
+void IRAM_ATTR SendCycleIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  SendCycleTimerIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}

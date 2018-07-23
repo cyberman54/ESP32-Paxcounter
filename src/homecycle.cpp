@@ -38,3 +38,18 @@ void doHomework() {
     reset_salt();          // get new salt for salting hashes
   }
 }
+
+void checkHousekeeping() {
+  if (HomeCycleIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    HomeCycleIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
+    doHomework();
+  }
+}
+
+void IRAM_ATTR homeCycleIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  HomeCycleIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}

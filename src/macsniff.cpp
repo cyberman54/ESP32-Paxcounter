@@ -16,7 +16,8 @@ static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
 */
 
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
-                                      WIFI_CHANNEL_MAX, WIFI_COUNTRY_POLICY_MANUAL};
+                                      WIFI_CHANNEL_MAX,
+                                      WIFI_COUNTRY_POLICY_MANUAL};
 
 // globals
 uint16_t salt;
@@ -137,4 +138,10 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
     uint8_t *p = (uint8_t *)hdr->addr2;
     mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
   }
+}
+
+void IRAM_ATTR ChannelSwitchIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  ChannelTimerIRQ++;
+  portEXIT_CRITICAL(&timerMux);
 }

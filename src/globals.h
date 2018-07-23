@@ -44,7 +44,8 @@ extern uint16_t macs_total, macs_wifi, macs_ble, batt_voltage; // display values
 extern std::set<uint16_t> macs; // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
-extern volatile int SendCycleTimerIRQ;
+extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
+    ChannelTimerIRQ, ButtonPressedIRQ;
 
 #ifdef HAS_GPS
 #include "gps.h"
@@ -58,6 +59,10 @@ extern volatile int SendCycleTimerIRQ;
 
 #ifdef HAS_DISPLAY
 #include "display.h"
+#endif
+
+#ifdef HAS_BUTTON
+#include "button.h"
 #endif
 
 #ifdef BLECOUNTER

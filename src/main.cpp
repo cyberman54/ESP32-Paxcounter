@@ -98,68 +98,6 @@ void lorawan_loop(void *pvParameters) {
 
 #endif // HAS_LORA
 
-// Setup IRQ handler routines
-// attn see https://github.com/espressif/arduino-esp32/issues/855
-
-void IRAM_ATTR ChannelSwitchIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  ChannelTimerIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-
-void IRAM_ATTR SendCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  SendCycleTimerIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-
-void IRAM_ATTR homeCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  HomeCycleIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-
-#ifdef HAS_DISPLAY
-void IRAM_ATTR DisplayIRQ() {
-  portENTER_CRITICAL_ISR(&timerMux);
-  DisplayTimerIRQ++;
-  portEXIT_CRITICAL_ISR(&timerMux);
-}
-void updateDisplay() {
-  if (DisplayTimerIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    DisplayTimerIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    refreshtheDisplay();
-  }
-}
-#endif
-
-void checkHousekeeping() {
-  if (HomeCycleIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    HomeCycleIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    doHomework();
-  }
-}
-
-#ifdef HAS_BUTTON
-void IRAM_ATTR ButtonIRQ() { ButtonPressedIRQ++; }
-
-void readButton() {
-  if (ButtonPressedIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    ButtonPressedIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    ESP_LOGI(TAG, "Button pressed");
-    payload.reset();
-    payload.addButton(0x01);
-    senddata(BUTTONPORT);
-  }
-}
-#endif
-
 // Wifi channel rotation task
 void wifi_channel_loop(void *pvParameters) {
 
