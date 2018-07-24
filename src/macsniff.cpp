@@ -95,6 +95,9 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
       if (cfg.monitormode) {
         beaconID = isBeacon(addr2int);
         if (beaconID) {
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+          blink_LED(COLOR_WHITE, 2000);
+#endif
           payload.reset();
           payload.addAlarm(rssi, beaconID);
           senddata(BEACONPORT);
