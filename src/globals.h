@@ -8,7 +8,7 @@
 #include <esp32-hal-log.h>
 
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.3.94" // use max 10 chars here!
+#define PROGVERSION "1.3.95" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions
@@ -33,6 +33,7 @@ typedef struct {
   uint8_t vendorfilter;  // 0=disabled, 1=enabled
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t gpsmode;       // 0=disabled, 1=enabled
+  uint8_t monitormode;   // 0=disabled, 1=enabled
   char version[10];      // Firmware version
 } configData_t;
 

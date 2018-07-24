@@ -45,10 +45,10 @@ portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
                                   // handler shared variables
 
-std::set<uint16_t> macs; // associative container holds total of unique MAC
+std::set<uint16_t> macs; // associative container holding unique MAC
                          // adress hashes (Wifi + BLE)
 
-// initialize payload ncoder
+// initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
 // local Tag for logging

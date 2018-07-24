@@ -6,6 +6,9 @@
 #include "vendor_array.h"
 #endif
 
+#include "beacon_array.h"
+#include "senddata.h"
+
 // Local logging tag
 static const char TAG[] = "wifi";
 
@@ -27,12 +30,21 @@ uint16_t reset_salt(void) {
   return salt;
 }
 
+uint8_t isBeacon(uint32_t mac) {
+  it = std::find(beacons.begin(), beacons.end(), mac);
+  if (it != beacons.end())
+    return std::distance(beacons.begin(), it);
+  else
+    return 0;
+}
+
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
   uint32_t addr2int, vendor2int; // temporary buffer for MAC and Vendor OUI
   uint16_t hashedmac;            // temporary buffer for generated hash value
+  uint8_t beacon = 0;            // beacon number in test monitor mode
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
@@ -50,6 +62,16 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // salt and hash MAC, and if new unique one, store identifier in container
     // and increment counter on display
     // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
+
+    // in test monitor mode check if MAC is a known beacon
+    if (cfg.monitormode) {
+      beacon = isBeacon(addr2int);
+      if (beacon) {
+        payload.reset();
+        payload.addAlarm(rssi, beacon);
+        senddata(BEACONPORT);
+      }
+    };
 
     addr2int += (uint32_t)salt; // add 16-bit salt to pseudo MAC
     snprintf(

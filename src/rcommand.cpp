@@ -170,13 +170,25 @@ void set_display(uint8_t val) {
 };
 
 void set_gps(uint8_t val) {
-  ESP_LOGI(TAG, "Remote command: set GPS to %s", val ? "on" : "off");
+  ESP_LOGI(TAG, "Remote command: set GPS mode to %s", val ? "on" : "off");
   switch (val) {
   case 1:
     cfg.gpsmode = val;
     break;
   default:
     cfg.gpsmode = 0;
+    break;
+  }
+};
+
+void set_monitor(uint8_t val) {
+  ESP_LOGI(TAG, "Remote command: set Monitor mode to %s", val ? "on" : "off");
+  switch (val) {
+  case 1:
+    cfg.monitormode = val;
+    break;
+  default:
+    cfg.monitormode = 0;
     break;
   }
 };
@@ -312,8 +324,8 @@ cmd_t table[] = {{0x01, set_rssi, true},          {0x02, set_countmode, true},
                  {0x0b, set_wifichancycle, true}, {0x0c, set_blescantime, true},
                  {0x0d, set_vendorfilter, false}, {0x0e, set_blescan, true},
                  {0x0f, set_wifiant, true},       {0x10, set_rgblum, true},
-                 {0x80, get_config, false},       {0x81, get_status, false},
-                 {0x84, get_gps, false}};
+                 {0x11, set_monitor, true},       {0x80, get_config, false},
+                 {0x81, get_status, false},       {0x84, get_gps, false}};
 
 // check and execute remote command
 void rcommand(uint8_t cmd, uint8_t arg) {

@@ -11,6 +11,8 @@
 #define LPP_BUTTON_CHANNEL 24
 #define LPP_ADR_CHANNEL 25
 #define LPP_TEMP_CHANNEL 26
+#define LPP_ALARM_CHANNEL 27
+#define LPP_MSG_CHANNEL 28
 #endif
 
 // MyDevices CayenneLPP types
@@ -20,6 +22,7 @@
 #define LPP_DIGITAL_OUTPUT 1 // 1 byte
 #define LPP_ANALOG_INPUT 2   // 2 bytes, 0.01 signed
 #define LPP_LUMINOSITY 101   // 2 bytes, 1 lux unsigned
+#define LPP_Presence 102     //	1 byte
 
 class PayloadConvert {
 
@@ -33,6 +36,7 @@ public:
   void addCount(uint16_t value1, uint16_t value2);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
+  void addAlarm(int8_t rssi, uint8_t message);
 #ifdef HAS_GPS
   void addGPS(gpsStatus_t value);
 #endif
