@@ -42,14 +42,17 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
-  uint32_t addr2int, vendor2int; // temporary buffer for MAC and Vendor OUI
-  uint16_t hashedmac;            // temporary buffer for generated hash value
-  uint8_t beacon = 0;            // beacon number in test monitor mode
+  uint32_t addr2int, vendor2int,
+      tempmac;          // temporary buffer for MAC and Vendor OUI
+  uint16_t hashedmac;   // temporary buffer for generated hash value
+  uint8_t beaconID = 0; // beacon number in test monitor mode
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
   addr2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[3] << 8) |
              ((uint32_t)paddr[4] << 16) | ((uint32_t)paddr[5] << 24);
+
+  tempmac = addr2int; // temporary store mac for beacon check
 
 #ifdef VENDORFILTER
   vendor2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[1] << 8) |
@@ -63,16 +66,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // and increment counter on display
     // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 
-    // in test monitor mode check if MAC is a known beacon
-    if (cfg.monitormode) {
-      beacon = isBeacon(addr2int);
-      if (beacon) {
-        payload.reset();
-        payload.addAlarm(rssi, beacon);
-        senddata(BEACONPORT);
-      }
-    };
-
     addr2int += (uint32_t)salt; // add 16-bit salt to pseudo MAC
     snprintf(
         buff, sizeof(buff), "%08X",
@@ -85,6 +78,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     // Count only if MAC was not yet seen
     if (added) {
+
       // increment counter and one blink led
       if (sniff_type == MAC_SNIFF_WIFI) {
         macs_wifi++; // increment Wifi MACs counter
@@ -100,7 +94,18 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 #endif
       }
 #endif
-    }
+
+      // in beacon monitor mode check if seen MAC is a known beacon
+      if (cfg.monitormode) {
+        beaconID = isBeacon(tempmac);
+        if (beaconID) {
+          payload.reset();
+          payload.addAlarm(rssi, beaconID);
+          senddata(BEACONPORT);
+        }
+      };
+
+    } // added
 
     // Log scan result
     ESP_LOGD(TAG,
