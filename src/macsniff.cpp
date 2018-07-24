@@ -12,15 +12,16 @@
 // Local logging tag
 static const char TAG[] = "wifi";
 
+/*
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX, 0,
                                       WIFI_COUNTRY_POLICY_MANUAL};
+*/
 
-/*
+
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX,
                                       WIFI_COUNTRY_POLICY_MANUAL};
-*/
 
 // globals
 uint16_t salt;
@@ -95,6 +96,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
       if (cfg.monitormode) {
         beaconID = isBeacon(addr2int);
         if (beaconID) {
+          ESP_LOGI(TAG, "Beacon ID#%d detected", beaconID);
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
           blink_LED(COLOR_WHITE, 2000);
 #endif

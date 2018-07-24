@@ -102,7 +102,7 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Quick blink (20ms on each 1/5 second): joining LoRaWAN network in progress or pending
 - Small blink (10ms on each 1/2 second): LoRaWAN data transmit in progress or pending
 - Long blink (200ms on each 2 seconds): LoRaWAN stack error
-- Single long flash (2ec): Known beacon detected
+- Single long flash (2sec): Known beacon detected
 
 **RGB LED:**
 
