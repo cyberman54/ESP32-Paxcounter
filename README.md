@@ -168,9 +168,14 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	bytes 10-11:	HDOP
 	bytes 12-13:	Altitude [meter]
 
-**Port #5:** Button pressed signal
+**Port #5:** Button pressed alarm
 
 	byte 1:		static value 0x01
+
+**Port #6:** Beacon proximity alarm
+
+	byte 1:		Beacon RSSI reception level
+	byte 2:		Beacon identifier
 
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
