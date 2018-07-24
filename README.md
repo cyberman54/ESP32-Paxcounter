@@ -172,7 +172,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1:		static value 0x01
 
-**Port #6:** Beacon proximity alarm
+**Port #6:** Beacon monitor alarm
 
 	byte 1:		Beacon RSSI reception level
 	byte 2:		Beacon identifier
