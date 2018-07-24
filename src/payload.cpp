@@ -198,13 +198,13 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
+  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
   buffer[cursor++] = highByte(val1);
   buffer[cursor++] = lowByte(val1);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
+  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
   buffer[cursor++] = highByte(val2);
   buffer[cursor++] = lowByte(val2);
 }
