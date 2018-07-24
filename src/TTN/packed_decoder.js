@@ -31,6 +31,17 @@ function Decoder(bytes, port) {
         // gps data      
         return decode(bytes, [latLng, latLng, uint8, hdop, uint16], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
     }
+
+    if (port === 5) {
+        // button pressed      
+        return decode(bytes, [uint8], ['button']);
+    }
+
+    if (port === 6) {
+        // beacon proximity alarm      
+        return decode(bytes, [uint8, uint8], ['rssi', 'beacon']);
+    }
+
 }
 
 

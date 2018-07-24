@@ -156,7 +156,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
 	byte 16:	GPS send data mode (1=on, 0=ff) [default 1]
-	bytes 17-27:	Software version (ASCII format, terminating with zero)
+	byte 17:	Beacon monitor mode (1=on, 0=off) [default 0]
+	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
 **Port #4:** GPS query result
@@ -304,6 +305,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
+
+0x11 set Beacon monitor mode on/off
+
+	0 = Beacon monitor mode off [default]
+	1 = Beacon monitor mode on, enables proximity alarm if test beacons are seen
 
 0x80 get device configuration
 
