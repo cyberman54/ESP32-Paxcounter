@@ -10,7 +10,9 @@ static const char TAG[] = "main";
 
 // do all housekeeping
 void doHomework() {
-  static uint64_t uptimecounter;
+
+  // update uptime counter
+  uptime();
 
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE
@@ -39,10 +41,7 @@ void doHomework() {
     reset_counters();      // clear macs container and reset all counters
     reset_salt();          // get new salt for salting hashes
   }
-
-  // update uptime counter
-  uptimecounter = uptime();
-}
+} // doHomework()
 
 void checkHousekeeping() {
   if (HomeCycleIRQ) {
