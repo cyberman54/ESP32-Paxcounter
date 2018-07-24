@@ -12,15 +12,15 @@
 // Local logging tag
 static const char TAG[] = "wifi";
 
-/* change for future Espressif v1.1.x
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX, 0,
                                       WIFI_COUNTRY_POLICY_MANUAL};
-*/
 
+/*
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX,
                                       WIFI_COUNTRY_POLICY_MANUAL};
+*/
 
 // globals
 uint16_t salt;
@@ -42,17 +42,14 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
-  uint32_t addr2int, vendor2int,
-      tempmac;          // temporary buffer for MAC and Vendor OUI
-  uint16_t hashedmac;   // temporary buffer for generated hash value
-  uint8_t beaconID = 0; // beacon number in test monitor mode
+  uint8_t beaconID;              // beacon number in test monitor mode
+  uint16_t hashedmac;            // temporary buffer for generated hash value
+  uint32_t addr2int, vendor2int; // temporary buffer for MAC and Vendor OUI
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
   addr2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[3] << 8) |
              ((uint32_t)paddr[4] << 16) | ((uint32_t)paddr[5] << 24);
-
-  tempmac = addr2int; // temporary store mac for beacon check
 
 #ifdef VENDORFILTER
   vendor2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[1] << 8) |
@@ -66,10 +63,9 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // and increment counter on display
     // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 
-    addr2int += (uint32_t)salt; // add 16-bit salt to pseudo MAC
-    snprintf(
-        buff, sizeof(buff), "%08X",
-        addr2int); // convert unsigned 32-bit salted MAC to 8 digit hex string
+    snprintf(buff, sizeof(buff), "%08X",
+             addr2int + (uint32_t)salt); // convert usigned 32-bit salted MAC to
+                                         // 8 digit hex string
     hashedmac = rokkit(&buff[3], 5); // hash MAC last string value, use 5 chars
                                      // to fit hash in uint16_t container
     auto newmac = macs.insert(hashedmac); // add hashed MAC, if new unique
@@ -97,7 +93,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
       // in beacon monitor mode check if seen MAC is a known beacon
       if (cfg.monitormode) {
-        beaconID = isBeacon(tempmac);
+        beaconID = isBeacon(addr2int);
         if (beaconID) {
           payload.reset();
           payload.addAlarm(rssi, beaconID);
