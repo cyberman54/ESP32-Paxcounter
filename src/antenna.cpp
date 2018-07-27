@@ -1,8 +1,6 @@
-/* switches wifi antenna, if board has switch  internal / external antenna */
+/* switches wifi antenna, if board has switch internal / external antenna */
 
 #ifdef HAS_ANTENNA_SWITCH
-
-#include <Arduino.h>
 
 // Local logging tag
 static const char TAG[] = "wifi";

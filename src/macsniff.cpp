@@ -9,10 +9,14 @@
 // Local logging tag
 static const char TAG[] = "wifi";
 
-static wifi_country_t wifi_country = {.cc = WIFI_MY_COUNTRY,
-                                      .schan = WIFI_CHANNEL_MIN,
-                                      .nchan = WIFI_CHANNEL_MAX,
-                                      .policy = WIFI_COUNTRY_POLICY_MANUAL};
+/* change for future Espressif v1.1.x
+static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
+                                      WIFI_CHANNEL_MAX, 0,
+                                      WIFI_COUNTRY_POLICY_MANUAL};
+*/
+
+static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
+                                      WIFI_CHANNEL_MAX, WIFI_COUNTRY_POLICY_MANUAL};
 
 // globals
 uint16_t salt;
@@ -106,7 +110,7 @@ void wifi_sniffer_init(void) {
       esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
   ESP_ERROR_CHECK(
       esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
-  // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
   ESP_ERROR_CHECK(
       esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));

@@ -1,5 +1,7 @@
 // Hardware related definitions for TTGO V2 Board
 
+#define HAS_LORA  1       // comment out if device shall not send data via LoRa
+#define HAS_SPI   1       // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
@@ -26,28 +28,29 @@
 #define OLED_SDA GPIO_NUM_21  // ESP32 GPIO21 -- SD1306 D1+D2
 #define OLED_SCL GPIO_NUM_22 // ESP32 GPIO22 -- SD1306 D0
 
+/* source:
+https://www.thethingsnetwork.org/forum/t/big-esp32-sx127x-topic-part-2/11973
 
-/*
- ESP32             LoRa module (SPI)        OLED display (I2C)
-   ---------         -----------------        ------------------
-    5  SCK           SCK
-   27  MOSI          MOSI
-   19  MISO          MISO
-   18  SS            NSS
-   14                RST
-   26                DIO0
-   33                DIO1  (see note {1})
-   32                DIO2  (see note {2})
-   22  SCL                                    SCL
-   21  SDA                                    SDA
-   22  LED  (useless, see note {3})
+TTGO LoRa32 V2:
+ESP32          LoRa (SPI)      Display (I2C)  LED
+-----------    ----------      -------------  ------------------
+GPIO5  SCK     SCK
+GPIO27 MOSI    MOSI
+GPIO19 MISO    MISO
+GPIO18 SS      NSS
+EN     RST     RST
+GPIO26         DIO0
+GPIO33         DIO1 (see #1)
+GPIO32         DIO2 (see #2)
+GPIO22 SCL                     SCL
+GPIO21 SDA                     SDA
+GPIO22                                        useless (see #3)
 
-   {1} Must be manually wired!
-       DIO1 is wired to a separate pin but is not wired on-board to pin/GPIO33.
-       Explicitly wire board pin labeled DIO1 to pin 33 (see TTGO V2.0 pinout).
-   {2} Must be manually wired!
-       DIO2 is wired to a separate pin but is not wired on-board to pin/GPIO32.
-       Explicitly wire board pin labeled DIO2 to pin 32 (see TTGO V2.0 pinout).
-   {3} The on-board LED is wired to SCL (used by display) therefore totally useless!
-   */
+#1 Required (used by LMIC for LoRa).
+Not on-board wired to any GPIO. Must be manually wired. <<-- necessary for paxcounter
 
+#2 Optional (used by LMIC for FSK but not for LoRa). <<-- NOT necessary for paxcounter
+Not on-board wired to any GPIO. When needed: must be manually wired.
+
+#3 GPIO22 is already used for SCL therefore LED cannot be used without conflicting with I2C and display.
+*/ 

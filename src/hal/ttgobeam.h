@@ -1,9 +1,14 @@
 // Hardware related definitions for TTGO T-Beam board
 
+#define HAS_LORA  1       // comment out if device shall not send data via LoRa
+#define HAS_SPI   1       // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
-#define HAS_LED GPIO_NUM_21 // on board green LED_G1
-//#define HAS_BUTTON GPIO_NUM_39 // on board button "BOOT" (next to reset button) !! seems not to work!!
+#define BOARD_HAS_PSRAM // use extra 4MB extern RAM
+#define HAS_LED GPIO_NUM_21 // on board green LED
+
+#define HAS_BUTTON GPIO_NUM_39 // on board button "BOOT" (next to reset button)
+
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
 #define HAS_GPS 1 // use on board GPS
@@ -19,4 +24,5 @@
 #define RST LMIC_UNUSED_PIN // connected to ESP32 RST/EN
 #define DIO0 GPIO_NUM_26    // ESP32 GPIO26 <-> HPD13A IO0
 #define DIO1 GPIO_NUM_32 // Lora1 <-> HPD13A IO1 // !! NEEDS EXTERNAL WIRING !!
+//#define DIO1 GPIO_NUM_33 // Lora1 <-> HPD13A IO1 // for T-Beam T22_V05 only
 #define DIO2 LMIC_UNUSED_PIN // Lora2 <-> HPD13A IO2 // not needed for LoRa

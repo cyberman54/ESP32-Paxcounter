@@ -9,5 +9,10 @@ function Converter(decoded, port) {
         converted.pax = converted.ble + converted.wifi;
     }
 
+    if (port === 2) {
+        converted.voltage /= 1000;
+    }
+
+
     return converted;
 }

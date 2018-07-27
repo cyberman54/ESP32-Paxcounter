@@ -6,6 +6,7 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
 // Basic Config
 #include "globals.h"
+#include "macsniff.h"
 
 // Bluetooth specific includes
 #include <esp_bt.h>
@@ -18,9 +19,6 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
 // local Tag for logging
 static const char TAG[] = "bluetooth";
-
-// defined in macsniff.cpp
-bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type);
 
 const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
   switch (type) {
@@ -124,7 +122,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
                                     esp_ble_gap_cb_param_t *param) {
   esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 
-  ESP_LOGD(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
+  ESP_LOGV(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
            btsig_gap_type(*p->scan_rst.ble_adv));
 
   switch (event) {
@@ -145,11 +143,11 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
     if (p->scan_rst.search_evt ==
         ESP_GAP_SEARCH_INQ_RES_EVT) // Inquiry result for a peer device
     {                               // evaluate sniffed packet
-      ESP_LOGD(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x",
+      ESP_LOGV(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x",
                BT_BD_ADDR_HEX(p->scan_rst.bda));
-      ESP_LOGD(TAG, "Addr_type           : %s",
+      ESP_LOGV(TAG, "Addr_type           : %s",
                bt_addr_t_to_string(p->scan_rst.ble_addr_type));
-      ESP_LOGD(TAG, "RSSI                : %d", p->scan_rst.rssi);
+      ESP_LOGV(TAG, "RSSI                : %d", p->scan_rst.rssi);
 
       if ((cfg.rssilimit) &&
           (p->scan_rst.rssi < cfg.rssilimit)) { // rssi is negative value
@@ -162,7 +160,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
 
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
-        ESP_LOGD(TAG, "BT device filtered");
+        ESP_LOGV(TAG, "BT device filtered");
         break;
       }
 
@@ -249,14 +247,7 @@ void start_BLEscan(void) {
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
 
   // Initialize BT controller to allocate task and other resource.
-  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-  bt_cfg.controller_task_stack_size =
-      BLESTACKSIZE; // set BT stack size to value configured in paxcounter.conf
-  ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
-  ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_BTDM));
-
-  // Init and alloc the resource for bluetooth stack, must be done prior to
-  // every bluetooth stuff
+  btStart();
   ESP_ERROR_CHECK(esp_bluedroid_init());
   ESP_ERROR_CHECK(esp_bluedroid_enable());
 
@@ -271,8 +262,7 @@ void stop_BLEscan(void) {
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
-  ESP_ERROR_CHECK(esp_bt_controller_disable());
-  ESP_ERROR_CHECK(esp_bt_controller_deinit());
+  btStop(); // disable & deinit bt_controller
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
 } // stop_BLEscan
 

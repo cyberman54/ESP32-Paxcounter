@@ -5,10 +5,7 @@
 
 // Basic Config
 #include "globals.h"
-
-// LMIC-Arduino LoRaWAN Stack
-#include <lmic.h>
-#include <hal/hal.h>
+#include "rcommand.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -20,34 +17,8 @@ typedef struct {
   const bool store;
 } cmd_t;
 
-// function defined in antenna.cpp
-#ifdef HAS_ANTENNA_SWITCH
-void antenna_select(const uint8_t _ant);
-#endif
-
-// function defined in adcread.cpp
-#ifdef HAS_BATTERY_PROBE
-uint16_t read_voltage(void);
-#endif
-
-// function sends result of get commands to LoRaWAN network
-void do_transmit(osjob_t *j) {
-  // check if there is a pending TX/RX job running, if yes then reschedule
-  // transmission
-  if (LMIC.opmode & OP_TXRXPEND) {
-    ESP_LOGI(TAG, "LoRa busy, rescheduling");
-    sprintf(display_lmic, "LORA BUSY");
-    os_setTimedCallback(&rcmdjob, os_getTime() + sec2osticks(RETRANSMIT_RCMD),
-                        do_transmit);
-  }
-  // send payload
-  LMIC_setTxData2(RCMDPORT, payload.getBuffer(), payload.getSize(),
-                  (cfg.countermode & 0x02));
-  ESP_LOGI(TAG, "%d bytes queued to send", payload.getSize());
-  sprintf(display_lmic, "PACKET QUEUED");
-}
-
-// help function to assign LoRa datarates to numeric spreadfactor values
+#ifdef HAS_LORA
+// helper function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora(uint8_t sf, uint8_t tx) {
   if (tx > 20)
     return;
@@ -93,13 +64,14 @@ void switch_lora(uint8_t sf, uint8_t tx) {
     break;
   }
 }
+#endif // HAS_LORA
 
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val) {
   switch (val) {
   case 0: // restart device
     ESP_LOGI(TAG, "Remote command: restart device");
-    sprintf(display_lora, "Reset pending");
+    sprintf(display_line6, "Reset pending");
     vTaskDelay(
         10000 /
         portTICK_PERIOD_MS); // wait for LMIC to confirm LoRa downlink to server
@@ -109,11 +81,11 @@ void set_reset(uint8_t val) {
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
     reset_counters(); // clear macs
     reset_salt();     // get new salt
-    sprintf(display_lora, "Reset counter");
+    sprintf(display_line6, "Reset counter");
     break;
   case 2: // reset device to factory settings
     ESP_LOGI(TAG, "Remote command: reset device to factory settings");
-    sprintf(display_lora, "Factory reset");
+    sprintf(display_line6, "Factory reset");
     eraseConfig();
     break;
   }
@@ -126,16 +98,18 @@ void set_rssi(uint8_t val) {
 
 void set_sendcycle(uint8_t val) {
   cfg.sendcycle = val;
+  // update send cycle interrupt
+  timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
+  // reload interrupt after each trigger of channel switch cycle
   ESP_LOGI(TAG, "Remote command: set payload send cycle to %d seconds",
            cfg.sendcycle * 2);
 };
 
 void set_wifichancycle(uint8_t val) {
   cfg.wifichancycle = val;
-  // modify wifi channel rotation IRQ
-  timerAlarmWrite(
-      channelSwitch, cfg.wifichancycle * 10000,
-      true); // reload interrupt after each trigger of channel switch cycle
+  // update channel rotation interrupt
+  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
+
   ESP_LOGI(TAG,
            "Remote command: set Wifi channel switch interval to %.1f seconds",
            cfg.wifichancycle / float(100));
@@ -208,11 +182,16 @@ void set_gps(uint8_t val) {
 };
 
 void set_lorasf(uint8_t val) {
+#ifdef HAS_LORA
   ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val);
   switch_lora(val, cfg.txpower);
+#else
+  ESP_LOGW(TAG, "Remote command: LoRa not implemented");
+#endif // HAS_LORA
 };
 
 void set_loraadr(uint8_t val) {
+#ifdef HAS_LORA
   ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s", val ? "on" : "off");
   switch (val) {
   case 1:
@@ -223,6 +202,9 @@ void set_loraadr(uint8_t val) {
     break;
   }
   LMIC_setAdrMode(cfg.adrmode);
+#else
+  ESP_LOGW(TAG, "Remote command: LoRa not implemented");
+#endif // HAS_LORA
 };
 
 void set_blescan(uint8_t val) {
@@ -280,15 +262,19 @@ void set_rgblum(uint8_t val) {
 };
 
 void set_lorapower(uint8_t val) {
+#ifdef HAS_LORA
   ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val);
   switch_lora(cfg.lorasf, val);
+#else
+  ESP_LOGW(TAG, "Remote command: LoRa not implemented");
+#endif // HAS_LORA
 };
 
 void get_config(uint8_t val) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  do_transmit(&rcmdjob);
+  senddata(CONFIGPORT);
 };
 
 void get_status(uint8_t val) {
@@ -299,8 +285,8 @@ void get_status(uint8_t val) {
   uint16_t voltage = 0;
 #endif
   payload.reset();
-  payload.addStatus(voltage, uptimecounter, temperatureRead());
-  do_transmit(&rcmdjob);
+  payload.addStatus(voltage, uptime() / 1000, temperatureRead());
+  senddata(STATUSPORT);
 };
 
 void get_gps(uint8_t val) {
@@ -309,7 +295,7 @@ void get_gps(uint8_t val) {
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
-  do_transmit(&rcmdjob);
+  senddata(GPSPORT);
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif

@@ -1,10 +1,8 @@
+#ifdef HAS_LORA
+
 // Basic Config
 #include "globals.h"
-
-// LMIC-Arduino LoRaWAN Stack
-#include "loraconf.h"
-#include <lmic.h>
-#include <hal/hal.h>
+#include "rcommand.h"
 
 #ifdef MCP_24AA02E64_I2C_ADDRESS
 #include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
@@ -12,10 +10,6 @@
 
 // Local logging Tag
 static const char TAG[] = "lora";
-
-// functions defined in rcommand.cpp
-void rcommand(uint8_t cmd, uint8_t arg);
-void switch_lora(uint8_t sf, uint8_t tx);
 
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
@@ -42,6 +36,33 @@ void RevBytes(unsigned char *b, size_t c) {
     b[i] = b[c - 1 - i];
     b[c - 1 - i] = t;
   }
+}
+
+// LMIC callback functions
+void os_getDevKey(u1_t *buf) { memcpy(buf, APPKEY, 16); }
+
+void os_getArtEui(u1_t *buf) {
+  memcpy(buf, APPEUI, 8);
+  RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
+}
+
+void os_getDevEui(u1_t *buf) {
+  int i = 0, k = 0;
+  memcpy(buf, DEVEUI, 8); // get fixed DEVEUI from loraconf.h
+  for (i = 0; i < 8; i++) {
+    k += buf[i];
+  }
+  if (k) {
+    RevBytes(buf, 8); // use fixed DEVEUI and swap bytes to LSB format
+  } else {
+    gen_lora_deveui(buf); // generate DEVEUI from device's MAC
+  }
+
+// Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+  get_hard_deveui(buf);
+  RevBytes(buf, 8); // swap bytes to LSB format
+#endif
 }
 
 void get_hard_deveui(uint8_t *pdeveui) {
@@ -105,44 +126,6 @@ void printKeys(void) {
 
 #endif // VERBOSE
 
-void do_send(osjob_t *j) {
-  // Schedule next transmission
-  os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(cfg.sendcycle * 2),
-                      do_send);
-
-  // Check if there is a pending TX/RX job running
-  if (LMIC.opmode & OP_TXRXPEND) {
-    ESP_LOGI(TAG, "LoRa busy, rescheduling");
-    sprintf(display_lmic, "LORA BUSY");
-    return;
-  }
-
-  // Prepare payload with counter and, if applicable, gps data
-  payload.reset();
-  payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
-
-#ifdef HAS_GPS
-  if ((cfg.gpsmode) && (gps.location.isValid())) {
-    gps_read();
-    payload.addGPS(gps_status);
-  }
-#endif
-
-  // send payload
-  LMIC_setTxData2(COUNTERPORT, payload.getBuffer(), payload.getSize(),
-                  (cfg.countermode & 0x02));
-  ESP_LOGI(TAG, "%d bytes queued to send", payload.getSize());
-  sprintf(display_lmic, "PACKET QUEUED");
-
-  // clear counter if not in cumulative counter mode
-  if (cfg.countermode != 1) {
-    reset_counters(); // clear macs container and reset all counters
-    reset_salt();     // get new salt for salting hashes
-    ESP_LOGI(TAG, "Counter cleared (countermode = %d)", cfg.countermode);
-  }
-
-} // do_send()
-
 void onEvent(ev_t ev) {
   char buff[24] = "";
 
@@ -190,7 +173,7 @@ void onEvent(ev_t ev) {
   case EV_JOINED:
 
     strcpy_P(buff, PSTR("JOINED"));
-    sprintf(display_lora, " "); // clear previous lmic status
+    sprintf(display_line6, " "); // clear previous lmic status
 
     // set data rate adaptation
     LMIC_setAdrMode(cfg.adrmode);
@@ -207,14 +190,14 @@ void onEvent(ev_t ev) {
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
                                                : PSTR("TX COMPLETE"));
-    sprintf(display_lora, " "); // clear previous lmic status
+    sprintf(display_line6, " "); // clear previous lmic status
 
     if (LMIC.dataLen) {
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
                LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);
       // LMIC.snr = SNR twos compliment [dB] * 4
       // LMIC.rssi = RSSI [dBm] (-196...+63)
-      sprintf(display_lora, "RSSI %d SNR %d", LMIC.rssi,
+      sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi,
               (signed char)LMIC.snr / 4);
 
       // check if payload received on command port, then call remote command
@@ -243,7 +226,9 @@ void onEvent(ev_t ev) {
   // Log & Display if asked
   if (*buff) {
     ESP_LOGI(TAG, "EV_%s", buff);
-    sprintf(display_lmic, buff);
+    sprintf(display_line7, buff);
   }
 
 } // onEvent()
+
+#endif // HAS_LORA
