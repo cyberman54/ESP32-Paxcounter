@@ -10,13 +10,6 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-// table of remote commands and assigned functions
-typedef struct {
-  const uint8_t nam;
-  void (*func)(uint8_t);
-  const bool store;
-} cmd_t;
-
 #ifdef HAS_LORA
 // helper function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora(uint8_t sf, uint8_t tx) {
