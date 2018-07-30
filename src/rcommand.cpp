@@ -174,12 +174,12 @@ void set_gps(uint8_t val[]) {
 };
 
 void set_beacon(uint8_t val[]) {
-  if ( (sizeof(*val) / sizeof(val[0]) == 9) && (val[0] <= 0xff ) ) {
+  if ( (sizeof(*val) / sizeof(val[0]) == 7) && (val[0] <= 0xff ) ) {
     uint8_t id = val[0];           // use first parameter as beacon storage id
-    memmove(val, val + 1, 8);      // strip off storage id
+    memmove(val, val + 1, 6);      // strip off storage id
     beacons[id] = macConvert(val); // store beacon MAC in array
     ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
-    printKey("MAC", val, 8, false); // show beacon MAC
+    printKey("MAC", val, 6, false); // show beacon MAC
   } else
     ESP_LOGW(TAG, "Remote command: set beacon called with invalid parameters");
 };

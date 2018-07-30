@@ -158,7 +158,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
 	byte 16:	GPS send data mode (1=on, 0=ff) [default 1]
-	byte 17:	Beacon monitor mode (1=on, 0=off) [default 0]
+	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
 	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
@@ -174,10 +174,10 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1:		static value 0x01
 
-**Port #6:** Beacon monitor alarm
+**Port #6:** Beacon proximity alarm
 
 	byte 1:		Beacon RSSI reception level
-	byte 2:		Beacon identifier
+	byte 2:		Beacon identifier (0..254)
 
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
@@ -311,15 +311,15 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
 
-0x11 set beacon monitor mode on/off
+0x11 set beacon proximity alarm mode on/off
 
 	0 = Beacon monitor mode off [default]
 	1 = Beacon monitor mode on, enables proximity alarm if test beacons are seen
 
-0x12 set or reset a beacon MAC
+0x12 set or reset a beacon MAC for proximity alarm
 
-	byte 1 = beacon ID (0..255)
-	bytes 2..9 = beacon MAC
+	byte 1 = beacon ID (0..254)
+	bytes 2..7 = beacon MAC with 6 digits (e.g. MAC 80:ab:00:01:02:03 -> 0x80ab00010203)
 
 0x80 get device configuration
 
