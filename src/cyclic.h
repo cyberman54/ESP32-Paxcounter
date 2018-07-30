@@ -1,5 +1,5 @@
-#ifndef _HOMECYCLE_H
-#define _HOMECYCLE_H
+#ifndef _CYCLIC_H
+#define _CYCLIC_H
 
 void doHomework(void);
 void checkHousekeeping(void);

@@ -226,8 +226,6 @@ function Converter(decoded, port) {
 # Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2.
-Each command is followed by exactly one parameter.
-Multiple command/parameter pairs can be concatenated and sent in one single payload downlink.
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
 
@@ -313,10 +311,15 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
 
-0x11 set Beacon monitor mode on/off
+0x11 set beacon monitor mode on/off
 
 	0 = Beacon monitor mode off [default]
 	1 = Beacon monitor mode on, enables proximity alarm if test beacons are seen
+
+0x12 set or reset a beacon MAC
+
+	byte 1 = beacon ID (0..255)
+	bytes 2..9 = beacon MAC
 
 0x80 get device configuration
 

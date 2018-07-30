@@ -27,6 +27,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
+
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
@@ -46,7 +47,7 @@ portMUX_TYPE timerMux =
                                   // handler shared variables
 
 std::set<uint16_t> macs; // associative container holding unique MAC
-                         // adress hashes (Wifi + BLE)
+// adress hashes (Wifi + BLE)
 
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);

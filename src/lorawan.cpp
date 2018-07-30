@@ -209,21 +209,10 @@ void onEvent(ev_t ev) {
       sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi,
               (signed char)LMIC.snr / 4);
 
-      // check if payload received on command port, then call remote command
-      // interpreter
+      // check if command is received on command port, then call interpreter
       if ((LMIC.txrxFlags & TXRX_PORT) &&
-          (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT)) {
-        // caution: buffering LMIC values here because rcommand() can modify
-        // LMIC.frame
-        unsigned char *buffer = new unsigned char[MAX_LEN_FRAME];
-        memcpy(buffer, LMIC.frame, MAX_LEN_FRAME); // Copy data from cfg to
-                                                   // char*
-        int i, k = LMIC.dataBeg, l = LMIC.dataBeg + LMIC.dataLen - 2;
-        for (i = k; i <= l; i += 2) {
-          rcommand(buffer[i], buffer[i + 1]);
-        }
-        delete[] buffer; // free memory
-      }
+          (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT))
+        rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
     }
     break;
 
@@ -250,6 +239,5 @@ void lorawan_loop(void *pvParameters) {
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
   }
 }
-
 
 #endif // HAS_LORA

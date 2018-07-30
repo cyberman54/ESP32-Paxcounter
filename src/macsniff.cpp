@@ -6,9 +6,6 @@
 #include "vendor_array.h"
 #endif
 
-#include "beacon_array.h"
-#include "senddata.h"
-
 // Local logging tag
 static const char TAG[] = "wifi";
 
@@ -17,7 +14,6 @@ static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX, 0,
                                       WIFI_COUNTRY_POLICY_MANUAL};
 */
-
 
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX,
@@ -31,21 +27,28 @@ uint16_t reset_salt(void) {
   return salt;
 }
 
-uint8_t isBeacon(uint32_t mac) {
+uint8_t isBeacon(uint64_t mac) {
   it = std::find(beacons.begin(), beacons.end(), mac);
   if (it != beacons.end())
     return std::distance(beacons.begin(), it);
   else
-    return 0;
+    return 0xff;
+}
+
+uint64_t macConvert(uint8_t *paddr) {
+  return ((uint64_t)paddr[0]) | ((uint64_t)paddr[1] << 8) |
+         ((uint64_t)paddr[2] << 16) | ((uint64_t)paddr[3] << 24) |
+         ((uint64_t)paddr[4] << 32) | ((uint64_t)paddr[5] << 40);
 }
 
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
-  uint8_t beaconID;              // beacon number in test monitor mode
-  uint16_t hashedmac;            // temporary buffer for generated hash value
-  uint32_t addr2int, vendor2int; // temporary buffer for MAC and Vendor OUI
+  uint8_t beaconID;   // beacon number in test monitor mode
+  uint16_t hashedmac; // temporary buffer for generated hash value
+  uint32_t addr2int,
+      vendor2int; // temporary buffer for shortened MAC and Vendor OUI
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
@@ -94,8 +97,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
       // in beacon monitor mode check if seen MAC is a known beacon
       if (cfg.monitormode) {
-        beaconID = isBeacon(addr2int);
-        if (beaconID) {
+        beaconID = isBeacon(macConvert(paddr));
+        if (beaconID != 0xff) {
           ESP_LOGI(TAG, "Beacon ID#%d detected", beaconID);
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
           blink_LED(COLOR_WHITE, 2000);
@@ -115,7 +118,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
              added ? "new  " : "known",
              sniff_type == MAC_SNIFF_WIFI ? "WiFi" : "BLTH", rssi, buff,
              hashedmac, macs_wifi, macs_ble, ESP.getFreeHeap());
-
 #ifdef VENDORFILTER
   } else {
     // Very noisy

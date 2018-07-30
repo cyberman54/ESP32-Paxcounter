@@ -50,7 +50,6 @@ public:
 private:
   uint8_t *buffer;
   uint8_t cursor;
-};
 
 #elif PAYLOAD_ENCODER == 2 // format packed
 
@@ -66,7 +65,6 @@ private:
   void writeTemperature(float temperature);
   void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
                    bool h);
-};
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4) // format cayenne lpp
 
@@ -74,11 +72,12 @@ private:
   uint8_t *buffer;
   uint8_t maxsize;
   uint8_t cursor;
-};
 
 #else
 #error "No valid payload converter defined"
 #endif
+
+};
 
 extern PayloadConvert payload;
 

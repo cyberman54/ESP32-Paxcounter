@@ -48,6 +48,9 @@ extern portMUX_TYPE timerMux;
 extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
 
+extern std::array<uint64_t, 0xfe>::iterator it;
+extern std::array<uint64_t, 0xfe> beacons;
+
 #ifdef HAS_GPS
 #include "gps.h"
 #endif
