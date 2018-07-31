@@ -1,8 +1,9 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
-#include "led.h"
+//#include "led.h"
 #include "macsniff.h"
+#include "wifiscan.h"
 #include "configmanager.h"
 #include "senddata.h"
 #include "cyclic.h"

@@ -55,6 +55,10 @@ extern std::array<uint64_t, 0xff> beacons;
 #include "gps.h"
 #endif
 
+#ifdef HAS_LED
+#include "led.h"
+#endif
+
 #include "payload.h"
 
 #ifdef HAS_LORA
