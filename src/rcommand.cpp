@@ -174,7 +174,7 @@ void set_gps(uint8_t val[]) {
 };
 
 void set_beacon(uint8_t val[]) {
-  if ( (sizeof(*val) / sizeof(val[0]) == 7) && (val[0] <= 0xff ) ) {
+  if (sizeof(*val) / sizeof(val[0]) == 7) {
     uint8_t id = val[0];           // use first parameter as beacon storage id
     memmove(val, val + 1, 6);      // strip off storage id
     beacons[id] = macConvert(val); // store beacon MAC in array

@@ -27,12 +27,12 @@ uint16_t reset_salt(void) {
   return salt;
 }
 
-uint8_t isBeacon(uint64_t mac) {
+int8_t isBeacon(uint64_t mac) {
   it = std::find(beacons.begin(), beacons.end(), mac);
   if (it != beacons.end())
     return std::distance(beacons.begin(), it);
   else
-    return 0xff;
+    return -1;
 }
 
 uint64_t macConvert(uint8_t *paddr) {
@@ -45,7 +45,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
-  uint8_t beaconID;   // beacon number in test monitor mode
+  int8_t beaconID;   // beacon number in test monitor mode
   uint16_t hashedmac; // temporary buffer for generated hash value
   uint32_t addr2int,
       vendor2int; // temporary buffer for shortened MAC and Vendor OUI
@@ -98,8 +98,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
       // in beacon monitor mode check if seen MAC is a known beacon
       if (cfg.monitormode) {
         beaconID = isBeacon(macConvert(paddr));
-        if (beaconID != 0xff) {
-          ESP_LOGI(TAG, "Beacon ID#%d detected", beaconID);
+        if (beaconID >= 0) {
+          ESP_LOGI(TAG, "Beacon ID#d detected", beaconID);
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
           blink_LED(COLOR_WHITE, 2000);
 #endif

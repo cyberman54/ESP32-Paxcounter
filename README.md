@@ -177,7 +177,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 **Port #6:** Beacon proximity alarm
 
 	byte 1:		Beacon RSSI reception level
-	byte 2:		Beacon identifier (0..254)
+	byte 2:		Beacon identifier (0..255)
 
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
@@ -318,7 +318,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 0x12 set or reset a beacon MAC for proximity alarm
 
-	byte 1 = beacon ID (0..254)
+	byte 1 = beacon ID (0..255)
 	bytes 2..7 = beacon MAC with 6 digits (e.g. MAC 80:ab:00:01:02:03 -> 0x80ab00010203)
 
 0x80 get device configuration
