@@ -170,4 +170,19 @@ void refreshtheDisplay() {
 #endif // HAS_LORA
 } // refreshDisplay()
 
+void IRAM_ATTR DisplayIRQ() {
+  portENTER_CRITICAL_ISR(&timerMux);
+  DisplayTimerIRQ++;
+  portEXIT_CRITICAL_ISR(&timerMux);
+}
+
+void updateDisplay() {
+  if (DisplayTimerIRQ) {
+    portENTER_CRITICAL(&timerMux);
+    DisplayTimerIRQ = 0;
+    portEXIT_CRITICAL(&timerMux);
+    refreshtheDisplay();
+  }
+}
+
 #endif // HAS_DISPLAY

@@ -8,7 +8,7 @@
 #include <esp32-hal-log.h>
 
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.3.93" // use max 10 chars here!
+#define PROGVERSION "1.4.0" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions
@@ -33,6 +33,7 @@ typedef struct {
   uint8_t vendorfilter;  // 0=disabled, 1=enabled
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t gpsmode;       // 0=disabled, 1=enabled
+  uint8_t monitormode;   // 0=disabled, 1=enabled
   char version[10];      // Firmware version
 } configData_t;
 
@@ -44,10 +45,18 @@ extern uint16_t macs_total, macs_wifi, macs_ble, batt_voltage; // display values
 extern std::set<uint16_t> macs; // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
-extern volatile int SendCycleTimerIRQ;
+extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
+    ChannelTimerIRQ, ButtonPressedIRQ;
+
+extern std::array<uint64_t, 0xff>::iterator it;
+extern std::array<uint64_t, 0xff> beacons;
 
 #ifdef HAS_GPS
 #include "gps.h"
+#endif
+
+#ifdef HAS_LED
+#include "led.h"
 #endif
 
 #include "payload.h"
@@ -58,6 +67,10 @@ extern volatile int SendCycleTimerIRQ;
 
 #ifdef HAS_DISPLAY
 #include "display.h"
+#endif
+
+#ifdef HAS_BUTTON
+#include "button.h"
 #endif
 
 #ifdef BLECOUNTER
@@ -74,7 +87,6 @@ extern volatile int SendCycleTimerIRQ;
 
 void reset_counters(void);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
-void led_loop(void);
 uint64_t uptime();
 
 #endif

@@ -30,6 +30,7 @@ void defaultConfig() {
   cfg.vendorfilter = 1;       // 0=disabled, 1=enabled
   cfg.rgblum = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
   cfg.gpsmode = 1;            // 0=disabled, 1=enabled
+  cfg.monitormode = 0;        // 0=disabled, 1=enabled
 
   strncpy(cfg.version, PROGVERSION, sizeof(cfg.version) - 1);
 }
@@ -137,6 +138,10 @@ void saveConfig() {
     if (nvs_get_i8(my_handle, "gpsmode", &flash8) != ESP_OK ||
         flash8 != cfg.gpsmode)
       nvs_set_i8(my_handle, "gpsmode", cfg.gpsmode);
+
+    if (nvs_get_i8(my_handle, "monitormode", &flash8) != ESP_OK ||
+        flash8 != cfg.monitormode)
+      nvs_set_i8(my_handle, "monitormode", cfg.monitormode);
 
     if (nvs_get_i16(my_handle, "rssilimit", &flash16) != ESP_OK ||
         flash16 != cfg.rssilimit)
@@ -307,14 +312,21 @@ void loadConfig() {
 
     if (nvs_get_i8(my_handle, "gpsmode", &flash8) == ESP_OK) {
       cfg.gpsmode = flash8;
-      ESP_LOGI(TAG, "GPSmode = %d", flash8);
+      ESP_LOGI(TAG, "GPS mode = %d", flash8);
     } else {
-      ESP_LOGI(TAG, "GPSmode set to default %d", cfg.gpsmode);
+      ESP_LOGI(TAG, "GPS mode set to default %d", cfg.gpsmode);
+      saveConfig();
+    }
+
+    if (nvs_get_i8(my_handle, "monitormode", &flash8) == ESP_OK) {
+      cfg.monitormode = flash8;
+      ESP_LOGI(TAG, "Monitor mode = %d", flash8);
+    } else {
+      ESP_LOGI(TAG, "Monitor mode set to default %d", cfg.monitormode);
       saveConfig();
     }
 
     nvs_close(my_handle);
     ESP_LOGI(TAG, "Done");
-
   }
 } // loadConfig()

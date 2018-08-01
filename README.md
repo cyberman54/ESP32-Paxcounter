@@ -102,6 +102,7 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Quick blink (20ms on each 1/5 second): joining LoRaWAN network in progress or pending
 - Small blink (10ms on each 1/2 second): LoRaWAN data transmit in progress or pending
 - Long blink (200ms on each 2 seconds): LoRaWAN stack error
+- Single long flash (2sec): Known beacon detected
 
 **RGB LED:**
 
@@ -110,6 +111,7 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Yellow quick blink: joining LoRaWAN network in progress or pending
 - Blue blink: LoRaWAN data transmit in progress or pending
 - Red long blink: LoRaWAN stack error
+- White long blink: Known Beacon detected
 
 # Payload format
 
@@ -156,7 +158,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
 	byte 16:	GPS send data mode (1=on, 0=ff) [default 1]
-	bytes 17-27:	Software version (ASCII format, terminating with zero)
+	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
+	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
 **Port #4:** GPS query result
@@ -167,9 +170,14 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	bytes 10-11:	HDOP
 	bytes 12-13:	Altitude [meter]
 
-**Port #5:** Button pressed signal
+**Port #5:** Button pressed alarm
 
 	byte 1:		static value 0x01
+
+**Port #6:** Beacon proximity alarm
+
+	byte 1:		Beacon RSSI reception level
+	byte 2:		Beacon identifier (0..255)
 
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js)
@@ -218,8 +226,6 @@ function Converter(decoded, port) {
 # Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2.
-Each command is followed by exactly one parameter.
-Multiple command/parameter pairs can be concatenated and sent in one single payload downlink.
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
 
@@ -304,6 +310,16 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
+
+0x11 set beacon proximity alarm mode on/off
+
+	0 = Beacon monitor mode off [default]
+	1 = Beacon monitor mode on, enables proximity alarm if test beacons are seen
+
+0x12 set or reset a beacon MAC for proximity alarm
+
+	byte 1 = beacon ID (0..255)
+	bytes 2..7 = beacon MAC with 6 digits (e.g. MAC 80:ab:00:01:02:03 -> 0x80ab00010203)
 
 0x80 get device configuration
 

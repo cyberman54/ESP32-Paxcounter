@@ -4,7 +4,7 @@
 #define HAS_SPI   1       // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
-#define BOARD_HAS_PSRAM // use extra 4MB extern RAM
+#define BOARD_HAS_PSRAM // use extra 4MB external RAM
 #define HAS_LED GPIO_NUM_21 // on board green LED
 
 #define HAS_BUTTON GPIO_NUM_39 // on board button "BOOT" (next to reset button)

@@ -27,6 +27,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
+
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
@@ -45,152 +46,14 @@ portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
                                   // handler shared variables
 
-std::set<uint16_t> macs; // associative container holds total of unique MAC
-                         // adress hashes (Wifi + BLE)
+std::set<uint16_t> macs; // associative container holding unique MAC
+// adress hashes (Wifi + BLE)
 
-// initialize payload ncoder
+// initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
 // local Tag for logging
 static const char TAG[] = "main";
-
-#ifndef VERBOSE
-int redirect_log(const char *fmt, va_list args) {
-  // do nothing
-  return 0;
-}
-#endif
-
-void reset_counters() {
-  macs.clear();   // clear all macs container
-  macs_total = 0; // reset all counters
-  macs_wifi = 0;
-  macs_ble = 0;
-}
-
-#ifdef HAS_LORA
-
-// LMIC enhanced Pin mapping
-const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
-                               .miso = PIN_SPI_MISO,
-                               .sck = PIN_SPI_SCK,
-                               .nss = PIN_SPI_SS,
-                               .rxtx = LMIC_UNUSED_PIN,
-                               .rst = RST,
-                               .dio = {DIO0, DIO1, DIO2}};
-
-// Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
-#ifdef MCP_24AA02E64_I2C_ADDRESS
-get_hard_deveui(buf);
-RevBytes(buf, 8); // swap bytes to LSB format
-#endif
-
-// LMIC FreeRTos Task
-void lorawan_loop(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-  while (1) {
-    os_runloop_once();                  // execute LMIC jobs
-    vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
-  }
-}
-
-#endif // HAS_LORA
-
-// Setup IRQ handler routines
-// attn see https://github.com/espressif/arduino-esp32/issues/855
-
-void IRAM_ATTR ChannelSwitchIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  ChannelTimerIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-
-void IRAM_ATTR SendCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  SendCycleTimerIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-
-void IRAM_ATTR homeCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  HomeCycleIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-
-#ifdef HAS_DISPLAY
-void IRAM_ATTR DisplayIRQ() {
-  portENTER_CRITICAL_ISR(&timerMux);
-  DisplayTimerIRQ++;
-  portEXIT_CRITICAL_ISR(&timerMux);
-}
-void updateDisplay() {
-  if (DisplayTimerIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    DisplayTimerIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    refreshtheDisplay();
-  }
-}
-#endif
-
-void checkHousekeeping() {
-  if (HomeCycleIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    HomeCycleIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    doHomework();
-  }
-}
-
-#ifdef HAS_BUTTON
-void IRAM_ATTR ButtonIRQ() { ButtonPressedIRQ++; }
-
-void readButton() {
-  if (ButtonPressedIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    ButtonPressedIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    ESP_LOGI(TAG, "Button pressed");
-    payload.reset();
-    payload.addButton(0x01);
-    senddata(BUTTONPORT);
-  }
-}
-#endif
-
-// Wifi channel rotation task
-void wifi_channel_loop(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-  while (1) {
-
-    if (ChannelTimerIRQ) {
-      portENTER_CRITICAL(&timerMux);
-      ChannelTimerIRQ = 0;
-      portEXIT_CRITICAL(&timerMux);
-      // rotates variable channel 1..WIFI_CHANNEL_MAX
-      channel = (channel % WIFI_CHANNEL_MAX) + 1;
-      wifi_sniffer_set_channel(channel);
-      ESP_LOGD(TAG, "Wifi set channel %d", channel);
-
-      vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
-    }
-
-  } // end of infinite wifi channel rotation loop
-}
-
-// uptime counter 64bit to prevent millis() rollover after 49 days
-uint64_t uptime() {
-  static uint32_t low32, high32;
-  uint32_t new_low32 = millis();
-  if (new_low32 < low32)
-    high32++;
-  low32 = new_low32;
-  return (uint64_t)high32 << 32 | low32;
-}
 
 /* begin Aruino SETUP
  * ------------------------------------------------------------ */
@@ -245,7 +108,12 @@ void setup() {
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
-  // initialize led if needed
+// initialize LoRa
+#if HAS_LORA
+  strcat_P(features, " LORA");
+#endif
+
+  // initialize led
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
@@ -256,7 +124,7 @@ void setup() {
   strcat_P(features, " RGB");
 #endif
 
-  // initialize button handling if needed
+  // initialize button
 #ifdef HAS_BUTTON
   strcat_P(features, " BTN_");
 #ifdef BUTTON_PULLUP
@@ -272,7 +140,7 @@ void setup() {
 #endif // BUTTON_PULLUP
 #endif // HAS_BUTTON
 
-  // initialize wifi antenna if needed
+  // initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
   strcat_P(features, " ANT");
   antenna_init();
@@ -286,19 +154,19 @@ void setup() {
   bool btstop = btStop();
 #endif
 
-// initialize gps if present
+// initialize gps
 #ifdef HAS_GPS
   strcat_P(features, " GPS");
 #endif
 
-// initialize battery status if present
+// initialize battery status
 #ifdef HAS_BATTERY_PROBE
   strcat_P(features, " BATT");
   calibrate_voltage();
   batt_voltage = read_voltage();
 #endif
 
-// initialize display if present
+// initialize display
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
@@ -347,10 +215,9 @@ void setup() {
 #endif
 
   // show compiled features
-  ESP_LOGI(TAG, "Features: %s", features);
+  ESP_LOGI(TAG, "Features:%s", features);
 
 #ifdef HAS_LORA
-
   // output LoRaWAN keys to console
 #ifdef VERBOSE
   printKeys();
@@ -413,8 +280,7 @@ void setup() {
 void loop() {
 
   while (1) {
-
-    // state machine for uptime, display, LED, button, lowmemory, senddata
+    // state machine for switching display, LED, button, housekeeping, senddata
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();
@@ -430,10 +296,8 @@ void loop() {
 
     // check housekeeping cycle and to homework if expired
     checkHousekeeping();
-
     // check send cycle and send payload if cycle is expired
     sendPayload();
-
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
 
   } // end of infinite main loop

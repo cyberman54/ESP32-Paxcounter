@@ -8,6 +8,7 @@ void senddata(uint8_t port) {
   if (LMIC.opmode & OP_TXRXPEND) {
     ESP_LOGI(TAG, "LoRa busy, data not sent");
     sprintf(display_line7, "LORA BUSY");
+    // to be done: add queuing here, e.g. use RTos xQueueSend
   } else {
     LMIC_setTxData2(
         PAYLOAD_ENCODER <= 2 ? port
@@ -66,3 +67,9 @@ void sendPayload() {
     senddata(COUNTERPORT);
   }
 } // sendpayload();
+
+void IRAM_ATTR SendCycleIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  SendCycleTimerIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}

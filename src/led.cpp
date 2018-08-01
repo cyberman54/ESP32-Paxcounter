@@ -1,5 +1,6 @@
 // Basic Config
 #include "globals.h"
+#include "led.h"
 
 led_states LEDState = LED_OFF; // LED state global for state machine
 led_states previousLEDState =
