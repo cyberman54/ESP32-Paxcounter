@@ -18,13 +18,11 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
   const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
 
   if ((cfg.rssilimit) &&
-      (ppkt->rx_ctrl.rssi < cfg.rssilimit)) { // rssi is negative value
-    ESP_LOGI(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi,
+      (ppkt->rx_ctrl.rssi < cfg.rssilimit)) // rssi is negative value
+    ESP_LOGD(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi,
              cfg.rssilimit);
-  } else {
-    uint8_t *p = (uint8_t *)hdr->addr2;
-    mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
-  }
+  else // count seen MAC
+    mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
 }
 
 void wifi_sniffer_init(void) {
@@ -44,16 +42,6 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 }
 
-void wifi_sniffer_set_channel(uint8_t channel) {
-  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-}
-
-void IRAM_ATTR ChannelSwitchIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  ChannelTimerIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
-
 // Wifi channel rotation task
 void wifi_channel_loop(void *pvParameters) {
 
@@ -67,11 +55,18 @@ void wifi_channel_loop(void *pvParameters) {
       portEXIT_CRITICAL(&timerMux);
       // rotates variable channel 1..WIFI_CHANNEL_MAX
       channel = (channel % WIFI_CHANNEL_MAX) + 1;
-      wifi_sniffer_set_channel(channel);
+      esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
       ESP_LOGD(TAG, "Wifi set channel %d", channel);
 
       vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
     }
 
   } // end of infinite wifi channel rotation loop
+}
+
+// IRQ handler
+void IRAM_ATTR ChannelSwitchIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  ChannelTimerIRQ++;
+  portEXIT_CRITICAL(&timerMux);
 }
