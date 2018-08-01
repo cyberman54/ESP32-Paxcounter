@@ -2,6 +2,7 @@
 #define _GPS_H
 
 #include <TinyGPS++.h>         // library for parsing NMEA data
+#include <TimeLib.h>
 
 typedef struct {
   uint32_t latitude;
