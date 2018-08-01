@@ -11,6 +11,15 @@
 // Local logging Tag
 static const char TAG[] = "lora";
 
+// LMIC enhanced Pin mapping
+const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
+                               .miso = PIN_SPI_MISO,
+                               .sck = PIN_SPI_SCK,
+                               .nss = PIN_SPI_SS,
+                               .rxtx = LMIC_UNUSED_PIN,
+                               .rst = RST,
+                               .dio = {DIO0, DIO1, DIO2}};
+
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
@@ -200,21 +209,10 @@ void onEvent(ev_t ev) {
       sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi,
               (signed char)LMIC.snr / 4);
 
-      // check if payload received on command port, then call remote command
-      // interpreter
+      // check if command is received on command port, then call interpreter
       if ((LMIC.txrxFlags & TXRX_PORT) &&
-          (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT)) {
-        // caution: buffering LMIC values here because rcommand() can modify
-        // LMIC.frame
-        unsigned char *buffer = new unsigned char[MAX_LEN_FRAME];
-        memcpy(buffer, LMIC.frame, MAX_LEN_FRAME); // Copy data from cfg to
-                                                   // char*
-        int i, k = LMIC.dataBeg, l = LMIC.dataBeg + LMIC.dataLen - 2;
-        for (i = k; i <= l; i += 2) {
-          rcommand(buffer[i], buffer[i + 1]);
-        }
-        delete[] buffer; // free memory
-      }
+          (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT))
+        rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
     }
     break;
 
@@ -230,5 +228,16 @@ void onEvent(ev_t ev) {
   }
 
 } // onEvent()
+
+// LMIC FreeRTos Task
+void lorawan_loop(void *pvParameters) {
+
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+
+  while (1) {
+    os_runloop_once();                  // execute LMIC jobs
+    vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+  }
+}
 
 #endif // HAS_LORA

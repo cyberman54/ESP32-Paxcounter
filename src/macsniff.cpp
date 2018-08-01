@@ -7,18 +7,8 @@
 #endif
 
 // Local logging tag
-static const char TAG[] = "wifi";
+static const char TAG[] = "main";
 
-/* change for future Espressif v1.1.x
-static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
-                                      WIFI_CHANNEL_MAX, 0,
-                                      WIFI_COUNTRY_POLICY_MANUAL};
-*/
-
-static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
-                                      WIFI_CHANNEL_MAX, WIFI_COUNTRY_POLICY_MANUAL};
-
-// globals
 uint16_t salt;
 
 uint16_t reset_salt(void) {
@@ -26,12 +16,28 @@ uint16_t reset_salt(void) {
   return salt;
 }
 
+int8_t isBeacon(uint64_t mac) {
+  it = std::find(beacons.begin(), beacons.end(), mac);
+  if (it != beacons.end())
+    return std::distance(beacons.begin(), it);
+  else
+    return -1;
+}
+
+uint64_t macConvert(uint8_t *paddr) {
+  return ((uint64_t)paddr[0]) | ((uint64_t)paddr[1] << 8) |
+         ((uint64_t)paddr[2] << 16) | ((uint64_t)paddr[3] << 24) |
+         ((uint64_t)paddr[4] << 32) | ((uint64_t)paddr[5] << 40);
+}
+
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
-  uint32_t addr2int, vendor2int; // temporary buffer for MAC and Vendor OUI
-  uint16_t hashedmac;            // temporary buffer for generated hash value
+  int8_t beaconID;   // beacon number in test monitor mode
+  uint16_t hashedmac; // temporary buffer for generated hash value
+  uint32_t addr2int,
+      vendor2int; // temporary buffer for shortened MAC and Vendor OUI
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
@@ -50,10 +56,9 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // and increment counter on display
     // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 
-    addr2int += (uint32_t)salt; // add 16-bit salt to pseudo MAC
-    snprintf(
-        buff, sizeof(buff), "%08X",
-        addr2int); // convert unsigned 32-bit salted MAC to 8 digit hex string
+    snprintf(buff, sizeof(buff), "%08X",
+             addr2int + (uint32_t)salt); // convert usigned 32-bit salted MAC to
+                                         // 8 digit hex string
     hashedmac = rokkit(&buff[3], 5); // hash MAC last string value, use 5 chars
                                      // to fit hash in uint16_t container
     auto newmac = macs.insert(hashedmac); // add hashed MAC, if new unique
@@ -62,6 +67,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     // Count only if MAC was not yet seen
     if (added) {
+
       // increment counter and one blink led
       if (sniff_type == MAC_SNIFF_WIFI) {
         macs_wifi++; // increment Wifi MACs counter
@@ -77,7 +83,22 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 #endif
       }
 #endif
-    }
+
+      // in beacon monitor mode check if seen MAC is a known beacon
+      if (cfg.monitormode) {
+        beaconID = isBeacon(macConvert(paddr));
+        if (beaconID >= 0) {
+          ESP_LOGI(TAG, "Beacon ID#d detected", beaconID);
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+          blink_LED(COLOR_WHITE, 2000);
+#endif
+          payload.reset();
+          payload.addAlarm(rssi, beaconID);
+          senddata(BEACONPORT);
+        }
+      };
+
+    } // added
 
     // Log scan result
     ESP_LOGD(TAG,
@@ -86,7 +107,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
              added ? "new  " : "known",
              sniff_type == MAC_SNIFF_WIFI ? "WiFi" : "BLTH", rssi, buff,
              hashedmac, macs_wifi, macs_ble, ESP.getFreeHeap());
-
 #ifdef VENDORFILTER
   } else {
     // Very noisy
@@ -98,43 +118,4 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
   // True if MAC WiFi/BLE was new
   return added; // function returns bool if a new and unique Wifi or BLE mac was
                 // counted (true) or not (false)
-}
-
-void wifi_sniffer_init(void) {
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  cfg.nvs_enable = 0; // we don't need any wifi settings from NVRAM
-  wifi_promiscuous_filter_t filter = {
-      .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
-  ESP_ERROR_CHECK(esp_wifi_init(&cfg));             // configure Wifi with cfg
-  ESP_ERROR_CHECK(
-      esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
-  ESP_ERROR_CHECK(
-      esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
-  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
-  ESP_ERROR_CHECK(
-      esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
-  ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
-  ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
-}
-
-void wifi_sniffer_set_channel(uint8_t channel) {
-  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-}
-
-// using IRAM_:ATTR here to speed up callback function
-IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
-                                           wifi_promiscuous_pkt_type_t type) {
-  const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
-  const wifi_ieee80211_packet_t *ipkt =
-      (wifi_ieee80211_packet_t *)ppkt->payload;
-  const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
-
-  if ((cfg.rssilimit) &&
-      (ppkt->rx_ctrl.rssi < cfg.rssilimit)) { // rssi is negative value
-    ESP_LOGI(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi,
-             cfg.rssilimit);
-  } else {
-    uint8_t *p = (uint8_t *)hdr->addr2;
-    mac_add(p, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
-  }
 }

@@ -26,6 +26,11 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   buffer[cursor++] = lowByte(value2);
 }
 
+void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
+  buffer[cursor++] = rssi;
+  buffer[cursor++] = msg;
+}
+
 void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.lorasf;
   buffer[cursor++] = value.txpower;
@@ -97,6 +102,11 @@ void PayloadConvert::addButton(uint8_t value) { buffer[cursor++] = value; }
 void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
   writeUint16(value1);
   writeUint16(value2);
+}
+
+void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
+  writeUint8(rssi);
+  writeUint8(msg);
 }
 
 void PayloadConvert::addConfig(configData_t value) {
@@ -193,20 +203,31 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
 void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
-  uint16_t val1 = value1 * 100;
-  uint16_t val2 = value2 * 100;
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
-  buffer[cursor++] = highByte(val1);
-  buffer[cursor++] = lowByte(val1);
+  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
+  buffer[cursor++] = highByte(value1);
+  buffer[cursor++] = lowByte(value1);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_ANALOG_INPUT; // workaround, type meter not found?
-  buffer[cursor++] = highByte(val2);
-  buffer[cursor++] = lowByte(val2);
+  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
+  buffer[cursor++] = highByte(value2);
+  buffer[cursor++] = lowByte(value2);
+}
+
+void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_ALARM_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_PRESENCE;
+  buffer[cursor++] = msg;
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_MSG_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = rssi;
 }
 
 void PayloadConvert::addConfig(configData_t value) {
