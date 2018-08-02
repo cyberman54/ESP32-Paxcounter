@@ -24,6 +24,18 @@ int8_t isBeacon(uint64_t mac) {
     return -1;
 }
 
+// Display a key
+void printKey(const char *name, const uint8_t *key, uint8_t len, bool lsb) {
+  const uint8_t *p;
+  char keystring[len + 1] = "", keybyte[3];
+  for (uint8_t i = 0; i < len; i++) {
+    p = lsb ? key + len - i - 1 : key + i;
+    sprintf(keybyte, "%02X", *p);
+    strncat(keystring, keybyte, 2);
+  }
+  ESP_LOGI(TAG, "%s: %s", name, keystring);
+}
+
 uint64_t macConvert(uint8_t *paddr) {
   return ((uint64_t)paddr[0]) | ((uint64_t)paddr[1] << 8) |
          ((uint64_t)paddr[2] << 16) | ((uint64_t)paddr[3] << 24) |
