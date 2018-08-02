@@ -183,7 +183,7 @@ void set_beacon(uint8_t val[]) {
   memmove(val, val + 1, 6);      // strip off storage id
   beacons[id] = macConvert(val); // store beacon MAC in array
   ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
-  printKey("MAC", val, 6, false); // show beacon MAC
+  //printKey("MAC", val, 6, false); // show beacon MAC
 };
 
 void set_monitor(uint8_t val[]) {
