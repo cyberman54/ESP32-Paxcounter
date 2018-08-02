@@ -63,9 +63,8 @@ void set_reset(uint8_t val[]) {
   case 0: // restart device
     ESP_LOGI(TAG, "Remote command: restart device");
     sprintf(display_line6, "Reset pending");
-    vTaskDelay(
-        10000 /
-        portTICK_PERIOD_MS); // wait for LMIC to confirm LoRa downlink to server
+    vTaskDelay(10000 / portTICK_PERIOD_MS); // wait for LMIC to confirm LoRa
+                                            // downlink to server
     esp_restart();
     break;
   case 1: // reset MAC counter
@@ -79,6 +78,8 @@ void set_reset(uint8_t val[]) {
     sprintf(display_line6, "Factory reset");
     eraseConfig();
     break;
+  default:
+    ESP_LOGW(TAG, "Remote command: reset called with invalid parameter(s)");
   }
 };
 
@@ -92,7 +93,7 @@ void set_sendcycle(uint8_t val[]) {
   // update send cycle interrupt
   timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
   // reload interrupt after each trigger of channel switch cycle
-  ESP_LOGI(TAG, "Remote command: set payload send cycle to %d seconds",
+  ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
 };
 
@@ -129,10 +130,14 @@ void set_countmode(uint8_t val[]) {
     cfg.countermode = 1;
     ESP_LOGI(TAG, "Remote command: set counter mode to cumulative");
     break;
-  default: // cyclic confirmed
+  case 2: // cyclic confirmed
     cfg.countermode = 2;
     ESP_LOGI(TAG, "Remote command: set counter mode to cyclic confirmed");
     break;
+  default: // invalid parameter
+    ESP_LOGW(
+        TAG,
+        "Remote command: set counter mode called with invalid parameter(s)");
   }
 };
 
@@ -170,18 +175,15 @@ void set_gps(uint8_t val[]) {
   default:
     cfg.gpsmode = 0;
     break;
-  }
-};
+  };
+}
 
 void set_beacon(uint8_t val[]) {
-  if (sizeof(*val) / sizeof(val[0]) == 7) {
-    uint8_t id = val[0];           // use first parameter as beacon storage id
-    memmove(val, val + 1, 6);      // strip off storage id
-    beacons[id] = macConvert(val); // store beacon MAC in array
-    ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
-    printKey("MAC", val, 6, false); // show beacon MAC
-  } else
-    ESP_LOGW(TAG, "Remote command: set beacon called with invalid parameters");
+  uint8_t id = val[0];           // use first parameter as beacon storage id
+  memmove(val, val + 1, 6);      // strip off storage id
+  beacons[id] = macConvert(val); // store beacon MAC in array
+  ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
+  printKey("MAC", val, 6, false); // show beacon MAC
 };
 
 void set_monitor(uint8_t val[]) {
@@ -319,46 +321,43 @@ void get_gps(uint8_t val[]) {
 };
 
 // assign previously defined functions to set of numeric remote commands
-// format: opcode, function, flag (1 = do make settings persistent / 0 = don't)
+// format: opcode, function, #bytes params,
+// flag (1 = do make settings persistent / 0 = don't)
 //
-cmd_t table[] = {{0x01, set_rssi, true},          {0x02, set_countmode, true},
-                 {0x03, set_gps, true},           {0x04, set_display, true},
-                 {0x05, set_lorasf, true},        {0x06, set_lorapower, true},
-                 {0x07, set_loraadr, true},       {0x08, set_screensaver, true},
-                 {0x09, set_reset, false},        {0x0a, set_sendcycle, true},
-                 {0x0b, set_wifichancycle, true}, {0x0c, set_blescantime, true},
-                 {0x0d, set_vendorfilter, false}, {0x0e, set_blescan, true},
-                 {0x0f, set_wifiant, true},       {0x10, set_rgblum, true},
-                 {0x11, set_monitor, true},       {0x12, set_beacon, false},
-                 {0x80, get_config, false},       {0x81, get_status, false},
-                 {0x84, get_gps, false}};
+cmd_t table[] = {
+    {0x01, set_rssi, 1, true},          {0x02, set_countmode, 1, true},
+    {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
+    {0x05, set_lorasf, 1, true},        {0x06, set_lorapower, 1, true},
+    {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
+    {0x09, set_reset, 1, false},        {0x0a, set_sendcycle, 1, true},
+    {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
+    {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
+    {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
+    {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
+    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
+    {0x84, get_gps, 0, false}};
 
 // check and execute remote command
 void rcommand(uint8_t cmd[], uint8_t cmdlength) {
 
   if (cmdlength == 0)
     return;
+  else
+    cmdlength--; // minus 1 byte for opcode
+
   int i =
       sizeof(table) / sizeof(table[0]); // number of commands in command table
-  bool store_flag = false;
 
   while (i--) {
-    if (cmd[0] == table[i].opcode) { // lookup command in opcode table
-      if (cmdlength) {
-        memmove(cmd, cmd + 1,
-                cmdlength - 1); // cutout opcode from parameter array
-        table[i].func(cmd); // execute assigned function with given parameters
-      } else
-        table[i].func(0); // execute assigned function with dummy as parameter
-      if (table[i].store) // ceck if function needs to store configuration after
-                          // execution
-        store_flag =
-            true; // set save flag if function needs to store configuration
-      break;      // exit check loop, since command was found
-    }
-  }
+    if ((cmd[0] == table[i].opcode) &&
+        (table[i].params == cmdlength)) { // lookup command in opcode table
+      memmove(cmd, cmd + 1,
+              cmdlength); // strip opcode
+      table[i].func(cmd); // execute assigned function with given parameters
+      if (table[i].store) // ceck if function needs to store configuration
+        saveConfig();
+      break; // exit while loop, command was found
+    }        // lookup command
+  }          // while
 
-  if (store_flag)
-    saveConfig(); // if save flag is set: store new configuration in NVS to make
-                  // it persistent
 } // rcommand()

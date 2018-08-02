@@ -27,7 +27,6 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
-
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
@@ -60,7 +59,7 @@ static const char TAG[] = "main";
 
 void setup() {
 
-  char features[64] = "";
+  char features[100] = "";
 
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
@@ -108,8 +107,12 @@ void setup() {
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
+#ifdef VENDORFILTER 
+  strcat_P(features, " OUIFLT");
+#endif
+
 // initialize LoRa
-#if HAS_LORA
+#ifdef HAS_LORA
   strcat_P(features, " LORA");
 #endif
 
@@ -205,13 +208,13 @@ void setup() {
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
-  strcat_P(features, " PAYLOAD_PLAIN");
+  strcat_P(features, " PLAIN");
 #elif PAYLOAD_ENCODER == 2
-  strcat_P(features, " PAYLOAD_PACKED");
+  strcat_P(features, " PACKED");
 #elif PAYLOAD_ENCODER == 3
-  strcat_P(features, " PAYLOAD_LPP_DYN");
+  strcat_P(features, " LPPDYN");
 #elif PAYLOAD_ENCODER == 4
-  strcat_P(features, " PAYLOAD_LPP_PKD");
+  strcat_P(features, " LPPPKD");
 #endif
 
   // show compiled features
@@ -264,12 +267,12 @@ void setup() {
   ESP_LOGI(TAG, "Starting Wifi task on core 0");
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
-  // arduino-esp32 core note: do this *after* wifi has started, since function
+  // arduino-esp32 core. Note: do this *after* wifi has started, since function
   // gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
   xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
                           NULL, 0);
-} // setup
+} // setup()
 
 /* end Arduino SETUP
  * ------------------------------------------------------------ */
@@ -294,13 +297,14 @@ void loop() {
     updateDisplay();
 #endif
 
-    // check housekeeping cycle and to homework if expired
+    // check housekeeping cycle and if expired do homework
     checkHousekeeping();
     // check send cycle and send payload if cycle is expired
     sendPayload();
-    vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+    // reset watchdog
+    vTaskDelay(1 / portTICK_PERIOD_MS);
 
-  } // end of infinite main loop
+  } // loop()
 }
 
 /* end Arduino main loop

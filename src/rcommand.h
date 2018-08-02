@@ -10,6 +10,7 @@
 typedef struct {
   const uint8_t opcode;
   void (*func)(uint8_t []);
+  uint8_t params;
   const bool store;
 } cmd_t;
 
