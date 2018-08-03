@@ -37,7 +37,7 @@ void doHomework() {
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
              esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-    senddata(COUNTERPORT); // send data before clearing counters
+    EnqueueSendData(COUNTERPORT, payload.getBuffer(), payload.getSize()); // send data before clearing counters
     reset_counters();      // clear macs container and reset all counters
     reset_salt();          // get new salt for salting hashes
   }

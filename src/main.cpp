@@ -41,6 +41,10 @@ hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
 volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
+// send queues
+QueueHandle_t LoraSendQueue, SPISendQueue;
+MessageBuffer_t SendBuffer;
+
 portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
                                   // handler shared variables
@@ -104,10 +108,30 @@ void setup() {
 
 #endif // verbose
 
+// initialize send queues for transmit channels
+#ifdef HAS_LORA
+  LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(struct SendBuffer *));
+  if (LoraSendQueue == 0) {
+    ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
+    exit(0);
+  } else
+    ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
+             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+#endif
+#ifdef HAS_SPI
+  SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(struct SendBuffer *));
+  if (SPISendQueue == 0) {
+    ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");
+    exit(0);
+  } else
+    ESP_LOGI(TAG, "SPI send queue created, size %d Bytes",
+             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+#endif
+
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
-#ifdef VENDORFILTER 
+#ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
 #endif
 
@@ -223,7 +247,7 @@ void setup() {
 #ifdef HAS_LORA
   // output LoRaWAN keys to console
 #ifdef VERBOSE
-  printKeys();
+  showLoraKeys();
 #endif
 
   // initialize LoRaWAN LMIC run-time environment
@@ -299,7 +323,9 @@ void loop() {
 
     // check housekeeping cycle and if expired do homework
     checkHousekeeping();
-    // check send cycle and send payload if cycle is expired
+    // check send queue and process it
+    processSendBuffer();
+    // check send cycle and enqueue payload if cycle is expired
     sendPayload();
     // reset watchdog
     vTaskDelay(1 / portTICK_PERIOD_MS);

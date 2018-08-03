@@ -293,7 +293,7 @@ void get_config(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  senddata(CONFIGPORT);
+  EnqueueSendData(CONFIGPORT, payload.getBuffer(), payload.getSize());
 };
 
 void get_status(uint8_t val[]) {
@@ -305,7 +305,7 @@ void get_status(uint8_t val[]) {
 #endif
   payload.reset();
   payload.addStatus(voltage, uptime() / 1000, temperatureRead());
-  senddata(STATUSPORT);
+  EnqueueSendData(STATUSPORT, payload.getBuffer(), payload.getSize());
 };
 
 void get_gps(uint8_t val[]) {
@@ -314,7 +314,7 @@ void get_gps(uint8_t val[]) {
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
-  senddata(GPSPORT);
+  EnqueueSendData(GPSPORT, payload.getBuffer(), payload.getSize());
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif
@@ -337,6 +337,8 @@ cmd_t table[] = {
     {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
     {0x84, get_gps, 0, false}};
 
+const uint8_t cmdtablesize = sizeof(table) / sizeof(table[0]); // number of commands in command table
+
 // check and execute remote command
 void rcommand(uint8_t cmd[], uint8_t cmdlength) {
 
@@ -345,14 +347,13 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
   else
     cmdlength--; // minus 1 byte for opcode
 
-  int i =
-      sizeof(table) / sizeof(table[0]); // number of commands in command table
+  int i = cmdtablesize;
 
   while (i--) {
     if ((cmd[0] == table[i].opcode) &&
         (table[i].params == cmdlength)) { // lookup command in opcode table
       memmove(cmd, cmd + 1,
-              cmdlength); // strip opcode
+              cmdlength); // strip opcode from cmd array
       table[i].func(cmd); // execute assigned function with given parameters
       if (table[i].store) // ceck if function needs to store configuration
         saveConfig();

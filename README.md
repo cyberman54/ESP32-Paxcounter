@@ -227,7 +227,7 @@ function Converter(decoded, port) {
 
 The device listenes for remote control commands on LoRaWAN Port 2.
 
-Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
+Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings send remote command 09 02 09 00 unconfirmed(!) once.
 
 0x01 set scan RSSI limit
 

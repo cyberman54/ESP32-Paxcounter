@@ -108,7 +108,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
 #ifdef VERBOSE
 
 // Display OTAA keys
-void printKeys(void) {
+void showLoraKeys(void) {
   // LMIC may not have used callback to fill
   // all EUI buffer so we do it here to a temp
   // buffer to be able to display them

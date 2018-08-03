@@ -1,28 +1,27 @@
 // Basic Config
 #include "globals.h"
 
-void senddata(uint8_t port) {
+// put data to send in RTos Queues used for transmit over channels Lora and SPI
+void EnqueueSendData(uint8_t port, uint8_t data[], uint8_t size) {
+  MessageBuffer_t *xMsg; // create pointer to struct which holds the sendbuffer
 
+  SendBuffer.MessageSize = size;
+  SendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
+                               ? port
+                               : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
+  memcpy(SendBuffer.Message, data, size);
+  xMsg = &SendBuffer;
+
+  // enqueue message in LoRa send queue
 #ifdef HAS_LORA
-  // Check if there is a pending TX/RX job running
-  if (LMIC.opmode & OP_TXRXPEND) {
-    ESP_LOGI(TAG, "LoRa busy, data not sent");
-    sprintf(display_line7, "LORA BUSY");
-    // to be done: add queuing here, e.g. use RTos xQueueSend
-  } else {
-    LMIC_setTxData2(
-        PAYLOAD_ENCODER <= 2 ? port
-                             : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT),
-        payload.getBuffer(), payload.getSize(), (cfg.countermode & 0x02));
-
-    ESP_LOGI(TAG, "%d bytes queued to send on LoRa", payload.getSize());
-    sprintf(display_line7, "PACKET QUEUED");
-  }
+  xQueueSend(LoraSendQueue, (void *)&xMsg, (TickType_t)0);
+  ESP_LOGI(TAG, "%d bytes enqueued to send on LoRa", size);
 #endif
 
+// enqueue message in SPI send queue
 #ifdef HAS_SPI
-  // to come here: code for sending payload to a local master via SPI
-  ESP_LOGI(TAG, "%d bytes sent on SPI", payload.getSize());
+  xQueueSend(SPISendQueue, (void *)&xMsg, (TickType_t)0);
+  ESP_LOGI(TAG, "%d bytes enqueued to send on SPI", size);
 #endif
 
   // clear counter if not in cumulative counter mode
@@ -34,8 +33,8 @@ void senddata(uint8_t port) {
 
 } // senddata
 
+// cyclic called function to prepare payload to send
 void sendPayload() {
-
   if (SendCycleTimerIRQ) {
     portENTER_CRITICAL(&timerMux);
     SendCycleTimerIRQ = 0;
@@ -64,12 +63,46 @@ void sendPayload() {
       ESP_LOGD(TAG, "No valid GPS position or GPS data mode disabled");
     }
 #endif
-    senddata(COUNTERPORT);
+    EnqueueSendData(COUNTERPORT, payload.getBuffer(), payload.getSize());
   }
-} // sendpayload();
+} // sendpayload()
 
+// interrupt handler used for payload send cycle timer
 void IRAM_ATTR SendCycleIRQ() {
   portENTER_CRITICAL(&timerMux);
   SendCycleTimerIRQ++;
   portEXIT_CRITICAL(&timerMux);
 }
+
+// cyclic called function to eat data from RTos send queues and transmit it
+void processSendBuffer() {
+  MessageBuffer_t *xMsg;
+
+#ifdef HAS_LORA
+  // Check if there is a pending TX/RX job running
+  if (LMIC.opmode & OP_TXRXPEND) {
+    sprintf(display_line7, "LORA BUSY");
+  } else {
+    if (xQueueReceive(LoraSendQueue, &(xMsg), (TickType_t)10)) {
+      // xMsg now holds the struct MessageBuffer from queue
+      LMIC_setTxData2(xMsg->MessagePort, xMsg->Message, xMsg->MessageSize,
+                      (cfg.countermode & 0x02));
+      ESP_LOGI(TAG, "%d bytes sent to LORA", xMsg->MessageSize);
+      sprintf(display_line7, "PACKET QUEUED");
+    }
+  }
+#endif
+
+#ifdef HAS_SPI
+  if (xQueueReceive(SPISendQueue, &(xMsg), (TickType_t)10)) {
+
+    // to come here: send data over SPI
+    // use these pointers to the payload:
+    // xMsg->MessagePort
+    // xMsg->MessageSize
+    // xMsg->Message
+
+    ESP_LOGI(TAG, "%d bytes sent to SPI", xMsg->MessageSize);
+  }
+#endif
+} // processSendBuffer
