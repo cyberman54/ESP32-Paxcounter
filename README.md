@@ -226,7 +226,7 @@ function Converter(decoded, port) {
 
 # Remote control
 
-The device listenes for remote control commands on LoRaWAN Port 2.
+The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings send remote command 09 02 09 00 unconfirmed(!) once.
 

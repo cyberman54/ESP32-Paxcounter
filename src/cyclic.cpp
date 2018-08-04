@@ -40,6 +40,9 @@ void doHomework() {
     SendData(COUNTERPORT); // send data before clearing counters
     reset_counters();      // clear macs container and reset all counters
     reset_salt();          // get new salt for salting hashes
+
+    if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
+      esp_restart(); // memory leak, reset device
   }
 } // doHomework()
 

@@ -337,7 +337,46 @@ cmd_t table[] = {
     {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
     {0x84, get_gps, 0, false}};
 
-const uint8_t cmdtablesize = sizeof(table) / sizeof(table[0]); // number of commands in command table
+const uint8_t cmdtablesize =
+    sizeof(table) / sizeof(table[0]); // number of commands in command table
+
+// check and execute remote command
+void rcommand(uint8_t cmd[], uint8_t cmdlength) {
+
+  if (cmdlength == 0)
+    return;
+
+  uint8_t foundcmd[cmdlength], cursor = 0;
+  bool storeflag = false;
+
+  while (cursor < cmdlength) {
+    int i = cmdtablesize;
+    while (i--) {
+      if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
+        cursor++;                           // strip 1 byte opcode
+        if ((cursor + table[i].params) <= cmdlength) {
+          memmove(foundcmd, cmd + cursor,
+                  table[i].params); // strip opcode from cmd array
+          cursor += table[i].params;
+          if (table[i].store) // ceck if function needs to store configuration
+            storeflag = true;
+          table[i].func(
+              foundcmd); // execute assigned function with given parameters
+        } else
+          ESP_LOGI(
+              TAG,
+              "Remote command x%02X called with missing parameter(s), skipped",
+              table[i].opcode);
+        break; // exit table lookup loop, command was found
+      }        // lookup command
+    }          // while loop table lookup
+  }            // while loop parsing cmd
+
+  if (storeflag)
+    saveConfig();
+} // rcommand()
+
+/*
 
 // check and execute remote command
 void rcommand(uint8_t cmd[], uint8_t cmdlength) {
@@ -348,7 +387,6 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
     cmdlength--; // minus 1 byte for opcode
 
   int i = cmdtablesize;
-
   while (i--) {
     if ((cmd[0] == table[i].opcode) &&
         (table[i].params == cmdlength)) { // lookup command in opcode table
@@ -362,3 +400,4 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
   }          // while
 
 } // rcommand()
+*/
