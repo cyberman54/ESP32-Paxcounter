@@ -168,7 +168,7 @@ void refreshtheDisplay() {
 
   // update LMiC event display (line 7)
   u8x8.setCursor(0, 7);
-  u8x8.printf("%-16s", display_line7);
+  u8x8.printf("%-14s", display_line7);
 
   // update LoRa send queue display (line 7)
   msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
@@ -178,7 +178,8 @@ void refreshtheDisplay() {
     u8x8.setInverseFont(1);
     u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
     u8x8.setInverseFont(0);
-  }
+  } else
+    u8x8.printf("  ");
 
 #endif // HAS_LORA
 
