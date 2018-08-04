@@ -50,7 +50,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
   uint16_t hashedmac; // temporary buffer for generated hash value
   uint32_t addr2int;  // temporary buffer for shortened MAC
 #ifdef VENDORFILTER
-  uinit32_t vendor2int; // temporary buffer for Vendor OUI
+  uint32_t vendor2int; // temporary buffer for Vendor OUI
 #endif
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
