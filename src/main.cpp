@@ -333,8 +333,6 @@ void loop() {
     // reset watchdog
     vTaskDelay(1 / portTICK_PERIOD_MS);
 
-    //ESP_LOGI(TAG, "%d Bytes left", ESP.getFreeHeap());
-
   } // loop()
 }
 

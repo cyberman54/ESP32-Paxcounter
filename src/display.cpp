@@ -91,18 +91,18 @@ void init_display(const char *Productname, const char *Version) {
 
 void refreshtheDisplay() {
 
-  uint8_t msgWaiting = 0;
-  char buff[16];
-
   // set display on/off according to current device configuration
   if (DisplayState != cfg.screenon) {
     DisplayState = cfg.screenon;
     u8x8.setPowerSave(!cfg.screenon);
   }
 
-  // if display is switched off we don't need to refresh it and save time
+  // if display is switched off we don't refresh it and save time
   if (!DisplayState)
     return;
+
+  uint8_t msgWaiting = 0;
+  char buff[16]; // 16 chars line buffer
 
   // update counter (lines 0-1)
   snprintf(
@@ -164,11 +164,11 @@ void refreshtheDisplay() {
 #ifdef HAS_LORA
   // update LoRa status display (line 6)
   u8x8.setCursor(0, 6);
-  u8x8.printf("%-14s", display_line6);
+  u8x8.printf("%-16s", display_line6);
 
   // update LMiC event display (line 7)
   u8x8.setCursor(0, 7);
-  u8x8.printf("%-14s", display_line7);
+  u8x8.printf("%-16s", display_line7);
 
   // update LoRa send queue display (line 7)
   msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
@@ -178,10 +178,10 @@ void refreshtheDisplay() {
     u8x8.setInverseFont(1);
     u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
     u8x8.setInverseFont(0);
-  } else
-    u8x8.print("  "); // clear queue display
+  }
 
 #endif // HAS_LORA
+
 } // refreshDisplay()
 
 void IRAM_ATTR DisplayIRQ() {

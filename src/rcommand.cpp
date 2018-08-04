@@ -293,7 +293,7 @@ void get_config(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  EnqueueSendData(CONFIGPORT, payload.getBuffer(), payload.getSize());
+  SendData(CONFIGPORT);
 };
 
 void get_status(uint8_t val[]) {
@@ -305,7 +305,7 @@ void get_status(uint8_t val[]) {
 #endif
   payload.reset();
   payload.addStatus(voltage, uptime() / 1000, temperatureRead());
-  EnqueueSendData(STATUSPORT, payload.getBuffer(), payload.getSize());
+  SendData(STATUSPORT);
 };
 
 void get_gps(uint8_t val[]) {
@@ -314,7 +314,7 @@ void get_gps(uint8_t val[]) {
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
-  EnqueueSendData(GPSPORT, payload.getBuffer(), payload.getSize());
+  SendData(GPSPORT);
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif

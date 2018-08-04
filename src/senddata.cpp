@@ -2,26 +2,26 @@
 #include "globals.h"
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
-void EnqueueSendData(uint8_t port, uint8_t data[], uint8_t size) {
+void SendData(uint8_t port) {
 
   MessageBuffer_t MySendBuffer;
 
-  MySendBuffer.MessageSize = size;
+  MySendBuffer.MessageSize = payload.getSize();
   MySendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
                                  ? port
                                  : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
-  memcpy(MySendBuffer.Message, data, size);
+  memcpy(MySendBuffer.Message, payload.getBuffer(), payload.getSize());
 
   // enqueue message in LoRa send queue
 #ifdef HAS_LORA
   if (xQueueSendToBack(LoraSendQueue, (void *)&MySendBuffer, (TickType_t)0))
-    ESP_LOGI(TAG, "%d bytes enqueued to send on LoRa", size);
+    ESP_LOGI(TAG, "%d bytes enqueued to send on LoRa", payload.getSize());
 #endif
 
 // enqueue message in SPI send queue
 #ifdef HAS_SPI
   if (xQueueSendToBack(SPISendQueue, (void *)&MySendBuffer, (TickType_t)0))
-    ESP_LOGI(TAG, "%d bytes enqueued to send on SPI", size);
+    ESP_LOGI(TAG, "%d bytes enqueued to send on SPI", payload.getSize());
 #endif
 
   // clear counter if not in cumulative counter mode
@@ -31,9 +31,7 @@ void EnqueueSendData(uint8_t port, uint8_t data[], uint8_t size) {
     ESP_LOGI(TAG, "Counter cleared");
   }
 
-  ESP_LOGI(TAG, "%d Bytes left", ESP.getFreeHeap());
-
-} // senddata
+} // SendData
 
 // cyclic called function to prepare payload to send
 void sendPayload() {
@@ -65,7 +63,7 @@ void sendPayload() {
       ESP_LOGD(TAG, "No valid GPS position or GPS data mode disabled");
     }
 #endif
-    EnqueueSendData(COUNTERPORT, payload.getBuffer(), payload.getSize());
+    SendData(COUNTERPORT);
   }
 } // sendpayload()
 
@@ -102,8 +100,6 @@ void processSendBuffer() {
   }
 #endif
 
-  ESP_LOGI(TAG, "%d Bytes left", ESP.getFreeHeap());
-
 } // processSendBuffer
 
 /* old version with pointers
@@ -112,7 +108,7 @@ void processSendBuffer() {
 #include "globals.h"
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
-void EnqueueSendData(uint8_t port, uint8_t data[], uint8_t size) {
+void SendData(uint8_t port, uint8_t data[], uint8_t size) {
 
   MessageBuffer_t *xMsg = &SendBuffer;
 
@@ -179,7 +175,7 @@ void sendPayload() {
       ESP_LOGD(TAG, "No valid GPS position or GPS data mode disabled");
     }
 #endif
-    EnqueueSendData(COUNTERPORT, payload.getBuffer(), payload.getSize());
+    SendData(COUNTERPORT, payload.getBuffer(), payload.getSize());
   }
 } // sendpayload()
 

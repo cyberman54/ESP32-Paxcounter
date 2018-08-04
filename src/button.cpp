@@ -16,7 +16,7 @@ void readButton() {
     ESP_LOGI(TAG, "Button pressed");
     payload.reset();
     payload.addButton(0x01);
-    EnqueueSendData(BUTTONPORT, payload.getBuffer(), payload.getSize());
+    SendData(BUTTONPORT);
   }
 }
 #endif
