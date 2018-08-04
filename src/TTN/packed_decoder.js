@@ -18,7 +18,7 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        return decode(bytes, [uint16, uptime, temperature], ['voltage', 'uptime', 'cputemp']);
+        return decode(bytes, [uint16, uptime, temperature, uint32], ['voltage', 'uptime', 'cputemp', 'memory']);
     }
 
 
@@ -66,7 +66,7 @@ uptime.BYTES = 4;
 
 var uint8 = function (bytes) {
     if (bytes.length !== uint8.BYTES) {
-        throw new Error('int must have exactly 1 byte');
+        throw new Error('uint8 must have exactly 1 byte');
     }
     return bytesToInt(bytes);
 };
@@ -74,11 +74,19 @@ uint8.BYTES = 1;
 
 var uint16 = function (bytes) {
     if (bytes.length !== uint16.BYTES) {
-        throw new Error('int must have exactly 2 bytes');
+        throw new Error('uint16 must have exactly 2 bytes');
     }
     return bytesToInt(bytes);
 };
 uint16.BYTES = 2;
+
+var uint32 = function (bytes) {
+    if (bytes.length !== uint32.BYTES) {
+        throw new Error('uint32 must have exactly 4 bytes');
+    }
+    return bytesToInt(bytes);
+};
+uint32.BYTES = 4;
 
 var latLng = function (bytes) {
     if (bytes.length !== latLng.BYTES) {

@@ -304,7 +304,7 @@ void get_status(uint8_t val[]) {
   uint16_t voltage = 0;
 #endif
   payload.reset();
-  payload.addStatus(voltage, uptime() / 1000, temperatureRead());
+  payload.addStatus(voltage, uptime() / 1000, temperatureRead(), ESP.getFreeHeap());
   SendData(STATUSPORT);
 };
 
@@ -350,6 +350,7 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
   bool storeflag = false;
 
   while (cursor < cmdlength) {
+
     int i = cmdtablesize;
     while (i--) {
       if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
@@ -368,36 +369,11 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
               "Remote command x%02X called with missing parameter(s), skipped",
               table[i].opcode);
         break; // exit table lookup loop, command was found
-      }        // lookup command
-    }          // while loop table lookup
-  }            // while loop parsing cmd
+      }        // command validation
+    }          // command table lookup loop
+
+  } // command parsing loop
 
   if (storeflag)
     saveConfig();
 } // rcommand()
-
-/*
-
-// check and execute remote command
-void rcommand(uint8_t cmd[], uint8_t cmdlength) {
-
-  if (cmdlength == 0)
-    return;
-  else
-    cmdlength--; // minus 1 byte for opcode
-
-  int i = cmdtablesize;
-  while (i--) {
-    if ((cmd[0] == table[i].opcode) &&
-        (table[i].params == cmdlength)) { // lookup command in opcode table
-      memmove(cmd, cmd + 1,
-              cmdlength); // strip opcode from cmd array
-      table[i].func(cmd); // execute assigned function with given parameters
-      if (table[i].store) // ceck if function needs to store configuration
-        saveConfig();
-      break; // exit while loop, command was found
-    }        // lookup command
-  }          // while
-
-} // rcommand()
-*/
