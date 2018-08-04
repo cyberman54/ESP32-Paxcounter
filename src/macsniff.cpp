@@ -46,10 +46,12 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
-  int8_t beaconID;   // beacon number in test monitor mode
+  int8_t beaconID;    // beacon number in test monitor mode
   uint16_t hashedmac; // temporary buffer for generated hash value
-  uint32_t addr2int,
-      vendor2int; // temporary buffer for shortened MAC and Vendor OUI
+  uint32_t addr2int;  // temporary buffer for shortened MAC
+#ifdef VENDORFILTER
+  uinit32_t vendor2int; // temporary buffer for Vendor OUI
+#endif
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
