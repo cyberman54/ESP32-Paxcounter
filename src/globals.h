@@ -47,6 +47,7 @@ extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
+extern QueueHandle_t LoraSendQueue, SPISendQueue;
 
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;

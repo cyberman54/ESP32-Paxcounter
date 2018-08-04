@@ -33,7 +33,7 @@ void doHomework() {
 
   // check free memory
   if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
-    ESP_LOGW(TAG,
+    ESP_LOGI(TAG,
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
              esp_get_minimum_free_heap_size(), ESP.getFreeHeap());

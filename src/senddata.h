@@ -8,9 +8,6 @@ typedef struct {
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 
-extern QueueHandle_t LoraSendQueue, SPISendQueue;
-extern MessageBuffer_t SendBuffer;
-
 void EnqueueSendData(uint8_t port, uint8_t data[], uint8_t size);
 void sendPayload(void);
 void SendCycleIRQ(void);

@@ -6,6 +6,7 @@
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
 <img src="img/Paxcounter-lolin.gif">
+<img src="img/Paxcounter-Screen.png">
 
 # Use case
 
