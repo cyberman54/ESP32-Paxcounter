@@ -15,5 +15,6 @@ void os_getArtEui(u1_t *buf);
 void os_getDevEui(u1_t *buf);
 void showLoraKeys(void);
 void lorawan_loop(void *pvParameters);
+void switch_lora(uint8_t sf, uint8_t tx);
 
 #endif

@@ -228,4 +228,51 @@ void lorawan_loop(void *pvParameters) {
   }
 }
 
+// helper function to assign LoRa datarates to numeric spreadfactor values
+void switch_lora(uint8_t sf, uint8_t tx) {
+  if (tx > 20)
+    return;
+  cfg.txpower = tx;
+  switch (sf) {
+  case 7:
+    LMIC_setDrTxpow(DR_SF7, tx);
+    cfg.lorasf = sf;
+    break;
+  case 8:
+    LMIC_setDrTxpow(DR_SF8, tx);
+    cfg.lorasf = sf;
+    break;
+  case 9:
+    LMIC_setDrTxpow(DR_SF9, tx);
+    cfg.lorasf = sf;
+    break;
+  case 10:
+    LMIC_setDrTxpow(DR_SF10, tx);
+    cfg.lorasf = sf;
+    break;
+  case 11:
+#if defined(CFG_eu868)
+    LMIC_setDrTxpow(DR_SF11, tx);
+    cfg.lorasf = sf;
+    break;
+#elif defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF11CR, tx);
+    cfg.lorasf = sf;
+    break;
+#endif
+  case 12:
+#if defined(CFG_eu868)
+    LMIC_setDrTxpow(DR_SF12, tx);
+    cfg.lorasf = sf;
+    break;
+#elif defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF12CR, tx);
+    cfg.lorasf = sf;
+    break;
+#endif
+  default:
+    break;
+  }
+}
+
 #endif // HAS_LORA

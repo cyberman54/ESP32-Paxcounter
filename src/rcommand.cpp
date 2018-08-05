@@ -8,55 +8,6 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-#ifdef HAS_LORA
-// helper function to assign LoRa datarates to numeric spreadfactor values
-void switch_lora(uint8_t sf, uint8_t tx) {
-  if (tx > 20)
-    return;
-  cfg.txpower = tx;
-  switch (sf) {
-  case 7:
-    LMIC_setDrTxpow(DR_SF7, tx);
-    cfg.lorasf = sf;
-    break;
-  case 8:
-    LMIC_setDrTxpow(DR_SF8, tx);
-    cfg.lorasf = sf;
-    break;
-  case 9:
-    LMIC_setDrTxpow(DR_SF9, tx);
-    cfg.lorasf = sf;
-    break;
-  case 10:
-    LMIC_setDrTxpow(DR_SF10, tx);
-    cfg.lorasf = sf;
-    break;
-  case 11:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF11, tx);
-    cfg.lorasf = sf;
-    break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF11CR, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  case 12:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF12, tx);
-    cfg.lorasf = sf;
-    break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF12CR, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  default:
-    break;
-  }
-}
-#endif // HAS_LORA
-
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
   switch (val[0]) {
@@ -77,6 +28,11 @@ void set_reset(uint8_t val[]) {
     ESP_LOGI(TAG, "Remote command: reset device to factory settings");
     sprintf(display_line6, "Factory reset");
     eraseConfig();
+    break;
+  case 3: // reset send queues
+    ESP_LOGI(TAG, "Remote command: flush send queue");
+    sprintf(display_line6, "Flush queues");
+    flushQueues();
     break;
   default:
     ESP_LOGW(TAG, "Remote command: reset called with invalid parameter(s)");
@@ -304,7 +260,8 @@ void get_status(uint8_t val[]) {
   uint16_t voltage = 0;
 #endif
   payload.reset();
-  payload.addStatus(voltage, uptime() / 1000, temperatureRead(), ESP.getFreeHeap());
+  payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
+                    ESP.getFreeHeap());
   SendData(STATUSPORT);
 };
 
