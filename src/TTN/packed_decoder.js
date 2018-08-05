@@ -56,14 +56,6 @@ var bytesToInt = function (bytes) {
     return i;
 };
 
-var uptime = function (bytes) {
-    if (bytes.length !== uptime.BYTES) {
-        throw new Error('uptime must have exactly 8 bytes');
-    }
-    return bytesToInt(bytes);
-};
-uptime.BYTES = 4;
-
 var uint8 = function (bytes) {
     if (bytes.length !== uint8.BYTES) {
         throw new Error('uint8 must have exactly 1 byte');
@@ -95,6 +87,14 @@ var latLng = function (bytes) {
     return bytesToInt(bytes) / 1e6;
 };
 latLng.BYTES = 4;
+
+var uptime = function (bytes) {
+    if (bytes.length !== uptime.BYTES) {
+        throw new Error('Uptime must have exactly 8 bytes');
+    }
+    return bytesToInt(bytes);
+};
+uptime.BYTES = 8;
 
 var hdop = function (bytes) {
     if (bytes.length !== hdop.BYTES) {
@@ -177,9 +177,10 @@ var decode = function (bytes, mask, names) {
 
 if (typeof module === 'object' && typeof module.exports !== 'undefined') {
     module.exports = {
-        uptime: uptime,
         uint8: uint8,
         uint16: uint16,
+        uint32: uint32,
+        uptime: uptime,
         temperature: temperature,
         humidity: humidity,
         latLng: latLng,

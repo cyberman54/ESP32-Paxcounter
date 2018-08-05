@@ -1,6 +1,3 @@
-// remote command interpreter, parses and executes commands with arguments in
-// array
-
 // Basic Config
 #include "globals.h"
 #include "rcommand.h"
@@ -31,7 +28,7 @@ void set_reset(uint8_t val[]) {
     break;
   case 3: // reset send queues
     ESP_LOGI(TAG, "Remote command: flush send queue");
-    sprintf(display_line6, "Flush queues");
+    sprintf(display_line6, "Queue reset");
     flushQueues();
     break;
   default:
