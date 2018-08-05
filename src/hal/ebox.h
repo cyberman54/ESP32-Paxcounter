@@ -6,6 +6,7 @@
 
 #define HAS_LED GPIO_NUM_23 // blue LED on board
 #define HAS_BUTTON GPIO_NUM_0 // button "PROG" on board
+#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    GPIO_NUM_18 // ESP32 GPIO18 (Pin18) -- SX1276 NSS (Pin19) SPI Chip Select Input
