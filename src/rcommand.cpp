@@ -1,61 +1,9 @@
-// remote command interpreter, parses and executes commands with arguments in
-// array
-
 // Basic Config
 #include "globals.h"
 #include "rcommand.h"
 
 // Local logging tag
 static const char TAG[] = "main";
-
-#ifdef HAS_LORA
-// helper function to assign LoRa datarates to numeric spreadfactor values
-void switch_lora(uint8_t sf, uint8_t tx) {
-  if (tx > 20)
-    return;
-  cfg.txpower = tx;
-  switch (sf) {
-  case 7:
-    LMIC_setDrTxpow(DR_SF7, tx);
-    cfg.lorasf = sf;
-    break;
-  case 8:
-    LMIC_setDrTxpow(DR_SF8, tx);
-    cfg.lorasf = sf;
-    break;
-  case 9:
-    LMIC_setDrTxpow(DR_SF9, tx);
-    cfg.lorasf = sf;
-    break;
-  case 10:
-    LMIC_setDrTxpow(DR_SF10, tx);
-    cfg.lorasf = sf;
-    break;
-  case 11:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF11, tx);
-    cfg.lorasf = sf;
-    break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF11CR, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  case 12:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF12, tx);
-    cfg.lorasf = sf;
-    break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF12CR, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  default:
-    break;
-  }
-}
-#endif // HAS_LORA
 
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
@@ -77,6 +25,11 @@ void set_reset(uint8_t val[]) {
     ESP_LOGI(TAG, "Remote command: reset device to factory settings");
     sprintf(display_line6, "Factory reset");
     eraseConfig();
+    break;
+  case 3: // reset send queues
+    ESP_LOGI(TAG, "Remote command: flush send queue");
+    sprintf(display_line6, "Queue reset");
+    flushQueues();
     break;
   default:
     ESP_LOGW(TAG, "Remote command: reset called with invalid parameter(s)");
@@ -293,7 +246,7 @@ void get_config(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  senddata(CONFIGPORT);
+  SendData(CONFIGPORT);
 };
 
 void get_status(uint8_t val[]) {
@@ -304,8 +257,9 @@ void get_status(uint8_t val[]) {
   uint16_t voltage = 0;
 #endif
   payload.reset();
-  payload.addStatus(voltage, uptime() / 1000, temperatureRead());
-  senddata(STATUSPORT);
+  payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
+                    ESP.getFreeHeap());
+  SendData(STATUSPORT);
 };
 
 void get_gps(uint8_t val[]) {
@@ -314,7 +268,7 @@ void get_gps(uint8_t val[]) {
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
-  senddata(GPSPORT);
+  SendData(GPSPORT);
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif
@@ -337,27 +291,43 @@ cmd_t table[] = {
     {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
     {0x84, get_gps, 0, false}};
 
+const uint8_t cmdtablesize =
+    sizeof(table) / sizeof(table[0]); // number of commands in command table
+
 // check and execute remote command
 void rcommand(uint8_t cmd[], uint8_t cmdlength) {
 
   if (cmdlength == 0)
     return;
-  else
-    cmdlength--; // minus 1 byte for opcode
 
-  int i =
-      sizeof(table) / sizeof(table[0]); // number of commands in command table
+  uint8_t foundcmd[cmdlength], cursor = 0;
+  bool storeflag = false;
 
-  while (i--) {
-    if ((cmd[0] == table[i].opcode) &&
-        (table[i].params == cmdlength)) { // lookup command in opcode table
-      memmove(cmd, cmd + 1,
-              cmdlength); // strip opcode
-      table[i].func(cmd); // execute assigned function with given parameters
-      if (table[i].store) // ceck if function needs to store configuration
-        saveConfig();
-      break; // exit while loop, command was found
-    }        // lookup command
-  }          // while
+  while (cursor < cmdlength) {
 
+    int i = cmdtablesize;
+    while (i--) {
+      if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
+        cursor++;                           // strip 1 byte opcode
+        if ((cursor + table[i].params) <= cmdlength) {
+          memmove(foundcmd, cmd + cursor,
+                  table[i].params); // strip opcode from cmd array
+          cursor += table[i].params;
+          if (table[i].store) // ceck if function needs to store configuration
+            storeflag = true;
+          table[i].func(
+              foundcmd); // execute assigned function with given parameters
+        } else
+          ESP_LOGI(
+              TAG,
+              "Remote command x%02X called with missing parameter(s), skipped",
+              table[i].opcode);
+        break; // exit table lookup loop, command was found
+      }        // command validation
+    }          // command table lookup loop
+
+  } // command parsing loop
+
+  if (storeflag)
+    saveConfig();
 } // rcommand()

@@ -1,4 +1,4 @@
-// Hardware related definitions for ebox ESP32-bit with RFM95 LoRa
+// Hardware related definitions for ebox ESP32-bit with external connected RFM95 LoRa
 
 #define HAS_LORA  1       // comment out if device shall not send data via LoRa
 #define HAS_SPI   1       // comment out if device shall not send data via SPI

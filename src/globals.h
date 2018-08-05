@@ -8,7 +8,7 @@
 #include <esp32-hal-log.h>
 
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.4.1" // use max 10 chars here!
+#define PROGVERSION "1.4.2" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions
@@ -47,6 +47,7 @@ extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
+extern QueueHandle_t LoraSendQueue, SPISendQueue;
 
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;

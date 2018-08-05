@@ -16,7 +16,7 @@ void readButton() {
     ESP_LOGI(TAG, "Button pressed");
     payload.reset();
     payload.addButton(0x01);
-    senddata(BUTTONPORT);
+    SendData(BUTTONPORT);
   }
 }
 #endif

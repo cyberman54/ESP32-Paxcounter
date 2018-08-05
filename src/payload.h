@@ -35,7 +35,7 @@ public:
   uint8_t *getBuffer(void);
   void addCount(uint16_t value1, uint16_t value2);
   void addConfig(configData_t value);
-  void addStatus(uint16_t voltage, uint64_t uptime, float cputemp);
+  void addStatus(uint16_t voltage, uint64_t uptime, float cputemp, uint32_t mem);
   void addAlarm(int8_t rssi, uint8_t message);
 #ifdef HAS_GPS
   void addGPS(gpsStatus_t value);
@@ -59,6 +59,7 @@ private:
   void intToBytes(uint8_t pos, int32_t i, uint8_t byteSize);
   void writeUptime(uint64_t unixtime);
   void writeLatLng(double latitude, double longitude);
+  void writeUint32(uint32_t i);
   void writeUint16(uint16_t i);
   void writeUint8(uint8_t i);
   void writeHumidity(float humidity);
