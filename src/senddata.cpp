@@ -1,26 +1,26 @@
 // Basic Config
 #include "globals.h"
 
+  MessageBuffer_t SendBuffer;
+
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {
 
-  MessageBuffer_t MySendBuffer;
-
-  MySendBuffer.MessageSize = payload.getSize();
-  MySendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
+  SendBuffer.MessageSize = payload.getSize();
+  SendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
                                  ? port
                                  : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
-  memcpy(MySendBuffer.Message, payload.getBuffer(), payload.getSize());
+  memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
   // enqueue message in LoRa send queue
 #ifdef HAS_LORA
-  if (xQueueSendToBack(LoraSendQueue, (void *)&MySendBuffer, (TickType_t)0))
+  if (xQueueSendToBack(LoraSendQueue, (void *)&SendBuffer, (TickType_t)0))
     ESP_LOGI(TAG, "%d bytes enqueued to send on LoRa", payload.getSize());
 #endif
 
 // enqueue message in SPI send queue
 #ifdef HAS_SPI
-  if (xQueueSendToBack(SPISendQueue, (void *)&MySendBuffer, (TickType_t)0))
+  if (xQueueSendToBack(SPISendQueue, (void *)&SendBuffer, (TickType_t)0))
     ESP_LOGI(TAG, "%d bytes enqueued to send on SPI", payload.getSize());
 #endif
 
@@ -77,26 +77,24 @@ void IRAM_ATTR SendCycleIRQ() {
 // cyclic called function to eat data from RTos send queues and transmit it
 void processSendBuffer() {
 
-  MessageBuffer_t RcvBuf;
-
 #ifdef HAS_LORA
   // Check if there is a pending TX/RX job running
   if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
     // LoRa Busy -> don't eat data from queue, since it cannot be sent
   } else {
-    if (xQueueReceive(LoraSendQueue, &(RcvBuf), (TickType_t)10)) {
-      // xMsg now holds the struct MessageBuffer from queue
-      LMIC_setTxData2(RcvBuf.MessagePort, RcvBuf.Message, RcvBuf.MessageSize,
+    if (xQueueReceive(LoraSendQueue, &(SendBuffer), (TickType_t)10)) {
+      // SendBuffer now holds the struct MessageBuffer with next payload from queue
+      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
                       (cfg.countermode & 0x02));
-      ESP_LOGI(TAG, "%d bytes sent to LORA", RcvBuf.MessageSize);
+      ESP_LOGI(TAG, "%d bytes sent to LORA", SendBuffer.MessageSize);
       sprintf(display_line7, "PACKET QUEUED");
     }
   }
 #endif
 
 #ifdef HAS_SPI
-  if (xQueueReceive(SPISendQueue, &(RcvBuf), (TickType_t)10)) {
-    ESP_LOGI(TAG, "%d bytes sent to SPI", RcvBuf.MessageSize);
+  if (xQueueReceive(SPISendQueue, &(SendBuffer), (TickType_t)10)) {
+    ESP_LOGI(TAG, "%d bytes sent to SPI", SendBuffer.MessageSize);
   }
 #endif
 
