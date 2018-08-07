@@ -1,26 +1,26 @@
 // Basic Config
 #include "globals.h"
 
-  MessageBuffer_t SendBuffer;
+MessageBuffer_t SendBuffer;
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {
 
   SendBuffer.MessageSize = payload.getSize();
   SendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
-                                 ? port
-                                 : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
+                               ? port
+                               : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
   // enqueue message in LoRa send queue
 #ifdef HAS_LORA
-  if (xQueueSendToBack(LoraSendQueue, (void *)&SendBuffer, (TickType_t)0))
+  if (xQueueSendToBack(LoraSendQueue, (void *)&SendBuffer, (TickType_t)0) == pdTRUE)
     ESP_LOGI(TAG, "%d bytes enqueued to send on LoRa", payload.getSize());
 #endif
 
 // enqueue message in SPI send queue
 #ifdef HAS_SPI
-  if (xQueueSendToBack(SPISendQueue, (void *)&SendBuffer, (TickType_t)0))
+  if (xQueueSendToBack(SPISendQueue, (void *)&SendBuffer, (TickType_t)0) == pdTRUE)
     ESP_LOGI(TAG, "%d bytes enqueued to send on SPI", payload.getSize());
 #endif
 
@@ -82,10 +82,10 @@ void processSendBuffer() {
   if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
     // LoRa Busy -> don't eat data from queue, since it cannot be sent
   } else {
-    if (xQueueReceive(LoraSendQueue, &(SendBuffer), (TickType_t)10)) {
-      // SendBuffer now holds the struct MessageBuffer with next payload from queue
-      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
-                      (cfg.countermode & 0x02));
+    if (xQueueReceive(LoraSendQueue, &(SendBuffer), (TickType_t)0) == pdTRUE) {
+      // SendBuffer gets struct MessageBuffer with next payload from queue
+      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                      SendBuffer.MessageSize, (cfg.countermode & 0x02));
       ESP_LOGI(TAG, "%d bytes sent to LORA", SendBuffer.MessageSize);
       sprintf(display_line7, "PACKET QUEUED");
     }
@@ -93,7 +93,7 @@ void processSendBuffer() {
 #endif
 
 #ifdef HAS_SPI
-  if (xQueueReceive(SPISendQueue, &(SendBuffer), (TickType_t)10)) {
+  if (xQueueReceive(SPISendQueue, &(SendBuffer), (TickType_t)0) == pdTRUE) {
     ESP_LOGI(TAG, "%d bytes sent to SPI", SendBuffer.MessageSize);
   }
 #endif
@@ -102,9 +102,9 @@ void processSendBuffer() {
 
 void flushQueues() {
 #ifdef HAS_LORA
-    xQueueReset(LoraSendQueue);
+  xQueueReset(LoraSendQueue);
 #endif
 #ifdef HAS_SPI
-    xQueueReset(SPISendQueue);
+  xQueueReset(SPISendQueue);
 #endif
 }
