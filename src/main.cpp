@@ -109,8 +109,6 @@ void setup() {
 
 // initialize send queues for transmit channels
 #ifdef HAS_LORA
-  //--> LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(struct SendBuffer
-  //*));
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
     ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
@@ -120,8 +118,6 @@ void setup() {
              SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 #endif
 #ifdef HAS_SPI
-  //--> SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(struct SendBuffer
-  //*));
   SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (SPISendQueue == 0) {
     ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");

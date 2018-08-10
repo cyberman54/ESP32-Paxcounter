@@ -37,6 +37,13 @@ typedef struct {
   char version[10];      // Firmware version
 } configData_t;
 
+// Struct holding payload for data send queue
+typedef struct {
+  uint8_t MessageSize;
+  uint8_t MessagePort;
+  uint8_t Message[PAYLOAD_BUFFER_SIZE];
+} MessageBuffer_t;
+
 // global variables
 extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers

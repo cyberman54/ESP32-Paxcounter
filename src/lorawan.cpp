@@ -172,13 +172,13 @@ void onEvent(ev_t ev) {
     strcpy_P(buff, PSTR("JOINED"));
     sprintf(display_line6, " "); // clear previous lmic status
 
-    // set cyclic lmic link check to off because is not supported by ttn
-    // (but enabled by lmic after join)
-    LMIC_setLinkCheckMode(0);
-
     // set data rate adaptation according to saved setting
     LMIC_setAdrMode(cfg.adrmode);
-    
+
+    // set cyclic lmic link check to off if no ADR because is not supported by
+    // ttn (but enabled by lmic after join)
+    LMIC_setLinkCheckMode(cfg.adrmode);
+
     // Set data rate and transmit power (note: txpower seems to be ignored by
     // the library)
     switch_lora(cfg.lorasf, cfg.txpower);
