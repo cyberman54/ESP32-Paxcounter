@@ -42,14 +42,19 @@ volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
 // RTos send queues for payload transmit
-QueueHandle_t LoraSendQueue, SPISendQueue;
+#ifdef HAS_LORA
+QueueHandle_t LoraSendQueue;
+#endif
+
+#ifdef HAS_SPI
+QueueHandle_t SPISendQueue;
+#endif
 
 portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
                                   // handler shared variables
 
-std::set<uint16_t> macs; // associative container holding unique MAC
-// adress hashes (Wifi + BLE)
+std::set<uint16_t> macs; // container holding unique MAC adress hashes
 
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
@@ -107,26 +112,6 @@ void setup() {
 
 #endif // verbose
 
-// initialize send queues for transmit channels
-#ifdef HAS_LORA
-  LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
-  if (LoraSendQueue == 0) {
-    ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
-    exit(0);
-  } else
-    ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
-             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
-#endif
-#ifdef HAS_SPI
-  SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
-  if (SPISendQueue == 0) {
-    ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");
-    exit(0);
-  } else
-    ESP_LOGI(TAG, "SPI send queue created, size %d Bytes",
-             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
-#endif
-
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
@@ -137,9 +122,28 @@ void setup() {
 // initialize LoRa
 #ifdef HAS_LORA
   strcat_P(features, " LORA");
+  LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
+  if (LoraSendQueue == 0) {
+    ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
+    exit(0);
+  } else
+    ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
+             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 #endif
 
-  // initialize led
+// initialize SPI
+#ifdef HAS_SPI
+  strcat_P(features, " SPI");
+  SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
+  if (SPISendQueue == 0) {
+    ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");
+    exit(0);
+  } else
+    ESP_LOGI(TAG, "SPI send queue created, size %d Bytes",
+             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+#endif
+
+    // initialize led
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
@@ -326,8 +330,6 @@ void loop() {
     processSendBuffer();
     // check send cycle and enqueue payload if cycle is expired
     sendPayload();
-    // reset watchdog
-    vTaskDelay(1 / portTICK_PERIOD_MS);
 
   } // loop()
 }

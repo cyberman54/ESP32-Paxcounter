@@ -34,12 +34,12 @@ void set_reset(uint8_t val[]) {
   default:
     ESP_LOGW(TAG, "Remote command: reset called with invalid parameter(s)");
   }
-};
+}
 
 void set_rssi(uint8_t val[]) {
   cfg.rssilimit = val[0] * -1;
   ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
-};
+}
 
 void set_sendcycle(uint8_t val[]) {
   cfg.sendcycle = val[0];
@@ -48,7 +48,7 @@ void set_sendcycle(uint8_t val[]) {
   // reload interrupt after each trigger of channel switch cycle
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
-};
+}
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
@@ -58,7 +58,7 @@ void set_wifichancycle(uint8_t val[]) {
   ESP_LOGI(TAG,
            "Remote command: set Wifi channel switch interval to %.1f seconds",
            cfg.wifichancycle / float(100));
-};
+}
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
@@ -71,7 +71,7 @@ void set_blescantime(uint8_t val[]) {
     start_BLEscan();
   }
 #endif
-};
+}
 
 void set_countmode(uint8_t val[]) {
   switch (val[0]) {
@@ -92,43 +92,22 @@ void set_countmode(uint8_t val[]) {
         TAG,
         "Remote command: set counter mode called with invalid parameter(s)");
   }
-};
+}
 
 void set_screensaver(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set screen saver to %s ",
            val[0] ? "on" : "off");
-  switch (val[0]) {
-  case 1:
-    cfg.screensaver = 1;
-    break;
-  default:
-    cfg.screensaver = 0;
-    break;
-  }
-};
+  cfg.screensaver = val[0] ? 1 : 0;
+}
 
 void set_display(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set screen to %s", val[0] ? "on" : "off");
-  switch (val[0]) {
-  case 1:
-    cfg.screenon = 1;
-    break;
-  default:
-    cfg.screenon = 0;
-    break;
-  }
-};
+  cfg.screenon = val[0] ? 1 : 0;
+}
 
 void set_gps(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set GPS mode to %s", val[0] ? "on" : "off");
-  switch (val[0]) {
-  case 1:
-    cfg.gpsmode = 1;
-    break;
-  default:
-    cfg.gpsmode = 0;
-    break;
-  };
+  cfg.gpsmode = val[0] ? 1 : 0;
 }
 
 void set_beacon(uint8_t val[]) {
@@ -137,20 +116,13 @@ void set_beacon(uint8_t val[]) {
   beacons[id] = macConvert(val); // store beacon MAC in array
   ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
   printKey("MAC", val, 6, false); // show beacon MAC
-};
+}
 
 void set_monitor(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set beacon monitor mode to %s",
            val ? "on" : "off");
-  switch (val[0]) {
-  case 1:
-    cfg.monitormode = 1;
-    break;
-  default:
-    cfg.monitormode = 0;
-    break;
-  }
-};
+  cfg.monitormode = val[0] ? 1 : 0;
+}
 
 void set_lorasf(uint8_t val[]) {
 #ifdef HAS_LORA
@@ -159,73 +131,46 @@ void set_lorasf(uint8_t val[]) {
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
-};
+}
 
 void set_loraadr(uint8_t val[]) {
 #ifdef HAS_LORA
   ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s",
            val[0] ? "on" : "off");
-  switch (val[0]) {
-  case 1:
-    cfg.adrmode = 1;
-    break;
-  default:
-    cfg.adrmode = 0;
-    break;
-  }
-  LMIC_setAdrMode(cfg.adrmode);
+  cfg.adrmode = val[0] ? 1 : 0;
+LMIC_setAdrMode(cfg.adrmode);
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
-};
+}
 
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
-  switch (val[0]) {
-  case 0:
-    cfg.blescan = 0;
-    macs_ble = 0; // clear BLE counter
+  cfg.blescan = val[0] ? 1 : 0;
 #ifdef BLECOUNTER
-    stop_BLEscan();
-#endif
-    break;
-  default:
-    cfg.blescan = 1;
-#ifdef BLECOUNTER
+  if (cfg.blescan)
     start_BLEscan();
-#endif
-    break;
+  else {
+    macs_ble = 0; // clear BLE counter
+    stop_BLEscan();
   }
-};
+#endif
+}
 
 void set_wifiant(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set Wifi antenna to %s",
            val[0] ? "external" : "internal");
-  switch (val[0]) {
-  case 1:
-    cfg.wifiant = 1;
-    break;
-  default:
-    cfg.wifiant = 0;
-    break;
-  }
+  cfg.wifiant = val[0] ? 1 : 0;
 #ifdef HAS_ANTENNA_SWITCH
   antenna_select(cfg.wifiant);
 #endif
-};
+}
 
 void set_vendorfilter(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set vendorfilter mode to %s",
            val[0] ? "on" : "off");
-  switch (val[0]) {
-  case 1:
-    cfg.vendorfilter = 1;
-    break;
-  default:
-    cfg.vendorfilter = 0;
-    break;
-  }
-};
+  cfg.vendorfilter = val[0] ? 1 : 0;
+}
 
 void set_rgblum(uint8_t val[]) {
   // Avoid wrong parameters

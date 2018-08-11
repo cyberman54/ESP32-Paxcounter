@@ -4,11 +4,8 @@
 // The mother of all embedded development...
 #include <Arduino.h>
 
-// needed for ESP_LOGx on arduino framework
-#include <esp32-hal-log.h>
-
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.4.21" // use max 10 chars here!
+#define PROGVERSION "1.4.23" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions
@@ -36,6 +33,13 @@ typedef struct {
   uint8_t monitormode;   // 0=disabled, 1=enabled
   char version[10];      // Firmware version
 } configData_t;
+
+// Struct holding payload for data send queue
+typedef struct {
+  uint8_t MessageSize;
+  uint8_t MessagePort;
+  uint8_t Message[PAYLOAD_BUFFER_SIZE];
+} MessageBuffer_t;
 
 // global variables
 extern configData_t cfg;                      // current device configuration
