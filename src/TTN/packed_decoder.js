@@ -18,7 +18,7 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        return decode(bytes, [uint16, uptime, temperature, uint32], ['voltage', 'uptime', 'cputemp', 'memory']);
+        return decode(bytes, [uint16, uptime, uint8, uint32], ['voltage', 'uptime', 'cputemp', 'memory']);
     }
 
 
