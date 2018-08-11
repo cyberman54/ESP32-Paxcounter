@@ -116,7 +116,7 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 # Payload format
 
-You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L40):
+You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L12):
 
 - ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 

@@ -15,6 +15,5 @@ typedef struct {
 } cmd_t;
 
 void rcommand(uint8_t cmd[], uint8_t cmdlength);
-void switch_lora(uint8_t sf, uint8_t tx);
 
 #endif
