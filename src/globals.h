@@ -4,11 +4,8 @@
 // The mother of all embedded development...
 #include <Arduino.h>
 
-// needed for ESP_LOGx on arduino framework
-#include <esp32-hal-log.h>
-
 // attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.4.22" // use max 10 chars here!
+#define PROGVERSION "1.4.23" // use max 10 chars here!
 #define PROGNAME "PAXCNT"
 
 // std::set for unified array functions

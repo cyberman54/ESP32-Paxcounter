@@ -8,8 +8,8 @@ void SendData(uint8_t port) {
 
   SendBuffer.MessageSize = payload.getSize();
   SendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
-                                ? port
-                                : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
+                               ? port
+                               : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
   // enqueue message in LoRa send queue
@@ -79,9 +79,6 @@ void IRAM_ATTR SendCycleIRQ() {
 // cyclic called function to eat data from RTos send queues and transmit it
 void processSendBuffer() {
 
-  int m1 = 0, m2 = 0;
-  m1 = ESP.getFreeHeap();
-
   MessageBuffer_t SendBuffer;
 
 #ifdef HAS_LORA
@@ -93,7 +90,7 @@ void processSendBuffer() {
       // SendBuffer gets struct MessageBuffer with next payload from queue
       LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
                       SendBuffer.MessageSize, (cfg.countermode & 0x02));
-      //ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+      ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
       sprintf(display_line7, "PACKET QUEUED");
     }
   }
@@ -101,13 +98,9 @@ void processSendBuffer() {
 
 #ifdef HAS_SPI
   if (xQueueReceive(SPISendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-    //ESP_LOGI(TAG, "%d bytes sent to SPI", SendBuffer.MessageSize);
+    ESP_LOGI(TAG, "%d bytes sent to SPI", SendBuffer.MessageSize);
   }
 #endif
-
-  m2 = ESP.getFreeHeap();
-  if (m2 - m1)
-    ESP_LOGI(TAG, "processSendBuffer consumed %d bytes", m2 - m1);
 
 } // processSendBuffer
 
