@@ -41,6 +41,8 @@ hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
 volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
+TaskHandle_t WifiLoopTask = NULL;
+
 // RTos send queues for payload transmit
 #ifdef HAS_LORA
 QueueHandle_t LoraSendQueue;
@@ -298,7 +300,7 @@ void setup() {
   // gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
   xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
-                          NULL, 0);
+                          &WifiLoopTask, 0);
 } // setup()
 
 /* end Arduino SETUP

@@ -6,6 +6,9 @@
 #include "lorawan.h"
 #include "macsniff.h"
 
+#include <WiFi.h>
+#include "SecureOTA.h"
+
 // table of remote commands and assigned functions
 typedef struct {
   const uint8_t opcode;

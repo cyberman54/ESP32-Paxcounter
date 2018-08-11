@@ -52,6 +52,7 @@ extern portMUX_TYPE timerMux;
 extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
 extern QueueHandle_t LoraSendQueue, SPISendQueue;
+extern TaskHandle_t WifiLoopTask;
 
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;

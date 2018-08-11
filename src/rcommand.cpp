@@ -138,7 +138,7 @@ void set_loraadr(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s",
            val[0] ? "on" : "off");
   cfg.adrmode = val[0] ? 1 : 0;
-LMIC_setAdrMode(cfg.adrmode);
+  LMIC_setAdrMode(cfg.adrmode);
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
@@ -219,6 +219,29 @@ void get_gps(uint8_t val[]) {
 #endif
 };
 
+void set_update(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: get firmware update");
+
+  ESP_LOGI(TAG, "Stopping Wifi task on core 0");
+  vTaskDelete(WifiLoopTask);
+
+  ESP_LOGI(TAG, "Connecting to %s", WIFI_SSID);
+  ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false)); // switch off monitor mode
+  //tcpipInit();
+  tcpip_adapter_init();
+  WiFi.mode(WIFI_STA);
+
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    ESP_LOGI(TAG, ".");
+    delay(500);
+  }
+
+  ESP_LOGI(TAG, "connected!");
+  checkFirmwareUpdates();
+};
+
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, #bytes params,
 // flag (1 = do make settings persistent / 0 = don't)
@@ -233,8 +256,8 @@ cmd_t table[] = {
     {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
-    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
-    {0x84, get_gps, 0, false}};
+    {0x20, set_update, 0, false},       {0x80, get_config, 0, false},
+    {0x81, get_status, 0, false},       {0x84, get_gps, 0, false}};
 
 const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
