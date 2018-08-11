@@ -4,9 +4,6 @@
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {
 
-  int m1 = 0, m2 = 0;
-  m1 = ESP.getFreeHeap();
-
   MessageBuffer_t SendBuffer;
 
   SendBuffer.MessageSize = payload.getSize();
@@ -35,18 +32,11 @@ void SendData(uint8_t port) {
     reset_salt();     // get new salt for salting hashes
     ESP_LOGI(TAG, "Counter cleared");
   }
-
-  m2 = ESP.getFreeHeap();
-  if (m2 - m1)
-    ESP_LOGI(TAG, "SendData            %d bytes", m2 - m1);
-
 } // SendData
 
 // cyclic called function to prepare payload to send
 void sendPayload() {
 
-  int m1 = 0, m2 = 0;
-  m1 = ESP.getFreeHeap();
   if (SendCycleTimerIRQ) {
     portENTER_CRITICAL(&timerMux);
     SendCycleTimerIRQ = 0;
@@ -77,11 +67,6 @@ void sendPayload() {
 #endif
     SendData(COUNTERPORT);
   }
-
-  m2 = ESP.getFreeHeap();
-  if (m2 - m1)
-    ESP_LOGI(TAG, "sendpayload         %d bytes", m2 - m1);
-
 } // sendpayload()
 
 // interrupt handler used for payload send cycle timer
@@ -108,7 +93,7 @@ void processSendBuffer() {
       // SendBuffer gets struct MessageBuffer with next payload from queue
       LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
                       SendBuffer.MessageSize, (cfg.countermode & 0x02));
-      ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+      //ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
       sprintf(display_line7, "PACKET QUEUED");
     }
   }
@@ -116,13 +101,13 @@ void processSendBuffer() {
 
 #ifdef HAS_SPI
   if (xQueueReceive(SPISendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes sent to SPI", SendBuffer.MessageSize);
+    //ESP_LOGI(TAG, "%d bytes sent to SPI", SendBuffer.MessageSize);
   }
 #endif
 
   m2 = ESP.getFreeHeap();
   if (m2 - m1)
-    ESP_LOGI(TAG, "processSendBuffer   %d bytes", m2 - m1);
+    ESP_LOGI(TAG, "processSendBuffer consumed %d bytes", m2 - m1);
 
 } // processSendBuffer
 

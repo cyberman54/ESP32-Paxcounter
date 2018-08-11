@@ -1,7 +1,7 @@
 // Hardware related definitions for generic ESP32 boards
 
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no LoRa
-#define HAS_SPI  1 // comment out if device shall not send data via SPI
+#define HAS_SPI 1  // comment out if device shall not send data via SPI
 
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
