@@ -52,8 +52,8 @@ void PayloadConvert::addConfig(configData_t value) {
   cursor += 10;
 }
 
-void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
-                               float cputemp, uint32_t mem) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
+                               uint32_t mem, uint8_t reset1, uint8_t reset2) {
   uint32_t temp = (uint32_t)cputemp;
   buffer[cursor++] = highByte(voltage);
   buffer[cursor++] = lowByte(voltage);
@@ -73,6 +73,8 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
   buffer[cursor++] = (byte)((mem & 0x00FF0000) >> 16);
   buffer[cursor++] = (byte)((mem & 0x0000FF00) >> 8);
   buffer[cursor++] = (byte)((mem & 0x000000FF));
+  buffer[cursor++] = (byte)(reset1);
+  buffer[cursor++] = (byte)(reset2);
 }
 
 #ifdef HAS_GPS
@@ -127,12 +129,14 @@ void PayloadConvert::addConfig(configData_t value) {
               value.vendorfilter ? true : false, value.gpsmode ? true : false);
 }
 
-void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
-                               float cputemp, uint32_t mem) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
+                               uint32_t mem, uint8_t reset1, uint8_t reset2) {
   writeUint16(voltage);
   writeUptime(uptime);
   writeTemperature(cputemp);
   writeUint32(mem);
+  writeUint8(reset1);
+  writeUint8(reset2);
 }
 
 #ifdef HAS_GPS
@@ -245,8 +249,8 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.adrmode;
 }
 
-void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
-                               float celsius, uint32_t mem) {
+void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
+                               uint32_t mem, uint8_t reset1, uint8_t reset2) {
   uint16_t temp = celsius * 10;
   uint16_t volt = voltage / 10;
 #ifdef HAS_BATTERY_PROBE

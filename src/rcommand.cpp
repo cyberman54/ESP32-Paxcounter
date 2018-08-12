@@ -203,7 +203,8 @@ void get_status(uint8_t val[]) {
 #endif
   payload.reset();
   payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
-                    ESP.getFreeHeap());
+                    ESP.getFreeHeap(), rtc_get_reset_reason(0),
+                    rtc_get_reset_reason(1));
   SendData(STATUSPORT);
 };
 
@@ -225,21 +226,13 @@ void set_update(uint8_t val[]) {
   ESP_LOGI(TAG, "Stopping Wifi task on core 0");
   vTaskDelete(WifiLoopTask);
 
+  ESP_LOGI(TAG, "Stopping LORA task on core 1");
+  vTaskDelete(LoraTask);
+
   ESP_LOGI(TAG, "Connecting to %s", WIFI_SSID);
-  ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false)); // switch off monitor mode
-  //tcpipInit();
-  tcpip_adapter_init();
-  WiFi.mode(WIFI_STA);
-
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    ESP_LOGI(TAG, ".");
-    delay(500);
-  }
-
-  ESP_LOGI(TAG, "connected!");
+  ota_wifi_init();
   checkFirmwareUpdates();
+
 };
 
 // assign previously defined functions to set of numeric remote commands

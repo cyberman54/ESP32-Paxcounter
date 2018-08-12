@@ -5,6 +5,8 @@
 #include "configmanager.h"
 #include "lorawan.h"
 #include "macsniff.h"
+#include <rom/rtc.h>
+#include "ota.h"
 
 #include <WiFi.h>
 #include "SecureOTA.h"

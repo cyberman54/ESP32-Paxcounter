@@ -36,6 +36,7 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(
       esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+  ESP_ERROR_CHECK(esp_wifi_stop());
   ESP_ERROR_CHECK(
       esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));

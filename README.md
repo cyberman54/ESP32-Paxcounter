@@ -142,6 +142,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 3-10:	Uptime [seconds]
 	bytes 11-14: 	CPU temperature [°C]
 	bytes 15-18:	Free RAM [bytes]
+	bytes 19-20:	Last reset reasons core 0 / core 1
 
 **Port #3:** Device configuration query result
 

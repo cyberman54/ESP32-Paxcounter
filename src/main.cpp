@@ -46,6 +46,7 @@ TaskHandle_t WifiLoopTask = NULL;
 // RTos send queues for payload transmit
 #ifdef HAS_LORA
 QueueHandle_t LoraSendQueue;
+TaskHandle_t LoraTask = NULL;
 #endif
 
 #ifdef HAS_SPI
@@ -271,7 +272,7 @@ void setup() {
 
   ESP_LOGI(TAG, "Starting Lora task on core 1");
   xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1,
-                          (5 | portPRIVILEGE_BIT), NULL, 1);
+                          (5 | portPRIVILEGE_BIT), &LoraTask, 1);
 #endif
 
 // if device has GPS and it is enabled, start GPS reader task on core 0 with
@@ -332,6 +333,8 @@ void loop() {
     processSendBuffer();
     // check send cycle and enqueue payload if cycle is expired
     sendPayload();
+    // reset watchdog	
+    vTaskDelay(1 / portTICK_PERIOD_MS);
 
   } // loop()
 }

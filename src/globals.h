@@ -51,7 +51,7 @@ extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
-extern QueueHandle_t LoraSendQueue, SPISendQueue;
+//extern QueueHandle_t LoraSendQueue, SPISendQueue;
 extern TaskHandle_t WifiLoopTask;
 
 extern std::array<uint64_t, 0xff>::iterator it;
@@ -68,7 +68,13 @@ extern std::array<uint64_t, 0xff> beacons;
 #include "payload.h"
 
 #ifdef HAS_LORA
+extern QueueHandle_t LoraSendQueue;
+extern TaskHandle_t LoraTask;
 #include "lorawan.h"
+#endif
+
+#ifdef HAS_SPI
+extern QueueHandle_t SPISendQueue;
 #endif
 
 #ifdef HAS_DISPLAY

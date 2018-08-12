@@ -37,16 +37,16 @@ void checkFirmwareUpdates()
   const String latest = bintray.getLatestVersion();
   if (latest.length() == 0)
   {
-    Serial.println("Could not load info about the latest firmware, so nothing to update. Continue ...");
+    ESP_LOGI(TAG, "Could not load info about the latest firmware, so nothing to update. Continue ...");
     return;
   }
   else if (atoi(latest.c_str()) <= VERSION)
   {
-    //Serial.println("The current firmware is up to date. Continue ...");
+    //ESP_LOGI(TAG, "The current firmware is up to date. Continue ...");
     return;
   }
 
-  Serial.println("There is a new version of firmware available: v." + latest);
+  ESP_LOGI(TAG, "There is a new version of firmware available: v.%s", latest);
   processOTAUpdate(latest);
 }
 
@@ -64,7 +64,7 @@ void processOTAUpdate(const String &version)
   String firmwarePath = bintray.getBinaryPath(version);
   if (!firmwarePath.endsWith(".bin"))
   {
-    Serial.println("Unsupported binary format. OTA update cannot be performed!");
+    ESP_LOGI(TAG, "Unsupported binary format. OTA update cannot be performed!");
     return;
   }
 
@@ -76,7 +76,7 @@ void processOTAUpdate(const String &version)
 
   if (!client.connect(currentHost.c_str(), port))
   {
-    Serial.println("Cannot connect to " + currentHost);
+    ESP_LOGI(TAG, "Cannot connect to %s", currentHost);
     return;
   }
 
@@ -89,12 +89,12 @@ void processOTAUpdate(const String &version)
       client.setCACert(bintray.getCertificate(currentHost));
       if (!client.connect(currentHost.c_str(), port))
       {
-        Serial.println("Redirect detected! Cannot connect to " + currentHost + " for some reason!");
+        ESP_LOGI(TAG, "Redirect detected! Cannot connect to %s for some reason!", currentHost);
         return;
       }
     }
 
-    //Serial.println("Requesting: " + firmwarePath);
+    //ESP_LOGI(TAG, "Requesting: " + firmwarePath);
 
     client.print(String("GET ") + firmwarePath + " HTTP/1.1\r\n");
     client.print(String("Host: ") + currentHost + "\r\n");
@@ -106,7 +106,7 @@ void processOTAUpdate(const String &version)
     {
       if (millis() - timeout > RESPONSE_TIMEOUT_MS)
       {
-        Serial.println("Client Timeout !");
+        ESP_LOGI(TAG, "Client Timeout !");
         client.stop();
         return;
       }
@@ -128,17 +128,17 @@ void processOTAUpdate(const String &version)
       {
         if (line.indexOf("200") > 0)
         {
-          //Serial.println("Got 200 status code from server. Proceeding to firmware flashing");
+          ESP_LOGI(TAG, "Got 200 status code from server. Proceeding to firmware flashing");
           redirect = false;
         }
         else if (line.indexOf("302") > 0)
         {
-          //Serial.println("Got 302 status code from server. Redirecting to the new address");
+          ESP_LOGI(TAG, "Got 302 status code from server. Redirecting to the new address");
           redirect = true;
         }
         else
         {
-          //Serial.println("Could not get a valid firmware url");
+          ESP_LOGI(TAG, "Could not get a valid firmware url");
           //Unexptected HTTP response. Retry or skip update?
           redirect = false;
         }
@@ -148,12 +148,12 @@ void processOTAUpdate(const String &version)
       if (line.startsWith("Location: "))
       {
         String newUrl = getHeaderValue(line, "Location: ");
-        //Serial.println("Got new url: " + newUrl);
+        ESP_LOGI(TAG, "Got new url: %s", newUrl);
         newUrl.remove(0, newUrl.indexOf("//") + 2);
         currentHost = newUrl.substring(0, newUrl.indexOf('/'));
         newUrl.remove(newUrl.indexOf(currentHost), currentHost.length());
         firmwarePath = newUrl;
-        //Serial.println("firmwarePath: " + firmwarePath);
+        ESP_LOGI(TAG, "firmwarePath: %s", firmwarePath);
         continue;
       }
 
@@ -161,13 +161,13 @@ void processOTAUpdate(const String &version)
       if (line.startsWith("Content-Length: "))
       {
         contentLength = atoi((getHeaderValue(line, "Content-Length: ")).c_str());
-        Serial.println("Got " + String(contentLength) + " bytes from server");
+        ESP_LOGI(TAG, "Got %s bytes from server", String(contentLength));
       }
 
       if (line.startsWith("Content-Type: "))
       {
         String contentType = getHeaderValue(line, "Content-Type: ");
-        //Serial.println("Got " + contentType + " payload.");
+        ESP_LOGI(TAG, "Got %s payload", contentType);
         if (contentType == "application/octet-stream")
         {
           isValidContentType = true;
@@ -181,16 +181,16 @@ void processOTAUpdate(const String &version)
   {
     if (Update.begin(contentLength))
     {
-      Serial.println("Starting Over-The-Air update. This may take some time to complete ...");
+      ESP_LOGI(TAG, "Starting Over-The-Air update. This may take some time to complete ...");
       size_t written = Update.writeStream(client);
 
       if (written == contentLength)
       {
-        Serial.println("Written : " + String(written) + " successfully");
+        ESP_LOGI(TAG, "Written %s successfully", String(written));
       }
       else
       {
-        Serial.println("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?");
+        ESP_LOGI(TAG, "Written only %s / %s Retry?", String(written), String(contentLength));
         // Retry??
       }
 
@@ -198,28 +198,28 @@ void processOTAUpdate(const String &version)
       {
         if (Update.isFinished())
         {
-          Serial.println("OTA update has successfully completed. Rebooting ...");
+          ESP_LOGI(TAG, "OTA update has successfully completed. Rebooting ...");
           ESP.restart();
         }
         else
         {
-          Serial.println("Something went wrong! OTA update hasn't been finished properly.");
+          ESP_LOGI(TAG, "Something went wrong! OTA update hasn't been finished properly.");
         }
       }
       else
       {
-        Serial.println("An error Occurred. Error #: " + String(Update.getError()));
+        ESP_LOGI(TAG, "An error occurred. Error #: %s", String(Update.getError()));
       }
     }
     else
     {
-      Serial.println("There isn't enough space to start OTA update");
+      ESP_LOGI(TAG, "There isn't enough space to start OTA update");
       client.flush();
     }
   }
   else
   {
-    Serial.println("There was no valid content in the response from the OTA server!");
+    ESP_LOGI(TAG, "There was no valid content in the response from the OTA server!");
     client.flush();
   }
 }

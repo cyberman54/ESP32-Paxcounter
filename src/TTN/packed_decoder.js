@@ -18,7 +18,7 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        return decode(bytes, [uint16, uptime, temperature, uint32], ['voltage', 'uptime', 'cputemp', 'memory']);
+        return decode(bytes, [uint16, uptime, temperature, uint32, uint8, uint8], ['voltage', 'uptime', 'cputemp', 'memory', 'reset', 'reset']);
     }
 
 
@@ -181,6 +181,7 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         uint16: uint16,
         uint32: uint32,
         uptime: uptime,
+        reset: reset,
         temperature: temperature,
         humidity: humidity,
         latLng: latLng,
