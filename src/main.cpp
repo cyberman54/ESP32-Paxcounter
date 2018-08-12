@@ -330,6 +330,8 @@ void loop() {
     processSendBuffer();
     // check send cycle and enqueue payload if cycle is expired
     sendPayload();
+    // reset watchdog	
+    vTaskDelay(1 / portTICK_PERIOD_MS);
 
   } // loop()
 }
