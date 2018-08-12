@@ -222,17 +222,7 @@ void get_gps(uint8_t val[]) {
 
 void set_update(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get firmware update");
-
-  ESP_LOGI(TAG, "Stopping Wifi task on core 0");
-  vTaskDelete(WifiLoopTask);
-
-  ESP_LOGI(TAG, "Stopping LORA task on core 1");
-  vTaskDelete(LoraTask);
-
-  ESP_LOGI(TAG, "Connecting to %s", WIFI_SSID);
-  ota_wifi_init();
-  checkFirmwareUpdates();
-
+  ota_update = true;
 };
 
 // assign previously defined functions to set of numeric remote commands

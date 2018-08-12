@@ -27,7 +27,8 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
-configData_t cfg; // struct holds current device configuration
+configData_t cfg;        // struct holds current device configuration
+bool ota_update = false; // triggers OTA update
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
@@ -70,6 +71,9 @@ static const char TAG[] = "main";
 
 void setup() {
 
+  // disable the default wifi logging
+  esp_log_level_set("wifi", ESP_LOG_NONE);
+
   char features[100] = "";
 
   // disable brownout detection
@@ -92,7 +96,8 @@ void setup() {
 
   // initialize system event handler for wifi task, needed for
   // wifi_sniffer_init()
-  esp_event_loop_init(NULL, NULL);
+  // esp_event_loop_init(NULL, NULL);
+  //ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
   // print chip information on startup if in verbose mode
 #ifdef VERBOSE
@@ -333,7 +338,7 @@ void loop() {
     processSendBuffer();
     // check send cycle and enqueue payload if cycle is expired
     sendPayload();
-    // reset watchdog	
+    // reset watchdog
     vTaskDelay(1 / portTICK_PERIOD_MS);
 
   } // loop()
