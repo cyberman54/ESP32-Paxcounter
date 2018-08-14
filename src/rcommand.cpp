@@ -138,7 +138,7 @@ void set_loraadr(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s",
            val[0] ? "on" : "off");
   cfg.adrmode = val[0] ? 1 : 0;
-LMIC_setAdrMode(cfg.adrmode);
+  LMIC_setAdrMode(cfg.adrmode);
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
@@ -267,10 +267,11 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
               TAG,
               "Remote command x%02X called with missing parameter(s), skipped",
               table[i].opcode);
-        break; // exit table lookup loop, command was found
-      }        // command validation
-    }          // command table lookup loop
-
+        break; // command found -> exit table lookup loop
+      }        // end of command validation
+    }          // end of command table lookup loop
+    if (i < 0) // command not found -> exit parser
+      break;
   } // command parsing loop
 
   if (storeflag)
