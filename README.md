@@ -6,6 +6,7 @@
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
 <img src="img/Paxcounter-lolin.gif">
+<img src="img/Paxcounter-Screen.png">
 
 # Use case
 
@@ -49,7 +50,7 @@ Target platform must be selected in [platformio.ini](https://github.com/cyberman
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
 
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
-<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A> for example.<br>
+<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A>, <A HREF="https://www.thingiverse.com/thing:3041339">T-BEAM</A> for example.<br>
 
 <b>Power consumption</b> was metered at around 750 - 1000mW, depending on board and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
 
@@ -115,7 +116,7 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 # Payload format
 
-You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L40):
+You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L12):
 
 - ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 
@@ -137,9 +138,10 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #2:** Device status query result
 
-  	byte 1-2:	Battery or USB Voltage [mV], 0 if unreadable
+  	byte 1-2:	Battery or USB Voltage [mV], 0 if no battery probe
 	byte 3-10:	Uptime [seconds]
 	bytes 11-14: 	CPU temperature [°C]
+	bytes 15-18:	Free RAM [bytes]
 
 **Port #3:** Device configuration query result
 
@@ -225,9 +227,9 @@ function Converter(decoded, port) {
 
 # Remote control
 
-The device listenes for remote control commands on LoRaWAN Port 2.
+The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
 
-Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings press button (if device has one), or send remote command 09 02 09 00 unconfirmed(!) once.
+Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings send remote command 09 02 09 00 unconfirmed(!) once.
 
 0x01 set scan RSSI limit
 
@@ -275,6 +277,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	0 = restart device
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
+	3 = flush send queues
 
 0x0A set LoRaWAN payload send cycle
 

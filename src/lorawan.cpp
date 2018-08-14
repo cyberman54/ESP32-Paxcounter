@@ -107,20 +107,8 @@ void get_hard_deveui(uint8_t *pdeveui) {
 
 #ifdef VERBOSE
 
-// Display a key
-void printKey(const char *name, const uint8_t *key, uint8_t len, bool lsb) {
-  const uint8_t *p;
-  char keystring[len + 1] = "", keybyte[3];
-  for (uint8_t i = 0; i < len; i++) {
-    p = lsb ? key + len - i - 1 : key + i;
-    sprintf(keybyte, "%02X", *p);
-    strncat(keystring, keybyte, 2);
-  }
-  ESP_LOGI(TAG, "%s: %s", name, keystring);
-}
-
 // Display OTAA keys
-void printKeys(void) {
+void showLoraKeys(void) {
   // LMIC may not have used callback to fill
   // all EUI buffer so we do it here to a temp
   // buffer to be able to display them
@@ -184,8 +172,13 @@ void onEvent(ev_t ev) {
     strcpy_P(buff, PSTR("JOINED"));
     sprintf(display_line6, " "); // clear previous lmic status
 
-    // set data rate adaptation
+    // set data rate adaptation according to saved setting
     LMIC_setAdrMode(cfg.adrmode);
+
+    // set cyclic lmic link check to off if no ADR because is not supported by
+    // ttn (but enabled by lmic after join)
+    LMIC_setLinkCheckMode(cfg.adrmode);
+
     // Set data rate and transmit power (note: txpower seems to be ignored by
     // the library)
     switch_lora(cfg.lorasf, cfg.txpower);
@@ -237,6 +230,53 @@ void lorawan_loop(void *pvParameters) {
   while (1) {
     os_runloop_once();                  // execute LMIC jobs
     vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+  }
+}
+
+// helper function to assign LoRa datarates to numeric spreadfactor values
+void switch_lora(uint8_t sf, uint8_t tx) {
+  if (tx > 20)
+    return;
+  cfg.txpower = tx;
+  switch (sf) {
+  case 7:
+    LMIC_setDrTxpow(DR_SF7, tx);
+    cfg.lorasf = sf;
+    break;
+  case 8:
+    LMIC_setDrTxpow(DR_SF8, tx);
+    cfg.lorasf = sf;
+    break;
+  case 9:
+    LMIC_setDrTxpow(DR_SF9, tx);
+    cfg.lorasf = sf;
+    break;
+  case 10:
+    LMIC_setDrTxpow(DR_SF10, tx);
+    cfg.lorasf = sf;
+    break;
+  case 11:
+#if defined(CFG_eu868)
+    LMIC_setDrTxpow(DR_SF11, tx);
+    cfg.lorasf = sf;
+    break;
+#elif defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF11CR, tx);
+    cfg.lorasf = sf;
+    break;
+#endif
+  case 12:
+#if defined(CFG_eu868)
+    LMIC_setDrTxpow(DR_SF12, tx);
+    cfg.lorasf = sf;
+    break;
+#elif defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF12CR, tx);
+    cfg.lorasf = sf;
+    break;
+#endif
+  default:
+    break;
   }
 }
 

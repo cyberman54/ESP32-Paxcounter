@@ -27,7 +27,6 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
-
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
@@ -42,12 +41,20 @@ hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
 volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
+// RTos send queues for payload transmit
+#ifdef HAS_LORA
+QueueHandle_t LoraSendQueue;
+#endif
+
+#ifdef HAS_SPI
+QueueHandle_t SPISendQueue;
+#endif
+
 portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
                                   // handler shared variables
 
-std::set<uint16_t> macs; // associative container holding unique MAC
-// adress hashes (Wifi + BLE)
+std::set<uint16_t> macs; // container holding unique MAC adress hashes
 
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
@@ -60,7 +67,7 @@ static const char TAG[] = "main";
 
 void setup() {
 
-  char features[64] = "";
+  char features[100] = "";
 
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
@@ -108,12 +115,35 @@ void setup() {
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
-// initialize LoRa
-#if HAS_LORA
-  strcat_P(features, " LORA");
+#ifdef VENDORFILTER
+  strcat_P(features, " OUIFLT");
 #endif
 
-  // initialize led
+// initialize LoRa
+#ifdef HAS_LORA
+  strcat_P(features, " LORA");
+  LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
+  if (LoraSendQueue == 0) {
+    ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
+    exit(0);
+  } else
+    ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
+             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+#endif
+
+// initialize SPI
+#ifdef HAS_SPI
+  strcat_P(features, " SPI");
+  SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
+  if (SPISendQueue == 0) {
+    ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");
+    exit(0);
+  } else
+    ESP_LOGI(TAG, "SPI send queue created, size %d Bytes",
+             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+#endif
+
+    // initialize led
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
@@ -205,13 +235,13 @@ void setup() {
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
-  strcat_P(features, " PAYLOAD_PLAIN");
+  strcat_P(features, " PLAIN");
 #elif PAYLOAD_ENCODER == 2
-  strcat_P(features, " PAYLOAD_PACKED");
+  strcat_P(features, " PACKED");
 #elif PAYLOAD_ENCODER == 3
-  strcat_P(features, " PAYLOAD_LPP_DYN");
+  strcat_P(features, " LPPDYN");
 #elif PAYLOAD_ENCODER == 4
-  strcat_P(features, " PAYLOAD_LPP_PKD");
+  strcat_P(features, " LPPPKD");
 #endif
 
   // show compiled features
@@ -220,7 +250,7 @@ void setup() {
 #ifdef HAS_LORA
   // output LoRaWAN keys to console
 #ifdef VERBOSE
-  printKeys();
+  showLoraKeys();
 #endif
 
   // initialize LoRaWAN LMIC run-time environment
@@ -264,12 +294,12 @@ void setup() {
   ESP_LOGI(TAG, "Starting Wifi task on core 0");
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
-  // arduino-esp32 core note: do this *after* wifi has started, since function
+  // arduino-esp32 core. Note: do this *after* wifi has started, since function
   // gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
   xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
                           NULL, 0);
-} // setup
+} // setup()
 
 /* end Arduino SETUP
  * ------------------------------------------------------------ */
@@ -294,13 +324,16 @@ void loop() {
     updateDisplay();
 #endif
 
-    // check housekeeping cycle and to homework if expired
+    // check housekeeping cycle and if expired do homework
     checkHousekeeping();
-    // check send cycle and send payload if cycle is expired
+    // check send queue and process it
+    processSendBuffer();
+    // check send cycle and enqueue payload if cycle is expired
     sendPayload();
-    vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+    // reset watchdog	
+    vTaskDelay(1 / portTICK_PERIOD_MS);
 
-  } // end of infinite main loop
+  } // loop()
 }
 
 /* end Arduino main loop

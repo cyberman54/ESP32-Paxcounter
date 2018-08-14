@@ -97,12 +97,14 @@ void refreshtheDisplay() {
     u8x8.setPowerSave(!cfg.screenon);
   }
 
-  // if display is switched off we don't need to refresh it and save time
+  // if display is switched off we don't refresh it and save time
   if (!DisplayState)
     return;
 
+  uint8_t msgWaiting = 0;
+  char buff[16]; // 16 chars line buffer
+
   // update counter (lines 0-1)
-  char buff[16];
   snprintf(
       buff, sizeof(buff), "PAX:%-4d",
       (int)macs.size()); // convert 16-bit MAC counter to decimal counter value
@@ -112,7 +114,7 @@ void refreshtheDisplay() {
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
   u8x8.setCursor(0, 2);
-  u8x8.printf("B:%.1fV", batt_voltage / 1000.0);
+  u8x8.printf(batt_voltage > 4000 ? "B:USB " : "B:%.1fV", batt_voltage / 1000.0);
 #endif
 
 // update GPS status (line 2)
@@ -166,8 +168,21 @@ void refreshtheDisplay() {
 
   // update LMiC event display (line 7)
   u8x8.setCursor(0, 7);
-  u8x8.printf("%-16s", display_line7);
+  u8x8.printf("%-14s", display_line7);
+
+  // update LoRa send queue display (line 7)
+  msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
+  if (msgWaiting) {
+    sprintf(buff, "%2d", msgWaiting);
+    u8x8.setCursor(14, 7);
+    u8x8.setInverseFont(1);
+    u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
+    u8x8.setInverseFont(0);
+  } else
+    u8x8.printf("  ");
+
 #endif // HAS_LORA
+
 } // refreshDisplay()
 
 void IRAM_ATTR DisplayIRQ() {

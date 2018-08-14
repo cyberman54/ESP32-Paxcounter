@@ -5,4 +5,4 @@
 #define HAS_LED 22        // on board LED on GPIO22
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 
-#define HAS_SPI   1       // comment out if device shall not send data via SPI
+#define HAS_SPI 1         // comment out if device shall not send data via SPI

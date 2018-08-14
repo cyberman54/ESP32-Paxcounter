@@ -24,6 +24,18 @@ int8_t isBeacon(uint64_t mac) {
     return -1;
 }
 
+// Display a key
+void printKey(const char *name, const uint8_t *key, uint8_t len, bool lsb) {
+  const uint8_t *p;
+  char keystring[len + 1] = "", keybyte[3];
+  for (uint8_t i = 0; i < len; i++) {
+    p = lsb ? key + len - i - 1 : key + i;
+    sprintf(keybyte, "%02X", *p);
+    strncat(keystring, keybyte, 2);
+  }
+  ESP_LOGI(TAG, "%s: %s", name, keystring);
+}
+
 uint64_t macConvert(uint8_t *paddr) {
   return ((uint64_t)paddr[0]) | ((uint64_t)paddr[1] << 8) |
          ((uint64_t)paddr[2] << 16) | ((uint64_t)paddr[3] << 24) |
@@ -34,10 +46,12 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[16]; // temporary buffer for printf
   bool added = false;
-  int8_t beaconID;   // beacon number in test monitor mode
+  int8_t beaconID;    // beacon number in test monitor mode
   uint16_t hashedmac; // temporary buffer for generated hash value
-  uint32_t addr2int,
-      vendor2int; // temporary buffer for shortened MAC and Vendor OUI
+  uint32_t addr2int;  // temporary buffer for shortened MAC
+#ifdef VENDORFILTER
+  uint32_t vendor2int; // temporary buffer for Vendor OUI
+#endif
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
@@ -88,13 +102,13 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
       if (cfg.monitormode) {
         beaconID = isBeacon(macConvert(paddr));
         if (beaconID >= 0) {
-          ESP_LOGI(TAG, "Beacon ID#d detected", beaconID);
+          ESP_LOGI(TAG, "Beacon ID#%d detected", beaconID);
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
           blink_LED(COLOR_WHITE, 2000);
 #endif
           payload.reset();
           payload.addAlarm(rssi, beaconID);
-          senddata(BEACONPORT);
+          SendData(BEACONPORT);
         }
       };
 

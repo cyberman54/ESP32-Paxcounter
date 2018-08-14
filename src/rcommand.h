@@ -10,10 +10,10 @@
 typedef struct {
   const uint8_t opcode;
   void (*func)(uint8_t []);
+  uint8_t params;
   const bool store;
 } cmd_t;
 
 void rcommand(uint8_t cmd[], uint8_t cmdlength);
-void switch_lora(uint8_t sf, uint8_t tx);
 
 #endif

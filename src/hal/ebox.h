@@ -1,11 +1,12 @@
-// Hardware related definitions for ebox ESP32-bit with RFM95 LoRa
+// Hardware related definitions for ebox ESP32-bit with external connected RFM95 LoRa
 
-#define HAS_LORA  1       // comment out if device shall not send data via LoRa
-#define HAS_SPI   1       // comment out if device shall not send data via SPI
+#define HAS_LORA 1       // comment out if device shall not send data via LoRa
+#define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1
 
 #define HAS_LED GPIO_NUM_23 // blue LED on board
 #define HAS_BUTTON GPIO_NUM_0 // button "PROG" on board
+#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 // re-define pin definitions of pins_arduino.h
 #define PIN_SPI_SS    GPIO_NUM_18 // ESP32 GPIO18 (Pin18) -- SX1276 NSS (Pin19) SPI Chip Select Input
