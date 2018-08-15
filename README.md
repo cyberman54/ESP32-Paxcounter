@@ -140,8 +140,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
   	byte 1-2:	Battery or USB Voltage [mV], 0 if no battery probe
 	byte 3-10:	Uptime [seconds]
-	bytes 11-14: 	CPU temperature [°C]
-	bytes 15-18:	Free RAM [bytes]
+	byte 11: 	CPU temperature [°C]
+	bytes 12-15:	Free RAM [bytes]
 
 **Port #3:** Device configuration query result
 
