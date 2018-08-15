@@ -269,10 +269,10 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
               table[i].opcode);
         break; // command found -> exit table lookup loop
       }        // end of command validation
-    }          // end of command table lookup loop
-    if (i < 0) // command not found -> exit parser
+    }          // end of table lookup loop
+    if (i < 0) // command not found -> exit parser loop
       break;
-  } // command parsing loop
+  } // end of command parsing loop
 
   if (storeflag)
     saveConfig();
