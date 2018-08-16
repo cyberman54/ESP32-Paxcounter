@@ -6,7 +6,7 @@
 static const char TAG[] = "wifi";
 
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
-                                      WIFI_CHANNEL_MAX, 0,
+                                      WIFI_CHANNEL_MAX, 100,
                                       WIFI_COUNTRY_POLICY_MANUAL};
 
 // using IRAM_:ATTR here to speed up callback function
