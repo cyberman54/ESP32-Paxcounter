@@ -54,7 +54,6 @@ void PayloadConvert::addConfig(configData_t value) {
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
                                float cputemp, uint32_t mem) {
-  uint32_t temp = (uint32_t)cputemp;
   buffer[cursor++] = highByte(voltage);
   buffer[cursor++] = lowByte(voltage);
   buffer[cursor++] = (byte)((uptime & 0xFF00000000000000) >> 56);
@@ -65,10 +64,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
   buffer[cursor++] = (byte)((uptime & 0x0000000000FF0000) >> 16);
   buffer[cursor++] = (byte)((uptime & 0x000000000000FF00) >> 8);
   buffer[cursor++] = (byte)((uptime & 0x00000000000000FF));
-  buffer[cursor++] = (byte)((temp & 0xFF000000) >> 24);
-  buffer[cursor++] = (byte)((temp & 0x00FF0000) >> 16);
-  buffer[cursor++] = (byte)((temp & 0x0000FF00) >> 8);
-  buffer[cursor++] = (byte)((temp & 0x000000FF));
+  buffer[cursor++] = (byte)(cputemp);
   buffer[cursor++] = (byte)((mem & 0xFF000000) >> 24);
   buffer[cursor++] = (byte)((mem & 0x00FF0000) >> 16);
   buffer[cursor++] = (byte)((mem & 0x0000FF00) >> 8);
@@ -131,7 +127,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime,
                                float cputemp, uint32_t mem) {
   writeUint16(voltage);
   writeUptime(uptime);
-  writeTemperature(cputemp);
+  writeUint8((byte)cputemp);
   writeUint32(mem);
 }
 
