@@ -1,13 +1,13 @@
 /*  Hardware related definitions for TTGO V2.1 Board
 / ATTENTION: check your board version!
 / Different versions are on the market which need different settings in this file:
-/ - without label       -> settings (2)
-/ - labeled v1.5 on pcb -> settings (2) 
-/ - labeled v1.6 on pcb -> settings (1)
+/ - without label       -> use settings (2)
+/ - labeled V1.5 on pcb -> use settings (2) 
+/ - labeled V1.6 on pcb -> use settings (1)
 / Choose the right configuration below
 */
 
-// (1) settings for board labeled "t3 v1.6" on pcb
+// (1) settings for board labeled "T3_V1.6" on pcb
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define HAS_SPI 1        // comment out if device shall not send data via SPI

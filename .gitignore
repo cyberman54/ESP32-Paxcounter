@@ -9,6 +9,4 @@
 .vscode/.browse.c_cpp.db*
 .clang_complete
 .gcc-flags.json
-platformio.ini
-src/paxcounter.conf
 src/loraconf.h
