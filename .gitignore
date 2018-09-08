@@ -5,8 +5,8 @@
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 .vscode/launch.json
-src/loraconf.h
 .vscode/*.db
 .vscode/.browse.c_cpp.db*
 .clang_complete
 .gcc-flags.json
+src/loraconf.h
