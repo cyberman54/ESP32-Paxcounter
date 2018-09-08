@@ -14,7 +14,7 @@
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
-#define HAS_LED GPIO_NUM_23 // green on board LED
+#define HAS_LED GPIO_NUM_25 // green on board LED
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // uses GPIO7
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
 
@@ -25,9 +25,7 @@
 #define PIN_SPI_SCK   GPIO_NUM_5  // ESP32 GPIO5 (Pin5)   -- HPD13A SCK (Pin5) SPI Clock Input
 
 // non arduino pin definitions
-//#define RST   GPIO_NUM_23 // ESP32 GPIO23 <-> HPD13A RESET
-#define RST   LMIC_UNUSED_PIN   // connected to ESP32 RST/EN (old board)
-//#define RST   GPIO_NUM_12     // (boards labeled v1.5)
+#define RST   GPIO_NUM_23 // ESP32 GPIO23 <-> HPD13A RESET
 #define DIO0  GPIO_NUM_26 // ESP32 GPIO26 <-> HPD13A IO0
 #define DIO1  GPIO_NUM_33 // ESP32 GPIO33 <-> HPDIO1 <-> HPD13A IO1
 #define DIO2  GPIO_NUM_32 // ESP32 GPIO32 <-> HPDIO2 <-> HPD13A IO2
