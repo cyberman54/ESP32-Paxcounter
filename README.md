@@ -49,6 +49,9 @@ Depending on board hardware following features are supported:
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
 
+<b>A suitable board with paxcounter software preloaded can be purchased via AliExpress 
+<A HREF="https://bit.ly/2MXqZh2">here</A></b>.<br>
+
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
 <A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A>, <A HREF="https://www.thingiverse.com/thing:3041339">T-BEAM</A> for example.<br>
 
