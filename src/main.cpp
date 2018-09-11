@@ -48,6 +48,7 @@ ESP32 hardware timers
 
 // Basic Config
 #include "main.h"
+#include "spislave.h"
 
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
@@ -197,14 +198,8 @@ void setup() {
 // initialize SPI
 #ifdef HAS_SPI
   strcat_P(features, " SPI");
-  SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
-  if (SPISendQueue == 0) {
-    ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");
-    exit(0);
-  } else
-    ESP_LOGI(TAG, "SPI send queue created, size %d Bytes",
-             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 #endif
+  assert(spi_init() == ESP_OK);
 
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
@@ -310,17 +305,6 @@ void setup() {
                           2,         // priority of the task
                           &GpsTask,  // task handle
                           1);        // CPU core
-#endif
-
-#ifdef HAS_SPI
-  ESP_LOGI(TAG, "Starting SPIloop...");
-  xTaskCreatePinnedToCore(spi_loop,  // task function
-                          "spiloop", // name of task
-                          2048,      // stack size of task
-                          (void *)1, // parameter of the task
-                          2,         // priority of the task
-                          &SpiTask,  // task handle
-                          0);        // CPU core
 #endif
 
   // start state machine

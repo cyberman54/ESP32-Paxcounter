@@ -1,5 +1,6 @@
 // Basic Config
 #include "globals.h"
+#include "spislave.h"
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {
@@ -19,12 +20,7 @@ void SendData(uint8_t port) {
     ESP_LOGI(TAG, "%d bytes enqueued to send on LoRa", payload.getSize());
 #endif
 
-// enqueue message in SPI send queue
-#ifdef HAS_SPI
-  if (xQueueSendToBack(SPISendQueue, (void *)&SendBuffer, (TickType_t)0) ==
-      pdTRUE)
-    ESP_LOGI(TAG, "%d bytes enqueued to send on SPI", payload.getSize());
-#endif
+  spi_enqueuedata(port, &SendBuffer);
 
   // clear counter if not in cumulative counter mode
   if ((port == COUNTERPORT) && (cfg.countermode != 1)) {
@@ -66,7 +62,6 @@ void flushQueues() {
 #ifdef HAS_LORA
   xQueueReset(LoraSendQueue);
 #endif
-#ifdef HAS_SPI
-  xQueueReset(SPISendQueue);
-#endif
+
+  spi_queuereset();
 }

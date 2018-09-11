@@ -66,10 +66,6 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 #include "lorawan.h"
 #endif
 
-#ifdef HAS_SPI
-#include "spisend.h"
-#endif
-
 #ifdef HAS_DISPLAY
 #include "display.h"
 #endif
