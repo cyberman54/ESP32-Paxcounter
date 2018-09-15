@@ -10,3 +10,4 @@
 .clang_complete
 .gcc-flags.json
 src/loraconf.h
+platformio.ini
