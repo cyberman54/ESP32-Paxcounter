@@ -15,8 +15,9 @@ void doHomework() {
   // update uptime counter
   uptime();
 
-  if (ota_update)
-    start_ota_update();
+  // check if update mode trigger switch was set
+  if (cfg.runmode == 1)
+    ESP.restart();
 
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE

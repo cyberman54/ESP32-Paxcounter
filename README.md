@@ -278,6 +278,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 	3 = flush send queues
+	9 = OTA software update via Wifi
 
 0x0A set LoRaWAN payload send cycle
 

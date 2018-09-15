@@ -27,8 +27,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
-configData_t cfg;        // struct holds current device configuration
-bool ota_update = false; // triggers OTA update
+configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
@@ -97,7 +96,7 @@ void setup() {
   // initialize system event handler for wifi task, needed for
   // wifi_sniffer_init()
   // esp_event_loop_init(NULL, NULL);
-  //ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
   // print chip information on startup if in verbose mode
 #ifdef VERBOSE
@@ -122,6 +121,13 @@ void setup() {
 
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
+
+  // reboot to firmware update mode if ota trigger switch is set
+  if (cfg.runmode == 1) {
+    cfg.runmode = 0;
+    saveConfig();
+    start_ota_update();
+  }
 
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
@@ -302,8 +308,8 @@ void setup() {
   ESP_LOGI(TAG, "Starting Wifi task on core 0");
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
-  // arduino-esp32 core. Note: do this *after* wifi has started, since function
-  // gets it's seed from RF noise
+  // arduino-esp32 core. Note: do this *after* wifi has started, since
+  // function gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
   xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
                           &WifiLoopTask, 0);
@@ -318,7 +324,8 @@ void setup() {
 void loop() {
 
   while (1) {
-    // state machine for switching display, LED, button, housekeeping, senddata
+    // state machine for switching display, LED, button, housekeeping,
+    // senddata
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();

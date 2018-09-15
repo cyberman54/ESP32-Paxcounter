@@ -31,6 +31,11 @@ void set_reset(uint8_t val[]) {
     sprintf(display_line6, "Queue reset");
     flushQueues();
     break;
+  case 9: // reset and ask for software update via Wifi OTA
+    ESP_LOGI(TAG, "Remote command: software update via Wifi");
+    sprintf(display_line6, "Software update");
+    cfg.runmode = 1;
+    break;
   default:
     ESP_LOGW(TAG, "Remote command: reset called with invalid parameter(s)");
   }
@@ -220,27 +225,22 @@ void get_gps(uint8_t val[]) {
 #endif
 };
 
-void set_update(uint8_t val[]) {
-  ESP_LOGI(TAG, "Remote command: get firmware update");
-  ota_update = true;
-};
-
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, #bytes params,
-// flag (1 = do make settings persistent / 0 = don't)
+// flag (true = do make settings persistent / false = don't)
 //
 cmd_t table[] = {
     {0x01, set_rssi, 1, true},          {0x02, set_countmode, 1, true},
     {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
     {0x05, set_lorasf, 1, true},        {0x06, set_lorapower, 1, true},
     {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
-    {0x09, set_reset, 1, false},        {0x0a, set_sendcycle, 1, true},
+    {0x09, set_reset, 1, true},         {0x0a, set_sendcycle, 1, true},
     {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
     {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
-    {0x20, set_update, 0, false},       {0x80, get_config, 0, false},
-    {0x81, get_status, 0, false},       {0x84, get_gps, 0, false}};
+    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
+    {0x84, get_gps, 0, false}};
 
 const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table

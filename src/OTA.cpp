@@ -36,16 +36,8 @@ volatile bool isValidContentType = false;
 static const char TAG[] = "main";
 
 void start_ota_update() {
-  ota_update = false; // clear ota trigger switch
-
-  ESP_LOGI(TAG, "Stopping Wifi scanner");
-  vTaskDelete(WifiLoopTask);
 
   ESP_LOGI(TAG, "Starting Wifi OTA update");
-  // switch off monitor more
-  ESP_ERROR_CHECK(
-      esp_wifi_set_promiscuous(false)); // now switch on monitor mode
-  ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(NULL));
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
@@ -56,7 +48,7 @@ void start_ota_update() {
 
   ESP_LOGI(TAG, "connected to %s", WIFI_SSID);
 
-  checkFirmwareUpdates();
+  checkFirmwareUpdates(); // gets and flashes new firmware and restarts
   ESP.restart(); // reached only if update was not successful
 
 } // start_ota_update
