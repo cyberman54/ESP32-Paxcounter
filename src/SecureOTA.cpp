@@ -31,9 +31,13 @@ const uint32_t RESPONSE_TIMEOUT_MS = 5000;
 volatile int contentLength = 0;
 volatile bool isValidContentType = false;
 
+// Local logging tag
+static const char TAG[] = "main";
+
 void checkFirmwareUpdates()
 {
   // Fetch the latest firmware version
+  ESP_LOGI(TAG, "Checking latest firmware version...");
   const String latest = bintray.getLatestVersion();
   if (latest.length() == 0)
   {
@@ -42,11 +46,11 @@ void checkFirmwareUpdates()
   }
   else if (atoi(latest.c_str()) <= VERSION)
   {
-    //ESP_LOGI(TAG, "The current firmware is up to date. Continue ...");
+    ESP_LOGI(TAG, "The current firmware is up to date. Continue ...");
     return;
   }
 
-  ESP_LOGI(TAG, "There is a new version of firmware available: v.%s", latest);
+  ESP_LOGI(TAG, "There is a new version of firmware available: v.%s", latest.c_str());
   processOTAUpdate(latest);
 }
 
@@ -76,7 +80,7 @@ void processOTAUpdate(const String &version)
 
   if (!client.connect(currentHost.c_str(), port))
   {
-    ESP_LOGI(TAG, "Cannot connect to %s", currentHost);
+    ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     return;
   }
 
@@ -89,7 +93,7 @@ void processOTAUpdate(const String &version)
       client.setCACert(bintray.getCertificate(currentHost));
       if (!client.connect(currentHost.c_str(), port))
       {
-        ESP_LOGI(TAG, "Redirect detected! Cannot connect to %s for some reason!", currentHost);
+        ESP_LOGI(TAG, "Redirect detected! Cannot connect to %s for some reason!", currentHost.c_str());
         return;
       }
     }
@@ -148,12 +152,12 @@ void processOTAUpdate(const String &version)
       if (line.startsWith("Location: "))
       {
         String newUrl = getHeaderValue(line, "Location: ");
-        ESP_LOGI(TAG, "Got new url: %s", newUrl);
+        ESP_LOGI(TAG, "Got new url: %s", newUrl.c_str());
         newUrl.remove(0, newUrl.indexOf("//") + 2);
         currentHost = newUrl.substring(0, newUrl.indexOf('/'));
         newUrl.remove(newUrl.indexOf(currentHost), currentHost.length());
         firmwarePath = newUrl;
-        ESP_LOGI(TAG, "firmwarePath: %s", firmwarePath);
+        ESP_LOGI(TAG, "firmwarePath: %s", firmwarePath.c_str());
         continue;
       }
 
@@ -161,13 +165,13 @@ void processOTAUpdate(const String &version)
       if (line.startsWith("Content-Length: "))
       {
         contentLength = atoi((getHeaderValue(line, "Content-Length: ")).c_str());
-        ESP_LOGI(TAG, "Got %s bytes from server", String(contentLength));
+        ESP_LOGI(TAG, "Got %d bytes from server", contentLength);
       }
 
       if (line.startsWith("Content-Type: "))
       {
         String contentType = getHeaderValue(line, "Content-Type: ");
-        ESP_LOGI(TAG, "Got %s payload", contentType);
+        ESP_LOGI(TAG, "Got %s payload", contentType.c_str());
         if (contentType == "application/octet-stream")
         {
           isValidContentType = true;
@@ -186,11 +190,11 @@ void processOTAUpdate(const String &version)
 
       if (written == contentLength)
       {
-        ESP_LOGI(TAG, "Written %s successfully", String(written));
+        ESP_LOGI(TAG, "Written %d successfully", written);
       }
       else
       {
-        ESP_LOGI(TAG, "Written only %s / %s Retry?", String(written), String(contentLength));
+        ESP_LOGI(TAG, "Written only %d / %d Retry?", written, contentLength);
         // Retry??
       }
 
@@ -208,7 +212,7 @@ void processOTAUpdate(const String &version)
       }
       else
       {
-        ESP_LOGI(TAG, "An error occurred. Error #: %s", String(Update.getError()));
+        ESP_LOGI(TAG, "An error occurred. Error #: %d", Update.getError());
       }
     }
     else
