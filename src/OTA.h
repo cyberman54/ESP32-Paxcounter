@@ -2,12 +2,12 @@
 #define OTA_H
 
 #include <Arduino.h>
-#include "globals.h"
-#include <BintrayClient.h>
 #include <WiFi.h>
-#include "ota.h"
-#include "SecureOTA.h"
+#include "globals.h"
+#include "wifiscan.h"
 
+void checkFirmwareUpdates();
+void processOTAUpdate(const String &version);
 void start_ota_update();
 
 #endif // OTA_H
