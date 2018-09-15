@@ -273,10 +273,13 @@ void rcommand(uint8_t cmd[], uint8_t cmdlength) {
               TAG,
               "Remote command x%02X called with missing parameter(s), skipped",
               table[i].opcode);
-        break; // exit table lookup loop, command was found
-      }        // command validation
-    }          // command table lookup loop
-
+        break;   // command found -> exit table lookup loop
+      }          // end of command validation
+    }            // end of command table lookup loop
+    if (i < 0) { // command not found -> exit parser
+      ESP_LOGI(TAG, "Unknown remote command x%02X, ignored", cmd[cursor]);
+      break;
+    }
   } // command parsing loop
 
   if (storeflag)
