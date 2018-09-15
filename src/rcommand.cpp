@@ -203,7 +203,8 @@ void get_status(uint8_t val[]) {
 #endif
   payload.reset();
   payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
-                    ESP.getFreeHeap());
+                    ESP.getFreeHeap(), rtc_get_reset_reason(0),
+                    rtc_get_reset_reason(1));
   SendData(STATUSPORT);
 };
 
@@ -217,6 +218,11 @@ void get_gps(uint8_t val[]) {
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif
+};
+
+void set_update(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: get firmware update");
+  ota_update = true;
 };
 
 // assign previously defined functions to set of numeric remote commands
@@ -233,8 +239,8 @@ cmd_t table[] = {
     {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
-    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
-    {0x84, get_gps, 0, false}};
+    {0x20, set_update, 0, false},       {0x80, get_config, 0, false},
+    {0x81, get_status, 0, false},       {0x84, get_gps, 0, false}};
 
 const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table

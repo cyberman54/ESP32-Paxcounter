@@ -5,6 +5,7 @@
 #include "configmanager.h"
 #include "lorawan.h"
 #include "macsniff.h"
+#include <rom/rtc.h>
 
 // table of remote commands and assigned functions
 typedef struct {

@@ -21,7 +21,6 @@ function Decoder(bytes, port) {
         return decode(bytes, [uint16, uptime, uint8, uint32], ['voltage', 'uptime', 'cputemp', 'memory']);
     }
 
-
     if (port === 3) {
         // device config data      
         return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
@@ -181,6 +180,7 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         uint16: uint16,
         uint32: uint32,
         uptime: uptime,
+        reset: reset,
         temperature: temperature,
         humidity: humidity,
         latLng: latLng,

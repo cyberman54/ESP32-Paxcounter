@@ -27,7 +27,8 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "main.h"
 
-configData_t cfg; // struct holds current device configuration
+configData_t cfg;        // struct holds current device configuration
+bool ota_update = false; // triggers OTA update
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t channel = 0;                       // channel rotation counter
 uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
@@ -41,9 +42,12 @@ hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
 volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
+TaskHandle_t WifiLoopTask = NULL;
+
 // RTos send queues for payload transmit
 #ifdef HAS_LORA
 QueueHandle_t LoraSendQueue;
+TaskHandle_t LoraTask = NULL;
 #endif
 
 #ifdef HAS_SPI
@@ -67,6 +71,9 @@ static const char TAG[] = "main";
 
 void setup() {
 
+  // disable the default wifi logging
+  esp_log_level_set("wifi", ESP_LOG_NONE);
+
   char features[100] = "";
 
   // disable brownout detection
@@ -89,7 +96,8 @@ void setup() {
 
   // initialize system event handler for wifi task, needed for
   // wifi_sniffer_init()
-  esp_event_loop_init(NULL, NULL);
+  // esp_event_loop_init(NULL, NULL);
+  //ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
   // print chip information on startup if in verbose mode
 #ifdef VERBOSE
@@ -269,7 +277,7 @@ void setup() {
 
   ESP_LOGI(TAG, "Starting Lora task on core 1");
   xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1,
-                          (5 | portPRIVILEGE_BIT), NULL, 1);
+                          (5 | portPRIVILEGE_BIT), &LoraTask, 1);
 #endif
 
 // if device has GPS and it is enabled, start GPS reader task on core 0 with
@@ -298,7 +306,7 @@ void setup() {
   // gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
   xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
-                          NULL, 0);
+                          &WifiLoopTask, 0);
 } // setup()
 
 /* end Arduino SETUP
@@ -330,7 +338,7 @@ void loop() {
     processSendBuffer();
     // check send cycle and enqueue payload if cycle is expired
     sendPayload();
-    // reset watchdog	
+    // reset watchdog
     vTaskDelay(1 / portTICK_PERIOD_MS);
 
   } // loop()

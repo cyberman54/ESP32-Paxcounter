@@ -4,6 +4,7 @@
 // Basic config
 #include "globals.h"
 #include "senddata.h"
+#include "ota.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -13,6 +14,9 @@ void doHomework() {
 
   // update uptime counter
   uptime();
+
+  if (ota_update)
+    start_ota_update();
 
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE

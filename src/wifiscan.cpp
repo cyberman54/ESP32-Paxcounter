@@ -6,7 +6,7 @@
 static const char TAG[] = "wifi";
 
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
-                                      WIFI_CHANNEL_MAX, 0,
+                                      WIFI_CHANNEL_MAX, 100,
                                       WIFI_COUNTRY_POLICY_MANUAL};
 
 // using IRAM_:ATTR here to speed up callback function
@@ -36,6 +36,7 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(
       esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+  ESP_ERROR_CHECK(esp_wifi_stop());
   ESP_ERROR_CHECK(
       esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
