@@ -22,7 +22,7 @@
 #define LPP_DIGITAL_OUTPUT 1 // 1 byte
 #define LPP_ANALOG_INPUT 2   // 2 bytes, 0.01 signed
 #define LPP_LUMINOSITY 101   // 2 bytes, 1 lux unsigned
-#define LPP_Presence 102     //	1 byte
+#define LPP_PRESENCE 102     //	1 byte
 
 class PayloadConvert {
 
