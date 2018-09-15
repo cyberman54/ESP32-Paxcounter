@@ -49,24 +49,25 @@ void start_ota_update() {
   ESP_LOGI(TAG, "connected to %s", WIFI_SSID);
 
   checkFirmwareUpdates(); // gets and flashes new firmware and restarts
-  ESP.restart(); // reached only if update was not successful
+  ESP.restart();          // reached only if update was not successful
 
 } // start_ota_update
 
 void checkFirmwareUpdates() {
   // Fetch the latest firmware version
-  ESP_LOGI(TAG, "Checking latest firmware version...");
+  ESP_LOGI(TAG, "OTA mode, checking latest firmware version on server...");
   const String latest = bintray.getLatestVersion();
   if (latest.length() == 0) {
-    ESP_LOGI(TAG, "Could not load info about the latest firmware, so nothing "
-                  "to update. Continue ...");
+    ESP_LOGI(
+        TAG,
+        "Could not load info about the latest firmware. Rebooting to runmode.");
     return;
   } else if (atoi(latest.c_str()) <= VERSION) {
-    ESP_LOGI(TAG, "The current firmware is up to date. Continue ...");
+    ESP_LOGI(TAG, "Current firmware is up to date. Rebooting to runmode.");
     return;
   }
 
-  ESP_LOGI(TAG, "There is a new version of firmware available: v.%s",
+  ESP_LOGI(TAG, "New firmware version v%s available. Downloading...",
            latest.c_str());
   processOTAUpdate(latest);
 }
@@ -82,7 +83,7 @@ inline String getHeaderValue(String header, String headerName) {
 void processOTAUpdate(const String &version) {
   String firmwarePath = bintray.getBinaryPath(version);
   if (!firmwarePath.endsWith(".bin")) {
-    ESP_LOGI(TAG, "Unsupported binary format. OTA update cannot be performed!");
+    ESP_LOGI(TAG, "Unsupported binary format, OTA update cancelled.");
     return;
   }
 
@@ -103,8 +104,7 @@ void processOTAUpdate(const String &version) {
       client.stop();
       client.setCACert(bintray.getCertificate(currentHost));
       if (!client.connect(currentHost.c_str(), port)) {
-        ESP_LOGI(TAG,
-                 "Redirect detected! Cannot connect to %s for some reason!",
+        ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
         return;
       }
@@ -120,7 +120,7 @@ void processOTAUpdate(const String &version) {
     unsigned long timeout = millis();
     while (client.available() == 0) {
       if (millis() - timeout > RESPONSE_TIMEOUT_MS) {
-        ESP_LOGI(TAG, "Client Timeout !");
+        ESP_LOGI(TAG, "Client Timeout.");
         client.stop();
         return;
       }
@@ -146,7 +146,7 @@ void processOTAUpdate(const String &version) {
                         "new address");
           redirect = true;
         } else {
-          ESP_LOGI(TAG, "Could not get a valid firmware url");
+          ESP_LOGI(TAG, "Could not get a valid firmware url.");
           // Unexptected HTTP response. Retry or skip update?
           redirect = false;
         }
@@ -184,20 +184,20 @@ void processOTAUpdate(const String &version) {
   // check whether we have everything for OTA update
   if (contentLength && isValidContentType) {
     if (Update.begin(contentLength)) {
-      ESP_LOGI(TAG, "Starting Over-The-Air update. This may take some time to "
-                    "complete ...");
+      ESP_LOGI(TAG, "Starting OTA update. This will take some time to "
+                    "complete...");
       size_t written = Update.writeStream(client);
 
       if (written == contentLength) {
-        ESP_LOGI(TAG, "Written %d successfully", written);
+        ESP_LOGI(TAG, "Written %d bytes successfully", written);
       } else {
-        ESP_LOGI(TAG, "Written only %d / %d Retry?", written, contentLength);
+        ESP_LOGI(TAG, "Written only %d of %d bytes, OTA update cancelled.", written, contentLength);
         // Retry??
       }
 
       if (Update.end()) {
         if (Update.isFinished()) {
-          ESP_LOGI(TAG, "OTA update has successfully completed. Rebooting ...");
+          ESP_LOGI(TAG, "OTA update completed. Rebooting to runmode.");
           ESP.restart();
         } else {
           ESP_LOGI(TAG, "Something went wrong! OTA update hasn't been finished "

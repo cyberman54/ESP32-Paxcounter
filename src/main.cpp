@@ -24,7 +24,6 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 */
 
 // Basic Config
-#include "globals.h"
 #include "main.h"
 
 configData_t cfg; // struct holds current device configuration
