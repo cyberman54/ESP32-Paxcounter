@@ -15,10 +15,7 @@
  limitations under the License.
 */
 
-#include <WiFiClientSecure.h>
-#include <Update.h>
-#include <BintrayClient.h>
-#include "ota.h"
+#include "OTA.h"
 
 const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
 
@@ -41,15 +38,20 @@ void start_ota_update() {
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(2000);
+  int i = WIFI_MAX_TRY;
+  while (i--) {
     ESP_LOGI(TAG, "trying to connect to %s", WIFI_SSID);
+    if (WiFi.status() == WL_CONNECTED)
+      break;
+    delay(5000);
   }
+  if (i >= 0) {
+    ESP_LOGI(TAG, "connected to %s", WIFI_SSID);
+    checkFirmwareUpdates(); // gets and flashes new firmware and restarts
+  } else
+    ESP_LOGI(TAG, "could not connect to %s, rebooting.", WIFI_SSID);
 
-  ESP_LOGI(TAG, "connected to %s", WIFI_SSID);
-
-  checkFirmwareUpdates(); // gets and flashes new firmware and restarts
-  ESP.restart();          // reached only if update was not successful
+  ESP.restart(); // reached only if update was not successful or no wifi connect
 
 } // start_ota_update
 
@@ -191,7 +193,8 @@ void processOTAUpdate(const String &version) {
       if (written == contentLength) {
         ESP_LOGI(TAG, "Written %d bytes successfully", written);
       } else {
-        ESP_LOGI(TAG, "Written only %d of %d bytes, OTA update cancelled.", written, contentLength);
+        ESP_LOGI(TAG, "Written only %d of %d bytes, OTA update cancelled.",
+                 written, contentLength);
         // Retry??
       }
 

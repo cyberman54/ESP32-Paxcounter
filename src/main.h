@@ -9,7 +9,7 @@
 #include "senddata.h"
 #include "cyclic.h"
 #include "beacon_array.h"
-#include "ota.h"
+#include "OTA.h"
 
 #include <esp_spi_flash.h>  // needed for reading ESP32 chip attributes
 #include <esp_event_loop.h> // needed for Wifi event handler

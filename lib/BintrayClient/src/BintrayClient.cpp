@@ -109,7 +109,7 @@ String BintrayClient::getLatestVersion() const
     const size_t bufferSize = 1024;
     if (jsonResult.length() > bufferSize)
     {
-        ESP_LOGI(TAG, "Error: Could not parse JSON. Input data is too big!");
+        Serial.println("Error: Could parse JSON. Input data is too big!");
         return version;
     }
     StaticJsonBuffer<bufferSize> jsonBuffer;
@@ -118,7 +118,7 @@ String BintrayClient::getLatestVersion() const
     // Check for errors in parsing
     if (!root.success())
     {
-        ESP_LOGI(TAG, "Error: Could not parse JSON!");
+        Serial.println("Error: Could not parse JSON!");
         return version;
     }
     return root.get<String>("name");
@@ -133,7 +133,7 @@ String BintrayClient::getBinaryPath(const String &version) const
     const size_t bufferSize = 1024;
     if (jsonResult.length() > bufferSize)
     {
-        ESP_LOGI(TAG, "Error: Could parse JSON. Input data is too big!");
+        Serial.println("Error: Could parse JSON. Input data is too big!");
         return path;
     }
     StaticJsonBuffer<bufferSize> jsonBuffer;
@@ -142,7 +142,7 @@ String BintrayClient::getBinaryPath(const String &version) const
     JsonObject &firstItem = root[0];
     if (!root.success())
     { //Check for errors in parsing
-        ESP_LOGI(TAG, "Error: Could not parse JSON!");
+        Serial.println("Error: Could not parse JSON!");
         return path;
     }
     return "/" + getUser() + "/" + getRepository() + "/" + firstItem.get<String>("path");

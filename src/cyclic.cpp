@@ -4,7 +4,7 @@
 // Basic config
 #include "globals.h"
 #include "senddata.h"
-#include "ota.h"
+#include "OTA.h"
 
 // Local logging tag
 static const char TAG[] = "main";
