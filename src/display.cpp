@@ -36,14 +36,14 @@ void init_display(const char *Productname, const char *Version) {
   u8x8.draw2x2String(0, 0, Productname);
   u8x8.setInverseFont(0);
   u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
+  vTaskDelay(1500 / portTICK_PERIOD_MS);
   u8x8.clear();
   u8x8.setFlipMode(1);
   u8x8.setInverseFont(1);
   u8x8.draw2x2String(0, 0, Productname);
   u8x8.setInverseFont(0);
   u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
+  vTaskDelay(1500 / portTICK_PERIOD_MS);
 
   u8x8.setFlipMode(0);
   u8x8.clear();
@@ -74,7 +74,7 @@ void init_display(const char *Productname, const char *Version) {
   DisplayKey(buf, 8, true);
 #endif // HAS_LORA
 
-  delay(5000);
+  vTaskDelay(3000 / portTICK_PERIOD_MS);
   u8x8.clear();
   u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
   u8x8.draw2x2String(0, 0, "PAX:0");

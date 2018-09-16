@@ -43,7 +43,7 @@ void start_ota_update() {
     ESP_LOGI(TAG, "trying to connect to %s", WIFI_SSID);
     if (WiFi.status() == WL_CONNECTED)
       break;
-    delay(5000);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
   if (i >= 0) {
     ESP_LOGI(TAG, "connected to %s", WIFI_SSID);

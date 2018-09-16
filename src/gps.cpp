@@ -42,7 +42,7 @@ void gps_loop(void *pvParameters) {
         while (GPS_Serial.available()) {
           gps.encode(GPS_Serial.read());
         }
-        vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+        vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
       }
       // after GPS function was disabled, close connect to GPS device
       GPS_Serial.end();
@@ -58,7 +58,7 @@ void gps_loop(void *pvParameters) {
         Wire.requestFrom(GPS_ADDR | 0x01, 32);
         while (Wire.available()) {
           gps.encode(Wire.read());
-          vTaskDelay(1 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
+          vTaskDelay(2 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
         }
       }
       // after GPS function was disabled, close connect to GPS device
@@ -67,7 +67,7 @@ void gps_loop(void *pvParameters) {
 #endif // GPS Type
     }
 
-    vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+    vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
 
   } // end of infinite loop
 
