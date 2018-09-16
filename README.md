@@ -229,7 +229,7 @@ function Converter(decoded, port) {
 
 The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
 
-Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings send remote command 09 02 09 00 unconfirmed(!) once.
+Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x01 set scan RSSI limit
 
@@ -272,13 +272,13 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 	useful to clear pending commands from LoRaWAN server quere, or to check RSSI on device
 
-0x09 reset functions
+0x09 reset functions (send this command with confirmed ack only to avoid boot loops!)
 
 	0 = restart device
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 	3 = flush send queues
-	9 = OTA software update via Wifi
+	9 = reboot device to OTA update via Wifi mode
 
 0x0A set LoRaWAN payload send cycle
 
