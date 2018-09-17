@@ -25,6 +25,9 @@ function Decoder(bytes, port) {
     decoded.uptime = ((bytes[i++] << 56) | (bytes[i++] << 48) | (bytes[i++] << 40) | (bytes[i++] << 32) |
       (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
     decoded.temp = bytes[i++];
+    decoded.memory = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
+    decoded.reset0 = bytes[i++];
+    decoded.reset1 = bytes[i++];
   }
 
   if (port === 5) {
