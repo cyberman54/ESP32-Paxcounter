@@ -60,7 +60,7 @@ var version = function (bytes) {
         throw new Error('version must have exactly 10 bytes');
     }
     return String.fromCharCode.apply(null, bytes).split('\u0000')[0];
-   };
+};
 version.BYTES = 10;
 
 var uint8 = function (bytes) {
