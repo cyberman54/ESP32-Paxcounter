@@ -16,31 +16,30 @@ import requests
 from os.path import basename
 from platformio import util
 
-Import('env')
+Import("env")
 
 project_config = util.load_project_config()
 bintray_config = {k: v for k, v in project_config.items("bintray")}
-version = project_config.get("common", "release_version")
+version = project_config.get("ota", "release_version")
+package = env.get("PIOENV")
 
 #
 # Push new firmware to the Bintray storage using API
 #
 
 
-def publish_firmware(source, target, env):
+def publish_bintray(source, target, env):
     firmware_path = str(source[0])
     firmware_name = basename(firmware_path)
 
     print("Uploading {0} to Bintray. Version: {1}".format(
         firmware_name, version))
 
-    print(firmware_path, firmware_name)
-
     url = "/".join([
         "https://api.bintray.com", "content",
         bintray_config.get("user"),
         bintray_config.get("repository"),
-        bintray_config.get("package"), version, firmware_name
+        package, version, firmware_name
     ])
 
     print(url)
@@ -65,7 +64,8 @@ def publish_firmware(source, target, env):
 
 
 # Custom upload command and program name
+
 env.Replace(
-    PROGNAME="firmware_v_%s" % version,
-    UPLOADCMD=publish_firmware
+    PROGNAME="firmware_" + package + "_v%s" % version,
+    UPLOADCMD=publish_bintray
 )

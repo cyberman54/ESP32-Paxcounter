@@ -90,7 +90,7 @@ void setup() {
   esp_log_set_vprintf(redirect_log);
 #endif
 
-  ESP_LOGI(TAG, "Starting %s v%s", PROGNAME, PROGVERSION);
+  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
 
   // initialize system event handler for wifi task, needed for
   // wifi_sniffer_init()
@@ -213,7 +213,7 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
-  init_display(PROGNAME, PROGVERSION);
+  init_display(PRODUCTNAME, PROGVERSION);
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/

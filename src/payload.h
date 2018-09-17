@@ -64,6 +64,7 @@ private:
   void writeUint8(uint8_t i);
   void writeHumidity(float humidity);
   void writeTemperature(float temperature);
+  void writeVersion(char * version);
   void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
                    bool h);
 

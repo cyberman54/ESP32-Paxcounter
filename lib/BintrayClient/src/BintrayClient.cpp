@@ -1,4 +1,5 @@
 /*
+ Parts of this file
  Copyright (c) 2014-present PlatformIO <contact@platformio.org>
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -94,7 +95,7 @@ String BintrayClient::requestHTTPContent(const String &url) const
     }
     else
     {
-        Serial.printf("GET request failed, error: %s\n", http.errorToString(httpCode).c_str());
+        ESP_LOGE(TAG, "GET request failed, error: %s", http.errorToString(httpCode).c_str());
     }
 
     http.end();
@@ -109,7 +110,7 @@ String BintrayClient::getLatestVersion() const
     const size_t bufferSize = 1024;
     if (jsonResult.length() > bufferSize)
     {
-        Serial.println("Error: Could parse JSON. Input data is too big!");
+        ESP_LOGE(TAG, "Error: Firmware version data invalid.");
         return version;
     }
     StaticJsonBuffer<bufferSize> jsonBuffer;
@@ -118,7 +119,7 @@ String BintrayClient::getLatestVersion() const
     // Check for errors in parsing
     if (!root.success())
     {
-        Serial.println("Error: Could not parse JSON!");
+        ESP_LOGE(TAG, "Error: Firmware version data not found.");
         return version;
     }
     return root.get<String>("name");
@@ -133,7 +134,7 @@ String BintrayClient::getBinaryPath(const String &version) const
     const size_t bufferSize = 1024;
     if (jsonResult.length() > bufferSize)
     {
-        Serial.println("Error: Could parse JSON. Input data is too big!");
+        ESP_LOGE(TAG, "Error: Firmware download path data invalid.");
         return path;
     }
     StaticJsonBuffer<bufferSize> jsonBuffer;
@@ -142,7 +143,7 @@ String BintrayClient::getBinaryPath(const String &version) const
     JsonObject &firstItem = root[0];
     if (!root.success())
     { //Check for errors in parsing
-        Serial.println("Error: Could not parse JSON!");
+        ESP_LOGE(TAG, "Error: Firmware download path not found.");
         return path;
     }
     return "/" + getUser() + "/" + getRepository() + "/" + firstItem.get<String>("path");
