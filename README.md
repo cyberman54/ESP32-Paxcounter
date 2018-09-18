@@ -74,10 +74,14 @@ Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for
 
 # Uploading
 
-To upload the code to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
+- **Initially, using USB/UART cable:**
+To upload the code via cable to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
 The LoPy/LoPy4/FiPy board needs to be set manually. See these 
 <A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it. Don't forget to press on board reset button after switching between run and bootloader mode.<p>
 The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
+	
+- **During runtime, using FOTA via WIFI:**
+After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by FOTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WIFI to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for FOTA are: 1. You own a Bintray repository (free), 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WIFI is present at the board's site, 4. WIFI credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
 
 # Legal note
 
