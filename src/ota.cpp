@@ -112,7 +112,7 @@ void processOTAUpdate(const String &version) {
       }
     }
 
-    ESP_LOGI(TAG, "Requesting %s", firmwarePath);
+    ESP_LOGI(TAG, "Requesting %s", firmwarePath.c_str());
 
     client.print(String("GET ") + firmwarePath + " HTTP/1.1\r\n");
     client.print(String("Host: ") + currentHost + "\r\n");
@@ -162,7 +162,6 @@ void processOTAUpdate(const String &version) {
         currentHost = newUrl.substring(0, newUrl.indexOf('/'));
         newUrl.remove(newUrl.indexOf(currentHost), currentHost.length());
         firmwarePath = newUrl;
-        ESP_LOGI(TAG, "firmwarePath: %s", firmwarePath.c_str());
         continue;
       }
 
@@ -196,7 +195,7 @@ void processOTAUpdate(const String &version) {
         ESP_LOGI(TAG,
                  "Starting OTA update, attempt %d of %d. This will take some "
                  "time to complete...",
-                 i, FLASH_MAX_TRY);
+                 FLASH_MAX_TRY - i, FLASH_MAX_TRY);
 
         written = Update.writeStream(client);
 
@@ -211,9 +210,12 @@ void processOTAUpdate(const String &version) {
       }
 
       if (Update.end()) {
-        
+
         if (Update.isFinished()) {
-          ESP_LOGI(TAG, "OTA update completed. Rebooting to runmode.");
+          ESP_LOGI(
+              TAG,
+              "OTA update completed. Rebooting to runmode with new version.");
+          client.stop();
           ESP.restart();
         } else {
           ESP_LOGI(TAG, "Something went wrong! OTA update hasn't been finished "
@@ -232,6 +234,10 @@ void processOTAUpdate(const String &version) {
              "There was no valid content in the response from the OTA server!");
     client.flush();
   }
+  ESP_LOGI(TAG,
+           "OTA update failed. Rebooting to runmode with current version.");
+  client.stop();
+  ESP.restart();
 }
 
 // helper function to compare two versions. Returns 1 if v2 is
