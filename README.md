@@ -132,7 +132,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 [**plain_decoder.js**](src/TTN/plain_decoder.js) | 
 [**plain_converter.js**](src/TTN/plain_converter.js) |
-[**pdacked_decoder.js**](src/TTN/packed_decoder.js) |
+[**packed_decoder.js**](src/TTN/packed_decoder.js) |
 [**packed_converter.js**](src/TTN/packed_converter.js)
 
 
