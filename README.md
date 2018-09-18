@@ -128,7 +128,13 @@ If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you 
 
 To track a paxcounter device with on board GPS and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. The formats *plain* and *packed* generate the fields `latitude`, `longitude` and `hdop` required by ttnmapper.
 
-Hereafter described is the default *plain* format, which uses MSB bit numbering.
+Hereafter described is the default *plain* format, which uses MSB bit numbering. Under /TTN in this repository you find some ready-to-go decoders which you may copy to your TTN console:
+
+[**plain_decoder.js**](src/TTN/plain_decoder.js) | 
+[**plain_converter.js**](src/TTN/plain_converter.js) |
+[**pdacked_decoder.js**](src/TTN/packed_decoder.js) |
+[**packed_converter.js**](src/TTN/packed_converter.js)
+
 
 **Port #1:** Paxcount data
 
@@ -181,50 +187,6 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1:		Beacon RSSI reception level
 	byte 2:		Beacon identifier (0..255)
-
-
-[**plain_decoder.js**](src/TTN/plain_decoder.js)
-
-```javascript
-function Decoder(bytes, port) {
-  var decoded = {};
-
-  if (port === 1) {
-    var i = 0;
-    decoded.wifi = (bytes[i++] << 8) | bytes[i++];
-    decoded.ble =  (bytes[i++] << 8) | bytes[i++];
-    if (bytes.length > 4) {
-      decoded.latitude =  ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
-      decoded.longitude = ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
-      decoded.sats = 	  (  bytes[i++] );
-      decoded.hdop = 	  (  bytes[i++] << 8)  | (bytes[i++] );
-      decoded.altitude =  (  bytes[i++] << 8)  | (bytes[i++] );
-    }
-  }
-
-  return decoded;
-}
-```
-
-[**plain_converter.js**](src/TTN/plain_converter.js)
-
-```javascript
-function Converter(decoded, port) {
-  
-  var converted = decoded;
-
-  if (port === 1) {
-    converted.pax = converted.ble + converted.wifi;
-    if (converted.hdop) {
-      converted.hdop /= 100;
-      converted.latitude /= 1000000;
-      converted.longitude /= 1000000;
-    }
-  }
-
-  return converted;
-}
-```
 
 # Remote control
 
