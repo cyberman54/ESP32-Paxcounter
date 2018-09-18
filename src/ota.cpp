@@ -112,7 +112,7 @@ void processOTAUpdate(const String &version) {
       }
     }
 
-    // ESP_LOGI(TAG, "Requesting: " + firmwarePath);
+    ESP_LOGI(TAG, "Requesting %s", firmwarePath);
 
     client.print(String("GET ") + firmwarePath + " HTTP/1.1\r\n");
     client.print(String("Host: ") + currentHost + "\r\n");
@@ -185,20 +185,33 @@ void processOTAUpdate(const String &version) {
 
   // check whether we have everything for OTA update
   if (contentLength && isValidContentType) {
-    if (Update.begin(contentLength)) {
-      ESP_LOGI(TAG, "Starting OTA update. This will take some time to "
-                    "complete...");
-      size_t written = Update.writeStream(client);
 
-      if (written == contentLength) {
-        ESP_LOGI(TAG, "Written %d bytes successfully", written);
-      } else {
-        ESP_LOGI(TAG, "Written only %d of %d bytes, OTA update cancelled.",
-                 written, contentLength);
-        // Retry??
+    size_t written;
+
+    if (Update.begin(contentLength)) {
+
+      int i = FLASH_MAX_TRY;
+      while ((i--) && (written != contentLength)) {
+
+        ESP_LOGI(TAG,
+                 "Starting OTA update, attempt %d of %d. This will take some "
+                 "time to complete...",
+                 i, FLASH_MAX_TRY);
+
+        written = Update.writeStream(client);
+
+        if (written == contentLength) {
+          ESP_LOGI(TAG, "Written %d bytes successfully", written);
+          break;
+        } else {
+          ESP_LOGI(TAG,
+                   "Written only %d of %d bytes, OTA update attempt cancelled.",
+                   written, contentLength);
+        }
       }
 
       if (Update.end()) {
+        
         if (Update.isFinished()) {
           ESP_LOGI(TAG, "OTA update completed. Rebooting to runmode.");
           ESP.restart();
@@ -209,6 +222,7 @@ void processOTAUpdate(const String &version) {
       } else {
         ESP_LOGI(TAG, "An error occurred. Error #: %d", Update.getError());
       }
+
     } else {
       ESP_LOGI(TAG, "There isn't enough space to start OTA update");
       client.flush();
