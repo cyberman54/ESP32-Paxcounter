@@ -43,14 +43,14 @@ void gen_lora_deveui(uint8_t *pdeveui) {
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
   ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
-  *p++ = dmac[0];
-  *p++ = dmac[1];
-  *p++ = dmac[2];
+  *p++ = dmac[5];
+  *p++ = dmac[4];
+  *p++ = dmac[3];
   *p++ = 0xff;
   *p++ = 0xfe;
-  *p++ = dmac[3];
-  *p++ = dmac[4];
-  *p++ = dmac[5];
+  *p++ = dmac[2];
+  *p++ = dmac[1];
+  *p++ = dmac[0];
 }
 */
 
