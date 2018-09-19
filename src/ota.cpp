@@ -216,7 +216,7 @@ void processOTAUpdate(const String &version) {
               TAG,
               "OTA update completed. Rebooting to runmode with new version.");
           client.stop();
-          ESP.restart();
+          return;
         } else {
           ESP_LOGI(TAG, "Something went wrong! OTA update hasn't been finished "
                         "properly.");
@@ -237,7 +237,6 @@ void processOTAUpdate(const String &version) {
   ESP_LOGI(TAG,
            "OTA update failed. Rebooting to runmode with current version.");
   client.stop();
-  ESP.restart();
 }
 
 // helper function to compare two versions. Returns 1 if v2 is
