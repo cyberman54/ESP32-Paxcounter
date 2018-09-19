@@ -1,37 +1,54 @@
 # build.py
 # pre-build script, setting up build environment
 
+import sys
+import os
+import os.path
 import requests
 from os.path import basename
 from platformio import util
 
 Import("env")
 
-# get keyfile from platformio.ini and parse it
+# get platformio environment variables
 project_config = util.load_project_config()
+
+# check if file loraconf.h is present in source directory
+keyfile = str(env.get("PROJECTSRC_DIR")) + "/loraconf.h"
+if os.path.isfile(keyfile) and os.access(keyfile, os.R_OK):
+    print "Parsing LORAWAN keys from " + keyfile
+else:
+    sys.exit("Missing file loraconf.h, please create it using template loraconf.sample.h! Aborting.")
+
+# check if file ota.conf is present in source directory
 keyfile = str(env.get("PROJECTSRC_DIR")) + "/" + project_config.get("common", "keyfile")
-print "Parsing OTA keys from " + keyfile
+if os.path.isfile(keyfile) and os.access(keyfile, os.R_OK):
+    print "Parsing OTA keys from " + keyfile
+else:
+    sys.exit("Missing file ota.conf, please create it using template ota.sample.conf! Aborting.")
+
+# parse file ota.conf
 mykeys = {}
 with open(keyfile) as myfile:
     for line in myfile:
         key, value = line.partition("=")[::2]
         mykeys[key.strip()] = str(value).strip()
 
-# get bintray credentials from keyfile
+# get bintray user credentials
 user = mykeys["BINTRAY_USER"]
 repository = mykeys["BINTRAY_REPO"]
 apitoken = mykeys["BINTRAY_API_TOKEN"]
 
-# get bintray parameters from platformio.ini
+# get bintray upload parameters
 version = project_config.get("common", "release_version")
 package = str(env.get("PIOENV"))
 
-# put bintray credentials to platformio environment
+# put bintray user credentials to platformio environment
 env.Replace(BINTRAY_USER=user)
 env.Replace(BINTRAY_REPO=repository)
 env.Replace(BINTRAY_API_TOKEN=apitoken)
 
-# get runtime credentials from keyfile and put them to compiler directive
+# get runtime credentials and put them to compiler directive
 env.Replace(CPPDEFINES=[
     ('WIFI_SSID', '\\"' + mykeys["OTA_WIFI_SSID"] + '\\"'), 
     ('WIFI_PASS', '\\"' + mykeys["OTA_WIFI_PASS"] + '\\"'),
