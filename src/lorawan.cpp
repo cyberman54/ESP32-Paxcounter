@@ -37,6 +37,23 @@ void gen_lora_deveui(uint8_t *pdeveui) {
   }
 }
 
+/* The above function should be changed to this one, but this would be a breaking change
+
+// DevEUI generator using devices's MAC address
+void gen_lora_deveui(uint8_t *pdeveui) {
+  uint8_t *p = pdeveui, dmac[6];
+  ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
+  *p++ = dmac[0];
+  *p++ = dmac[1];
+  *p++ = dmac[2];
+  *p++ = 0xff;
+  *p++ = 0xfe;
+  *p++ = dmac[3];
+  *p++ = dmac[4];
+  *p++ = dmac[5];
+}
+*/
+
 // Function to do a byte swap in a byte array
 void RevBytes(unsigned char *b, size_t c) {
   u1_t i;
