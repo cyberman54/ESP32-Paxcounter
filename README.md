@@ -32,7 +32,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 
-*SPI only*: (coming soon)
+*SPI only*: (code yet to come)
 
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32
@@ -47,7 +47,7 @@ Depending on board hardware following features are supported:
 - GPS
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
-Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
+Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
 
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
 <A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A>, <A HREF="https://www.thingiverse.com/thing:3041339">T-BEAM</A> for example.<br>
@@ -62,7 +62,7 @@ Before compiling the code,
 
 - **create file loraconf.h in your local /src directory** using the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. If you're using popular <A HREF="https://thethingsnetwork.org">TheThingsNetwork</A> you can copy&paste the keys from TTN console or output of ttnctl.
 
-- **create file ota.conf in your local /src directory** using the template [ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf). Enter your WIFI network&key and your Bintray user account data in this file. If you do not want to use wireless firmware updates you don't need to touch the contents of the file, just rename ota.sample.conf to ota.conf.
+- **create file ota.conf in your local /src directory** using the template [ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates. If you want to push own OTA updates you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
 To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings.
 
@@ -83,7 +83,7 @@ The LoPy/LoPy4/FiPy board needs to be set manually. See these
 The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
 	
 - **During runtime, using FOTA via WIFI:**
-After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by FOTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WIFI to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for FOTA are: 1. You own a Bintray repository (free), 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WIFI is present at the board's site, 4. WIFI credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
+After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by FOTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WIFI to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for FOTA are: 1. You own a Bintray repository, 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WIFI is present at the board's site, 4. WIFI credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
 
 # Legal note
 
