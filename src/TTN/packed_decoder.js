@@ -18,13 +18,12 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        return decode(bytes, [uint16, uptime, uint8, uint32], ['voltage', 'uptime', 'cputemp', 'memory']);
+        return decode(bytes, [uint16, uptime, uint8, uint32, uint8, uint8], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'reset1']);
     }
-
 
     if (port === 3) {
         // device config data      
-        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags']);
+        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap, version], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'version']);
     }
 
     if (port === 4) {
@@ -55,6 +54,14 @@ var bytesToInt = function (bytes) {
     }
     return i;
 };
+
+var version = function (bytes) {
+    if (bytes.length !== version.BYTES) {
+        throw new Error('version must have exactly 10 bytes');
+    }
+    return String.fromCharCode.apply(null, bytes).split('\u0000')[0];
+};
+version.BYTES = 10;
 
 var uint8 = function (bytes) {
     if (bytes.length !== uint8.BYTES) {
@@ -186,6 +193,7 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         latLng: latLng,
         hdop: hdop,
         bitmap: bitmap,
+        version: version,
         decode: decode
     };
 }

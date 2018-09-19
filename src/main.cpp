@@ -24,7 +24,6 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 */
 
 // Basic Config
-#include "globals.h"
 #include "main.h"
 
 configData_t cfg; // struct holds current device configuration
@@ -41,9 +40,12 @@ hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
 volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
+TaskHandle_t WifiLoopTask = NULL;
+
 // RTos send queues for payload transmit
 #ifdef HAS_LORA
 QueueHandle_t LoraSendQueue;
+TaskHandle_t LoraTask = NULL;
 #endif
 
 #ifdef HAS_SPI
@@ -67,6 +69,9 @@ static const char TAG[] = "main";
 
 void setup() {
 
+  // disable the default wifi logging
+  esp_log_level_set("wifi", ESP_LOG_NONE);
+
   char features[100] = "";
 
   // disable brownout detection
@@ -85,11 +90,12 @@ void setup() {
   esp_log_set_vprintf(redirect_log);
 #endif
 
-  ESP_LOGI(TAG, "Starting %s v%s", PROGNAME, PROGVERSION);
+  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
 
   // initialize system event handler for wifi task, needed for
   // wifi_sniffer_init()
-  esp_event_loop_init(NULL, NULL);
+  // esp_event_loop_init(NULL, NULL);
+  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
   // print chip information on startup if in verbose mode
 #ifdef VERBOSE
@@ -114,6 +120,13 @@ void setup() {
 
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
+
+  // reboot to firmware update mode if ota trigger switch is set
+  if (cfg.runmode == 1) {
+    cfg.runmode = 0;
+    saveConfig();
+    start_ota_update();
+  }
 
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
@@ -200,7 +213,7 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
-  init_display(PROGNAME, PROGVERSION);
+  init_display(PRODUCTNAME, PROGVERSION);
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
@@ -269,7 +282,7 @@ void setup() {
 
   ESP_LOGI(TAG, "Starting Lora task on core 1");
   xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1,
-                          (5 | portPRIVILEGE_BIT), NULL, 1);
+                          (5 | portPRIVILEGE_BIT), &LoraTask, 1);
 #endif
 
 // if device has GPS and it is enabled, start GPS reader task on core 0 with
@@ -294,11 +307,11 @@ void setup() {
   ESP_LOGI(TAG, "Starting Wifi task on core 0");
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
-  // arduino-esp32 core. Note: do this *after* wifi has started, since function
-  // gets it's seed from RF noise
+  // arduino-esp32 core. Note: do this *after* wifi has started, since
+  // function gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
   xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
-                          NULL, 0);
+                          &WifiLoopTask, 0);
 } // setup()
 
 /* end Arduino SETUP
@@ -310,7 +323,8 @@ void setup() {
 void loop() {
 
   while (1) {
-    // state machine for switching display, LED, button, housekeeping, senddata
+    // state machine for switching display, LED, button, housekeeping,
+    // senddata
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
     led_loop();
@@ -330,8 +344,8 @@ void loop() {
     processSendBuffer();
     // check send cycle and enqueue payload if cycle is expired
     sendPayload();
-    // reset watchdog	
-    vTaskDelay(1 / portTICK_PERIOD_MS);
+    // reset watchdog
+    vTaskDelay(2 / portTICK_PERIOD_MS);
 
   } // loop()
 }

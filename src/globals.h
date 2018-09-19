@@ -4,10 +4,6 @@
 // The mother of all embedded development...
 #include <Arduino.h>
 
-// attn: increment version after modifications to configData_t truct!
-#define PROGVERSION "1.4.23" // use max 10 chars here!
-#define PROGNAME "PAXCNT"
-
 // std::set for unified array functions
 #include <set>
 #include <array>
@@ -31,6 +27,7 @@ typedef struct {
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t gpsmode;       // 0=disabled, 1=enabled
   uint8_t monitormode;   // 0=disabled, 1=enabled
+  uint8_t runmode;       // 0=normal, 1=update
   char version[10];      // Firmware version
 } configData_t;
 
@@ -42,7 +39,7 @@ typedef struct {
 } MessageBuffer_t;
 
 // global variables
-extern configData_t cfg;                      // current device configuration
+extern configData_t cfg; // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t channel;                       // wifi channel rotation counter
 extern uint16_t macs_total, macs_wifi, macs_ble, batt_voltage; // display values
@@ -51,7 +48,8 @@ extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
 extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
-extern QueueHandle_t LoraSendQueue, SPISendQueue;
+// extern QueueHandle_t LoraSendQueue, SPISendQueue;
+extern TaskHandle_t WifiLoopTask;
 
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
@@ -67,7 +65,13 @@ extern std::array<uint64_t, 0xff> beacons;
 #include "payload.h"
 
 #ifdef HAS_LORA
+extern QueueHandle_t LoraSendQueue;
+extern TaskHandle_t LoraTask;
 #include "lorawan.h"
+#endif
+
+#ifdef HAS_SPI
+extern QueueHandle_t SPISendQueue;
 #endif
 
 #ifdef HAS_DISPLAY

@@ -196,11 +196,9 @@ void onEvent(ev_t ev) {
 
     if (LMIC.dataLen) {
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
-               LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);
-      // LMIC.snr = SNR twos compliment [dB] * 4
-      // LMIC.rssi = RSSI [dBm] (-196...+63)
+               LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr);
       sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi,
-              (signed char)LMIC.snr / 4);
+              (signed char)LMIC.snr);
 
       // check if command is received on command port, then call interpreter
       if ((LMIC.txrxFlags & TXRX_PORT) &&
@@ -229,7 +227,7 @@ void lorawan_loop(void *pvParameters) {
 
   while (1) {
     os_runloop_once();                  // execute LMIC jobs
-    vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
+    vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
   }
 }
 

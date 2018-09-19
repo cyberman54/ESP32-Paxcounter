@@ -4,6 +4,7 @@
 // Basic config
 #include "globals.h"
 #include "senddata.h"
+#include "OTA.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -13,6 +14,10 @@ void doHomework() {
 
   // update uptime counter
   uptime();
+
+  // check if update mode trigger switch was set
+  if (cfg.runmode == 1)
+    ESP.restart();
 
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE
