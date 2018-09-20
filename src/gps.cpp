@@ -25,17 +25,27 @@ void gps_loop(void *pvParameters) {
 // initialize and, if needed, configure, GPS
 #if defined GPS_SERIAL
   HardwareSerial GPS_Serial(1);
+  GPS_Serial.begin(GPS_SERIAL); // serial connect to GPS device
+
 #elif defined GPS_QUECTEL_L76
   Wire.begin(GPS_QUECTEL_L76, 400000); // I2C connect to GPS device with 400 KHz
+  uint8_t i2c_ret;
+  Wire.beginTransmission(GPS_ADDR);
+  Wire.write(0x00);                 // dummy write to start read
+  i2c_ret = Wire.endTransmission(); // check if chip is seen on i2c bus
+
+  if (i2c_ret) {
+    ESP_LOGE(TAG, "Quectel L76 GPS chip not found on i2c bus, bus error %d",
+             i2c_ret);
+    return;
+  }
+
 #endif
 
   while (1) {
 
     if (cfg.gpsmode) {
 #if defined GPS_SERIAL
-
-      // serial connect to GPS device
-      GPS_Serial.begin(GPS_SERIAL);
 
       while (cfg.gpsmode) {
         // feed GPS decoder with serial NMEA data from GPS device
@@ -49,16 +59,14 @@ void gps_loop(void *pvParameters) {
 
 #elif defined GPS_QUECTEL_L76
 
-      Wire.beginTransmission(GPS_ADDR);
-      Wire.write(0x00); // dummy write to start read
-      Wire.endTransmission();
-
       while (cfg.gpsmode) {
-        Wire.requestFrom(GPS_ADDR | 0x01, 32);
+        Wire.requestFrom(GPS_ADDR,
+                         128); // 128 is Wire.h buffersize arduino-ESP32
         while (Wire.available()) {
           gps.encode(Wire.read());
-          vTaskDelay(2 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
+          vTaskDelay(2 / portTICK_PERIOD_MS); // delay see L76 datasheet
         }
+        vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
       }
 
 #endif // GPS Type
