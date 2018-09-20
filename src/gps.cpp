@@ -25,19 +25,23 @@ void gps_loop(void *pvParameters) {
 // initialize and, if needed, configure, GPS
 #if defined GPS_SERIAL
   HardwareSerial GPS_Serial(1);
-  GPS_Serial.begin(GPS_SERIAL); // serial connect to GPS device
+  GPS_Serial.begin(GPS_SERIAL);
 
 #elif defined GPS_QUECTEL_L76
+  uint8_t ret;
   Wire.begin(GPS_QUECTEL_L76, 400000); // I2C connect to GPS device with 400 KHz
-  uint8_t i2c_ret;
   Wire.beginTransmission(GPS_ADDR);
-  Wire.write(0x00);                 // dummy write to start read
-  i2c_ret = Wire.endTransmission(); // check if chip is seen on i2c bus
+  Wire.write(0x00);             // dummy write
+  ret = Wire.endTransmission(); // check if chip is seen on i2c bus
 
-  if (i2c_ret) {
-    ESP_LOGE(TAG, "Quectel L76 GPS chip not found on i2c bus, bus error %d",
-             i2c_ret);
-    return;
+  if (ret) {
+    ESP_LOGE(TAG,
+             "Quectel L76 GPS chip not found on i2c bus, bus error %d. "
+             "Stopping GPS-Task.",
+             ret);
+    vTaskDelete(GpsTask);
+  } else {
+    ESP_LOGI(TAG, "Quectel L76 GPS chip found.");
   }
 
 #endif
@@ -46,31 +50,18 @@ void gps_loop(void *pvParameters) {
 
     if (cfg.gpsmode) {
 #if defined GPS_SERIAL
-
-      while (cfg.gpsmode) {
-        // feed GPS decoder with serial NMEA data from GPS device
-        while (GPS_Serial.available()) {
-          gps.encode(GPS_Serial.read());
-        }
-        vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
+      // feed GPS decoder with serial NMEA data from GPS device
+      while (GPS_Serial.available()) {
+        gps.encode(GPS_Serial.read());
       }
-      // after GPS function was disabled, close connect to GPS device
-      GPS_Serial.end();
-
 #elif defined GPS_QUECTEL_L76
-
-      while (cfg.gpsmode) {
-        Wire.requestFrom(GPS_ADDR,
-                         128); // 128 is Wire.h buffersize arduino-ESP32
-        while (Wire.available()) {
-          gps.encode(Wire.read());
-          vTaskDelay(2 / portTICK_PERIOD_MS); // delay see L76 datasheet
-        }
-        vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
+      Wire.requestFrom(GPS_ADDR, 32); // caution: this is a blocking call
+      while (Wire.available()) {
+        gps.encode(Wire.read());
+        vTaskDelay(2 / portTICK_PERIOD_MS); // 2ms delay according L76 datasheet
       }
-
-#endif // GPS Type
-    }
+#endif
+    } // if (cfg.gpsmode)
 
     vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
 

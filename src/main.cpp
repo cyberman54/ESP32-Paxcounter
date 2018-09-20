@@ -52,6 +52,10 @@ TaskHandle_t LoraTask = NULL;
 QueueHandle_t SPISendQueue;
 #endif
 
+#ifdef HAS_GPS
+TaskHandle_t GpsTask = NULL;
+#endif
+
 portMUX_TYPE timerMux =
     portMUX_INITIALIZER_UNLOCKED; // sync main loop and ISR when modifying IRQ
                                   // handler shared variables
@@ -280,7 +284,7 @@ void setup() {
   // (note: arduino main loop runs on core 1, too)
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
-  ESP_LOGI(TAG, "Starting Lora task on core 1");
+  ESP_LOGI(TAG, "Starting Lora...");
   xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1,
                           (5 | portPRIVILEGE_BIT), &LoraTask, 1);
 #endif
@@ -289,22 +293,20 @@ void setup() {
 // higher priority than wifi channel rotation task since we process serial
 // streaming NMEA data
 #ifdef HAS_GPS
-  if (cfg.gpsmode) {
-    ESP_LOGI(TAG, "Starting GPS task on core 0");
-    xTaskCreatePinnedToCore(gps_loop, "gpsloop", 2048, (void *)1, 2, NULL, 0);
-  }
+  ESP_LOGI(TAG, "Starting GPS...");
+  xTaskCreatePinnedToCore(gps_loop, "gpsloop", 2048, (void *)1, 2, &GpsTask, 0);
 #endif
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 #ifdef BLECOUNTER
   if (cfg.blescan) {
-    ESP_LOGI(TAG, "Starting BLE task on core 1");
+    ESP_LOGI(TAG, "Starting Bluetooth...");
     start_BLEscan();
   }
 #endif
 
   // start wifi in monitor mode and start channel rotation task on core 0
-  ESP_LOGI(TAG, "Starting Wifi task on core 0");
+  ESP_LOGI(TAG, "Starting Wifi...");
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since

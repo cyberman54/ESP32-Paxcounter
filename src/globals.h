@@ -55,6 +55,7 @@ extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
 #ifdef HAS_GPS
+extern TaskHandle_t GpsTask;
 #include "gps.h"
 #endif
 

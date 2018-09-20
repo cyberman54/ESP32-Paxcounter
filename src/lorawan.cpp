@@ -103,7 +103,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
   i2c_ret = Wire.endTransmission();
 
   // check if device was seen on i2c bus
-  if (ic2_ret == 0) {
+  if (i2c_ret == 0) {
     char deveui[32] = "";
     uint8_t data;
 
