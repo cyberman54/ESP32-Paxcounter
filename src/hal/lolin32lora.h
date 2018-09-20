@@ -32,8 +32,8 @@
 
 // Hardware pin definitions for LoRaNode32 Board with OLED I2C Display
 #define OLED_RST U8X8_PIN_NONE  // Not reset pin
-#define OLED_SDA 21             // ESP32 GPIO21 (Pin21) -- OLED SDA
-#define OLED_SCL 22             // ESP32 GPIO22 (Pin22) -- OLED SCL
+#define I2C_SDA 21             // ESP32 GPIO21 (Pin21) -- OLED SDA
+#define I2C_SCL 22             // ESP32 GPIO22 (Pin22) -- OLED SCL
 
 // I2C config for Microchip 24AA02E64 DEVEUI unique address
 #define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 

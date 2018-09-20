@@ -34,5 +34,5 @@
 
 // pin definitions for I2C interface of OLED Display
 #define OLED_RST GPIO_NUM_16 // SSD1306 RST
-#define OLED_SDA GPIO_NUM_4  // SD1306 D1+D2
-#define OLED_SCL GPIO_NUM_15 // SD1306 D0
+#define I2C_SDA GPIO_NUM_4  // SD1306 D1+D2
+#define I2C_SCL GPIO_NUM_15 // SD1306 D0

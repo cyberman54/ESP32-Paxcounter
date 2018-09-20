@@ -43,6 +43,10 @@ void gen_lora_deveui(uint8_t *pdeveui) {
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
   ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
+   // deveui is LSB, we reverse it so TTN DEVEUI display
+  // will remain the same as MAC address
+  // MAC is 6 bytes, devEUI 8, set middle 2 ones
+  // to an arbitrary value
   *p++ = dmac[5];
   *p++ = dmac[4];
   *p++ = dmac[3];
@@ -96,7 +100,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
 #ifdef MCP_24AA02E64_I2C_ADDRESS
   uint8_t i2c_ret;
   // Init this just in case, no more to 100KHz
-  Wire.begin(OLED_SDA, OLED_SCL, 100000);
+  Wire.begin(I2C_SDA, I2C_SCL, 100000);
   Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
   Wire.write(MCP_24AA02E64_MAC_ADDRESS);
   i2c_ret = Wire.endTransmission();
