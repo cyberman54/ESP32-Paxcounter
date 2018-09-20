@@ -22,5 +22,5 @@
 
 // Hardware pin definitions for Heltec LoRa-32 Board with OLED SSD1306 I2C Display
 #define OLED_RST GPIO_NUM_16 // ESP32 GPIO16 (Pin16) -- SD1306 RST
-#define OLED_SDA GPIO_NUM_4  // ESP32 GPIO4 (Pin4)   -- SD1306 D1+D2
-#define OLED_SCL GPIO_NUM_15 // ESP32 GPIO15 (Pin15) -- SD1306 D0
+#define I2C_SDA GPIO_NUM_4  // ESP32 GPIO4 (Pin4)   -- SD1306 D1+D2
+#define I2C_SCL GPIO_NUM_15 // ESP32 GPIO15 (Pin15) -- SD1306 D0

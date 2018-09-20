@@ -4,7 +4,7 @@
 #include "globals.h"
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
-HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
+HAS_DISPLAY u8x8(OLED_RST, I2C_SCL, I2C_SDA);
 
 // helper string for converting LoRa spread factor values
 #if defined(CFG_eu868)
