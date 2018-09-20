@@ -36,3 +36,7 @@
 #define OLED_RST GPIO_NUM_16 // SSD1306 RST
 #define I2C_SDA GPIO_NUM_4  // SD1306 D1+D2
 #define I2C_SCL GPIO_NUM_15 // SD1306 D0
+
+// I2C config for Microchip 24AA02E64 DEVEUI unique address
+#define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 
+#define MCP_24AA02E64_MAC_ADDRESS 0xF8 // Memory adress of unique deveui 64 bits

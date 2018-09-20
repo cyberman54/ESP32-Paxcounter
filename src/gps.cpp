@@ -5,7 +5,7 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-TinyGPSPlus gps;        
+TinyGPSPlus gps;
 gpsStatus_t gps_status;
 
 // read GPS data and cast to global struct
@@ -53,7 +53,6 @@ void gps_loop(void *pvParameters) {
       Wire.write(0x00); // dummy write to start read
       Wire.endTransmission();
 
-      Wire.beginTransmission(GPS_ADDR);
       while (cfg.gpsmode) {
         Wire.requestFrom(GPS_ADDR | 0x01, 32);
         while (Wire.available()) {
@@ -61,8 +60,6 @@ void gps_loop(void *pvParameters) {
           vTaskDelay(2 / portTICK_PERIOD_MS); // polling mode: 500ms sleep
         }
       }
-      // after GPS function was disabled, close connect to GPS device
-      Wire.endTransmission();
 
 #endif // GPS Type
     }

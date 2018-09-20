@@ -20,6 +20,8 @@ const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
                                .rst = RST,
                                .dio = {DIO0, DIO1, DIO2}};
 
+/* old version
+
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
@@ -37,13 +39,13 @@ void gen_lora_deveui(uint8_t *pdeveui) {
   }
 }
 
-/* The above function should be changed to this one, but this would be a breaking change
+*/
 
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
   ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
-   // deveui is LSB, we reverse it so TTN DEVEUI display
+  // deveui is LSB, we reverse it so TTN DEVEUI display
   // will remain the same as MAC address
   // MAC is 6 bytes, devEUI 8, set middle 2 ones
   // to an arbitrary value
@@ -56,7 +58,6 @@ void gen_lora_deveui(uint8_t *pdeveui) {
   *p++ = dmac[1];
   *p++ = dmac[0];
 }
-*/
 
 // Function to do a byte swap in a byte array
 void RevBytes(unsigned char *b, size_t c) {
@@ -98,29 +99,35 @@ void os_getDevEui(u1_t *buf) {
 void get_hard_deveui(uint8_t *pdeveui) {
   // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
 #ifdef MCP_24AA02E64_I2C_ADDRESS
-  uint8_t i2c_ret;
+
   // Init this just in case, no more to 100KHz
   Wire.begin(I2C_SDA, I2C_SCL, 100000);
   Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
   Wire.write(MCP_24AA02E64_MAC_ADDRESS);
-  i2c_ret = Wire.endTransmission();
-  // check if device seen on i2c bus
-  if (i2c_ret == 0) {
+
+  // check if device was seen on i2c bus
+  if (Wire.endTransmission() == 0) {
     char deveui[32] = "";
     uint8_t data;
+
     Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
     Wire.write(MCP_24AA02E64_MAC_ADDRESS);
-    Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8);
-    while (Wire.available()) {
-      data = Wire.read();
-      sprintf(deveui + strlen(deveui), "%02X ", data);
-      *pdeveui++ = data;
+    Wire.endTransmission();
+
+    if (Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8)) {
+      while (Wire.available()) {
+        data = Wire.read();
+        sprintf(deveui + strlen(deveui), "%02X ", data);
+        *pdeveui++ = data;
+      }
+      ESP_LOGI(TAG, "Serial EEPROM found, read DEVEUI %s", deveui);
+    } else {
+      ESP_LOGI(TAG, "Could not read DEVEUI from serial EEPROM");
     }
-    i2c_ret = Wire.endTransmission();
-    ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 found, read DEVEUI %s", deveui);
   } else {
-    ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 not found ret=%d", i2c_ret);
+    ESP_LOGI(TAG, "Could not find serial EEPROM on I2C bus");
   }
+
   // Set back to 400KHz to speed up OLED
   Wire.setClock(400000);
 #endif // MCP 24AA02E64
