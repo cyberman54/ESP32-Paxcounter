@@ -236,19 +236,22 @@ void setup() {
   channelSwitch = timerBegin(1, 800, true);
   timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
   timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-  timerAlarmEnable(channelSwitch);
+  //ESP_LOGI(TAG, "chanelswitch alarm threshold %d", cfg.wifichancycle * 1000);
 
   // setup send cycle trigger IRQ using esp32 hardware timer 2
   sendCycle = timerBegin(2, 8000, true);
   timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
   timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
-  timerAlarmEnable(sendCycle);
 
   // setup house keeping cycle trigger IRQ using esp32 hardware timer 3
   homeCycle = timerBegin(3, 8000, true);
   timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
+
+  //enable timers, caution: order is critical here
   timerAlarmEnable(homeCycle);
+  timerAlarmEnable(sendCycle);
+  timerAlarmEnable(channelSwitch);
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
@@ -324,33 +327,31 @@ void setup() {
 
 void loop() {
 
-  while (1) {
-    // state machine for switching display, LED, button, housekeeping,
-    // senddata
+  // state machine for switching display, LED, button, housekeeping,
+  // senddata
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-    led_loop();
+  led_loop();
 #endif
 
 #ifdef HAS_BUTTON
-    readButton();
+  readButton();
 #endif
 
 #ifdef HAS_DISPLAY
-    updateDisplay();
+  updateDisplay();
 #endif
 
-    // check housekeeping cycle and if expired do homework
-    checkHousekeeping();
-    // check send queue and process it
-    processSendBuffer();
-    // check send cycle and enqueue payload if cycle is expired
-    sendPayload();
-    // reset watchdog
-    vTaskDelay(2 / portTICK_PERIOD_MS);
+  // check housekeeping cycle and if expired do homework
+  checkHousekeeping();
+  // check send queue and process it
+  processSendBuffer();
+  // check send cycle and enqueue payload if cycle is expired
+  sendPayload();
+  // yield to CPU
+  vTaskDelay(2 / portTICK_PERIOD_MS);
 
-  } // loop()
-}
+} // loop()
 
 /* end Arduino main loop
  * ------------------------------------------------------------ */

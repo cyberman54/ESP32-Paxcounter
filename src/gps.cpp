@@ -63,7 +63,7 @@ void gps_loop(void *pvParameters) {
 #endif
     } // if (cfg.gpsmode)
 
-    vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
+    vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
 
   } // end of infinite loop
 
