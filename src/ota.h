@@ -6,6 +6,7 @@
 #include <WiFiClientSecure.h>
 #include <Update.h>
 #include <BintrayClient.h>
+#include <string>
 
 void checkFirmwareUpdates();
 void processOTAUpdate(const String &version);

@@ -15,7 +15,7 @@
  limitations under the License.
 */
 
-#include "OTA.h"
+#include "ota.h"
 
 const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
 
