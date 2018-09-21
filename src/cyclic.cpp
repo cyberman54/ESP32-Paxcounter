@@ -10,7 +10,11 @@
 static const char TAG[] = "main";
 
 // do all housekeeping
-void doHomework() {
+void doHousekeeping() {
+
+  portENTER_CRITICAL(&timerMux);
+  HomeCycleIRQ = 0;
+  portEXIT_CRITICAL(&timerMux);
 
   // update uptime counter
   uptime();
@@ -49,16 +53,7 @@ void doHomework() {
     if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
       esp_restart(); // memory leak, reset device
   }
-} // doHomework()
-
-void checkHousekeeping() {
-  if (HomeCycleIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    HomeCycleIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    doHomework();
-  }
-}
+} // doHousekeeping()
 
 void IRAM_ATTR homeCycleIRQ() {
   portENTER_CRITICAL(&timerMux);

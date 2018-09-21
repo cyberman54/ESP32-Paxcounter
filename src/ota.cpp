@@ -246,7 +246,7 @@ int version_compare(const String v1, const String v2) {
   //  vnum stores each numeric part of version
   int vnum1 = 0, vnum2 = 0;
 
-  //  loop untill both string are processed
+  //  loop until both string are processed
   for (int i = 0, j = 0; (i < v1.length() || j < v2.length());) {
     //  storing numeric part of version 1 in vnum1
     while (i < v1.length() && v1[i] != '.') {

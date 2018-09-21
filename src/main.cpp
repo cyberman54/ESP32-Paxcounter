@@ -33,14 +33,14 @@ uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
          batt_voltage = 0; // globals for display
 
 // hardware timer for cyclic tasks
-hw_timer_t *channelSwitch = NULL, *displaytimer = NULL, *sendCycle = NULL,
-           *homeCycle = NULL;
+hw_timer_t *channelSwitch, *displaytimer, *sendCycle, *homeCycle;
 
 // this variables will be changed in the ISR, and read in main loop
 volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
 TaskHandle_t WifiLoopTask = NULL;
+TaskHandle_t StateTask = NULL;
 
 // RTos send queues for payload transmit
 #ifdef HAS_LORA
@@ -67,9 +67,6 @@ PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
 // local Tag for logging
 static const char TAG[] = "main";
-
-/* begin Aruino SETUP
- * ------------------------------------------------------------ */
 
 void setup() {
 
@@ -229,6 +226,7 @@ void setup() {
   // reload interrupt after each trigger of display refresh cycle
   timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
   // enable display interrupt
+  yield();
   timerAlarmEnable(displaytimer);
 #endif
 
@@ -236,7 +234,6 @@ void setup() {
   channelSwitch = timerBegin(1, 800, true);
   timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
   timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-  //ESP_LOGI(TAG, "chanelswitch alarm threshold %d", cfg.wifichancycle * 1000);
 
   // setup send cycle trigger IRQ using esp32 hardware timer 2
   sendCycle = timerBegin(2, 8000, true);
@@ -248,9 +245,13 @@ void setup() {
   timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
 
-  //enable timers, caution: order is critical here
+  // enable timers
+  // caution, see: https://github.com/espressif/arduino-esp32/issues/1313
+  yield();
   timerAlarmEnable(homeCycle);
+  yield();
   timerAlarmEnable(sendCycle);
+  yield();
   timerAlarmEnable(channelSwitch);
 
 // show payload encoder
@@ -283,13 +284,35 @@ void setup() {
   // join network
   LMIC_startJoining();
 
+  /*
+
+  Overview Tasks & Timer
+
+  Task          Core  Prio  Purpose
+  ====================================================================
+  IDLE          0     0     ESP32 arduino scheduler
+  wifiloop      0     1     switches Wifi channels
+  gpsloop       0     2     reasd data from GPS over serial or i2c
+  IDLE          1     0     Arduino loop() -> unused
+  loraloop      1     1     runs the LMIC stack
+  statemachine  1     3     switches process logic
+
+  Timers
+  ======
+  0	Display-Refresh
+  1	Wifi Channel Switch
+  2	Send Cycle
+  3	Housekeeping
+
+  */
+
   // start lmic runloop in rtos task on core 1
   // (note: arduino main loop runs on core 1, too)
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
   ESP_LOGI(TAG, "Starting Lora...");
-  xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1,
-                          (5 | portPRIVILEGE_BIT), &LoraTask, 1);
+  xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1, 1,
+                          &LoraTask, 1);
 #endif
 
 // if device has GPS and it is enabled, start GPS reader task on core 0 with
@@ -317,41 +340,43 @@ void setup() {
   reset_salt(); // get new 16bit for salting hashes
   xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
                           &WifiLoopTask, 0);
+
+  // start state machine
+  ESP_LOGI(TAG, "Starting Statemachine...");
+  xTaskCreatePinnedToCore(stateMachine, "stateloop", 2048, (void *)1, 3,
+                          &StateTask, 1);
+
 } // setup()
 
-/* end Arduino SETUP
- * ------------------------------------------------------------ */
+void stateMachine(void *pvParameters) {
 
-/* begin Arduino main loop
- * ------------------------------------------------------ */
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-void loop() {
-
-  // state machine for switching display, LED, button, housekeeping,
-  // senddata
+  while (1) {
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-  led_loop();
+    led_loop();
 #endif
 
 #ifdef HAS_BUTTON
-  readButton();
+    readButton();
 #endif
 
 #ifdef HAS_DISPLAY
-  updateDisplay();
+    updateDisplay();
 #endif
 
-  // check housekeeping cycle and if expired do homework
-  checkHousekeeping();
-  // check send queue and process it
-  processSendBuffer();
-  // check send cycle and enqueue payload if cycle is expired
-  sendPayload();
-  // yield to CPU
-  vTaskDelay(2 / portTICK_PERIOD_MS);
+    // check housekeeping cycle and if expired do the work
+    if (HomeCycleIRQ)
+      doHousekeeping();
+    // check send queue and process it
+    processSendBuffer();
+    // check send cycle and enqueue payload if cycle is expired
+    if (SendCycleTimerIRQ)
+      sendPayload();
+    // yield to CPU
+    vTaskDelay(2 / portTICK_PERIOD_MS);
+  }
+}
 
-} // loop()
-
-/* end Arduino main loop
- * ------------------------------------------------------------ */
+void loop() { vTaskDelay(2 / portTICK_PERIOD_MS); }

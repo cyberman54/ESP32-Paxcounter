@@ -13,5 +13,8 @@
 
 #include <esp_spi_flash.h>  // needed for reading ESP32 chip attributes
 #include <esp_event_loop.h> // needed for Wifi event handler
+#include <esp32-hal-timer.h> // needed for timers
+
+void stateMachine(void *pvParameters);
 
 #endif

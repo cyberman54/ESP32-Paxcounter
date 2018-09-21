@@ -1,8 +1,7 @@
 #ifndef _CYCLIC_H
 #define _CYCLIC_H
 
-void doHomework(void);
-void checkHousekeeping(void);
+void doHousekeeping(void);
 void homeCycleIRQ(void);
 uint64_t uptime(void);
 void reset_counters(void);
