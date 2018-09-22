@@ -2,9 +2,10 @@
 #define OTA_H
 
 #include "globals.h"
+#include "update.h"
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
-#include <Update.h>
+//#include <Update.h>
 #include <BintrayClient.h>
 #include <string>
 
