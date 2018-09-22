@@ -1,10 +1,18 @@
 #ifndef _LORAWAN_H
 #define _LORAWAN_H
 
+#include "globals.h"
+#include "rcommand.h"
+
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
 #include <hal/hal.h>
 #include "loraconf.h"
+
+// Needed for 24AA02E64, does not hurt anything if included and not used
+#ifdef MCP_24AA02E64_I2C_ADDRESS
+#include <Wire.h>
+#endif
 
 void onEvent(ev_t ev);
 void gen_lora_deveui(uint8_t *pdeveui);

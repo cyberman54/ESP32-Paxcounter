@@ -44,7 +44,7 @@ Depending on board hardware following features are supported:
 - Button
 - Silicon unique ID
 - Battery voltage monitoring
-- GPS
+- GPS (Generic serial NMEA, or Quectel L76 I2C)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>

@@ -43,27 +43,16 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 }
 
-// Wifi channel rotation task
-void wifi_channel_loop(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-  while (1) {
-
-    if (ChannelTimerIRQ) {
+// Wifi channel rotation
+void switchWifiChannel(uint8_t &ch) {
       portENTER_CRITICAL(&timerMux);
       ChannelTimerIRQ = 0;
       portEXIT_CRITICAL(&timerMux);
       // rotates variable channel 1..WIFI_CHANNEL_MAX
-      channel = (channel % WIFI_CHANNEL_MAX) + 1;
-      esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-      ESP_LOGD(TAG, "Wifi set channel %d", channel);
-
-      vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
+      ch = (ch % WIFI_CHANNEL_MAX) + 1;
+      esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+      ESP_LOGD(TAG, "Wifi set channel %d", &ch);
     }
-
-  } // end of infinite wifi channel rotation loop
-}
 
 // IRQ handler
 void IRAM_ATTR ChannelSwitchIRQ() {

@@ -21,14 +21,10 @@
 #define HAS_ANTENNA_SWITCH  21      // pin for switching wifi antenna
 #define WIFI_ANTENNA 0              // 0 = internal, 1 = external
 
-// !!EXPERIMENTAL - not tested yet!!
 // uncomment this only if your LoPy runs on a Pytrack expansion board with GPS
-// see http://www.quectel.com/UploadImage/Downlad/Quectel_L76-L_I2C_Application_Note_V1.0.pdf
 //#define HAS_GPS 1
 //#define GPS_QUECTEL_L76 GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
 //#define GPS_ADDR 0x10
-//#define HAS_BUTTON GPIO_NUM_37 // (P14)
-//#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
 
 // uncomment this only if your LoPy runs on a expansion board 3.0
 #define HAS_BATTERY_PROBE ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7

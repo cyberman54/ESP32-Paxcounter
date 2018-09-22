@@ -1,12 +1,7 @@
 #ifdef HAS_LORA
 
 // Basic Config
-#include "globals.h"
-#include "rcommand.h"
-
-#ifdef MCP_24AA02E64_I2C_ADDRESS
-#include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
-#endif
+#include "lorawan.h"
 
 // Local logging Tag
 static const char TAG[] = "lora";
@@ -37,13 +32,13 @@ void gen_lora_deveui(uint8_t *pdeveui) {
   }
 }
 
-/* The above function should be changed to this one, but this would be a breaking change
-
+/* new version, does it with well formed mac according IEEE spec, but is
+breaking change
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
   ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
-   // deveui is LSB, we reverse it so TTN DEVEUI display
+  // deveui is LSB, we reverse it so TTN DEVEUI display
   // will remain the same as MAC address
   // MAC is 6 bytes, devEUI 8, set middle 2 ones
   // to an arbitrary value
@@ -98,29 +93,34 @@ void os_getDevEui(u1_t *buf) {
 void get_hard_deveui(uint8_t *pdeveui) {
   // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
 #ifdef MCP_24AA02E64_I2C_ADDRESS
+
   uint8_t i2c_ret;
+
   // Init this just in case, no more to 100KHz
   Wire.begin(I2C_SDA, I2C_SCL, 100000);
   Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
   Wire.write(MCP_24AA02E64_MAC_ADDRESS);
   i2c_ret = Wire.endTransmission();
-  // check if device seen on i2c bus
+
+  // check if device was seen on i2c bus
   if (i2c_ret == 0) {
     char deveui[32] = "";
     uint8_t data;
+
     Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
     Wire.write(MCP_24AA02E64_MAC_ADDRESS);
+    Wire.endTransmission();
+
     Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8);
     while (Wire.available()) {
       data = Wire.read();
       sprintf(deveui + strlen(deveui), "%02X ", data);
       *pdeveui++ = data;
     }
-    i2c_ret = Wire.endTransmission();
-    ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 found, read DEVEUI %s", deveui);
-  } else {
-    ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 not found ret=%d", i2c_ret);
-  }
+    ESP_LOGI(TAG, "Serial EEPROM found, read DEVEUI %s", deveui);
+  } else
+    ESP_LOGI(TAG, "Could not read DEVEUI from serial EEPROM");
+
   // Set back to 400KHz to speed up OLED
   Wire.setClock(400000);
 #endif // MCP 24AA02E64
@@ -248,7 +248,7 @@ void lorawan_loop(void *pvParameters) {
 
   while (1) {
     os_runloop_once();                  // execute LMIC jobs
-    vTaskDelay(2 / portTICK_PERIOD_MS); // reset watchdog
+    vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
   }
 }
 
