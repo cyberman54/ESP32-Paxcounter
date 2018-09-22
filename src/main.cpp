@@ -216,6 +216,16 @@ void setup() {
   DisplayState = cfg.screenon;
   init_display(PRODUCTNAME, PROGVERSION);
 
+/*
+  Usage of ESP32 hardware timers
+  ==============================
+
+  0	Display-Refresh
+  1	Wifi Channel Switch
+  2	Send Cycle
+  3	Housekeeping
+*/
+
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
 
@@ -286,8 +296,6 @@ void setup() {
 
   /*
 
-  Overview Tasks & Timer
-
   Task          Core  Prio  Purpose
   ====================================================================
   IDLE          0     0     ESP32 arduino scheduler
@@ -295,13 +303,6 @@ void setup() {
   IDLE          1     0     Arduino loop() -> unused
   loraloop      1     1     runs the LMIC stack
   statemachine  1     3     switches process logic
-
-  Timers
-  ======
-  0	Display-Refresh
-  1	Wifi Channel Switch
-  2	Send Cycle
-  3	Housekeeping
 
   */
 
