@@ -291,8 +291,7 @@ void setup() {
   Task          Core  Prio  Purpose
   ====================================================================
   IDLE          0     0     ESP32 arduino scheduler
-  wifiloop      0     1     switches Wifi channels
-  gpsloop       0     2     reasd data from GPS over serial or i2c
+  gpsloop       0     2     read data from GPS over serial or i2c
   IDLE          1     0     Arduino loop() -> unused
   loraloop      1     1     runs the LMIC stack
   statemachine  1     3     switches process logic
@@ -338,8 +337,6 @@ void setup() {
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
   reset_salt(); // get new 16bit for salting hashes
-  xTaskCreatePinnedToCore(wifi_channel_loop, "wifiloop", 2048, (void *)1, 1,
-                          &WifiLoopTask, 0);
 
   // start state machine
   ESP_LOGI(TAG, "Starting Statemachine...");
@@ -366,12 +363,15 @@ void stateMachine(void *pvParameters) {
     updateDisplay();
 #endif
 
-    // check housekeeping cycle and if expired do the work
+    // check wifi scan cycle and if due rotate channel
+    if (ChannelTimerIRQ)
+      switchWifiChannel(channel);
+    // check housekeeping cycle and if due do the work
     if (HomeCycleIRQ)
       doHousekeeping();
     // check send queue and process it
-    processSendBuffer();
-    // check send cycle and enqueue payload if cycle is expired
+    enqueuePayload();
+    // check send cycle and if due enqueue payload to send
     if (SendCycleTimerIRQ)
       sendPayload();
     // yield to CPU

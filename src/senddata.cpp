@@ -74,7 +74,7 @@ void IRAM_ATTR SendCycleIRQ() {
 }
 
 // interrupt triggered function to eat data from RTos send queues and transmit it
-void processSendBuffer() {
+void enqueuePayload() {
   MessageBuffer_t SendBuffer;
 
 #ifdef HAS_LORA
@@ -98,7 +98,7 @@ void processSendBuffer() {
   }
 #endif
 
-} // processSendBuffer
+} // enqueuePayload
 
 void flushQueues() {
 #ifdef HAS_LORA
