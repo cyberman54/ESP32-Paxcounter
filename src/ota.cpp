@@ -17,6 +17,9 @@
 
 #include "ota.h"
 
+#include <string>
+using namespace std;
+
 const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
 
 // Connection port (HTTPS)
@@ -32,9 +35,33 @@ volatile bool isValidContentType = false;
 // Local logging tag
 static const char TAG[] = "main";
 
+void display(const uint8_t x, const uint8_t y, char* text) {
+#ifdef HAS_DISPLAY
+  u8x8.setCursor(x, y);
+  u8x8.print(text);
+#endif
+}
+
 void start_ota_update() {
 
+#ifdef HAS_DISPLAY
+  u8x8.begin();
+  u8x8.setFont(u8x8_font_chroma48medium8_r);
+  u8x8.clear();
+#ifdef DISPLAY_FLIP
+  u8x8.setFlipMode(1);
+#endif
+  u8x8.draw2x2String(0, 0, "UPDATING");
+  u8x8.setCursor(0, 3);
+  u8x8.print("Wifi connect  ..\n");
+  u8x8.print("Get Update?   ..\n");
+  u8x8.print("Downloading   ..\n");
+  u8x8.print("Flashing      ..\n");
+  u8x8.print("Rebooting     ..");
+#endif
+
   ESP_LOGI(TAG, "Starting Wifi OTA update");
+  display(14, 3, "**");
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
@@ -47,10 +74,15 @@ void start_ota_update() {
   }
   if (i >= 0) {
     ESP_LOGI(TAG, "connected to %s", WIFI_SSID);
+    display(14, 3, "OK");
     checkFirmwareUpdates(); // gets and flashes new firmware and restarts
-  } else
+  } else {
     ESP_LOGI(TAG, "could not connect to %s, rebooting.", WIFI_SSID);
+    display(14, 3, " E");
+  }
 
+  display(14, 7, "**");
+  delay(5000);
   ESP.restart(); // reached only if update was not successful or no wifi connect
 
 } // start_ota_update
@@ -58,19 +90,24 @@ void start_ota_update() {
 void checkFirmwareUpdates() {
   // Fetch the latest firmware version
   ESP_LOGI(TAG, "OTA mode, checking latest firmware version on server...");
+  display(14, 4, "**");
   const String latest = bintray.getLatestVersion();
 
   if (latest.length() == 0) {
     ESP_LOGI(
         TAG,
         "Could not load info about the latest firmware. Rebooting to runmode.");
+    display(14, 4, " E");
     return;
   } else if (version_compare(latest, cfg.version) <= 0) {
     ESP_LOGI(TAG, "Current firmware is up to date. Rebooting to runmode.");
+    display(14, 4, "NO");
     return;
   }
   ESP_LOGI(TAG, "New firmware version v%s available. Downloading...",
            latest.c_str());
+  display(14, 4, "OK");
+
   processOTAUpdate(latest);
 }
 
@@ -83,9 +120,11 @@ inline String getHeaderValue(String header, String headerName) {
  * OTA update processing
  */
 void processOTAUpdate(const String &version) {
+  display(14, 5, "**");
   String firmwarePath = bintray.getBinaryPath(version);
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format, OTA update cancelled.");
+    display(14, 5, " E");
     return;
   }
 
@@ -97,6 +136,7 @@ void processOTAUpdate(const String &version) {
 
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
+    display(14, 5, " E");
     return;
   }
 
@@ -108,6 +148,7 @@ void processOTAUpdate(const String &version) {
       if (!client.connect(currentHost.c_str(), port)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
+        display(14, 5, " E");
         return;
       }
     }
@@ -123,6 +164,7 @@ void processOTAUpdate(const String &version) {
     while (client.available() == 0) {
       if (millis() - timeout > RESPONSE_TIMEOUT_MS) {
         ESP_LOGI(TAG, "Client Timeout.");
+        display(14, 5, " E");
         client.stop();
         return;
       }
@@ -182,6 +224,8 @@ void processOTAUpdate(const String &version) {
     }
   }
 
+  display(14, 5, "OK");
+
   // check whether we have everything for OTA update
   if (contentLength && isValidContentType) {
 
@@ -196,16 +240,19 @@ void processOTAUpdate(const String &version) {
                  "Starting OTA update, attempt %d of %d. This will take some "
                  "time to complete...",
                  FLASH_MAX_TRY - i, FLASH_MAX_TRY);
+        display(14, 6, "**");
 
         written = Update.writeStream(client);
 
         if (written == contentLength) {
           ESP_LOGI(TAG, "Written %d bytes successfully", written);
+          display(14, 6, "**");
           break;
         } else {
           ESP_LOGI(TAG,
                    "Written only %d of %d bytes, OTA update attempt cancelled.",
                    written, contentLength);
+          display(14, 6, " E");
         }
       }
 
@@ -215,27 +262,33 @@ void processOTAUpdate(const String &version) {
           ESP_LOGI(
               TAG,
               "OTA update completed. Rebooting to runmode with new version.");
+          display(14, 7, "OK");
           client.stop();
           return;
         } else {
           ESP_LOGI(TAG, "Something went wrong! OTA update hasn't been finished "
                         "properly.");
+          display(14, 7, " E");
         }
       } else {
         ESP_LOGI(TAG, "An error occurred. Error #: %d", Update.getError());
+        display(14, 7, " E");
       }
 
     } else {
       ESP_LOGI(TAG, "There isn't enough space to start OTA update");
+      display(14, 7, " E");
       client.flush();
     }
   } else {
     ESP_LOGI(TAG,
              "There was no valid content in the response from the OTA server!");
+    display(14, 7, " E");
     client.flush();
   }
   ESP_LOGI(TAG,
            "OTA update failed. Rebooting to runmode with current version.");
+  display(14, 7, " E");
   client.stop();
 }
 
