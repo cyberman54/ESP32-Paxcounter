@@ -39,7 +39,6 @@ hw_timer_t *channelSwitch, *displaytimer, *sendCycle, *homeCycle;
 volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
              DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
-TaskHandle_t WifiLoopTask = NULL;
 TaskHandle_t StateTask = NULL;
 
 // RTos send queues for payload transmit
@@ -121,13 +120,6 @@ void setup() {
 
   // read settings from NVRAM
   loadConfig(); // includes initialize if necessary
-
-  // reboot to firmware update mode if ota trigger switch is set
-  if (cfg.runmode == 1) {
-    cfg.runmode = 0;
-    saveConfig();
-    start_ota_update();
-  }
 
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
@@ -239,6 +231,13 @@ void setup() {
   yield();
   timerAlarmEnable(displaytimer);
 #endif
+
+  // reboot to firmware update mode if ota trigger switch is set
+  if (cfg.runmode == 1) {
+    cfg.runmode = 0;
+    saveConfig();
+    start_ota_update();
+  }
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
   channelSwitch = timerBegin(1, 800, true);
