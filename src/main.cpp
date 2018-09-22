@@ -216,15 +216,15 @@ void setup() {
   DisplayState = cfg.screenon;
   init_display(PRODUCTNAME, PROGVERSION);
 
-/*
-  Usage of ESP32 hardware timers
-  ==============================
+  /*
+    Usage of ESP32 hardware timers
+    ==============================
 
-  0	Display-Refresh
-  1	Wifi Channel Switch
-  2	Send Cycle
-  3	Housekeeping
-*/
+    0	Display-Refresh
+    1	Wifi Channel Switch
+    2	Send Cycle
+    3	Housekeeping
+  */
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
@@ -300,9 +300,9 @@ void setup() {
   ====================================================================
   IDLE          0     0     ESP32 arduino scheduler
   gpsloop       0     2     read data from GPS over serial or i2c
-  IDLE          1     0     Arduino loop() -> unused
+  IDLE          1     0     Arduino loop() -> used for LED switching
   loraloop      1     1     runs the LMIC stack
-  statemachine  1     3     switches process logic
+  statemachine  1     3     switches application process logic
 
   */
 
@@ -352,10 +352,6 @@ void stateMachine(void *pvParameters) {
 
   while (1) {
 
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-    led_loop();
-#endif
-
 #ifdef HAS_BUTTON
     readButton();
 #endif
@@ -375,9 +371,19 @@ void stateMachine(void *pvParameters) {
     // check send cycle and if due enqueue payload to send
     if (SendCycleTimerIRQ)
       sendPayload();
-    // yield to CPU
+
+    // give yield to CPU
     vTaskDelay(2 / portTICK_PERIOD_MS);
   }
 }
 
-void loop() { vTaskDelay(2 / portTICK_PERIOD_MS); }
+void loop() {
+
+// switch LED states if device has a LED
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+  led_loop();
+#endif
+
+  // give yield to CPU
+  vTaskDelay(2 / portTICK_PERIOD_MS);
+}
