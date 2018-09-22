@@ -21,6 +21,25 @@ NOTICE:
 Parts of the source files in this repository are made available under different
 licenses. Refer to LICENSE.txt file in repository for more details.
 
+//////////////////////// ESP32-Paxcounter \\\\\\\\\\\\\\\\\\\\\\\\\\
+
+Uused tasks and timers:
+
+Task          Core  Prio  Purpose
+====================================================================
+IDLE          0     0     ESP32 arduino scheduler
+gpsloop       0     2     read data from GPS over serial or i2c
+IDLE          1     0     Arduino loop() -> used for LED switching
+loraloop      1     1     runs the LMIC stack
+statemachine  1     3     switches application process logic
+
+ESP32 hardware timers
+==========================
+ 0	Display-Refresh
+ 1	Wifi Channel Switch
+ 2	Send Cycle
+ 3	Housekeeping
+
 */
 
 // Basic Config
@@ -90,39 +109,66 @@ void setup() {
   esp_log_set_vprintf(redirect_log);
 #endif
 
-  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
-
-  // initialize system event handler for wifi task, needed for
-  // wifi_sniffer_init()
-  // esp_event_loop_init(NULL, NULL);
-  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-
-  // print chip information on startup if in verbose mode
-#ifdef VERBOSE
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  ESP_LOGI(TAG,
-           "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
-           "%d, %dMB %s Flash",
-           chip_info.cores, (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-           (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
-           chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
-           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
-                                                         : "external");
-  ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
-  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
-
-#ifdef HAS_GPS
-  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
-#endif
-
-#endif // verbose
-
-  // read settings from NVRAM
+  // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
-#ifdef VENDORFILTER
-  strcat_P(features, " OUIFLT");
+  // initialize leds
+#if (HAS_LED != NOT_A_PIN)
+  pinMode(HAS_LED, OUTPUT);
+  strcat_P(features, " LED");
+#endif
+#ifdef HAS_RGB_LED
+  rgb_set_color(COLOR_PINK);
+  strcat_P(features, " RGB");
+#endif
+
+  // initialize wifi antenna
+#ifdef HAS_ANTENNA_SWITCH
+  strcat_P(features, " ANT");
+  antenna_init();
+  antenna_select(cfg.wifiant);
+#endif
+
+// switch off bluetooth, if not compiled
+#ifdef BLECOUNTER
+  strcat_P(features, " BLE");
+#else
+  bool btstop = btStop();
+#endif
+
+// initialize battery status
+#ifdef HAS_BATTERY_PROBE
+  strcat_P(features, " BATT");
+  calibrate_voltage();
+  batt_voltage = read_voltage();
+#endif
+
+  // reboot to firmware update mode if ota trigger switch is set
+  if (cfg.runmode == 1) {
+    cfg.runmode = 0;
+    saveConfig();
+    start_ota_update();
+  }
+
+  // initialize button
+#ifdef HAS_BUTTON
+  strcat_P(features, " BTN_");
+#ifdef BUTTON_PULLUP
+  strcat_P(features, "PU");
+  // install button interrupt (pullup mode)
+  pinMode(HAS_BUTTON, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
+#else
+  strcat_P(features, "PD");
+  // install button interrupt (pulldown mode)
+  pinMode(HAS_BUTTON, INPUT_PULLDOWN);
+  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
+#endif // BUTTON_PULLUP
+#endif // HAS_BUTTON
+
+// initialize gps
+#ifdef HAS_GPS
+  strcat_P(features, " GPS");
 #endif
 
 // initialize LoRa
@@ -149,74 +195,38 @@ void setup() {
              SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 #endif
 
-    // initialize led
-#if (HAS_LED != NOT_A_PIN)
-  pinMode(HAS_LED, OUTPUT);
-  strcat_P(features, " LED");
+#ifdef VENDORFILTER
+  strcat_P(features, " OUIFLT");
 #endif
 
-#ifdef HAS_RGB_LED
-  rgb_set_color(COLOR_PINK);
-  strcat_P(features, " RGB");
-#endif
+  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
 
-  // initialize button
-#ifdef HAS_BUTTON
-  strcat_P(features, " BTN_");
-#ifdef BUTTON_PULLUP
-  strcat_P(features, "PU");
-  // install button interrupt (pullup mode)
-  pinMode(HAS_BUTTON, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
-#else
-  strcat_P(features, "PD");
-  // install button interrupt (pulldown mode)
-  pinMode(HAS_BUTTON, INPUT_PULLDOWN);
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
-#endif // BUTTON_PULLUP
-#endif // HAS_BUTTON
+  // print chip information on startup if in verbose mode
+#ifdef VERBOSE
+  esp_chip_info_t chip_info;
+  esp_chip_info(&chip_info);
+  ESP_LOGI(TAG,
+           "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
+           "%d, %dMB %s Flash",
+           chip_info.cores, (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+           (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
+           chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
+           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
+                                                         : "external");
+  ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
+  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
 
-  // initialize wifi antenna
-#ifdef HAS_ANTENNA_SWITCH
-  strcat_P(features, " ANT");
-  antenna_init();
-  antenna_select(cfg.wifiant);
-#endif
-
-// switch off bluetooth on esp32 module, if not compiled
-#ifdef BLECOUNTER
-  strcat_P(features, " BLE");
-#else
-  bool btstop = btStop();
-#endif
-
-// initialize gps
 #ifdef HAS_GPS
-  strcat_P(features, " GPS");
+  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
 #endif
 
-// initialize battery status
-#ifdef HAS_BATTERY_PROBE
-  strcat_P(features, " BATT");
-  calibrate_voltage();
-  batt_voltage = read_voltage();
-#endif
+#endif // verbose
 
 // initialize display
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
   init_display(PRODUCTNAME, PROGVERSION);
-
-  /*
-    Usage of ESP32 hardware timers
-    ==============================
-
-    0	Display-Refresh
-    1	Wifi Channel Switch
-    2	Send Cycle
-    3	Housekeeping
-  */
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
@@ -231,13 +241,6 @@ void setup() {
   yield();
   timerAlarmEnable(displaytimer);
 #endif
-
-  // reboot to firmware update mode if ota trigger switch is set
-  if (cfg.runmode == 1) {
-    cfg.runmode = 0;
-    saveConfig();
-    start_ota_update();
-  }
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
   channelSwitch = timerBegin(1, 800, true);
@@ -293,18 +296,6 @@ void setup() {
   // join network
   LMIC_startJoining();
 
-  /*
-
-  Task          Core  Prio  Purpose
-  ====================================================================
-  IDLE          0     0     ESP32 arduino scheduler
-  gpsloop       0     2     read data from GPS over serial or i2c
-  IDLE          1     0     Arduino loop() -> used for LED switching
-  loraloop      1     1     runs the LMIC stack
-  statemachine  1     3     switches application process logic
-
-  */
-
   // start lmic runloop in rtos task on core 1
   // (note: arduino main loop runs on core 1, too)
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
@@ -332,6 +323,8 @@ void setup() {
 
   // start wifi in monitor mode and start channel rotation task on core 0
   ESP_LOGI(TAG, "Starting Wifi...");
+  // esp_event_loop_init(NULL, NULL);
+  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
@@ -345,40 +338,9 @@ void setup() {
 
 } // setup()
 
-void stateMachine(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-  while (1) {
-
-#ifdef HAS_BUTTON
-    readButton();
-#endif
-
-#ifdef HAS_DISPLAY
-    updateDisplay();
-#endif
-
-    // check wifi scan cycle and if due rotate channel
-    if (ChannelTimerIRQ)
-      switchWifiChannel(channel);
-    // check housekeeping cycle and if due do the work
-    if (HomeCycleIRQ)
-      doHousekeeping();
-    // check send queue and process it
-    enqueuePayload();
-    // check send cycle and if due enqueue payload to send
-    if (SendCycleTimerIRQ)
-      sendPayload();
-
-    // give yield to CPU
-    vTaskDelay(2 / portTICK_PERIOD_MS);
-  }
-}
-
 void loop() {
 
-// switch LED states if device has a LED
+// switch LED state if device has LED(s)
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   led_loop();
 #endif

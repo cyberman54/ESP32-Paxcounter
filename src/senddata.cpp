@@ -73,8 +73,8 @@ void IRAM_ATTR SendCycleIRQ() {
   portEXIT_CRITICAL(&timerMux);
 }
 
-// interrupt triggered function to eat data from RTos send queues and transmit it
-void enqueuePayload() {
+// interrupt triggered function to eat data from send queues and transmit it
+void checkSendQueues() {
   MessageBuffer_t SendBuffer;
 
 #ifdef HAS_LORA
@@ -98,7 +98,7 @@ void enqueuePayload() {
   }
 #endif
 
-} // enqueuePayload
+} // checkSendQueues
 
 void flushQueues() {
 #ifdef HAS_LORA
