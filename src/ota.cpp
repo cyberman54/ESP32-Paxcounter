@@ -42,6 +42,14 @@ inline String getHeaderValue(String header, String headerName) {
 
 void start_ota_update() {
 
+// check battery status if we can before doing ota
+#ifdef HAS_BATTERY_PROBE
+  if (batt_voltage < OTA_MIN_BATT) {
+    ESP_LOGW(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
+    return;
+  }
+#endif
+
 // turn on LED
 #if (HAS_LED != NOT_A_PIN)
 #ifdef LED_ACTIVE_LOW
@@ -107,7 +115,6 @@ void start_ota_update() {
 
 } // start_ota_update
 
-
 void do_ota_update() {
   char buf[17];
 
@@ -130,7 +137,7 @@ void do_ota_update() {
   ESP_LOGI(TAG, "New firmware version v%s available. Downloading...",
            latest.c_str());
   display(2, "OK", latest.c_str());
-  
+
   display(3, "**", "");
   String firmwarePath = bintray.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
@@ -319,7 +326,7 @@ void display(const uint8_t row, std::string status, std::string msg) {
 // callback function to show download progress while streaming data
 void show_progress(size_t current, size_t size) {
   char buf[17];
-  snprintf(buf, 17, "%-9lu (%3lu%%)",  current, current*100 / size);
+  snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
   display(4, "**", buf);
 }
 
