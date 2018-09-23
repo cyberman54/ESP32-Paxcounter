@@ -6,7 +6,11 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-void IRAM_ATTR ButtonIRQ() { ButtonPressedIRQ++; }
+void IRAM_ATTR ButtonIRQ() {
+  portENTER_CRITICAL(&timerMux);
+  ButtonPressedIRQ++;
+  portEXIT_CRITICAL(&timerMux);
+}
 
 void readButton() {
   if (ButtonPressedIRQ) {

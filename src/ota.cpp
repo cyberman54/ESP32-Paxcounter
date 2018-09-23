@@ -35,23 +35,9 @@ volatile bool isValidContentType = false;
 // Local logging tag
 static const char TAG[] = "main";
 
-void display(const uint8_t row, std::string status, std::string msg) {
-#ifdef HAS_DISPLAY
-  u8x8.setCursor(14, row);
-  u8x8.print((status.substr(0, 2)).c_str());
-  if (!msg.empty()) {
-    u8x8.clearLine(7);
-    u8x8.setCursor(0, 7);
-    u8x8.print(msg.substr(0, 16).c_str());
-  }
-#endif
-}
-
-// callback function to show download progress while streaming data
-void show_progress(size_t current, size_t size) {
-  char buf[17];
-  snprintf(buf, 17, "%-9lu (%3lu%%)",  current, current*100 / size);
-  display(4, "**", buf);
+// helper function to extract header value from header
+inline String getHeaderValue(String header, String headerName) {
+  return header.substring(strlen(headerName.c_str()));
 }
 
 void start_ota_update() {
@@ -99,7 +85,7 @@ void start_ota_update() {
   if (i >= 0) {
     ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
     display(1, "OK", "WiFi connected");
-    checkFirmwareUpdates(); // gets and flashes new firmware
+    do_ota_update(); // gets and flashes new firmware
   } else {
     ESP_LOGI(TAG, "Could not connect to %s, rebooting.", WIFI_SSID);
     display(1, " E", "no WiFi connect");
@@ -121,7 +107,10 @@ void start_ota_update() {
 
 } // start_ota_update
 
-void checkFirmwareUpdates() {
+
+void do_ota_update() {
+  char buf[17];
+
   // Fetch the latest firmware version
   ESP_LOGI(TAG, "Checking latest firmware version on server...");
   display(2, "**", "checking version");
@@ -140,24 +129,10 @@ void checkFirmwareUpdates() {
   }
   ESP_LOGI(TAG, "New firmware version v%s available. Downloading...",
            latest.c_str());
-  display(2, "OK", "");
-
-  processOTAUpdate(latest);
-}
-
-// helper function to extract header value from header
-inline String getHeaderValue(String header, String headerName) {
-  return header.substring(strlen(headerName.c_str()));
-}
-
-/**
- * OTA update processing
- */
-void processOTAUpdate(const String &version) {
-
-  char buf[17];
-  display(3, "**", "requesting file");
-  String firmwarePath = bintray.getBinaryPath(version);
+  display(2, "OK", latest.c_str());
+  
+  display(3, "**", "");
+  String firmwarePath = bintray.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format, OTA update cancelled.");
     display(3, " E", "file type error");
@@ -327,6 +302,25 @@ void processOTAUpdate(const String &version) {
   ESP_LOGI(TAG,
            "OTA update failed. Rebooting to runmode with current version.");
   client.stop();
+} // do_ota_update
+
+void display(const uint8_t row, std::string status, std::string msg) {
+#ifdef HAS_DISPLAY
+  u8x8.setCursor(14, row);
+  u8x8.print((status.substr(0, 2)).c_str());
+  if (!msg.empty()) {
+    u8x8.clearLine(7);
+    u8x8.setCursor(0, 7);
+    u8x8.print(msg.substr(0, 16).c_str());
+  }
+#endif
+}
+
+// callback function to show download progress while streaming data
+void show_progress(size_t current, size_t size) {
+  char buf[17];
+  snprintf(buf, 17, "%-9lu (%3lu%%)",  current, current*100 / size);
+  display(4, "**", buf);
 }
 
 // helper function to compare two versions. Returns 1 if v2 is
