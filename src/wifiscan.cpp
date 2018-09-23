@@ -44,15 +44,15 @@ void wifi_sniffer_init(void) {
 }
 
 // Wifi channel rotation
-void switchWifiChannel(uint8_t &ch) {
-      portENTER_CRITICAL(&timerMux);
-      ChannelTimerIRQ = 0;
-      portEXIT_CRITICAL(&timerMux);
-      // rotates variable channel 1..WIFI_CHANNEL_MAX
-      ch = (ch % WIFI_CHANNEL_MAX) + 1;
-      esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
-      ESP_LOGD(TAG, "Wifi set channel %d", &ch);
-    }
+void switchWifiChannel(uint8_t volatile &ch) {
+  portENTER_CRITICAL(&timerMux);
+  ChannelTimerIRQ = 0;
+  portEXIT_CRITICAL(&timerMux);
+  // rotates variable channel 1..WIFI_CHANNEL_MAX
+  ch = (ch % WIFI_CHANNEL_MAX) + 1;
+  esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+  ESP_LOGD(TAG, "Wifi set channel %d", ch);
+}
 
 // IRQ handler
 void IRAM_ATTR ChannelSwitchIRQ() {

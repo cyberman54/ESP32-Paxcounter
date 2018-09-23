@@ -29,8 +29,8 @@ const int port = 443;
 const uint32_t RESPONSE_TIMEOUT_MS = 5000;
 
 // Variables to validate firmware content
-volatile int contentLength = 0;
-volatile bool isValidContentType = false;
+int volatile contentLength = 0;
+bool volatile isValidContentType = false;
 
 // Local logging tag
 static const char TAG[] = "main";

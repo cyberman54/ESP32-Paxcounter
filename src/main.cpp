@@ -47,16 +47,16 @@ ESP32 hardware timers
 
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
-uint8_t channel = 0;                       // channel rotation counter
-uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
-         batt_voltage = 0; // globals for display
+uint8_t volatile channel = 0;              // channel rotation counter
+uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
+                  batt_voltage = 0; // globals for display
 
 // hardware timer for cyclic tasks
 hw_timer_t *channelSwitch, *displaytimer, *sendCycle, *homeCycle;
 
 // this variables will be changed in the ISR, and read in main loop
-volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
-             DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
+uint8_t volatile ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
+                 SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
 TaskHandle_t StateTask = NULL;
 
@@ -96,7 +96,7 @@ void setup() {
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
-  (*((volatile uint32_t *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
+  (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
 #endif
 
   // setup debug output or silence device
@@ -329,7 +329,7 @@ void setup() {
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
-  reset_salt(); // get new 16bit for salting hashes
+  get_salt(); // get new 16bit for salting hashes
 
   // start state machine
   ESP_LOGI(TAG, "Starting Statemachine...");

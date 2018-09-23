@@ -18,7 +18,7 @@ void set_reset(uint8_t val[]) {
   case 1: // reset MAC counter
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
     reset_counters(); // clear macs
-    reset_salt();     // get new salt
+    get_salt();     // get new salt
     sprintf(display_line6, "Reset counter");
     break;
   case 2: // reset device to factory settings

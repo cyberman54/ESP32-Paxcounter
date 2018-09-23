@@ -28,6 +28,6 @@ typedef struct {
 void wifi_sniffer_init(void);
 void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 void ChannelSwitchIRQ(void);
-void switchWifiChannel(uint8_t &ch);
+void switchWifiChannel(uint8_t volatile &ch);
 
 #endif
