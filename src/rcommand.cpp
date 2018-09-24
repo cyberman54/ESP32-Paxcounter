@@ -18,7 +18,7 @@ void set_reset(uint8_t val[]) {
   case 1: // reset MAC counter
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
     reset_counters(); // clear macs
-    get_salt();     // get new salt
+    get_salt();       // get new salt
     sprintf(display_line6, "Reset counter");
     break;
   case 2: // reset device to factory settings
@@ -33,9 +33,14 @@ void set_reset(uint8_t val[]) {
     break;
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
+#ifdef USE_OTA
     sprintf(display_line6, "Software update");
     cfg.runmode = 1;
+#else
+    sprintf(display_line6, "Software update not implemented");
+#endif // USE_OTA
     break;
+
   default:
     ESP_LOGW(TAG, "Remote command: reset called with invalid parameter(s)");
   }

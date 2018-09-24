@@ -1,3 +1,5 @@
+#ifdef USE_OTA
+
 /*
  Parts of this code:
  Copyright (c) 2014-present PlatformIO <contact@platformio.org>
@@ -17,7 +19,6 @@
 
 #include "ota.h"
 
-#include <string>
 using namespace std;
 
 const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
@@ -250,10 +251,10 @@ void do_ota_update() {
     size_t written, current, size;
 
     if (Update.begin(contentLength)) {
-
+#ifdef HAS_DISPLAY
       // register callback function for showing progress while streaming data
       Update.onProgress(&show_progress);
-
+#endif
       int i = FLASH_MAX_TRY;
       while ((i--) && (written != contentLength)) {
 
@@ -311,7 +312,7 @@ void do_ota_update() {
   client.stop();
 } // do_ota_update
 
-void display(const uint8_t row, std::string status, std::string msg) {
+void display(const uint8_t row, const std::string status, const std::string msg) {
 #ifdef HAS_DISPLAY
   u8x8.setCursor(14, row);
   u8x8.print((status.substr(0, 2)).c_str());
@@ -320,7 +321,6 @@ void display(const uint8_t row, std::string status, std::string msg) {
     u8x8.setCursor(0, 7);
     u8x8.print(msg.substr(0, 16).c_str());
   }
-#endif
 }
 
 // callback function to show download progress while streaming data
@@ -328,6 +328,7 @@ void show_progress(size_t current, size_t size) {
   char buf[17];
   snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
   display(4, "**", buf);
+#endif
 }
 
 // helper function to compare two versions. Returns 1 if v2 is
@@ -364,3 +365,4 @@ int version_compare(const String v1, const String v2) {
   }
   return 0;
 }
+#endif // USE_OTA

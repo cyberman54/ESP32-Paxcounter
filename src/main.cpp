@@ -143,12 +143,15 @@ void setup() {
   batt_voltage = read_voltage();
 #endif
 
+#ifdef USE_OTA
+  strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
   if (cfg.runmode == 1) {
     cfg.runmode = 0;
     saveConfig();
     start_ota_update();
   }
+#endif
 
   // initialize button
 #ifdef HAS_BUTTON

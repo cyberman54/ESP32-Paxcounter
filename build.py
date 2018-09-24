@@ -90,5 +90,4 @@ def publish_bintray(source, target, env):
 # put build file name and upload command to platformio environment
 env.Replace(
     PROGNAME="firmware_" + package + "_v%s" % version,
-    UPLOADCMD=publish_bintray
-)
+    UPLOADCMD=publish_bintray)
