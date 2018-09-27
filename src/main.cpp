@@ -59,7 +59,7 @@ hw_timer_t *channelSwitch, *displaytimer, *sendCycle, *homeCycle;
 uint8_t volatile ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
                  SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
-TaskHandle_t stateMachineTask = NULL;
+TaskHandle_t stateMachineTask, wifiSwitchTask;
 
 SemaphoreHandle_t xWifiChannelSwitchSemaphore;
 
@@ -308,8 +308,13 @@ void setup() {
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
   ESP_LOGI(TAG, "Starting Lora...");
-  xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1, 1,
-                          &LoraTask, 1);
+  xTaskCreatePinnedToCore(lorawan_loop, /* task function */
+                          "loraloop",   /* name of task */
+                          2560,         /* stack size of task */
+                          (void *)1,    /* parameter of the task */
+                          1,            /* priority of the task */
+                          &LoraTask,    /* task handle*/
+                          1);           /* CPU core */
 #endif
 
 // if device has GPS and it is enabled, start GPS reader task on core 0 with
@@ -317,7 +322,13 @@ void setup() {
 // streaming NMEA data
 #ifdef HAS_GPS
   ESP_LOGI(TAG, "Starting GPS...");
-  xTaskCreatePinnedToCore(gps_loop, "gpsloop", 2048, (void *)1, 2, &GpsTask, 0);
+  xTaskCreatePinnedToCore(gps_loop,  /* task function */
+                          "gpsloop", /* name of task */
+                          1024,      /* stack size of task */
+                          (void *)1, /* parameter of the task */
+                          2,         /* priority of the task */
+                          &GpsTask,  /* task handle*/
+                          0);        /* CPU core */
 #endif
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
@@ -339,10 +350,10 @@ void setup() {
   // start wifi channel rotation task
   xTaskCreatePinnedToCore(switchWifiChannel, /* task function */
                           "wifiloop",        /* name of task */
-                          3048,              /* stack size of task */
+                          1024,              /* stack size of task */
                           NULL,              /* parameter of the task */
                           4,                 /* priority of the task */
-                          NULL,              /* task handle*/
+                          &wifiSwitchTask,   /* task handle*/
                           0);                /* CPU core */
 
   // start state machine

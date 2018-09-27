@@ -57,7 +57,7 @@ void ChannelSwitchIRQ() {
 // Wifi channel rotation task
 void switchWifiChannel(void * parameter) {
   while (1) {
-    // task in block state to wait for channel switch timer interrupt event
+    // task is remaining in block state waiting for channel switch timer interrupt event
     xSemaphoreTake(xWifiChannelSwitchSemaphore, portMAX_DELAY);
     // rotates variable channel 1..WIFI_CHANNEL_MAX
     channel = (channel % WIFI_CHANNEL_MAX) + 1;

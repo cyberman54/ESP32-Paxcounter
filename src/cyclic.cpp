@@ -23,6 +23,19 @@ void doHousekeeping() {
   if (cfg.runmode == 1)
     ESP.restart();
 
+// task storage debugging //
+#ifdef HAS_LORA
+  ESP_LOGD(TAG, "Loraloop %d bytes left",
+           uxTaskGetStackHighWaterMark(LoraTask));
+#endif
+  ESP_LOGD(TAG, "Wifiloop %d bytes left",
+           uxTaskGetStackHighWaterMark(wifiSwitchTask));
+  ESP_LOGD(TAG, "Statemachine %d bytes left",
+           uxTaskGetStackHighWaterMark(stateMachineTask));
+#ifdef HAS_GPS
+  ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
+#endif
+
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE
   batt_voltage = read_voltage();
@@ -48,7 +61,7 @@ void doHousekeeping() {
              esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
     SendData(COUNTERPORT); // send data before clearing counters
     reset_counters();      // clear macs container and reset all counters
-    get_salt();          // get new salt for salting hashes
+    get_salt();            // get new salt for salting hashes
 
     if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
       esp_restart(); // memory leak, reset device

@@ -54,6 +54,7 @@ extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
 extern SemaphoreHandle_t xWifiChannelSwitchSemaphore;
+extern TaskHandle_t stateMachineTask, wifiSwitchTask;
 
 #ifdef HAS_GPS
 extern TaskHandle_t GpsTask;
