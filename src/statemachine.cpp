@@ -10,16 +10,15 @@ void stateMachine(void *pvParameters) {
   while (1) {
 
 #ifdef HAS_BUTTON
-    readButton();
+    if (ButtonPressedIRQ)
+      readButton();
 #endif
 
 #ifdef HAS_DISPLAY
-    updateDisplay();
+    if (DisplayTimerIRQ)
+      refreshtheDisplay();
 #endif
 
-    // check wifi scan cycle and if due rotate channel
-    if (ChannelTimerIRQ)
-      switchWifiChannel(channel);
     // check housekeeping cycle and if due do the work
     if (HomeCycleIRQ)
       doHousekeeping();

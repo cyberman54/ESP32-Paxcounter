@@ -3,7 +3,9 @@
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1272_radio 1
-#define HAS_LED NOT_A_PIN // LoPy has no on board LED, so we use RGB LED on LoPy
+//#define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
+#define HAS_LED GPIO_NUM_12 // use if LoPy is on Expansion Board, this has a user LED
+#define LED_ACTIVE_LOW 1 // use if LoPy is on Expansion Board, this has a user LED
 #define HAS_RGB_LED GPIO_NUM_0  // WS2812B RGB LED on GPIO0
 
 // Hardware pin definitions for Pycom LoPy board
@@ -28,7 +30,7 @@
 // uncomment this only if your LoPy runs on a expansion board 3.0
 //#define HAS_BATTERY_PROBE ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BATT_FACTOR 2 // voltage divider 1MOhm/1MOhm on board
-//#define HAS_BUTTON GPIO_NUM_37 // (P14)
+//#define HAS_BUTTON GPIO_NUM_13 // (P14)
 //#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
 
 // uncomment this only if your LoPy runs on a expansion board 2.0

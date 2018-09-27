@@ -39,18 +39,22 @@ typedef struct {
 } MessageBuffer_t;
 
 // global variables
-extern configData_t cfg; // current device configuration
+extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
-extern uint8_t channel;                       // wifi channel rotation counter
-extern uint16_t macs_total, macs_wifi, macs_ble, batt_voltage; // display values
+extern uint8_t volatile channel;              // wifi channel rotation counter
+extern uint16_t volatile macs_total, macs_wifi, macs_ble,
+    batt_voltage;               // display values
 extern std::set<uint16_t> macs; // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
 extern portMUX_TYPE timerMux;
-extern volatile int SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
+extern volatile uint8_t SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
 
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
+
+extern SemaphoreHandle_t xWifiChannelSwitchSemaphore;
+extern TaskHandle_t stateMachineTask, wifiSwitchTask;
 
 #ifdef HAS_GPS
 extern TaskHandle_t GpsTask;

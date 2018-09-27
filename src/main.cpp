@@ -32,6 +32,7 @@ gpsloop       0     2     read data from GPS over serial or i2c
 IDLE          1     0     Arduino loop() -> used for LED switching
 loraloop      1     1     runs the LMIC stack
 statemachine  1     3     switches application process logic
+wifiloop      0     4     rotates wifi channels
 
 ESP32 hardware timers
 ==========================
@@ -47,18 +48,20 @@ ESP32 hardware timers
 
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
-uint8_t channel = 0;                       // channel rotation counter
-uint16_t macs_total = 0, macs_wifi = 0, macs_ble = 0,
-         batt_voltage = 0; // globals for display
+uint8_t volatile channel = 0;              // channel rotation counter
+uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
+                  batt_voltage = 0; // globals for display
 
 // hardware timer for cyclic tasks
 hw_timer_t *channelSwitch, *displaytimer, *sendCycle, *homeCycle;
 
 // this variables will be changed in the ISR, and read in main loop
-volatile int ButtonPressedIRQ = 0, ChannelTimerIRQ = 0, SendCycleTimerIRQ = 0,
-             DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
+uint8_t volatile ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
+                 SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
-TaskHandle_t StateTask = NULL;
+TaskHandle_t stateMachineTask, wifiSwitchTask;
+
+SemaphoreHandle_t xWifiChannelSwitchSemaphore;
 
 // RTos send queues for payload transmit
 #ifdef HAS_LORA
@@ -96,7 +99,7 @@ void setup() {
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
-  (*((volatile uint32_t *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
+  (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
 #endif
 
   // setup debug output or silence device
@@ -143,12 +146,15 @@ void setup() {
   batt_voltage = read_voltage();
 #endif
 
+#ifdef USE_OTA
+  strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
   if (cfg.runmode == 1) {
     cfg.runmode = 0;
     saveConfig();
     start_ota_update();
   }
+#endif
 
   // initialize button
 #ifdef HAS_BUTTON
@@ -242,11 +248,6 @@ void setup() {
   timerAlarmEnable(displaytimer);
 #endif
 
-  // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  channelSwitch = timerBegin(1, 800, true);
-  timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
-  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-
   // setup send cycle trigger IRQ using esp32 hardware timer 2
   sendCycle = timerBegin(2, 8000, true);
   timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
@@ -256,6 +257,12 @@ void setup() {
   homeCycle = timerBegin(3, 8000, true);
   timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
+
+  // setup channel rotation trigger IRQ using esp32 hardware timer 1
+  xWifiChannelSwitchSemaphore = xSemaphoreCreateBinary();
+  channelSwitch = timerBegin(1, 800, true);
+  timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
+  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
 
   // enable timers
   // caution, see: https://github.com/espressif/arduino-esp32/issues/1313
@@ -301,8 +308,13 @@ void setup() {
   // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
 
   ESP_LOGI(TAG, "Starting Lora...");
-  xTaskCreatePinnedToCore(lorawan_loop, "loraloop", 2048, (void *)1, 1,
-                          &LoraTask, 1);
+  xTaskCreatePinnedToCore(lorawan_loop, /* task function */
+                          "loraloop",   /* name of task */
+                          2560,         /* stack size of task */
+                          (void *)1,    /* parameter of the task */
+                          1,            /* priority of the task */
+                          &LoraTask,    /* task handle*/
+                          1);           /* CPU core */
 #endif
 
 // if device has GPS and it is enabled, start GPS reader task on core 0 with
@@ -310,7 +322,13 @@ void setup() {
 // streaming NMEA data
 #ifdef HAS_GPS
   ESP_LOGI(TAG, "Starting GPS...");
-  xTaskCreatePinnedToCore(gps_loop, "gpsloop", 2048, (void *)1, 2, &GpsTask, 0);
+  xTaskCreatePinnedToCore(gps_loop,  /* task function */
+                          "gpsloop", /* name of task */
+                          1024,      /* stack size of task */
+                          (void *)1, /* parameter of the task */
+                          2,         /* priority of the task */
+                          &GpsTask,  /* task handle*/
+                          0);        /* CPU core */
 #endif
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
@@ -323,18 +341,30 @@ void setup() {
 
   // start wifi in monitor mode and start channel rotation task on core 0
   ESP_LOGI(TAG, "Starting Wifi...");
-  // esp_event_loop_init(NULL, NULL);
-  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
-  reset_salt(); // get new 16bit for salting hashes
+  get_salt(); // get new 16bit for salting hashes
+
+  // start wifi channel rotation task
+  xTaskCreatePinnedToCore(switchWifiChannel, /* task function */
+                          "wifiloop",        /* name of task */
+                          1024,              /* stack size of task */
+                          NULL,              /* parameter of the task */
+                          4,                 /* priority of the task */
+                          &wifiSwitchTask,   /* task handle*/
+                          0);                /* CPU core */
 
   // start state machine
   ESP_LOGI(TAG, "Starting Statemachine...");
-  xTaskCreatePinnedToCore(stateMachine, "stateloop", 2048, (void *)1, 3,
-                          &StateTask, 1);
+  xTaskCreatePinnedToCore(stateMachine,      /* task function */
+                          "stateloop",       /* name of task */
+                          2048,              /* stack size of task */
+                          (void *)1,         /* parameter of the task */
+                          3,                 /* priority of the task */
+                          &stateMachineTask, /* task handle */
+                          1);                /* CPU core */
 
 } // setup()
 

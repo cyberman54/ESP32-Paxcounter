@@ -13,7 +13,7 @@ const char lora_datarate[] = {"1211100908077BFSNA"};
 const char lora_datarate[] = {"100908078CNA121110090807"};
 #endif
 
-uint8_t DisplayState = 0;
+uint8_t volatile DisplayState = 0;
 
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
@@ -91,6 +91,10 @@ void init_display(const char *Productname, const char *Version) {
 
 void refreshtheDisplay() {
 
+  portENTER_CRITICAL(&timerMux);
+  DisplayTimerIRQ = 0;
+  portEXIT_CRITICAL(&timerMux);
+
   // set display on/off according to current device configuration
   if (DisplayState != cfg.screenon) {
     DisplayState = cfg.screenon;
@@ -114,7 +118,8 @@ void refreshtheDisplay() {
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
   u8x8.setCursor(0, 2);
-  u8x8.printf(batt_voltage > 4000 ? "B:USB " : "B:%.1fV", batt_voltage / 1000.0);
+  u8x8.printf(batt_voltage > 4000 ? "B:USB " : "B:%.1fV",
+              batt_voltage / 1000.0);
 #endif
 
 // update GPS status (line 2)
@@ -189,15 +194,6 @@ void IRAM_ATTR DisplayIRQ() {
   portENTER_CRITICAL_ISR(&timerMux);
   DisplayTimerIRQ++;
   portEXIT_CRITICAL_ISR(&timerMux);
-}
-
-void updateDisplay() {
-  if (DisplayTimerIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    DisplayTimerIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    refreshtheDisplay();
-  }
 }
 
 #endif // HAS_DISPLAY
