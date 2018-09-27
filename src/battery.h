@@ -9,5 +9,6 @@
 
 uint16_t read_voltage(void);
 void calibrate_voltage(void);
+bool batt_sufficient(void);
 
 #endif

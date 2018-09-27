@@ -45,7 +45,7 @@ void start_ota_update() {
 
 // check battery status if we can before doing ota
 #ifdef HAS_BATTERY_PROBE
-  if (batt_voltage < OTA_MIN_BATT) {
+  if (!batt_sufficient()) {
     ESP_LOGW(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
     return;
   }
