@@ -30,7 +30,11 @@ void wifi_sniffer_init(void) {
   cfg.nvs_enable = 0; // we don't need any wifi settings from NVRAM
   wifi_promiscuous_filter_t filter = {
       .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
-  ESP_ERROR_CHECK(esp_wifi_init(&cfg));             // configure Wifi with cfg
+
+  // esp_event_loop_init(NULL, NULL);
+  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+
+  ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
       esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
   ESP_ERROR_CHECK(
@@ -43,20 +47,22 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 }
 
-// Wifi channel rotation
-void switchWifiChannel(uint8_t volatile &ch) {
-  portENTER_CRITICAL(&timerMux);
-  ChannelTimerIRQ = 0;
-  portEXIT_CRITICAL(&timerMux);
-  // rotates variable channel 1..WIFI_CHANNEL_MAX
-  ch = (ch % WIFI_CHANNEL_MAX) + 1;
-  esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
-  ESP_LOGD(TAG, "Wifi set channel %d", ch);
+// IRQ Handler
+void ChannelSwitchIRQ() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  // unblock wifi channel rotation task
+  xSemaphoreGiveFromISR(xWifiChannelSwitchSemaphore, &xHigherPriorityTaskWoken);
 }
 
-// IRQ handler
-void IRAM_ATTR ChannelSwitchIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  ChannelTimerIRQ++;
-  portEXIT_CRITICAL(&timerMux);
+// Wifi channel rotation task
+void switchWifiChannel(void * parameter) {
+  while (1) {
+    // task in block state to wait for channel switch timer interrupt event
+    xSemaphoreTake(xWifiChannelSwitchSemaphore, portMAX_DELAY);
+    // rotates variable channel 1..WIFI_CHANNEL_MAX
+    channel = (channel % WIFI_CHANNEL_MAX) + 1;
+    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+    ESP_LOGD(TAG, "Wifi set channel %d", channel);
+  }
+  vTaskDelete(NULL);
 }

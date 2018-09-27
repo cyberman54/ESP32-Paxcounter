@@ -247,7 +247,9 @@ void lorawan_loop(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
   while (1) {
-    os_runloop_once();                  // execute LMIC jobs
+    //vTaskSuspendAll();
+    os_runloop_once(); // execute LMIC jobs
+    //xTaskResumeAll();
     vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
   }
 }

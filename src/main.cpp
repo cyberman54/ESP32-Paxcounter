@@ -32,6 +32,7 @@ gpsloop       0     2     read data from GPS over serial or i2c
 IDLE          1     0     Arduino loop() -> used for LED switching
 loraloop      1     1     runs the LMIC stack
 statemachine  1     3     switches application process logic
+wifiloop      0     4     rotates wifi channels
 
 ESP32 hardware timers
 ==========================
@@ -58,7 +59,9 @@ hw_timer_t *channelSwitch, *displaytimer, *sendCycle, *homeCycle;
 uint8_t volatile ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
                  SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
 
-TaskHandle_t StateTask = NULL;
+TaskHandle_t stateMachineTask = NULL;
+
+SemaphoreHandle_t xWifiChannelSwitchSemaphore;
 
 // RTos send queues for payload transmit
 #ifdef HAS_LORA
@@ -245,11 +248,6 @@ void setup() {
   timerAlarmEnable(displaytimer);
 #endif
 
-  // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  channelSwitch = timerBegin(1, 800, true);
-  timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
-  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-
   // setup send cycle trigger IRQ using esp32 hardware timer 2
   sendCycle = timerBegin(2, 8000, true);
   timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
@@ -259,6 +257,12 @@ void setup() {
   homeCycle = timerBegin(3, 8000, true);
   timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
+
+  // setup channel rotation trigger IRQ using esp32 hardware timer 1
+  xWifiChannelSwitchSemaphore = xSemaphoreCreateBinary();
+  channelSwitch = timerBegin(1, 800, true);
+  timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
+  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
 
   // enable timers
   // caution, see: https://github.com/espressif/arduino-esp32/issues/1313
@@ -326,18 +330,30 @@ void setup() {
 
   // start wifi in monitor mode and start channel rotation task on core 0
   ESP_LOGI(TAG, "Starting Wifi...");
-  // esp_event_loop_init(NULL, NULL);
-  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
   get_salt(); // get new 16bit for salting hashes
 
+  // start wifi channel rotation task
+  xTaskCreatePinnedToCore(switchWifiChannel, /* task function */
+                          "wifiloop",        /* name of task */
+                          3048,              /* stack size of task */
+                          NULL,              /* parameter of the task */
+                          4,                 /* priority of the task */
+                          NULL,              /* task handle*/
+                          0);                /* CPU core */
+
   // start state machine
   ESP_LOGI(TAG, "Starting Statemachine...");
-  xTaskCreatePinnedToCore(stateMachine, "stateloop", 2048, (void *)1, 3,
-                          &StateTask, 1);
+  xTaskCreatePinnedToCore(stateMachine,      /* task function */
+                          "stateloop",       /* name of task */
+                          2048,              /* stack size of task */
+                          (void *)1,         /* parameter of the task */
+                          3,                 /* priority of the task */
+                          &stateMachineTask, /* task handle */
+                          1);                /* CPU core */
 
 } // setup()
 

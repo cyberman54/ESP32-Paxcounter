@@ -53,6 +53,8 @@ extern volatile uint8_t SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
+extern SemaphoreHandle_t xWifiChannelSwitchSemaphore;
+
 #ifdef HAS_GPS
 extern TaskHandle_t GpsTask;
 #include "gps.h"

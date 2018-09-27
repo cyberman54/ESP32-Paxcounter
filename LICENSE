@@ -20,9 +20,9 @@ Parts of the source files in this repository are made available under different 
 listed below. Refer to each individual source file for more details.
 
 ------------------------------------------------------------------------------------------------
-wifisniffer.cpp
+wifiscan.cpp
 
-Parts of wifisniffer.cpp were derived or taken from
+Prior art was used for wifiscan.cpp and taken from
 
  * Copyright (c) 2017, Łukasz Marcin Podkalicki <lpodkalicki@gmail.com>
  * ESP32/016 WiFi Sniffer

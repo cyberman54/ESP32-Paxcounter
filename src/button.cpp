@@ -13,7 +13,6 @@ void IRAM_ATTR ButtonIRQ() {
 }
 
 void readButton() {
-  if (ButtonPressedIRQ) {
     portENTER_CRITICAL(&timerMux);
     ButtonPressedIRQ = 0;
     portEXIT_CRITICAL(&timerMux);
@@ -21,6 +20,5 @@ void readButton() {
     payload.reset();
     payload.addButton(0x01);
     SendData(BUTTONPORT);
-  }
 }
 #endif

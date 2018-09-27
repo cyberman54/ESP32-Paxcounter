@@ -8,5 +8,6 @@
 #include "cyclic.h"
 
 void stateMachine(void *pvParameters);
+void stateMachineInit();
 
 #endif
