@@ -1,4 +1,4 @@
-// Hardware related definitions for Pycom LoPy Board (not: LoPy4)
+// Hardware related definitions for Pycom LoPy4 Board
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define HAS_SPI 1        // comment out if device shall not send data via SPI
