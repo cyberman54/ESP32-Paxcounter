@@ -314,7 +314,8 @@ void do_ota_update() {
   client.stop();
 } // do_ota_update
 
-void display(const uint8_t row, const std::string status, const std::string msg) {
+void display(const uint8_t row, const std::string status,
+                       const std::string msg) {
 #ifdef HAS_DISPLAY
   u8x8.setCursor(14, row);
   u8x8.print((status.substr(0, 2)).c_str());
@@ -323,15 +324,17 @@ void display(const uint8_t row, const std::string status, const std::string msg)
     u8x8.setCursor(0, 7);
     u8x8.print(msg.substr(0, 16).c_str());
   }
+#endif
 }
 
+#ifdef HAS_DISPLAY
 // callback function to show download progress while streaming data
 void show_progress(size_t current, size_t size) {
   char buf[17];
   snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
   display(4, "**", buf);
-#endif
 }
+#endif
 
 // helper function to compare two versions. Returns 1 if v2 is
 // smaller, -1 if v1 is smaller, 0 if equal

@@ -26,7 +26,7 @@ typedef struct {
 } wifi_ieee80211_packet_t;
 
 void wifi_sniffer_init(void);
-void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
+void IRAM_ATTR wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 void ChannelSwitchIRQ(void);
 void switchWifiChannel(void * parameter);
 

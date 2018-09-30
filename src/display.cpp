@@ -91,9 +91,9 @@ void init_display(const char *Productname, const char *Version) {
 
 void refreshtheDisplay() {
 
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&mutexDisplay);
   DisplayTimerIRQ = 0;
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&mutexDisplay);
 
   // set display on/off according to current device configuration
   if (DisplayState != cfg.screenon) {
@@ -191,9 +191,9 @@ void refreshtheDisplay() {
 } // refreshDisplay()
 
 void IRAM_ATTR DisplayIRQ() {
-  portENTER_CRITICAL_ISR(&timerMux);
+  portENTER_CRITICAL_ISR(&mutexDisplay);
   DisplayTimerIRQ++;
-  portEXIT_CRITICAL_ISR(&timerMux);
+  portEXIT_CRITICAL_ISR(&mutexDisplay);
 }
 
 #endif // HAS_DISPLAY
