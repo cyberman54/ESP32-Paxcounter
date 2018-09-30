@@ -37,9 +37,9 @@ void SendData(uint8_t port) {
 // interrupt triggered function to prepare payload to send
 void sendPayload() {
 
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&mutexSendCycle);
   SendCycleTimerIRQ = 0;
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&mutexSendCycle);
 
   // append counter data to payload
   payload.reset();
@@ -68,9 +68,9 @@ void sendPayload() {
 
 // interrupt handler used for payload send cycle timer
 void IRAM_ATTR SendCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&mutexSendCycle);
   SendCycleTimerIRQ++;
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&mutexSendCycle);
 }
 
 // interrupt triggered function to eat data from send queues and transmit it

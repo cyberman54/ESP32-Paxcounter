@@ -28,6 +28,7 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
 void wifi_sniffer_init(void) {
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
   cfg.nvs_enable = 0; // we don't need any wifi settings from NVRAM
+  cfg.wifi_task_core_id = 0; // we want wifi task running on core 0
   wifi_promiscuous_filter_t filter = {
       .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // we need only MGMT frames
 
@@ -64,5 +65,5 @@ void switchWifiChannel(void * parameter) {
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
     ESP_LOGD(TAG, "Wifi set channel %d", channel);
   }
-  vTaskDelete(NULL);
+  vTaskDelete(NULL); // shoud never be reached
 }

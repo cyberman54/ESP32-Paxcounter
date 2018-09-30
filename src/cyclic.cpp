@@ -12,9 +12,9 @@ static const char TAG[] = "main";
 // do all housekeeping
 void doHousekeeping() {
 
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&mutexHomeCycle);
   HomeCycleIRQ = 0;
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&mutexHomeCycle);
 
   // update uptime counter
   uptime();
@@ -69,9 +69,9 @@ void doHousekeeping() {
 } // doHousekeeping()
 
 void IRAM_ATTR homeCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
+  portENTER_CRITICAL(&mutexHomeCycle);
   HomeCycleIRQ++;
-  portEXIT_CRITICAL(&timerMux);
+  portEXIT_CRITICAL(&mutexHomeCycle);
 }
 
 // uptime counter 64bit to prevent millis() rollover after 49 days

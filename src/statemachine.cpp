@@ -31,4 +31,5 @@ void stateMachine(void *pvParameters) {
     // give yield to CPU
     vTaskDelay(2 / portTICK_PERIOD_MS);
   }
+  vTaskDelete(NULL); // shoud never be reached
 }

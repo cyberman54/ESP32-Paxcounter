@@ -46,7 +46,7 @@ extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;               // display values
 extern std::set<uint16_t> macs; // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
-extern portMUX_TYPE timerMux;
+extern portMUX_TYPE mutexButton, mutexDisplay, mutexHomeCycle, mutexSendCycle;
 extern volatile uint8_t SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
     ChannelTimerIRQ, ButtonPressedIRQ;
 

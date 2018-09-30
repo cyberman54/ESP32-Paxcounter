@@ -14,8 +14,11 @@
 void do_ota_update();
 void start_ota_update();
 int version_compare(const String v1, const String v2);
+void display(const uint8_t row, const std::string status,
+                       const std::string msg);
+#ifdef HAS_DISPLAY
 void show_progress(size_t current, size_t size);
-void display(const uint8_t row, const std::string status, const std::string msg);
+#endif
 
 #endif // USE_OTA
 
