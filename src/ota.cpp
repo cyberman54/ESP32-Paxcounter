@@ -43,6 +43,7 @@ inline String getHeaderValue(String header, String headerName) {
 
 void start_ota_update() {
 
+/*
 // check battery status if we can before doing ota
 #ifdef HAS_BATTERY_PROBE
   if (!batt_sufficient()) {
@@ -50,6 +51,7 @@ void start_ota_update() {
     return;
   }
 #endif
+*/
 
 // turn on LED
 #if (HAS_LED != NOT_A_PIN)
