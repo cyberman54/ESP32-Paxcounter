@@ -29,7 +29,7 @@
 //#define HAS_LED GPIO_NUM_12 // use if LoPy is on Expansion Board, this has a user LED
 //#define LED_ACTIVE_LOW 1 // use if LoPy is on Expansion Board, this has a user LED
 //#define HAS_BUTTON GPIO_NUM_13 // user button on expansion board
-//define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
+//#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
 //#define HAS_BATTERY_PROBE ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BATT_FACTOR 2 // voltage divider 1MOhm/1MOhm -> expansion board 3.0
 //#define BATT_FACTOR 4 // voltage divider 115kOhm/56kOhm -> expansion board 2.0
