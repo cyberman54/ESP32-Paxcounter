@@ -30,7 +30,7 @@ Task          Core  Prio  Purpose
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer task
 gpsloop       0     2     read data from GPS over serial or i2c
 IDLE          1     0     Arduino loop() -> used for LED switching
-loraloop      1     3     runs the LMIC stack
+loraloop      1     2     runs the LMIC stack
 statemachine  1     1     switches application process logic
 wifiloop      0     4     rotates wifi channels
 
@@ -76,12 +76,6 @@ QueueHandle_t SPISendQueue;
 #ifdef HAS_GPS
 TaskHandle_t GpsTask = NULL;
 #endif
-
-// sync main loop and ISR when modifying IRQ handler shared variables
-portMUX_TYPE mutexButton = portMUX_INITIALIZER_UNLOCKED;
-portMUX_TYPE mutexDisplay = portMUX_INITIALIZER_UNLOCKED;
-portMUX_TYPE mutexHomeCycle = portMUX_INITIALIZER_UNLOCKED;
-portMUX_TYPE mutexSendCycle = portMUX_INITIALIZER_UNLOCKED;
 
 std::set<uint16_t> macs; // container holding unique MAC adress hashes
 
@@ -312,9 +306,9 @@ void setup() {
   ESP_LOGI(TAG, "Starting Lora...");
   xTaskCreatePinnedToCore(lorawan_loop, /* task function */
                           "loraloop",   /* name of task */
-                          2560,         /* stack size of task */
+                          3048,         /* stack size of task */
                           (void *)1,    /* parameter of the task */
-                          3,            /* priority of the task */
+                          2,            /* priority of the task */
                           &LoraTask,    /* task handle*/
                           1);           /* CPU core */
 #endif
@@ -352,7 +346,7 @@ void setup() {
   // start wifi channel rotation task
   xTaskCreatePinnedToCore(switchWifiChannel, /* task function */
                           "wifiloop",        /* name of task */
-                          1536,              /* stack size of task */
+                          2048,              /* stack size of task */
                           NULL,              /* parameter of the task */
                           4,                 /* priority of the task */
                           &wifiSwitchTask,   /* task handle*/

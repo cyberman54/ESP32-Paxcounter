@@ -6,6 +6,8 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+portMUX_TYPE mutexButton = portMUX_INITIALIZER_UNLOCKED;
+
 void IRAM_ATTR ButtonIRQ() {
   portENTER_CRITICAL(&mutexButton);
   ButtonPressedIRQ++;

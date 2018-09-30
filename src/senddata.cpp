@@ -1,6 +1,8 @@
 // Basic Config
 #include "globals.h"
 
+portMUX_TYPE mutexSendCycle = portMUX_INITIALIZER_UNLOCKED;
+
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {
 

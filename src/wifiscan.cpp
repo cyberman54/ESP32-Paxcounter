@@ -33,9 +33,6 @@ void wifi_sniffer_init(void) {
       // .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
       .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
 
-  // esp_event_loop_init(NULL, NULL);
-  // ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-
   ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
       esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
@@ -50,7 +47,7 @@ void wifi_sniffer_init(void) {
 }
 
 // IRQ Handler
-void ChannelSwitchIRQ() {
+void IRAM_ATTR ChannelSwitchIRQ() {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   // unblock wifi channel rotation task
   xSemaphoreGiveFromISR(xWifiChannelSwitchSemaphore, &xHigherPriorityTaskWoken);

@@ -9,6 +9,8 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+portMUX_TYPE mutexHomeCycle = portMUX_INITIALIZER_UNLOCKED;
+
 // do all housekeeping
 void doHousekeeping() {
 
