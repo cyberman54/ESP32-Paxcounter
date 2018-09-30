@@ -3,7 +3,7 @@
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1
-#define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
+//#define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
 #define HAS_RGB_LED   GPIO_NUM_0  // WS2812B RGB LED on GPIO0
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 

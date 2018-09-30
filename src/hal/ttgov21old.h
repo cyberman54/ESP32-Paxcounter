@@ -7,6 +7,7 @@
 #define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define HAS_LED NOT_A_PIN // no usable LED on board
+#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 //#define DISPLAY_FLIP  1 // rotated display

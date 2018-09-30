@@ -15,6 +15,8 @@ const char lora_datarate[] = {"100908078CNA121110090807"};
 
 uint8_t volatile DisplayState = 0;
 
+portMUX_TYPE mutexDisplay = portMUX_INITIALIZER_UNLOCKED;
+
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   const uint8_t *p;
