@@ -43,13 +43,15 @@ inline String getHeaderValue(String header, String headerName) {
 
 void start_ota_update() {
 
+/*
 // check battery status if we can before doing ota
 #ifdef HAS_BATTERY_PROBE
-  if (batt_voltage < OTA_MIN_BATT) {
+  if (!batt_sufficient()) {
     ESP_LOGW(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
     return;
   }
 #endif
+*/
 
 // turn on LED
 #if (HAS_LED != NOT_A_PIN)

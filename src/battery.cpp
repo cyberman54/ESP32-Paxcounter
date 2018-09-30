@@ -49,4 +49,9 @@ uint16_t read_voltage() {
   return voltage;
 }
 
+bool batt_sufficient() {
+  uint16_t volts = read_voltage();
+  return (( volts < 1000 ) || (volts > OTA_MIN_BATT)); // no battery or battery sufficient
+}
+
 #endif // HAS_BATTERY_PROBE

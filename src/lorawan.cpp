@@ -45,8 +45,8 @@ void gen_lora_deveui(uint8_t *pdeveui) {
   *p++ = dmac[5];
   *p++ = dmac[4];
   *p++ = dmac[3];
-  *p++ = 0xff;
   *p++ = 0xfe;
+  *p++ = 0xff;
   *p++ = dmac[2];
   *p++ = dmac[1];
   *p++ = dmac[0];
@@ -247,9 +247,7 @@ void lorawan_loop(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
   while (1) {
-    //vTaskSuspendAll();
     os_runloop_once(); // execute LMIC jobs
-    //xTaskResumeAll();
     vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
   }
 }
