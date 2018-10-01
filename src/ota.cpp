@@ -74,8 +74,8 @@ void start_ota_update() {
   u8x8.setInverseFont(0);
   u8x8.print("WiFi connect  ..\n");
   u8x8.print("Has Update?   ..\n");
+  u8x8.print("Fetching      ..\n");
   u8x8.print("Downloading   ..\n");
-  u8x8.print("Flashing      ..\n");
   u8x8.print("Rebooting     ..");
 #endif
 
