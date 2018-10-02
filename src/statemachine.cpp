@@ -7,6 +7,11 @@ void stateMachine(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
+  // initialize display - caution: must be done on core 1 in arduino loop!
+#ifdef HAS_DISPLAY
+  init_display(PRODUCTNAME, PROGVERSION);
+#endif
+
   while (1) {
 
 #ifdef HAS_BUTTON

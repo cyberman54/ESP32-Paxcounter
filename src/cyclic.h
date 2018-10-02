@@ -1,6 +1,10 @@
 #ifndef _CYCLIC_H
 #define _CYCLIC_H
 
+#include "senddata.h"
+#include "ota.h"
+#include "led.h"
+
 void doHousekeeping(void);
 void IRAM_ATTR homeCycleIRQ(void);
 uint64_t uptime(void);

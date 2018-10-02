@@ -3,8 +3,6 @@
 
 // Basic config
 #include "globals.h"
-#include "senddata.h"
-#include "ota.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -26,16 +24,15 @@ void doHousekeeping() {
     ESP.restart();
 
 // task storage debugging //
-#ifdef HAS_LORA
-  ESP_LOGD(TAG, "Loraloop %d bytes left",
-           uxTaskGetStackHighWaterMark(LoraTask));
-#endif
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
            uxTaskGetStackHighWaterMark(wifiSwitchTask));
   ESP_LOGD(TAG, "Statemachine %d bytes left",
            uxTaskGetStackHighWaterMark(stateMachineTask));
 #ifdef HAS_GPS
   ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
+#endif
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+  ESP_LOGD(TAG, "LEDloop %d bytes left", uxTaskGetStackHighWaterMark(ledLoopTask));
 #endif
 
 // read battery voltage into global variable

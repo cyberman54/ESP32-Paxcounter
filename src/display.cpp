@@ -15,6 +15,8 @@ const char lora_datarate[] = {"100908078CNA121110090807"};
 
 uint8_t volatile DisplayState = 0;
 
+hw_timer_t *displaytimer;
+
 portMUX_TYPE mutexDisplay = portMUX_INITIALIZER_UNLOCKED;
 
 // helper function, prints a hex key on display
@@ -27,8 +29,20 @@ void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   u8x8.printf("\n");
 }
 
-// show startup screen
 void init_display(const char *Productname, const char *Version) {
+
+  // setup display refresh trigger IRQ using esp32 hardware timer
+  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+  displaytimer = timerBegin(0, 80, true);
+  // interrupt handler DisplayIRQ, triggered by edge
+  timerAttachInterrupt(displaytimer, &DisplayIRQ, true);
+  // reload interrupt after each trigger of display refresh cycle
+  timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
+  // enable display interrupt
+  timerAlarmEnable(displaytimer);
+
+  // show startup screen
   uint8_t buf[32];
   u8x8.begin();
   u8x8.setFont(u8x8_font_chroma48medium8_r);
@@ -107,7 +121,7 @@ void refreshtheDisplay() {
   if (!DisplayState)
     return;
 
-  uint8_t msgWaiting = 0;
+  uint8_t msgWaiting;
   char buff[16]; // 16 chars line buffer
 
   // update counter (lines 0-1)

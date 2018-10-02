@@ -63,6 +63,18 @@ void RevBytes(unsigned char *b, size_t c) {
   }
 }
 
+// initial lmic job
+void initlmic(osjob_t *j) {
+  // reset MAC state
+  LMIC_reset();
+  // This tells LMIC to make the receive windows bigger, in case your clock is
+  // 1% faster or slower.
+  LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
+  // start joining
+  LMIC_startJoining();
+  // init done - onEvent() callback will be invoked...
+}
+
 // LMIC callback functions
 void os_getDevKey(u1_t *buf) { memcpy(buf, APPKEY, 16); }
 
@@ -240,17 +252,6 @@ void onEvent(ev_t ev) {
   }
 
 } // onEvent()
-
-// LMIC FreeRTos Task
-void lorawan_loop(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-  while (1) {
-    os_runloop_once(); // execute LMIC jobs
-    vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
-  }
-}
 
 // helper function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora(uint8_t sf, uint8_t tx) {

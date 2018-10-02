@@ -56,19 +56,17 @@ extern SemaphoreHandle_t xWifiChannelSwitchSemaphore;
 extern TaskHandle_t stateMachineTask, wifiSwitchTask;
 
 #ifdef HAS_GPS
-extern TaskHandle_t GpsTask;
 #include "gps.h"
 #endif
 
-#ifdef HAS_LED
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 #include "led.h"
+extern TaskHandle_t ledLoopTask;
 #endif
 
 #include "payload.h"
 
 #ifdef HAS_LORA
-extern QueueHandle_t LoraSendQueue;
-extern TaskHandle_t LoraTask;
 #include "lorawan.h"
 #endif
 
