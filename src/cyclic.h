@@ -1,9 +1,8 @@
 #ifndef _CYCLIC_H
 #define _CYCLIC_H
 
+#include "globals.h"
 #include "senddata.h"
-#include "ota.h"
-#include "led.h"
 
 void doHousekeeping(void);
 void IRAM_ATTR homeCycleIRQ(void);

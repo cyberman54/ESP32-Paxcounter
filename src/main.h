@@ -6,7 +6,6 @@
 #include <esp32-hal-timer.h> // needed for timers
 
 #include "globals.h"
-#include "led.h"
 #include "wifiscan.h"
 #include "configmanager.h"
 #include "cyclic.h"

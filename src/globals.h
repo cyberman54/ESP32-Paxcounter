@@ -61,7 +61,6 @@ extern TaskHandle_t stateMachineTask, wifiSwitchTask;
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 #include "led.h"
-extern TaskHandle_t ledLoopTask;
 #endif
 
 #include "payload.h"

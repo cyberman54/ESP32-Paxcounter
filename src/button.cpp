@@ -1,7 +1,6 @@
 #ifdef HAS_BUTTON
 
 #include "globals.h"
-#include "senddata.h"
 
 // Local logging tag
 static const char TAG[] = "main";

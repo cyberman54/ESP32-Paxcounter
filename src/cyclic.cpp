@@ -2,7 +2,7 @@
 /* Interval can be set in paxcounter.conf (HOMECYCLE)       */
 
 // Basic config
-#include "globals.h"
+#include "cyclic.h"
 
 // Local logging tag
 static const char TAG[] = "main";
