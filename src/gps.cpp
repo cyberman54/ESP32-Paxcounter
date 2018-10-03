@@ -7,6 +7,7 @@ static const char TAG[] = "main";
 
 TinyGPSPlus gps;
 gpsStatus_t gps_status;
+TaskHandle_t GpsTask;
 
 // read GPS data and cast to global struct
 void gps_read() {
@@ -66,6 +67,8 @@ void gps_loop(void *pvParameters) {
     vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
 
   } // end of infinite loop
+
+  vTaskDelete(NULL); // shoud never be reached
 
 } // gps_loop()
 

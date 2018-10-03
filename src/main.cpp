@@ -29,11 +29,12 @@ Task          Core  Prio  Purpose
 ====================================================================================
 wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
-gpsloop       0     2     read data from GPS over serial or i2c
+gpsloop       0     2     reads data from GPS over serial or i2c
+spiloop       0     2     reads/writes data on spi interface
 statemachine  0     1     switches application process logic
-IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer task
+IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
-looptask      1     1     arduino loop() -> runs the LMIC stack
+looptask      1     1     arduino core -> runs the LMIC LoRa stack
 IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
@@ -64,23 +65,6 @@ uint8_t volatile ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
 TaskHandle_t stateMachineTask, wifiSwitchTask;
 
 SemaphoreHandle_t xWifiChannelSwitchSemaphore;
-
-// RTos send queues for payload transmit
-#ifdef HAS_LORA
-QueueHandle_t LoraSendQueue;
-#endif
-
-#ifdef HAS_SPI
-QueueHandle_t SPISendQueue;
-#endif
-
-#ifdef HAS_GPS
-TaskHandle_t GpsTask;
-#endif
-
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-TaskHandle_t ledLoopTask;
-#endif
 
 std::set<uint16_t> macs; // container holding unique MAC adress hashes
 
@@ -138,7 +122,6 @@ void setup() {
   strcat_P(features, " BLE");
 #else
   bool btstop = btStop();
-  //esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
 #endif
 
 // initialize battery status
@@ -189,6 +172,16 @@ void setup() {
   } else
     ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
              SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+
+  ESP_LOGI(TAG, "Starting LMIC...");
+  os_init();    // initialize lmic run-time environment on core 1
+  LMIC_reset(); // initialize lmic MAC
+  LMIC_setClockError(MAX_CLOCK_ERROR * 1 /
+                     100); // This tells LMIC to make the receive windows
+                           // bigger, in case your clock is 1% faster or slower.
+
+  LMIC_startJoining(); // start joining
+
 #endif
 
 // initialize SPI
@@ -293,13 +286,24 @@ void setup() {
   get_salt(); // get new 16bit for salting hashes
 
 #ifdef HAS_GPS
-  ESP_LOGI(TAG, "Starting GPS...");
+  ESP_LOGI(TAG, "Starting GPSloop...");
   xTaskCreatePinnedToCore(gps_loop,  /* task function */
                           "gpsloop", /* name of task */
                           1024,      /* stack size of task */
                           (void *)1, /* parameter of the task */
                           2,         /* priority of the task */
                           &GpsTask,  /* task handle*/
+                          0);        /* CPU core */
+#endif
+
+#ifdef HAS_SPI
+  ESP_LOGI(TAG, "Starting SPIloop...");
+  xTaskCreatePinnedToCore(spi_loop,  /* task function */
+                          "spiloop", /* name of task */
+                          2048,      /* stack size of task */
+                          (void *)1, /* parameter of the task */
+                          2,         /* priority of the task */
+                          &SpiTask,  /* task handle*/
                           0);        /* CPU core */
 #endif
 
@@ -338,14 +342,13 @@ void setup() {
 } // setup()
 
 void loop() {
-  osjob_t initjob;
-  // initialize run-time env
-  os_init();
-  // setup initial job
-  os_setCallback(&initjob, initlmic);
-  // execute scheduled jobs and events
+
   while (1) {
-    os_runloop_once();                  // execute LMIC jobs
+#ifdef HAS_LORA
+    os_runloop_once(); // execute lmic scheduled jobs and events
+#endif
     vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
   }
+
+  vTaskDelete(NULL); // shoud never be reached
 }

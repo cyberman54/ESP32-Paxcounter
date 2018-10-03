@@ -75,33 +75,6 @@ void IRAM_ATTR SendCycleIRQ() {
   portEXIT_CRITICAL(&mutexSendCycle);
 }
 
-// interrupt triggered function to eat data from send queues and transmit it
-void checkSendQueues() {
-  MessageBuffer_t SendBuffer;
-
-#ifdef HAS_LORA
-  // Check if there is a pending TX/RX job running
-  if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
-    // LoRa Busy -> don't eat data from queue, since it cannot be sent
-  } else {
-    if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-      // SendBuffer gets struct MessageBuffer with next payload from queue
-      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                      SendBuffer.MessageSize, (cfg.countermode & 0x02));
-      ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
-      sprintf(display_line7, "PACKET QUEUED");
-    }
-  }
-#endif
-
-#ifdef HAS_SPI
-  if (xQueueReceive(SPISendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes sent to SPI", SendBuffer.MessageSize);
-  }
-#endif
-
-} // checkSendQueues
-
 void flushQueues() {
 #ifdef HAS_LORA
   xQueueReset(LoraSendQueue);

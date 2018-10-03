@@ -25,6 +25,6 @@ void os_getArtEui(u1_t *buf);
 void os_getDevEui(u1_t *buf);
 void showLoraKeys(void);
 void switch_lora(uint8_t sf, uint8_t tx);
-void initlmic(osjob_t *j);
+void lora_send(osjob_t *job);
 
 #endif
