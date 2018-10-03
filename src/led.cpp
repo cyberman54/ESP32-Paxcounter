@@ -6,6 +6,8 @@ led_states LEDState = LED_OFF; // LED state global for state machine
 led_states previousLEDState =
     LED_ON; // This will force LED to be off at boot since State is OFF
 
+TaskHandle_t ledLoopTask;
+
 uint16_t LEDColor = COLOR_NONE, LEDBlinkDuration = 0; // state machine variables
 unsigned long LEDBlinkStarted = 0; // When (in millis() led blink started)
 

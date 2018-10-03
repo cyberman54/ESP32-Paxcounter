@@ -71,7 +71,7 @@ extern TaskHandle_t ledLoopTask;
 #endif
 
 #ifdef HAS_SPI
-extern QueueHandle_t SPISendQueue;
+#include "spi.h"
 #endif
 
 #ifdef HAS_DISPLAY

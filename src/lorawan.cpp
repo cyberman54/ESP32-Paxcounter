@@ -6,6 +6,9 @@
 // Local logging Tag
 static const char TAG[] = "lora";
 
+osjob_t sendjob;
+QueueHandle_t LoraSendQueue;
+
 // LMIC enhanced Pin mapping
 const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
                                .miso = PIN_SPI_MISO,
@@ -61,18 +64,6 @@ void RevBytes(unsigned char *b, size_t c) {
     b[i] = b[c - 1 - i];
     b[c - 1 - i] = t;
   }
-}
-
-// initial lmic job
-void initlmic(osjob_t *j) {
-  // reset MAC state
-  LMIC_reset();
-  // This tells LMIC to make the receive windows bigger, in case your clock is
-  // 1% faster or slower.
-  LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
-  // start joining
-  LMIC_startJoining();
-  // init done - onEvent() callback will be invoked...
 }
 
 // LMIC callback functions
@@ -216,6 +207,9 @@ void onEvent(ev_t ev) {
     // the library)
     switch_lora(cfg.lorasf, cfg.txpower);
 
+    // kickoff first send job
+    os_setCallback(&sendjob, lora_send);
+
     // show effective LoRa parameters after join
     ESP_LOGI(TAG, "ADR=%d, SF=%d, TXPOWER=%d", cfg.adrmode, cfg.lorasf,
              cfg.txpower);
@@ -298,6 +292,27 @@ void switch_lora(uint8_t sf, uint8_t tx) {
   default:
     break;
   }
+}
+
+void lora_send(osjob_t *job) {
+  MessageBuffer_t SendBuffer;
+  // Check if there is a pending TX/RX job running, if yes don't eat data
+  // since it cannot be sent right now
+  if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
+    // waiting for LoRa getting ready
+  } else {
+    if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
+      // SendBuffer gets struct MessageBuffer with next payload from queue
+      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                      SendBuffer.MessageSize, (cfg.countermode & 0x02));
+      ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+      sprintf(display_line7, "PACKET QUEUED");
+    }
+  }
+  // reschedule job every 0,5 - 1 sec. including a bit of random to prevent
+  // systematic collisions
+  os_setTimedCallback(job, os_getTime() + 500 + ms2osticks(random(500)),
+                      lora_send);
 }
 
 #endif // HAS_LORA

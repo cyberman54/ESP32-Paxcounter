@@ -27,12 +27,11 @@ void stateMachine(void *pvParameters) {
     // check housekeeping cycle and if due do the work
     if (HomeCycleIRQ)
       doHousekeeping();
-    // check send cycle and if due enqueue payload to send
+
+        // check send cycle and if due enqueue payload to send
     if (SendCycleTimerIRQ)
       sendPayload();
-    // check send queues and process due payload to send
-    checkSendQueues();
-
+         
     // give yield to CPU
     vTaskDelay(2 / portTICK_PERIOD_MS);
   }
