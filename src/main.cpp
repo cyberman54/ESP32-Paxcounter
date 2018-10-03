@@ -39,10 +39,10 @@ IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
 ==========================
- 0	Display-Refresh
- 1	Wifi Channel Switch
- 2	Send Cycle
- 3	Housekeeping
+ 0	Trigger display refresh
+ 1	Trigger Wifi channel switch
+ 2	Trigger send payload cycle
+ 3	Trigger housekeeping cycle
 
 */
 
@@ -320,24 +320,24 @@ void setup() {
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   // start led loop
   ESP_LOGI(TAG, "Starting LEDloop...");
-  xTaskCreatePinnedToCore(ledLoop,      /* task function */
-                          "ledloop",    /* name of task */
-                          1024,         /* stack size of task */
-                          (void *)1,    /* parameter of the task */
-                          3,            /* priority of the task */
-                          &ledLoopTask, /* task handle */
-                          0);           /* CPU core */
+  xTaskCreatePinnedToCore(ledLoop,      // task function
+                          "ledloop",    // name of task
+                          1024,         // stack size of task
+                          (void *)1,    // parameter of the task
+                          3,            // priority of the task
+                          &ledLoopTask, // task handle
+                          0);           // CPU core
 #endif
 
   // start wifi channel rotation task
   ESP_LOGI(TAG, "Starting Wifi Channel rotation...");
-  xTaskCreatePinnedToCore(switchWifiChannel, /* task function */
-                          "wifiloop",        /* name of task */
-                          2048,              /* stack size of task */
-                          NULL,              /* parameter of the task */
-                          4,                 /* priority of the task */
-                          &wifiSwitchTask,   /* task handle*/
-                          0);                /* CPU core */
+  xTaskCreatePinnedToCore(switchWifiChannel, // task function
+                          "wifiloop",        // name of task
+                          2048,              // stack size of task
+                          NULL,              // parameter of the task
+                          4,                 // priority of the task
+                          &wifiSwitchTask,   // task handle
+                          0);                // CPU core
 
 } // setup()
 
