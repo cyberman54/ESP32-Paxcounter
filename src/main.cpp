@@ -140,12 +140,10 @@ void setup() {
   strcat_P(features, "PU");
   // install button interrupt (pullup mode)
   pinMode(HAS_BUTTON, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
 #else
   strcat_P(features, "PD");
   // install button interrupt (pulldown mode)
   pinMode(HAS_BUTTON, INPUT_PULLDOWN);
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
 #endif // BUTTON_PULLUP
 #endif // HAS_BUTTON
 
@@ -345,6 +343,15 @@ void setup() {
   timerAlarmEnable(sendCycle);
   timerAlarmEnable(homeCycle);
   timerAlarmEnable(channelSwitch);
+
+  // start button interrupt
+#ifdef HAS_BUTTON
+#ifdef BUTTON_PULLUP
+  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
+#else
+  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
+#endif
+#endif // HAS_BUTTON
 
 } // setup()
 
