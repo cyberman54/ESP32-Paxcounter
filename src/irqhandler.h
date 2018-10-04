@@ -10,7 +10,6 @@
 #include "cyclic.h"
 #include "button.h"
 #include "display.h"
-#include "cyclic.h"
 #include "senddata.h"
 
 void irqHandler(void *pvParameters);
