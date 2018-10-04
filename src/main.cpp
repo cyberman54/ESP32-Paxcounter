@@ -31,10 +31,10 @@ wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
 gpsloop       0     2     reads data from GPS over serial or i2c
 spiloop       0     2     reads/writes data on spi interface
-statemachine  0     1     switches application process logic
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
+irqhandler    1     1     executes tasks triggered by irq
 IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
@@ -55,16 +55,8 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-// hardware timer for cyclic tasks
-hw_timer_t *channelSwitch, *sendCycle, *homeCycle;
-
-// this variables will be changed in the ISR, and read in main loop
-uint8_t volatile ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
-                 SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
-
-TaskHandle_t stateMachineTask, wifiSwitchTask;
-
-SemaphoreHandle_t xWifiChannelSwitchSemaphore;
+hw_timer_t *channelSwitch, *sendCycle, *homeCycle, *displaytimer; // irq tasks
+TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 std::set<uint16_t> macs; // container holding unique MAC adress hashes
 
@@ -227,26 +219,32 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
+  init_display(PRODUCTNAME, PROGVERSION);
+
+  // setup display refresh trigger IRQ using esp32 hardware timer
+  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+  displaytimer = timerBegin(0, 80, true);
+  // interrupt handler DisplayIRQ, triggered by edge
+  timerAttachInterrupt(displaytimer, &DisplayIRQ, true);
+  // reload interrupt after each trigger of display refresh cycle
+  timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
 #endif
 
   // setup send cycle trigger IRQ using esp32 hardware timer 2
   sendCycle = timerBegin(2, 8000, true);
   timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
   timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
-  timerAlarmEnable(sendCycle);
 
   // setup house keeping cycle trigger IRQ using esp32 hardware timer 3
   homeCycle = timerBegin(3, 8000, true);
   timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
-  timerAlarmEnable(homeCycle);
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  xWifiChannelSwitchSemaphore = xSemaphoreCreateBinary();
   channelSwitch = timerBegin(1, 800, true);
   timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
   timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-  timerAlarmEnable(channelSwitch);
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
@@ -287,35 +285,35 @@ void setup() {
 
 #ifdef HAS_GPS
   ESP_LOGI(TAG, "Starting GPSloop...");
-  xTaskCreatePinnedToCore(gps_loop,  /* task function */
-                          "gpsloop", /* name of task */
-                          1024,      /* stack size of task */
-                          (void *)1, /* parameter of the task */
-                          2,         /* priority of the task */
-                          &GpsTask,  /* task handle*/
-                          0);        /* CPU core */
+  xTaskCreatePinnedToCore(gps_loop,  // task function
+                          "gpsloop", // name of task
+                          1024,      // stack size of task
+                          (void *)1, // parameter of the task
+                          2,         // priority of the task
+                          &GpsTask,  // task handle
+                          0);        // CPU core
 #endif
 
 #ifdef HAS_SPI
   ESP_LOGI(TAG, "Starting SPIloop...");
-  xTaskCreatePinnedToCore(spi_loop,  /* task function */
-                          "spiloop", /* name of task */
-                          2048,      /* stack size of task */
-                          (void *)1, /* parameter of the task */
-                          2,         /* priority of the task */
-                          &SpiTask,  /* task handle*/
-                          0);        /* CPU core */
+  xTaskCreatePinnedToCore(spi_loop,  // task function
+                          "spiloop", // name of task
+                          2048,      // stack size of task
+                          (void *)1, // parameter of the task
+                          2,         // priority of the task
+                          &SpiTask,  // task handle
+                          0);        // CPU core
 #endif
 
   // start state machine
-  ESP_LOGI(TAG, "Starting Statemachine...");
-  xTaskCreatePinnedToCore(stateMachine,      /* task function */
-                          "stateloop",       /* name of task */
-                          2048,              /* stack size of task */
-                          (void *)1,         /* parameter of the task */
-                          1,                 /* priority of the task */
-                          &stateMachineTask, /* task handle */
-                          0);                /* CPU core */
+  ESP_LOGI(TAG, "Starting IRQ Handler...");
+  xTaskCreatePinnedToCore(irqHandler,      // task function
+                          "irqhandler",    // name of task
+                          2048,            // stack size of task
+                          (void *)1,       // parameter of the task
+                          1,               // priority of the task
+                          &irqHandlerTask, // task handle
+                          1);              // CPU core
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   // start led loop
@@ -338,6 +336,15 @@ void setup() {
                           4,                 // priority of the task
                           &wifiSwitchTask,   // task handle
                           0);                // CPU core
+
+  // start timer triggered interrupts
+  ESP_LOGI(TAG, "Starting Interrupts...");
+#ifdef HAS_DISPLAY
+  timerAlarmEnable(displaytimer);
+#endif
+  timerAlarmEnable(sendCycle);
+  timerAlarmEnable(homeCycle);
+  timerAlarmEnable(channelSwitch);
 
 } // setup()
 

@@ -3,7 +3,7 @@
 
 #include "senddata.h"
 
-void IRAM_ATTR ButtonIRQ(void);
-void readButton(void);
+void IRAM_ATTR ButtonIRQ();
+void readButton();
 
 #endif

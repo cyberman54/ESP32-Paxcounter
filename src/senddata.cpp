@@ -1,8 +1,6 @@
 // Basic Config
 #include "globals.h"
 
-portMUX_TYPE mutexSendCycle = portMUX_INITIALIZER_UNLOCKED;
-
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {
 
@@ -39,10 +37,6 @@ void SendData(uint8_t port) {
 // interrupt triggered function to prepare payload to send
 void sendPayload() {
 
-  portENTER_CRITICAL(&mutexSendCycle);
-  SendCycleTimerIRQ = 0;
-  portEXIT_CRITICAL(&mutexSendCycle);
-
   // append counter data to payload
   payload.reset();
   payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
@@ -67,13 +61,6 @@ void sendPayload() {
 #endif
   SendData(COUNTERPORT);
 } // sendpayload()
-
-// interrupt handler used for payload send cycle timer
-void IRAM_ATTR SendCycleIRQ() {
-  portENTER_CRITICAL(&mutexSendCycle);
-  SendCycleTimerIRQ++;
-  portEXIT_CRITICAL(&mutexSendCycle);
-}
 
 void flushQueues() {
 #ifdef HAS_LORA

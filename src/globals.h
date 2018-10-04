@@ -46,14 +46,11 @@ extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;               // display values
 extern std::set<uint16_t> macs; // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle;
-extern volatile uint8_t SendCycleTimerIRQ, HomeCycleIRQ, DisplayTimerIRQ,
-    ChannelTimerIRQ, ButtonPressedIRQ;
 
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
-extern SemaphoreHandle_t xWifiChannelSwitchSemaphore;
-extern TaskHandle_t stateMachineTask, wifiSwitchTask;
+extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 #ifdef HAS_GPS
 #include "gps.h"

@@ -46,21 +46,12 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 }
 
-// IRQ Handler
-void IRAM_ATTR ChannelSwitchIRQ() {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-  // unblock wifi channel rotation task
-  xSemaphoreGiveFromISR(xWifiChannelSwitchSemaphore, &xHigherPriorityTaskWoken);
-}
-
 // Wifi channel rotation task
 void switchWifiChannel(void *parameter) {
   while (1) {
-    // task is remaining in block state waiting for channel switch timer
-    // interrupt event
-    xSemaphoreTake(xWifiChannelSwitchSemaphore, portMAX_DELAY);
-    // rotates variable channel 1..WIFI_CHANNEL_MAX
-    channel = (channel % WIFI_CHANNEL_MAX) + 1;
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // waiting for channel switch timer
+    channel =
+        (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
     ESP_LOGD(TAG, "Wifi set channel %d", channel);
   }

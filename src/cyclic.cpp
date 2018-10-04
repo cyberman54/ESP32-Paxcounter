@@ -7,14 +7,8 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-portMUX_TYPE mutexHomeCycle = portMUX_INITIALIZER_UNLOCKED;
-
 // do all housekeeping
 void doHousekeeping() {
-
-  portENTER_CRITICAL(&mutexHomeCycle);
-  HomeCycleIRQ = 0;
-  portEXIT_CRITICAL(&mutexHomeCycle);
 
   // update uptime counter
   uptime();
@@ -26,8 +20,8 @@ void doHousekeeping() {
 // task storage debugging //
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
            uxTaskGetStackHighWaterMark(wifiSwitchTask));
-  ESP_LOGD(TAG, "Stateloop %d bytes left",
-           uxTaskGetStackHighWaterMark(stateMachineTask));
+  ESP_LOGD(TAG, "IRQhandler %d bytes left",
+           uxTaskGetStackHighWaterMark(irqHandlerTask));
 #ifdef HAS_GPS
   ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
 #endif
@@ -69,12 +63,6 @@ void doHousekeeping() {
       esp_restart(); // memory leak, reset device
   }
 } // doHousekeeping()
-
-void IRAM_ATTR homeCycleIRQ() {
-  portENTER_CRITICAL(&mutexHomeCycle);
-  HomeCycleIRQ++;
-  portEXIT_CRITICAL(&mutexHomeCycle);
-}
 
 // uptime counter 64bit to prevent millis() rollover after 49 days
 uint64_t uptime() {

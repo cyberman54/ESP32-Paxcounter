@@ -11,6 +11,6 @@
 #include "cyclic.h"
 #include "beacon_array.h"
 #include "ota.h"
-#include "statemachine.h"
+#include "irqhandler.h"
 
 #endif
