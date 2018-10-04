@@ -8,18 +8,20 @@
 
 #include "globals.h"
 #include "cyclic.h"
-#include "button.h"
-#include "display.h"
 #include "senddata.h"
 
 void irqHandler(void *pvParameters);
 void IRAM_ATTR ChannelSwitchIRQ();
 void IRAM_ATTR homeCycleIRQ();
 void IRAM_ATTR SendCycleIRQ();
+
 #ifdef HAS_DISPLAY
+#include "display.h"
 void IRAM_ATTR DisplayIRQ();
 #endif
+
 #ifdef HAS_BUTTON
+#include "button.h"
 void IRAM_ATTR ButtonIRQ();
 #endif
 
