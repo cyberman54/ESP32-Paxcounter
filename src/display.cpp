@@ -15,8 +15,6 @@ const char lora_datarate[] = {"100908078CNA121110090807"};
 
 uint8_t volatile DisplayState = 0;
 
-portMUX_TYPE mutexDisplay = portMUX_INITIALIZER_UNLOCKED;
-
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   const uint8_t *p;
@@ -27,8 +25,9 @@ void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   u8x8.printf("\n");
 }
 
-// show startup screen
 void init_display(const char *Productname, const char *Version) {
+
+  // show startup screen
   uint8_t buf[32];
   u8x8.begin();
   u8x8.setFont(u8x8_font_chroma48medium8_r);
@@ -93,10 +92,6 @@ void init_display(const char *Productname, const char *Version) {
 
 void refreshtheDisplay() {
 
-  portENTER_CRITICAL(&mutexDisplay);
-  DisplayTimerIRQ = 0;
-  portEXIT_CRITICAL(&mutexDisplay);
-
   // set display on/off according to current device configuration
   if (DisplayState != cfg.screenon) {
     DisplayState = cfg.screenon;
@@ -107,7 +102,7 @@ void refreshtheDisplay() {
   if (!DisplayState)
     return;
 
-  uint8_t msgWaiting = 0;
+  uint8_t msgWaiting;
   char buff[16]; // 16 chars line buffer
 
   // update counter (lines 0-1)
@@ -191,11 +186,5 @@ void refreshtheDisplay() {
 #endif // HAS_LORA
 
 } // refreshDisplay()
-
-void IRAM_ATTR DisplayIRQ() {
-  portENTER_CRITICAL_ISR(&mutexDisplay);
-  DisplayTimerIRQ++;
-  portEXIT_CRITICAL_ISR(&mutexDisplay);
-}
 
 #endif // HAS_DISPLAY

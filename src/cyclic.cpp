@@ -2,21 +2,13 @@
 /* Interval can be set in paxcounter.conf (HOMECYCLE)       */
 
 // Basic config
-#include "globals.h"
-#include "senddata.h"
-#include "ota.h"
+#include "cyclic.h"
 
 // Local logging tag
 static const char TAG[] = "main";
 
-portMUX_TYPE mutexHomeCycle = portMUX_INITIALIZER_UNLOCKED;
-
 // do all housekeeping
 void doHousekeeping() {
-
-  portENTER_CRITICAL(&mutexHomeCycle);
-  HomeCycleIRQ = 0;
-  portEXIT_CRITICAL(&mutexHomeCycle);
 
   // update uptime counter
   uptime();
@@ -26,16 +18,18 @@ void doHousekeeping() {
     ESP.restart();
 
 // task storage debugging //
-#ifdef HAS_LORA
-  ESP_LOGD(TAG, "Loraloop %d bytes left",
-           uxTaskGetStackHighWaterMark(LoraTask));
-#endif
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
            uxTaskGetStackHighWaterMark(wifiSwitchTask));
-  ESP_LOGD(TAG, "Statemachine %d bytes left",
-           uxTaskGetStackHighWaterMark(stateMachineTask));
+  ESP_LOGD(TAG, "IRQhandler %d bytes left",
+           uxTaskGetStackHighWaterMark(irqHandlerTask));
 #ifdef HAS_GPS
   ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
+#endif
+#ifdef HAS_SPI
+  ESP_LOGD(TAG, "Spiloop %d bytes left", uxTaskGetStackHighWaterMark(SpiTask));
+#endif
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+  ESP_LOGD(TAG, "LEDloop %d bytes left", uxTaskGetStackHighWaterMark(ledLoopTask));
 #endif
 
 // read battery voltage into global variable
@@ -69,12 +63,6 @@ void doHousekeeping() {
       esp_restart(); // memory leak, reset device
   }
 } // doHousekeeping()
-
-void IRAM_ATTR homeCycleIRQ() {
-  portENTER_CRITICAL(&mutexHomeCycle);
-  HomeCycleIRQ++;
-  portEXIT_CRITICAL(&mutexHomeCycle);
-}
 
 // uptime counter 64bit to prevent millis() rollover after 49 days
 uint64_t uptime() {

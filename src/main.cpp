@@ -27,19 +27,22 @@ Uused tasks and timers:
 
 Task          Core  Prio  Purpose
 ====================================================================================
-IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer task
-gpsloop       0     2     read data from GPS over serial or i2c
-IDLE          1     0     Arduino loop() -> used for LED switching
-loraloop      1     2     runs the LMIC stack
-statemachine  1     1     switches application process logic
 wifiloop      0     4     rotates wifi channels
+ledloop       0     3     blinks LEDs
+gpsloop       0     2     reads data from GPS over serial or i2c
+spiloop       0     2     reads/writes data on spi interface
+IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
+
+looptask      1     1     arduino core -> runs the LMIC LoRa stack
+irqhandler    1     1     executes tasks triggered by irq
+IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
 ==========================
- 0	Display-Refresh
- 1	Wifi Channel Switch
- 2	Send Cycle
- 3	Housekeeping
+ 0	Trigger display refresh
+ 1	Trigger Wifi channel switch
+ 2	Trigger send payload cycle
+ 3	Trigger housekeeping cycle
 
 */
 
@@ -52,30 +55,8 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-// hardware timer for cyclic tasks
-hw_timer_t *channelSwitch, *displaytimer, *sendCycle, *homeCycle;
-
-// this variables will be changed in the ISR, and read in main loop
-uint8_t volatile ButtonPressedIRQ = 0, ChannelTimerIRQ = 0,
-                 SendCycleTimerIRQ = 0, DisplayTimerIRQ = 0, HomeCycleIRQ = 0;
-
-TaskHandle_t stateMachineTask, wifiSwitchTask;
-
-SemaphoreHandle_t xWifiChannelSwitchSemaphore;
-
-// RTos send queues for payload transmit
-#ifdef HAS_LORA
-QueueHandle_t LoraSendQueue;
-TaskHandle_t LoraTask = NULL;
-#endif
-
-#ifdef HAS_SPI
-QueueHandle_t SPISendQueue;
-#endif
-
-#ifdef HAS_GPS
-TaskHandle_t GpsTask = NULL;
-#endif
+hw_timer_t *channelSwitch, *sendCycle, *homeCycle, *displaytimer; // irq tasks
+TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 std::set<uint16_t> macs; // container holding unique MAC adress hashes
 
@@ -159,12 +140,10 @@ void setup() {
   strcat_P(features, "PU");
   // install button interrupt (pullup mode)
   pinMode(HAS_BUTTON, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
 #else
   strcat_P(features, "PD");
   // install button interrupt (pulldown mode)
   pinMode(HAS_BUTTON, INPUT_PULLDOWN);
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
 #endif // BUTTON_PULLUP
 #endif // HAS_BUTTON
 
@@ -183,6 +162,16 @@ void setup() {
   } else
     ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
              SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+
+  ESP_LOGI(TAG, "Starting LMIC...");
+  os_init();    // initialize lmic run-time environment on core 1
+  LMIC_reset(); // initialize lmic MAC
+  LMIC_setClockError(MAX_CLOCK_ERROR * 1 /
+                     100); // This tells LMIC to make the receive windows
+                           // bigger, in case your clock is 1% faster or slower.
+
+  LMIC_startJoining(); // start joining
+
 #endif
 
 // initialize SPI
@@ -232,16 +221,12 @@ void setup() {
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
   displaytimer = timerBegin(0, 80, true);
   // interrupt handler DisplayIRQ, triggered by edge
   timerAttachInterrupt(displaytimer, &DisplayIRQ, true);
   // reload interrupt after each trigger of display refresh cycle
   timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
-  // enable display interrupt
-  yield();
-  timerAlarmEnable(displaytimer);
 #endif
 
   // setup send cycle trigger IRQ using esp32 hardware timer 2
@@ -255,19 +240,9 @@ void setup() {
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
 
   // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  xWifiChannelSwitchSemaphore = xSemaphoreCreateBinary();
   channelSwitch = timerBegin(1, 800, true);
   timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
   timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-
-  // enable timers
-  // caution, see: https://github.com/espressif/arduino-esp32/issues/1313
-  yield();
-  timerAlarmEnable(homeCycle);
-  yield();
-  timerAlarmEnable(sendCycle);
-  yield();
-  timerAlarmEnable(channelSwitch);
 
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
@@ -288,43 +263,6 @@ void setup() {
 #ifdef VERBOSE
   showLoraKeys();
 #endif
-
-  // initialize LoRaWAN LMIC run-time environment
-  os_init();
-  // reset LMIC MAC state
-  LMIC_reset();
-  // This tells LMIC to make the receive windows bigger, in case your clock is
-  // 1% faster or slower.
-  LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
-  // join network
-  LMIC_startJoining();
-
-  // start lmic runloop in rtos task on core 1
-  // (note: arduino main loop runs on core 1, too)
-  // https://techtutorialsx.com/2017/05/09/esp32-get-task-execution-core/
-
-  ESP_LOGI(TAG, "Starting Lora...");
-  xTaskCreatePinnedToCore(lorawan_loop, /* task function */
-                          "loraloop",   /* name of task */
-                          3048,         /* stack size of task */
-                          (void *)1,    /* parameter of the task */
-                          2,            /* priority of the task */
-                          &LoraTask,    /* task handle*/
-                          1);           /* CPU core */
-#endif
-
-// if device has GPS and it is enabled, start GPS reader task on core 0 with
-// higher priority than wifi channel rotation task since we process serial
-// streaming NMEA data
-#ifdef HAS_GPS
-  ESP_LOGI(TAG, "Starting GPS...");
-  xTaskCreatePinnedToCore(gps_loop,  /* task function */
-                          "gpsloop", /* name of task */
-                          1024,      /* stack size of task */
-                          (void *)1, /* parameter of the task */
-                          2,         /* priority of the task */
-                          &GpsTask,  /* task handle*/
-                          0);        /* CPU core */
 #endif
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
@@ -343,34 +281,88 @@ void setup() {
   // function gets it's seed from RF noise
   get_salt(); // get new 16bit for salting hashes
 
-  // start wifi channel rotation task
-  xTaskCreatePinnedToCore(switchWifiChannel, /* task function */
-                          "wifiloop",        /* name of task */
-                          2048,              /* stack size of task */
-                          NULL,              /* parameter of the task */
-                          4,                 /* priority of the task */
-                          &wifiSwitchTask,   /* task handle*/
-                          0);                /* CPU core */
+#ifdef HAS_GPS
+  ESP_LOGI(TAG, "Starting GPSloop...");
+  xTaskCreatePinnedToCore(gps_loop,  // task function
+                          "gpsloop", // name of task
+                          1024,      // stack size of task
+                          (void *)1, // parameter of the task
+                          2,         // priority of the task
+                          &GpsTask,  // task handle
+                          0);        // CPU core
+#endif
+
+#ifdef HAS_SPI
+  ESP_LOGI(TAG, "Starting SPIloop...");
+  xTaskCreatePinnedToCore(spi_loop,  // task function
+                          "spiloop", // name of task
+                          2048,      // stack size of task
+                          (void *)1, // parameter of the task
+                          2,         // priority of the task
+                          &SpiTask,  // task handle
+                          0);        // CPU core
+#endif
 
   // start state machine
-  ESP_LOGI(TAG, "Starting Statemachine...");
-  xTaskCreatePinnedToCore(stateMachine,      /* task function */
-                          "stateloop",       /* name of task */
-                          2048,              /* stack size of task */
-                          (void *)1,         /* parameter of the task */
-                          1,                 /* priority of the task */
-                          &stateMachineTask, /* task handle */
-                          1);                /* CPU core */
+  ESP_LOGI(TAG, "Starting IRQ Handler...");
+  xTaskCreatePinnedToCore(irqHandler,      // task function
+                          "irqhandler",    // name of task
+                          2048,            // stack size of task
+                          (void *)1,       // parameter of the task
+                          1,               // priority of the task
+                          &irqHandlerTask, // task handle
+                          1);              // CPU core
+
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+  // start led loop
+  ESP_LOGI(TAG, "Starting LEDloop...");
+  xTaskCreatePinnedToCore(ledLoop,      // task function
+                          "ledloop",    // name of task
+                          1024,         // stack size of task
+                          (void *)1,    // parameter of the task
+                          3,            // priority of the task
+                          &ledLoopTask, // task handle
+                          0);           // CPU core
+#endif
+
+  // start wifi channel rotation task
+  ESP_LOGI(TAG, "Starting Wifi Channel rotation...");
+  xTaskCreatePinnedToCore(switchWifiChannel, // task function
+                          "wifiloop",        // name of task
+                          2048,              // stack size of task
+                          NULL,              // parameter of the task
+                          4,                 // priority of the task
+                          &wifiSwitchTask,   // task handle
+                          0);                // CPU core
+
+  // start timer triggered interrupts
+  ESP_LOGI(TAG, "Starting Interrupts...");
+#ifdef HAS_DISPLAY
+  timerAlarmEnable(displaytimer);
+#endif
+  timerAlarmEnable(sendCycle);
+  timerAlarmEnable(homeCycle);
+  timerAlarmEnable(channelSwitch);
+
+  // start button interrupt
+#ifdef HAS_BUTTON
+#ifdef BUTTON_PULLUP
+  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
+#else
+  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
+#endif
+#endif // HAS_BUTTON
 
 } // setup()
 
 void loop() {
 
-// switch LED state if device has LED(s)
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-  led_loop();
+  while (1) {
+#ifdef HAS_LORA
+    os_runloop_once(); // execute lmic scheduled jobs and events
 #endif
+    vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
+  }
 
-  // give yield to CPU
-  vTaskDelay(2 / portTICK_PERIOD_MS);
+  vTaskDelete(NULL); // shoud never be reached
 }

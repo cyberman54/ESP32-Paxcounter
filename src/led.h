@@ -31,9 +31,11 @@ struct RGBColor {
 
 enum led_states { LED_OFF, LED_ON };
 
+extern TaskHandle_t ledLoopTask;
+
 // Exported Functions
 void rgb_set_color(uint16_t hue);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
-void led_loop();
+void ledLoop(void *parameter);
 
 #endif
