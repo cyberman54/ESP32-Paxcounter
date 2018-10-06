@@ -17,7 +17,7 @@
 #define DIO2  GPIO_NUM_23 // Pin tied via diode to DIO0
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
-#define HAS_ANTENNA_SWITCH  16      // pin for switching wifi antenna
+#define HAS_ANTENNA_SWITCH  GPIO_NUM_16      // pin for switching wifi antenna
 #define WIFI_ANTENNA 0              // 0 = internal, 1 = external
 
 // uncomment this only if your LoPy runs on a PYTRACK BOARD
