@@ -128,7 +128,7 @@ void refreshtheDisplay() {
     u8x8.printf("Sats:%.2d", gps.satellites.value());
     u8x8.setInverseFont(0);
   } else
-    u8x8.printf("Sats:%.d", gps.satellites.value());
+    u8x8.printf("Sats:%.2d", gps.satellites.value());
 #endif
 
     // update bluetooth counter + LoRa SF (line 3)
