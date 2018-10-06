@@ -31,6 +31,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 - Pycom: LoPy, LoPy4, FiPy
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+- Adafruit ESP32 Feather + LoRa Wing + OLED Wing, #IoT Octopus32 (Octopus + ESP32 Feather)
 
 *SPI only*: (code yet to come)
 
