@@ -34,9 +34,9 @@
  * SOFTWARE.
  */
 
-#include <inttypes.h>
+#include "hash.h"
 
-uint32_t rokkit(const char *data, int len) {
+uint32_t IRAM_ATTR rokkit(const char *data, int len) {
   uint32_t hash, tmp;
   int rem;
 

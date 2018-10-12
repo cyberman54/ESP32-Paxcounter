@@ -3,8 +3,7 @@
 
 void SendData(uint8_t port);
 void sendPayload(void);
-void SendCycleIRQ(void);
-void processSendBuffer(void);
+void checkSendQueues(void);
 void flushQueues();
 
 #endif // _SENDDATA_H_

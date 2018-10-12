@@ -2,17 +2,35 @@
 /* Interval can be set in paxcounter.conf (HOMECYCLE)       */
 
 // Basic config
-#include "globals.h"
-#include "senddata.h"
+#include "cyclic.h"
 
 // Local logging tag
 static const char TAG[] = "main";
 
 // do all housekeeping
-void doHomework() {
+void doHousekeeping() {
 
   // update uptime counter
   uptime();
+
+  // check if update mode trigger switch was set
+  if (cfg.runmode == 1)
+    ESP.restart();
+
+// task storage debugging //
+  ESP_LOGD(TAG, "Wifiloop %d bytes left",
+           uxTaskGetStackHighWaterMark(wifiSwitchTask));
+  ESP_LOGD(TAG, "IRQhandler %d bytes left",
+           uxTaskGetStackHighWaterMark(irqHandlerTask));
+#ifdef HAS_GPS
+  ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
+#endif
+#ifdef HAS_SPI
+  ESP_LOGD(TAG, "Spiloop %d bytes left", uxTaskGetStackHighWaterMark(SpiTask));
+#endif
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+  ESP_LOGD(TAG, "LEDloop %d bytes left", uxTaskGetStackHighWaterMark(ledLoopTask));
+#endif
 
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE
@@ -39,27 +57,12 @@ void doHomework() {
              esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
     SendData(COUNTERPORT); // send data before clearing counters
     reset_counters();      // clear macs container and reset all counters
-    reset_salt();          // get new salt for salting hashes
+    get_salt();            // get new salt for salting hashes
 
     if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
       esp_restart(); // memory leak, reset device
   }
-} // doHomework()
-
-void checkHousekeeping() {
-  if (HomeCycleIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    HomeCycleIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    doHomework();
-  }
-}
-
-void IRAM_ATTR homeCycleIRQ() {
-  portENTER_CRITICAL(&timerMux);
-  HomeCycleIRQ++;
-  portEXIT_CRITICAL(&timerMux);
-}
+} // doHousekeeping()
 
 // uptime counter 64bit to prevent millis() rollover after 49 days
 uint64_t uptime() {

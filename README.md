@@ -31,8 +31,9 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 - Pycom: LoPy, LoPy4, FiPy
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
+- Adafruit ESP32 Feather + LoRa Wing + OLED Wing, #IoT Octopus32 (Octopus + ESP32 Feather)
 
-*SPI only*: (coming soon)
+*SPI only*: (code yet to come)
 
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32
@@ -44,10 +45,10 @@ Depending on board hardware following features are supported:
 - Button
 - Silicon unique ID
 - Battery voltage monitoring
-- GPS
+- GPS (Generic serial NMEA, or Quectel L76 I2C)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
-Hardware dependent settings (pinout etc.) are stored in board files in /hal directory.<br>
+Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
 
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
 <A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A>, <A HREF="https://www.thingiverse.com/thing:3041339">T-BEAM</A> for example.<br>
@@ -62,6 +63,8 @@ Before compiling the code,
 
 - **create file loraconf.h in your local /src directory** using the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. If you're using popular <A HREF="https://thethingsnetwork.org">TheThingsNetwork</A> you can copy&paste the keys from TTN console or output of ttnctl.
 
+- **create file ota.conf in your local /src directory** using the template [ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates. If you want to push own OTA updates you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
+
 To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings.
 
 If your device has a fixed DEVEUI enter this in your local loraconf.h file. During compile time this DEVEUI will be grabbed from loraconf.h and inserted in the code.
@@ -74,10 +77,14 @@ Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for
 
 # Uploading
 
-To upload the code to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
+- **Initially, using USB/UART cable:**
+To upload the code via cable to your ESP32 board this needs to be switched from run to bootloader mode. Boards with USB bridge like Heltec and TTGO usually have an onboard logic which allows soft switching by the upload tool. In PlatformIO this happenes automatically.<p>
 The LoPy/LoPy4/FiPy board needs to be set manually. See these 
 <A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it. Don't forget to press on board reset button after switching between run and bootloader mode.<p>
 The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
+	
+- **During runtime, using FOTA via WIFI:**
+After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by FOTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WIFI to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for FOTA are: 1. You own a Bintray repository, 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WIFI is present at the board's site, 4. WIFI credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
 
 # Legal note
 
@@ -128,7 +135,13 @@ If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you 
 
 To track a paxcounter device with on board GPS and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. The formats *plain* and *packed* generate the fields `latitude`, `longitude` and `hdop` required by ttnmapper.
 
-Hereafter described is the default *plain* format, which uses MSB bit numbering.
+Hereafter described is the default *plain* format, which uses MSB bit numbering. Under /TTN in this repository you find some ready-to-go decoders which you may copy to your TTN console:
+
+[**plain_decoder.js**](src/TTN/plain_decoder.js) | 
+[**plain_converter.js**](src/TTN/plain_converter.js) |
+[**packed_decoder.js**](src/TTN/packed_decoder.js) |
+[**packed_converter.js**](src/TTN/packed_converter.js)
+
 
 **Port #1:** Paxcount data
 
@@ -142,6 +155,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 3-10:	Uptime [seconds]
 	byte 11: 	CPU temperature [°C]
 	bytes 12-15:	Free RAM [bytes]
+	bytes 16-17:	Last CPU reset reason [core 0, core 1]
 
 **Port #3:** Device configuration query result
 
@@ -181,55 +195,11 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 1:		Beacon RSSI reception level
 	byte 2:		Beacon identifier (0..255)
 
-
-[**plain_decoder.js**](src/TTN/plain_decoder.js)
-
-```javascript
-function Decoder(bytes, port) {
-  var decoded = {};
-
-  if (port === 1) {
-    var i = 0;
-    decoded.wifi = (bytes[i++] << 8) | bytes[i++];
-    decoded.ble =  (bytes[i++] << 8) | bytes[i++];
-    if (bytes.length > 4) {
-      decoded.latitude =  ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
-      decoded.longitude = ( (bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++] );
-      decoded.sats = 	  (  bytes[i++] );
-      decoded.hdop = 	  (  bytes[i++] << 8)  | (bytes[i++] );
-      decoded.altitude =  (  bytes[i++] << 8)  | (bytes[i++] );
-    }
-  }
-
-  return decoded;
-}
-```
-
-[**plain_converter.js**](src/TTN/plain_converter.js)
-
-```javascript
-function Converter(decoded, port) {
-  
-  var converted = decoded;
-
-  if (port === 1) {
-    converted.pax = converted.ble + converted.wifi;
-    if (converted.hdop) {
-      converted.hdop /= 100;
-      converted.latitude /= 1000000;
-      converted.longitude /= 1000000;
-    }
-  }
-
-  return converted;
-}
-```
-
 # Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
 
-Note: all settings are stored in NVRAM and will be reloaded when device starts. To reset device to factory settings send remote command 09 02 09 00 unconfirmed(!) once.
+Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x01 set scan RSSI limit
 
@@ -272,12 +242,13 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts. 
 
 	useful to clear pending commands from LoRaWAN server quere, or to check RSSI on device
 
-0x09 reset functions
+0x09 reset functions (send this command with confirmed ack only to avoid boot loops!)
 
 	0 = restart device
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 	3 = flush send queues
+	9 = reboot device to OTA update via Wifi mode
 
 0x0A set LoRaWAN payload send cycle
 

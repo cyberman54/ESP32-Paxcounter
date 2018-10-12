@@ -4,7 +4,7 @@
 #include "globals.h"
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
-HAS_DISPLAY u8x8(OLED_RST, OLED_SCL, OLED_SDA);
+HAS_DISPLAY u8x8(OLED_RST, I2C_SCL, I2C_SDA);
 
 // helper string for converting LoRa spread factor values
 #if defined(CFG_eu868)
@@ -13,7 +13,7 @@ const char lora_datarate[] = {"1211100908077BFSNA"};
 const char lora_datarate[] = {"100908078CNA121110090807"};
 #endif
 
-uint8_t DisplayState = 0;
+uint8_t volatile DisplayState = 0;
 
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
@@ -25,8 +25,9 @@ void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
   u8x8.printf("\n");
 }
 
-// show startup screen
 void init_display(const char *Productname, const char *Version) {
+
+  // show startup screen
   uint8_t buf[32];
   u8x8.begin();
   u8x8.setFont(u8x8_font_chroma48medium8_r);
@@ -36,14 +37,14 @@ void init_display(const char *Productname, const char *Version) {
   u8x8.draw2x2String(0, 0, Productname);
   u8x8.setInverseFont(0);
   u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
+  vTaskDelay(1500 / portTICK_PERIOD_MS);
   u8x8.clear();
   u8x8.setFlipMode(1);
   u8x8.setInverseFont(1);
   u8x8.draw2x2String(0, 0, Productname);
   u8x8.setInverseFont(0);
   u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
+  vTaskDelay(1500 / portTICK_PERIOD_MS);
 
   u8x8.setFlipMode(0);
   u8x8.clear();
@@ -74,7 +75,7 @@ void init_display(const char *Productname, const char *Version) {
   DisplayKey(buf, 8, true);
 #endif // HAS_LORA
 
-  delay(5000);
+  vTaskDelay(3000 / portTICK_PERIOD_MS);
   u8x8.clear();
   u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
   u8x8.draw2x2String(0, 0, "PAX:0");
@@ -101,7 +102,7 @@ void refreshtheDisplay() {
   if (!DisplayState)
     return;
 
-  uint8_t msgWaiting = 0;
+  uint8_t msgWaiting;
   char buff[16]; // 16 chars line buffer
 
   // update counter (lines 0-1)
@@ -114,7 +115,8 @@ void refreshtheDisplay() {
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
   u8x8.setCursor(0, 2);
-  u8x8.printf(batt_voltage > 4000 ? "B:USB " : "B:%.1fV", batt_voltage / 1000.0);
+  u8x8.printf(batt_voltage > 4000 ? "B:USB " : "B:%.1fV",
+              batt_voltage / 1000.0);
 #endif
 
 // update GPS status (line 2)
@@ -126,7 +128,7 @@ void refreshtheDisplay() {
     u8x8.printf("Sats:%.2d", gps.satellites.value());
     u8x8.setInverseFont(0);
   } else
-    u8x8.printf("Sats:%.d", gps.satellites.value());
+    u8x8.printf("Sats:%.2d", gps.satellites.value());
 #endif
 
     // update bluetooth counter + LoRa SF (line 3)
@@ -184,20 +186,5 @@ void refreshtheDisplay() {
 #endif // HAS_LORA
 
 } // refreshDisplay()
-
-void IRAM_ATTR DisplayIRQ() {
-  portENTER_CRITICAL_ISR(&timerMux);
-  DisplayTimerIRQ++;
-  portEXIT_CRITICAL_ISR(&timerMux);
-}
-
-void updateDisplay() {
-  if (DisplayTimerIRQ) {
-    portENTER_CRITICAL(&timerMux);
-    DisplayTimerIRQ = 0;
-    portEXIT_CRITICAL(&timerMux);
-    refreshtheDisplay();
-  }
-}
 
 #endif // HAS_DISPLAY

@@ -1,8 +1,12 @@
 #ifndef _GPS_H
 #define _GPS_H
 
-#include <TinyGPS++.h>         // library for parsing NMEA data
+#include <TinyGPS++.h> // library for parsing NMEA data
 #include <TimeLib.h>
+
+#ifdef GPS_QUECTEL_L76 // Needed for reading from I2C Bus
+#include <Wire.h>
+#endif
 
 typedef struct {
   uint32_t latitude;
@@ -12,8 +16,10 @@ typedef struct {
   uint16_t altitude;
 } gpsStatus_t;
 
-extern TinyGPSPlus gps;        // Make TinyGPS++ instance globally availabe
-extern gpsStatus_t gps_status; // Make struct for storing gps data globally available
+extern TinyGPSPlus gps; // Make TinyGPS++ instance globally availabe
+extern gpsStatus_t
+    gps_status; // Make struct for storing gps data globally available
+extern TaskHandle_t GpsTask;
 
 void gps_read(void);
 void gps_loop(void *pvParameters);

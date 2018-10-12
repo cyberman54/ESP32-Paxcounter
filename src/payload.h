@@ -35,7 +35,8 @@ public:
   uint8_t *getBuffer(void);
   void addCount(uint16_t value1, uint16_t value2);
   void addConfig(configData_t value);
-  void addStatus(uint16_t voltage, uint64_t uptime, float cputemp, uint32_t mem);
+  void addStatus(uint16_t voltage, uint64_t uptime, float cputemp, uint32_t mem,
+                 uint8_t reset1, uint8_t reset2);
   void addAlarm(int8_t rssi, uint8_t message);
 #ifdef HAS_GPS
   void addGPS(gpsStatus_t value);
@@ -43,7 +44,6 @@ public:
 #ifdef HAS_BUTTON
   void addButton(uint8_t value);
 #endif
-
 
 #if PAYLOAD_ENCODER == 1 // format plain
 
@@ -64,6 +64,7 @@ private:
   void writeUint8(uint8_t i);
   void writeHumidity(float humidity);
   void writeTemperature(float temperature);
+  void writeVersion(char * version);
   void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
                    bool h);
 
@@ -77,7 +78,6 @@ private:
 #else
 #error "No valid payload converter defined"
 #endif
-
 };
 
 extern PayloadConvert payload;

@@ -25,8 +25,8 @@
 
 // Hardware pin definitions for TTGO V2 Board with OLED SSD1306 0,96" I2C Display
 #define OLED_RST U8X8_PIN_NONE // connected to CPU RST/EN
-#define OLED_SDA GPIO_NUM_21  // ESP32 GPIO21 -- SD1306 D1+D2
-#define OLED_SCL GPIO_NUM_22 // ESP32 GPIO22 -- SD1306 D0
+#define I2C_SDA GPIO_NUM_21  // ESP32 GPIO21 -- SD1306 D1+D2
+#define I2C_SCL GPIO_NUM_22 // ESP32 GPIO22 -- SD1306 D0
 
 /* source:
 https://www.thethingsnetwork.org/forum/t/big-esp32-sx127x-topic-part-2/11973

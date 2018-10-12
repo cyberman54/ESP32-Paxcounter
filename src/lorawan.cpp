@@ -1,15 +1,13 @@
 #ifdef HAS_LORA
 
 // Basic Config
-#include "globals.h"
-#include "rcommand.h"
-
-#ifdef MCP_24AA02E64_I2C_ADDRESS
-#include <Wire.h> // Needed for 24AA02E64, does not hurt anything if included and not used
-#endif
+#include "lorawan.h"
 
 // Local logging Tag
 static const char TAG[] = "lora";
+
+osjob_t sendjob;
+QueueHandle_t LoraSendQueue;
 
 // LMIC enhanced Pin mapping
 const lmic_pinmap lmic_pins = {.mosi = PIN_SPI_MOSI,
@@ -36,6 +34,27 @@ void gen_lora_deveui(uint8_t *pdeveui) {
     *p++ = dmac[5 - i];
   }
 }
+
+/* new version, does it with well formed mac according IEEE spec, but is
+breaking change
+// DevEUI generator using devices's MAC address
+void gen_lora_deveui(uint8_t *pdeveui) {
+  uint8_t *p = pdeveui, dmac[6];
+  ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
+  // deveui is LSB, we reverse it so TTN DEVEUI display
+  // will remain the same as MAC address
+  // MAC is 6 bytes, devEUI 8, set middle 2 ones
+  // to an arbitrary value
+  *p++ = dmac[5];
+  *p++ = dmac[4];
+  *p++ = dmac[3];
+  *p++ = 0xfe;
+  *p++ = 0xff;
+  *p++ = dmac[2];
+  *p++ = dmac[1];
+  *p++ = dmac[0];
+}
+*/
 
 // Function to do a byte swap in a byte array
 void RevBytes(unsigned char *b, size_t c) {
@@ -77,29 +96,34 @@ void os_getDevEui(u1_t *buf) {
 void get_hard_deveui(uint8_t *pdeveui) {
   // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
 #ifdef MCP_24AA02E64_I2C_ADDRESS
+
   uint8_t i2c_ret;
+
   // Init this just in case, no more to 100KHz
-  Wire.begin(OLED_SDA, OLED_SCL, 100000);
+  Wire.begin(I2C_SDA, I2C_SCL, 100000);
   Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
   Wire.write(MCP_24AA02E64_MAC_ADDRESS);
   i2c_ret = Wire.endTransmission();
-  // check if device seen on i2c bus
+
+  // check if device was seen on i2c bus
   if (i2c_ret == 0) {
     char deveui[32] = "";
     uint8_t data;
+
     Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
     Wire.write(MCP_24AA02E64_MAC_ADDRESS);
+    Wire.endTransmission();
+
     Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8);
     while (Wire.available()) {
       data = Wire.read();
       sprintf(deveui + strlen(deveui), "%02X ", data);
       *pdeveui++ = data;
     }
-    i2c_ret = Wire.endTransmission();
-    ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 found, read DEVEUI %s", deveui);
-  } else {
-    ESP_LOGI(TAG, "Serial EEPROM 24AA02E64 not found ret=%d", i2c_ret);
-  }
+    ESP_LOGI(TAG, "Serial EEPROM found, read DEVEUI %s", deveui);
+  } else
+    ESP_LOGI(TAG, "Could not read DEVEUI from serial EEPROM");
+
   // Set back to 400KHz to speed up OLED
   Wire.setClock(400000);
 #endif // MCP 24AA02E64
@@ -183,6 +207,9 @@ void onEvent(ev_t ev) {
     // the library)
     switch_lora(cfg.lorasf, cfg.txpower);
 
+    // kickoff first send job
+    os_setCallback(&sendjob, lora_send);
+
     // show effective LoRa parameters after join
     ESP_LOGI(TAG, "ADR=%d, SF=%d, TXPOWER=%d", cfg.adrmode, cfg.lorasf,
              cfg.txpower);
@@ -196,11 +223,9 @@ void onEvent(ev_t ev) {
 
     if (LMIC.dataLen) {
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
-               LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr / 4);
-      // LMIC.snr = SNR twos compliment [dB] * 4
-      // LMIC.rssi = RSSI [dBm] (-196...+63)
+               LMIC.dataLen, LMIC.rssi, (signed char)LMIC.snr);
       sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi,
-              (signed char)LMIC.snr / 4);
+              (signed char)LMIC.snr);
 
       // check if command is received on command port, then call interpreter
       if ((LMIC.txrxFlags & TXRX_PORT) &&
@@ -221,17 +246,6 @@ void onEvent(ev_t ev) {
   }
 
 } // onEvent()
-
-// LMIC FreeRTos Task
-void lorawan_loop(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-  while (1) {
-    os_runloop_once();                  // execute LMIC jobs
-    vTaskDelay(1 / portTICK_PERIOD_MS); // reset watchdog
-  }
-}
 
 // helper function to assign LoRa datarates to numeric spreadfactor values
 void switch_lora(uint8_t sf, uint8_t tx) {
@@ -278,6 +292,27 @@ void switch_lora(uint8_t sf, uint8_t tx) {
   default:
     break;
   }
+}
+
+void lora_send(osjob_t *job) {
+  MessageBuffer_t SendBuffer;
+  // Check if there is a pending TX/RX job running, if yes don't eat data
+  // since it cannot be sent right now
+  if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
+    // waiting for LoRa getting ready
+  } else {
+    if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
+      // SendBuffer gets struct MessageBuffer with next payload from queue
+      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                      SendBuffer.MessageSize, (cfg.countermode & 0x02));
+      ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+      sprintf(display_line7, "PACKET QUEUED");
+    }
+  }
+  // reschedule job every 0,5 - 1 sec. including a bit of random to prevent
+  // systematic collisions
+  os_setTimedCallback(job, os_getTime() + 500 + ms2osticks(random(500)),
+                      lora_send);
 }
 
 #endif // HAS_LORA

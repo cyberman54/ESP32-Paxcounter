@@ -11,8 +11,8 @@ static const char TAG[] = "main";
 
 uint16_t salt;
 
-uint16_t reset_salt(void) {
-  salt = random(65536); // get new 16bit random for salting hashes
+uint16_t get_salt(void) {
+  salt = (uint16_t)random(65536); // get new 16bit random for salting hashes
   return salt;
 }
 
@@ -71,8 +71,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 
     snprintf(buff, sizeof(buff), "%08X",
-             addr2int + (uint32_t)salt); // convert usigned 32-bit salted MAC to
-                                         // 8 digit hex string
+             addr2int + (uint32_t)salt); // convert usigned 32-bit salted MAC
+                                         // to 8 digit hex string
     hashedmac = rokkit(&buff[3], 5); // hash MAC last string value, use 5 chars
                                      // to fit hash in uint16_t container
     auto newmac = macs.insert(hashedmac); // add hashed MAC, if new unique
@@ -81,7 +81,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     // Count only if MAC was not yet seen
     if (added) {
-
       // increment counter and one blink led
       if (sniff_type == MAC_SNIFF_WIFI) {
         macs_wifi++; // increment Wifi MACs counter
