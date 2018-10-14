@@ -24,5 +24,5 @@
 #define RST LMIC_UNUSED_PIN // connected to ESP32 RST/EN
 #define DIO0 GPIO_NUM_26    // ESP32 GPIO26 <-> HPD13A IO0
 #define DIO1 GPIO_NUM_32 // Lora1 <-> HPD13A IO1 // !! NEEDS EXTERNAL WIRING !!
-//#define DIO1 GPIO_NUM_33 // Lora1 <-> HPD13A IO1 // for T-Beam T22_V05 only
+//#define DIO1 GPIO_NUM_33 // Lora1 <-> HPD13A IO1 // for T-Beam T22_V05 and T22_V07, other versions may need external wiring
 #define DIO2 LMIC_UNUSED_PIN // Lora2 <-> HPD13A IO2 // not needed for LoRa
