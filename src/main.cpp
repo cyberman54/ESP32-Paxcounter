@@ -285,7 +285,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting GPSloop...");
   xTaskCreatePinnedToCore(gps_loop,  // task function
                           "gpsloop", // name of task
-                          1024,      // stack size of task
+                          2048,      // stack size of task
                           (void *)1, // parameter of the task
                           2,         // priority of the task
                           &GpsTask,  // task handle
