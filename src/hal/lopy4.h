@@ -4,7 +4,7 @@
 #define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1
 //#define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
-#define HAS_RGB_LED   GPIO_NUM_0  // WS2812B RGB LED on GPIO0
+#define HAS_RGB_LED   GPIO_NUM_0  // WS2812B RGB LED on GPIO0 (P2)
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
 // Hardware pin definitions for Pycom LoPy4 board
@@ -18,8 +18,8 @@
 #define DIO2  GPIO_NUM_23 // Pin tied via diode to DIO0
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
-#define HAS_ANTENNA_SWITCH  21      // pin for switching wifi antenna
-#define WIFI_ANTENNA 0              // 0 = internal, 1 = external
+#define HAS_ANTENNA_SWITCH  GPIO_NUM_21 // pin for switching wifi antenna (P12)
+#define WIFI_ANTENNA 0    // 0 = internal, 1 = external
 
 // uncomment this only if your LoPy runs on a PYTRACK BOARD
 //#define HAS_GPS 1
