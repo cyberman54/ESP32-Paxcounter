@@ -29,12 +29,12 @@ Task          Core  Prio  Purpose
 ====================================================================================
 wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
-gpsloop       0     2     reads data from GPS over serial or i2c
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by irq
+gpsloop       1     2     reads data from GPS over serial or i2c
 IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
@@ -289,7 +289,7 @@ void setup() {
                           (void *)1, // parameter of the task
                           2,         // priority of the task
                           &GpsTask,  // task handle
-                          0);        // CPU core
+                          1);        // CPU core
 #endif
 
 #ifdef HAS_SPI
