@@ -122,7 +122,18 @@ void ledLoop(void *parameter) {
         LEDState =
             ((millis() % 200) < 20) ? LED_ON : LED_OFF; // TX data pending
       } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
-        LEDColor = COLOR_BLUE;
+        // select color to blink by message port
+        switch (LMIC.pendTxPort) {
+        case STATUSPORT:
+          LEDColor = COLOR_RED;
+          break;
+        case CONFIGPORT:
+          LEDColor = COLOR_CYAN;
+          break;
+        default:
+          LEDColor = COLOR_BLUE;
+          break;
+        }
         // small blink 10ms on each 1/2sec (not when joining)
         LEDState = ((millis() % 500) < 10) ? LED_ON : LED_OFF;
         // This should not happen so indicate a problem
