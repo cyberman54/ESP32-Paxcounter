@@ -16,5 +16,6 @@ typedef struct {
 } cmd_t;
 
 void rcommand(uint8_t cmd[], uint8_t cmdlength);
+void do_reset();
 
 #endif
