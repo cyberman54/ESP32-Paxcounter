@@ -4,7 +4,7 @@
 #include <TinyGPS++.h> // library for parsing NMEA data
 #include <TimeLib.h>
 
-#ifdef GPS_QUECTEL_L76 // Needed for reading from I2C Bus
+#ifdef GPS_I2C // Needed for reading from I2C Bus
 #include <Wire.h>
 #endif
 

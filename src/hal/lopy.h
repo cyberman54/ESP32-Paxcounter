@@ -22,7 +22,7 @@
 
 // uncomment this only if your LoPy runs on a PYTRACK BOARD
 //#define HAS_GPS 1
-//#define GPS_QUECTEL_L76 GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
+//#define GPS_I2C GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
 //#define GPS_ADDR 0x10
 
 // uncomment this only if your LoPy runs on a EXPANSION BOARD
