@@ -13,7 +13,7 @@
 #define HAS_RGB_LED GPIO_NUM_0 // WS2812B RGB LED on GPIO0
 #define BOARD_HAS_PSRAM        // use extra 4MB extern RAM
 
-// Pins for LORA chip reset and interrupt lines
+// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
 #define LORA_CS   (18)
 #define LORA_MISO (19)

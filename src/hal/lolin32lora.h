@@ -22,7 +22,7 @@
 #define HAS_SPI   1       // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // RFM95 module
 
-// Pins for LORA chip reset and interrupt lines
+// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
 #define LORA_CS   (18)
 #define LORA_MISO (19)

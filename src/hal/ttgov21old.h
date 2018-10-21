@@ -25,7 +25,7 @@
 #define MY_OLED_SCL (22)
 #define MY_OLED_RST U8X8_PIN_NONE
 
-// Pins for LORA chip reset and interrupt lines
+// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
 #define LORA_CS   (18)
 #define LORA_MISO (19)

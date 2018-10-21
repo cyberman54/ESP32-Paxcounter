@@ -11,7 +11,7 @@
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0
 
-// Pins for LORA chip reset and interrupt lines
+// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5)  // GPIO5  - SX1276 SCK
 #define LORA_CS   (17) // GPIO17 - SX1276 CS
 #define LORA_MISO (19) // GPIO19 - SX1276 MISO

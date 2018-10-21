@@ -19,7 +19,7 @@
 #define HAS_GPS 1 // use on board GPS
 #define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M or 7M with default configuration
 
-// Pins for LORA chip reset and interrupt lines
+// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
 #define LORA_CS   (18)
 #define LORA_MISO (19)

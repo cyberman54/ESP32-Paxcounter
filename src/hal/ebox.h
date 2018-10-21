@@ -13,7 +13,7 @@
 #define HAS_BUTTON (0) // button "PROG" on board
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-// Pins for LORA chip reset and interrupt lines
+// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
 #define LORA_CS   (18)
 #define LORA_MISO (19)

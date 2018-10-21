@@ -18,7 +18,7 @@
 #define OLED_SCL (15)
 #define OLED_RST (16)
 
-// Pins for LORA chip reset and interrupt lines
+// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
 #define LORA_CS   (18)
 #define LORA_MISO (19)
