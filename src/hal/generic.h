@@ -33,10 +33,14 @@
 #define MY_OLED_RST (16)
 
 // Pins for LORA chip reset and interrupt lines
-#define RST   (14)
-#define DIO0  (26)
-#define DIO1  (33)
-#define DIO2  LMIC_UNUSED_PIN
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
+#define LORA_RST  (14)
+#define LORA_IO0  (26)
+#define LORA_IO1  (33)
+#define LORA_IO2  LMIC_UNUSED_PIN
 
 // I2C config for Microchip 24AA02E64 DEVEUI unique address
 #define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 

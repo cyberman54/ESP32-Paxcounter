@@ -11,19 +11,15 @@
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0
 
-/* SPI remapping does currently not work!!
-// Hardware pin definitions for Pycom LoPy board
-#define PIN_SPI_SS    GPIO_NUM_17
-#define PIN_SPI_MOSI  GPIO_NUM_27
-#define PIN_SPI_MISO  GPIO_NUM_19
-#define PIN_SPI_SCK   GPIO_NUM_5
-*/
-
 // Pins for LORA chip reset and interrupt lines
-#define RST   (18)
-#define DIO0  (23) // LoRa IRQ
-#define DIO1  (23) // Pin tied via diode to DIO0
-#define DIO2  (23) // Pin tied via diode to DIO0
+#define LORA_SCK  (5)  // GPIO5  - SX1276 SCK
+#define LORA_CS   (17) // GPIO17 - SX1276 CS
+#define LORA_MISO (19) // GPIO19 - SX1276 MISO
+#define LORA_MOSI (27) // GPIO27 - SX1276 MOSI
+#define LORA_RST  (18) // GPIO18 - SX1276 RESET
+#define LORA_IO0  (23) // LoRa IRQ
+#define LORA_IO1  (23) // Pin tied via diode to DIO0
+#define LORA_IO2  (23) // Pin tied via diode to DIO0
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define HAS_ANTENNA_SWITCH  (16)      // pin for switching wifi antenna

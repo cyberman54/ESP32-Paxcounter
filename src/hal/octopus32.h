@@ -20,19 +20,15 @@
 #define HAS_SPI   1       // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // RFM95 module
 
-/* SPI remapping does currently not work!! */
-// re-define pin definitions of pins_arduino.h
-#define PIN_SPI_SS    14 //14 // ESP32  GPIO5 (Pin5)  -- SX1276 NSS  (Pin19) SPI Chip Select Input
-#define PIN_SPI_MOSI  18 // ESP32 GPIO23 (Pin23) -- SX1276 MOSI (Pin18) SPI Data Input
-#define PIN_SPI_MISO  19 // ESP32 GPIO19 (Pin19) -- SX1276 MISO (Pin17) SPI Data Output
-#define PIN_SPI_SCK   5 // ESP32 GPIO18 (Pin18) -- SX1276 SCK  (Pin16) SPI Clock Input
-
 // Pins for LORA chip reset and interrupt lines
-#define RST   LMIC_UNUSED_PIN
-#define DIO0  (33)
-#define DIO1  (33)
-#define DIO2  LMIC_UNUSED_PIN
-#define DIO5  LMIC_UNUSED_PIN
+#define LORA_SCK  (5) 
+#define LORA_CS   (14)
+#define LORA_MISO (19)
+#define LORA_MOSI (18)
+#define LORA_RST  LMIC_UNUSED_PIN
+#define LORA_IO0  (33)
+#define LORA_IO1  (33)
+#define LORA_IO2  LMIC_UNUSED_PIN
 
 // Pins for I2C interface of OLED Display
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // U8X8_SSD1306_128X32_UNIVISION_SW_I2C //

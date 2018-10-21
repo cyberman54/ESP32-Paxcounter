@@ -15,9 +15,13 @@
 #define DISABLE_BROWNOUT 1      // comment out if you want to keep brownout feature
 
 // Pins for LORA chip reset and interrupt lines
-#define RST   (14)
-#define DIO0  (26)
-#define DIO1  (33)
-#define DIO2  (32)
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
+#define LORA_RST  (14)
+#define LORA_IO0  (26)
+#define LORA_IO1  (33)
+#define LORA_IO2  (32)
 
 #endif

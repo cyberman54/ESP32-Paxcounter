@@ -19,9 +19,13 @@
 #define OLED_RST (16)
 
 // Pins for LORA chip reset and interrupt lines
-#define RST   (14)
-#define DIO0  (26)
-#define DIO1  (34)
-#define DIO2  (35)
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
+#define LORA_RST  (14)
+#define LORA_IO0  (26)
+#define LORA_IO1  (34)
+#define LORA_IO2  (35)
 
 #endif

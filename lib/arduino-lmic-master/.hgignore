@@ -1,0 +1,17 @@
+^CVS
+.*/CVS
+.*/CVS/.*
+\.\#.*$
+^\.DS_Store$
+.*\.BAK$
+.*\.bak$
+.*\.CKP$
+^build
+^build/.*
+^.*\.o$
+^.*\.d$
+^.*\.td$
+\.a$
+^core$
+.*/core$
+.*\.rej$

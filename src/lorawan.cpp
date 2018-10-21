@@ -11,10 +11,13 @@ QueueHandle_t LoraSendQueue;
 
 // LMIC enhanced Pin mapping
 const lmic_pinmap lmic_pins = {
-    .nss = SS,
+    .nss = LORA_CS,
     .rxtx = LMIC_UNUSED_PIN,
-    .rst = RST,
-    .dio = {DIO0, DIO1, DIO2}
+    .rst = LORA_RST,
+    .dio = {LORA_IO0, LORA_IO1, LORA_IO2},
+    .mosi = LORA_MOSI,
+    .miso = LORA_MISO,
+    .sck = LORA_SCK
     // optional: set polarity of rxtx pin.
     //.rxtx_rx_active = 0,
     // optional: set RSSI cal for listen-before-talk

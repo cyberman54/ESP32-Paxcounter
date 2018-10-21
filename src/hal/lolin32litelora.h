@@ -22,11 +22,14 @@
 #define CFG_sx1276_radio 1 // RFM95 module
 
 // Pins for LORA chip reset and interrupt lines
-#define RST   (25)
-#define DIO0  (27)
-#define DIO1  (26)
-#define DIO2  LMIC_UNUSED_PIN
-#define DIO5  LMIC_UNUSED_PIN
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
+#define LORA_RST  (25)
+#define LORA_IO0  (27)
+#define LORA_IO1  (26)
+#define LORA_IO2  LMIC_UNUSED_PIN
 
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (14)

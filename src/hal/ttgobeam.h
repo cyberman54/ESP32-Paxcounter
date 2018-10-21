@@ -20,10 +20,14 @@
 #define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M or 7M with default configuration
 
 // Pins for LORA chip reset and interrupt lines
-#define RST   LMIC_UNUSED_PIN
-#define DIO0  (26)
-#define DIO1  (32) // !! NEEDS EXTERNAL WIRING !!
-//#define DIO1  (33)  // for T-Beam T22_V05 and T22_V07, other versions may need external wiring
-#define DIO2  LMIC_UNUSED_PIN
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
+#define LORA_RST   LMIC_UNUSED_PIN
+#define LORA_IO0  (26)
+#define LORA_IO1  (32) // !! NEEDS EXTERNAL WIRING !!
+//#define LORA_IO1  (33)  // for T-Beam T22_V05 and T22_V07, other versions may need external wiring
+#define LORA_IO2  LMIC_UNUSED_PIN
 
 #endif
