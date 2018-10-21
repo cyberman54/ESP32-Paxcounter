@@ -250,7 +250,7 @@ void do_ota_update() {
   // check whether we have everything for OTA update
   if (contentLength && isValidContentType) {
 
-    size_t written, current, size;
+    size_t written = 0;
 
     if (Update.begin(contentLength)) {
 #ifdef HAS_DISPLAY
@@ -270,7 +270,7 @@ void do_ota_update() {
 
         if (written == contentLength) {
           ESP_LOGI(TAG, "Written %u bytes successfully", written);
-          snprintf(buf, 17, "%u kB Done!", (uint16_t)(written / 1024));
+          snprintf(buf, 17, "%ukB Done!", (uint16_t)(written / 1024));
           display(4, "OK", buf);
           break;
         } else {
@@ -329,7 +329,7 @@ void display(const uint8_t row, const std::string status,
 
 #ifdef HAS_DISPLAY
 // callback function to show download progress while streaming data
-void show_progress(size_t current, size_t size) {
+void show_progress (unsigned long current, unsigned long size) {
   char buf[17];
   snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
   display(4, "**", buf);

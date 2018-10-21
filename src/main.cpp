@@ -166,10 +166,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting LMIC...");
   os_init();    // initialize lmic run-time environment on core 1
   LMIC_reset(); // initialize lmic MAC
-  LMIC_setClockError(MAX_CLOCK_ERROR * 1 /
-                     100); // This tells LMIC to make the receive windows
-                           // bigger, in case your clock is 1% faster or slower.
-
+  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
   LMIC_startJoining(); // start joining
 
 #endif

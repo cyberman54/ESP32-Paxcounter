@@ -20,9 +20,9 @@ Parts of the source files in this repository are made available under different 
 listed below. Refer to each individual source file for more details.
 
 ------------------------------------------------------------------------------------------------
-wifiscan.cpp
+wifiscan.cpp and macsniff.cpp:
 
-Prior art was used for wifiscan.cpp and taken from
+Parts were derived or taken from
 
  * Copyright (c) 2017, Łukasz Marcin Podkalicki <lpodkalicki@gmail.com>
  * ESP32/016 WiFi Sniffer
@@ -208,10 +208,9 @@ under this License:
    END OF TERMS AND CONDITIONS"
 
 ------------------------------------------------------------------------------------------------
-src/lorawan.cpp and /lib/arduino-lmic-1.5.0-<...>
+lorawan.cpp
 
-Parts of lorawan.cpp, and the arduino lmic library, which is included in the /lib directory of this 
-repository, were derived or taken from
+Parts of lorawan.cpp, and the arduino lmic library were derived or taken from
 
 Arduino-LMIC Library
 TTN OTAA Example
@@ -222,10 +221,32 @@ and it's fork
 LoraWAN-in-C library, adapted to run under the Arduino environment
 https://github.com/jpmeijers/arduino-lmic
 
-under this Licence:
+under this MIT Licence:
 
-"License
-Most source files in this repository are made available under the Eclipse Public License v1.0. The examples which use a more liberal license. Some of the AES code is available under the LGPL. Refer to each individual source file for more details."
+"MIT License
+
+Copyright (C) 2014-2016 IBM Corporation
+Copyright (c) 2016-2018 MCCI Corporation
+Copyright (c) 2015 Thomas Telkamp and Matthijs Kooijman
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."
+
 
 ------------------------------------------------------------------------------------------------
 blescan.cpp

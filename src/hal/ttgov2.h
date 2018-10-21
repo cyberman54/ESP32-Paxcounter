@@ -1,3 +1,8 @@
+#ifndef _TTGOV2_H
+#define _TTGOV2_H
+
+#include <stdint.h>
+
 // Hardware related definitions for TTGO V2 Board
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
@@ -11,46 +16,19 @@
 // disable brownout detection (needed on TTGOv2 for battery powered operation)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-// re-define pin definitions of pins_arduino.h
-#define PIN_SPI_SS    GPIO_NUM_18 // ESP32 GPIO18 (Pin18) -- HPD13A NSS/SEL (Pin4) SPI Chip Select Input
-#define PIN_SPI_MOSI  GPIO_NUM_27 // ESP32 GPIO27 (Pin27) -- HPD13A MOSI/DSI (Pin6) SPI Data Input
-#define PIN_SPI_MISO  GPIO_NUM_19 // ESP32 GPIO19 (Pin19) -- HPD13A MISO/DSO (Pin7) SPI Data Output
-#define PIN_SPI_SCK   GPIO_NUM_5  // ESP32 GPIO5 (Pin5)   -- HPD13A SCK (Pin5) SPI Clock Input
+// Pins for I2C interface of OLED Display
+#define MY_OLED_SDA (21)
+#define MY_OLED_SCL (22)
+#define MY_OLED_RST U8X8_PIN_NONE
 
-// non arduino pin definitions
-#define RST   LMIC_UNUSED_PIN // connected to ESP32 RST/EN
-#define DIO0  GPIO_NUM_26 // ESP32 GPIO26 wired on PCB to HPD13A
-#define DIO1  GPIO_NUM_33 // HPDIO1 on pcb, needs to be wired external to GPIO33
-#define DIO2  LMIC_UNUSED_PIN // 32 HPDIO2 on pcb, needs to be wired external to GPIO32 (not necessary for LoRa, only FSK)
+// Pins for LORA chip SPI interface, reset line and interrupt lines
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
+#define LORA_RST  LMIC_UNUSED_PIN
+#define LORA_IO0  (26)
+#define LORA_IO1  (33)
+#define LORA_IO2  LMIC_UNUSED_PIN
 
-// Hardware pin definitions for TTGO V2 Board with OLED SSD1306 0,96" I2C Display
-#define OLED_RST U8X8_PIN_NONE // connected to CPU RST/EN
-#define I2C_SDA GPIO_NUM_21  // ESP32 GPIO21 -- SD1306 D1+D2
-#define I2C_SCL GPIO_NUM_22 // ESP32 GPIO22 -- SD1306 D0
-
-/* source:
-https://www.thethingsnetwork.org/forum/t/big-esp32-sx127x-topic-part-2/11973
-
-TTGO LoRa32 V2:
-ESP32          LoRa (SPI)      Display (I2C)  LED
------------    ----------      -------------  ------------------
-GPIO5  SCK     SCK
-GPIO27 MOSI    MOSI
-GPIO19 MISO    MISO
-GPIO18 SS      NSS
-EN     RST     RST
-GPIO26         DIO0
-GPIO33         DIO1 (see #1)
-GPIO32         DIO2 (see #2)
-GPIO22 SCL                     SCL
-GPIO21 SDA                     SDA
-GPIO22                                        useless (see #3)
-
-#1 Required (used by LMIC for LoRa).
-Not on-board wired to any GPIO. Must be manually wired. <<-- necessary for paxcounter
-
-#2 Optional (used by LMIC for FSK but not for LoRa). <<-- NOT necessary for paxcounter
-Not on-board wired to any GPIO. When needed: must be manually wired.
-
-#3 GPIO22 is already used for SCL therefore LED cannot be used without conflicting with I2C and display.
-*/ 
+#endif

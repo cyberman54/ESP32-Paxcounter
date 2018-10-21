@@ -53,7 +53,7 @@ extern std::array<uint64_t, 0xff> beacons;
 extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 #ifdef HAS_GPS
-#include "gps.h"
+#include "gpsread.h"
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
@@ -67,7 +67,7 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 #endif
 
 #ifdef HAS_SPI
-#include "spi.h"
+#include "spisend.h"
 #endif
 
 #ifdef HAS_DISPLAY
