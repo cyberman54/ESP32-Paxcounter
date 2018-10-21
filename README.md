@@ -59,7 +59,9 @@ Hardware dependent settings (pinout etc.) are stored in board files in /hal dire
 
 Before compiling the code,
 
-- **edit paxcounter.conf** and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use.
+- **edit src/paxcounter.conf** and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use.
+
+- **edit src/lmic_config.h** and tailor settings in this file according to your country and device hardware. Please take care of national regulations when selecting the frequency band for LoRaWAN.
 
 - **create file loraconf.h in your local /src directory** using the template [loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and populate it with your personal APPEUI und APPKEY for the LoRaWAN network. If you're using popular <A HREF="https://thethingsnetwork.org">TheThingsNetwork</A> you can copy&paste the keys from TTN console or output of ttnctl.
 
@@ -336,3 +338,4 @@ Thanks to
 - [Oliver Brandmüller](https://github.com/spmrider) for idea and initial setup of this project
 - [Charles Hallard](https://github.com/hallard) for major code contributions to this project
 - [robbi5](https://github.com/robbi5) for the payload converter
+- [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack

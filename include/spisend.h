@@ -1,5 +1,5 @@
-#ifndef _SPI_H
-#define _SPI_H
+#ifndef _SPISEND_H
+#define _SPISEND_H
 
 extern TaskHandle_t SpiTask;
 extern QueueHandle_t SPISendQueue;

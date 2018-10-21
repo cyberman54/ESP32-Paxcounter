@@ -1,5 +1,5 @@
-#ifndef _GPS_H
-#define _GPS_H
+#ifndef _GPSREAD_H
+#define _GPSREAD_H
 
 #include <TinyGPS++.h> // library for parsing NMEA data
 #include <TimeLib.h>
