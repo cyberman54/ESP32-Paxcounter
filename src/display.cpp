@@ -11,6 +11,12 @@ HAS_DISPLAY u8x8(MY_OLED_RST, MY_OLED_SCL, MY_OLED_SDA);
 const char lora_datarate[] = {"1211100908077BFSNA"};
 #elif defined(CFG_us915)
 const char lora_datarate[] = {"100908078CNA121110090807"};
+#if defined(CFG_as923)
+const char lora_datarate[] = {"1211100908077BFSNA"};
+#if defined(CFG_au921)
+const char lora_datarate[] = {"1211100908078CNA1211109C8C7C"};
+#if defined(CFG_in866)
+const char lora_datarate[] = {"121110090807FSNA"};
 #endif
 
 uint8_t volatile DisplayState = 0;
