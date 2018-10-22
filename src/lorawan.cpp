@@ -306,22 +306,22 @@ void switch_lora(uint8_t sf, uint8_t tx) {
     cfg.lorasf = sf;
     break;
   case 11:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF11, tx);
+#if defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF11CR, tx);
     cfg.lorasf = sf;
     break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF11CR, tx);
+#else
+    LMIC_setDrTxpow(DR_SF11, tx);
     cfg.lorasf = sf;
     break;
 #endif
   case 12:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF12, tx);
+#if defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF12CR, tx);
     cfg.lorasf = sf;
     break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF12CR, tx);
+#else
+    LMIC_setDrTxpow(DR_SF12, tx);
     cfg.lorasf = sf;
     break;
 #endif
