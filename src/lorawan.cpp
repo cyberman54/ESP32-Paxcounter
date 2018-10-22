@@ -253,23 +253,13 @@ void onEvent(ev_t ev) {
       strcpy_P(buff, PSTR("TX START"));
     break;
 
-    /*
-    || This event is defined but not used in the code. No
-    || point in wasting codespace on it.
-    ||
-    || case EV_SCAN_FOUND:
-    ||    Serial.println(F("EV_SCAN_FOUND"));
-    ||    break;
-    */
+  case EV_SCAN_FOUND:
+    strcpy_P(buff, PSTR("SCAN_FOUND"));
+    break;
 
-    /*
-    || This event is defined but not used in the code. No
-    || point in wasting codespace on it.
-    ||
-    || case EV_RFU1:
-    ||     Serial.println(F("EV_RFU1"));
-    ||     break;
-    */
+  case EV_RFU1:
+    strcpy_P(buff, PSTR("RFU1"));
+    break;
 
   default:
     sprintf_P(buff, PSTR("UNKNOWN EVENT %d"), ev);
