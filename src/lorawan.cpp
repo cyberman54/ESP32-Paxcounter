@@ -112,7 +112,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
   uint8_t i2c_ret;
 
   // Init this just in case, no more to 100KHz
-  Wire.begin(SDA, SCL, 100000);
+  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
   Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
   Wire.write(MCP_24AA02E64_MAC_ADDRESS);
   i2c_ret = Wire.endTransmission();
@@ -249,7 +249,8 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_TXSTART:
-    strcpy_P(buff, PSTR("TX START"));
+    if (!(LMIC.opmode & OP_JOINING))
+      strcpy_P(buff, PSTR("TX START"));
     break;
 
     /*
@@ -341,7 +342,7 @@ void lora_send(osjob_t *job) {
       LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
                       SendBuffer.MessageSize, (cfg.countermode & 0x02));
       ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
-      //sprintf(display_line7, "PACKET QUEUED");
+      // sprintf(display_line7, "PACKET QUEUED");
     }
   }
   // reschedule job every 0,5 - 1 sec. including a bit of random to prevent
