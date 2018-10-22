@@ -166,7 +166,21 @@ void setup() {
   ESP_LOGI(TAG, "Starting LMIC...");
   os_init();    // initialize lmic run-time environment on core 1
   LMIC_reset(); // initialize lmic MAC
+  LMIC_setLinkCheckMode(0);
   LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
+
+#ifdef CFG_US915
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power. Set
+  // the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
+  // in the US, with TTN, it saves join time if we start on subband 1 (channels
+  // 8-15). This will get overridden after the join by parameters from the
+  // network. If working with other networks or in other regions, this will need
+  // to be changed.
+  LMIC_selectSubBand(1);
+#endif
+
   LMIC_startJoining(); // start joining
 
 #endif
