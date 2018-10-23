@@ -253,23 +253,13 @@ void onEvent(ev_t ev) {
       strcpy_P(buff, PSTR("TX START"));
     break;
 
-    /*
-    || This event is defined but not used in the code. No
-    || point in wasting codespace on it.
-    ||
-    || case EV_SCAN_FOUND:
-    ||    Serial.println(F("EV_SCAN_FOUND"));
-    ||    break;
-    */
+  case EV_SCAN_FOUND:
+    strcpy_P(buff, PSTR("SCAN_FOUND"));
+    break;
 
-    /*
-    || This event is defined but not used in the code. No
-    || point in wasting codespace on it.
-    ||
-    || case EV_RFU1:
-    ||     Serial.println(F("EV_RFU1"));
-    ||     break;
-    */
+  case EV_RFU1:
+    strcpy_P(buff, PSTR("RFU1"));
+    break;
 
   default:
     sprintf_P(buff, PSTR("UNKNOWN EVENT %d"), ev);
@@ -306,22 +296,22 @@ void switch_lora(uint8_t sf, uint8_t tx) {
     cfg.lorasf = sf;
     break;
   case 11:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF11, tx);
+#if defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF11CR, tx);
     cfg.lorasf = sf;
     break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF11CR, tx);
+#else
+    LMIC_setDrTxpow(DR_SF11, tx);
     cfg.lorasf = sf;
     break;
 #endif
   case 12:
-#if defined(CFG_eu868)
-    LMIC_setDrTxpow(DR_SF12, tx);
+#if defined(CFG_us915)
+    LMIC_setDrTxpow(DR_SF12CR, tx);
     cfg.lorasf = sf;
     break;
-#elif defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF12CR, tx);
+#else
+    LMIC_setDrTxpow(DR_SF12, tx);
     cfg.lorasf = sf;
     break;
 #endif
