@@ -96,7 +96,12 @@ void setup() {
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
+// switch on power LED if we have 2 LEDs, else use it for status
+#ifdef HAS_RGB_LED
+  switch_LED(LED_ON);
 #endif
+#endif
+
 #ifdef HAS_RGB_LED
   rgb_set_color(COLOR_PINK);
   strcat_P(features, " RGB");
