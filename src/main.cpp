@@ -29,12 +29,12 @@ Task          Core  Prio  Purpose
 ====================================================================================
 wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
-gpsloop       0     2     reads data from GPS over serial or i2c
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by irq
+gpsloop       1     2     reads data from GPS over serial or i2c
 IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
@@ -166,9 +166,24 @@ void setup() {
   ESP_LOGI(TAG, "Starting LMIC...");
   os_init();    // initialize lmic run-time environment on core 1
   LMIC_reset(); // initialize lmic MAC
-  LMIC_setClockError(MAX_CLOCK_ERROR * 1 /
-                     100); // This tells LMIC to make the receive windows
-                           // bigger, in case your clock is 1% faster or slower.
+  LMIC_setLinkCheckMode(0);
+  // This tells LMIC to make the receive windows bigger, in case your clock is
+  // faster or slower. This causes the transceiver to be earlier switched on,
+  // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
+  // in src/lmic_config.h if you are limited on battery.
+  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power. Set
+  // the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
+
+#if defined(CFG_US915) || defined(CFG_au921)
+  // in the US, with TTN, it saves join time if we start on subband 1 (channels
+  // 8-15). This will get overridden after the join by parameters from the
+  // network. If working with other networks or in other regions, this will need
+  // to be changed.
+  LMIC_selectSubBand(1);
+#endif
 
   LMIC_startJoining(); // start joining
 
@@ -285,11 +300,11 @@ void setup() {
   ESP_LOGI(TAG, "Starting GPSloop...");
   xTaskCreatePinnedToCore(gps_loop,  // task function
                           "gpsloop", // name of task
-                          1024,      // stack size of task
+                          2048,      // stack size of task
                           (void *)1, // parameter of the task
                           2,         // priority of the task
                           &GpsTask,  // task handle
-                          0);        // CPU core
+                          1);        // CPU core
 #endif
 
 #ifdef HAS_SPI

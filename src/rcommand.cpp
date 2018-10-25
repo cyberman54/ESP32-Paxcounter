@@ -5,15 +5,19 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+// helper function
+void do_reset() {
+  ESP_LOGI(TAG, "Remote command: restart device");
+  LMIC_shutdown();
+  esp_restart();
+}
+
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
   switch (val[0]) {
   case 0: // restart device
-    ESP_LOGI(TAG, "Remote command: restart device");
     sprintf(display_line6, "Reset pending");
-    vTaskDelay(10000 / portTICK_PERIOD_MS); // wait for LMIC to confirm LoRa
-                                            // downlink to server
-    esp_restart();
+    do_reset();
     break;
   case 1: // reset MAC counter
     ESP_LOGI(TAG, "Remote command: reset MAC counter");

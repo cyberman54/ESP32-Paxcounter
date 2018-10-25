@@ -1,3 +1,8 @@
+#ifndef _GENERIC_H
+#define _GENERIC_H
+
+#include <stdint.h>
+
 // Hardware related definitions for generic ESP32 boards
 
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no LoRa
@@ -13,30 +18,32 @@
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // uses GPIO7
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
 
-#define HAS_LED GPIO_NUM_21 // on board  LED
-#define HAS_BUTTON GPIO_NUM_39 // on board button
-#define HAS_RGB_LED   GPIO_NUM_0  // WS2812B RGB LED on GPIO0
+#define HAS_LED (21) // on board  LED
+#define HAS_BUTTON (39) // on board button
+#define HAS_RGB_LED (0) // WS2812B RGB LED on GPIO0
 
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
 #define HAS_GPS 1 // use if board has GPS
 #define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M or 7M with default configuration
 
-// pin definitions for SPI interface of LoRa chip
-#define PIN_SPI_SS    GPIO_NUM_18 // SPI Chip Select
-#define PIN_SPI_MOSI  GPIO_NUM_27 // SPI Data Input
-#define PIN_SPI_MISO  GPIO_NUM_19 // SPI Data Output
-#define PIN_SPI_SCK   GPIO_NUM_5  // SPI Clock
-#define RST LMIC_UNUSED_PIN  // LoRa Reset (if wired)
-#define DIO0 GPIO_NUM_26     // LoRa IO0
-#define DIO1 GPIO_NUM_32     // LoRa IO1
-#define DIO2 LMIC_UNUSED_PIN // LoRa IO2 (not needed)
+// Pins for I2C interface of OLED Display
+#define MY_OLED_SDA (4)
+#define MY_OLED_SCL (15)
+#define MY_OLED_RST (16)
 
-// pin definitions for I2C interface of OLED Display
-#define OLED_RST GPIO_NUM_16 // SSD1306 RST
-#define I2C_SDA GPIO_NUM_4  // SD1306 D1+D2
-#define I2C_SCL GPIO_NUM_15 // SD1306 D0
+// Pins for LORA chip SPI interface, reset line and interrupt lines
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
+#define LORA_RST  (14)
+#define LORA_IO0  (26)
+#define LORA_IO1  (33)
+#define LORA_IO2  LMIC_UNUSED_PIN
 
 // I2C config for Microchip 24AA02E64 DEVEUI unique address
 #define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 
 #define MCP_24AA02E64_MAC_ADDRESS 0xF8 // Memory adress of unique deveui 64 bits
+
+#endif

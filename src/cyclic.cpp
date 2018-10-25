@@ -15,7 +15,7 @@ void doHousekeeping() {
 
   // check if update mode trigger switch was set
   if (cfg.runmode == 1)
-    ESP.restart();
+    do_reset();
 
 // task storage debugging //
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
@@ -60,7 +60,7 @@ void doHousekeeping() {
     get_salt();            // get new salt for salting hashes
 
     if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
-      esp_restart(); // memory leak, reset device
+      do_reset(); // memory leak, reset device
   }
 } // doHousekeeping()
 
