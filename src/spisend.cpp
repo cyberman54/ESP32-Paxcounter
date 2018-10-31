@@ -41,32 +41,34 @@ void spi_loop(void *pvParameters) {
 
 void hal_spi_init() { SPI.begin(SCK, MISO, MOSI, SS); }
 
-void hal_spi_trx(uint8_t port, uint8_t *buf, int len, uint8_t is_read) {
+void hal_spi_trx(u1_t cmd, u1_t *buf, int len, u1_t is_read) {
 
+  u1_t nss = SS;
   SPISettings settings(1E6, MSBFIRST, SPI_MODE0);
   SPI.beginTransaction(settings);
-  digitalWrite(SS, 0);
 
-  SPI.transfer(port);
+  digitalWrite(nss, 0);
 
-  for (uint8_t i = 0; i < len; i++) {
-    uint8_t *p = buf + i;
-    uint8_t data = is_read ? 0x00 : *p;
+  SPI.transfer(cmd);
+
+  for (u1_t i = 0; i < len; i++) {
+    u1_t *p = buf + i;
+    u1_t data = is_read ? 0x00 : *p;
     data = SPI.transfer(data);
     if (is_read)
       *p = data;
   }
 
-  digitalWrite(SS, 1);
+  digitalWrite(nss, 1);
   SPI.endTransaction();
 }
 
-void hal_spi_write(uint8_t port, const uint8_t *buf, int len) {
-  hal_spi_trx(port, (uint8_t *)buf, len, 0);
+void hal_spi_write(u1_t cmd, const u1_t *buf, int len) {
+  hal_spi_trx(cmd, (u1_t *)buf, len, 0);
 }
 
-void hal_spi_read(uint8_t port, uint8_t *buf, int len) {
-  hal_spi_trx(port, buf, len, 1);
+void hal_spi_read(u1_t cmd, u1_t *buf, int len) {
+  hal_spi_trx(cmd, buf, len, 1);
 }
 
 #endif // HAS_SPI
