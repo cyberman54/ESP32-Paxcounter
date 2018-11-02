@@ -3,6 +3,7 @@
 
 // Basic config
 #include "cyclic.h"
+#include "rcommand.h"
 
 // Local logging tag
 static const char TAG[] = "main";
