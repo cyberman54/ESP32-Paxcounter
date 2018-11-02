@@ -48,6 +48,7 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.vendorfilter;
   buffer[cursor++] = value.rgblum;
   buffer[cursor++] = value.gpsmode;
+  buffer[cursor++] = value.monitormode;
   memcpy(buffer + cursor, value.version, 10);
   cursor += 10;
 }
