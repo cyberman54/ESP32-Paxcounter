@@ -131,7 +131,7 @@ void spi_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
   BaseType_t ret =
       xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
   if (ret == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes enqueued for SPI consumption",
+    ESP_LOGI(TAG, "%d bytes enqueued for SPI interface",
              message->MessageSize);
   } else {
     ESP_LOGW(TAG, "SPI sendqueue is full");

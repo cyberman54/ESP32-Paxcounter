@@ -13,19 +13,14 @@ void SendData(uint8_t port) {
                                : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
-  // enqueue message in LoRa send queue
-#ifdef HAS_LORA
-  if (xQueueSendToBack(LoraSendQueue, (void *)&SendBuffer, (TickType_t)0) ==
-      pdTRUE)
-    ESP_LOGI(TAG, "%d bytes enqueued to send on LoRa", payload.getSize());
-#endif
-
+  // enqueue message in device's send queues
+  lora_enqueuedata(port, &SendBuffer);
   spi_enqueuedata(port, &SendBuffer);
 
   // clear counter if not in cumulative counter mode
   if ((port == COUNTERPORT) && (cfg.countermode != 1)) {
     reset_counters(); // clear macs container and reset all counters
-    get_salt();     // get new salt for salting hashes
+    get_salt();       // get new salt for salting hashes
     ESP_LOGI(TAG, "Counter cleared");
   }
 } // SendData
@@ -59,9 +54,6 @@ void sendPayload() {
 } // sendpayload()
 
 void flushQueues() {
-#ifdef HAS_LORA
-  xQueueReset(LoraSendQueue);
-#endif
-
+  lora_queuereset();
   spi_queuereset();
 }
