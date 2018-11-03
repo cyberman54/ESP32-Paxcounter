@@ -6,7 +6,6 @@
 // Hardware related definitions for Pycom FiPy Board
 
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa
-#define HAS_SPI 1  // comment out if device shall not send data via SPI
 
 #define CFG_sx1272_radio 1
 #define HAS_LED NOT_A_PIN      // FiPy has no on board LED, so we use RGB LED

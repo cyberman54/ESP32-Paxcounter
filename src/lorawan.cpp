@@ -1,10 +1,10 @@
-#ifdef HAS_LORA
-
 // Basic Config
 #include "lorawan.h"
 
 // Local logging Tag
 static const char TAG[] = "lora";
+
+#ifdef HAS_LORA
 
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;

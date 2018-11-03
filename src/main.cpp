@@ -48,7 +48,6 @@ ESP32 hardware timers
 
 // Basic Config
 #include "main.h"
-#include "spislave.h"
 
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers

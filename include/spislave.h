@@ -25,6 +25,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #define _SPISLAVE_H
 
 #include "globals.h"
+#include "spislave.h"
 
 esp_err_t spi_init();
 

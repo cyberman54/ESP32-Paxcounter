@@ -1,6 +1,5 @@
 // Basic Config
-#include "globals.h"
-#include "spislave.h"
+#include "senddata.h"
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {

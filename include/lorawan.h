@@ -29,6 +29,7 @@ void lora_send(osjob_t *job);
 void lora_enqueuedata(uint8_t messageType, MessageBuffer_t *message);
 void lora_queuereset(void);
 void lora_housekeeping(void);
+
 esp_err_t lora_stack_init();
 
 #endif
