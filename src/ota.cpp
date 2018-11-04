@@ -85,10 +85,8 @@ void start_ota_update() {
       display(1, "OK", "WiFi connected");
       // do a number of tries to update firmware limited by OTA_MAX_TRY
       while ((j--) && (!ret)) {
-        ESP_LOGI(TAG,
-                 "Starting OTA update, attempt %u of %u. This will take some "
-                 "time to complete...",
-                 OTA_MAX_TRY - j, OTA_MAX_TRY);
+        ESP_LOGI(TAG, "Starting OTA update, attempt %u of %u", OTA_MAX_TRY - j,
+                 OTA_MAX_TRY);
         ret = do_ota_update();
       }
       goto end;
@@ -102,8 +100,7 @@ void start_ota_update() {
 
 end:
   switch_LED(LED_OFF);
-  ESP_LOGI(TAG, "Rebooting to runmode using %s firmware",
-           ret ? "new" : "current");
+  ESP_LOGI(TAG, "Rebooting to %s firmware", ret ? "new" : "current");
   display(5, "**", ""); // mark line rebooting
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   ESP.restart();
@@ -117,29 +114,26 @@ bool do_ota_update() {
   size_t written = 0;
 
   // Fetch the latest firmware version
-  ESP_LOGI(TAG, "Checking latest firmware version on server...");
+  ESP_LOGI(TAG, "Checking latest firmware version on server");
   display(2, "**", "checking version");
   const String latest = bintray.getLatestVersion();
 
   if (latest.length() == 0) {
-    ESP_LOGI(
-        TAG,
-        "Could not load info about the latest firmware. Rebooting to runmode.");
+    ESP_LOGI(TAG, "Could not fetch info on latest firmware");
     display(2, " E", "file not found");
     return false;
   } else if (version_compare(latest, cfg.version) <= 0) {
-    ESP_LOGI(TAG, "Current firmware is up to date. Rebooting to runmode.");
+    ESP_LOGI(TAG, "Current firmware is up to date");
     display(2, "NO", "no update found");
     return false;
   }
-  ESP_LOGI(TAG, "New firmware version v%s available. Downloading...",
-           latest.c_str());
+  ESP_LOGI(TAG, "New firmware version v%s available", latest.c_str());
   display(2, "OK", latest.c_str());
 
   display(3, "**", "");
   String firmwarePath = bintray.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
-    ESP_LOGI(TAG, "Unsupported binary format, OTA update cancelled.");
+    ESP_LOGI(TAG, "Unsupported binary format");
     display(3, " E", "file type error");
     return false;
   }
@@ -178,7 +172,7 @@ bool do_ota_update() {
     unsigned long timeout = millis();
     while (client.available() == 0) {
       if (millis() - timeout > RESPONSE_TIMEOUT_MS) {
-        ESP_LOGI(TAG, "Client Timeout.");
+        ESP_LOGI(TAG, "Client timeout");
         display(3, " E", "client timeout");
         goto failure;
       }
@@ -200,11 +194,11 @@ bool do_ota_update() {
                         "firmware flashing");
           redirect = false;
         } else if (line.indexOf("302") > 0) {
-          ESP_LOGI(TAG, "Got 302 status code from server. Redirecting to the "
+          ESP_LOGI(TAG, "Got 302 status code from server. Redirecting to "
                         "new address");
           redirect = true;
         } else {
-          ESP_LOGI(TAG, "Could not get a valid firmware url.");
+          ESP_LOGI(TAG, "Could not get firmware download URL");
           // Unexptected HTTP response. Retry or skip update?
           redirect = false;
         }
@@ -242,14 +236,13 @@ bool do_ota_update() {
 
   // check whether we have everything for OTA update
   if (!(contentLength && isValidContentType)) {
-    ESP_LOGI(TAG,
-             "There was no valid content in the response from the OTA server!");
+    ESP_LOGI(TAG, "Invalid OTA server response");
     display(4, " E", "response error");
     goto failure;
   }
 
   if (!Update.begin(contentLength)) {
-    ESP_LOGI(TAG, "There isn't enough space to start OTA update");
+    ESP_LOGI(TAG, "Not enough space to start OTA update");
     display(4, " E", "disk full");
     goto failure;
   }
@@ -270,7 +263,7 @@ bool do_ota_update() {
     snprintf(buf, 17, "%ukB Done!", (uint16_t)(written / 1024));
     display(4, "OK", buf);
   } else {
-    ESP_LOGI(TAG, "Written only %u of %u bytes, OTA update attempt cancelled.",
+    ESP_LOGI(TAG, "Written only %u of %u bytes, OTA update attempt cancelled",
              written, contentLength);
   }
 
@@ -285,12 +278,12 @@ bool do_ota_update() {
 
 finished:
   client.stop();
-  ESP_LOGI(TAG, "OTA update completed.");
+  ESP_LOGI(TAG, "OTA update finished");
   return true;
 
 failure:
   client.stop();
-  ESP_LOGI(TAG, "OTA update failed.");
+  ESP_LOGI(TAG, "OTA update failed");
   return false;
 
 } // do_ota_update
