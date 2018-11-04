@@ -75,6 +75,7 @@ void start_ota_update() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
+  bool ret = false;
 
   while (i--) {
     ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
@@ -82,26 +83,29 @@ void start_ota_update() {
       // we now have wifi connection and try to do an OTA over wifi update
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
       display(1, "OK", "WiFi connected");
-      // do a number of tries limited by OTA_MAX_TRY
-      while (j--) {
+      // do a number of tries to update firmware limited by OTA_MAX_TRY
+      while ( j--) {
         ESP_LOGI(TAG,
                  "Starting OTA update, attempt %u of %u. This will take some "
                  "time to complete...",
                  OTA_MAX_TRY - j, OTA_MAX_TRY);
-        if (do_ota_update())
-          goto end;
+        ret = do_ota_update();
+        if (ret)
+          goto end; // update successful
       }
-    } else {
-      vTaskDelay(5000 / portTICK_PERIOD_MS);
+      goto end; // update not successful
     }
   }
 
-  ESP_LOGI(TAG, "Could not connect to %s, rebooting.", WIFI_SSID);
+  // wifi did not connect
+  ESP_LOGI(TAG, "Could not connect to %s", WIFI_SSID);
   display(1, " E", "no WiFi connect");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
 
 end:
-
   switch_LED(LED_OFF);
+  ESP_LOGI(TAG, "Rebooting to runmode using %s firmware",
+           ret ? "new" : "current");
   display(5, "**", ""); // mark line rebooting
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   ESP.restart();
@@ -281,13 +285,12 @@ bool do_ota_update() {
 
 finished:
   client.stop();
-  ESP_LOGI(TAG, "OTA update completed. Rebooting to runmode with new version.");
+  ESP_LOGI(TAG, "OTA update completed.");
   return true;
 
 failure:
   client.stop();
-  ESP_LOGI(TAG,
-           "OTA update failed. Rebooting to runmode with current version.");
+  ESP_LOGI(TAG, "OTA update failed.");
   return false;
 
 } // do_ota_update
