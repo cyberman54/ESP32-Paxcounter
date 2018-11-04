@@ -84,16 +84,14 @@ void start_ota_update() {
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
       display(1, "OK", "WiFi connected");
       // do a number of tries to update firmware limited by OTA_MAX_TRY
-      while (j--) {
+      while ((j--) && (!ret)) {
         ESP_LOGI(TAG,
                  "Starting OTA update, attempt %u of %u. This will take some "
                  "time to complete...",
                  OTA_MAX_TRY - j, OTA_MAX_TRY);
         ret = do_ota_update();
-        if (ret)
-          goto end; // update successful
-      } // update not successful
-      goto end; 
+      }
+      goto end;
     }
   }
 
