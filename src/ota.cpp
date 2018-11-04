@@ -101,7 +101,7 @@ void start_ota_update() {
 
 end:
   switch_LED(LED_OFF);
-  ESP_LOGI(TAG, "Rebooting to %s firmware", (ret < 0) ? "current" : "new");
+  ESP_LOGI(TAG, "Rebooting to %s firmware", (ret == 0) ? "new" : "current");
   display(5, "**", ""); // mark line rebooting
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   ESP.restart();
