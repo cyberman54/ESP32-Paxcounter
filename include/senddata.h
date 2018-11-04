@@ -3,6 +3,7 @@
 
 #include "spislave.h"
 #include "lorawan.h"
+#include "cyclic.h"
 
 void SendData(uint8_t port);
 void sendPayload(void);

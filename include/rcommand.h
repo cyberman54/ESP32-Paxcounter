@@ -2,6 +2,7 @@
 #define _RCOMMAND_H
 
 #include "senddata.h"
+#include "cyclic.h"
 #include "configmanager.h"
 #include "lorawan.h"
 #include "macsniff.h"

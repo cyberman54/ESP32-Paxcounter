@@ -11,7 +11,7 @@
 #include <BintrayClient.h>
 #include <string>
 
-void do_ota_update();
+bool do_ota_update();
 void start_ota_update();
 int version_compare(const String v1, const String v2);
 void display(const uint8_t row, const std::string status,
