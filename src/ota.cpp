@@ -77,8 +77,8 @@ void start_ota_update() {
   int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
   bool ret = false;
 
+  ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
   while (i--) {
-    ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
     if (WiFi.status() == WL_CONNECTED) {
       // we now have wifi connection and try to do an OTA over wifi update
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
@@ -91,6 +91,7 @@ void start_ota_update() {
       }
       goto end;
     }
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 
   // wifi did not connect
@@ -142,8 +143,7 @@ bool do_ota_update() {
   String prevHost = currentHost;
 
   WiFiClientSecure client;
-  // set server connection timeout and open server connection
-  client.setTimeout(RESPONSE_TIMEOUT_MS);
+
   client.setCACert(bintray.getCertificate(currentHost));
 
   if (!client.connect(currentHost.c_str(), port)) {
@@ -151,11 +151,11 @@ bool do_ota_update() {
     display(3, " E", "connection lost");
     goto failure;
   }
+  // client.setTimeout(RESPONSE_TIMEOUT);
 
   while (redirect) {
     if (currentHost != prevHost) {
       client.stop();
-      client.setTimeout(RESPONSE_TIMEOUT_MS);
       client.setCACert(bintray.getCertificate(currentHost));
       if (!client.connect(currentHost.c_str(), port)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
@@ -163,6 +163,7 @@ bool do_ota_update() {
         display(3, " E", "server error");
         goto failure;
       }
+      // client.setTimeout(RESPONSE_TIMEOUT);
     }
 
     ESP_LOGI(TAG, "Requesting %s", firmwarePath.c_str());
@@ -174,7 +175,7 @@ bool do_ota_update() {
 
     unsigned long timeout = millis();
     while (client.available() == 0) {
-      if (millis() - timeout > RESPONSE_TIMEOUT_MS) {
+      if ((millis() - timeout) > (RESPONSE_TIMEOUT * 1000)) {
         ESP_LOGI(TAG, "Client timeout");
         display(3, " E", "client timeout");
         goto failure;
@@ -257,6 +258,7 @@ bool do_ota_update() {
 
   display(4, "**", "writing...");
   written = Update.writeStream(client);
+  client.setTimeout(RESPONSE_TIMEOUT);
 
   if (written == contentLength) {
     ESP_LOGI(TAG, "Written %u bytes successfully", written);
@@ -270,8 +272,8 @@ bool do_ota_update() {
   if (Update.end()) {
     goto finished;
   } else {
-    ESP_LOGI(TAG, "An error occurred. Error #: %d", Update.getError());
-    snprintf(buf, 17, "Error #: %d", Update.getError());
+    ESP_LOGI(TAG, "An error occurred. Error#: %d", Update.getError());
+    snprintf(buf, 17, "Error#: %d", Update.getError());
     display(4, " E", buf);
     goto failure;
   }
