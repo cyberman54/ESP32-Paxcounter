@@ -155,6 +155,7 @@ bool do_ota_update() {
   while (redirect) {
     if (currentHost != prevHost) {
       client.stop();
+      client.setTimeout(RESPONSE_TIMEOUT_MS);
       client.setCACert(bintray.getCertificate(currentHost));
       if (!client.connect(currentHost.c_str(), port)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
