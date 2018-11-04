@@ -75,7 +75,7 @@ void start_ota_update() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
-  bool ret = false;
+  bool ret = 1;
 
   ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
   while (i--) {
@@ -84,7 +84,7 @@ void start_ota_update() {
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
       display(1, "OK", "WiFi connected");
       // do a number of tries to update firmware limited by OTA_MAX_TRY
-      while ((j--) && (!ret)) {
+      while ((j--) && (ret > 0)) {
         ESP_LOGI(TAG, "Starting OTA update, attempt %u of %u", OTA_MAX_TRY - j,
                  OTA_MAX_TRY);
         ret = do_ota_update();
@@ -101,7 +101,7 @@ void start_ota_update() {
 
 end:
   switch_LED(LED_OFF);
-  ESP_LOGI(TAG, "Rebooting to %s firmware", ret ? "new" : "current");
+  ESP_LOGI(TAG, "Rebooting to %s firmware", (ret < 0) ? "current" : "new");
   display(5, "**", ""); // mark line rebooting
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   ESP.restart();
@@ -122,11 +122,11 @@ bool do_ota_update() {
   if (latest.length() == 0) {
     ESP_LOGI(TAG, "Could not fetch info on latest firmware");
     display(2, " E", "file not found");
-    return false;
+    return -1;
   } else if (version_compare(latest, cfg.version) <= 0) {
     ESP_LOGI(TAG, "Current firmware is up to date");
     display(2, "NO", "no update found");
-    return false;
+    return -2;
   }
   ESP_LOGI(TAG, "New firmware version v%s available", latest.c_str());
   display(2, "OK", latest.c_str());
@@ -136,7 +136,7 @@ bool do_ota_update() {
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format");
     display(3, " E", "file type error");
-    return false;
+    return -1;
   }
 
   String currentHost = bintray.getStorageHost();
@@ -149,7 +149,7 @@ bool do_ota_update() {
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     display(3, " E", "connection lost");
-    goto failure;
+    goto abort;
   }
   // client.setTimeout(RESPONSE_TIMEOUT);
 
@@ -161,7 +161,7 @@ bool do_ota_update() {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
         display(3, " E", "server error");
-        goto failure;
+        goto abort;
       }
       // client.setTimeout(RESPONSE_TIMEOUT);
     }
@@ -178,7 +178,7 @@ bool do_ota_update() {
       if ((millis() - timeout) > (RESPONSE_TIMEOUT * 1000)) {
         ESP_LOGI(TAG, "Client timeout");
         display(3, " E", "client timeout");
-        goto failure;
+        goto abort;
       }
     }
 
@@ -242,13 +242,13 @@ bool do_ota_update() {
   if (!(contentLength && isValidContentType)) {
     ESP_LOGI(TAG, "Invalid OTA server response");
     display(4, " E", "response error");
-    goto failure;
+    goto retry;
   }
 
   if (!Update.begin(contentLength)) {
     ESP_LOGI(TAG, "Not enough space to start OTA update");
     display(4, " E", "disk full");
-    goto failure;
+    goto abort;
   }
 
 #ifdef HAS_DISPLAY
@@ -275,18 +275,21 @@ bool do_ota_update() {
     ESP_LOGI(TAG, "An error occurred. Error#: %d", Update.getError());
     snprintf(buf, 17, "Error#: %d", Update.getError());
     display(4, " E", buf);
-    goto failure;
+    goto retry;
   }
 
 finished:
   client.stop();
   ESP_LOGI(TAG, "OTA update finished");
-  return true;
+  return 0;
 
-failure:
+abort:
   client.stop();
   ESP_LOGI(TAG, "OTA update failed");
-  return false;
+  return -1;
+
+retry:
+  return 1;
 
 } // do_ota_update
 
