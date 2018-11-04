@@ -48,31 +48,37 @@ void spi_slave_task(void *param) {
     MessageBuffer_t msg;
     size_t transaction_size;
 
+    // clear rx + tx buffers
     memset(txbuf, 0, sizeof(txbuf));
     memset(rxbuf, 0, sizeof(rxbuf));
 
+    // wait until data to send arrivey
     if (xQueueReceive(SPISendQueue, &msg, portMAX_DELAY) != pdTRUE) {
       ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
       continue;
     }
 
+    // fill tx buffer with data to send from queue and calculate crc16 cheksum
     uint8_t *messageType = txbuf + 2;
     *messageType = msg.MessagePort;
     uint8_t *messageSize = txbuf + 3;
     *messageSize = msg.MessageSize;
     memcpy(txbuf + HEADER_SIZE, &msg.Message, msg.MessageSize);
+    // calculate crc16 checksum, not used yet
+    // uint16_t *crc = (uint16_t *)txbuf;
+    //*crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
 
+    // set length for spi slave driver
     transaction_size = HEADER_SIZE + msg.MessageSize;
     transaction_size += (4 - transaction_size % 4);
 
-    uint16_t *crc = (uint16_t *)txbuf;
-    *crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
-
+    // prepare spi transaction
     spi_slave_transaction_t spi_transaction = {0};
     spi_transaction.length = transaction_size * 8;
     spi_transaction.tx_buffer = txbuf;
     spi_transaction.rx_buffer = rxbuf;
 
+    // wait until spi master clocks out the data, and read results in rx buffer
     ESP_LOGI(TAG, "Prepared SPI transaction for %zu bytes", transaction_size);
     ESP_LOG_BUFFER_HEXDUMP(TAG, txbuf, transaction_size, ESP_LOG_DEBUG);
     esp_err_t ret =
@@ -80,6 +86,11 @@ void spi_slave_task(void *param) {
     ESP_LOG_BUFFER_HEXDUMP(TAG, rxbuf, transaction_size, ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Transaction finished with size %zu bits",
              spi_transaction.trans_len);
+
+    // check if command was received, then call interpreter with command payload
+    if ((spi_transaction.trans_len) && ((rxbuf[2]) == RCMDPORT)) {
+      rcommand(rxbuf + HEADER_SIZE, spi_transaction.trans_len - HEADER_SIZE);
+    };
   }
 }
 
@@ -111,6 +122,8 @@ esp_err_t spi_init() {
                                               .post_setup_cb = NULL,
                                               .post_trans_cb = NULL};
 
+  // Enable pull-ups on SPI lines so we don't detect rogue pulses when no master
+  // is connected
   gpio_set_pull_mode(SPI_MOSI, GPIO_PULLUP_ONLY);
   gpio_set_pull_mode(SPI_SCLK, GPIO_PULLUP_ONLY);
   gpio_set_pull_mode(SPI_CS, GPIO_PULLUP_ONLY);
@@ -131,8 +144,7 @@ void spi_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
   BaseType_t ret =
       xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
   if (ret == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes enqueued for SPI interface",
-             message->MessageSize);
+    ESP_LOGI(TAG, "%d bytes enqueued for SPI interface", message->MessageSize);
   } else {
     ESP_LOGW(TAG, "SPI sendqueue is full");
   }

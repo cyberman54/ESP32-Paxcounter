@@ -329,9 +329,13 @@ void lora_send(osjob_t *job) {
   } else {
     if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
       // SendBuffer gets struct MessageBuffer with next payload from queue
-      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                      SendBuffer.MessageSize, (cfg.countermode & 0x02));
-      ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+      if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                          SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
+        ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+      } else {
+        ESP_LOGE(TAG, "coult not send %d bytes to LoRa",
+                 SendBuffer.MessageSize);
+      }
       // sprintf(display_line7, "PACKET QUEUED");
     }
   }
@@ -340,6 +344,8 @@ void lora_send(osjob_t *job) {
   os_setTimedCallback(job, os_getTime() + 500 + ms2osticks(random(500)),
                       lora_send);
 }
+
+#endif // HAS_LORA
 
 esp_err_t lora_stack_init() {
 #ifndef HAS_LORA
@@ -375,12 +381,13 @@ esp_err_t lora_stack_init() {
   LMIC_selectSubBand(1);
 #endif
 
-  LMIC_startJoining(); // start joining
-  return ESP_OK;       // continue main program
+  if (!LMIC_startJoining()) { // start joining
+    ESP_LOGI(TAG, "Already joined");
+  }
+  
+  return ESP_OK; // continue main program
 #endif
 }
-
-#endif // HAS_LORA
 
 void lora_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
   // enqueue message in LORA send queue
@@ -388,8 +395,7 @@ void lora_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
   BaseType_t ret =
       xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
   if (ret == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes enqueued for LORA interface",
-             message->MessageSize);
+    ESP_LOGI(TAG, "%d bytes enqueued for LORA interface", message->MessageSize);
   } else {
     ESP_LOGW(TAG, "LORA sendqueue is full");
   }
