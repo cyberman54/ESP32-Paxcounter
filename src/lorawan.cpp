@@ -329,11 +329,11 @@ void lora_send(osjob_t *job) {
   } else {
     if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
       // SendBuffer gets struct MessageBuffer with next payload from queue
-      if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+      if (!LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
                           SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
-        ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+        ESP_LOGI(TAG, "%d byte(s) sent to LoRa", SendBuffer.MessageSize);
       } else {
-        ESP_LOGE(TAG, "coult not send %d bytes to LoRa",
+        ESP_LOGE(TAG, "could not send %d byte(s) to LoRa",
                  SendBuffer.MessageSize);
       }
       // sprintf(display_line7, "PACKET QUEUED");

@@ -79,7 +79,7 @@ void spi_slave_task(void *param) {
     spi_transaction.rx_buffer = rxbuf;
 
     // wait until spi master clocks out the data, and read results in rx buffer
-    ESP_LOGI(TAG, "Prepared SPI transaction for %zu bytes", transaction_size);
+    ESP_LOGI(TAG, "Prepared SPI transaction for %zu byte(s)", transaction_size);
     ESP_LOG_BUFFER_HEXDUMP(TAG, txbuf, transaction_size, ESP_LOG_DEBUG);
     esp_err_t ret =
         spi_slave_transmit(HSPI_HOST, &spi_transaction, portMAX_DELAY);
@@ -149,7 +149,7 @@ void spi_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
   BaseType_t ret =
       xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
   if (ret == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes enqueued for SPI interface", message->MessageSize);
+    ESP_LOGI(TAG, "%d byte(s) enqueued for SPI interface", message->MessageSize);
   } else {
     ESP_LOGW(TAG, "SPI sendqueue is full");
   }
