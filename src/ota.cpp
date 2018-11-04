@@ -84,7 +84,7 @@ void start_ota_update() {
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
       display(1, "OK", "WiFi connected");
       // do a number of tries to update firmware limited by OTA_MAX_TRY
-      while ( j--) {
+      while (j--) {
         ESP_LOGI(TAG,
                  "Starting OTA update, attempt %u of %u. This will take some "
                  "time to complete...",
@@ -92,8 +92,8 @@ void start_ota_update() {
         ret = do_ota_update();
         if (ret)
           goto end; // update successful
-      }
-      goto end; // update not successful
+      } // update not successful
+      goto end; 
     }
   }
 
@@ -263,6 +263,8 @@ bool do_ota_update() {
 
   display(4, "**", "writing...");
 
+  // set server connection timeout and open server connection
+  client.setTimeout(RESPONSE_TIMEOUT_MS);
   written = Update.writeStream(client);
 
   if (written == contentLength) {
