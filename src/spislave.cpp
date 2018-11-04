@@ -128,11 +128,16 @@ esp_err_t spi_init() {
   gpio_set_pull_mode(SPI_SCLK, GPIO_PULLUP_ONLY);
   gpio_set_pull_mode(SPI_CS, GPIO_PULLUP_ONLY);
 
-  ESP_LOGI(TAG, "Starting SPIloop...");
-  xTaskCreate(spi_slave_task, "spiloop", 4096, (void *)NULL, 2, &spiTask);
-
   esp_err_t ret =
       spi_slave_initialize(HSPI_HOST, &spi_bus_cfg, &spi_slv_cfg, 1);
+
+  if (ret == ESP_OK) {
+    ESP_LOGI(TAG, "Starting SPIloop...");
+    xTaskCreate(spi_slave_task, "spiloop", 4096, (void *)NULL, 2, &spiTask);
+  } else {
+    ESP_LOGE(TAG, "SPI interface initialization failed");
+  }
+
   return ret;
 
 #endif
