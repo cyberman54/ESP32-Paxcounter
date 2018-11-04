@@ -142,6 +142,8 @@ bool do_ota_update() {
   String prevHost = currentHost;
 
   WiFiClientSecure client;
+  // set server connection timeout and open server connection
+  client.setTimeout(RESPONSE_TIMEOUT_MS);
   client.setCACert(bintray.getCertificate(currentHost));
 
   if (!client.connect(currentHost.c_str(), port)) {
@@ -253,9 +255,6 @@ bool do_ota_update() {
 #endif
 
   display(4, "**", "writing...");
-
-  // set server connection timeout and open server connection
-  client.setTimeout(RESPONSE_TIMEOUT_MS);
   written = Update.writeStream(client);
 
   if (written == contentLength) {
