@@ -26,6 +26,8 @@ const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
 // Connection port (HTTPS)
 const int port = 443;
 
+const unsigned long STREAM_TIMEOUT = 30000;
+
 // Variables to validate firmware content
 int volatile contentLength = 0;
 bool volatile isValidContentType = false;
@@ -145,13 +147,15 @@ bool do_ota_update() {
   WiFiClientSecure client;
 
   client.setCACert(bintray.getCertificate(currentHost));
+  //client.setTimeout(RESPONSE_TIMEOUT_MS);
+  // --> causing error [E][WiFiClient.cpp:236] setSocketOption(): 1006 : 9
+  // so we unfortunately need patched update.cpp which sets the stream timeout
 
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     display(3, " E", "connection lost");
     goto abort;
   }
-  // client.setTimeout(RESPONSE_TIMEOUT);
 
   while (redirect) {
     if (currentHost != prevHost) {
@@ -163,7 +167,6 @@ bool do_ota_update() {
         display(3, " E", "server error");
         goto abort;
       }
-      // client.setTimeout(RESPONSE_TIMEOUT);
     }
 
     ESP_LOGI(TAG, "Requesting %s", firmwarePath.c_str());
@@ -175,7 +178,7 @@ bool do_ota_update() {
 
     unsigned long timeout = millis();
     while (client.available() == 0) {
-      if ((millis() - timeout) > (RESPONSE_TIMEOUT * 1000)) {
+      if ((millis() - timeout) > (RESPONSE_TIMEOUT_MS)) {
         ESP_LOGI(TAG, "Client timeout");
         display(3, " E", "client timeout");
         goto abort;
@@ -233,8 +236,8 @@ bool do_ota_update() {
           isValidContentType = true;
         }
       }
-    }
-  } // while (redirect)
+    } // while (client.available())
+  }   // while (redirect)
 
   display(3, "OK", ""); // line download
 
@@ -257,8 +260,7 @@ bool do_ota_update() {
 #endif
 
   display(4, "**", "writing...");
-  written = Update.writeStream(client);
-  client.setTimeout(RESPONSE_TIMEOUT);
+  written = Update.writeStream(client); // this is a blocking call
 
   if (written == contentLength) {
     ESP_LOGI(TAG, "Written %u bytes successfully", written);
