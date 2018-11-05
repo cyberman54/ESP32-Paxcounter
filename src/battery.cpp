@@ -1,5 +1,3 @@
-#ifdef HAS_BATTERY_PROBE
-
 #include "globals.h"
 
 // Local logging tag
@@ -14,6 +12,7 @@ static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
 
 void calibrate_voltage(void) {
+#ifdef HAS_BATTERY_PROBE
   // configure ADC
   ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
   ESP_ERROR_CHECK(adc1_config_channel_atten(adc_channel, atten));
@@ -30,9 +29,11 @@ void calibrate_voltage(void) {
   } else {
     ESP_LOGI(TAG, "ADC characterization based on default reference voltage");
   }
+#endif
 }
 
 uint16_t read_voltage() {
+#ifdef HAS_BATTERY_PROBE
   // multisample ADC
   uint32_t adc_reading = 0;
   for (int i = 0; i < NO_OF_SAMPLES; i++) {
@@ -47,6 +48,9 @@ uint16_t read_voltage() {
 #endif
   ESP_LOGD(TAG, "Raw: %d / Voltage: %dmV", adc_reading, voltage);
   return voltage;
+#else
+  return 0;
+#endif
 }
 
 bool batt_sufficient() {
@@ -58,5 +62,3 @@ bool batt_sufficient() {
   return true;
 #endif
 }
-
-#endif // HAS_BATTERY_PROBE
