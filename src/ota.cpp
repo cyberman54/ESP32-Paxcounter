@@ -72,12 +72,14 @@ void start_ota_update() {
   ESP_LOGI(TAG, "Starting Wifi OTA update");
   display(1, "**", WIFI_SSID);
 
+  WiFi.mode(WIFI_AP_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
   int ret = 1; // 0 = finished, 1 = retry, -1 = abort
 
   ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
+
   while (i--) {
     if (WiFi.status() == WL_CONNECTED) {
       // we now have wifi connection and try to do an OTA over wifi update
@@ -92,6 +94,7 @@ void start_ota_update() {
       goto end;
     }
     vTaskDelay(5000 / portTICK_PERIOD_MS);
+    WiFi.reconnect();
   }
 
   // wifi did not connect
