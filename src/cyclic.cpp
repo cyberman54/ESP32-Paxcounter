@@ -3,6 +3,8 @@
 
 // Basic config
 #include "cyclic.h"
+#include "rcommand.h"
+#include "spislave.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -25,9 +27,9 @@ void doHousekeeping() {
 #ifdef HAS_GPS
   ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
 #endif
-#ifdef HAS_SPI
-  ESP_LOGD(TAG, "Spiloop %d bytes left", uxTaskGetStackHighWaterMark(SpiTask));
-#endif
+
+  spi_housekeeping();
+
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   ESP_LOGD(TAG, "LEDloop %d bytes left", uxTaskGetStackHighWaterMark(ledLoopTask));
 #endif

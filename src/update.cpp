@@ -1,11 +1,9 @@
 /*
-
 this file copied from esp32-arduino library and patched, see PR
-https://github.com/espressif/arduino-esp32/pull/1886
-
+https://github.com/espressif/arduino-esp32/pull/1979
 */
 
-#include "update.h"
+#include "Update.h"
 #include "Arduino.h"
 #include "esp_spi_flash.h"
 #include "esp_ota_ops.h"
@@ -95,6 +93,10 @@ void UpdateClass::_reset() {
     _progress = 0;
     _size = 0;
     _command = U_FLASH;
+
+    if(_ledPin != -1) {
+      digitalWrite(_ledPin, !_ledOn); // off
+    }
 }
 
 bool UpdateClass::canRollBack(){
@@ -113,11 +115,14 @@ bool UpdateClass::rollBack(){
     return _partitionIsBootable(partition) && !esp_ota_set_boot_partition(partition);
 }
 
-bool UpdateClass::begin(size_t size, int command) {
+bool UpdateClass::begin(size_t size, int command, int ledPin, uint8_t ledOn) {
     if(_size > 0){
         log_w("already running");
         return false;
     }
+
+    _ledPin = ledPin;
+    _ledOn = !!ledOn; // 0(LOW) or 1(HIGH)
 
     _reset();
     _error = 0;
@@ -310,7 +315,7 @@ size_t UpdateClass::write(uint8_t *data, size_t len) {
 }
 
 size_t UpdateClass::writeStream(Stream &data) {
-    data.setTimeout(20000);
+    data.setTimeout(RESPONSE_TIMEOUT_MS);
     size_t written = 0;
     size_t toRead = 0;
     if(hasError() || !isRunning())
@@ -323,15 +328,31 @@ size_t UpdateClass::writeStream(Stream &data) {
     if (_progress_callback) {
         _progress_callback(0, _size);
     }
+
+    if(_ledPin != -1) {
+        pinMode(_ledPin, OUTPUT);
+    }
+
     while(remaining()) {
-        toRead = data.readBytes(_buffer + _bufferLen,  (SPI_FLASH_SEC_SIZE - _bufferLen));
+        if(_ledPin != -1) {
+            digitalWrite(_ledPin, _ledOn); // Switch LED on
+        }
+        size_t bytesToRead = SPI_FLASH_SEC_SIZE - _bufferLen;
+        if(bytesToRead > remaining()) {
+            bytesToRead = remaining();
+        }
+
+        toRead = data.readBytes(_buffer + _bufferLen,  bytesToRead);
         if(toRead == 0) { //Timeout
             delay(100);
-            toRead = data.readBytes(_buffer + _bufferLen, (SPI_FLASH_SEC_SIZE - _bufferLen));
+            toRead = data.readBytes(_buffer + _bufferLen, bytesToRead);
             if(toRead == 0) { //Timeout
                 _abort(UPDATE_ERROR_STREAM);
                 return written;
             }
+        }
+        if(_ledPin != -1) {
+            digitalWrite(_ledPin, !_ledOn); // Switch LED off
         }
         _bufferLen += toRead;
         if((_bufferLen == remaining() || _bufferLen == SPI_FLASH_SEC_SIZE) && !_writeBuffer())

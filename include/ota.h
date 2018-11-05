@@ -4,14 +4,14 @@
 #ifdef USE_OTA
 
 #include "globals.h"
-#include "update.h"
 #include "battery.h"
+#include "update.h"
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <BintrayClient.h>
 #include <string>
 
-void do_ota_update();
+int do_ota_update();
 void start_ota_update();
 int version_compare(const String v1, const String v2);
 void display(const uint8_t row, const std::string status,

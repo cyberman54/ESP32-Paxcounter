@@ -13,5 +13,7 @@
 #include "ota.h"
 #include "irqhandler.h"
 #include "led.h"
+#include "spislave.h"
+#include "lorawan.h"
 
 #endif

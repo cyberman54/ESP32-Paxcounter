@@ -26,9 +26,6 @@ const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
 // Connection port (HTTPS)
 const int port = 443;
 
-// Connection timeout
-const uint32_t RESPONSE_TIMEOUT_MS = 5000;
-
 // Variables to validate firmware content
 int volatile contentLength = 0;
 bool volatile isValidContentType = false;
@@ -43,24 +40,17 @@ inline String getHeaderValue(String header, String headerName) {
 
 void start_ota_update() {
 
-/*
-// check battery status if we can before doing ota
-#ifdef HAS_BATTERY_PROBE
-  if (!batt_sufficient()) {
-    ESP_LOGW(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
-    return;
-  }
-#endif
-*/
+  /*
+  // check battery status if we can before doing ota
+  #ifdef HAS_BATTERY_PROBE
+    if (!batt_sufficient()) {
+      ESP_LOGW(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
+      return;
+    }
+  #endif
+  */
 
-// turn on LED
-#if (HAS_LED != NOT_A_PIN)
-#ifdef LED_ACTIVE_LOW
-  digitalWrite(HAS_LED, LOW);
-#else
-  digitalWrite(HAS_LED, HIGH);
-#endif
-#endif
+  switch_LED(LED_ON);
 
 #ifdef HAS_DISPLAY
   u8x8.begin();
@@ -82,86 +72,94 @@ void start_ota_update() {
   ESP_LOGI(TAG, "Starting Wifi OTA update");
   display(1, "**", WIFI_SSID);
 
+  WiFi.mode(WIFI_AP_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  int i = WIFI_MAX_TRY;
+  int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
+  int ret = 1; // 0 = finished, 1 = retry, -1 = abort
+
+  ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
 
   while (i--) {
-    ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
-    if (WiFi.status() == WL_CONNECTED)
-      break;
+    if (WiFi.status() == WL_CONNECTED) {
+      // we now have wifi connection and try to do an OTA over wifi update
+      ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
+      display(1, "OK", "WiFi connected");
+      // do a number of tries to update firmware limited by OTA_MAX_TRY
+      while ((j--) && (ret > 0)) {
+        ESP_LOGI(TAG, "Starting OTA update, attempt %u of %u", OTA_MAX_TRY - j,
+                 OTA_MAX_TRY);
+        ret = do_ota_update();
+      }
+      goto end;
+    }
     vTaskDelay(5000 / portTICK_PERIOD_MS);
+    WiFi.reconnect();
   }
 
-  if (i >= 0) {
-    ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
-    display(1, "OK", "WiFi connected");
-    do_ota_update(); // gets and flashes new firmware
-  } else {
-    ESP_LOGI(TAG, "Could not connect to %s, rebooting.", WIFI_SSID);
-    display(1, " E", "no WiFi connect");
-  }
+  // wifi did not connect
+  ESP_LOGI(TAG, "Could not connect to %s", WIFI_SSID);
+  display(1, " E", "no WiFi connect");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
 
+end:
+  switch_LED(LED_OFF);
+  ESP_LOGI(TAG, "Rebooting to %s firmware", (ret == 0) ? "new" : "current");
   display(5, "**", ""); // mark line rebooting
-
-// turn off LED
-#if (HAS_LED != NOT_A_PIN)
-#ifdef LED_ACTIVE_LOW
-  digitalWrite(HAS_LED, HIGH);
-#else
-  digitalWrite(HAS_LED, LOW);
-#endif
-#endif
-
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   ESP.restart();
 
 } // start_ota_update
 
-void do_ota_update() {
+// Reads data vom wifi client and flashes it to ota partition
+// returns: 0 = finished, 1 = retry, -1 = abort
+int do_ota_update() {
+
   char buf[17];
+  bool redirect = true;
+  size_t written = 0;
 
   // Fetch the latest firmware version
-  ESP_LOGI(TAG, "Checking latest firmware version on server...");
+  ESP_LOGI(TAG, "Checking latest firmware version on server");
   display(2, "**", "checking version");
   const String latest = bintray.getLatestVersion();
 
   if (latest.length() == 0) {
-    ESP_LOGI(
-        TAG,
-        "Could not load info about the latest firmware. Rebooting to runmode.");
+    ESP_LOGI(TAG, "Could not fetch info on latest firmware");
     display(2, " E", "file not found");
-    return;
+    return -1;
   } else if (version_compare(latest, cfg.version) <= 0) {
-    ESP_LOGI(TAG, "Current firmware is up to date. Rebooting to runmode.");
+    ESP_LOGI(TAG, "Current firmware is up to date");
     display(2, "NO", "no update found");
-    return;
+    return -1;
   }
-  ESP_LOGI(TAG, "New firmware version v%s available. Downloading...",
-           latest.c_str());
+  ESP_LOGI(TAG, "New firmware version v%s available", latest.c_str());
   display(2, "OK", latest.c_str());
 
   display(3, "**", "");
   String firmwarePath = bintray.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
-    ESP_LOGI(TAG, "Unsupported binary format, OTA update cancelled.");
+    ESP_LOGI(TAG, "Unsupported binary format");
     display(3, " E", "file type error");
-    return;
+    return -1;
   }
 
   String currentHost = bintray.getStorageHost();
   String prevHost = currentHost;
 
   WiFiClientSecure client;
+
   client.setCACert(bintray.getCertificate(currentHost));
+  // client.setTimeout(RESPONSE_TIMEOUT_MS);
+  // --> causing error [E][WiFiClient.cpp:236] setSocketOption(): 1006 : 9
+  // so we unfortunately need patched update.cpp which sets the stream timeout
 
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     display(3, " E", "connection lost");
-    return;
+    goto abort;
   }
 
-  bool redirect = true;
   while (redirect) {
     if (currentHost != prevHost) {
       client.stop();
@@ -170,7 +168,7 @@ void do_ota_update() {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
         display(3, " E", "server error");
-        return;
+        goto abort;
       }
     }
 
@@ -183,11 +181,10 @@ void do_ota_update() {
 
     unsigned long timeout = millis();
     while (client.available() == 0) {
-      if (millis() - timeout > RESPONSE_TIMEOUT_MS) {
-        ESP_LOGI(TAG, "Client Timeout.");
+      if ((millis() - timeout) > (RESPONSE_TIMEOUT_MS)) {
+        ESP_LOGI(TAG, "Client timeout");
         display(3, " E", "client timeout");
-        client.stop();
-        return;
+        goto abort;
       }
     }
 
@@ -207,13 +204,12 @@ void do_ota_update() {
                         "firmware flashing");
           redirect = false;
         } else if (line.indexOf("302") > 0) {
-          ESP_LOGI(TAG, "Got 302 status code from server. Redirecting to the "
+          ESP_LOGI(TAG, "Got 302 status code from server. Redirecting to "
                         "new address");
           redirect = true;
         } else {
-          ESP_LOGI(TAG, "Could not get a valid firmware url.");
-          // Unexptected HTTP response. Retry or skip update?
-          redirect = false;
+          ESP_LOGI(TAG, "Could not get firmware download URL");
+          goto retry;
         }
       }
 
@@ -242,80 +238,75 @@ void do_ota_update() {
           isValidContentType = true;
         }
       }
-    }
-  }
+    } // while (client.available())
+  }   // while (redirect)
 
   display(3, "OK", ""); // line download
 
   // check whether we have everything for OTA update
-  if (contentLength && isValidContentType) {
-
-    size_t written = 0;
-
-    if (Update.begin(contentLength)) {
-#ifdef HAS_DISPLAY
-      // register callback function for showing progress while streaming data
-      Update.onProgress(&show_progress);
-#endif
-      int i = FLASH_MAX_TRY;
-      while ((i--) && (written != contentLength)) {
-
-        ESP_LOGI(TAG,
-                 "Starting OTA update, attempt %u of %u. This will take some "
-                 "time to complete...",
-                 FLASH_MAX_TRY - i, FLASH_MAX_TRY);
-        display(4, "**", "writing...");
-
-        written = Update.writeStream(client);
-
-        if (written == contentLength) {
-          ESP_LOGI(TAG, "Written %u bytes successfully", written);
-          snprintf(buf, 17, "%ukB Done!", (uint16_t)(written / 1024));
-          display(4, "OK", buf);
-          break;
-        } else {
-          ESP_LOGI(TAG,
-                   "Written only %u of %u bytes, OTA update attempt cancelled.",
-                   written, contentLength);
-        }
-      }
-
-      if (Update.end()) {
-
-        if (Update.isFinished()) {
-          ESP_LOGI(
-              TAG,
-              "OTA update completed. Rebooting to runmode with new version.");
-          client.stop();
-          return;
-        } else {
-          ESP_LOGI(TAG, "Something went wrong! OTA update hasn't been finished "
-                        "properly.");
-        }
-      } else {
-        ESP_LOGI(TAG, "An error occurred. Error #: %d", Update.getError());
-        snprintf(buf, 17, "Error #: %d", Update.getError());
-        display(4, " E", buf);
-      }
-
-    } else {
-      ESP_LOGI(TAG, "There isn't enough space to start OTA update");
-      display(4, " E", "disk full");
-      client.flush();
-    }
-  } else {
-    ESP_LOGI(TAG,
-             "There was no valid content in the response from the OTA server!");
+  if (!(contentLength && isValidContentType)) {
+    ESP_LOGI(TAG, "Invalid OTA server response");
     display(4, " E", "response error");
-    client.flush();
+    goto retry;
   }
-  ESP_LOGI(TAG,
-           "OTA update failed. Rebooting to runmode with current version.");
+
+#ifdef HAS_LED
+#ifndef LED_ACTIVE_LOW
+  if (!Update.begin(contentLength, U_FLASH, HAS_LED, HIGH)) {
+#else
+  if (!Update.begin(contentLength, U_FLASH, HAS_LED, LOW)) {
+#endif
+#else
+  if (!Update.begin(contentLength)) {
+#endif
+    ESP_LOGI(TAG, "Not enough space to start OTA update");
+    display(4, " E", "disk full");
+    goto abort;
+  }
+
+#ifdef HAS_DISPLAY
+  // register callback function for showing progress while streaming data
+  Update.onProgress(&show_progress);
+#endif
+
+  display(4, "**", "writing...");
+  written = Update.writeStream(client); // this is a blocking call
+
+  if (written == contentLength) {
+    ESP_LOGI(TAG, "Written %u bytes successfully", written);
+    snprintf(buf, 17, "%ukB Done!", (uint16_t)(written / 1024));
+    display(4, "OK", buf);
+  } else {
+    ESP_LOGI(TAG, "Written only %u of %u bytes, OTA update attempt cancelled",
+             written, contentLength);
+  }
+
+  if (Update.end()) {
+    goto finished;
+  } else {
+    ESP_LOGI(TAG, "An error occurred. Error#: %d", Update.getError());
+    snprintf(buf, 17, "Error#: %d", Update.getError());
+    display(4, " E", buf);
+    goto retry;
+  }
+
+finished:
   client.stop();
+  ESP_LOGI(TAG, "OTA update finished");
+  return 0;
+
+abort:
+  client.stop();
+  ESP_LOGI(TAG, "OTA update failed");
+  return -1;
+
+retry:
+  return 1;
+
 } // do_ota_update
 
 void display(const uint8_t row, const std::string status,
-                       const std::string msg) {
+             const std::string msg) {
 #ifdef HAS_DISPLAY
   u8x8.setCursor(14, row);
   u8x8.print((status.substr(0, 2)).c_str());
@@ -329,7 +320,7 @@ void display(const uint8_t row, const std::string status,
 
 #ifdef HAS_DISPLAY
 // callback function to show download progress while streaming data
-void show_progress (unsigned long current, unsigned long size) {
+void show_progress(unsigned long current, unsigned long size) {
   char buf[17];
   snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
   display(4, "**", buf);

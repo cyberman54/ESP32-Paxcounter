@@ -160,51 +160,14 @@ void setup() {
 // initialize LoRa
 #ifdef HAS_LORA
   strcat_P(features, " LORA");
-  LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
-  if (LoraSendQueue == 0) {
-    ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
-    exit(0);
-  } else
-    ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
-             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
-
-  ESP_LOGI(TAG, "Starting LMIC...");
-  os_init();    // initialize lmic run-time environment on core 1
-  LMIC_reset(); // initialize lmic MAC
-  LMIC_setLinkCheckMode(0);
-  // This tells LMIC to make the receive windows bigger, in case your clock is
-  // faster or slower. This causes the transceiver to be earlier switched on,
-  // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
-  // in src/lmic_config.h if you are limited on battery.
-  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power. Set
-  // the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
-
-#if defined(CFG_US915) || defined(CFG_au921)
-  // in the US, with TTN, it saves join time if we start on subband 1 (channels
-  // 8-15). This will get overridden after the join by parameters from the
-  // network. If working with other networks or in other regions, this will need
-  // to be changed.
-  LMIC_selectSubBand(1);
 #endif
-
-  LMIC_startJoining(); // start joining
-
-#endif
+  assert(lora_stack_init() == ESP_OK);
 
 // initialize SPI
 #ifdef HAS_SPI
   strcat_P(features, " SPI");
-  SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
-  if (SPISendQueue == 0) {
-    ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");
-    exit(0);
-  } else
-    ESP_LOGI(TAG, "SPI send queue created, size %d Bytes",
-             SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 #endif
+  assert(spi_init() == ESP_OK);
 
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
@@ -310,17 +273,6 @@ void setup() {
                           2,         // priority of the task
                           &GpsTask,  // task handle
                           1);        // CPU core
-#endif
-
-#ifdef HAS_SPI
-  ESP_LOGI(TAG, "Starting SPIloop...");
-  xTaskCreatePinnedToCore(spi_loop,  // task function
-                          "spiloop", // name of task
-                          2048,      // stack size of task
-                          (void *)1, // parameter of the task
-                          2,         // priority of the task
-                          &SpiTask,  // task handle
-                          0);        // CPU core
 #endif
 
   // start state machine

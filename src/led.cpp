@@ -87,9 +87,8 @@ void rgb_set_color(uint16_t hue) {}
 
 #endif
 
-#if (HAS_LED != NOT_A_PIN)
-
 void switch_LED(uint8_t state) {
+#if (HAS_LED != NOT_A_PIN)
   if (state == LED_ON) {
     // switch LED on
 #ifdef LED_ACTIVE_LOW
@@ -105,9 +104,8 @@ void switch_LED(uint8_t state) {
     digitalWrite(HAS_LED, LOW);
 #endif
   }
-}
-
 #endif
+}
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
