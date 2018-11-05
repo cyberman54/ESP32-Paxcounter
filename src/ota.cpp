@@ -327,38 +327,22 @@ void show_progress(unsigned long current, unsigned long size) {
 }
 #endif
 
-// helper function to compare two versions. Returns 1 if v2 is
+// helper function to convert strings into lower case
+bool comp(char s1, char s2) { return tolower(s1) < tolower(s2); }
+
+// helper function to lexicographically compare two versions. Returns 1 if v2 is
 // smaller, -1 if v1 is smaller, 0 if equal
-
 int version_compare(const String v1, const String v2) {
-  //  vnum stores each numeric part of version
-  int vnum1 = 0, vnum2 = 0;
 
-  //  loop until both string are processed
-  for (int i = 0, j = 0; (i < v1.length() || j < v2.length());) {
-    //  storing numeric part of version 1 in vnum1
-    while (i < v1.length() && v1[i] != '.') {
-      vnum1 = vnum1 * 10 + (v1[i] - '0');
-      i++;
-    }
+  if (v1 == v2)
+    return 0;
 
-    //  storing numeric part of version 2 in vnum2
-    while (j < v2.length() && v2[j] != '.') {
-      vnum2 = vnum2 * 10 + (v2[j] - '0');
-      j++;
-    }
+  const char *a1 = v1.c_str(), *a2 = v2.c_str();
 
-    if (vnum1 > vnum2)
-      return 1;
-    if (vnum2 > vnum1)
-      return -1;
-
-    //  if equal, reset variables and go for next numeric
-    // part
-    vnum1 = vnum2 = 0;
-    i++;
-    j++;
-  }
-  return 0;
+  if (lexicographical_compare(a1, a1 + strlen(a1), a2, a2 + strlen(a2), comp))
+    return -1;
+  else
+    return 1;
 }
+
 #endif // USE_OTA
