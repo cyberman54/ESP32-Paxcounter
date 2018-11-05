@@ -26,8 +26,6 @@ const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
 // Connection port (HTTPS)
 const int port = 443;
 
-const unsigned long STREAM_TIMEOUT = 30000;
-
 // Variables to validate firmware content
 int volatile contentLength = 0;
 bool volatile isValidContentType = false;
@@ -77,7 +75,7 @@ void start_ota_update() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
-  bool ret = 1;
+  int ret = 1; // 0 = finished, 1 = retry, -1 = abort
 
   ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
   while (i--) {
@@ -110,7 +108,9 @@ end:
 
 } // start_ota_update
 
-bool do_ota_update() {
+// Reads data vom wifi client and flashes it to ota partition
+// returns: 0 = finished, 1 = retry, -1 = abort
+int do_ota_update() {
 
   char buf[17];
   bool redirect = true;
@@ -128,7 +128,7 @@ bool do_ota_update() {
   } else if (version_compare(latest, cfg.version) <= 0) {
     ESP_LOGI(TAG, "Current firmware is up to date");
     display(2, "NO", "no update found");
-    return -2;
+    return -1;
   }
   ESP_LOGI(TAG, "New firmware version v%s available", latest.c_str());
   display(2, "OK", latest.c_str());
@@ -147,7 +147,7 @@ bool do_ota_update() {
   WiFiClientSecure client;
 
   client.setCACert(bintray.getCertificate(currentHost));
-  //client.setTimeout(RESPONSE_TIMEOUT_MS);
+  // client.setTimeout(RESPONSE_TIMEOUT_MS);
   // --> causing error [E][WiFiClient.cpp:236] setSocketOption(): 1006 : 9
   // so we unfortunately need patched update.cpp which sets the stream timeout
 
@@ -206,8 +206,7 @@ bool do_ota_update() {
           redirect = true;
         } else {
           ESP_LOGI(TAG, "Could not get firmware download URL");
-          // Unexptected HTTP response. Retry or skip update?
-          redirect = false;
+          goto retry;
         }
       }
 
@@ -248,7 +247,15 @@ bool do_ota_update() {
     goto retry;
   }
 
+#ifdef HAS_LED
+#ifndef LED_ACTIVE_LOW
+  if (!Update.begin(contentLength, U_FLASH, HAS_LED, HIGH)) {
+#else
+  if (!Update.begin(contentLength, U_FLASH, HAS_LED, LOW)) {
+#endif
+#else
   if (!Update.begin(contentLength)) {
+#endif
     ESP_LOGI(TAG, "Not enough space to start OTA update");
     display(4, " E", "disk full");
     goto abort;
