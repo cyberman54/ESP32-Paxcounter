@@ -25,7 +25,7 @@
 #define LORA_MOSI (27)
 #define LORA_RST  (14)
 #define LORA_IO0  (26)
-#define LORA_IO1  (34)
-#define LORA_IO2  (35)
+#define LORA_IO1  (35)
+#define LORA_IO2  (34)
 
 #endif

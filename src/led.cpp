@@ -87,6 +87,28 @@ void rgb_set_color(uint16_t hue) {}
 
 #endif
 
+#if (HAS_LED != NOT_A_PIN)
+
+void switch_LED(uint8_t state) {
+  if (state == LED_ON) {
+    // switch LED on
+#ifdef LED_ACTIVE_LOW
+    digitalWrite(HAS_LED, LOW);
+#else
+    digitalWrite(HAS_LED, HIGH);
+#endif
+  } else if (state == LED_OFF) {
+    // switch LED off
+#ifdef LED_ACTIVE_LOW
+    digitalWrite(HAS_LED, HIGH);
+#else
+    digitalWrite(HAS_LED, LOW);
+#endif
+  }
+}
+
+#endif
+
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
@@ -98,7 +120,8 @@ void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
 
 void ledLoop(void *parameter) {
   while (1) {
-    // Custom blink running always have priority other LoRaWAN led management
+    // Custom blink running always have priority other LoRaWAN led
+    // management
     if (LEDBlinkStarted && LEDBlinkDuration) {
       // Custom blink is finished, let this order, avoid millis() overflow
       if ((millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
@@ -154,20 +177,14 @@ void ledLoop(void *parameter) {
     if (LEDState != previousLEDState) {
       if (LEDState == LED_ON) {
         rgb_set_color(LEDColor);
-
-#ifdef LED_ACTIVE_LOW
-        digitalWrite(HAS_LED, LOW);
-#else
-        digitalWrite(HAS_LED, HIGH);
+        // if we have only single LED we use it to blink for status
+#ifndef HAS_RGB_LED
+        switch_LED(LED_ON);
 #endif
-
       } else {
         rgb_set_color(COLOR_NONE);
-
-#ifdef LED_ACTIVE_LOW
-        digitalWrite(HAS_LED, HIGH);
-#else
-        digitalWrite(HAS_LED, LOW);
+#ifndef HAS_RGB_LED
+        switch_LED(LED_OFF);
 #endif
       }
       previousLEDState = LEDState;

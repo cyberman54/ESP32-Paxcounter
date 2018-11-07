@@ -12,5 +12,6 @@
 #include "beacon_array.h"
 #include "ota.h"
 #include "irqhandler.h"
+#include "led.h"
 
 #endif

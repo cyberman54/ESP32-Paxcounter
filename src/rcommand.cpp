@@ -105,7 +105,10 @@ void set_countmode(uint8_t val[]) {
     ESP_LOGW(
         TAG,
         "Remote command: set counter mode called with invalid parameter(s)");
+    return;
   }
+  reset_counters(); // clear macs
+  get_salt();       // get new salt
 }
 
 void set_screensaver(uint8_t val[]) {
