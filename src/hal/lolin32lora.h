@@ -19,7 +19,6 @@
 #define BUTTON_PULLUP  1  // Button need pullup instead of default pulldown
 
 #define HAS_LORA  1       // comment out if device shall not send data via LoRa
-#define HAS_SPI   1       // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // RFM95 module
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines

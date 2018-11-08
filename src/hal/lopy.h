@@ -6,7 +6,6 @@
 // Hardware related definitions for Pycom LoPy Board (NOT LoPy4)
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
-#define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1272_radio 1
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0
@@ -26,9 +25,9 @@
 #define WIFI_ANTENNA 0              // 0 = internal, 1 = external
 
 // uncomment this only if your LoPy runs on a PYTRACK BOARD
-//#define HAS_GPS 1
-//#define GPS_I2C GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
-//#define GPS_ADDR 0x10
+#define HAS_GPS 1
+#define GPS_I2C GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
+#define GPS_ADDR 0x10
 
 // uncomment this only if your LoPy runs on a EXPANSION BOARD
 //#define HAS_LED (12) // use if LoPy is on Expansion Board, this has a user LED

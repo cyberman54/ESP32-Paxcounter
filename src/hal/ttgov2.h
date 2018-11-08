@@ -6,7 +6,6 @@
 // Hardware related definitions for TTGO V2 Board
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
-#define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C

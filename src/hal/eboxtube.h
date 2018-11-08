@@ -6,7 +6,6 @@
 // Hardware related definitions for ebox ESP32-bit with external connected RFM95 LoRa
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
-#define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1
 
 #define HAS_LED (22)     // Green LED on board
