@@ -60,13 +60,13 @@ void spi_slave_task(void *param) {
       continue;
     }
 
-    // fill tx buffer with data to send from queue and calculate crc16 cheksum
+    // fill tx buffer with data to send from queue
     uint8_t *messageType = txbuf + 2;
     *messageType = msg.MessagePort;
     uint8_t *messageSize = txbuf + 3;
     *messageSize = msg.MessageSize;
     memcpy(txbuf + HEADER_SIZE, &msg.Message, msg.MessageSize);
-    // calculate crc16 checksum
+    // calculate crc16 checksum over txbuf and insert checksum at pos 0+1 of txbuf
     uint16_t *crc = (uint16_t *)txbuf;
     *crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
 
