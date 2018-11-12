@@ -35,7 +35,9 @@ static const char TAG[] = __FILE__;
 // https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html
 #define BUFFER_SIZE                                                            \
   (MAX(8, HEADER_SIZE + PAYLOAD_BUFFER_SIZE) +                                 \
-   (4 - MAX(8, HEADER_SIZE + PAYLOAD_BUFFER_SIZE) % 4))
+   (PAYLOAD_BUFFER_SIZE % 4 == 0                                               \
+        ? 0                                                                    \
+        : 4 - MAX(8, HEADER_SIZE + PAYLOAD_BUFFER_SIZE) % 4))
 DMA_ATTR uint8_t txbuf[BUFFER_SIZE];
 DMA_ATTR uint8_t rxbuf[BUFFER_SIZE];
 
@@ -64,13 +66,17 @@ void spi_slave_task(void *param) {
     uint8_t *messageSize = txbuf + 3;
     *messageSize = msg.MessageSize;
     memcpy(txbuf + HEADER_SIZE, &msg.Message, msg.MessageSize);
-    // calculate crc16 checksum, not used yet
-    // uint16_t *crc = (uint16_t *)txbuf;
-    //*crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
+    // calculate crc16 checksum
+    uint16_t *crc = (uint16_t *)txbuf;
+    *crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
 
     // set length for spi slave driver
     transaction_size = HEADER_SIZE + msg.MessageSize;
-    transaction_size += (4 - transaction_size % 4);
+    // SPI transaction size needs to be at least 8 bytes and dividable by 4, see
+    // https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html
+    if (transaction_size % 4 != 0) {
+      transaction_size += (4 - transaction_size % 4);
+    }
 
     // prepare spi transaction
     spi_slave_transaction_t spi_transaction = {0};
@@ -149,7 +155,8 @@ void spi_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
   BaseType_t ret =
       xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
   if (ret == pdTRUE) {
-    ESP_LOGI(TAG, "%d byte(s) enqueued for SPI interface", message->MessageSize);
+    ESP_LOGI(TAG, "%d byte(s) enqueued for SPI interface",
+             message->MessageSize);
   } else {
     ESP_LOGW(TAG, "SPI sendqueue is full");
   }
