@@ -66,9 +66,9 @@ void spi_slave_task(void *param) {
     uint8_t *messageSize = txbuf + 3;
     *messageSize = msg.MessageSize;
     memcpy(txbuf + HEADER_SIZE, &msg.Message, msg.MessageSize);
-    // calculate crc16 checksum, not used yet
-    // uint16_t *crc = (uint16_t *)txbuf;
-    //*crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
+    // calculate crc16 checksum
+    uint16_t *crc = (uint16_t *)txbuf;
+    *crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
 
     // set length for spi slave driver
     transaction_size = HEADER_SIZE + msg.MessageSize;
