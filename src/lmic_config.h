@@ -21,6 +21,8 @@
 
 //#define LMIC_USE_INTERRUPTS
 
+#define LMIC_ENABLE_DeviceTimeReq 1
+
 // 16 μs per tick
 // LMIC requires ticks to be 15.5μs - 100 μs long
 #define US_PER_OSTICK_EXPONENT 4
@@ -38,7 +40,7 @@
 // enable more verbose output. Make sure that printf is actually
 // configured (e.g. on AVR it is not by default), otherwise using it can
 // cause crashing.
-//#define LMIC_DEBUG_LEVEL 1
+#define LMIC_DEBUG_LEVEL 2
 
 // Enable this to allow using printf() to print to the given serial port
 // (or any other Print object). This can be easy for debugging. The
