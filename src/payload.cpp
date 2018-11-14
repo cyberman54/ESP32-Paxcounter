@@ -93,6 +93,16 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 }
 
+void PayloadConvert::addBME(bmeStatus_t value) {
+#ifdef HAS_BME
+  buffer[cursor++] = (byte)(value.temperature);
+  buffer[cursor++] = (byte)(value.pressure);
+  buffer[cursor++] = (byte)(value.humidity);
+  buffer[cursor++] = (byte)(value.gas_resistance);
+  buffer[cursor++] = (byte)(value.altitude);
+#endif
+}
+
 void PayloadConvert::addButton(uint8_t value) {
 #ifdef HAS_BUTTON
   buffer[cursor++] = value;
@@ -147,6 +157,16 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   writeUint8(value.satellites);
   writeUint16(value.hdop);
   writeUint16(value.altitude);
+#endif
+}
+
+void PayloadConvert::addBME(bmeStatus_t value) {
+#ifdef HAS_BME
+  writeUint8((byte)value.temperature);
+  writeUint8((byte)value.pressure);
+  writeUint8((byte)value.humidity);
+  writeUint8((byte)value.gas_resistance);
+  writeUint8((byte)value.altitude);
 #endif
 }
 

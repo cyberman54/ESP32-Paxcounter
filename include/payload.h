@@ -39,6 +39,7 @@ public:
                  uint8_t reset1, uint8_t reset2);
   void addAlarm(int8_t rssi, uint8_t message);
   void addGPS(gpsStatus_t value);
+  void addBME(bmeStatus_t value);
   void addButton(uint8_t value);
 
 #if PAYLOAD_ENCODER == 1 // format plain
