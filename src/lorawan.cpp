@@ -419,13 +419,6 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess) {
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
   uint32_t *pUserUTCTime = (uint32_t *)pVoidUserUTCTime;
-
-  // A struct that will be populated by LMIC_getNetworkTimeReference.
-  // It contains the following fields:
-  //  - tLocal: the value returned by os_GetTime() when the time
-  //            request was sent to the gateway, and
-  //  - tNetwork: the seconds between the GPS epoch and the time
-  //              the gateway received the time request
   lmic_time_reference_t lmicTimeReference;
 
   if (flagSuccess != 1) {
@@ -433,7 +426,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
     return;
   }
 
-  // Populate "lmic_time_reference"
+  // Populate lmic_time_reference
   flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
   if (flagSuccess != 1) {
     ESP_LOGW(TAG, "Network time request failed");
@@ -443,18 +436,16 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   // Update userUTCTime, considering the difference between the GPS and UTC
   // epoch, and the leap seconds
   *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
-
-  // Add the delay between the instant the time was transmitted and
-  // the current time
-
   // Current time, in ticks
   ostime_t ticksNow = os_getTime();
   // Time when the request was sent, in ticks
   ostime_t ticksRequestSent = lmicTimeReference.tLocal;
+  // Add the delay between the instant the time was transmitted and
+  // the current time
   uint32_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
   *pUserUTCTime += requestDelaySec;
 
-  // Update the system time with the time read from the network
+  // Update system time with  time read from the network
   setTime(*pUserUTCTime);
   ESP_LOGI(TAG, "Time synced by LoRa network to %02d:%02d:%02d", hour(),
            minute(), second());

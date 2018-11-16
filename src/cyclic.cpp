@@ -21,12 +21,13 @@ void doHousekeeping() {
     do_reset();
 
   spi_housekeeping();
+  lora_housekeeping();
 
 // time sync once per TIME_SYNC_INTERVAL_MIN
 #ifdef TIME_SYNC
   if (millis() >= nextTimeSync) {
     nextTimeSync = millis() + TIME_SYNC_INTERVAL_MIN *
-                                  60000; // set up  next time sync period
+                                  60000; // set up next time sync period
     do_timesync();
   }
 #endif
