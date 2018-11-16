@@ -8,6 +8,7 @@
 static const char TAG[] = "main";
 
 uint32_t userUTCTime; // Seconds since the UTC epoch
+unsigned long nextTimeSync = millis();
 
 // do all housekeeping
 void doHousekeeping() {
@@ -20,7 +21,15 @@ void doHousekeeping() {
     do_reset();
 
   spi_housekeeping();
-  do_timesync();
+
+// time sync once per TIME_SYNC_INTERVAL_MIN
+#ifdef TIME_SYNC
+  if (millis() >= nextTimeSync) {
+    nextTimeSync = millis() + TIME_SYNC_INTERVAL_MIN *
+                                  60000; // set up  next time sync period
+    do_timesync();
+  }
+#endif
 
   // task storage debugging //
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
@@ -75,6 +84,7 @@ void reset_counters() {
 }
 
 void do_timesync() {
+#ifdef TIME_SYNC
 // sync time & date if we have valid gps time
 #ifdef HAS_GPS
   if (gps.time.isValid()) {
@@ -84,13 +94,14 @@ void do_timesync() {
              second());
     return;
   } else {
-    ESP_LOGW(TAG, "No valid GPS time");
+    ESP_LOGI(TAG, "No valid GPS time");
   }
 #endif
   // Schedule a network time request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
-}
+#endif
+} // do_timesync()
 
 #ifndef VERBOSE
 int redirect_log(const char *fmt, va_list args) {
