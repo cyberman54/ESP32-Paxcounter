@@ -203,9 +203,9 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	bytes 1-2:	Temperature [°C]
 	bytes 3-4:	Pressure [hPa]
-	byte 5:		Humidity [%]
-	bytes 6-7:	Gas resistance [MOhm]
-	bytes 8-9:	Altitude [meter]
+	bytes 5-6:	Humidity [%]
+	bytes 7-8:	Gas resistance [MOhm]
+	bytes 9-10:		Altitude [meter]
 
 # Remote control
 
