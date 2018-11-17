@@ -30,9 +30,9 @@ bool bme_read(void) {
   bool ret = bme.performReading();
   if (ret) {
     // read current BME data and buffer in global struct
-    bme_status.temperature = (uint16_t)(bme.temperature * 100.0);
+    bme_status.temperature = bme.temperature;
     bme_status.pressure = (uint16_t)(bme.pressure / 100.0);
-    bme_status.humidity = (uint8_t)bme.humidity;
+    bme_status.humidity = bme.humidity;
     bme_status.gas_resistance = (uint16_t)(bme.gas_resistance / 1000.0);
     bme_status.altitude =
         (uint16_t)(bme.readAltitude(SEALEVELPRESSURE_HPA / 1000.0));

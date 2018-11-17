@@ -40,6 +40,15 @@ function Decoder(bytes, port) {
     decoded.rssi = bytes[i++];
     decoded.beacon = bytes[i++];
   }
+  
+  if (port === 7) {
+    var i = 0;
+    decoded.temperature = ((bytes[i++] << 8) | bytes[i++]);
+    decoded.pressure = ((bytes[i++] << 8) | bytes[i++]);
+    decoded.humidity = ((bytes[i++] << 8) | bytes[i++]);
+    decoded.gas = ((bytes[i++] << 8) | bytes[i++]);
+    decoded.altitude = ((bytes[i++] << 8) | bytes[i++]);
+  }
 
   return decoded;
 

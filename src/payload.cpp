@@ -95,11 +95,12 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
-  buffer[cursor++] = highByte(value.temperature);
-  buffer[cursor++] = lowByte(value.temperature);
+  buffer[cursor++] = highByte((int16_t)value.temperature);
+  buffer[cursor++] = lowByte((int16_t)value.temperature);
   buffer[cursor++] = highByte(value.pressure);
   buffer[cursor++] = lowByte(value.pressure);
-  buffer[cursor++] = (byte)(value.humidity);
+  buffer[cursor++] = highByte((uint16_t)value.humidity);
+  buffer[cursor++] = lowByte((uint16_t)value.humidity);
   buffer[cursor++] = highByte(value.gas_resistance);
   buffer[cursor++] = lowByte(value.gas_resistance);
   buffer[cursor++] = highByte(value.altitude);
@@ -166,9 +167,9 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
-  writeUint16(value.temperature);
+  writeTemperature(value.temperature);
   writeUint16(value.pressure);
-  writeUint8(value.humidity);
+  writeHumidity(value.humidity);
   writeUint16(value.gas_resistance);
   writeUint16(value.altitude);
 #endif
@@ -250,13 +251,13 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
+  buffer[cursor++] = LPP_TEMPERATURE;
   buffer[cursor++] = highByte(value1);
   buffer[cursor++] = lowByte(value1);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
+  buffer[cursor++] = LPP_HUMIDITY;
   buffer[cursor++] = highByte(value2);
   buffer[cursor++] = lowByte(value2);
 }
@@ -293,9 +294,10 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = highByte(volt);
   buffer[cursor++] = lowByte(volt);
-#endif
+#endif // HAS_BATTERY_PROBE
+
 #if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_TEMP_CHANNEL;
+  buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
 #endif
   buffer[cursor++] = LPP_TEMPERATURE;
   buffer[cursor++] = highByte(temp);
@@ -316,11 +318,39 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = (byte)((lat & 0x0000FF));
   buffer[cursor++] = (byte)((lon & 0xFF0000) >> 16);
   buffer[cursor++] = (byte)((lon & 0x00FF00) >> 8);
-  buffer[cursor++] = (byte)((lon & 0x0000FF));
+  buffer[cursor++] = (byte)(lon & 0x0000FF);
   buffer[cursor++] = (byte)((alt & 0xFF0000) >> 16);
   buffer[cursor++] = (byte)((alt & 0x00FF00) >> 8);
-  buffer[cursor++] = (byte)((alt & 0x0000FF));
+  buffer[cursor++] = (byte)(alt & 0x0000FF);
+#endif // HAS_GPS
+}
+
+void PayloadConvert::addBME(bmeStatus_t value) {
+#ifdef HAS_BME
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
 #endif
+  buffer[cursor++] = LPP_TEMPERATURE;
+  buffer[cursor++] = highByte((int16_t)value.temperature);
+  buffer[cursor++] = lowByte((int16_t)value.temperature);
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_BAROMETER_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_BAROMETER;
+  buffer[cursor++] = highByte(value.pressure);
+  buffer[cursor++] = lowByte(value.pressure);
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_HUMIDITY_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_HUMIDITY;
+  buffer[cursor++] = (byte)value.humidity;
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_GAS_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = highByte(value.gas_resistance);
+  buffer[cursor++] = lowByte(value.gas_resistance);
+#endif // HAS_BME
 }
 
 void PayloadConvert::addButton(uint8_t value) {
@@ -330,7 +360,7 @@ void PayloadConvert::addButton(uint8_t value) {
 #endif
   buffer[cursor++] = LPP_DIGITAL_INPUT;
   buffer[cursor++] = value;
-#endif
+#endif // HAS_BUTTON
 }
 
 #else
