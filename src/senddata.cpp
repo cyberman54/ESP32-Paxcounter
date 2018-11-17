@@ -7,14 +7,12 @@ void SendData(uint8_t port) {
   MessageBuffer_t SendBuffer;
 
   SendBuffer.MessageSize = payload.getSize();
-  SendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
-                               ? port
-                               : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
+  SendBuffer.MessagePort = port;
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
   // enqueue message in device's send queues
-  lora_enqueuedata(port, &SendBuffer);
-  spi_enqueuedata(port, &SendBuffer);
+  lora_enqueuedata(&SendBuffer);
+  spi_enqueuedata(&SendBuffer);
 
   // clear counter if not in cumulative counter mode
   if ((port == COUNTERPORT) && (cfg.countermode != 1)) {
@@ -49,7 +47,9 @@ void sendPayload() {
     ESP_LOGD(TAG, "No valid GPS position or GPS data mode disabled");
   }
 #endif
-  SendData(COUNTERPORT);
+  SendData(PAYLOAD_ENCODER <= 2 ? COUNTERPORT
+                                : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT));
+
 } // sendpayload()
 
 void flushQueues() {

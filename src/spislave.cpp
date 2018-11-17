@@ -149,7 +149,7 @@ esp_err_t spi_init() {
 #endif
 }
 
-void spi_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
+void spi_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in SPI send queue
 #ifdef HAS_SPI
   BaseType_t ret =

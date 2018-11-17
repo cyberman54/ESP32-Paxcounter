@@ -389,7 +389,7 @@ esp_err_t lora_stack_init() {
 #endif
 }
 
-void lora_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
+void lora_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in LORA send queue
 #ifdef HAS_LORA
   BaseType_t ret =
