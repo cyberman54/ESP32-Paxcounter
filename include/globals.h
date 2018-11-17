@@ -47,11 +47,11 @@ typedef struct {
 } gpsStatus_t;
 
 typedef struct {
-  float_t temperature;
-  float_t pressure;
-  float_t humidity;
-  float_t gas_resistance;
-  float_t altitude;
+  uint16_t temperature; // Temperature * 100 in degrees Centigrade
+  uint16_t pressure; // Barometic pressure in hecto pascals
+  uint8_t humidity; // Relative humidity in percent
+  uint32_t gas_resistance; // Resistance in Ohms
+  uint16_t altitude; // Altitude in meters
 } bmeStatus_t;
 
 // global variables

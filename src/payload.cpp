@@ -95,11 +95,15 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
-  buffer[cursor++] = (byte)(value.temperature);
-  buffer[cursor++] = (byte)(value.pressure);
+  buffer[cursor++] = highByte(value.temperature);
+  buffer[cursor++] = lowByte(value.temperature);
+  buffer[cursor++] = highByte(value.pressure);
+  buffer[cursor++] = lowByte(value.pressure);
   buffer[cursor++] = (byte)(value.humidity);
-  buffer[cursor++] = (byte)(value.gas_resistance);
-  buffer[cursor++] = (byte)(value.altitude);
+  buffer[cursor++] = highByte(value.gas_resistance);
+  buffer[cursor++] = lowByte(value.gas_resistance);
+  buffer[cursor++] = highByte(value.altitude);
+  buffer[cursor++] = lowByte(value.altitude);
 #endif
 }
 
@@ -162,11 +166,11 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
-  writeUint8((byte)value.temperature);
-  writeUint8((byte)value.pressure);
-  writeUint8((byte)value.humidity);
-  writeUint8((byte)value.gas_resistance);
-  writeUint8((byte)value.altitude);
+  writeUint16(value.temperature);
+  writeUint16(value.pressure);
+  writeUint8(value.humidity);
+  writeUint16(value.gas_resistance);
+  writeUint16(value.altitude);
 #endif
 }
 

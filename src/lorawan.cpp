@@ -422,14 +422,14 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   lmic_time_reference_t lmicTimeReference;
 
   if (flagSuccess != 1) {
-    ESP_LOGW(TAG, "Network time request callback error");
+    ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
     return;
   }
 
   // Populate lmic_time_reference
   flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
   if (flagSuccess != 1) {
-    ESP_LOGW(TAG, "Network time request failed");
+    ESP_LOGW(TAG, "LoRaWAN time request failed");
     return;
   }
 

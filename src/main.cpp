@@ -35,7 +35,6 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by irq
 gpsloop       1     2     reads data from GPS over serial or i2c
-bmeloop       1     2     reads data from BME680 over i2c
 IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
@@ -56,7 +55,8 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL, *displaytimer = NULL; // irq tasks
+hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
+           *displaytimer = NULL; // irq tasks
 TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 std::set<uint16_t> macs; // container holding unique MAC adress hashes
@@ -161,6 +161,7 @@ void setup() {
 // initialize gps
 #ifdef HAS_BME
   strcat_P(features, " BME");
+  bme_init();
 #endif
 
 // initialize LoRa
@@ -278,17 +279,6 @@ void setup() {
                           (void *)1, // parameter of the task
                           2,         // priority of the task
                           &GpsTask,  // task handle
-                          1);        // CPU core
-#endif
-
-#ifdef HAS_BME
-  ESP_LOGI(TAG, "Starting BMEloop...");
-  xTaskCreatePinnedToCore(bme_loop,  // task function
-                          "bmeloop", // name of task
-                          2048,      // stack size of task
-                          (void *)1, // parameter of the task
-                          2,         // priority of the task
-                          &BmeTask,  // task handle
                           1);        // CPU core
 #endif
 

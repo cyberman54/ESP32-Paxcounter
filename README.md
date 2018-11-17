@@ -47,6 +47,7 @@ Depending on board hardware following features are supported:
 - Silicon unique ID
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
+- MEMS sensor (Bosch BME680)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -198,6 +199,14 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 1:		Beacon RSSI reception level
 	byte 2:		Beacon identifier (0..255)
 
+**Port #7:** BME680 query result
+
+	bytes 1-2:	Temperature [°C]
+	bytes 3-4:	Pressure [hPa]
+	byte 5:		Humidity [%]
+	bytes 6-7:	Gas resistance [MOhm]
+	bytes 8-9:	Altitude [meter]
+
 # Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
@@ -309,6 +318,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 0x84 get device GPS status
 
 	Device answers with it's current status on Port 4. 
+
+0x85 get BME680 sensor data
+
+	Device answers with BME680 sensor data set on Port 7.
 
 	
 # License

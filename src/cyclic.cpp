@@ -32,6 +32,11 @@ void doHousekeeping() {
   }
 #endif
 
+#ifdef HAS_BME
+  // read BME280 sensor if present
+  bme_read();
+#endif
+
   // task storage debugging //
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
            uxTaskGetStackHighWaterMark(wifiSwitchTask));

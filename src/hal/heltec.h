@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+//#define HAS_BME 1  // BME680 sensor on I2C bus (SDI=21/SCL=22); comment out if not present
+
 // Hardware related definitions for Heltec LoRa-32 Board
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1

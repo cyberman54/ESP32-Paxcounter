@@ -240,6 +240,17 @@ void get_gps(uint8_t val[]) {
 #endif
 };
 
+void get_bme(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: get bme680 sensor data");
+#ifdef HAS_BME
+  payload.reset();
+  payload.addBME(bme_status);
+  SendData(BMEPORT);
+#else
+  ESP_LOGW(TAG, "BME680 sensor not supported");
+#endif
+};
+
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, #bytes params,
 // flag (true = do make settings persistent / false = don't)
@@ -255,7 +266,8 @@ cmd_t table[] = {
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
     {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
-    {0x84, get_gps, 0, false}};
+    {0x84, get_gps, 0, false},          {0x85, get_bme, 0, false},
+};
 
 const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
