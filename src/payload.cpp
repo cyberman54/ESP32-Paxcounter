@@ -47,7 +47,7 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.wifiant;
   buffer[cursor++] = value.vendorfilter;
   buffer[cursor++] = value.rgblum;
-  buffer[cursor++] = value.gpsmode;
+  buffer[cursor++] = value.payloadmask;
   buffer[cursor++] = value.monitormode;
   memcpy(buffer + cursor, value.version, 10);
   cursor += 10;
@@ -142,7 +142,16 @@ void PayloadConvert::addConfig(configData_t value) {
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
               value.blescan ? true : false, value.wifiant ? true : false,
-              value.vendorfilter ? true : false, value.gpsmode ? true : false);
+              value.vendorfilter ? true : false,
+              value.monitormode ? true : false);
+  writeBitmap(value.payloadmask && GPS_DATA ? true : false,
+              value.payloadmask && ALARM_DATA ? true : false,
+              value.payloadmask && MEMS_DATA ? true : false,
+              value.payloadmask && COUNT_DATA ? true : false,
+              value.payloadmask && SENSOR1_DATA ? true : false,
+              value.payloadmask && SENSOR2_DATA ? true : false,
+              value.payloadmask && SENSOR3_DATA ? true : false,
+              value.payloadmask && SENSOR4_DATA ? true : false);
   writeVersion(value.version);
 }
 

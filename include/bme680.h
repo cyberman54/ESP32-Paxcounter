@@ -1,5 +1,5 @@
-#ifndef _HAS_BME
-#define _HAS_BME
+#ifndef _BME680_H
+#define _BME680_H
 
 #include "globals.h"
 #include <Wire.h>

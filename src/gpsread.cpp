@@ -49,7 +49,7 @@ void gps_loop(void *pvParameters) {
 
   while (1) {
 
-    if (cfg.gpsmode) {
+    if (cfg.payloadmask && GPS_DATA) {
 #if defined GPS_SERIAL
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available()) {
@@ -62,7 +62,7 @@ void gps_loop(void *pvParameters) {
         vTaskDelay(2 / portTICK_PERIOD_MS); // 2ms delay according L76 datasheet
       }
 #endif
-    } // if (cfg.gpsmode)
+    } // if
 
     vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
 

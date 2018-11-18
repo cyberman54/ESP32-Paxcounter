@@ -29,9 +29,9 @@ void defaultConfig() {
   cfg.wifiant = 0; // 0=internal, 1=external (for LoPy/LoPy4)
   cfg.vendorfilter = 1;       // 0=disabled, 1=enabled
   cfg.rgblum = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
-  cfg.gpsmode = 1;            // 0=disabled, 1=enabled
   cfg.monitormode = 0;        // 0=disabled, 1=enabled
   cfg.runmode = 0;            // 0=normal, 1=update
+  cfg.payloadmask = 0xFF;     // all payload switched on
 
   strncpy(cfg.version, PROGVERSION, sizeof(cfg.version) - 1);
 }
@@ -136,9 +136,9 @@ void saveConfig() {
         flash8 != cfg.rgblum)
       nvs_set_i8(my_handle, "rgblum", cfg.rgblum);
 
-    if (nvs_get_i8(my_handle, "gpsmode", &flash8) != ESP_OK ||
-        flash8 != cfg.gpsmode)
-      nvs_set_i8(my_handle, "gpsmode", cfg.gpsmode);
+    if (nvs_get_i8(my_handle, "payloadmask", &flash8) != ESP_OK ||
+        flash8 != cfg.payloadmask)
+      nvs_set_i8(my_handle, "payloadmask", cfg.payloadmask);
 
     if (nvs_get_i8(my_handle, "monitormode", &flash8) != ESP_OK ||
         flash8 != cfg.monitormode)
@@ -315,11 +315,11 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "gpsmode", &flash8) == ESP_OK) {
-      cfg.gpsmode = flash8;
+    if (nvs_get_i8(my_handle, "payloadmask", &flash8) == ESP_OK) {
+      cfg.payloadmask = flash8;
       ESP_LOGI(TAG, "GPS mode = %d", flash8);
     } else {
-      ESP_LOGI(TAG, "GPS mode set to default %d", cfg.gpsmode);
+      ESP_LOGI(TAG, "GPS mode set to default %d", cfg.payloadmask);
       saveConfig();
     }
 

@@ -151,7 +151,6 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1-2:	Number of unique pax, first seen on Wifi
 	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
-	bytes 5-18: 	GPS data, format see Port #4 (appended only, if GPS is present and has a fix)
 
 **Port #2:** Device status query result
 
@@ -177,12 +176,12 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
 	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
-	byte 16:	GPS send data mode (1=on, 0=ff) [default 1]
+	byte 16:	Payload filter mask
 	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
 	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
-**Port #4:** GPS query result
+**Port #4:** GPS query result (device answers only if has GPS and GPS has a fix)
 
 	bytes 1-4:	Latitude
 	bytes 5-8:	Longitude
