@@ -97,7 +97,6 @@ void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
   int16_t temperature = (int16_t)(value.temperature); // float -> int
   uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
-  int16_t altitude = (int16_t)(value.altitude);      // float -> int
   buffer[cursor++] = highByte(temperature);
   buffer[cursor++] = lowByte(temperature);
   buffer[cursor++] = highByte(value.pressure);
@@ -106,8 +105,6 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   buffer[cursor++] = lowByte(humidity);
   buffer[cursor++] = highByte(value.gas_resistance);
   buffer[cursor++] = lowByte(value.gas_resistance);
-  buffer[cursor++] = highByte(altitude);
-  buffer[cursor++] = lowByte(altitude);
 #endif
 }
 
@@ -174,7 +171,6 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   writeUint16(value.pressure);
   writeHumidity(value.humidity);
   writeUint16(value.gas_resistance);
-  writeTemperature(value.altitude);
 #endif
 }
 

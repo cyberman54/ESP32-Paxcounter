@@ -234,7 +234,7 @@ void get_gps(uint8_t val[]) {
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
-  SendPayload(GPSPORT)
+  SendPayload(GPSPORT);
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif

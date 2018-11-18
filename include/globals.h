@@ -51,7 +51,6 @@ typedef struct {
   uint16_t pressure; // Barometic pressure in hecto pascals
   float humidity; // Relative humidity in percent
   uint16_t gas_resistance; // Resistance in MOhms
-  uint16_t altitude; // Altitude in meters
 } bmeStatus_t;
 
 // global variables

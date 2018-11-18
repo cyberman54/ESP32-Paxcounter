@@ -34,7 +34,6 @@ bool bme_read(void) {
     bme_status.pressure = (uint16_t)(bme.pressure / 100.0); // convert Pa -> hPa
     bme_status.humidity = bme.humidity;
     bme_status.gas_resistance = (uint16_t)(bme.gas_resistance / 1000.0); // convert Ohm -> kOhm
-    bme_status.altitude = bme.readAltitude(SEALEVELPRESSURE_HPA);
     ESP_LOGI(TAG, "BME680 sensor data read success");
   } else {
     ESP_LOGI(TAG, "BME680 sensor read error");
