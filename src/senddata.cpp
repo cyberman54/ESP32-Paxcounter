@@ -52,6 +52,13 @@ void sendCounter() {
 #endif
   SendPayload(COUNTERPORT);
 
+// if we have MEMS sensor, send sensor data in separate frame
+#ifdef HAS_BME
+  payload.reset();
+  payload.addBME(bme_status);
+  SendPayload(BMEPORT);
+#endif
+
 } // sendCounter()
 
 void flushQueues() {
