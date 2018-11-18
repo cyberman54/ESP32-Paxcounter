@@ -46,7 +46,7 @@ function Decoder(bytes, port) {
     decoded.temperature = ((bytes[i++] << 8) | bytes[i++]);
     decoded.pressure = ((bytes[i++] << 8) | bytes[i++]);
     decoded.humidity = ((bytes[i++] << 8) | bytes[i++]);
-    decoded.gas = ((bytes[i++] << 8) | bytes[i++]);
+    decoded.air = ((bytes[i++] << 8) | bytes[i++]);
     decoded.altitude = ((bytes[i++] << 8) | bytes[i++]);
   }
 

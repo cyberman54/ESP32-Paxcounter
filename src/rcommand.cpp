@@ -211,7 +211,7 @@ void get_config(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  SendData(CONFIGPORT);
+  SendPayload(CONFIGPORT);
 };
 
 void get_status(uint8_t val[]) {
@@ -225,7 +225,7 @@ void get_status(uint8_t val[]) {
   payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
                     ESP.getFreeHeap(), rtc_get_reset_reason(0),
                     rtc_get_reset_reason(1));
-  SendData(STATUSPORT);
+  SendPayload(STATUSPORT);
 };
 
 void get_gps(uint8_t val[]) {
@@ -234,7 +234,7 @@ void get_gps(uint8_t val[]) {
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
-  SendData(GPSPORT);
+  SendPayload(GPSPORT)
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif
@@ -245,7 +245,7 @@ void get_bme(uint8_t val[]) {
 #ifdef HAS_BME
   payload.reset();
   payload.addBME(bme_status);
-  SendData(BMEPORT);
+  SendPayload(BMEPORT);
 #else
   ESP_LOGW(TAG, "BME680 sensor not supported");
 #endif

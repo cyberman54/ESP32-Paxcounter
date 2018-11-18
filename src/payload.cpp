@@ -95,16 +95,19 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
-  buffer[cursor++] = highByte((int16_t)value.temperature);
-  buffer[cursor++] = lowByte((int16_t)value.temperature);
+  int16_t temperature = (int16_t)(value.temperature); // float -> int
+  uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
+  int16_t altitude = (int16_t)(value.altitude);      // float -> int
+  buffer[cursor++] = highByte(temperature);
+  buffer[cursor++] = lowByte(temperature);
   buffer[cursor++] = highByte(value.pressure);
   buffer[cursor++] = lowByte(value.pressure);
-  buffer[cursor++] = highByte((uint16_t)value.humidity);
-  buffer[cursor++] = lowByte((uint16_t)value.humidity);
+  buffer[cursor++] = highByte(humidity);
+  buffer[cursor++] = lowByte(humidity);
   buffer[cursor++] = highByte(value.gas_resistance);
   buffer[cursor++] = lowByte(value.gas_resistance);
-  buffer[cursor++] = highByte(value.altitude);
-  buffer[cursor++] = lowByte(value.altitude);
+  buffer[cursor++] = highByte(altitude);
+  buffer[cursor++] = lowByte(altitude);
 #endif
 }
 
@@ -171,7 +174,7 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   writeUint16(value.pressure);
   writeHumidity(value.humidity);
   writeUint16(value.gas_resistance);
-  writeUint16(value.altitude);
+  writeTemperature(value.altitude);
 #endif
 }
 
@@ -331,29 +334,40 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
+
+  // data value conversions to meet cayenne data type definition
+  // 0.1°C per bit => -3276,7 .. +3276,7 °C
+  int16_t temperature = (int16_t)(value.temperature * 10.0);
+  // 0.1 hPa per bit => 0 .. 6553,6 hPa
+  uint16_t pressure = value.pressure * 10;
+  // 0.5% per bit => 0 .. 128 %C
+  uint8_t humidity = (uint8_t)(value.humidity * 2.0);
+  // 0.01 Ohm per bit => 0 .. 655,36 Ohm
+  uint16_t gas = value.gas_resistance * 100;
+
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_TEMPERATURE;
-  buffer[cursor++] = highByte((int16_t)value.temperature);
-  buffer[cursor++] = lowByte((int16_t)value.temperature);
+  buffer[cursor++] = LPP_TEMPERATURE; // 2 bytes 0.1 °C Signed MSB
+  buffer[cursor++] = highByte(temperature);
+  buffer[cursor++] = lowByte(temperature);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BAROMETER_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_BAROMETER;
-  buffer[cursor++] = highByte(value.pressure);
-  buffer[cursor++] = lowByte(value.pressure);
+  buffer[cursor++] = LPP_BAROMETER; // 2 bytes 0.1 hPa Unsigned MSB
+  buffer[cursor++] = highByte(pressure);
+  buffer[cursor++] = lowByte(pressure);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_HUMIDITY_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_HUMIDITY;
-  buffer[cursor++] = (byte)value.humidity;
+  buffer[cursor++] = LPP_HUMIDITY; // 1 byte 0.5 % Unsigned
+  buffer[cursor++] = humidity;
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_GAS_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_ANALOG_INPUT;
-  buffer[cursor++] = highByte(value.gas_resistance);
-  buffer[cursor++] = lowByte(value.gas_resistance);
+  buffer[cursor++] = LPP_ANALOG_INPUT; // 2 bytes 0.01 Signed
+  buffer[cursor++] = highByte(gas);
+  buffer[cursor++] = lowByte(gas);
 #endif // HAS_BME
 }
 

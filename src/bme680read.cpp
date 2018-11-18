@@ -14,7 +14,7 @@ bmeStatus_t bme_status;
 
 void bme_init(void) {
   // initialize BME680 sensor using default i2c address 0x77
-  if (bme.begin()) {
+  if (bme.begin(HAS_BME)) {
     // Set up oversampling and filter initialization
     bme.setTemperatureOversampling(BME680_OS_8X);
     bme.setHumidityOversampling(BME680_OS_2X);
@@ -31,11 +31,10 @@ bool bme_read(void) {
   if (ret) {
     // read current BME data and buffer in global struct
     bme_status.temperature = bme.temperature;
-    bme_status.pressure = (uint16_t)(bme.pressure / 100.0);
+    bme_status.pressure = (uint16_t)(bme.pressure / 100.0); // convert Pa -> hPa
     bme_status.humidity = bme.humidity;
-    bme_status.gas_resistance = (uint16_t)(bme.gas_resistance / 1000.0);
-    bme_status.altitude =
-        (uint16_t)(bme.readAltitude(SEALEVELPRESSURE_HPA / 1000.0));
+    bme_status.gas_resistance = (uint16_t)(bme.gas_resistance / 1000.0); // convert Ohm -> kOhm
+    bme_status.altitude = bme.readAltitude(SEALEVELPRESSURE_HPA);
     ESP_LOGI(TAG, "BME680 sensor data read success");
   } else {
     ESP_LOGI(TAG, "BME680 sensor read error");

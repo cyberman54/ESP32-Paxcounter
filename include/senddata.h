@@ -5,8 +5,8 @@
 #include "lorawan.h"
 #include "cyclic.h"
 
-void SendData(uint8_t port);
-void sendPayload(void);
+void SendPayload(uint8_t port);
+void sendCounter(void);
 void checkSendQueues(void);
 void flushQueues();
 

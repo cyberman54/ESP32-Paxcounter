@@ -23,10 +23,10 @@ void doHousekeeping() {
   spi_housekeeping();
   lora_housekeeping();
 
-// time sync once per TIME_SYNC_INTERVAL_MIN
-#ifdef TIME_SYNC
+// time sync once per TIME_SYNC_INTERVAL
+#ifdef TIME_SYNC_INTERVAL
   if (millis() >= nextTimeSync) {
-    nextTimeSync = millis() + TIME_SYNC_INTERVAL_MIN *
+    nextTimeSync = millis() + TIME_SYNC_INTERVAL *
                                   60000; // set up next time sync period
     do_timesync();
   }
@@ -63,7 +63,7 @@ void doHousekeeping() {
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
              esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-    SendData(COUNTERPORT); // send data before clearing counters
+    SendPayload(COUNTERPORT); // send data before clearing counters
     reset_counters();      // clear macs container and reset all counters
     get_salt();            // get new salt for salting hashes
 
@@ -90,7 +90,7 @@ void reset_counters() {
 }
 
 void do_timesync() {
-#ifdef TIME_SYNC
+#ifdef TIME_SYNC_INTERVAL
 // sync time & date if we have valid gps time
 #ifdef HAS_GPS
   if (gps.time.isValid()) {
@@ -106,7 +106,7 @@ void do_timesync() {
   // Schedule a network time request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
-#endif // TIME_SYNC
+#endif // TIME_SYNC_INTERVAL
 } // do_timesync()
 
 #ifndef VERBOSE

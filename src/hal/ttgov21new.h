@@ -8,7 +8,7 @@
 // This settings are for boards labeled v1.6 on pcb, NOT for v1.5 or older
 */
 
-//#define HAS_BME 1  // BME680 sensor on I2C bus (SDI=21/SCL=22); comment out if not present
+#define HAS_BME 0x77  // BME680 sensor on I2C bus (SDI=21/SCL=22); comment out if not present
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
