@@ -102,11 +102,11 @@ void do_timesync() {
   } else {
     ESP_LOGI(TAG, "No valid GPS time");
   }
-#endif
+#endif // HAS_GPS
   // Schedule a network time request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
-#endif
+#endif // TIME_SYNC
 } // do_timesync()
 
 #ifndef VERBOSE

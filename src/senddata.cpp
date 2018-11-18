@@ -4,7 +4,7 @@
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendData(uint8_t port) {
 
-  MessageBuffer_t SendBuffer;
+  MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
   SendBuffer.MessagePort = port;
@@ -14,12 +14,6 @@ void SendData(uint8_t port) {
   lora_enqueuedata(&SendBuffer);
   spi_enqueuedata(&SendBuffer);
 
-  // clear counter if not in cumulative counter mode
-  if ((port == COUNTERPORT) && (cfg.countermode != 1)) {
-    reset_counters(); // clear macs container and reset all counters
-    get_salt();       // get new salt for salting hashes
-    ESP_LOGI(TAG, "Counter cleared");
-  }
 } // SendData
 
 // interrupt triggered function to prepare payload to send
@@ -29,6 +23,13 @@ void sendPayload() {
   payload.reset();
   payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
   // append GPS data, if present
+
+  // clear counter if not in cumulative counter mode
+  if (cfg.countermode != 1) {
+    reset_counters(); // clear macs container and reset all counters
+    get_salt();       // get new salt for salting hashes
+    ESP_LOGI(TAG, "Counter cleared");
+  }
 
 #ifdef HAS_GPS
   // show NMEA data in debug mode, useful for debugging GPS on board

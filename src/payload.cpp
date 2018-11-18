@@ -242,8 +242,10 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
   writeUint8(bitmap);
 }
 
-/* ---------------- Cayenne LPP format ---------- */
-// http://community.mydevices.com/t/cayenne-lpp-2-0/7510
+/* ---------------- Cayenne LPP 2.0 format ---------- */
+// see specs http://community.mydevices.com/t/cayenne-lpp-2-0/7510
+// PAYLOAD_ENCODER == 3 -> Dynamic Sensor Payload, using channels -> FPort 1
+// PAYLOAD_ENCODER == 4 -> Packed Sensor Payload, not using channels -> FPort 2
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
@@ -251,13 +253,15 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_TEMPERATURE;
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
   buffer[cursor++] = highByte(value1);
   buffer[cursor++] = lowByte(value1);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_HUMIDITY;
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
   buffer[cursor++] = highByte(value2);
   buffer[cursor++] = lowByte(value2);
 }
