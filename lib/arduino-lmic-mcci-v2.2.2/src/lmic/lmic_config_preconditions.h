@@ -113,6 +113,12 @@ Revision history:
 // following values. These are in order of the sections in the manual. Not all of the
 // below are supported yet.
 //
+// CFG_as923jp is treated as a special case of CFG_as923, so it's not included in
+// the below.
+//
+// TODO(tmm@mcci.com) consider moving this block to a central file as it's not
+// user-editable.
+//
 # define CFG_LMIC_REGION_MASK   \
                         ((defined(CFG_eu868) << LMIC_REGION_eu868) | \
                          (defined(CFG_us915) << LMIC_REGION_us915) | \
@@ -126,6 +132,8 @@ Revision history:
                          0)
 
 // the selected region.
+// TODO(tmm@mcci.com) consider moving this block to a central file as it's not
+// user-editable.
 #if defined(CFG_eu868)
 # define CFG_region     LMIC_REGION_eu868
 #elif defined(CFG_us915)
@@ -138,6 +146,10 @@ Revision history:
 # define CFG_region     LMIC_REGION_au921
 #elif defined(CFG_cn490)
 # define CFG_region     LMIC_REGION_cn490
+#elif defined(CFG_as923jp)
+# define CFG_as923	1			/* CFG_as923jp implies CFG_as923 */
+# define CFG_region     LMIC_REGION_as923
+# define LMIC_COUNTRY_CODE  LMIC_COUNTRY_CODE_JP
 #elif defined(CFG_as923)
 # define CFG_region     LMIC_REGION_as923
 #elif defined(CFG_kr921)
@@ -148,7 +160,11 @@ Revision history:
 # define CFG_region     0
 #endif
 
-// finally the mask of` US-like and EU-like regions
+// a bitmask of EU-like regions -- these are regions which have up to 16
+// channels indidually programmable via downloink.
+//
+// TODO(tmm@mcci.com) consider moving this block to a central file as it's not
+// user-editable.
 #define CFG_LMIC_EU_like_MASK   (                               \
                                 (1 << LMIC_REGION_eu868) |      \
                              /* (1 << LMIC_REGION_us915) | */   \
@@ -161,6 +177,12 @@ Revision history:
                                 (1 << LMIC_REGION_in866) |      \
                                 0)
 
+// a bitmask of` US-like regions -- these are regions with 64 fixed 125 kHz channels
+// overlaid by 8 500 kHz channels. The channel frequencies can't be changed, but
+// subsets of channels can be selected via masks.
+//
+// TODO(tmm@mcci.com) consider moving this block to a central file as it's not
+// user-editable.
 #define CFG_LMIC_US_like_MASK   (                               \
                              /* (1 << LMIC_REGION_eu868) | */   \
                                 (1 << LMIC_REGION_us915) |      \
@@ -173,9 +195,12 @@ Revision history:
                              /* (1 << LMIC_REGION_in866) | */   \
                                 0)
 
+//
+// booleans that are true if the configured region is EU-like or US-like.
+// TODO(tmm@mcci.com) consider moving this block to a central file as it's not
+// user-editable.
+//
 #define CFG_LMIC_EU_like        (!!(CFG_LMIC_REGION_MASK & CFG_LMIC_EU_like_MASK))
 #define CFG_LMIC_US_like        (!!(CFG_LMIC_REGION_MASK & CFG_LMIC_US_like_MASK))
-
-
 
 #endif /* _LMIC_CONFIG_PRECONDITIONS_H_ */

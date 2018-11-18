@@ -328,9 +328,9 @@ void lora_send(osjob_t *job) {
     // waiting for LoRa getting ready
   } else {
     if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-      // SendBuffer gets struct MessageBuffer with next payload from queue
+      // SendBuffer now filled with next payload from queue
       if (!LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                          SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
+                           SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
         ESP_LOGI(TAG, "%d byte(s) sent to LoRa", SendBuffer.MessageSize);
       } else {
         ESP_LOGE(TAG, "could not send %d byte(s) to LoRa",
@@ -384,12 +384,12 @@ esp_err_t lora_stack_init() {
   if (!LMIC_startJoining()) { // start joining
     ESP_LOGI(TAG, "Already joined");
   }
-  
+
   return ESP_OK; // continue main program
 #endif
 }
 
-void lora_enqueuedata(uint8_t messageType, MessageBuffer_t *message) {
+void lora_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in LORA send queue
 #ifdef HAS_LORA
   BaseType_t ret =
@@ -413,4 +413,40 @@ void lora_housekeeping(void) {
 // ESP_LOGD(TAG, "loraloop %d bytes left",
 // uxTaskGetStackHighWaterMark(LoraTask));
 #endif
+}
+
+void user_request_network_time_callback(void *pVoidUserUTCTime,
+                                        int flagSuccess) {
+  // Explicit conversion from void* to uint32_t* to avoid compiler errors
+  uint32_t *pUserUTCTime = (uint32_t *)pVoidUserUTCTime;
+  lmic_time_reference_t lmicTimeReference;
+
+  if (flagSuccess != 1) {
+    ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
+    return;
+  }
+
+  // Populate lmic_time_reference
+  flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
+  if (flagSuccess != 1) {
+    ESP_LOGW(TAG, "LoRaWAN time request failed");
+    return;
+  }
+
+  // Update userUTCTime, considering the difference between the GPS and UTC
+  // epoch, and the leap seconds
+  *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
+  // Current time, in ticks
+  ostime_t ticksNow = os_getTime();
+  // Time when the request was sent, in ticks
+  ostime_t ticksRequestSent = lmicTimeReference.tLocal;
+  // Add the delay between the instant the time was transmitted and
+  // the current time
+  uint32_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
+  *pUserUTCTime += requestDelaySec;
+
+  // Update system time with  time read from the network
+  setTime(*pUserUTCTime);
+  ESP_LOGI(TAG, "Time synced by LoRa network to %02d:%02d:%02d", hour(),
+           minute(), second());
 }

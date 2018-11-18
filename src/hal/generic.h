@@ -13,6 +13,8 @@
 #define SPI_SCLK GPIO_NUM_18
 #define SPI_CS   GPIO_NUM_5
 
+#define HAS_BME 0x77  // BME680 sensor on I2C bus (SDA=4/SCL=15); comment out if not present
+
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
 #define BOARD_HAS_PSRAM // use if board has external PSRAM

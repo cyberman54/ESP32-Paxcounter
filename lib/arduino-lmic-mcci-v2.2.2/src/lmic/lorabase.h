@@ -449,6 +449,7 @@ enum {
     MCMD_RXTimingSetupAns = 0x08,       //         : -
     MCMD_TxParamSetupAns = 0x09,        //         : -
     MCMD_DIChannelAns = 0x0A,           //         : u1: [7-2]:RFU 1:exists 0:OK
+    MCMD_DeviceTimeReq = 0x0D,
 
     // Class B
     MCMD_PING_IND = 0x10, // -  pingability indic  : u1: 7=RFU, 6-4:interval, 3-0:datarate
@@ -468,6 +469,7 @@ enum {
     MCMD_RXTimingSetupReq = 0x08,       //      : u1: [7-4]:RFU [3-0]: Delay 1-15s (0 => 1)
     MCMD_TxParamSetupReq = 0x09,        //      : u1: [7-6]:RFU [5:4]: dl dwell/ul dwell [3:0] max EIRP
     MCMD_DIChannelReq = 0x0A,           //      : u1: channel, u3: frequency
+    MCMD_DeviceTimeAns = 0x0D,
 
     // Class B
     MCMD_PING_SET = 0x11, // set ping freq      : u3: freq
@@ -583,33 +585,33 @@ typedef u4_t devaddr_t;
 // RX quality (device)
 enum { RSSI_OFF=64, SNR_SCALEUP=4 };
 
-inline sf_t  getSf   (rps_t params)            { return   (sf_t)(params &  0x7); }
-inline rps_t setSf   (rps_t params, sf_t sf)   { return (rps_t)((params & ~0x7) | sf); }
-inline bw_t  getBw   (rps_t params)            { return  (bw_t)((params >> 3) & 0x3); }
-inline rps_t setBw   (rps_t params, bw_t cr)   { return (rps_t)((params & ~0x18) | (cr<<3)); }
-inline cr_t  getCr   (rps_t params)            { return  (cr_t)((params >> 5) & 0x3); }
-inline rps_t setCr   (rps_t params, cr_t cr)   { return (rps_t)((params & ~0x60) | (cr<<5)); }
-inline int   getNocrc(rps_t params)            { return        ((params >> 7) & 0x1); }
-inline rps_t setNocrc(rps_t params, int nocrc) { return (rps_t)((params & ~0x80) | (nocrc<<7)); }
-inline int   getIh   (rps_t params)            { return        ((params >> 8) & 0xFF); }
-inline rps_t setIh   (rps_t params, int ih)    { return (rps_t)((params & ~0xFF00) | (ih<<8)); }
-inline rps_t makeRps (sf_t sf, bw_t bw, cr_t cr, int ih, int nocrc) {
+static inline sf_t  getSf   (rps_t params)            { return   (sf_t)(params &  0x7); }
+static inline rps_t setSf   (rps_t params, sf_t sf)   { return (rps_t)((params & ~0x7) | sf); }
+static inline bw_t  getBw   (rps_t params)            { return  (bw_t)((params >> 3) & 0x3); }
+static inline rps_t setBw   (rps_t params, bw_t cr)   { return (rps_t)((params & ~0x18) | (cr<<3)); }
+static inline cr_t  getCr   (rps_t params)            { return  (cr_t)((params >> 5) & 0x3); }
+static inline rps_t setCr   (rps_t params, cr_t cr)   { return (rps_t)((params & ~0x60) | (cr<<5)); }
+static inline int   getNocrc(rps_t params)            { return        ((params >> 7) & 0x1); }
+static inline rps_t setNocrc(rps_t params, int nocrc) { return (rps_t)((params & ~0x80) | (nocrc<<7)); }
+static inline int   getIh   (rps_t params)            { return        ((params >> 8) & 0xFF); }
+static inline rps_t setIh   (rps_t params, int ih)    { return (rps_t)((params & ~0xFF00) | (ih<<8)); }
+static inline rps_t makeRps (sf_t sf, bw_t bw, cr_t cr, int ih, int nocrc) {
     return sf | (bw<<3) | (cr<<5) | (nocrc?(1<<7):0) | ((ih&0xFF)<<8);
 }
 #define MAKERPS(sf,bw,cr,ih,nocrc) ((rps_t)((sf) | ((bw)<<3) | ((cr)<<5) | ((nocrc)?(1<<7):0) | ((ih&0xFF)<<8)))
 // Two frames with params r1/r2 would interfere on air: same SFx + BWx
-inline int sameSfBw(rps_t r1, rps_t r2) { return ((r1^r2)&0x1F) == 0; }
+static inline int sameSfBw(rps_t r1, rps_t r2) { return ((r1^r2)&0x1F) == 0; }
 
 extern CONST_TABLE(u1_t, _DR2RPS_CRC)[];
-inline rps_t updr2rps (dr_t dr) { return (rps_t)TABLE_GET_U1(_DR2RPS_CRC, dr+1); }
-inline rps_t dndr2rps (dr_t dr) { return setNocrc(updr2rps(dr),1); }
-inline int isFasterDR (dr_t dr1, dr_t dr2) { return dr1 > dr2; }
-inline int isSlowerDR (dr_t dr1, dr_t dr2) { return dr1 < dr2; }
-inline dr_t  incDR    (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr+2)==ILLEGAL_RPS ? dr : (dr_t)(dr+1); } // increase data rate
-inline dr_t  decDR    (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr  )==ILLEGAL_RPS ? dr : (dr_t)(dr-1); } // decrease data rate
-inline dr_t  assertDR (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr+1)==ILLEGAL_RPS ? DR_DFLTMIN : dr; }   // force into a valid DR
-inline bit_t validDR  (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr+1)!=ILLEGAL_RPS; } // in range
-inline dr_t  lowerDR  (dr_t dr, u1_t n) { while(n--){dr=decDR(dr);} return dr; } // decrease data rate by n steps
+static inline rps_t updr2rps (dr_t dr) { return (rps_t)TABLE_GET_U1(_DR2RPS_CRC, dr+1); }
+static inline rps_t dndr2rps (dr_t dr) { return setNocrc(updr2rps(dr),1); }
+static inline int isFasterDR (dr_t dr1, dr_t dr2) { return dr1 > dr2; }
+static inline int isSlowerDR (dr_t dr1, dr_t dr2) { return dr1 < dr2; }
+static inline dr_t  incDR    (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr+2)==ILLEGAL_RPS ? dr : (dr_t)(dr+1); } // increase data rate
+static inline dr_t  decDR    (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr  )==ILLEGAL_RPS ? dr : (dr_t)(dr-1); } // decrease data rate
+static inline dr_t  assertDR (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr+1)==ILLEGAL_RPS ? (dr_t)DR_DFLTMIN : dr; }   // force into a valid DR
+static inline bit_t validDR  (dr_t dr) { return TABLE_GET_U1(_DR2RPS_CRC, dr+1)!=ILLEGAL_RPS; } // in range
+static inline dr_t  lowerDR  (dr_t dr, u1_t n) { while(n--){dr=decDR(dr);} return dr; } // decrease data rate by n steps
 
 //
 // BEG: Keep in sync with lorabase.hpp
