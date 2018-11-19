@@ -75,6 +75,14 @@ typedef        const u1_t* xref2cu1_t;
 typedef              u1_t* xref2u1_t;
 typedef              s4_t  ostime_t;
 
+// int32_t == s4_t is long on some platforms; and someday
+// we will want 64-bit ostime_t. So, we will use a macro for the
+// print formatting of ostime_t.
+#ifndef LMIC_PRId_ostime_t
+# include <inttypes.h>
+# define LMIC_PRId_ostime_t	PRId32
+#endif
+
 #define TYPEDEF_xref2rps_t     typedef         rps_t* xref2rps_t
 #define TYPEDEF_xref2rxsched_t typedef     rxsched_t* xref2rxsched_t
 #define TYPEDEF_xref2chnldef_t typedef     chnldef_t* xref2chnldef_t
@@ -82,6 +90,105 @@ typedef              s4_t  ostime_t;
 #define TYPEDEF_xref2osjob_t   typedef       osjob_t* xref2osjob_t
 
 #define SIZEOFEXPR(x) sizeof(x)
+
+//----------------------------------------------------------------------------
+// Annotations to avoid various "unused" warnings. These must appear as a
+// statement in the function body; the macro annotates the variable to quiet
+// compiler warnings.  The way this is done is compiler-specific, and so these
+// definitions are fall-backs, which might be overridden.
+//
+// Although these are all similar, we don't want extra macro expansions,
+// so we define each one explicitly rather than relying on a common macro.
+//----------------------------------------------------------------------------
+
+// signal that a parameter is intentionally unused.
+#ifndef LMIC_UNREFERENCED_PARAMETER
+# define LMIC_UNREFERENCED_PARAMETER(v)      do { (void) (v); } while (0)
+#endif
+
+// an API parameter is a parameter that is required by an API definition, but
+// happens to be unreferenced in this implementation. This is a stronger
+// assertion than LMIC_UNREFERENCED_PARAMETER(): this parameter is here
+// becuase of an API contract, but we have no use for it in this function.
+#ifndef LMIC_API_PARAMETER
+# define LMIC_API_PARAMETER(v)               do { (void) (v); } while (0)
+#endif
+
+// an intentionally-unreferenced variable.
+#ifndef LMIC_UNREFERENCED_VARIABLE
+# define LMIC_UNREFERENCED_VARIABLE(v)       do { (void) (v); } while (0)
+#endif
+
+// we have three (!) debug levels (LMIC_DEBUG_LEVEL > 0, LMIC_DEBUG_LEVEL > 1,
+// and LMIC_X_DEBUG_LEVEL > 0. In each case we might have parameters or
+// or varables that are only refereneced at the target debug level.
+
+// Parameter referenced only if debugging at level > 0.
+#ifndef LMIC_DEBUG1_PARAMETER
+# if LMIC_DEBUG_LEVEL > 0
+#  define LMIC_DEBUG1_PARAMETER(v)           do { ; } while (0)
+# else
+#  define LMIC_DEBUG1_PARAMETER(v)           do { (void) (v); } while (0)
+# endif
+#endif
+
+// variable referenced only if debugging at level > 0
+#ifndef LMIC_DEBUG1_VARIABLE
+# if LMIC_DEBUG_LEVEL > 0
+#  define LMIC_DEBUG1_VARIABLE(v)            do { ; } while (0)
+# else
+#  define LMIC_DEBUG1_VARIABLE(v)            do { (void) (v); } while (0)
+# endif
+#endif
+
+// parameter referenced only if debugging at level > 1
+#ifndef LMIC_DEBUG2_PARAMETER
+# if LMIC_DEBUG_LEVEL > 1
+#  define LMIC_DEBUG2_PARAMETER(v)           do { ; } while (0)
+# else
+#  define LMIC_DEBUG2_PARAMETER(v)           do { (void) (v); } while (0)
+# endif
+#endif
+
+// variable referenced only if debugging at level > 1
+#ifndef LMIC_DEBUG2_VARIABLE
+# if LMIC_DEBUG_LEVEL > 1
+#  define LMIC_DEBUG2_VARIABLE(v)            do { ; } while (0)
+# else
+#  define LMIC_DEBUG2_VARIABLE(v)            do { (void) (v); } while (0)
+# endif
+#endif
+
+// parameter referenced only if LMIC_X_DEBUG_LEVEL > 0
+#ifndef LMIC_X_DEBUG_PARAMETER
+# if LMIC_X_DEBUG_LEVEL > 0
+#  define LMIC_X_DEBUG_PARAMETER(v)           do { ; } while (0)
+# else
+#  define LMIC_X_DEBUG_PARAMETER(v)           do { (void) (v); } while (0)
+# endif
+#endif
+
+// variable referenced only if LMIC_X_DEBUG_LEVEL > 0
+#ifndef LMIC_X_DEBUG_VARIABLE
+# if LMIC_X_DEBUG_LEVEL > 0
+#  define LMIC_X_DEBUG_VARIABLE(v)            do { ; } while (0)
+# else
+#  define LMIC_X_DEBUG_VARIABLE(v)            do { (void) (v); } while (0)
+# endif
+#endif
+
+// parameter referenced only if EV() macro is enabled (which it never is)
+// TODO(tmm@mcci.com) take out the EV() framework as it reuqires C++, and
+// this code is really C-99 to its bones.
+#ifndef LMIC_EV_PARAMETER
+# define LMIC_EV_PARAMETER(v)                 do { (void) (v); } while (0)
+#endif
+
+// variable referenced only if EV() macro is defined.
+#ifndef LMIC_EV_VARIABLE
+# define LMIC_EV_VARIABLE(v)                  do { (void) (v); } while (0)
+#endif
+
 
 #define ON_LMIC_EVENT(ev)  onEvent(ev)
 #define DECL_ON_LMIC_EVENT void onEvent(ev_t e)
@@ -258,7 +365,7 @@ u2_t os_crc16 (xref2cu1_t d, uint len);
     // progmem using pgm_read_xx, or accesses memory directly when the
     // index is a constant so gcc can optimize it away;
     #define TABLE_GETTER(postfix, type, pgm_type) \
-        inline type table_get ## postfix(const type *table, size_t index) { \
+        static inline type table_get ## postfix(const type *table, size_t index) { \
             if (__builtin_constant_p(table[index])) \
                 return table[index]; \
             return pgm_read_ ## pgm_type(&table[index]); \
@@ -278,13 +385,13 @@ u2_t os_crc16 (xref2cu1_t d, uint len);
     // For AVR, store constants in PROGMEM, saving on RAM usage
     #define CONST_TABLE(type, name) const type PROGMEM RESOLVE_TABLE(name)
 #else
-    inline u1_t table_get_u1(const u1_t *table, size_t index) { return table[index]; }
-    inline s1_t table_get_s1(const s1_t *table, size_t index) { return table[index]; }
-    inline u2_t table_get_u2(const u2_t *table, size_t index) { return table[index]; }
-    inline s2_t table_get_s2(const s2_t *table, size_t index) { return table[index]; }
-    inline u4_t table_get_u4(const u4_t *table, size_t index) { return table[index]; }
-    inline s4_t table_get_s4(const s4_t *table, size_t index) { return table[index]; }
-    inline ostime_t table_get_ostime(const ostime_t *table, size_t index) { return table[index]; }
+    static inline u1_t table_get_u1(const u1_t *table, size_t index) { return table[index]; }
+    static inline s1_t table_get_s1(const s1_t *table, size_t index) { return table[index]; }
+    static inline u2_t table_get_u2(const u2_t *table, size_t index) { return table[index]; }
+    static inline s2_t table_get_s2(const s2_t *table, size_t index) { return table[index]; }
+    static inline u4_t table_get_u4(const u4_t *table, size_t index) { return table[index]; }
+    static inline s4_t table_get_s4(const s4_t *table, size_t index) { return table[index]; }
+    static inline ostime_t table_get_ostime(const ostime_t *table, size_t index) { return table[index]; }
 
     // Declare a table
     #define CONST_TABLE(type, name) const type RESOLVE_TABLE(name)

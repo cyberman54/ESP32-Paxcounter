@@ -3,11 +3,12 @@
 
 // Basic config
 #include "cyclic.h"
-#include "rcommand.h"
-#include "spislave.h"
 
 // Local logging tag
 static const char TAG[] = "main";
+
+uint32_t userUTCTime; // Seconds since the UTC epoch
+unsigned long nextTimeSync = millis();
 
 // do all housekeeping
 void doHousekeeping() {
@@ -19,7 +20,24 @@ void doHousekeeping() {
   if (cfg.runmode == 1)
     do_reset();
 
-// task storage debugging //
+  spi_housekeeping();
+  lora_housekeeping();
+
+// time sync once per TIME_SYNC_INTERVAL
+#ifdef TIME_SYNC_INTERVAL
+  if (millis() >= nextTimeSync) {
+    nextTimeSync = millis() + TIME_SYNC_INTERVAL *
+                                  60000; // set up next time sync period
+    do_timesync();
+  }
+#endif
+
+#ifdef HAS_BME
+  // read BME280 sensor if present
+  bme_read();
+#endif
+
+  // task storage debugging //
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
            uxTaskGetStackHighWaterMark(wifiSwitchTask));
   ESP_LOGD(TAG, "IRQhandler %d bytes left",
@@ -28,10 +46,9 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
 #endif
 
-  spi_housekeeping();
-
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-  ESP_LOGD(TAG, "LEDloop %d bytes left", uxTaskGetStackHighWaterMark(ledLoopTask));
+  ESP_LOGD(TAG, "LEDloop %d bytes left",
+           uxTaskGetStackHighWaterMark(ledLoopTask));
 #endif
 
 // read battery voltage into global variable
@@ -40,24 +57,13 @@ void doHousekeeping() {
   ESP_LOGI(TAG, "Measured Voltage: %dmV", batt_voltage);
 #endif
 
-// sync time & date if we have valid gps time
-#ifdef HAS_GPS
-  if (gps.time.isValid()) {
-    setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
-            gps.date.day(), gps.date.month(), gps.date.year());
-    ESP_LOGI(TAG, "Time synced to %02d:%02d:%02d", hour(), minute(), second());
-  } else {
-    ESP_LOGI(TAG, "No valid GPS time");
-  }
-#endif
-
   // check free memory
   if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
     ESP_LOGI(TAG,
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
              esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
-    SendData(COUNTERPORT); // send data before clearing counters
+    SendPayload(COUNTERPORT); // send data before clearing counters
     reset_counters();      // clear macs container and reset all counters
     get_salt();            // get new salt for salting hashes
 
@@ -82,6 +88,26 @@ void reset_counters() {
   macs_wifi = 0;
   macs_ble = 0;
 }
+
+void do_timesync() {
+#ifdef TIME_SYNC_INTERVAL
+// sync time & date if we have valid gps time
+#ifdef HAS_GPS
+  if (gps.time.isValid()) {
+    setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
+            gps.date.day(), gps.date.month(), gps.date.year());
+    ESP_LOGI(TAG, "Time synced by GPS to %02d:%02d:%02d", hour(), minute(),
+             second());
+    return;
+  } else {
+    ESP_LOGI(TAG, "No valid GPS time");
+  }
+#endif // HAS_GPS
+  // Schedule a network time request at the next possible time
+  LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
+  ESP_LOGI(TAG, "Network time request scheduled");
+#endif // TIME_SYNC_INTERVAL
+} // do_timesync()
 
 #ifndef VERBOSE
 int redirect_log(const char *fmt, va_list args) {

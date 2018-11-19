@@ -10,6 +10,8 @@
 // disable brownout detection (avoid unexpected reset on some boards)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
+#define HAS_BME 0x76  // BME680 sensor on I2C bus; comment out if not present
+
 #define HAS_LED        13  // ESP32 GPIO12 (pin22) On Board LED
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 //#define HAS_RGB_LED   13  // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED

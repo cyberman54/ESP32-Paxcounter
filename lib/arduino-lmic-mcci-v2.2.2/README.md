@@ -1,5 +1,4 @@
-Arduino-LMIC library
-====================
+# Arduino-LMIC library
 
 This repository contains the IBM LMIC (LoraMAC-in-C) library, slightly
 modified to run in the Arduino environment, allowing using the SX1272,
@@ -25,56 +24,56 @@ requires C99 mode to be enabled by default.
   We strongly recommend updating using VS Code, the markdown-toc extension and the
   bierner.markdown-preview-github-styles extension.
 -->
-<!-- TOC depthFrom:1 -->
+<!-- TOC depthFrom:2 -->
 
 - [Installing](#installing)
 - [Features](#features)
 - [Configuration](#configuration)
-	- [Selecting the LoRaWAN Region Configuration](#selecting-the-lorawan-region-configuration)
-		- [eu868, as923, in866](#eu868-as923-in866)
-		- [us915, au921](#us915-au921)
-	- [Selecting the target radio transceiver](#selecting-the-target-radio-transceiver)
-	- [Controlling use of interrupts](#controlling-use-of-interrupts)
-	- [Disabling PING](#disabling-ping)
-	- [Disabling Beacons](#disabling-beacons)
-	- [Rarely changed variables](#rarely-changed-variables)
-		- [Changing debug output](#changing-debug-output)
-		- [Getting debug from the RF library](#getting-debug-from-the-rf-library)
-		- [Selecting the AES library](#selecting-the-aes-library)
-		- [Defining the OS Tick Frequency](#defining-the-os-tick-frequency)
-		- [Setting the SPI-bus frequency](#setting-the-spi-bus-frequency)
-		- [Changing handling of runtime assertion failures](#changing-handling-of-runtime-assertion-failures)
-		- [Disabling JOIN](#disabling-join)
-		- [Disabling Class A MAC commands](#disabling-class-a-mac-commands)
-		- [Disabling Class B MAC commands](#disabling-class-b-mac-commands)
-		- [Special purpose](#special-purpose)
+    - [Selecting the LoRaWAN Region Configuration](#selecting-the-lorawan-region-configuration)
+        - [eu868, as923, in866](#eu868-as923-in866)
+        - [us915, au921](#us915-au921)
+    - [Selecting the target radio transceiver](#selecting-the-target-radio-transceiver)
+    - [Controlling use of interrupts](#controlling-use-of-interrupts)
+    - [Disabling PING](#disabling-ping)
+    - [Disabling Beacons](#disabling-beacons)
+    - [Rarely changed variables](#rarely-changed-variables)
+        - [Changing debug output](#changing-debug-output)
+        - [Getting debug from the RF library](#getting-debug-from-the-rf-library)
+        - [Selecting the AES library](#selecting-the-aes-library)
+        - [Defining the OS Tick Frequency](#defining-the-os-tick-frequency)
+        - [Setting the SPI-bus frequency](#setting-the-spi-bus-frequency)
+        - [Changing handling of runtime assertion failures](#changing-handling-of-runtime-assertion-failures)
+        - [Disabling JOIN](#disabling-join)
+        - [Disabling Class A MAC commands](#disabling-class-a-mac-commands)
+        - [Disabling Class B MAC commands](#disabling-class-b-mac-commands)
+        - [Special purpose](#special-purpose)
 - [Supported hardware](#supported-hardware)
 - [Connections](#connections)
-	- [Power](#power)
-	- [SPI](#spi)
-	- [DIO pins](#dio-pins)
-	- [Reset](#reset)
-	- [RXTX](#rxtx)
-	- [RXTX Polarity](#rxtx-polarity)
-	- [Pin mapping](#pin-mapping)
-		- [Adafruit Feather M0 LoRa](#adafruit-feather-m0-lora)
-		- [Adafruit Feather 32u4 LoRa](#adafruit-feather-32u4-lora)
-		- [LoRa Nexus by Ideetron](#lora-nexus-by-ideetron)
-		- [MCCI Catena 4450/4460](#mcci-catena-44504460)
-		- [MCCI Catena 4551](#mcci-catena-4551)
+    - [Power](#power)
+    - [SPI](#spi)
+    - [DIO pins](#dio-pins)
+    - [Reset](#reset)
+    - [RXTX](#rxtx)
+    - [RXTX Polarity](#rxtx-polarity)
+    - [Pin mapping](#pin-mapping)
+        - [Adafruit Feather M0 LoRa](#adafruit-feather-m0-lora)
+        - [Adafruit Feather 32u4 LoRa](#adafruit-feather-32u4-lora)
+        - [LoRa Nexus by Ideetron](#lora-nexus-by-ideetron)
+        - [MCCI Catena 4450/4460](#mcci-catena-44504460)
+        - [MCCI Catena 4551](#mcci-catena-4551)
 - [Example Sketches](#example-sketches)
 - [Timing](#timing)
-	- [`LMIC_setClockError()`](#lmic_setclockerror)
+    - [`LMIC_setClockError()`](#lmic_setclockerror)
 - [Downlink datarate](#downlink-datarate)
 - [Encoding Utilities](#encoding-utilities)
-	- [sflt16](#sflt16)
-		- [JavaScript decoder](#javascript-decoder)
-	- [uflt16](#uflt16)
-		- [JavaScript decoder](#javascript-decoder-1)
-	- [sflt12](#sflt12)
-		- [JavaScript decoder](#javascript-decoder-2)
-	- [uflt12](#uflt12)
-		- [JavaScript decoder](#javascript-decoder-3)
+    - [sflt16](#sflt16)
+        - [JavaScript decoder](#javascript-decoder)
+    - [uflt16](#uflt16)
+        - [JavaScript decoder](#javascript-decoder-1)
+    - [sflt12](#sflt12)
+        - [JavaScript decoder](#javascript-decoder-2)
+    - [uflt12](#uflt12)
+        - [JavaScript decoder](#javascript-decoder-3)
 - [Release History](#release-history)
 - [Contributions](#contributions)
 - [Trademark Acknowledgements](#trademark-acknowledgements)
@@ -86,12 +85,12 @@ requires C99 mode to be enabled by default.
 
 To install this library:
 
- - install it using the Arduino Library manager ("Sketch" -> "Include
+- install it using the Arduino Library manager ("Sketch" -> "Include
    Library" -> "Manage Libraries..."), or
- - download a zipfile from github using the "Download ZIP" button and
+- download a zipfile from github using the "Download ZIP" button and
    install it using the IDE ("Sketch" -> "Include Library" -> "Add .ZIP
    Library..."
- - clone this git repository into your sketchbook/libraries folder.
+- clone this git repository into your sketchbook/libraries folder.
 
 For more info, see https://www.arduino.cc/en/Guide/Libraries
 
@@ -105,19 +104,19 @@ The library has only been tested with LoRaWAN 1.0.2 networks and does not have t
 
 What certainly works:
 
- - Sending packets uplink, taking into account duty cycling.
- - Encryption and message integrity checking.
- - Receiving downlink packets in the RX2 window.
- - Custom frequencies and datarate settings.
- - Over-the-air activation (OTAA / joining).
- - Receiving downlink packets in the RX1 and RX2 windows.
- - Some MAC command processing.
+- Sending packets uplink, taking into account duty cycling.
+- Encryption and message integrity checking.
+- Receiving downlink packets in the RX2 window.
+- Custom frequencies and datarate settings.
+- Over-the-air activation (OTAA / joining).
+- Receiving downlink packets in the RX1 and RX2 windows.
+- Some MAC command processing.
 
 What has not been tested:
 
- - Receiving and processing all MAC commands.
- - Class B operation.
- - FSK has not been extensively tested.
+- Receiving and processing all MAC commands.
+- Class B operation.
+- FSK has not been extensively tested.
 
 If you try one of these untested features and it works, be sure to let
 us know (creating a github issue is probably the best way for that).
@@ -131,7 +130,7 @@ directory is the only directory that contains files that you
 should edit to match your project; we organize things this way
 so that your local changes are more clearly separated from
 the distribution files. The Arduino environment doesn't give
-us a better way to do this.
+us a better way to do this, unless you change `BOARDS.txt`.
 
 Unlike other ports of the LMIC code, in this port, you should not edit `src/lmic/config.h` to configure this package.
 
@@ -147,6 +146,7 @@ The library supports the following regions:
 `-D CFG_us915` | `LMIC_REGION_us915` | 2 | 2.2 | US 902-928 MHz ISM
 `-D CFG_au921` | `LMIC_REGION_au921` | 5 | 2.5 | Australia 915-928 MHz ISM
 `-D CFG_as923` | `LMIC_REGION_as923` | 7 | 2.7 | Asia 923 MHz ISM
+`-D CFG_as923jp` | `LMIC_REGION_as923` and `LMIC_COUNTRY_CODE_JP` | 7 | 2.7 | Asia 923 MHz ISM  with Japan listen-before-talk (LBT) rules
 `-D CFG_in866` | `LMIC_REGION_in866` | 9 | 2.9 | India 865-867 MHz ISM
 
 You should define exactly one of `CFG_...` variables. If you don't,
@@ -205,8 +205,7 @@ By default, PING support is included in the library.
 If defined, removes all code needed for handling beacons. Removes the APIs `LMIC_enableTracking()` and `LMIC_disableTracking()`.
 Class A devices don't support beacons, so defining `DISABLE_BEACONS` might be a good idea.
 
-
-### Rarely changed variables ###
+### Rarely changed variables
 
 The remaining variables are rarely used, but we list them here for completeness.
 
@@ -1021,6 +1020,10 @@ function uflt122f(rawUflt12)
 ```
 
 ## Release History
+
+- Interim bug fixes: added a new API (`radio_irq_handler_v2()`), which allows the caller to provide the timestamp of the interrupt. This allows for more accurate timing, because the knowledge of interrupt overhead can be moved to a platform-specific layer ([#148](https://github.com/mcci-catena/arduino-lmic/issues/148)). Fixed compile issues on ESP32 ([#140](https://github.com/mcci-catena/arduino-lmic/issues/140) and [#153](https://github.com/mcci-catena/arduino-lmic/issues/150)). We added ESP32 and 32u4 as targets in CI testing. We switched CI testing to Arduino IDE 1.8.7.
+   Fixed issue [#161](https://github.com/mcci-catena/arduino-lmic/issues/161) selecting the Japan version of as923 using `CFG_as923jp` (selecting via `CFG_as923` and `LMIC_COUNTRY_CODE=LMIC_COUNTRY_CODE_JP` worked).
+   Fixed [#38](https://github.com/mcci-catena/arduino-lmic/issues/38) -- now any call to hal_init() will put the NSS line in the idle (high/inactive) state. As a side effect, RXTX is initialized, and RESET code changed to set value before transitioning state. Likely no net effect, but certainly more correct.
 
 - V2.2.2 adds `ttn-abp-feather-us915-dht22.ino` example, and fixes some documentation typos. It also fixes encoding of the `Margin` field of the `DevStatusAns` MAC message ([#130](https://github.com/mcci-catena/arduino-lmic/issues/130)).  This makes Arduino LMIC work with newtorks implemented with [LoraServer](https://www.loraserver.io/).
 

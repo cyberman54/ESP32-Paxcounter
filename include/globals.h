@@ -46,6 +46,13 @@ typedef struct {
   uint16_t altitude;
 } gpsStatus_t;
 
+typedef struct {
+  float temperature; // Temperature in degrees Centigrade
+  uint16_t pressure; // Barometic pressure in hecto pascals
+  float humidity; // Relative humidity in percent
+  uint16_t gas_resistance; // Resistance in MOhms
+} bmeStatus_t;
+
 // global variables
 extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
@@ -65,6 +72,10 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 #ifdef HAS_GPS
 #include "gpsread.h"
+#endif
+
+#ifdef HAS_BME
+#include "bme680read.h"
 #endif
 
 #ifdef HAS_LORA

@@ -55,7 +55,8 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL, *displaytimer = NULL; // irq tasks
+hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
+           *displaytimer = NULL; // irq tasks
 TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 std::set<uint16_t> macs; // container holding unique MAC adress hashes
@@ -155,6 +156,12 @@ void setup() {
 // initialize gps
 #ifdef HAS_GPS
   strcat_P(features, " GPS");
+#endif
+
+// initialize gps
+#ifdef HAS_BME
+  strcat_P(features, " BME");
+  bme_init();
 #endif
 
 // initialize LoRa
