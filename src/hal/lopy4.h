@@ -25,7 +25,7 @@
 #define LORA_MISO (19)
 #define LORA_MOSI (27)
 #define LORA_RST  LMIC_UNUSED_PIN
-#define LORA_IO0  (23) // LoRa IRQ
+#define LORA_IRQ  (23) // LoRa IRQ
 #define LORA_IO1  (23) // Pin tied via diode to DIO0
 #define LORA_IO2  (23) // Pin tied via diode to DIO0
 

@@ -15,6 +15,8 @@
 
 #define HAS_BME 0x77  // BME680 sensor on I2C bus (SDA=4/SCL=15); comment out if not present
 
+#define HAS_SENSORS 1 // comment out if device has user defined sensors
+
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
 #define BOARD_HAS_PSRAM // use if board has external PSRAM
@@ -45,7 +47,7 @@
 #define LORA_MISO (19)
 #define LORA_MOSI (27)
 #define LORA_RST  (14)
-#define LORA_IO0  (26)
+#define LORA_IRQ  (26)
 #define LORA_IO1  (33)
 #define LORA_IO2  LMIC_UNUSED_PIN
 

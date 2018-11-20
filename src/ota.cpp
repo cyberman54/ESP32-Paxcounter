@@ -146,9 +146,7 @@ int do_ota_update() {
   WiFiClientSecure client;
 
   client.setCACert(bintray.getCertificate(currentHost));
-  // client.setTimeout(RESPONSE_TIMEOUT_MS);
-  // --> causing error [E][WiFiClient.cpp:236] setSocketOption(): 1006 : 9
-  // so we unfortunately need patched update.cpp which sets the stream timeout
+  client.setTimeout(RESPONSE_TIMEOUT_MS);
 
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());

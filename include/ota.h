@@ -5,7 +5,8 @@
 
 #include "globals.h"
 #include "battery.h"
-#include "update.h"
+//#include "update.h"
+#include <Update.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <BintrayClient.h>

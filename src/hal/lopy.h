@@ -16,7 +16,7 @@
 #define LORA_MISO (19) // GPIO19 - SX1276 MISO
 #define LORA_MOSI (27) // GPIO27 - SX1276 MOSI
 #define LORA_RST  (18) // GPIO18 - SX1276 RESET
-#define LORA_IO0  (23) // LoRa IRQ
+#define LORA_IRQ  (23) // LoRa IRQ
 #define LORA_IO1  (23) // Pin tied via diode to DIO0
 #define LORA_IO2  (23) // Pin tied via diode to DIO0
 

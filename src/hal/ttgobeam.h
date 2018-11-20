@@ -24,7 +24,7 @@
 #define LORA_MISO (19)
 #define LORA_MOSI (27)
 #define LORA_RST   LMIC_UNUSED_PIN
-#define LORA_IO0  (26)
+#define LORA_IRQ  (26)
 #define LORA_IO1  (32) // !! NEEDS EXTERNAL WIRING !!
 //#define LORA_IO1  (33)  // for T-Beam T22_V05 and T22_V07, other versions may need external wiring
 #define LORA_IO2  LMIC_UNUSED_PIN

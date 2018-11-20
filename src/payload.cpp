@@ -1,4 +1,3 @@
-
 #include "globals.h"
 #include "payload.h"
 
@@ -93,6 +92,14 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 }
 
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+  uint8_t length = buf[0];
+  memcpy(buffer, buf + 1, length);
+  cursor += length; // length of buffer
+#endif
+}
+
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
   int16_t temperature = (int16_t)(value.temperature); // float -> int
@@ -171,6 +178,14 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   writeUint8(value.satellites);
   writeUint16(value.hdop);
   writeUint16(value.altitude);
+#endif
+}
+
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+  uint8_t length = buf[0];
+  memcpy(buffer, buf + 1, length);
+  cursor += length; // length of buffer
 #endif
 }
 
@@ -335,6 +350,17 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = (byte)((alt & 0x00FF00) >> 8);
   buffer[cursor++] = (byte)(alt & 0x0000FF);
 #endif // HAS_GPS
+}
+
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+// to come
+/*
+  uint8_t length = buf[0];
+  memcpy(buffer, buf+1, length);
+  cursor += length; // length of buffer
+*/
+#endif
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {

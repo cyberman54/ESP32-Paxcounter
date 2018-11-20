@@ -122,4 +122,8 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 #include "antenna.h"
 #endif
 
+#ifdef HAS_SENSORS
+#include "sensor.h"
+#endif
+
 #endif

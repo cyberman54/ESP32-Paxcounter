@@ -27,7 +27,7 @@
 #define LORA_MISO (19)
 #define LORA_MOSI (27)
 #define LORA_RST  (25)
-#define LORA_IO0  (27)
+#define LORA_IRQ  (27)
 #define LORA_IO1  (26)
 #define LORA_IO2  LMIC_UNUSED_PIN
 #define LORA_IO5  LMIC_UNUSED_PIN

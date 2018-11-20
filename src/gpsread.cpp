@@ -16,6 +16,9 @@ void gps_read() {
   gps_status.satellites = (uint8_t)gps.satellites.value();
   gps_status.hdop = (uint16_t)gps.hdop.value();
   gps_status.altitude = (int16_t)gps.altitude.meters();
+  // show NMEA data in debug mode, useful for debugging GPS
+  ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+           gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
 }
 
 // GPS serial feed FreeRTos Task
