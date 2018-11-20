@@ -4,6 +4,13 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+void sensor_init(void) {
+
+  // this function is called dureing device startup
+  // put your sensor initialization routines here
+
+}
+
 uint8_t sensor_mask(uint8_t sensor_no) {
   switch (sensor_no) {
   case 1:

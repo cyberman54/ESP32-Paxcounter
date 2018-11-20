@@ -158,10 +158,16 @@ void setup() {
   strcat_P(features, " GPS");
 #endif
 
-// initialize gps
+// initialize bme
 #ifdef HAS_BME
   strcat_P(features, " BME");
   bme_init();
+#endif
+
+// initialize sensors
+#ifdef HAS_SENSORS
+  strcat_P(features, " SENS");
+  sensor_init();
 #endif
 
 // initialize LoRa

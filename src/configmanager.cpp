@@ -317,9 +317,9 @@ void loadConfig() {
 
     if (nvs_get_i8(my_handle, "payloadmask", &flash8) == ESP_OK) {
       cfg.payloadmask = flash8;
-      ESP_LOGI(TAG, "GPS mode = %d", flash8);
+      ESP_LOGI(TAG, "payloadmask = %u", flash8);
     } else {
-      ESP_LOGI(TAG, "GPS mode set to default %d", cfg.payloadmask);
+      ESP_LOGI(TAG, "payloadmask set to default %u", cfg.payloadmask);
       saveConfig();
     }
 
