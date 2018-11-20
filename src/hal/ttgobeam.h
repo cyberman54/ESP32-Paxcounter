@@ -5,7 +5,11 @@
 
 // Hardware related definitions for TTGO T-Beam board
 
-#define HAS_SENSORS 1 // test
+////////////// test //////////
+// enable only if device has these sensors, otherwise comment these lines
+#define HAS_BME 0x77  // BME680 sensor on I2C bus (default SDA=21/SCL=22); comment out if not present
+//#define HAS_SENSORS 1 // comment out if device has user defined sensors
+////////////// test //////////
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC

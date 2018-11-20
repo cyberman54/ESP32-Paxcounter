@@ -133,6 +133,7 @@ void set_gps(uint8_t val[]) {
 }
 
 void set_sensor(uint8_t val[]) {
+#ifdef HAS_SENSORS
   switch (val[0]) { // check if valid sensor number 1...4
   case 1:
   case 2:
@@ -153,6 +154,7 @@ void set_sensor(uint8_t val[]) {
     cfg.payloadmask |= sensor_mask(val[0]); // set bit
   else
     cfg.payloadmask &= ~sensor_mask(val[0]); // clear bit
+#endif
 }
 
 void set_beacon(uint8_t val[]) {
