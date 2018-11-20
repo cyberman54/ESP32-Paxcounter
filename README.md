@@ -305,6 +305,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	byte 1 = beacon ID (0..255)
 	bytes 2..7 = beacon MAC with 6 digits (e.g. MAC 80:ab:00:01:02:03 -> 0x80ab00010203)
 
+0x13 set user sensor mode
+
+	byte 1 = user sensor number (1..4)
+	byte 2 = sensor mode (0 = disabled / 1 = enabled [default])
+
 0x80 get device configuration
 
 	Device answers with it's current configuration on Port 3. 

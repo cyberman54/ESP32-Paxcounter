@@ -4,7 +4,21 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-uint8_t * sensor_read(uint8_t sensor) {
+uint8_t sensor_mask(uint8_t sensor_no) {
+  switch (sensor_no) {
+  case 1:
+    return (uint8_t)SENSOR1_DATA;
+  case 2:
+    return (uint8_t)SENSOR2_DATA;
+    break;
+  case 3:
+    return (uint8_t)SENSOR3_DATA;
+  case 4:
+    return (uint8_t)SENSOR4_DATA;
+  }
+}
+
+uint8_t *sensor_read(uint8_t sensor) {
 
   static uint8_t buf[SENSORBUFFER] = {0};
   uint8_t length = 3;

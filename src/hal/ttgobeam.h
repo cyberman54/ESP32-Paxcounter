@@ -5,6 +5,8 @@
 
 // Hardware related definitions for TTGO T-Beam board
 
+#define HAS_SENSORS 1 // test
+
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 

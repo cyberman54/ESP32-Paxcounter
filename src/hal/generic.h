@@ -13,8 +13,8 @@
 #define SPI_SCLK GPIO_NUM_18
 #define SPI_CS   GPIO_NUM_5
 
-#define HAS_BME 0x77  // BME680 sensor on I2C bus (SDA=4/SCL=15); comment out if not present
-
+// enable only if device has these sensors, otherwise comment these lines
+#define HAS_BME 0x77  // BME680 sensor on I2C bus (default SDA=4/SCL=15); comment out if not present
 #define HAS_SENSORS 1 // comment out if device has user defined sensors
 
 #define CFG_sx1276_radio 1 // select LoRa chip
