@@ -118,6 +118,10 @@ int do_ota_update() {
   // Fetch the latest firmware version
   ESP_LOGI(TAG, "Checking latest firmware version on server");
   display(2, "**", "checking version");
+
+  if (WiFi.status() != WL_CONNECTED)
+    return 1;
+
   const String latest = bintray.getLatestVersion();
 
   if (latest.length() == 0) {
@@ -133,6 +137,8 @@ int do_ota_update() {
   display(2, "OK", latest.c_str());
 
   display(3, "**", "");
+  if (WiFi.status() != WL_CONNECTED)
+    return 1;
   String firmwarePath = bintray.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format");

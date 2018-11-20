@@ -8,8 +8,6 @@ static const char TAG[] = "main";
 // helper function
 void do_reset() {
   ESP_LOGI(TAG, "Remote command: restart device");
-  if (irqHandlerTask != NULL)
-    vTaskDelete(irqHandlerTask);
   LMIC_shutdown();
   vTaskDelay(3000 / portTICK_PERIOD_MS);
   esp_restart();
