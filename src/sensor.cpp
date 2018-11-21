@@ -4,11 +4,12 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+#define SENSORBUFFER 10 // max. size of user sensor data buffer in bytes [default=20]
+
 void sensor_init(void) {
 
   // this function is called dureing device startup
   // put your sensor initialization routines here
-
 }
 
 uint8_t sensor_mask(uint8_t sensor_no) {
