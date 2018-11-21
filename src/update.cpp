@@ -3,7 +3,7 @@ this file copied from esp32-arduino library and patched, see PR
 https://github.com/espressif/arduino-esp32/pull/1979
 */
 
-#include "Update.h"
+#include "update.h"
 #include "Arduino.h"
 #include "esp_spi_flash.h"
 #include "esp_ota_ops.h"
