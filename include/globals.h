@@ -95,7 +95,7 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 #endif
 
 #ifdef HAS_BME
-#include "bme680.h"
+#include "bme680mems.h"
 #endif
 
 #ifdef HAS_LORA
