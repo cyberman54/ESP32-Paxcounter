@@ -101,6 +101,11 @@ u4_t LMICau921_convFreq(xref2cu1_t ptr) {
 
 // au921: no support for xchannels.
 bit_t LMIC_setupChannel(u1_t chidx, u4_t freq, u2_t drmap, s1_t band) {
+        LMIC_API_PARAMETER(chidx);
+        LMIC_API_PARAMETER(freq);
+        LMIC_API_PARAMETER(drmap);
+        LMIC_API_PARAMETER(band);
+
         return 0; // all channels are hardwired.
 }
 

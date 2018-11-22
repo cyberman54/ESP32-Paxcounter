@@ -171,4 +171,11 @@
 # endif // defined(LMIC_DISABLE_DR_LEGACY)
 #endif // LMIC_DR_LEGACY
 
+// LMIC_ENABLE_DeviceTimeReq
+// enable support for MCMD_DeviceTimeReq and MCMD_DeviceTimeAns
+// this is always defined, and non-zero to enable it.
+#if !defined(LMIC_ENABLE_DeviceTimeReq)
+# define LMIC_ENABLE_DeviceTimeReq 0
+#endif
+
 #endif // _lmic_config_h_

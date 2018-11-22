@@ -10,7 +10,6 @@
 */
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
-#define HAS_SPI 1        // comment out if device shall not send data via SPI
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define HAS_LED NOT_A_PIN // no usable LED on board
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature

@@ -41,6 +41,11 @@ function Decoder(bytes, port) {
         return decode(bytes, [uint8, uint8], ['rssi', 'beacon']);
     }
 
+    if (port === 7) {
+        // BME680 sensor data     
+        return decode(bytes, [temperature, uint16, humidity, uint16], ['temperature', 'pressure', 'humidity', 'air']);
+    }
+
 }
 
 
@@ -132,7 +137,7 @@ var temperature = function (bytes) {
     if (isNegative) {
         t = -t;
     }
-    return t / 1e2;
+    return +(t / 100).toFixed(1);
 };
 temperature.BYTES = 2;
 
@@ -142,7 +147,7 @@ var humidity = function (bytes) {
     }
 
     var h = bytesToInt(bytes);
-    return h / 1e2;
+    return +(h / 100).toFixed(1);
 };
 humidity.BYTES = 2;
 

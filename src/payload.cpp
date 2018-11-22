@@ -75,8 +75,8 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
   buffer[cursor++] = (byte)(reset2);
 }
 
-#ifdef HAS_GPS
 void PayloadConvert::addGPS(gpsStatus_t value) {
+#ifdef HAS_GPS
   buffer[cursor++] = (byte)((value.latitude & 0xFF000000) >> 24);
   buffer[cursor++] = (byte)((value.latitude & 0x00FF0000) >> 16);
   buffer[cursor++] = (byte)((value.latitude & 0x0000FF00) >> 8);
@@ -90,14 +90,32 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = lowByte(value.hdop);
   buffer[cursor++] = highByte(value.altitude);
   buffer[cursor++] = lowByte(value.altitude);
+#endif
 }
-#endif
 
+void PayloadConvert::addBME(bmeStatus_t value) {
+#ifdef HAS_BME
+  int16_t temperature = (int16_t)(value.temperature); // float -> int
+  uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
+  buffer[cursor++] = highByte(temperature);
+  buffer[cursor++] = lowByte(temperature);
+  buffer[cursor++] = highByte(value.pressure);
+  buffer[cursor++] = lowByte(value.pressure);
+  buffer[cursor++] = highByte(humidity);
+  buffer[cursor++] = lowByte(humidity);
+  buffer[cursor++] = highByte(value.gas_resistance);
+  buffer[cursor++] = lowByte(value.gas_resistance);
+#endif
+}
+
+void PayloadConvert::addButton(uint8_t value) {
 #ifdef HAS_BUTTON
-void PayloadConvert::addButton(uint8_t value) { buffer[cursor++] = value; }
+  buffer[cursor++] = value;
 #endif
+}
 
-/* ---------------- packed format with LoRa serialization Encoder ---------- */
+/* ---------------- packed format with LoRa serialization Encoder ----------
+ */
 // derived from
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
@@ -138,18 +156,29 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
   writeUint8(reset2);
 }
 
-#ifdef HAS_GPS
 void PayloadConvert::addGPS(gpsStatus_t value) {
+#ifdef HAS_GPS
   writeLatLng(value.latitude, value.longitude);
   writeUint8(value.satellites);
   writeUint16(value.hdop);
   writeUint16(value.altitude);
+#endif
 }
-#endif
 
-#ifdef HAS_BUTTON
-void PayloadConvert::addButton(uint8_t value) { writeUint8(value); }
+void PayloadConvert::addBME(bmeStatus_t value) {
+#ifdef HAS_BME
+  writeTemperature(value.temperature);
+  writeUint16(value.pressure);
+  writeHumidity(value.humidity);
+  writeUint16(value.gas_resistance);
 #endif
+}
+
+void PayloadConvert::addButton(uint8_t value) {
+#ifdef HAS_BUTTON
+  writeUint8(value);
+#endif
+}
 
 void PayloadConvert::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
@@ -162,7 +191,7 @@ void PayloadConvert::writeUptime(uint64_t uptime) {
   intToBytes(cursor, uptime, 8);
 }
 
-void PayloadConvert::writeVersion(char * version) {
+void PayloadConvert::writeVersion(char *version) {
   memcpy(buffer + cursor, version, 10);
   cursor += 10;
 }
@@ -212,8 +241,10 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
   writeUint8(bitmap);
 }
 
-/* ---------------- Cayenne LPP format ---------- */
-// http://community.mydevices.com/t/cayenne-lpp-2-0/7510
+/* ---------------- Cayenne LPP 2.0 format ---------- */
+// see specs http://community.mydevices.com/t/cayenne-lpp-2-0/7510
+// PAYLOAD_ENCODER == 3 -> Dynamic Sensor Payload, using channels -> FPort 1
+// PAYLOAD_ENCODER == 4 -> Packed Sensor Payload, not using channels -> FPort 2
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
@@ -221,13 +252,15 @@ void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
   buffer[cursor++] = highByte(value1);
   buffer[cursor++] = lowByte(value1);
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_LUMINOSITY; // workaround, type meter not found?
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
   buffer[cursor++] = highByte(value2);
   buffer[cursor++] = lowByte(value2);
 }
@@ -264,17 +297,18 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = highByte(volt);
   buffer[cursor++] = lowByte(volt);
-#endif
+#endif // HAS_BATTERY_PROBE
+
 #if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_TEMP_CHANNEL;
+  buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
 #endif
   buffer[cursor++] = LPP_TEMPERATURE;
   buffer[cursor++] = highByte(temp);
   buffer[cursor++] = lowByte(temp);
 }
 
-#ifdef HAS_GPS
 void PayloadConvert::addGPS(gpsStatus_t value) {
+#ifdef HAS_GPS
   int32_t lat = value.latitude / 100;
   int32_t lon = value.longitude / 100;
   int32_t alt = value.altitude * 100;
@@ -287,22 +321,61 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = (byte)((lat & 0x0000FF));
   buffer[cursor++] = (byte)((lon & 0xFF0000) >> 16);
   buffer[cursor++] = (byte)((lon & 0x00FF00) >> 8);
-  buffer[cursor++] = (byte)((lon & 0x0000FF));
+  buffer[cursor++] = (byte)(lon & 0x0000FF);
   buffer[cursor++] = (byte)((alt & 0xFF0000) >> 16);
   buffer[cursor++] = (byte)((alt & 0x00FF00) >> 8);
-  buffer[cursor++] = (byte)((alt & 0x0000FF));
+  buffer[cursor++] = (byte)(alt & 0x0000FF);
+#endif // HAS_GPS
 }
-#endif
 
-#ifdef HAS_BUTTON
+void PayloadConvert::addBME(bmeStatus_t value) {
+#ifdef HAS_BME
+
+  // data value conversions to meet cayenne data type definition
+  // 0.1°C per bit => -3276,7 .. +3276,7 °C
+  int16_t temperature = (int16_t)(value.temperature * 10.0);
+  // 0.1 hPa per bit => 0 .. 6553,6 hPa
+  uint16_t pressure = value.pressure * 10;
+  // 0.5% per bit => 0 .. 128 %C
+  uint8_t humidity = (uint8_t)(value.humidity * 2.0);
+  // 0.01 Ohm per bit => 0 .. 655,36 Ohm
+  uint16_t gas = value.gas_resistance * 100;
+
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_TEMPERATURE; // 2 bytes 0.1 °C Signed MSB
+  buffer[cursor++] = highByte(temperature);
+  buffer[cursor++] = lowByte(temperature);
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_BAROMETER_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_BAROMETER; // 2 bytes 0.1 hPa Unsigned MSB
+  buffer[cursor++] = highByte(pressure);
+  buffer[cursor++] = lowByte(pressure);
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_HUMIDITY_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_HUMIDITY; // 1 byte 0.5 % Unsigned
+  buffer[cursor++] = humidity;
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_GAS_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_ANALOG_INPUT; // 2 bytes 0.01 Signed
+  buffer[cursor++] = highByte(gas);
+  buffer[cursor++] = lowByte(gas);
+#endif // HAS_BME
+}
+
 void PayloadConvert::addButton(uint8_t value) {
+#ifdef HAS_BUTTON
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BUTTON_CHANNEL;
 #endif
   buffer[cursor++] = LPP_DIGITAL_INPUT;
   buffer[cursor++] = value;
+#endif // HAS_BUTTON
 }
-#endif
 
 #else
 #error "No valid payload converter defined"

@@ -1,8 +1,12 @@
 #ifndef _SENDDATA_H
 #define _SENDDATA_H
 
-void SendData(uint8_t port);
-void sendPayload(void);
+#include "spislave.h"
+#include "lorawan.h"
+#include "cyclic.h"
+
+void SendPayload(uint8_t port);
+void sendCounter(void);
 void checkSendQueues(void);
 void flushQueues();
 

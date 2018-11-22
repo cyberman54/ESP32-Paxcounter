@@ -107,7 +107,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 #endif
           payload.reset();
           payload.addAlarm(rssi, beaconID);
-          SendData(BEACONPORT);
+          SendPayload(BEACONPORT);
         }
       };
 

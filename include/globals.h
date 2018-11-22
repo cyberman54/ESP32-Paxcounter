@@ -38,6 +38,21 @@ typedef struct {
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 
+typedef struct {
+  uint32_t latitude;
+  uint32_t longitude;
+  uint8_t satellites;
+  uint16_t hdop;
+  uint16_t altitude;
+} gpsStatus_t;
+
+typedef struct {
+  float temperature; // Temperature in degrees Centigrade
+  uint16_t pressure; // Barometic pressure in hecto pascals
+  float humidity; // Relative humidity in percent
+  uint16_t gas_resistance; // Resistance in MOhms
+} bmeStatus_t;
+
 // global variables
 extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
@@ -52,22 +67,19 @@ extern std::array<uint64_t, 0xff> beacons;
 
 extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
+#include "led.h"
+#include "payload.h"
+
 #ifdef HAS_GPS
 #include "gpsread.h"
 #endif
 
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-#include "led.h"
+#ifdef HAS_BME
+#include "bme680read.h"
 #endif
-
-#include "payload.h"
 
 #ifdef HAS_LORA
 #include "lorawan.h"
-#endif
-
-#ifdef HAS_SPI
-#include "spisend.h"
 #endif
 
 #ifdef HAS_DISPLAY
@@ -89,9 +101,5 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 #ifdef HAS_ANTENNA_SWITCH
 #include "antenna.h"
 #endif
-
-void reset_counters(void);
-void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
-uint64_t uptime();
 
 #endif

@@ -26,5 +26,12 @@ void os_getDevEui(u1_t *buf);
 void showLoraKeys(void);
 void switch_lora(uint8_t sf, uint8_t tx);
 void lora_send(osjob_t *job);
+void lora_enqueuedata(MessageBuffer_t *message);
+void lora_queuereset(void);
+void lora_housekeeping(void);
+void user_request_network_time_callback(void *pVoidUserUTCTime,
+                                        int flagSuccess);
+
+esp_err_t lora_stack_init();
 
 #endif

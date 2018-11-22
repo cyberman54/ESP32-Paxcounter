@@ -35,8 +35,8 @@ void irqHandler(void *pvParameters) {
       doHousekeeping();
 
     // is time to send the payload?
-    if (InterruptStatus & SENDPAYLOAD_IRQ)
-      sendPayload();
+    if (InterruptStatus & SENDCOUNTER_IRQ)
+      sendCounter();
   }
   vTaskDelete(NULL); // shoud never be reached
 }
@@ -55,7 +55,7 @@ void IRAM_ATTR homeCycleIRQ() {
 }
 
 void IRAM_ATTR SendCycleIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, SENDPAYLOAD_IRQ, eSetBits, NULL);
+  xTaskNotifyFromISR(irqHandlerTask, SENDCOUNTER_IRQ, eSetBits, NULL);
   portYIELD_FROM_ISR();
 }
 

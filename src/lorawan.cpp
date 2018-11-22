@@ -1,10 +1,10 @@
-#ifdef HAS_LORA
-
 // Basic Config
 #include "lorawan.h"
 
 // Local logging Tag
 static const char TAG[] = "lora";
+
+#ifdef HAS_LORA
 
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
@@ -328,10 +328,14 @@ void lora_send(osjob_t *job) {
     // waiting for LoRa getting ready
   } else {
     if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-      // SendBuffer gets struct MessageBuffer with next payload from queue
-      LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                      SendBuffer.MessageSize, (cfg.countermode & 0x02));
-      ESP_LOGI(TAG, "%d bytes sent to LoRa", SendBuffer.MessageSize);
+      // SendBuffer now filled with next payload from queue
+      if (!LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                           SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
+        ESP_LOGI(TAG, "%d byte(s) sent to LoRa", SendBuffer.MessageSize);
+      } else {
+        ESP_LOGE(TAG, "could not send %d byte(s) to LoRa",
+                 SendBuffer.MessageSize);
+      }
       // sprintf(display_line7, "PACKET QUEUED");
     }
   }
@@ -342,3 +346,107 @@ void lora_send(osjob_t *job) {
 }
 
 #endif // HAS_LORA
+
+esp_err_t lora_stack_init() {
+#ifndef HAS_LORA
+  return ESP_OK; // continue main program
+#else
+  LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
+  if (LoraSendQueue == 0) {
+    ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
+    return ESP_FAIL;
+  }
+  ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
+           SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+
+  ESP_LOGI(TAG, "Starting LMIC...");
+  os_init();    // initialize lmic run-time environment on core 1
+  LMIC_reset(); // initialize lmic MAC
+  LMIC_setLinkCheckMode(0);
+  // This tells LMIC to make the receive windows bigger, in case your clock is
+  // faster or slower. This causes the transceiver to be earlier switched on,
+  // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
+  // in src/lmic_config.h if you are limited on battery.
+  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power. Set
+  // the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
+
+#if defined(CFG_US915) || defined(CFG_au921)
+  // in the US, with TTN, it saves join time if we start on subband 1 (channels
+  // 8-15). This will get overridden after the join by parameters from the
+  // network. If working with other networks or in other regions, this will need
+  // to be changed.
+  LMIC_selectSubBand(1);
+#endif
+
+  if (!LMIC_startJoining()) { // start joining
+    ESP_LOGI(TAG, "Already joined");
+  }
+
+  return ESP_OK; // continue main program
+#endif
+}
+
+void lora_enqueuedata(MessageBuffer_t *message) {
+  // enqueue message in LORA send queue
+#ifdef HAS_LORA
+  BaseType_t ret =
+      xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
+  if (ret == pdTRUE) {
+    ESP_LOGI(TAG, "%d bytes enqueued for LORA interface", message->MessageSize);
+  } else {
+    ESP_LOGW(TAG, "LORA sendqueue is full");
+  }
+#endif
+}
+
+void lora_queuereset(void) {
+#ifdef HAS_LORA
+  xQueueReset(LoraSendQueue);
+#endif
+}
+
+void lora_housekeeping(void) {
+#ifdef HAS_LORA
+// ESP_LOGD(TAG, "loraloop %d bytes left",
+// uxTaskGetStackHighWaterMark(LoraTask));
+#endif
+}
+
+void user_request_network_time_callback(void *pVoidUserUTCTime,
+                                        int flagSuccess) {
+  // Explicit conversion from void* to uint32_t* to avoid compiler errors
+  uint32_t *pUserUTCTime = (uint32_t *)pVoidUserUTCTime;
+  lmic_time_reference_t lmicTimeReference;
+
+  if (flagSuccess != 1) {
+    ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
+    return;
+  }
+
+  // Populate lmic_time_reference
+  flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
+  if (flagSuccess != 1) {
+    ESP_LOGW(TAG, "LoRaWAN time request failed");
+    return;
+  }
+
+  // Update userUTCTime, considering the difference between the GPS and UTC
+  // epoch, and the leap seconds
+  *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
+  // Current time, in ticks
+  ostime_t ticksNow = os_getTime();
+  // Time when the request was sent, in ticks
+  ostime_t ticksRequestSent = lmicTimeReference.tLocal;
+  // Add the delay between the instant the time was transmitted and
+  // the current time
+  uint32_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
+  *pUserUTCTime += requestDelaySec;
+
+  // Update system time with  time read from the network
+  setTime(*pUserUTCTime);
+  ESP_LOGI(TAG, "Time synced by LoRa network to %02d:%02d:%02d", hour(),
+           minute(), second());
+}

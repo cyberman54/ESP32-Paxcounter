@@ -33,11 +33,19 @@ static void hal_io_init () {
 //    Serial.print("dio[1]: "); Serial.println(plmic_pins->dio[1]);
 //    Serial.print("dio[2]: "); Serial.println(plmic_pins->dio[2]);
 
+    // initialize SPI chip select to high (it's active low)
+    digitalWrite(plmic_pins->nss, HIGH);
     pinMode(plmic_pins->nss, OUTPUT);
-    if (plmic_pins->rxtx != LMIC_UNUSED_PIN)
+
+    if (plmic_pins->rxtx != LMIC_UNUSED_PIN) {
+        // initialize to RX
+        digitalWrite(plmic_pins->rxtx, LOW != plmic_pins->rxtx_rx_active);
         pinMode(plmic_pins->rxtx, OUTPUT);
-    if (plmic_pins->rst != LMIC_UNUSED_PIN)
-        pinMode(plmic_pins->rst, OUTPUT);
+    }
+    if (plmic_pins->rst != LMIC_UNUSED_PIN) {
+        // initialize RST to floating
+        pinMode(plmic_pins->rst, INPUT);
+    }
 
     hal_interrupt_init();
 }
@@ -54,8 +62,8 @@ void hal_pin_rst (u1_t val) {
         return;
 
     if(val == 0 || val == 1) { // drive pin
-        pinMode(plmic_pins->rst, OUTPUT);
         digitalWrite(plmic_pins->rst, val);
+        pinMode(plmic_pins->rst, OUTPUT);
     } else { // keep pin floating
         pinMode(plmic_pins->rst, INPUT);
     }

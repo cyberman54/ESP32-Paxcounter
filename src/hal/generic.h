@@ -7,6 +7,13 @@
 
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no LoRa
 #define HAS_SPI 1  // comment out if device shall not send data via SPI
+// pin definitions for SPI slave interface
+#define SPI_MOSI GPIO_NUM_23
+#define SPI_MISO GPIO_NUM_19
+#define SPI_SCLK GPIO_NUM_18
+#define SPI_CS   GPIO_NUM_5
+
+#define HAS_BME 0x77  // BME680 sensor on I2C bus (SDA=4/SCL=15); comment out if not present
 
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
