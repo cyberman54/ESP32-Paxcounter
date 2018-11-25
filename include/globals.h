@@ -67,10 +67,14 @@ typedef struct {
 } gpsStatus_t;
 
 typedef struct {
-  float temperature;       // Temperature in degrees Centigrade
-  uint16_t pressure;       // Barometic pressure in hecto pascals
-  float humidity;          // Relative humidity in percent
-  uint16_t gas_resistance; // Resistance in MOhms
+float iaq;             // IAQ signal
+uint8_t iaq_accuracy;  // accuracy of IAQ signal
+float temperature;     // temperature signal
+float humidity;        // humidity signal
+float pressure;        // pressure signal
+float raw_temperature; // raw temperature signal
+float raw_humidity;    // raw humidity signal
+float gas;             // raw gas sensor signal
 } bmeStatus_t;
 
 // global variables

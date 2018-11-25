@@ -104,14 +104,15 @@ void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
   int16_t temperature = (int16_t)(value.temperature); // float -> int
   uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
+  uint16_t iaq = (uint16_t)(value.iaq);               // float -> int
   buffer[cursor++] = highByte(temperature);
   buffer[cursor++] = lowByte(temperature);
   buffer[cursor++] = highByte(value.pressure);
   buffer[cursor++] = lowByte(value.pressure);
   buffer[cursor++] = highByte(humidity);
   buffer[cursor++] = lowByte(humidity);
-  buffer[cursor++] = highByte(value.gas_resistance);
-  buffer[cursor++] = lowByte(value.gas_resistance);
+  buffer[cursor++] = highByte(value.iaq);
+  buffer[cursor++] = lowByte(value.iaq);
 #endif
 }
 
@@ -194,7 +195,7 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   writeTemperature(value.temperature);
   writeUint16(value.pressure);
   writeHumidity(value.humidity);
-  writeUint16(value.gas_resistance);
+  writeUint16(value.iaq);
 #endif
 }
 
@@ -373,8 +374,8 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   uint16_t pressure = value.pressure * 10;
   // 0.5% per bit => 0 .. 128 %C
   uint8_t humidity = (uint8_t)(value.humidity * 2.0);
-  // 0.01 Ohm per bit => 0 .. 655,36 Ohm
-  uint16_t gas = value.gas_resistance * 100;
+  // 0.01 IAQ per bit => 0 .. 655,36 IAQ
+  uint16_t iaq = (uint16_t) value.iaq * 100;
 
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
@@ -397,8 +398,8 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   buffer[cursor++] = LPP_GAS_CHANNEL;
 #endif
   buffer[cursor++] = LPP_ANALOG_INPUT; // 2 bytes 0.01 Signed
-  buffer[cursor++] = highByte(gas);
-  buffer[cursor++] = lowByte(gas);
+  buffer[cursor++] = highByte(iaq);
+  buffer[cursor++] = lowByte(iaq);
 #endif // HAS_BME
 }
 

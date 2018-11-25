@@ -34,7 +34,8 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by irq
-gpsloop       1     2     reads data from GPS over serial or i2c
+gpsloop       1     2     reads data from GPS via serial or i2c
+bmeloop       1     2     reads data from BME sensor via i2c
 IDLE          1     0     ESP32 arduino scheduler
 
 ESP32 hardware timers
@@ -90,6 +91,29 @@ void setup() {
   esp_log_set_vprintf(redirect_log);
 #endif
 
+  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
+
+  // print chip information on startup if in verbose mode
+#ifdef VERBOSE
+  esp_chip_info_t chip_info;
+  esp_chip_info(&chip_info);
+  ESP_LOGI(TAG,
+           "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
+           "%d, %dMB %s Flash",
+           chip_info.cores, (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+           (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
+           chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
+           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
+                                                         : "external");
+  ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
+  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
+
+#ifdef HAS_GPS
+  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
+#endif
+
+#endif // verbose
+
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
@@ -100,12 +124,21 @@ void setup() {
 // switch on power LED if we have 2 LEDs, else use it for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
+  strcat_P(features, " RGB");
+  rgb_set_color(COLOR_PINK);
 #endif
 #endif
 
-#ifdef HAS_RGB_LED
-  rgb_set_color(COLOR_PINK);
-  strcat_P(features, " RGB");
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+  // start led loop
+  ESP_LOGI(TAG, "Starting LEDloop...");
+  xTaskCreatePinnedToCore(ledLoop,      // task function
+                          "ledloop",    // name of task
+                          1024,         // stack size of task
+                          (void *)1,    // parameter of the task
+                          3,            // priority of the task
+                          &ledLoopTask, // task handle
+                          0);           // CPU core
 #endif
 
   // initialize wifi antenna
@@ -156,12 +189,31 @@ void setup() {
 // initialize gps
 #ifdef HAS_GPS
   strcat_P(features, " GPS");
+  if (gps_init()) {
+    ESP_LOGI(TAG, "Starting GPSloop...");
+    xTaskCreatePinnedToCore(gps_loop,  // task function
+                            "gpsloop", // name of task
+                            2048,      // stack size of task
+                            (void *)1, // parameter of the task
+                            2,         // priority of the task
+                            &GpsTask,  // task handle
+                            1);        // CPU core
+  }
 #endif
 
 // initialize bme
 #ifdef HAS_BME
   strcat_P(features, " BME");
-  bme_init();
+  if (bme_init()) {
+    ESP_LOGI(TAG, "Starting BMEloop...");
+    xTaskCreatePinnedToCore(bme_loop,  // task function
+                            "bmeloop", // name of task
+                            4096,      // stack size of task
+                            (void *)1, // parameter of the task
+                            2,         // priority of the task
+                            &BmeTask,  // task handle
+                            1);        // CPU core
+  }
 #endif
 
 // initialize sensors
@@ -185,29 +237,6 @@ void setup() {
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
 #endif
-
-  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
-
-  // print chip information on startup if in verbose mode
-#ifdef VERBOSE
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  ESP_LOGI(TAG,
-           "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
-           "%d, %dMB %s Flash",
-           chip_info.cores, (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-           (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
-           chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
-           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
-                                                         : "external");
-  ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
-  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
-
-#ifdef HAS_GPS
-  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
-#endif
-
-#endif // verbose
 
 // initialize display
 #ifdef HAS_DISPLAY
@@ -277,17 +306,6 @@ void setup() {
   // function gets it's seed from RF noise
   get_salt(); // get new 16bit for salting hashes
 
-#ifdef HAS_GPS
-  ESP_LOGI(TAG, "Starting GPSloop...");
-  xTaskCreatePinnedToCore(gps_loop,  // task function
-                          "gpsloop", // name of task
-                          2048,      // stack size of task
-                          (void *)1, // parameter of the task
-                          2,         // priority of the task
-                          &GpsTask,  // task handle
-                          1);        // CPU core
-#endif
-
   // start state machine
   ESP_LOGI(TAG, "Starting IRQ Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
@@ -297,18 +315,6 @@ void setup() {
                           1,               // priority of the task
                           &irqHandlerTask, // task handle
                           1);              // CPU core
-
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-  // start led loop
-  ESP_LOGI(TAG, "Starting LEDloop...");
-  xTaskCreatePinnedToCore(ledLoop,      // task function
-                          "ledloop",    // name of task
-                          1024,         // stack size of task
-                          (void *)1,    // parameter of the task
-                          3,            // priority of the task
-                          &ledLoopTask, // task handle
-                          0);           // CPU core
-#endif
 
   // start wifi channel rotation task
   ESP_LOGI(TAG, "Starting Wifi Channel rotation...");

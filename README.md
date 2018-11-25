@@ -47,7 +47,7 @@ Depending on board hardware following features are supported:
 - Silicon unique ID
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
-- MEMS sensor (Bosch BME680)
+- Environmental sensor (Bosch BME680 I2C)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -198,12 +198,20 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 1:		Beacon RSSI reception level
 	byte 2:		Beacon identifier (0..255)
 
-**Port #7:** BME680 query result
+**Port #7:** Environmental sensor query result
 
 	bytes 1-2:	Temperature [°C]
 	bytes 3-4:	Pressure [hPa]
 	bytes 5-6:	Humidity [%]
-	bytes 7-8:	Gas resistance [kOhm]
+	bytes 7-8:	Indoor air quality index (0..500), see below
+
+	Indoor air quality classification:
+	0-50		good
+	51-100		average
+	101-150 	little bad
+	151-200 	bad
+	201-300 	worse
+	301-500 	very bad
 
 # Remote control
 

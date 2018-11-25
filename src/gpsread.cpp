@@ -9,6 +9,38 @@ TinyGPSPlus gps;
 gpsStatus_t gps_status;
 TaskHandle_t GpsTask;
 
+#ifdef GPS_SERIAL
+HardwareSerial GPS_Serial(1);
+#endif
+
+// initialize and configure GPS
+int gps_init(void) {
+
+  int ret = 1;
+
+#if defined GPS_SERIAL
+  GPS_Serial.begin(GPS_SERIAL);
+  ESP_LOGI(TAG, "Using serial GPS");
+#elif defined GPS_I2C
+  Wire.begin(GPS_I2C, 400000); // I2C connect to GPS device with 400 KHz
+  Wire.beginTransmission(GPS_ADDR);
+  Wire.write(0x00);             // dummy write
+  ret = Wire.endTransmission(); // check if chip is seen on i2c bus
+
+  if (ret) {
+    ESP_LOGE(TAG,
+             "Quectel L76 GPS chip not found on i2c bus, bus error %d. "
+             "Stopping GPS-Task.",
+             ret);
+    ret = 0;
+  } else {
+    ESP_LOGI(TAG, "Quectel L76 GPS chip found");
+  }
+#endif
+
+  return ret;
+} // gps_init()
+
 // read GPS data and cast to global struct
 void gps_read() {
   gps_status.latitude = (int32_t)(gps.location.lat() * 1e6);
@@ -25,30 +57,6 @@ void gps_read() {
 void gps_loop(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-// initialize and, if needed, configure, GPS
-#if defined GPS_SERIAL
-  HardwareSerial GPS_Serial(1);
-  GPS_Serial.begin(GPS_SERIAL);
-
-#elif defined GPS_I2C
-  uint8_t ret;
-  Wire.begin(GPS_I2C, 400000); // I2C connect to GPS device with 400 KHz
-  Wire.beginTransmission(GPS_ADDR);
-  Wire.write(0x00);             // dummy write
-  ret = Wire.endTransmission(); // check if chip is seen on i2c bus
-
-  if (ret) {
-    ESP_LOGE(TAG,
-             "Quectel L76 GPS chip not found on i2c bus, bus error %d. "
-             "Stopping GPS-Task.",
-             ret);
-    vTaskDelete(GpsTask);
-  } else {
-    ESP_LOGI(TAG, "Quectel L76 GPS chip found.");
-  }
-
-#endif
 
   while (1) {
 

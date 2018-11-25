@@ -69,8 +69,8 @@ fill in the various parameters as shown below
 
     gas_sensor.dev_id = BME680_I2C_ADDR_PRIMARY;
     gas_sensor.intf = BME680_I2C_INTF;
-    gas_sensor.read = user_i2c_read;
-    gas_sensor.write = user_i2c_write;
+    gas_sensor.read = i2c_read;
+    gas_sensor.write = i2c_write;
     gas_sensor.delay_ms = user_delay_ms;
     /* amb_temp can be set to 25 prior to configuring the gas sensor 
      * or by performing a few temperature readings without operating the gas sensor.
@@ -225,7 +225,7 @@ int8_t user_spi_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint1
     return rslt;
 }
 
-int8_t user_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
+int8_t i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
 {
     int8_t rslt = 0; /* Return 0 for Success, non-zero for failure */
 
@@ -252,7 +252,7 @@ int8_t user_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16
     return rslt;
 }
 
-int8_t user_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
+int8_t i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len)
 {
     int8_t rslt = 0; /* Return 0 for Success, non-zero for failure */
 
