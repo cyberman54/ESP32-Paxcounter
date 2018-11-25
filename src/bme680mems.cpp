@@ -5,69 +5,27 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+#define NUM_USED_OUTPUTS 8
+
 bmeStatus_t bme_status;
 
-void bme_init(void) {
+// initialize BME680 sensor
+ int bme_init(void) {
 
-  // initialize BME680 sensor
-
+  return_values_init ret = {BME680_OK, BSEC_OK};
   struct bme680_dev gas_sensor;
-
   Wire.begin(HAS_BME, 400000); // I2C connect to BME680 sensor with 400 KHz
 
-  // configure sensor for I2C communication
-  gas_sensor.dev_id = BME_ADDR;
-  gas_sensor.intf = BME680_I2C_INTF;
-  gas_sensor.read = user_i2c_read;
-  gas_sensor.write = user_i2c_write;
-  gas_sensor.delay_ms = user_delay_ms;
-  gas_sensor.amb_temp = 25;
-
-  int8_t rslt = BME680_OK;
-  rslt = bme680_init(&gas_sensor);
-
-  if (rslt == BME680_OK) {
-    ESP_LOGI(TAG, "BME680 sensor found");
-  } else {
-    ESP_LOGE(TAG, "BME680 sensor not found on i2c bus");
-    return;
-  }
-
-  // configure BME680 sensor in forced mode
-
-  uint8_t set_required_settings;
-
-  /* Set the temperature, pressure and humidity settings */
-  gas_sensor.tph_sett.os_hum = BME680_OS_2X;
-  gas_sensor.tph_sett.os_pres = BME680_OS_4X;
-  gas_sensor.tph_sett.os_temp = BME680_OS_8X;
-  gas_sensor.tph_sett.filter = BME680_FILTER_SIZE_3;
-
-  /* Set the remaining gas sensor settings and link the heating profile */
-  gas_sensor.gas_sett.run_gas = BME680_ENABLE_GAS_MEAS;
-  /* Create a ramp heat waveform in 3 steps */
-  gas_sensor.gas_sett.heatr_temp = 320; /* degree Celsius */
-  gas_sensor.gas_sett.heatr_dur = 150;  /* milliseconds */
-
-  /* Select the power mode */
-  /* Must be set before writing the sensor configuration */
-  gas_sensor.power_mode = BME680_FORCED_MODE;
-
-  /* Set the required sensor settings needed */
-  set_required_settings = BME680_OST_SEL | BME680_OSP_SEL | BME680_OSH_SEL |
-                          BME680_FILTER_SEL | BME680_GAS_SENSOR_SEL;
-
-  /* Set the desired sensor configuration */
-  rslt = bme680_set_sensor_settings(set_required_settings, &gas_sensor);
-
-  /* Set the power mode */
-  rslt = bme680_set_sensor_mode(&gas_sensor);
-
-  if (rslt == BME680_OK) {
-    ESP_LOGI(TAG, "BME680 sensor initialized");
-  } else {
-    ESP_LOGE(TAG, "BME680 initialization failed");
-    return;
+  /* Call to the function which initializes the BSEC library
+   * Switch on low-power mode and provide no temperature offset */
+  ret = bsec_iot_init(BSEC_SAMPLE_RATE_LP, 0.0f, user_i2c_write, user_i2c_read,
+                      user_delay_ms, state_load, config_load);
+  if (ret.bme680_status) {
+    /* Could not intialize BME680 */
+    return (int)ret.bme680_status;
+  } else if (ret.bsec_status) {
+    /* Could not intialize BSEC library */
+    return (int)ret.bsec_status;
   }
 }
 
@@ -89,6 +47,15 @@ bool bme_read(void) {
 
   */
 }
+
+/*
+//Call to endless loop function which reads and processes data based on
+//sensor settings
+//State is saved every 10.000 samples, which means every 10.000 * 3 secs =
+//500 minutes
+
+  bsec_iot_loop(sleep, get_timestamp_us, output_ready, state_save, 10000);
+*/
 
 int8_t user_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data,
                      uint16_t len) {
@@ -122,6 +89,93 @@ int8_t user_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data,
   return rslt;
 }
 
+/*!
+ * @brief           Load previous library state from non-volatile memory
+ *
+ * @param[in,out]   state_buffer    buffer to hold the loaded state string
+ * @param[in]       n_buffer        size of the allocated state buffer
+ *
+ * @return          number of bytes copied to state_buffer
+ */
+uint32_t state_load(uint8_t *state_buffer, uint32_t n_buffer) {
+  // ...
+  // Load a previous library state from non-volatile memory, if available.
+  //
+  // Return zero if loading was unsuccessful or no state was available,
+  // otherwise return length of loaded state string.
+  // ...
+  return 0;
+}
+
+/*!
+ * @brief           Save library state to non-volatile memory
+ *
+ * @param[in]       state_buffer    buffer holding the state to be stored
+ * @param[in]       length          length of the state string to be stored
+ *
+ * @return          none
+ */
+void state_save(const uint8_t *state_buffer, uint32_t length) {
+  // ...
+  // Save the string some form of non-volatile memory, if possible.
+  // ...
+}
+
+/*!
+ * @brief           Load library config from non-volatile memory
+ *
+ * @param[in,out]   config_buffer    buffer to hold the loaded state string
+ * @param[in]       n_buffer        size of the allocated state buffer
+ *
+ * @return          number of bytes copied to config_buffer
+ */
+uint32_t config_load(uint8_t *config_buffer, uint32_t n_buffer) {
+  // ...
+  // Load a library config from non-volatile memory, if available.
+  //
+  // Return zero if loading was unsuccessful or no config was available,
+  // otherwise return length of loaded config string.
+  // ...
+  return 0;
+}
+
+/*!
+ * @brief           Interrupt handler for press of a ULP plus button
+ *
+ * @return          none
+ */
+
+void ulp_plus_button_press() {
+  /* We call bsec_update_subscription() in order to instruct BSEC to perform an
+   * extra measurement at the next possible time slot
+   */
+
+  bsec_sensor_configuration_t requested_virtual_sensors[1];
+  uint8_t n_requested_virtual_sensors = 1;
+  bsec_sensor_configuration_t
+      required_sensor_settings[BSEC_MAX_PHYSICAL_SENSOR];
+  uint8_t n_required_sensor_settings = BSEC_MAX_PHYSICAL_SENSOR;
+  bsec_library_return_t status = BSEC_OK;
+
+  /* To trigger a ULP plus, we request the IAQ virtual sensor with a specific
+   * sample rate code */
+  requested_virtual_sensors[0].sensor_id = BSEC_OUTPUT_IAQ;
+  requested_virtual_sensors[0].sample_rate =
+      BSEC_SAMPLE_RATE_ULP_MEASUREMENT_ON_DEMAND;
+
+  /* Call bsec_update_subscription() to enable/disable the requested virtual
+   * sensors */
+  status = bsec_update_subscription(
+      requested_virtual_sensors, n_requested_virtual_sensors,
+      required_sensor_settings, &n_required_sensor_settings);
+
+  /* The status code would tell is if the request was accepted. It will be
+   * rejected if the sensor is not already in ULP mode, or if the time
+   * difference between requests is too short, for example. */
+}
+
 void user_delay_ms(uint32_t period) { vTaskDelay(period / portTICK_PERIOD_MS); }
+
+int64_t get_timestamp_us() { return (int64_t)millis() * 1000; }
 
 #endif // HAS_BME
