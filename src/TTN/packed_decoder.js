@@ -43,7 +43,7 @@ function Decoder(bytes, port) {
 
     if (port === 7) {
         // BME680 sensor data     
-        return decode(bytes, [float, ufloat, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
+        return decode(bytes, [float, uint16, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
     }
 
 }
@@ -151,6 +151,16 @@ var ufloat = function (bytes) {
 };
 ufloat.BYTES = 2;
 
+var pressure = function (bytes) {
+    if (bytes.length !== pressure.BYTES) {
+        throw new Error('Pressure must have exactly 2 bytes');
+    }
+
+    var h = bytesToInt(bytes);
+    return +(h / 10).toFixed(1);
+};
+pressure.BYTES = 2;
+
 var bitmap = function (byte) {
     if (byte.length !== bitmap.BYTES) {
         throw new Error('Bitmap must have exactly 1 byte');
@@ -195,6 +205,7 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         uptime: uptime,
         float: float,
         ufloat: ufloat,
+        pressure: pressure,
         latLng: latLng,
         hdop: hdop,
         bitmap: bitmap,
