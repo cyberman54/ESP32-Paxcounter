@@ -104,15 +104,16 @@ void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
   int16_t temperature = (int16_t)(value.temperature); // float -> int
   uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
+  uint16_t pressure = (uint16_t)(value.pressure);     // float -> int
   uint16_t iaq = (uint16_t)(value.iaq);               // float -> int
   buffer[cursor++] = highByte(temperature);
   buffer[cursor++] = lowByte(temperature);
-  buffer[cursor++] = highByte(value.pressure);
-  buffer[cursor++] = lowByte(value.pressure);
+  buffer[cursor++] = highByte(pressure);
+  buffer[cursor++] = lowByte(pressure);
   buffer[cursor++] = highByte(humidity);
   buffer[cursor++] = lowByte(humidity);
-  buffer[cursor++] = highByte(value.iaq);
-  buffer[cursor++] = lowByte(value.iaq);
+  buffer[cursor++] = highByte(iaq);
+  buffer[cursor++] = lowByte(iaq);
 #endif
 }
 
@@ -192,10 +193,10 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
 
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
-  writeTemperature(value.temperature);
-  writeUint16(value.pressure);
-  writeHumidity(value.humidity);
-  writeUint16(value.iaq);
+  writeFloat(value.temperature);
+  writeUFloat(value.pressure);
+  writeUFloat(value.humidity);
+  writeUFloat(value.iaq);
 #endif
 }
 
@@ -232,7 +233,7 @@ void PayloadConvert::writeUint16(uint16_t i) { intToBytes(cursor, i, 2); }
 
 void PayloadConvert::writeUint8(uint8_t i) { intToBytes(cursor, i, 1); }
 
-void PayloadConvert::writeHumidity(float humidity) {
+void PayloadConvert::writeUFloat(float humidity) {
   int16_t h = (int16_t)(humidity * 100);
   intToBytes(cursor, h, 2);
 }
@@ -241,7 +242,7 @@ void PayloadConvert::writeHumidity(float humidity) {
  * Uses a 16bit two's complement with two decimals, so the range is
  * -327.68 to +327.67 degrees
  */
-void PayloadConvert::writeTemperature(float temperature) {
+void PayloadConvert::writeFloat(float temperature) {
   int16_t t = (int16_t)(temperature * 100);
   if (temperature < 0) {
     t = ~-t;
@@ -375,7 +376,7 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   // 0.5% per bit => 0 .. 128 %C
   uint8_t humidity = (uint8_t)(value.humidity * 2.0);
   // 0.01 IAQ per bit => 0 .. 655,36 IAQ
-  uint16_t iaq = (uint16_t) value.iaq * 100;
+  uint16_t iaq = (uint16_t)value.iaq * 100;
 
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
@@ -395,7 +396,7 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   buffer[cursor++] = LPP_HUMIDITY; // 1 byte 0.5 % Unsigned
   buffer[cursor++] = humidity;
 #if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_GAS_CHANNEL;
+  buffer[cursor++] = LPP_AIR_CHANNEL;
 #endif
   buffer[cursor++] = LPP_ANALOG_INPUT; // 2 bytes 0.01 Signed
   buffer[cursor++] = highByte(iaq);
