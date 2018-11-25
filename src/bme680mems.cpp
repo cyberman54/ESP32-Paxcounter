@@ -8,10 +8,10 @@ static const char TAG[] = "main";
 bmeStatus_t bme_status;
 TaskHandle_t BmeTask;
 
-// BSEC configuration
-// 3,3V supply voltage; 3s sensor_control; 4 days calibration
-// change this const if not applicable for your application (see BME680
-// datasheet)
+// --- Bosch BSEC library configuration ---
+// 3,3V supply voltage; 3s max time between sensor_control calls; 4 days
+// calibration. Change this const if not applicable for your application (see
+// BME680 datasheet)
 const uint8_t bsec_config_iaq[454] = {
     1,   7,   4,   1,   61,  0,   0,   0,   0,   0,   0,   0,   174, 1,   0,
     0,   48,  0,   1,   0,   137, 65,  0,   63,  205, 204, 204, 62,  0,   0,
