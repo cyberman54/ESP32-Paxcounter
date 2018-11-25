@@ -21,43 +21,77 @@ void SendPayload(uint8_t port) {
 // interrupt triggered function to prepare payload to send
 void sendCounter() {
 
-  // append counter data to payload
-  payload.reset();
-  payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
-  // append GPS data, if present
+  uint8_t bitmask = cfg.payloadmask;
+  uint8_t mask = 1;
 
-  // clear counter if not in cumulative counter mode
-  if (cfg.countermode != 1) {
-    reset_counters(); // clear macs container and reset all counters
-    get_salt();       // get new salt for salting hashes
-    ESP_LOGI(TAG, "Counter cleared");
-  }
+  while (bitmask) {
+    switch (bitmask & mask) {
+
+    case COUNT_DATA:
+      payload.reset();
+      payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
+      SendPayload(COUNTERPORT);
+      // clear counter if not in cumulative counter mode
+      if (cfg.countermode != 1) {
+        reset_counters(); // clear macs container and reset all counters
+        get_salt();       // get new salt for salting hashes
+        ESP_LOGI(TAG, "Counter cleared");
+      }
+      break;
+
+#ifdef HAS_BME
+    case MEMS_DATA:
+      payload.reset();
+      payload.addBME(bme_status);
+      SendPayload(BMEPORT);
+      break;
+#endif
 
 #ifdef HAS_GPS
-  // show NMEA data in debug mode, useful for debugging GPS on board
-  // connection
-  ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
-           gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
-  // log GPS position if we have a fix and gps data mode is enabled
-  if ((cfg.gpsmode) && (gps.location.isValid())) {
-    gps_read();
-    payload.addGPS(gps_status);
-    ESP_LOGD(TAG, "lat=%.6f | lon=%.6f | %u Sats | HDOP=%.1f | Altitude=%um",
-             gps_status.latitude / (float)1e6,
-             gps_status.longitude / (float)1e6, gps_status.satellites,
-             gps_status.hdop / (float)100, gps_status.altitude);
-  } else {
-    ESP_LOGD(TAG, "No valid GPS position or GPS data mode disabled");
-  }
+    case GPS_DATA:
+      // send GPS position only if we have a fix
+      if (gps.location.isValid()) {
+        gps_read();
+        payload.reset();
+        payload.addGPS(gps_status);
+        SendPayload(GPSPORT);
+      } else
+        ESP_LOGD(TAG, "No valid GPS position");
+      break;
 #endif
-  SendPayload(COUNTERPORT);
 
-// if we have MEMS sensor, send sensor data in separate frame
-#ifdef HAS_BME
-  payload.reset();
-  payload.addBME(bme_status);
-  SendPayload(BMEPORT);
+#ifdef HAS_SENSORS
+
+    case SENSOR1_DATA:
+      payload.reset();
+      payload.addSensor(sensor_read(1));
+      SendPayload(SENSOR1PORT);
+      break;
+
+    case SENSOR2_DATA:
+      payload.reset();
+      payload.addSensor(sensor_read(2));
+      SendPayload(SENSOR2PORT);
+      break;
+
+    case SENSOR3_DATA:
+      payload.reset();
+      payload.addSensor(sensor_read(3));
+      SendPayload(SENSOR3PORT);
+      break;
+
+    case SENSOR4_DATA:
+      payload.reset();
+      payload.addSensor(sensor_read(4));
+      SendPayload(SENSOR4PORT);
+      break;
+
 #endif
+
+    } // switch
+    bitmask &= ~mask;
+    mask <<= 1;
+  } // while (bitmask)
 
 } // sendCounter()
 

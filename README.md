@@ -47,7 +47,7 @@ Depending on board hardware following features are supported:
 - Silicon unique ID
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
-- MEMS sensor (Bosch BME680)
+- Environmental sensor (Bosch BME680 I2C)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -151,7 +151,6 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1-2:	Number of unique pax, first seen on Wifi
 	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
-	bytes 5-18: 	GPS data, format see Port #4 (appended only, if GPS is present and has a fix)
 
 **Port #2:** Device status query result
 
@@ -177,12 +176,12 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
 	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
-	byte 16:	GPS send data mode (1=on, 0=ff) [default 1]
+	byte 16:	Payload filter mask
 	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
 	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
-**Port #4:** GPS query result
+**Port #4:** GPS query result (device answers only if has GPS and GPS has a fix)
 
 	bytes 1-4:	Latitude
 	bytes 5-8:	Longitude
@@ -199,12 +198,20 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 1:		Beacon RSSI reception level
 	byte 2:		Beacon identifier (0..255)
 
-**Port #7:** BME680 query result
+**Port #7:** Environmental sensor query result
 
 	bytes 1-2:	Temperature [°C]
 	bytes 3-4:	Pressure [hPa]
 	bytes 5-6:	Humidity [%]
-	bytes 7-8:	Gas resistance [kOhm]
+	bytes 7-8:	Indoor air quality index (0..500), see below
+
+	Indoor air quality classification:
+	0-50		good
+	51-100		average
+	101-150 	little bad
+	151-200 	bad
+	201-300 	worse
+	301-500 	very bad
 
 # Remote control
 
@@ -305,6 +312,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	byte 1 = beacon ID (0..255)
 	bytes 2..7 = beacon MAC with 6 digits (e.g. MAC 80:ab:00:01:02:03 -> 0x80ab00010203)
+
+0x13 set user sensor mode
+
+	byte 1 = user sensor number (1..4)
+	byte 2 = sensor mode (0 = disabled / 1 = enabled [default])
 
 0x80 get device configuration
 

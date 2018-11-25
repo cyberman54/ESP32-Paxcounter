@@ -23,7 +23,7 @@ function Decoder(bytes, port) {
 
     if (port === 3) {
         // device config data      
-        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap, version], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'version']);
+        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap, bitmap, version], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'payloadmask', 'version']);
     }
 
     if (port === 4) {
@@ -157,7 +157,7 @@ var bitmap = function (byte) {
     }
     var i = bytesToInt(byte);
     var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
-    return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'filter', 'gpsmode']
+    return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'filter', 'alarm']
         .reduce(function (obj, pos, index) {
             obj[pos] = +bm[index];
             return obj;

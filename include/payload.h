@@ -47,6 +47,7 @@ public:
   void addGPS(gpsStatus_t value);
   void addBME(bmeStatus_t value);
   void addButton(uint8_t value);
+  void addSensor(uint8_t[]);
 
 #if PAYLOAD_ENCODER == 1 // format plain
 

@@ -1,9 +1,14 @@
+// clang-format off
+
 #ifndef _HELTECV2_H
 #define _HELTECV2_H
 
 #include <stdint.h>
 
 // Hardware related definitions for Heltec V2 LoRa-32 Board
+
+//#define HAS_BME 0x77  // BME680 sensor on I2C bus (SDI=21/SCL=22); comment out
+//if not present
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1
@@ -17,13 +22,8 @@
 #define OLED_SCL (15)
 #define OLED_RST (16)
 
-// Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  (5) 
-#define LORA_CS   (18)
-#define LORA_MISO (19)
-#define LORA_MOSI (27)
-#define LORA_RST  (14)
-#define LORA_IO0  (26)
+// Pins for LORA chip SPI interface come from board file, we need some
+// additional definitions for LMIC
 #define LORA_IO1  (35)
 #define LORA_IO2  (34)
 

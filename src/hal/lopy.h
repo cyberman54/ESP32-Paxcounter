@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _LOPY_H
 #define _LOPY_H
 
@@ -10,13 +12,8 @@
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0
 
-// Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  (5)  // GPIO5  - SX1276 SCK
-#define LORA_CS   (17) // GPIO17 - SX1276 CS
-#define LORA_MISO (19) // GPIO19 - SX1276 MISO
-#define LORA_MOSI (27) // GPIO27 - SX1276 MOSI
-#define LORA_RST  (18) // GPIO18 - SX1276 RESET
-#define LORA_IO0  (23) // LoRa IRQ
+// Pins for LORA chip SPI interface come from board file, we need some
+// additional definitions for LMIC
 #define LORA_IO1  (23) // Pin tied via diode to DIO0
 #define LORA_IO2  (23) // Pin tied via diode to DIO0
 
