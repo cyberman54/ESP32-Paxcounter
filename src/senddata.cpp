@@ -7,9 +7,20 @@ void SendPayload(uint8_t port) {
   MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
-  SendBuffer.MessagePort = PAYLOAD_ENCODER <= 2
-                               ? port
-                               : (PAYLOAD_ENCODER == 4 ? LPP2PORT : LPP1PORT);
+  switch (PAYLOAD_ENCODER) {
+  case 1:
+  case 2:
+    SendBuffer.MessagePort = port;
+    break;
+  case 3:
+    SendBuffer.MessagePort = LPP1PORT;
+    break;
+  case 4:
+    SendBuffer.MessagePort = LPP2PORT;
+    break;
+  default:
+    SendBuffer.MessagePort = port;
+  }
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
   // enqueue message in device's send queues

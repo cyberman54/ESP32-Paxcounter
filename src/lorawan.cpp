@@ -164,7 +164,7 @@ void onEvent(ev_t ev) {
   switch (ev) {
 
   case EV_SCAN_TIMEOUT:
-    strcpy_P(buff, PSTR("SCAN TIMEOUT"));
+    strcpy_P(buff, PSTR("SCAN_TIMEOUT"));
     break;
 
   case EV_BEACON_FOUND:
@@ -210,15 +210,21 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_TXCOMPLETE:
-    strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
-                                               : PSTR("TX COMPLETE"));
+    strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
+                                               : PSTR("TX_COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
 
+    //    if (LMIC.dataLen) {
+    //      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
+    //               LMIC.dataLen, (signed char)LMIC.rssi, (signed
+    //               char)LMIC.snr);
+    //      sprintf(display_line6, "RSSI %d SNR %d", (signed char)LMIC.rssi,
+    //              (signed char)LMIC.snr);
+
     if (LMIC.dataLen) {
-      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
-               LMIC.dataLen, (signed char)LMIC.rssi, (signed char)LMIC.snr);
-      sprintf(display_line6, "RSSI %d SNR %d", (signed char)LMIC.rssi,
-              (signed char)LMIC.snr);
+      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI -%d SNR %d",
+               LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
+      sprintf(display_line6, "RSSI -%d SNR %d", LMIC.rssi, LMIC.snr / 4);
 
       // check if command is received on command port, then call interpreter
       if ((LMIC.txrxFlags & TXRX_PORT) &&
@@ -237,20 +243,20 @@ void onEvent(ev_t ev) {
 
   case EV_RXCOMPLETE:
     // data received in ping slot
-    strcpy_P(buff, PSTR("RX COMPLETE"));
+    strcpy_P(buff, PSTR("RX_COMPLETE"));
     break;
 
   case EV_LINK_DEAD:
-    strcpy_P(buff, PSTR("LINK DEAD"));
+    strcpy_P(buff, PSTR("LINK_DEAD"));
     break;
 
   case EV_LINK_ALIVE:
-    strcpy_P(buff, PSTR("LINK ALIVE"));
+    strcpy_P(buff, PSTR("LINK_ALIVE"));
     break;
 
   case EV_TXSTART:
     if (!(LMIC.opmode & OP_JOINING))
-      strcpy_P(buff, PSTR("TX START"));
+      strcpy_P(buff, PSTR("TX_START"));
     break;
 
   case EV_SCAN_FOUND:
@@ -262,7 +268,7 @@ void onEvent(ev_t ev) {
     break;
 
   default:
-    sprintf_P(buff, PSTR("UNKNOWN EVENT %d"), ev);
+    sprintf_P(buff, PSTR("UNKNOWN_EVENT_%d"), ev);
     break;
   }
 

@@ -5,6 +5,8 @@
 #include <Wire.h>
 #include "bsec_integration.h"
 
+extern const uint8_t bsec_config_iaq[454];
+
 extern bmeStatus_t
     bme_status; // Make struct for storing gps data globally available
 extern TaskHandle_t BmeTask;
