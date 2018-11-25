@@ -9,7 +9,10 @@
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
+// attention: Pin21 is also LED! set HAS_LED to NOT_A_PIN if using BME280
+// don't forget to connect SDIO of BME680 to GND for selecting i2c addr 0x76
 #define HAS_BME GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
+#define HAS_LED NOT_A_PIN // on board green LED
 
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
@@ -18,7 +21,7 @@
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 #define BOARD_HAS_PSRAM // use extra 4MB external RAM
-#define HAS_LED GPIO_NUM_21 // on board green LED
+//#define HAS_LED GPIO_NUM_21 // on board green LED
 
 #define HAS_BUTTON GPIO_NUM_39 // on board button "BOOT" (next to reset button)
 
