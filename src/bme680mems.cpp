@@ -10,7 +10,7 @@ static const char TAG[] = "main";
 bmeStatus_t bme_status;
 
 // initialize BME680 sensor
- int bme_init(void) {
+int bme_init(void) {
 
   return_values_init ret = {BME680_OK, BSEC_OK};
   struct bme680_dev gas_sensor;
@@ -48,14 +48,22 @@ bool bme_read(void) {
   */
 }
 
-/*
-//Call to endless loop function which reads and processes data based on
-//sensor settings
-//State is saved every 10.000 samples, which means every 10.000 * 3 secs =
-//500 minutes
+// loop function which reads and processes data based on sensor settings
+void bme_loop(void *pvParameters) {
 
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+
+#ifdef HAS_BME
+
+  // State is saved every 10.000 samples, which means every 10.000 * 3 secs =
+  // 500 minutes
   bsec_iot_loop(sleep, get_timestamp_us, output_ready, state_save, 10000);
-*/
+
+  vTaskDelete(NULL); // shoud never be reached
+
+#endif
+
+} // bme_loop()
 
 int8_t user_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data,
                      uint16_t len) {
