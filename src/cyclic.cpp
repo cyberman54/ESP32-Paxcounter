@@ -32,11 +32,6 @@ void doHousekeeping() {
   }
 #endif
 
-#ifdef HAS_BME
-  // read BME280 sensor if present
-  bme_read();
-#endif
-
   // task storage debugging //
   ESP_LOGD(TAG, "Wifiloop %d bytes left",
            uxTaskGetStackHighWaterMark(wifiSwitchTask));
@@ -44,6 +39,9 @@ void doHousekeeping() {
            uxTaskGetStackHighWaterMark(irqHandlerTask));
 #ifdef HAS_GPS
   ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
+#endif
+#ifdef HAS_BME
+  ESP_LOGD(TAG, "Bmeloop %d bytes left", uxTaskGetStackHighWaterMark(BmeTask));
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)

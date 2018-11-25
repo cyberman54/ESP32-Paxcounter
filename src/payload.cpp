@@ -1,4 +1,3 @@
-
 #include "globals.h"
 #include "payload.h"
 
@@ -47,7 +46,7 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.wifiant;
   buffer[cursor++] = value.vendorfilter;
   buffer[cursor++] = value.rgblum;
-  buffer[cursor++] = value.gpsmode;
+  buffer[cursor++] = value.payloadmask;
   buffer[cursor++] = value.monitormode;
   memcpy(buffer + cursor, value.version, 10);
   cursor += 10;
@@ -93,18 +92,27 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 }
 
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+  uint8_t length = buf[0];
+  memcpy(buffer, buf + 1, length);
+  cursor += length; // length of buffer
+#endif
+}
+
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
   int16_t temperature = (int16_t)(value.temperature); // float -> int
   uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
+  uint16_t iaq = (uint16_t)(value.iaq);               // float -> int
   buffer[cursor++] = highByte(temperature);
   buffer[cursor++] = lowByte(temperature);
   buffer[cursor++] = highByte(value.pressure);
   buffer[cursor++] = lowByte(value.pressure);
   buffer[cursor++] = highByte(humidity);
   buffer[cursor++] = lowByte(humidity);
-  buffer[cursor++] = highByte(value.gas_resistance);
-  buffer[cursor++] = lowByte(value.gas_resistance);
+  buffer[cursor++] = highByte(value.iaq);
+  buffer[cursor++] = lowByte(value.iaq);
 #endif
 }
 
@@ -142,7 +150,16 @@ void PayloadConvert::addConfig(configData_t value) {
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
               value.blescan ? true : false, value.wifiant ? true : false,
-              value.vendorfilter ? true : false, value.gpsmode ? true : false);
+              value.vendorfilter ? true : false,
+              value.monitormode ? true : false);
+  writeBitmap(value.payloadmask && GPS_DATA ? true : false,
+              value.payloadmask && ALARM_DATA ? true : false,
+              value.payloadmask && MEMS_DATA ? true : false,
+              value.payloadmask && COUNT_DATA ? true : false,
+              value.payloadmask && SENSOR1_DATA ? true : false,
+              value.payloadmask && SENSOR2_DATA ? true : false,
+              value.payloadmask && SENSOR3_DATA ? true : false,
+              value.payloadmask && SENSOR4_DATA ? true : false);
   writeVersion(value.version);
 }
 
@@ -165,12 +182,20 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 }
 
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+  uint8_t length = buf[0];
+  memcpy(buffer, buf + 1, length);
+  cursor += length; // length of buffer
+#endif
+}
+
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
   writeTemperature(value.temperature);
   writeUint16(value.pressure);
   writeHumidity(value.humidity);
-  writeUint16(value.gas_resistance);
+  writeUint16(value.iaq);
 #endif
 }
 
@@ -328,6 +353,17 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif // HAS_GPS
 }
 
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+// to come
+/*
+  uint8_t length = buf[0];
+  memcpy(buffer, buf+1, length);
+  cursor += length; // length of buffer
+*/
+#endif
+}
+
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
 
@@ -338,8 +374,8 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   uint16_t pressure = value.pressure * 10;
   // 0.5% per bit => 0 .. 128 %C
   uint8_t humidity = (uint8_t)(value.humidity * 2.0);
-  // 0.01 Ohm per bit => 0 .. 655,36 Ohm
-  uint16_t gas = value.gas_resistance * 100;
+  // 0.01 IAQ per bit => 0 .. 655,36 IAQ
+  uint16_t iaq = (uint16_t) value.iaq * 100;
 
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
@@ -362,8 +398,8 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   buffer[cursor++] = LPP_GAS_CHANNEL;
 #endif
   buffer[cursor++] = LPP_ANALOG_INPUT; // 2 bytes 0.01 Signed
-  buffer[cursor++] = highByte(gas);
-  buffer[cursor++] = lowByte(gas);
+  buffer[cursor++] = highByte(iaq);
+  buffer[cursor++] = lowByte(iaq);
 #endif // HAS_BME
 }
 

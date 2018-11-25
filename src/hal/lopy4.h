@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _LOPY4_H
 #define _LOPY4_H
 
@@ -19,13 +21,8 @@
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0 (P2)
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
-// Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  (5) 
-#define LORA_CS   (18)
-#define LORA_MISO (19)
-#define LORA_MOSI (27)
-#define LORA_RST  LMIC_UNUSED_PIN
-#define LORA_IO0  (23) // LoRa IRQ
+// Pins for LORA chip SPI interface come from board file, we need some
+// additional definitions for LMIC
 #define LORA_IO1  (23) // Pin tied via diode to DIO0
 #define LORA_IO2  (23) // Pin tied via diode to DIO0
 

@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _OCTOPUS_H
 #define _OCTOPUS_H
 
@@ -10,7 +12,13 @@
 // disable brownout detection (avoid unexpected reset on some boards)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-#define HAS_BME 0x76  // BME680 sensor on I2C bus; comment out if not present
+// enable only if device has these sensors, otherwise comment these lines
+// BME680 sensor on I2C bus
+// don't forget to connect SDIO of BME680 to GND for selecting i2c addr 0x76
+#define HAS_BME GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
+
+// user defined sensors
+//#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
 #define HAS_LED        13  // ESP32 GPIO12 (pin22) On Board LED
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
@@ -27,7 +35,7 @@
 #define LORA_MISO (19)
 #define LORA_MOSI (18)
 #define LORA_RST  LMIC_UNUSED_PIN
-#define LORA_IO0  (33)
+#define LORA_IRQ  (33)
 #define LORA_IO1  (33)
 #define LORA_IO2  LMIC_UNUSED_PIN
 

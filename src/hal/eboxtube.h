@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _EBOXTUBE_H
 #define _EBOXTUBE_H
 
@@ -19,7 +21,7 @@
 #define LORA_MISO (19)
 #define LORA_MOSI (27)
 #define LORA_RST  (14)
-#define LORA_IO0  (26)
+#define LORA_IRQ  (26)
 #define LORA_IO1  (33)
 #define LORA_IO2  (32)
 
