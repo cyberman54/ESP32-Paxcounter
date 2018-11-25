@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _LOLINLITE_H
 #define _LOLINLITE_H
 

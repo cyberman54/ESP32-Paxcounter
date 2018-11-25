@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _TTGOV21NEW_H
 #define _TTGOV21NEW_H
 

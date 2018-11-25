@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _LOPY4_H
 #define _LOPY4_H
 

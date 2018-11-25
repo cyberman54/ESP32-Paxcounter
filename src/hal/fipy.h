@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _FIPY_H
 #define _FIPY_H
 

@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _EBOXTUBE_H
 #define _EBOXTUBE_H
 

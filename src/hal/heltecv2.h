@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _HELTECV2_H
 #define _HELTECV2_H
 

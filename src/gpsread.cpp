@@ -79,7 +79,7 @@ void gps_loop(void *pvParameters) {
 
   } // end of infinite loop
 
-  vTaskDelete(NULL); // shoud never be reached
+  vTaskDelete(GpsTask); // shoud never be reached
 
 } // gps_loop()
 

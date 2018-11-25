@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _GENERIC_H
 #define _GENERIC_H
 

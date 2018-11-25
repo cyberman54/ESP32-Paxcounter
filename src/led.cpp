@@ -190,7 +190,7 @@ void ledLoop(void *parameter) {
     // give yield to CPU
     vTaskDelay(2 / portTICK_PERIOD_MS);
   }                  // while(1)
-  vTaskDelete(NULL); // shoud never be reached
+  vTaskDelete(ledLoopTask); // shoud never be reached
 };                   // ledloop()
 
 #endif // #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)

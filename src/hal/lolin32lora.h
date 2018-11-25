@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _LOLINLORA_H
 #define _LOLINLORA_H
 

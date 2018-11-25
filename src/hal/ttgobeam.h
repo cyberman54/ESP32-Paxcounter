@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _TTGOBEAM_H
 #define _TTGOBEAM_H
 

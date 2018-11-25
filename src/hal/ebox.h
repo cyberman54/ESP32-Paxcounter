@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _EBOX_H
 #define _EBOX_H
 
