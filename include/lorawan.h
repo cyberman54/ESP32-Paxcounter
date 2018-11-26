@@ -8,6 +8,8 @@
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
 #include <hal/hal.h>
+#include <SPI.h>
+#include <arduino_lmic_hal_boards.h>
 #include "loraconf.h"
 
 // Needed for 24AA02E64, does not hurt anything if included and not used

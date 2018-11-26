@@ -9,26 +9,59 @@ static const char TAG[] = "lora";
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
 
-// LMIC enhanced Pin mapping
-const lmic_pinmap lmic_pins = {
-    .nss = LORA_CS,
-    .rxtx = LMIC_UNUSED_PIN,
-    .rst = LORA_RST,
-    .dio = {LORA_IRQ, LORA_IO1, LORA_IO2},
-    .mosi = LORA_MOSI,
-    .miso = LORA_MISO,
-    .sck = LORA_SCK
+namespace Arduino_LMIC {
+
+class HalConfiguration_ThisBoard_t : public HalConfiguration_t {
+
+public:
+  enum DIGITAL_PINS : uint8_t {
+    PIN_SX1276_NSS = LORA_CS,
+    PIN_SX1276_NRESET = LORA_RST,
+    PIN_SX1276_DIO0 = LORA_IRQ,
+    PIN_SX1276_DIO1 = LORA_IO1,
+    PIN_SX1276_DIO2 = LORA_IO2,
+    PIN_SX1276_ANT_SWITCH_RX = HalPinmap_t::UNUSED_PIN,
+    PIN_SX1276_ANT_SWITCH_TX_BOOST = HalPinmap_t::UNUSED_PIN,
+    PIN_SX1276_ANT_SWITCH_TX_RFO = HalPinmap_t::UNUSED_PIN,
+    PIN_VDD_BOOST_ENABLE = HalPinmap_t::UNUSED_PIN,
+    PIN_SX1276_MOSI = LORA_MOSI,
+    PIN_SX1276_MISO = LORA_MISO,
+    PIN_SX1276_SCK = LORA_SCK,
+  };
+
+  virtual void begin(void) override {
+    SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+  }
+
+  // virtual void end(void) override
+
+  // virtual ostime_t setModuleActive(bool state) override
+};
+
+static HalConfiguration_ThisBoard_t myConfig;
+
+static const HalPinmap_t myPinmap = {
+    .nss = HalConfiguration_ThisBoard_t::PIN_SX1276_NSS,
+    .rxtx = HalConfiguration_ThisBoard_t::PIN_SX1276_ANT_SWITCH_RX,
+    .rst = HalConfiguration_ThisBoard_t::PIN_SX1276_NRESET,
+    .dio = {HalConfiguration_ThisBoard_t::PIN_SX1276_DIO0,
+            HalConfiguration_ThisBoard_t::PIN_SX1276_DIO1,
+            HalConfiguration_ThisBoard_t::PIN_SX1276_DIO2},
     // optional: set polarity of rxtx pin.
-    //.rxtx_rx_active = 0,
+    .rxtx_rx_active = 0,
     // optional: set RSSI cal for listen-before-talk
     // this value is in dB, and is added to RSSI
     // measured prior to decision.
     // Must include noise guardband! Ignored in US,
     // EU, IN, other markets where LBT is not required.
-    //.rssi_cal = 0,
+    .rssi_cal = 0,
     // optional: override LMIC_SPI_FREQ if non-zero
-    //.spi_freq = 0,
-};
+    .spi_freq = 0,
+    .pConfig = &myConfig};
+
+const HalPinmap_t *GetPinmap_ThisBoard(void) { return &myPinmap; }
+
+} // namespace Arduino_LMIC
 
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
@@ -366,7 +399,17 @@ esp_err_t lora_stack_init() {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting LMIC...");
-  os_init();    // initialize lmic run-time environment on core 1
+
+  // initialize runtime env, don't die mysteriously; die noisily.
+  const lmic_pinmap *pPinMap = Arduino_LMIC::GetPinmap_ThisBoard();
+
+  if (pPinMap == nullptr) {
+    ESP_LOGE(TAG, "LoRa chip not found. Aborting.");
+    return ESP_FAIL;
+  }
+
+  os_init_ex(pPinMap);
+  // os_init();    // initialize lmic run-time environment on core 1
   LMIC_reset(); // initialize lmic MAC
   LMIC_setLinkCheckMode(0);
   // This tells LMIC to make the receive windows bigger, in case your clock is
