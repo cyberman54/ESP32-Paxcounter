@@ -400,17 +400,14 @@ esp_err_t lora_stack_init() {
 
   ESP_LOGI(TAG, "Starting LMIC...");
 
-  // initialize runtime env, don't die mysteriously; die noisily.
   const lmic_pinmap *pPinMap = Arduino_LMIC::GetPinmap_ThisBoard();
-
   if (pPinMap == nullptr) {
-    ESP_LOGE(TAG, "LoRa chip not found. Aborting.");
+    ESP_LOGE(TAG, "No device pinmap found. Aborting.");
     return ESP_FAIL;
   }
 
-  os_init_ex(pPinMap);
-  // os_init();    // initialize lmic run-time environment on core 1
-  LMIC_reset(); // initialize lmic MAC
+  os_init_ex(pPinMap); // initialize lmic run-time environment on core 1
+  LMIC_reset();        // initialize lmic MAC
   LMIC_setLinkCheckMode(0);
   // This tells LMIC to make the receive windows bigger, in case your clock is
   // faster or slower. This causes the transceiver to be earlier switched on,
