@@ -2,7 +2,6 @@
 
 #ifndef _OCTOPUS_H
 #define _OCTOPUS_H
-
 #include <stdint.h>
 
 // Hardware related definitions for #IoT Octopus32 with the Adafruit LoRaWAN Wing
@@ -14,14 +13,15 @@
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-// don't forget to connect SDIO of BME680 to GND for selecting i2c addr 0x76
-#define HAS_BME GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
+// Octopus32 has a pre-populated BME680 on i2c addr 0x76
+#define HAS_BME GPIO_NUM_23, GPIO_NUM_22 // SDA, SCL
+//#define HAS_BME 0x76
 
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
 #define HAS_LED        13  // ESP32 GPIO12 (pin22) On Board LED
-#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
+//#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 //#define HAS_RGB_LED   13  // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
 //#define HAS_BUTTON    15  // ESP32 GPIO15 (pin15) Button is on the LoraNode32 shield
 //#define BUTTON_PULLUP  1  // Button need pullup instead of default pulldown
