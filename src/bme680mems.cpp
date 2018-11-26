@@ -8,6 +8,8 @@ static const char TAG[] = "main";
 bmeStatus_t bme_status;
 TaskHandle_t BmeTask;
 
+float bme_offset = (float) BME_TEMP_OFFSET;
+
 // --- Bosch BSEC library configuration ---
 // 3,3V supply voltage; 3s max time between sensor_control calls; 4 days
 // calibration. Change this const if not applicable for your application (see
@@ -55,9 +57,9 @@ int bme_init(void) {
   // Switch on low-power mode and provide no temperature offset
 
   return_values_init ret =
-      bsec_iot_init(BSEC_SAMPLE_RATE_LP, 0.0f, i2c_write, i2c_read,
+      bsec_iot_init(BSEC_SAMPLE_RATE_LP, bme_offset, i2c_write, i2c_read,
                     user_delay_ms, state_load, config_load);
-
+  
   if ((int)ret.bme680_status) {
     ESP_LOGE(TAG, "Could not initialize BME680, error %d",
              (int)ret.bme680_status);
@@ -79,7 +81,7 @@ void output_ready(int64_t timestamp, float iaq, uint8_t iaq_accuracy,
 
   bme_status.temperature = temperature;
   bme_status.humidity = humidity;
-  bme_status.pressure = pressure;
+  bme_status.pressure = (pressure / 100.0); // conversion Pa -> hPa
   bme_status.iaq = iaq;
 }
 
