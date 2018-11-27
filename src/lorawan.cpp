@@ -9,18 +9,18 @@ static const char TAG[] = "lora";
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
 
-class cMyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
+class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
 public:
-  cMyHalConfig_t(){};
+  MyHalConfig_t(){};
   virtual void begin(void) override {
     SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
   }
 };
 
-cMyHalConfig_t myHalConfig{};
+MyHalConfig_t myHalConfig{};
 
-// LMIC enhanced Pin mapping
+// LMIC pin mapping
 const lmic_pinmap lmic_pins = {
     .nss = LORA_CS,
     .rxtx = LMIC_UNUSED_PIN,
