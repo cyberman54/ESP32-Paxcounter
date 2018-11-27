@@ -9,26 +9,34 @@ static const char TAG[] = "lora";
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
 
-// LMIC enhanced Pin mapping
+class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
+
+public:
+  MyHalConfig_t(){};
+  virtual void begin(void) override {
+    SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+  }
+};
+
+MyHalConfig_t myHalConfig{};
+
+// LMIC pin mapping
 const lmic_pinmap lmic_pins = {
     .nss = LORA_CS,
     .rxtx = LMIC_UNUSED_PIN,
     .rst = LORA_RST,
     .dio = {LORA_IRQ, LORA_IO1, LORA_IO2},
-    .mosi = LORA_MOSI,
-    .miso = LORA_MISO,
-    .sck = LORA_SCK
     // optional: set polarity of rxtx pin.
-    //.rxtx_rx_active = 0,
+    .rxtx_rx_active = 0,
     // optional: set RSSI cal for listen-before-talk
     // this value is in dB, and is added to RSSI
     // measured prior to decision.
     // Must include noise guardband! Ignored in US,
     // EU, IN, other markets where LBT is not required.
-    //.rssi_cal = 0,
+    .rssi_cal = 0,
     // optional: override LMIC_SPI_FREQ if non-zero
-    //.spi_freq = 0,
-};
+    .spi_freq = 0,
+    .pConfig = &myHalConfig};
 
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
@@ -366,6 +374,7 @@ esp_err_t lora_stack_init() {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting LMIC...");
+
   os_init();    // initialize lmic run-time environment on core 1
   LMIC_reset(); // initialize lmic MAC
   LMIC_setLinkCheckMode(0);

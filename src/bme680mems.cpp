@@ -163,14 +163,6 @@ void state_save(const uint8_t *state_buffer, uint32_t length) {
   // ...
 }
 
-/*!
- * @brief           Load library config from non-volatile memory
- *
- * @param[in,out]   config_buffer    buffer to hold the loaded state string
- * @param[in]       n_buffer        size of the allocated state buffer
- *
- * @return          number of bytes copied to config_buffer
- */
 uint32_t config_load(uint8_t *config_buffer, uint32_t n_buffer) {
 
   // Load a library config from non-volatile memory, if available.
@@ -180,12 +172,6 @@ uint32_t config_load(uint8_t *config_buffer, uint32_t n_buffer) {
   memcpy(config_buffer, bsec_config_iaq, sizeof(bsec_config_iaq));
   return sizeof(bsec_config_iaq);
 }
-
-/*!
- * @brief           Interrupt handler for press of a ULP plus button
- *
- * @return          none
- */
 
 void user_delay_ms(uint32_t period) { vTaskDelay(period / portTICK_PERIOD_MS); }
 
