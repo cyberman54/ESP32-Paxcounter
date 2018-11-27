@@ -23,7 +23,7 @@ function Decoder(bytes, port) {
 
     if (port === 3) {
         // device config data      
-        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap, bitmap, version], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'payloadmask', 'version']);
+        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap1, bitmap2, version], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'payloadmask', 'version']);
     }
 
     if (port === 4) {
@@ -161,8 +161,8 @@ var pressure = function (bytes) {
 };
 pressure.BYTES = 2;
 
-var bitmap = function (byte) {
-    if (byte.length !== bitmap.BYTES) {
+var bitmap1 = function (byte) {
+    if (byte.length !== bitmap1.BYTES) {
         throw new Error('Bitmap must have exactly 1 byte');
     }
     var i = bytesToInt(byte);
@@ -173,7 +173,21 @@ var bitmap = function (byte) {
             return obj;
         }, {});
 };
-bitmap.BYTES = 1;
+bitmap1.BYTES = 1;
+
+var bitmap2 = function (byte) {
+    if (byte.length !== bitmap2.BYTES) {
+        throw new Error('Bitmap must have exactly 1 byte');
+    }
+    var i = bytesToInt(byte);
+    var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
+    return ['gps', 'alarm', 'bme', 'counter', 'sensor1', 'sensor2', 'sensor3', 'battery']
+        .reduce(function (obj, pos, index) {
+            obj[pos] = +bm[index];
+            return obj;
+        }, {});
+};
+bitmap2.BYTES = 1;
 
 var decode = function (bytes, mask, names) {
 
@@ -208,7 +222,8 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         pressure: pressure,
         latLng: latLng,
         hdop: hdop,
-        bitmap: bitmap,
+        bitmap1: bitmap1,
+        bitmap2: bitmap2,
         version: version,
         decode: decode
     };
