@@ -72,31 +72,29 @@ void sendCounter() {
 #endif
 
 #ifdef HAS_SENSORS
-
     case SENSOR1_DATA:
       payload.reset();
       payload.addSensor(sensor_read(1));
       SendPayload(SENSOR1PORT);
       break;
-
     case SENSOR2_DATA:
       payload.reset();
       payload.addSensor(sensor_read(2));
       SendPayload(SENSOR2PORT);
       break;
-
     case SENSOR3_DATA:
       payload.reset();
       payload.addSensor(sensor_read(3));
       SendPayload(SENSOR3PORT);
       break;
+#endif
 
-    case SENSOR4_DATA:
+#ifdef HAS_BATTERY_PROBE
+    case BATT_DATA:
       payload.reset();
-      payload.addSensor(sensor_read(4));
-      SendPayload(SENSOR4PORT);
+      payload.addVoltage(read_voltage());
+      SendPayload(BATTPORT);
       break;
-
 #endif
 
     } // switch

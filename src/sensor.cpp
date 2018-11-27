@@ -24,7 +24,7 @@ uint8_t sensor_mask(uint8_t sensor_no) {
   case 3:
     return (uint8_t)SENSOR3_DATA;
   case 4:
-    return (uint8_t)SENSOR4_DATA;
+    return (uint8_t)BATT_DATA;
   case 5:
     return (uint8_t)GPS_DATA;
   case 6:
@@ -63,14 +63,6 @@ uint8_t *sensor_read(uint8_t sensor) {
     buf[1] = 0xff;
     buf[2] = 0xa0;
     buf[3] = 0x03;
-    break;
-
-  case 4:
-
-    buf[0] = length;
-    buf[1] = 0xff;
-    buf[2] = 0xa0;
-    buf[3] = 0x04;
     break;
   }
 
