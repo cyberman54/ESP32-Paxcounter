@@ -319,7 +319,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x13 set user sensor mode
 
-	byte 1 = user sensor number (1..4)
+	byte 1 = user sensor number (1..3)
 	byte 2 = sensor mode (0 = disabled / 1 = enabled [default])
 
 0x80 get device configuration
