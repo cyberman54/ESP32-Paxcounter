@@ -30,6 +30,11 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   buffer[cursor++] = msg;
 }
 
+void PayloadConvert::addVoltage(uint16_t value) {
+  buffer[cursor++] = highByte(value);
+  buffer[cursor++] = lowByte(value);
+}
+
 void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.lorasf;
   buffer[cursor++] = value.txpower;
@@ -140,6 +145,8 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   writeUint8(msg);
 }
 
+void PayloadConvert::addVoltage(uint16_t value) { writeUint16(value); }
+
 void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.lorasf);
   writeUint8(value.txpower);
@@ -160,7 +167,7 @@ void PayloadConvert::addConfig(configData_t value) {
               value.payloadmask && SENSOR1_DATA ? true : false,
               value.payloadmask && SENSOR2_DATA ? true : false,
               value.payloadmask && SENSOR3_DATA ? true : false,
-              value.payloadmask && SENSOR4_DATA ? true : false);
+              value.payloadmask && BATT_DATA ? true : false);
   writeVersion(value.version);
 }
 
@@ -307,6 +314,16 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
 #endif
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = rssi;
+}
+
+void PayloadConvert::addVoltage(uint16_t value) {
+   uint16_t volt = value / 10;
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_BATT_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = highByte(volt);
+  buffer[cursor++] = lowByte(volt);
 }
 
 void PayloadConvert::addConfig(configData_t value) {

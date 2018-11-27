@@ -71,25 +71,27 @@ void start_ota_update() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
+  uint8_t i = WIFI_MAX_TRY;
   int ret = 1; // 0 = finished, 1 = retry, -1 = abort
 
-  ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
-
   while (i--) {
+    ESP_LOGI(TAG, "Trying to connect to %s, attempt %u of %u", WIFI_SSID,
+             WIFI_MAX_TRY - i, WIFI_MAX_TRY);
+    vTaskDelay(10000 / portTICK_PERIOD_MS); // wait for stable connect
     if (WiFi.status() == WL_CONNECTED) {
       // we now have wifi connection and try to do an OTA over wifi update
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
       display(1, "OK", "WiFi connected");
       // do a number of tries to update firmware limited by OTA_MAX_TRY
+      uint8_t j = OTA_MAX_TRY;
       while ((j--) && (ret > 0)) {
         ESP_LOGI(TAG, "Starting OTA update, attempt %u of %u", OTA_MAX_TRY - j,
                  OTA_MAX_TRY);
         ret = do_ota_update();
       }
-      goto end;
+      if (WiFi.status() == WL_CONNECTED)
+        goto end; // OTA update finished or OTA max attemps reached
     }
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
     WiFi.reconnect();
   }
 

@@ -138,7 +138,6 @@ void set_sensor(uint8_t val[]) {
   case 1:
   case 2:
   case 3:
-  case 4:
     break; // valid sensor number -> continue
   default:
     ESP_LOGW(

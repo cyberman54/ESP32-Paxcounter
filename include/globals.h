@@ -17,7 +17,7 @@
 #define SENSOR1_DATA (0x10)
 #define SENSOR2_DATA (0x20)
 #define SENSOR3_DATA (0x40)
-#define SENSOR4_DATA (0x80)
+#define BATT_DATA (0x80)
 
 // bits in configmask for device runmode control
 #define GPS_MODE (0x01)

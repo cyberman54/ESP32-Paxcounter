@@ -181,7 +181,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
-**Port #4:** GPS query result (device answers only if has GPS and GPS has a fix)
+**Port #4:** GPS data (only if device has fature GPS, and GPS data is enabled and GPS has a fix)
 
 	bytes 1-4:	Latitude
 	bytes 5-8:	Longitude
@@ -198,7 +198,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 1:		Beacon RSSI reception level
 	byte 2:		Beacon identifier (0..255)
 
-**Port #7:** Environmental sensor query result
+**Port #7:** Environmental sensor data (only if device has feature BME)
 
 	bytes 1-2:	Temperature [°C]
 	bytes 3-4:	Pressure [hPa]
@@ -212,6 +212,10 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	151-200 	bad
 	201-300 	worse
 	301-500 	very bad
+
+**Port #8:** Battery voltage data (only if device has feature BATT)
+
+  	byte 1-2:	Battery or USB Voltage [mV], 0 if no battery probe
 
 # Remote control
 
@@ -315,7 +319,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x13 set user sensor mode
 
-	byte 1 = user sensor number (1..4)
+	byte 1 = user sensor number (1..3)
 	byte 2 = sensor mode (0 = disabled / 1 = enabled [default])
 
 0x80 get device configuration
