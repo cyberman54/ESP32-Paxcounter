@@ -149,13 +149,6 @@ void setup() {
   antenna_select(cfg.wifiant);
 #endif
 
-// switch off bluetooth, if not compiled
-#ifdef BLECOUNTER
-  strcat_P(features, " BLE");
-#else
-  bool btstop = btStop();
-#endif
-
 // initialize battery status
 #ifdef HAS_BATTERY_PROBE
   strcat_P(features, " BATT");
@@ -173,7 +166,20 @@ void setup() {
   }
 #endif
 
-  // initialize button
+// start BLE scan callback if BLE function is enabled in NVRAM configuration
+// or switch off bluetooth, if not compiled
+#ifdef BLECOUNTER
+  strcat_P(features, " BLE");
+  if (cfg.blescan) {
+    ESP_LOGI(TAG, "Starting Bluetooth...");
+    start_BLEscan();
+  } else
+    btStop();
+#else
+  btStop();
+#endif
+
+// initialize button
 #ifdef HAS_BUTTON
   strcat_P(features, " BTN_");
 #ifdef BUTTON_PULLUP
@@ -289,14 +295,6 @@ void setup() {
 #ifdef VERBOSE
   showLoraKeys();
 #endif
-#endif
-
-// start BLE scan callback if BLE function is enabled in NVRAM configuration
-#ifdef BLECOUNTER
-  if (cfg.blescan) {
-    ESP_LOGI(TAG, "Starting Bluetooth...");
-    start_BLEscan();
-  }
 #endif
 
   // start wifi in monitor mode and start channel rotation task on core 0

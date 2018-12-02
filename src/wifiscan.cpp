@@ -10,8 +10,6 @@ static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX, 100,
                                       WIFI_COUNTRY_POLICY_MANUAL};
 
-esp_coex_prefer_t esp_coexist_config = ESP_COEX_PREFER_BALANCE;
-
 typedef struct {
   unsigned frame_ctrl : 16;
   unsigned duration_id : 16;
@@ -52,10 +50,8 @@ void wifi_sniffer_init(void) {
       // .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
       .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
 
-  //coex_pause();
   ESP_ERROR_CHECK(
-      esp_coex_preference_set(esp_coexist_config)); // configure Wifi/BT coexist lib
-  //coex_resume();
+      esp_coex_preference_set((esp_coex_prefer_t) ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
 
   ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
