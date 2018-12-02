@@ -106,7 +106,7 @@ void setup() {
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                          : "external");
   ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
-  ESP_LOGI(TAG, "Wifi/BT software coexist version: %s", esp_coex_version_get());
+  ESP_LOGI(TAG, "Wifi/BT software coexist version: %s", coex_version_get());
   ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
 
 #ifdef HAS_GPS

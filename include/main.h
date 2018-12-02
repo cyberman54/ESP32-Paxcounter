@@ -16,7 +16,4 @@
 #include "spislave.h"
 #include "lorawan.h"
 
-#include <esp_coexist.h>
-#include "coexist_internal.h"
-
 #endif

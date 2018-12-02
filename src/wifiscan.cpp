@@ -2,7 +2,6 @@
 #include "globals.h"
 #include "wifiscan.h"
 #include <esp_coexist.h>
-#include "coexist_internal.h"
 
 // Local logging tag
 static const char TAG[] = "wifi";
@@ -11,7 +10,7 @@ static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX, 100,
                                       WIFI_COUNTRY_POLICY_MANUAL};
 
-esp_coex_prefer_t coexist_config = ESP_COEX_PREFER_BALANCE;
+esp_coex_prefer_t esp_coexist_config = ESP_COEX_PREFER_BALANCE;
 
 typedef struct {
   unsigned frame_ctrl : 16;
@@ -45,12 +44,6 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
     mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
 }
 
-const char *esp_coex_version_get(void) { return coex_version_get(); }
-
-esp_err_t esp_coex_preference_set(esp_coex_prefer_t prefer) {
-  return coex_preference_set((coex_prefer_t)prefer);
-}
-
 void wifi_sniffer_init(void) {
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
   cfg.nvs_enable = 0;        // we don't need any wifi settings from NVRAM
@@ -59,12 +52,10 @@ void wifi_sniffer_init(void) {
       // .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
       .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
 
-  coex_pause();
+  //coex_pause();
   ESP_ERROR_CHECK(
-      esp_coex_preference_set(coexist_config)); // configure Wifi/BT coexist lib
-  coex_resume();
-
-  //coex_deinit();
+      esp_coex_preference_set(esp_coexist_config)); // configure Wifi/BT coexist lib
+  //coex_resume();
 
   ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
