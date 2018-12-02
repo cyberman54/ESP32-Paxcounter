@@ -18,11 +18,9 @@ uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
 #if PAYLOAD_ENCODER == 1
 
-void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
-  buffer[cursor++] = highByte(value1);
-  buffer[cursor++] = lowByte(value1);
-  buffer[cursor++] = highByte(value2);
-  buffer[cursor++] = lowByte(value2);
+void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
+  buffer[cursor++] = highByte(value);
+  buffer[cursor++] = lowByte(value);
 }
 
 void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
@@ -135,10 +133,7 @@ void PayloadConvert::addButton(uint8_t value) {
 
 #elif PAYLOAD_ENCODER == 2
 
-void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
-  writeUint16(value1);
-  writeUint16(value2);
-}
+void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) { writeUint16(value); }
 
 void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   writeUint8(rssi);
@@ -286,21 +281,27 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
-void PayloadConvert::addCount(uint16_t value1, uint16_t value2) {
+void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
+  select(snifftype) {
+  case MAC_SNIFF_WIFI:
 #if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
+    buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
 #endif
-  buffer[cursor++] =
-      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
-  buffer[cursor++] = highByte(value1);
-  buffer[cursor++] = lowByte(value1);
+    buffer[cursor++] =
+        LPP_LUMINOSITY; // workaround since cayenne has no data type meter
+    buffer[cursor++] = highByte(value);
+    buffer[cursor++] = lowByte(value);
+    break;
+  case MAC_SNIFF_BLE:
 #if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
+    buffer[cursor++] = LPP_COUNT_BLE_CHANNEL;
 #endif
-  buffer[cursor++] =
-      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
-  buffer[cursor++] = highByte(value2);
-  buffer[cursor++] = lowByte(value2);
+    buffer[cursor++] =
+        LPP_LUMINOSITY; // workaround since cayenne has no data type meter
+    buffer[cursor++] = highByte(value);
+    buffer[cursor++] = lowByte(value);
+    break;
+  }
 }
 
 void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
@@ -317,7 +318,7 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
 }
 
 void PayloadConvert::addVoltage(uint16_t value) {
-   uint16_t volt = value / 10;
+  uint16_t volt = value / 10;
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BATT_CHANNEL;
 #endif

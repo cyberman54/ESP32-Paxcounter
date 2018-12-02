@@ -6,7 +6,11 @@ function Decoder(bytes, port) {
     var decoded = {};
 
     if (port === 1) {
-        // only counter data, no gps
+        // only wifi counter data, no gps
+        if (bytes.length === 2) {
+            return decode(bytes, [uint16], ['wifi']);
+        }
+        // wifi + ble counter data, no gps
         if (bytes.length === 4) {
             return decode(bytes, [uint16, uint16], ['wifi', 'ble']);
         }

@@ -9,6 +9,10 @@
 #include <array>
 #include <algorithm>
 
+// sniffing types
+#define MAC_SNIFF_WIFI 0
+#define MAC_SNIFF_BLE 1
+
 // bits in payloadmask for filtering payload data
 #define GPS_DATA (0x01)
 #define ALARM_DATA (0x02)
@@ -93,6 +97,7 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 #include "led.h"
 #include "payload.h"
+#include "blescan.h"
 
 #ifdef HAS_GPS
 #include "gpsread.h"
@@ -112,10 +117,6 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 #ifdef HAS_BUTTON
 #include "button.h"
-#endif
-
-#ifdef BLECOUNTER
-#include "blescan.h"
 #endif
 
 #ifdef HAS_BATTERY_PROBE

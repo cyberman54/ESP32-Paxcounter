@@ -40,7 +40,9 @@ void sendCounter() {
 
     case COUNT_DATA:
       payload.reset();
-      payload.addCount(macs_wifi, cfg.blescan ? macs_ble : 0);
+      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
+      if (cfg.blescan)
+        payload.addCount(macs_ble, MAC_SNIFF_BLE);
       SendPayload(COUNTERPORT);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
