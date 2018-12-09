@@ -282,7 +282,7 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
-  select(snifftype) {
+  switch(snifftype) {
   case MAC_SNIFF_WIFI:
 #if (PAYLOAD_ENCODER == 3)
     buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
