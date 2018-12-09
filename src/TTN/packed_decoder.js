@@ -50,6 +50,11 @@ function Decoder(bytes, port) {
         return decode(bytes, [float, uint16, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
     }
 
+    if (port === 8) {
+        // battery voltage      
+        return decode(bytes, [uint16], ['voltage']);
+    }
+
 }
 
 

@@ -2,6 +2,7 @@
 #include "globals.h"
 #include "wifiscan.h"
 #include <esp_coexist.h>
+#include "coexist_internal.h"
 
 // Local logging tag
 static const char TAG[] = "wifi";
@@ -50,8 +51,10 @@ void wifi_sniffer_init(void) {
       // .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
       .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
 
-  ESP_ERROR_CHECK(
-      esp_coex_preference_set((esp_coex_prefer_t) ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+  ESP_ERROR_CHECK(esp_coex_preference_set(
+      ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
+
+  coex_deinit();
 
   ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
