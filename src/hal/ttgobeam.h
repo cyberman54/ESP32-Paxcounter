@@ -20,6 +20,8 @@
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
+#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
+
 #define BOARD_HAS_PSRAM // use extra 4MB external RAM
 //#define HAS_LED GPIO_NUM_21 // on board green LED
 
