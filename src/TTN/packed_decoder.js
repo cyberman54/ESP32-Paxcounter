@@ -5,6 +5,10 @@ function Decoder(bytes, port) {
 
     var decoded = {};
 
+    if (bytes.length === 0)  {
+        return {};
+    }
+
     if (port === 1) {
         // only wifi counter data, no gps
         if (bytes.length === 2) {
