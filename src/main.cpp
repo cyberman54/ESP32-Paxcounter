@@ -176,7 +176,14 @@ void setup() {
   } else
     btStop();
 #else
+  // remove bluetooth stack to gain more free memory
+  ESP_ERROR_CHECK(esp_bluedroid_disable());
+  ESP_ERROR_CHECK(esp_bluedroid_deinit());
   btStop();
+  ESP_ERROR_CHECK(esp_bt_controller_deinit());
+  ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
+  ESP_ERROR_CHECK(esp_coex_preference_set((
+      esp_coex_prefer_t)ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
 #endif
 
 // initialize button

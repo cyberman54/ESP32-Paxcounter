@@ -272,7 +272,7 @@ void stop_BLEscan(void) {
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
-  btStop(); // disable & deinit bt_controller
+  btStop(); // disable bt_controller
   ESP_ERROR_CHECK(esp_coex_preference_set((
       esp_coex_prefer_t)ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
