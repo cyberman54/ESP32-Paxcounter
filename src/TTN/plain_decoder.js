@@ -30,6 +30,15 @@ function Decoder(bytes, port) {
     decoded.reset1 = bytes[i++];
   }
 
+  if (port === 4) {
+    var i = 0;
+    decoded.latitude = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
+    decoded.longitude = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
+    decoded.sats = bytes[i++];
+    decoded.hdop = (bytes[i++] << 8) | (bytes[i++]);
+    decoded.altitude = (bytes[i++] << 8) | (bytes[i++]);
+  }
+
   if (port === 5) {
     var i = 0;
     decoded.button = bytes[i++];
