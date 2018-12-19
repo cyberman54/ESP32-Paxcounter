@@ -358,7 +358,7 @@ void loop() {
 #ifdef HAS_LORA
     os_runloop_once(); // execute lmic scheduled jobs and events
 #endif
-    vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
+    delay(2); // yield to CPU
   }
 
   vTaskDelete(NULL); // shoud never be reached

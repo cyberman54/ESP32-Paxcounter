@@ -9,7 +9,7 @@ static const char TAG[] = "main";
 void do_reset() {
   ESP_LOGI(TAG, "Remote command: restart device");
   LMIC_shutdown();
-  vTaskDelay(3000 / portTICK_PERIOD_MS);
+  delay(3000);
   esp_restart();
 }
 

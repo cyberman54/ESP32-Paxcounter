@@ -173,7 +173,7 @@ uint32_t config_load(uint8_t *config_buffer, uint32_t n_buffer) {
   return sizeof(bsec_config_iaq);
 }
 
-void user_delay_ms(uint32_t period) { vTaskDelay(period / portTICK_PERIOD_MS); }
+void user_delay_ms(uint32_t period) { delay(period); }
 
 int64_t get_timestamp_us() { return (int64_t)millis() * 1000; }
 
