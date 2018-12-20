@@ -54,8 +54,6 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_coex_preference_set(
       ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
 
-  coex_deinit();
-
   ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
       esp_wifi_set_country(&wifi_country)); // set locales for RF and channels

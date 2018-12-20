@@ -71,14 +71,14 @@ typedef struct {
 } gpsStatus_t;
 
 typedef struct {
-float iaq;             // IAQ signal
-uint8_t iaq_accuracy;  // accuracy of IAQ signal
-float temperature;     // temperature signal
-float humidity;        // humidity signal
-float pressure;        // pressure signal
-float raw_temperature; // raw temperature signal
-float raw_humidity;    // raw humidity signal
-float gas;             // raw gas sensor signal
+  float iaq;             // IAQ signal
+  uint8_t iaq_accuracy;  // accuracy of IAQ signal
+  float temperature;     // temperature signal
+  float humidity;        // humidity signal
+  float pressure;        // pressure signal
+  float raw_temperature; // raw temperature signal
+  float raw_humidity;    // raw humidity signal
+  float gas;             // raw gas sensor signal
 } bmeStatus_t;
 
 // global variables
@@ -86,9 +86,9 @@ extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
-    batt_voltage;               // display values
-extern std::set<uint16_t> macs; // temp storage for MACs
-extern hw_timer_t *channelSwitch, *sendCycle;
+    batt_voltage;                  // display values
+extern std::set<uint16_t> macs;    // temp storage for MACs
+extern hw_timer_t *channelSwitch, *sendCycle, *displaytimer;
 
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;

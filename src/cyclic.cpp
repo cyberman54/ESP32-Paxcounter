@@ -26,8 +26,8 @@ void doHousekeeping() {
 // time sync once per TIME_SYNC_INTERVAL
 #ifdef TIME_SYNC_INTERVAL
   if (millis() >= nextTimeSync) {
-    nextTimeSync = millis() + TIME_SYNC_INTERVAL *
-                                  60000; // set up next time sync period
+    nextTimeSync =
+        millis() + TIME_SYNC_INTERVAL * 60000; // set up next time sync period
     do_timesync();
   }
 #endif
@@ -62,8 +62,8 @@ void doHousekeeping() {
              "free heap = %d bytes)",
              esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
     SendPayload(COUNTERPORT); // send data before clearing counters
-    reset_counters();      // clear macs container and reset all counters
-    get_salt();            // get new salt for salting hashes
+    reset_counters();         // clear macs container and reset all counters
+    get_salt();               // get new salt for salting hashes
 
     if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
       do_reset(); // memory leak, reset device
@@ -89,7 +89,8 @@ void reset_counters() {
 
 void do_timesync() {
 #ifdef TIME_SYNC_INTERVAL
-// sync time & date if we have valid gps time
+
+// sync time & date by GPS if we have valid gps time
 #ifdef HAS_GPS
   if (gps.time.isValid()) {
     setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
@@ -101,9 +102,14 @@ void do_timesync() {
     ESP_LOGI(TAG, "No valid GPS time");
   }
 #endif // HAS_GPS
+
+// sync time by LoRa Network if network supports DevTimeReq
+#ifdef LMIC_ENABLE_DeviceTimeReq
   // Schedule a network time request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
+#endif
+
 #endif // TIME_SYNC_INTERVAL
 } // do_timesync()
 

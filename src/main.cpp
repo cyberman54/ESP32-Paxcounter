@@ -54,7 +54,7 @@ configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
-                  batt_voltage = 0; // globals for display
+                  batt_voltage = 0;      // globals for display
 
 hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
            *displaytimer = NULL; // irq tasks
@@ -105,9 +105,15 @@ void setup() {
            chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                          : "external");
-  ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
+  ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
+           ESP.getHeapSize(), ESP.getFreeHeap());
+  ESP_LOGI(TAG, "SPIRam Total heap %d, SPIRam Free Heap %d", ESP.getPsramSize(),
+           ESP.getFreePsram());
+  ESP_LOGI(TAG, "ChipRevision %d, Cpu Freq %d, SDK Version %s",
+           ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
+  ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
+           ESP.getFlashChipSpeed());
   ESP_LOGI(TAG, "Wifi/BT software coexist version: %s", esp_coex_version_get());
-  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
 
 #ifdef HAS_GPS
   ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
