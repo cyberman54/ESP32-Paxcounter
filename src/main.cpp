@@ -128,15 +128,12 @@ void setup() {
   loadConfig(); // includes initialize if necessary
 
 #ifdef BOARD_HAS_PSRAM
-  if (psramFound()) {
-    ESP_LOGI(TAG, "PSRAM found and initialized");
-    strcat_P(features, " PSRAM");
-  } else
-    ESP_LOGI(TAG, "No PSRAM found");
-#else
+  assert(psramFound());
+  ESP_LOGI(TAG, "PSRAM found and initialized");
+  strcat_P(features, " PSRAM");
 #endif
 
-    // initialize leds
+  // initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
