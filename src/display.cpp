@@ -43,14 +43,14 @@ void init_display(const char *Productname, const char *Version) {
   u8x8.draw2x2String(0, 0, Productname);
   u8x8.setInverseFont(0);
   u8x8.draw2x2String(2, 2, Productname);
-  vTaskDelay(1500 / portTICK_PERIOD_MS);
+  delay(1500);
   u8x8.clear();
   u8x8.setFlipMode(1);
   u8x8.setInverseFont(1);
   u8x8.draw2x2String(0, 0, Productname);
   u8x8.setInverseFont(0);
   u8x8.draw2x2String(2, 2, Productname);
-  vTaskDelay(1500 / portTICK_PERIOD_MS);
+  delay(1500);
 
   u8x8.setFlipMode(0);
   u8x8.clear();
@@ -81,7 +81,7 @@ void init_display(const char *Productname, const char *Version) {
   DisplayKey(buf, 8, true);
 #endif // HAS_LORA
 
-  vTaskDelay(3000 / portTICK_PERIOD_MS);
+  delay(3000);
   u8x8.clear();
   u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
   u8x8.draw2x2String(0, 0, "PAX:0");
@@ -121,8 +121,7 @@ void refreshtheDisplay() {
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
   u8x8.setCursor(0, 2);
-  u8x8.printf(batt_voltage > 4000 ? "B:USB " : "B:%.1fV",
-              batt_voltage / 1000.0);
+  u8x8.printf("B:%.1fV", batt_voltage / 1000.0);
 #endif
 
 // update GPS status (line 2)
@@ -167,7 +166,7 @@ void refreshtheDisplay() {
   u8x8.setCursor(0, 5);
   u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
   u8x8.setCursor(10, 5);
-  u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
+  u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
 #ifdef HAS_LORA
   // update LoRa status display (line 6)

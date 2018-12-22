@@ -55,12 +55,13 @@ char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
-
 hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
            *displaytimer = NULL; // irq tasks
 TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
-std::set<uint16_t> macs; // container holding unique MAC adress hashes
+// container holding unique MAC address hashes with Memory Alloctor using PSRAM,
+// if present
+std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
@@ -105,8 +106,17 @@ void setup() {
            chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                          : "external");
-  ESP_LOGI(TAG, "ESP32 SDK: %s", ESP.getSdkVersion());
-  ESP_LOGI(TAG, "Free RAM: %d bytes", ESP.getFreeHeap());
+  ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
+           ESP.getHeapSize(), ESP.getFreeHeap());
+#ifdef BOARD_HAS_PSRAM
+  ESP_LOGI(TAG, "SPIRam Total heap %d, SPIRam Free Heap %d", ESP.getPsramSize(),
+           ESP.getFreePsram());
+#endif
+  ESP_LOGI(TAG, "ChipRevision %d, Cpu Freq %d, SDK Version %s",
+           ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
+  ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
+           ESP.getFlashChipSpeed());
+  ESP_LOGI(TAG, "Wifi/BT software coexist version: %s", esp_coex_version_get());
 
 #ifdef HAS_GPS
   ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
@@ -117,7 +127,16 @@ void setup() {
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
-  // initialize leds
+#ifdef BOARD_HAS_PSRAM
+  if (psramFound()) {
+    ESP_LOGI(TAG, "PSRAM found and initialized");
+    strcat_P(features, " PSRAM");
+  } else
+    ESP_LOGI(TAG, "No PSRAM found");
+#else
+#endif
+
+    // initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
@@ -148,13 +167,6 @@ void setup() {
   antenna_select(cfg.wifiant);
 #endif
 
-// switch off bluetooth, if not compiled
-#ifdef BLECOUNTER
-  strcat_P(features, " BLE");
-#else
-  bool btstop = btStop();
-#endif
-
 // initialize battery status
 #ifdef HAS_BATTERY_PROBE
   strcat_P(features, " BATT");
@@ -172,7 +184,27 @@ void setup() {
   }
 #endif
 
-  // initialize button
+// start BLE scan callback if BLE function is enabled in NVRAM configuration
+// or switch off bluetooth, if not compiled
+#ifdef BLECOUNTER
+  strcat_P(features, " BLE");
+  if (cfg.blescan) {
+    ESP_LOGI(TAG, "Starting Bluetooth...");
+    start_BLEscan();
+  } else
+    btStop();
+#else
+  // remove bluetooth stack to gain more free memory
+  ESP_ERROR_CHECK(esp_bluedroid_disable());
+  ESP_ERROR_CHECK(esp_bluedroid_deinit());
+  btStop();
+  ESP_ERROR_CHECK(esp_bt_controller_deinit());
+  ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
+  ESP_ERROR_CHECK(esp_coex_preference_set((
+      esp_coex_prefer_t)ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+#endif
+
+// initialize button
 #ifdef HAS_BUTTON
   strcat_P(features, " BTN_");
 #ifdef BUTTON_PULLUP
@@ -290,14 +322,6 @@ void setup() {
 #endif
 #endif
 
-// start BLE scan callback if BLE function is enabled in NVRAM configuration
-#ifdef BLECOUNTER
-  if (cfg.blescan) {
-    ESP_LOGI(TAG, "Starting Bluetooth...");
-    start_BLEscan();
-  }
-#endif
-
   // start wifi in monitor mode and start channel rotation task on core 0
   ESP_LOGI(TAG, "Starting Wifi...");
   wifi_sniffer_init();
@@ -352,7 +376,7 @@ void loop() {
 #ifdef HAS_LORA
     os_runloop_once(); // execute lmic scheduled jobs and events
 #endif
-    vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
+    delay(2); // yield to CPU
   }
 
   vTaskDelete(NULL); // shoud never be reached

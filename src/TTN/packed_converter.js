@@ -4,9 +4,16 @@
 function Converter(decoded, port) {
 
     var converted = decoded;
+    var pax = 0;
 
     if (port === 1) {
-        converted.pax = converted.ble + converted.wifi;
+
+        for (var x in converted) {
+            pax += converted[x];
+            }
+            
+    converted.pax = pax;
+
     }
 
     if (port === 2) {

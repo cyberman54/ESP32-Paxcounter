@@ -1,6 +1,8 @@
 // Basic Config
 #include "globals.h"
 #include "wifiscan.h"
+#include <esp_coexist.h>
+#include "coexist_internal.h"
 
 // Local logging tag
 static const char TAG[] = "wifi";
@@ -27,7 +29,7 @@ typedef struct {
 // using IRAM_:ATTR here to speed up callback function
 IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
                                            wifi_promiscuous_pkt_type_t type) {
-                                               
+
   const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
   const wifi_ieee80211_packet_t *ipkt =
       (wifi_ieee80211_packet_t *)ppkt->payload;
@@ -48,6 +50,9 @@ void wifi_sniffer_init(void) {
   wifi_promiscuous_filter_t filter = {
       // .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
       .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
+
+  ESP_ERROR_CHECK(esp_coex_preference_set(
+      ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
 
   ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(

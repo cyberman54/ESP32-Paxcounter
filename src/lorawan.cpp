@@ -222,13 +222,6 @@ void onEvent(ev_t ev) {
                                                : PSTR("TX_COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
 
-    //    if (LMIC.dataLen) {
-    //      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
-    //               LMIC.dataLen, (signed char)LMIC.rssi, (signed
-    //               char)LMIC.snr);
-    //      sprintf(display_line6, "RSSI %d SNR %d", (signed char)LMIC.rssi,
-    //              (signed char)LMIC.snr);
-
     if (LMIC.dataLen) {
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI -%d SNR %d",
                LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);

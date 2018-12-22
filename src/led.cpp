@@ -190,7 +190,7 @@ void ledLoop(void *parameter) {
       previousLEDState = LEDState;
     }
     // give yield to CPU
-    vTaskDelay(2 / portTICK_PERIOD_MS);
+    delay(2);
   }                         // while(1)
   vTaskDelete(ledLoopTask); // shoud never be reached
 };                          // ledloop()
