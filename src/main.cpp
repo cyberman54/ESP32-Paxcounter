@@ -54,13 +54,14 @@ configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
-                  batt_voltage = 0;      // globals for display
-
+                  batt_voltage = 0; // globals for display
 hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
            *displaytimer = NULL; // irq tasks
 TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
-std::set<uint16_t> macs; // container holding unique MAC adress hashes
+// container holding unique MAC address hashes with Memory Alloctor using PSRAM,
+// if present
+std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
@@ -107,8 +108,10 @@ void setup() {
                                                          : "external");
   ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
            ESP.getHeapSize(), ESP.getFreeHeap());
+#ifdef BOARD_HAS_PSRAM
   ESP_LOGI(TAG, "SPIRam Total heap %d, SPIRam Free Heap %d", ESP.getPsramSize(),
            ESP.getFreePsram());
+#endif
   ESP_LOGI(TAG, "ChipRevision %d, Cpu Freq %d, SDK Version %s",
            ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
   ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
@@ -124,7 +127,16 @@ void setup() {
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
-  // initialize leds
+#ifdef BOARD_HAS_PSRAM
+  if (psramFound()) {
+    ESP_LOGI(TAG, "PSRAM found and initialized");
+    strcat_P(features, " PSRAM");
+  } else
+    ESP_LOGI(TAG, "No PSRAM found");
+#else
+#endif
+
+    // initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");

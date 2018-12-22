@@ -166,7 +166,7 @@ void refreshtheDisplay() {
   u8x8.setCursor(0, 5);
   u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
   u8x8.setCursor(10, 5);
-  u8x8.printf("%4dKB", ESP.getFreeHeap() / 1024);
+  u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
 #ifdef HAS_LORA
   // update LoRa status display (line 6)

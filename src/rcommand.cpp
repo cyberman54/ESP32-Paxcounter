@@ -245,7 +245,7 @@ void get_status(uint8_t val[]) {
 #endif
   payload.reset();
   payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
-                    ESP.getFreeHeap(), rtc_get_reset_reason(0),
+                    getFreeRAM(), rtc_get_reset_reason(0),
                     rtc_get_reset_reason(1));
   SendPayload(STATUSPORT);
 };

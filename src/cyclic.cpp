@@ -55,19 +55,33 @@ void doHousekeeping() {
   ESP_LOGI(TAG, "Measured Voltage: %dmV", batt_voltage);
 #endif
 
-  // check free memory
-  if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
+  // check free heap memory
+  if (ESP.getMinFreeHeap() <= MEM_LOW) {
     ESP_LOGI(TAG,
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
-             esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
+             ESP.getMinFreeHeap() , ESP.getFreeHeap());
     SendPayload(COUNTERPORT); // send data before clearing counters
     reset_counters();         // clear macs container and reset all counters
     get_salt();               // get new salt for salting hashes
 
-    if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
+    if (ESP.getMinFreeHeap()  <= MEM_LOW) // check again
       do_reset(); // memory leak, reset device
   }
+
+// check free PSRAM memory
+#ifdef BOARD_HAS_PSRAM
+  if (ESP.getMinFreePsram() <= MEM_LOW) {
+    ESP_LOGI(TAG, "PSRAM full, counter cleared");
+    SendPayload(COUNTERPORT); // send data before clearing counters
+    reset_counters();         // clear macs container and reset all counters
+    get_salt();               // get new salt for salting hashes
+
+    if (ESP.getMinFreePsram() <= MEM_LOW) // check again
+      do_reset();                      // memory leak, reset device
+  }
+#endif
+
 } // doHousekeeping()
 
 // uptime counter 64bit to prevent millis() rollover after 49 days
@@ -78,6 +92,14 @@ uint64_t uptime() {
     high32++;
   low32 = new_low32;
   return (uint64_t)high32 << 32 | low32;
+}
+
+uint32_t getFreeRAM() {
+#ifndef BOARD_HAS_PSRAM
+  return ESP.getFreeHeap();
+#else
+  return ESP.getFreePsram();
+#endif
 }
 
 void reset_counters() {

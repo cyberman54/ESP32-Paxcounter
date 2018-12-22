@@ -8,6 +8,7 @@
 #include <set>
 #include <array>
 #include <algorithm>
+#include "Mallocator.h"
 
 // sniffing types
 #define MAC_SNIFF_WIFI 0
@@ -87,9 +88,9 @@ extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                  // display values
-extern std::set<uint16_t> macs;    // temp storage for MACs
 extern hw_timer_t *channelSwitch, *sendCycle, *displaytimer;
 
+extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
