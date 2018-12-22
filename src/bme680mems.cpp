@@ -101,34 +101,28 @@ void bme_loop(void *pvParameters) {
 
 int8_t i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data,
                 uint16_t len) {
-  int8_t rslt = 0; /* Return 0 for Success, non-zero for failure */
-  uint16_t i;
-
+  int8_t rslt = 0;
   Wire.beginTransmission(dev_id);
   Wire.write(reg_addr);
-  rslt = Wire.endTransmission();
+  rslt = Wire.endTransmission(false);
 
   Wire.requestFrom((int)dev_id, (int)len);
-  for (i = 0; (i < len) && Wire.available(); i++) {
+  for (uint16_t i = 0; (i < len) && Wire.available(); i++) {
     reg_data[i] = Wire.read();
   }
-
+  // return 0 for success, non-zero for failure
   return rslt;
 }
 
 int8_t i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data,
                  uint16_t len) {
-  int8_t rslt = 0; /* Return 0 for Success, non-zero for failure */
-  uint16_t i;
-
   Wire.beginTransmission(dev_id);
   Wire.write(reg_addr);
-  for (i = 0; i < len; i++) {
+  for (uint16_t i = 0; i < len; i++) {
     Wire.write(reg_data[i]);
   }
-  rslt = Wire.endTransmission();
-
-  return rslt;
+  // return 0 for success, non-zero for failure
+  return Wire.endTransmission(true);
 }
 
 /*!

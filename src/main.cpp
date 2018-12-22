@@ -35,8 +35,10 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by irq
 gpsloop       1     2     reads data from GPS via serial or i2c
-bmeloop       1     2     reads data from BME sensor via i2c
+bmeloop       1     0     reads data from BME sensor via i2c
 IDLE          1     0     ESP32 arduino scheduler
+
+Low priority numbers denote low priority tasks.
 
 ESP32 hardware timers
 ==========================
@@ -239,7 +241,7 @@ void setup() {
                             "bmeloop", // name of task
                             4096,      // stack size of task
                             (void *)1, // parameter of the task
-                            2,         // priority of the task
+                            0,         // priority of the task
                             &BmeTask,  // task handle
                             1);        // CPU core
   }
@@ -331,7 +333,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting IRQ Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
                           "irqhandler",    // name of task
-                          2048,            // stack size of task
+                          4096,            // stack size of task
                           (void *)1,       // parameter of the task
                           1,               // priority of the task
                           &irqHandlerTask, // task handle
