@@ -14,8 +14,7 @@
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC
-#define LORA_IO1  (23) // Pin tied via diode to DIO0
-#define LORA_IO2  (23) // Pin tied via diode to DIO0
+#define LORA_IRQ  (23)
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define HAS_ANTENNA_SWITCH  (16)      // pin for switching wifi antenna
