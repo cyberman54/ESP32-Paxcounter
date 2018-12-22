@@ -182,9 +182,7 @@ void refreshtheDisplay() {
   if (msgWaiting) {
     sprintf(buff, "%2d", msgWaiting);
     u8x8.setCursor(14, 7);
-    u8x8.setInverseFont(1);
     u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
-    u8x8.setInverseFont(0);
   } else
     u8x8.printf("  ");
 
