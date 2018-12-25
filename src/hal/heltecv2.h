@@ -26,5 +26,11 @@
 // additional definitions for LMIC
 #define LORA_IO1  (35)
 #define LORA_IO2  (34)
+#define LORA_SCK (5)
+#define LORA_MOSI (27)
+#define LORA_MISO (19)
+#define LORA_CS (18)
+#define LORA_RST (14)
+#define LORA_IRQ (26)
 
 #endif
