@@ -4,7 +4,7 @@
 #include "globals.h"
 #include <Wire.h>
 #include "irqhandler.h"
-#include "bsec.h"
+#include "../lib/Bosch-BSEC/src/bsec.h"
 
 extern bmeStatus_t
     bme_status; // Make struct for storing gps data globally available

@@ -1,7 +1,6 @@
 #ifdef HAS_BME
 
 #include "bme680mems.h"
-#include "bsec.h"
 
 // Local logging tag
 static const char TAG[] = "main";

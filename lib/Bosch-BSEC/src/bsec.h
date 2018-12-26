@@ -52,9 +52,9 @@
 #include "Arduino.h"
 #include "Wire.h"
 #include "SPI.h"
-#include "bsec_datatypes.h"
-#include "bsec_interface.h"
-#include "bme680.h"
+#include "inc/bsec_datatypes.h"
+#include "inc/bsec_interface.h"
+#include "bme680/bme680.h"
 
 /* BSEC class definition */
 class Bsec
