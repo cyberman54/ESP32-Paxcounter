@@ -17,8 +17,8 @@
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-// don't forget to connect SDIO of BME680 to GND for selecting i2c addr 0x76
 #define HAS_BME GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
+#define BME_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
 
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
