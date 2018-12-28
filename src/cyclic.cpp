@@ -26,8 +26,8 @@ void doHousekeeping() {
 // time sync once per TIME_SYNC_INTERVAL
 #ifdef TIME_SYNC_INTERVAL
   if (millis() >= nextTimeSync) {
-    nextTimeSync = millis() + TIME_SYNC_INTERVAL *
-                                  60000; // set up next time sync period
+    nextTimeSync =
+        millis() + TIME_SYNC_INTERVAL * 60000; // set up next time sync period
     do_timesync();
   }
 #endif
@@ -52,22 +52,41 @@ void doHousekeeping() {
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE
   batt_voltage = read_voltage();
-  ESP_LOGI(TAG, "Measured Voltage: %dmV", batt_voltage);
+  ESP_LOGI(TAG, "Voltage: %dmV", batt_voltage);
 #endif
 
-  // check free memory
-  if (esp_get_minimum_free_heap_size() <= MEM_LOW) {
+// display BME sensor data if present
+#ifdef HAS_BME
+  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f", bme_status.temperature, bme_status.iaq);
+#endif
+
+  // check free heap memory
+  if (ESP.getMinFreeHeap() <= MEM_LOW) {
     ESP_LOGI(TAG,
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
-             esp_get_minimum_free_heap_size(), ESP.getFreeHeap());
+             ESP.getMinFreeHeap() , ESP.getFreeHeap());
     SendPayload(COUNTERPORT); // send data before clearing counters
-    reset_counters();      // clear macs container and reset all counters
-    get_salt();            // get new salt for salting hashes
+    reset_counters();         // clear macs container and reset all counters
+    get_salt();               // get new salt for salting hashes
 
-    if (esp_get_minimum_free_heap_size() <= MEM_LOW) // check again
+    if (ESP.getMinFreeHeap()  <= MEM_LOW) // check again
       do_reset(); // memory leak, reset device
   }
+
+// check free PSRAM memory
+#ifdef BOARD_HAS_PSRAM
+  if (ESP.getMinFreePsram() <= MEM_LOW) {
+    ESP_LOGI(TAG, "PSRAM full, counter cleared");
+    SendPayload(COUNTERPORT); // send data before clearing counters
+    reset_counters();         // clear macs container and reset all counters
+    get_salt();               // get new salt for salting hashes
+
+    if (ESP.getMinFreePsram() <= MEM_LOW) // check again
+      do_reset();                      // memory leak, reset device
+  }
+#endif
+
 } // doHousekeeping()
 
 // uptime counter 64bit to prevent millis() rollover after 49 days
@@ -80,6 +99,14 @@ uint64_t uptime() {
   return (uint64_t)high32 << 32 | low32;
 }
 
+uint32_t getFreeRAM() {
+#ifndef BOARD_HAS_PSRAM
+  return ESP.getFreeHeap();
+#else
+  return ESP.getFreePsram();
+#endif
+}
+
 void reset_counters() {
   macs.clear();   // clear all macs container
   macs_total = 0; // reset all counters
@@ -89,7 +116,8 @@ void reset_counters() {
 
 void do_timesync() {
 #ifdef TIME_SYNC_INTERVAL
-// sync time & date if we have valid gps time
+
+// sync time & date by GPS if we have valid gps time
 #ifdef HAS_GPS
   if (gps.time.isValid()) {
     setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
@@ -101,9 +129,14 @@ void do_timesync() {
     ESP_LOGI(TAG, "No valid GPS time");
   }
 #endif // HAS_GPS
+
+// sync time by LoRa Network if network supports DevTimeReq
+#ifdef LMIC_ENABLE_DeviceTimeReq
   // Schedule a network time request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
+#endif
+
 #endif // TIME_SYNC_INTERVAL
 } // do_timesync()
 

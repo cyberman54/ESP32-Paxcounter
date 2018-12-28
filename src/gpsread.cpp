@@ -70,12 +70,12 @@ void gps_loop(void *pvParameters) {
       Wire.requestFrom(GPS_ADDR, 32); // caution: this is a blocking call
       while (Wire.available()) {
         gps.encode(Wire.read());
-        vTaskDelay(2 / portTICK_PERIOD_MS); // 2ms delay according L76 datasheet
+        delay(2); // 2ms delay according L76 datasheet
       }
 #endif
     } // if
 
-    vTaskDelay(2 / portTICK_PERIOD_MS); // yield to CPU
+    delay(2); // yield to CPU
 
   } // end of infinite loop
 

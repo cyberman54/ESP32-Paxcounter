@@ -39,7 +39,7 @@ public:
   void reset(void);
   uint8_t getSize(void);
   uint8_t *getBuffer(void);
-  void addCount(uint16_t value1, uint16_t value2);
+  void addCount(uint16_t value, uint8_t sniffytpe);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp, uint32_t mem,
                  uint8_t reset1, uint8_t reset2);

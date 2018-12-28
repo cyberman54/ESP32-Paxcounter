@@ -2,6 +2,7 @@
 #define _DISPLAY_H
 
 #include <U8x8lib.h>
+#include "cyclic.h"
 
 extern uint8_t volatile DisplayState;
 extern HAS_DISPLAY u8x8;

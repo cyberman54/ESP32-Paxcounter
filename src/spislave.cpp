@@ -87,8 +87,7 @@ void spi_slave_task(void *param) {
     // wait until spi master clocks out the data, and read results in rx buffer
     ESP_LOGI(TAG, "Prepared SPI transaction for %zu byte(s)", transaction_size);
     ESP_LOG_BUFFER_HEXDUMP(TAG, txbuf, transaction_size, ESP_LOG_DEBUG);
-    esp_err_t ret =
-        spi_slave_transmit(HSPI_HOST, &spi_transaction, portMAX_DELAY);
+    ESP_ERROR_CHECK_WITHOUT_ABORT(spi_slave_transmit(HSPI_HOST, &spi_transaction, portMAX_DELAY));
     ESP_LOG_BUFFER_HEXDUMP(TAG, rxbuf, transaction_size, ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Transaction finished with size %zu bits",
              spi_transaction.trans_len);

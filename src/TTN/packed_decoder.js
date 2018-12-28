@@ -5,8 +5,16 @@ function Decoder(bytes, port) {
 
     var decoded = {};
 
+    if (bytes.length === 0)  {
+        return {};
+    }
+
     if (port === 1) {
-        // only counter data, no gps
+        // only wifi counter data, no gps
+        if (bytes.length === 2) {
+            return decode(bytes, [uint16], ['wifi']);
+        }
+        // wifi + ble counter data, no gps
         if (bytes.length === 4) {
             return decode(bytes, [uint16, uint16], ['wifi', 'ble']);
         }
@@ -44,6 +52,11 @@ function Decoder(bytes, port) {
     if (port === 7) {
         // BME680 sensor data     
         return decode(bytes, [float, uint16, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
+    }
+
+    if (port === 8) {
+        // battery voltage      
+        return decode(bytes, [uint16], ['voltage']);
     }
 
 }
