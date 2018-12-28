@@ -12,9 +12,7 @@
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0
 
-// Pins for LORA chip SPI interface come from board file, we need some
-// additional definitions for LMIC
-#define LORA_IRQ  (23)
+// Note: Pins for LORA chip SPI interface come from board file pins_arduino.h
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define HAS_ANTENNA_SWITCH  (16)      // pin for switching wifi antenna

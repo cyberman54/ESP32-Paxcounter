@@ -21,11 +21,7 @@
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0 (P2)
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
-// Pins for LORA chip SPI interface come from board file, we need some
-// additional definitions for LMIC
-#define LORA_IRQ  (23)
-#define LORA_RST NOT_A_PIN
-#define SS 18
+// Note: Pins for LORA chip SPI interface come from board file pins_arduino.h
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define HAS_ANTENNA_SWITCH  (21) // pin for switching wifi antenna (P12)
