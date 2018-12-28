@@ -8,7 +8,7 @@ static const char TAG[] = "main";
 bmeStatus_t bme_status;
 TaskHandle_t BmeTask;
 
-float bme_offset = (float) BME_TEMP_OFFSET;
+float bme_offset = (float)BME_TEMP_OFFSET;
 
 // --- Bosch BSEC library configuration ---
 // 3,3V supply voltage; 3s max time between sensor_control calls; 4 days
@@ -59,7 +59,7 @@ int bme_init(void) {
   return_values_init ret =
       bsec_iot_init(BSEC_SAMPLE_RATE_LP, bme_offset, i2c_write, i2c_read,
                     user_delay_ms, state_load, config_load);
-  
+
   if ((int)ret.bme680_status) {
     ESP_LOGE(TAG, "Could not initialize BME680, error %d",
              (int)ret.bme680_status);
@@ -173,7 +173,7 @@ uint32_t config_load(uint8_t *config_buffer, uint32_t n_buffer) {
   return sizeof(bsec_config_iaq);
 }
 
-void user_delay_ms(uint32_t period) { vTaskDelay(period / portTICK_PERIOD_MS); }
+void user_delay_ms(uint32_t period) { delay(period); }
 
 int64_t get_timestamp_us() { return (int64_t)millis() * 1000; }
 

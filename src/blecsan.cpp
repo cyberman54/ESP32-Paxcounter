@@ -13,6 +13,7 @@ https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 #include <esp_bt_main.h>
 #include <esp_gap_ble_api.h>
 #include <esp_blufi_api.h> // needed for BLE_ADDR types, do not remove
+#include <esp_coexist.h>
 
 #define BT_BD_ADDR_HEX(addr)                                                   \
   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
@@ -243,8 +244,15 @@ esp_err_t register_ble_callback(void) {
 
 } // register_ble_callback
 
+#endif // BLECOUNTER
+
 void start_BLEscan(void) {
+#ifdef BLECOUNTER
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
+
+  ESP_ERROR_CHECK(esp_coex_preference_set(
+      (esp_coex_prefer_t)
+          ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
 
   // Initialize BT controller to allocate task and other resource.
   btStart();
@@ -255,15 +263,18 @@ void start_BLEscan(void) {
   ESP_ERROR_CHECK(register_ble_callback());
 
   ESP_LOGI(TAG, "Bluetooth scanner started");
+#endif // BLECOUNTER
 } // start_BLEscan
 
 void stop_BLEscan(void) {
+#ifdef BLECOUNTER
   ESP_LOGI(TAG, "Shutting down bluetooth scanner ...");
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
-  btStop(); // disable & deinit bt_controller
+  btStop(); // disable bt_controller
+  ESP_ERROR_CHECK(esp_coex_preference_set((
+      esp_coex_prefer_t)ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
-} // stop_BLEscan
-
 #endif // BLECOUNTER
+} // stop_BLEscan

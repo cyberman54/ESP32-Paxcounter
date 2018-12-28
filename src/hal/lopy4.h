@@ -9,12 +9,12 @@
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 
-#define HAS_SPI 1        // comment out if device shall not send data via SPI
+//#defin HAS_SPI 1        // comment out if device shall not send data via SPI
 // pin definitions for local wired SPI slave interface
-#define SPI_MOSI  GPIO_NUM_22
-#define SPI_MISO  GPIO_NUM_33
-#define SPI_SCLK  GPIO_NUM_26
-#define SPI_CS    GPIO_NUM_36
+//#define SPI_MOSI  GPIO_NUM_22
+//#define SPI_MISO  GPIO_NUM_33
+//#define SPI_SCLK  GPIO_NUM_26
+//#define SPI_CS    GPIO_NUM_36
 
 #define CFG_sx1276_radio 1
 //#define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED

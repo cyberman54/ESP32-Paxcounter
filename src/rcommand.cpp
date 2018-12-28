@@ -9,7 +9,7 @@ static const char TAG[] = "main";
 void do_reset() {
   ESP_LOGI(TAG, "Remote command: restart device");
   LMIC_shutdown();
-  vTaskDelay(3000 / portTICK_PERIOD_MS);
+  delay(3000);
   esp_restart();
 }
 
@@ -79,13 +79,11 @@ void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
   ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds",
            cfg.blescantime / float(100));
-#ifdef BLECOUNTER
   // stop & restart BLE scan task to apply new parameter
   if (cfg.blescan) {
     stop_BLEscan();
     start_BLEscan();
   }
-#endif
 }
 
 void set_countmode(uint8_t val[]) {
@@ -193,14 +191,12 @@ void set_loraadr(uint8_t val[]) {
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
   cfg.blescan = val[0] ? 1 : 0;
-#ifdef BLECOUNTER
   if (cfg.blescan)
     start_BLEscan();
   else {
     macs_ble = 0; // clear BLE counter
     stop_BLEscan();
   }
-#endif
 }
 
 void set_wifiant(uint8_t val[]) {
@@ -249,7 +245,7 @@ void get_status(uint8_t val[]) {
 #endif
   payload.reset();
   payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
-                    ESP.getFreeHeap(), rtc_get_reset_reason(0),
+                    getFreeRAM(), rtc_get_reset_reason(0),
                     rtc_get_reset_reason(1));
   SendPayload(STATUSPORT);
 };

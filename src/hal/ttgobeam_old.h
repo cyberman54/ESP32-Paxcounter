@@ -19,6 +19,12 @@
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
+//#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+//#define MY_OLED_SDA (21)
+//#define MY_OLED_SCL (22)
+//#define MY_OLED_RST (NOT_A_PIN)
+//#define DISPLAY_FLIP  1 // use if display is rotated
+
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define BOARD_HAS_PSRAM // use extra 4MB external RAM
