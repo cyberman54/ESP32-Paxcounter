@@ -98,97 +98,103 @@ void init_display(const char *Productname, const char *Version) {
 
 void refreshtheDisplay() {
 
-  // set display on/off according to current device configuration
-  if (DisplayState != cfg.screenon) {
-    DisplayState = cfg.screenon;
-    u8x8.setPowerSave(!cfg.screenon);
-  }
+  // block i2c bus access
+  if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
+      pdTRUE) {
 
-  // if display is switched off we don't refresh it and save time
-  if (!DisplayState)
-    return;
+    // set display on/off according to current device configuration
+    if (DisplayState != cfg.screenon) {
+      DisplayState = cfg.screenon;
+      u8x8.setPowerSave(!cfg.screenon);
+    }
 
-  uint8_t msgWaiting;
-  char buff[16]; // 16 chars line buffer
+    // if display is switched off we don't refresh it and save time
+    if (!DisplayState)
+      return;
 
-  // update counter (lines 0-1)
-  snprintf(
-      buff, sizeof(buff), "PAX:%-4d",
-      (int)macs.size()); // convert 16-bit MAC counter to decimal counter value
-  u8x8.draw2x2String(0, 0,
-                     buff); // display number on unique macs total Wifi + BLE
+    uint8_t msgWaiting;
+    char buff[16]; // 16 chars line buffer
+
+    // update counter (lines 0-1)
+    snprintf(
+        buff, sizeof(buff), "PAX:%-4d",
+        (int)
+            macs.size()); // convert 16-bit MAC counter to decimal counter value
+    u8x8.draw2x2String(0, 0,
+                       buff); // display number on unique macs total Wifi + BLE
 
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
-  u8x8.setCursor(0, 2);
-  u8x8.printf("B:%.1fV", batt_voltage / 1000.0);
+    u8x8.setCursor(0, 2);
+    u8x8.printf("B:%.1fV", batt_voltage / 1000.0);
 #endif
 
 // update GPS status (line 2)
 #ifdef HAS_GPS
-  u8x8.setCursor(9, 2);
-  if (!gps.location.isValid()) // if no fix then display Sats value inverse
-  {
-    u8x8.setInverseFont(1);
-    u8x8.printf("Sats:%.2d", gps.satellites.value());
-    u8x8.setInverseFont(0);
-  } else
-    u8x8.printf("Sats:%.2d", gps.satellites.value());
+    u8x8.setCursor(9, 2);
+    if (!gps.location.isValid()) // if no fix then display Sats value inverse
+    {
+      u8x8.setInverseFont(1);
+      u8x8.printf("Sats:%.2d", gps.satellites.value());
+      u8x8.setInverseFont(0);
+    } else
+      u8x8.printf("Sats:%.2d", gps.satellites.value());
 #endif
 
-    // update bluetooth counter + LoRa SF (line 3)
+      // update bluetooth counter + LoRa SF (line 3)
 #ifdef BLECOUNTER
-  u8x8.setCursor(0, 3);
-  if (cfg.blescan)
-    u8x8.printf("BLTH:%-4d", macs_ble);
-  else
-    u8x8.printf("%s", "BLTH:off");
+    u8x8.setCursor(0, 3);
+    if (cfg.blescan)
+      u8x8.printf("BLTH:%-4d", macs_ble);
+    else
+      u8x8.printf("%s", "BLTH:off");
 #endif
 
 #ifdef HAS_LORA
-  u8x8.setCursor(11, 3);
-  u8x8.printf("SF:");
-  if (cfg.adrmode) // if ADR=on then display SF value inverse
-    u8x8.setInverseFont(1);
-  u8x8.printf("%c%c", lora_datarate[LMIC.datarate * 2],
-              lora_datarate[LMIC.datarate * 2 + 1]);
-  if (cfg.adrmode) // switch off inverse if it was turned on
-    u8x8.setInverseFont(0);
+    u8x8.setCursor(11, 3);
+    u8x8.printf("SF:");
+    if (cfg.adrmode) // if ADR=on then display SF value inverse
+      u8x8.setInverseFont(1);
+    u8x8.printf("%c%c", lora_datarate[LMIC.datarate * 2],
+                lora_datarate[LMIC.datarate * 2 + 1]);
+    if (cfg.adrmode) // switch off inverse if it was turned on
+      u8x8.setInverseFont(0);
 #endif // HAS_LORA
 
-  // update wifi counter + channel display (line 4)
-  u8x8.setCursor(0, 4);
-  u8x8.printf("WIFI:%-4d", macs_wifi);
-  u8x8.setCursor(11, 4);
-  u8x8.printf("ch:%02d", channel);
+    // update wifi counter + channel display (line 4)
+    u8x8.setCursor(0, 4);
+    u8x8.printf("WIFI:%-4d", macs_wifi);
+    u8x8.setCursor(11, 4);
+    u8x8.printf("ch:%02d", channel);
 
-  // update RSSI limiter status & free memory display (line 5)
-  u8x8.setCursor(0, 5);
-  u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-  u8x8.setCursor(10, 5);
-  u8x8.printf("%4dKB", getFreeRAM() / 1024);
+    // update RSSI limiter status & free memory display (line 5)
+    u8x8.setCursor(0, 5);
+    u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
+    u8x8.setCursor(10, 5);
+    u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
 #ifdef HAS_LORA
-  // update LoRa status display (line 6)
-  u8x8.setCursor(0, 6);
-  u8x8.printf("%-16s", display_line6);
+    // update LoRa status display (line 6)
+    u8x8.setCursor(0, 6);
+    u8x8.printf("%-16s", display_line6);
 
-  // update LMiC event display (line 7)
-  u8x8.setCursor(0, 7);
-  u8x8.printf("%-14s", display_line7);
+    // update LMiC event display (line 7)
+    u8x8.setCursor(0, 7);
+    u8x8.printf("%-14s", display_line7);
 
-  // update LoRa send queue display (line 7)
-  msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
-  if (msgWaiting) {
-    sprintf(buff, "%2d", msgWaiting);
-    u8x8.setCursor(14, 7);
-    u8x8.setInverseFont(1);
-    u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
-    u8x8.setInverseFont(0);
-  } else
-    u8x8.printf("  ");
+    // update LoRa send queue display (line 7)
+    msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
+    if (msgWaiting) {
+      sprintf(buff, "%2d", msgWaiting);
+      u8x8.setCursor(14, 7);
+      u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
+    } else
+      u8x8.printf("  ");
 
 #endif // HAS_LORA
+
+    xSemaphoreGive(I2Caccess); // release i2c bus access
+  }
 
 } // refreshDisplay()
 

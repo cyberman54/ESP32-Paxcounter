@@ -52,10 +52,15 @@ void doHousekeeping() {
 // read battery voltage into global variable
 #ifdef HAS_BATTERY_PROBE
   batt_voltage = read_voltage();
-  ESP_LOGI(TAG, "Measured Voltage: %dmV", batt_voltage);
+  ESP_LOGI(TAG, "Voltage: %dmV", batt_voltage);
 #endif
 
-  // check free heap memory
+// display BME sensor data if present
+#ifdef HAS_BME
+  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f", bme_status.temperature, bme_status.iaq);
+#endif
+
+// check free heap memory
   if (ESP.getMinFreeHeap() <= MEM_LOW) {
     ESP_LOGI(TAG,
              "Memory full, counter cleared (heap low water mark = %d Bytes / "

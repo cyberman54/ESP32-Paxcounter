@@ -43,17 +43,18 @@ void sendCounter() {
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
-      
-      #ifdef HAS_GPS
+
+#ifdef HAS_GPS
       if (gps.location.isValid()) { // send GPS position only if we have a fix
         gps_read();
         payload.addGPS(gps_status);
-        ESP_LOGD(TAG, "Add GPS data to counter data.");
-      }else {
-        ESP_LOGD(TAG, "No valid GPS position. Don't add GPS data to counter data.");
+      } else {
+        ESP_LOGD(
+            TAG,
+            "No valid GPS position. GPS data not appended to counter data.");
       }
-      #endif
-      
+#endif
+
       SendPayload(COUNTERPORT);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {

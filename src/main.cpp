@@ -35,8 +35,13 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by irq
 gpsloop       1     2     reads data from GPS via serial or i2c
-bmeloop       1     2     reads data from BME sensor via i2c
+bmeloop       1     1     reads data from BME sensor via i2c
 IDLE          1     0     ESP32 arduino scheduler
+
+Low priority numbers denote low priority tasks.
+
+Tasks using i2c bus all must have same priority, because using mutex semaphore
+(irqhandler, bmeloop)
 
 ESP32 hardware timers
 ==========================
@@ -58,6 +63,7 @@ uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
 hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
            *displaytimer = NULL; // irq tasks
 TaskHandle_t irqHandlerTask, wifiSwitchTask;
+SemaphoreHandle_t I2Caccess;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -75,6 +81,14 @@ void setup() {
   esp_log_level_set("wifi", ESP_LOG_NONE);
 
   char features[100] = "";
+
+  if (I2Caccess == NULL) // Check that semaphore has not already been created
+  {
+    I2Caccess = xSemaphoreCreateMutex(); // Create a mutex semaphore we will use
+                                         // to manage the i2c bus
+    if ((I2Caccess) != NULL)
+      xSemaphoreGive((I2Caccess)); // Flag the i2c bus available for use
+  }
 
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
@@ -230,21 +244,6 @@ void setup() {
   }
 #endif
 
-// initialize bme
-#ifdef HAS_BME
-  strcat_P(features, " BME");
-  if (bme_init()) {
-    ESP_LOGI(TAG, "Starting BMEloop...");
-    xTaskCreatePinnedToCore(bme_loop,  // task function
-                            "bmeloop", // name of task
-                            4096,      // stack size of task
-                            (void *)1, // parameter of the task
-                            2,         // priority of the task
-                            &BmeTask,  // task handle
-                            1);        // CPU core
-  }
-#endif
-
 // initialize sensors
 #ifdef HAS_SENSORS
   strcat_P(features, " SENS");
@@ -331,7 +330,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting IRQ Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
                           "irqhandler",    // name of task
-                          2048,            // stack size of task
+                          4096,            // stack size of task
                           (void *)1,       // parameter of the task
                           1,               // priority of the task
                           &irqHandlerTask, // task handle
@@ -346,6 +345,22 @@ void setup() {
                           4,                 // priority of the task
                           &wifiSwitchTask,   // task handle
                           0);                // CPU core
+
+  // initialize bme
+#ifdef HAS_BME
+  strcat_P(features, " BME");
+  if (bme_init()) {
+    ESP_LOGI(TAG, "Starting BMEloop...");
+    xTaskCreatePinnedToCore(bme_loop,  // task function
+                            "bmeloop", // name of task
+                            4096,      // stack size of task
+                            (void *)1, // parameter of the task
+                            //0,         // priority of the task
+                            1,         // priority of the task
+                            &BmeTask,  // task handle
+                            1);        // CPU core
+  }
+#endif
 
   // start timer triggered interrupts
   ESP_LOGI(TAG, "Starting Interrupts...");
