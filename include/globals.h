@@ -54,6 +54,7 @@ typedef struct {
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
   char version[10];      // Firmware version
+  char bsecstate[BSEC_MAX_STATE_BLOB_SIZE+1]; // init BSEC state for BME680 sensor
 } configData_t;
 
 // Struct holding payload for data send queue
@@ -87,7 +88,7 @@ extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
-    batt_voltage;                  // display values
+    batt_voltage; // display values
 extern hw_timer_t *channelSwitch, *sendCycle, *displaytimer;
 extern SemaphoreHandle_t I2Caccess;
 

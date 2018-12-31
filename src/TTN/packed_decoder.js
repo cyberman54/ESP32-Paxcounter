@@ -18,7 +18,11 @@ function Decoder(bytes, port) {
         if (bytes.length === 4) {
             return decode(bytes, [uint16, uint16], ['wifi', 'ble']);
         }
-        // combined counter and gps data
+        // combined wifi counter and gps data
+        if (bytes.length === 15) {
+            return decode(bytes, [uint16, latLng, latLng, uint8, hdop, uint16], ['wifi', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+        }
+        // combined wifi + ble counter and gps data
         if (bytes.length === 17) {
             return decode(bytes, [uint16, uint16, latLng, latLng, uint8, hdop, uint16], ['wifi', 'ble', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
         }

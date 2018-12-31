@@ -32,6 +32,8 @@ void defaultConfig() {
   cfg.monitormode = 0;        // 0=disabled, 1=enabled
   cfg.runmode = 0;            // 0=normal, 1=update
   cfg.payloadmask = 0xFF;     // all payload switched on
+  cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] = {
+      0}; // init BSEC state for BME680 sensor
 
   strncpy(cfg.version, PROGVERSION, sizeof(cfg.version) - 1);
 }
@@ -78,6 +80,12 @@ void saveConfig() {
     int16_t flash16 = 0;
     size_t required_size;
     char storedversion[10];
+    char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1];
+
+    if (nvs_get_str(my_handle, "bsecstate", bsecstate, &required_size) !=
+            ESP_OK ||
+        strcmp(bsecstate, cfg.bsecstate) != 0)
+      nvs_set_str(my_handle, "bsecstate", cfg.bsecstate);
 
     if (nvs_get_str(my_handle, "version", storedversion, &required_size) !=
             ESP_OK ||
@@ -202,7 +210,16 @@ void loadConfig() {
       migrateVersion();
     }
 
-    // overwrite defaults with valid values from NVRAM
+    // populate pre set defaults with current values from NVRAM
+
+    char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1];
+
+    if (nvs_get_str(my_handle, "bsecstate", NULL, &required_size) == ESP_OK) {
+      nvs_get_str(my_handle, "bsecstate", cfg.bsecstate, &required_size);
+      ESP_LOGI(TAG, "bsecstate = %d",
+               cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]);
+    }
+
     if (nvs_get_i8(my_handle, "lorasf", &flash8) == ESP_OK) {
       cfg.lorasf = flash8;
       ESP_LOGI(TAG, "lorasf = %d", flash8);

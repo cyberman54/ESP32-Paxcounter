@@ -23,9 +23,12 @@ bsec_virtual_sensor_t sensorList[10] = {
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
 };
 
+uint8_t bsecState[BSEC_MAX_STATE_BLOB_SIZE] = {0};
+uint16_t stateUpdateCounter = 0;
+
 // initialize BME680 sensor
 int bme_init(void) {
-
+  
   // block i2c bus access
   if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
       pdTRUE) {
@@ -45,6 +48,8 @@ int bme_init(void) {
       ESP_LOGE(TAG, "BME680 sensor not found");
       return 1;
     }
+
+    loadState();
 
     iaqSensor.setTemperatureOffset((float)BME_TEMP_OFFSET);
     iaqSensor.updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
@@ -99,7 +104,6 @@ void bme_loop(void *pvParameters) {
     // block i2c bus access
     if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
         pdTRUE) {
-
       if (iaqSensor.run()) { // If new data is available
         bme_status.raw_temperature = iaqSensor.rawTemperature;
         bme_status.raw_humidity = iaqSensor.rawHumidity;
@@ -111,7 +115,6 @@ void bme_loop(void *pvParameters) {
         bme_status.iaq_accuracy = iaqSensor.iaqAccuracy;
         bme_status.gas = iaqSensor.gasResistance;
       }
-
       xSemaphoreGive(I2Caccess); // release i2c bus access
     }
   }
@@ -120,5 +123,44 @@ void bme_loop(void *pvParameters) {
   vTaskDelete(BmeTask); // should never be reached
 
 } // bme_loop()
+
+void loadState(void) {
+  if (cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] == BSEC_MAX_STATE_BLOB_SIZE) {
+    // Existing state in NVS stored
+    ESP_LOGI(TAG, "restoring BSEC state from NVRAM");
+    memcpy(bsecState, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
+    iaqSensor.setState(bsecState);
+    checkIaqSensorStatus();
+  } else // no state stored
+    ESP_LOGI(TAG,
+             "no BSEC state stored in NVRAM, starting sensor with defaults");
+}
+
+void updateState(void) {
+  bool update = false;
+
+  if (stateUpdateCounter == 0) {
+    /* First state update when IAQ accuracy is >= 1 */
+    if (iaqSensor.iaqAccuracy >= 3) {
+      update = true;
+      stateUpdateCounter++;
+    }
+  } else {
+    /* Update every STATE_SAVE_PERIOD minutes */
+    if ((stateUpdateCounter * STATE_SAVE_PERIOD) < millis()) {
+      update = true;
+      stateUpdateCounter++;
+    }
+  }
+
+  if (update) {
+    memcpy(bsecState, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
+    cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] = BSEC_MAX_STATE_BLOB_SIZE;
+    iaqSensor.getState(bsecState);
+    checkIaqSensorStatus();
+    ESP_LOGI(TAG, "saving BSEC state to NVRAM");
+    saveConfig();
+  }
+}
 
 #endif // HAS_BME

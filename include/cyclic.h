@@ -7,6 +7,10 @@
 #include "spislave.h"
 #include <lmic.h>
 
+#ifdef HAS_BME
+#include "bme680mems.h"
+#endif
+
 void doHousekeeping(void);
 void do_timesync(void);
 uint64_t uptime(void);

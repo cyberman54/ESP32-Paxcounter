@@ -47,8 +47,11 @@ const uint8_t bsec_config_iaq[454] = {
     255, 255, 255, 255, 255, 255, 255, 255, 255, 44,  1,   0,   0,   0,   0,
     239, 79,  0,   0};
 
+// Helper functions declarations
 int bme_init();
 void bme_loop(void *pvParameters);
 int checkIaqSensorStatus(void);
+void loadState(void);
+void updateState(void);
 
 #endif
