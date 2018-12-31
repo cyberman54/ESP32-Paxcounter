@@ -9,10 +9,9 @@
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-// attention: Pin21 is also LED! set HAS_LED to NOT_A_PIN if using BME280
-// don't forget to connect SDIO of BME680 to GND for selecting i2c addr 0x76
 //#define HAS_BME GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
-//#define HAS_LED NOT_A_PIN // on board green LED
+//#define BME_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
+//#define HAS_LED NOT_A_PIN // on board green LED uses same GPIO as SDA!
 
 #define HAS_LED GPIO_NUM_21 // on board green LED
 
