@@ -80,11 +80,11 @@ void saveConfig() {
     int16_t flash16 = 0;
     size_t required_size;
     char storedversion[10];
-    char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1];
+    char bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE + 1];
 
-    if (nvs_get_str(my_handle, "bsecstate", bsecstate, &required_size) !=
+    if (nvs_get_str(my_handle, "bsecstate", bsecstate_buffer, &required_size) !=
             ESP_OK ||
-        strcmp(bsecstate, cfg.bsecstate) != 0)
+        strcmp(bsecstate_buffer, cfg.bsecstate) != 0)
       nvs_set_str(my_handle, "bsecstate", cfg.bsecstate);
 
     if (nvs_get_str(my_handle, "version", storedversion, &required_size) !=
@@ -212,12 +212,10 @@ void loadConfig() {
 
     // populate pre set defaults with current values from NVRAM
 
-    char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1];
-
     if (nvs_get_str(my_handle, "bsecstate", NULL, &required_size) == ESP_OK) {
       nvs_get_str(my_handle, "bsecstate", cfg.bsecstate, &required_size);
       ESP_LOGI(TAG, "bsecstate = %d",
-               cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]);
+               (int)(cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]));
     }
 
     if (nvs_get_i8(my_handle, "lorasf", &flash8) == ESP_OK) {

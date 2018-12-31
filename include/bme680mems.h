@@ -3,7 +3,6 @@
 
 #include "globals.h"
 #include <Wire.h>
-#include "irqhandler.h"
 #include "../lib/Bosch-BSEC/src/bsec.h"
 
 extern bmeStatus_t

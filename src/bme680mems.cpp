@@ -23,12 +23,14 @@ bsec_virtual_sensor_t sensorList[10] = {
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
 };
 
-uint8_t bsecState[BSEC_MAX_STATE_BLOB_SIZE] = {0};
+uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
 uint16_t stateUpdateCounter = 0;
 
 // initialize BME680 sensor
 int bme_init(void) {
-  
+
+  // return = 0 -> error / return = 1 -> success
+
   // block i2c bus access
   if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
       pdTRUE) {
@@ -46,7 +48,7 @@ int bme_init(void) {
       ESP_LOGI(TAG, "BME680 sensor found and initialized");
     else {
       ESP_LOGE(TAG, "BME680 sensor not found");
-      return 1;
+      goto error;
     }
 
     loadState();
@@ -58,15 +60,20 @@ int bme_init(void) {
       ESP_LOGI(TAG, "BSEC subscription succesful");
     else {
       ESP_LOGE(TAG, "BSEC subscription error");
-      return 1;
+      goto error;
     }
-
-    xSemaphoreGive(I2Caccess); // release i2c bus access
 
   } else {
     ESP_LOGE(TAG, "I2c bus busy - BME680 initialization error");
-    return 1;
+    goto error;
   }
+
+  xSemaphoreGive(I2Caccess); // release i2c bus access
+  return 1;
+
+error:
+  xSemaphoreGive(I2Caccess); // release i2c bus access
+  return 0;
 
 } // bme_init()
 
@@ -128,8 +135,8 @@ void loadState(void) {
   if (cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] == BSEC_MAX_STATE_BLOB_SIZE) {
     // Existing state in NVS stored
     ESP_LOGI(TAG, "restoring BSEC state from NVRAM");
-    memcpy(bsecState, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
-    iaqSensor.setState(bsecState);
+    memcpy(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
+    iaqSensor.setState(bsecstate_buffer);
     checkIaqSensorStatus();
   } else // no state stored
     ESP_LOGI(TAG,
@@ -154,9 +161,9 @@ void updateState(void) {
   }
 
   if (update) {
-    memcpy(bsecState, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
+    memcpy(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
     cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] = BSEC_MAX_STATE_BLOB_SIZE;
-    iaqSensor.getState(bsecState);
+    iaqSensor.getState(bsecstate_buffer);
     checkIaqSensorStatus();
     ESP_LOGI(TAG, "saving BSEC state to NVRAM");
     saveConfig();

@@ -9,6 +9,7 @@
 #include <array>
 #include <algorithm>
 #include "Mallocator.h"
+#include "inc/bsec_datatypes.h"
 
 // sniffing types
 #define MAC_SNIFF_WIFI 0
@@ -54,7 +55,7 @@ typedef struct {
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
   char version[10];      // Firmware version
-  char bsecstate[BSEC_MAX_STATE_BLOB_SIZE+1]; // init BSEC state for BME680 sensor
+  char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 2]; // init BSEC state for BME680 sensor
 } configData_t;
 
 // Struct holding payload for data send queue
@@ -98,16 +99,13 @@ extern std::array<uint64_t, 0xff> beacons;
 
 extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
+// application includes
 #include "led.h"
 #include "payload.h"
 #include "blescan.h"
 
 #ifdef HAS_GPS
 #include "gpsread.h"
-#endif
-
-#ifdef HAS_BME
-#include "bme680mems.h"
 #endif
 
 #ifdef HAS_LORA
@@ -132,6 +130,10 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 #ifdef HAS_SENSORS
 #include "sensor.h"
+#endif
+
+#ifdef HAS_BME
+#include "bme680mems.h"
 #endif
 
 #endif
