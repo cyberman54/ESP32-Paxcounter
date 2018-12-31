@@ -9,7 +9,8 @@
 #include <array>
 #include <algorithm>
 #include "Mallocator.h"
-#include "inc/bsec_datatypes.h"
+//#include "inc/bsec_datatypes.h"
+#include "../lib/Bosch-BSEC/src/inc/bsec_datatypes.h"
 
 // sniffing types
 #define MAC_SNIFF_WIFI 0
@@ -55,7 +56,7 @@ typedef struct {
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
   char version[10];      // Firmware version
-  char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 2]; // init BSEC state for BME680 sensor
+  char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 2]; // BSEC state for BME680 sensor
 } configData_t;
 
 // Struct holding payload for data send queue
