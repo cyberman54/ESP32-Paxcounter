@@ -147,7 +147,7 @@ void updateState(void) {
   bool update = false;
 
   if (stateUpdateCounter == 0) {
-    /* First state update when IAQ accuracy is >= 1 */
+    /* First state update when IAQ accuracy is >= 3 */
     if (iaqSensor.iaqAccuracy >= 3) {
       update = true;
       stateUpdateCounter++;
@@ -161,10 +161,10 @@ void updateState(void) {
   }
 
   if (update) {
-    memcpy(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
-    cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] = BSEC_MAX_STATE_BLOB_SIZE;
     iaqSensor.getState(bsecstate_buffer);
     checkIaqSensorStatus();
+    memcpy(cfg.bsecstate, bsecstate_buffer, BSEC_MAX_STATE_BLOB_SIZE);
+    cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] = BSEC_MAX_STATE_BLOB_SIZE;
     ESP_LOGI(TAG, "saving BSEC state to NVRAM");
     saveConfig();
   }
