@@ -7,19 +7,19 @@ function Converter(decoded, port) {
     var pax = 0;
 
     if (port === 1) {
-
-        for (var x in converted) {
-            pax += converted[x];
-            }
-            
-    converted.pax = pax;
-
+      if('wifi' in converted){
+          pax += converted.wifi
+      }
+       
+      if('ble' in converted){
+          pax += converted.ble
+      } 
+        converted.pax = pax;
     }
 
     if (port === 2) {
         converted.voltage /= 1000;
     }
-
 
     return converted;
 }
