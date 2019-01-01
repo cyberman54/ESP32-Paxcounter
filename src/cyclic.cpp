@@ -57,7 +57,7 @@ void doHousekeeping() {
 
 // display BME sensor data if present
 #ifdef HAS_BME
-  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f", bme_status.temperature, bme_status.iaq);
+  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f | IAQacc: %d", bme_status.temperature, bme_status.iaq, bme_status.iaq_accuracy);
   updateState();
 #endif
 

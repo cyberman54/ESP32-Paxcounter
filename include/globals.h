@@ -56,7 +56,7 @@ typedef struct {
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
   char version[10];      // Firmware version
-  char bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 2]; // BSEC state for BME680 sensor
+  uint8_t bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
 } configData_t;
 
 // Struct holding payload for data send queue

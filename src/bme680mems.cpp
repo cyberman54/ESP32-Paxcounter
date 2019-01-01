@@ -23,7 +23,6 @@ bsec_virtual_sensor_t sensorList[10] = {
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
 };
 
-uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
 uint16_t stateUpdateCounter = 0;
 
 // initialize BME680 sensor
@@ -132,7 +131,8 @@ void bme_loop(void *pvParameters) {
 } // bme_loop()
 
 void loadState(void) {
-  if (cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] == BSEC_MAX_STATE_BLOB_SIZE) {
+  uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
+  if (cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] == BSEC_MAX_STATE_BLOB_SIZE) {
     // Existing state in NVS stored
     ESP_LOGI(TAG, "restoring BSEC state from NVRAM");
     memcpy(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE);
@@ -145,14 +145,16 @@ void loadState(void) {
 
 void updateState(void) {
   bool update = false;
+  uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
 
   if (stateUpdateCounter == 0) {
-    /* First state update when IAQ accuracy is >= 3 */
+    // first state update when IAQ accuracy is >= 3
     if (iaqSensor.iaqAccuracy >= 3) {
       update = true;
       stateUpdateCounter++;
     }
   } else {
+
     /* Update every STATE_SAVE_PERIOD minutes */
     if ((stateUpdateCounter * STATE_SAVE_PERIOD) < millis()) {
       update = true;
@@ -164,7 +166,7 @@ void updateState(void) {
     iaqSensor.getState(bsecstate_buffer);
     checkIaqSensorStatus();
     memcpy(cfg.bsecstate, bsecstate_buffer, BSEC_MAX_STATE_BLOB_SIZE);
-    cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1] = BSEC_MAX_STATE_BLOB_SIZE;
+    cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = BSEC_MAX_STATE_BLOB_SIZE;
     ESP_LOGI(TAG, "saving BSEC state to NVRAM");
     saveConfig();
   }
