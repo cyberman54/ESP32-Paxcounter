@@ -1,3 +1,5 @@
+// clang-format off
+
 #ifndef _LOPY4_H
 #define _LOPY4_H
 
@@ -19,15 +21,17 @@
 #define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0 (P2)
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
-// Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  (5) 
-#define LORA_CS   (18)
-#define LORA_MISO (19)
-#define LORA_MOSI (27)
-#define LORA_RST  LMIC_UNUSED_PIN
-#define LORA_IO0  (23) // LoRa IRQ
-#define LORA_IO1  (23) // Pin tied via diode to DIO0
-#define LORA_IO2  (23) // Pin tied via diode to DIO0
+// Pins for LORA chip SPI interface come from board file, we need some
+// additional definitions for LMIC
+#define LORA_SCK 5      // GPIO5  - SX1276 SCK
+#define LORA_MISO 19    // GPIO19 - SX1276 MISO
+#define LORA_MOSI 27    // GPIO27 - SX1276 MOSI
+#define LORA_CS 18      // GPIO18 - SX1276 CS
+#define LORA_IRQ 23     // GPIO23 - SX1276 IO0
+#define LORA_IO0 LORA_IRQ  // alias
+#define LORA_IO1 LORA_IRQ   // tied by diode to IO0
+#define LORA_IO2 LORA_IRQ   // tied by diode to IO0
+#define LORA_RST NOT_A_PIN
 
 // select WIFI antenna (internal = onboard / external = u.fl socket)
 #define HAS_ANTENNA_SWITCH  (21) // pin for switching wifi antenna (P12)

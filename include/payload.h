@@ -15,7 +15,7 @@
 #define LPP_MSG_CHANNEL 28
 #define LPP_HUMIDITY_CHANNEL 29
 #define LPP_BAROMETER_CHANNEL 30
-#define LPP_GAS_CHANNEL 31 
+#define LPP_AIR_CHANNEL 31 
 
 #endif
 
@@ -44,9 +44,11 @@ public:
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp, uint32_t mem,
                  uint8_t reset1, uint8_t reset2);
   void addAlarm(int8_t rssi, uint8_t message);
+  void addVoltage(uint16_t value);
   void addGPS(gpsStatus_t value);
   void addBME(bmeStatus_t value);
   void addButton(uint8_t value);
+  void addSensor(uint8_t[]);
 
 #if PAYLOAD_ENCODER == 1 // format plain
 
@@ -65,8 +67,9 @@ private:
   void writeUint32(uint32_t i);
   void writeUint16(uint16_t i);
   void writeUint8(uint8_t i);
-  void writeHumidity(float humidity);
-  void writeTemperature(float temperature);
+  void writeFloat(float value);
+  void writeUFloat(float value);
+  void writePressure(float value);
   void writeVersion(char * version);
   void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
                    bool h);

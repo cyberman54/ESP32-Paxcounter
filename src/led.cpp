@@ -107,14 +107,16 @@ void switch_LED(uint8_t state) {
 #endif
 }
 
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   LEDColor = set_color;                 // set color for RGB LED
   LEDBlinkDuration = set_blinkduration; // duration
   LEDBlinkStarted = millis();           // Time Start here
   LEDState = LED_ON;                    // Let main set LED on
+#endif
 }
+
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
 void ledLoop(void *parameter) {
   while (1) {
@@ -189,8 +191,8 @@ void ledLoop(void *parameter) {
     }
     // give yield to CPU
     vTaskDelay(2 / portTICK_PERIOD_MS);
-  }                  // while(1)
-  vTaskDelete(NULL); // shoud never be reached
-};                   // ledloop()
+  }                         // while(1)
+  vTaskDelete(ledLoopTask); // shoud never be reached
+};                          // ledloop()
 
 #endif // #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)

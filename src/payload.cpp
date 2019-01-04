@@ -1,4 +1,3 @@
-
 #include "globals.h"
 #include "payload.h"
 
@@ -31,6 +30,11 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   buffer[cursor++] = msg;
 }
 
+void PayloadConvert::addVoltage(uint16_t value) {
+  buffer[cursor++] = highByte(value);
+  buffer[cursor++] = lowByte(value);
+}
+
 void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.lorasf;
   buffer[cursor++] = value.txpower;
@@ -47,7 +51,7 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.wifiant;
   buffer[cursor++] = value.vendorfilter;
   buffer[cursor++] = value.rgblum;
-  buffer[cursor++] = value.gpsmode;
+  buffer[cursor++] = value.payloadmask;
   buffer[cursor++] = value.monitormode;
   memcpy(buffer + cursor, value.version, 10);
   cursor += 10;
@@ -93,18 +97,28 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 }
 
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+  uint8_t length = buf[0];
+  memcpy(buffer, buf + 1, length);
+  cursor += length; // length of buffer
+#endif
+}
+
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
   int16_t temperature = (int16_t)(value.temperature); // float -> int
   uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
+  uint16_t pressure = (uint16_t)(value.pressure);     // float -> int
+  uint16_t iaq = (uint16_t)(value.iaq);               // float -> int
   buffer[cursor++] = highByte(temperature);
   buffer[cursor++] = lowByte(temperature);
-  buffer[cursor++] = highByte(value.pressure);
-  buffer[cursor++] = lowByte(value.pressure);
+  buffer[cursor++] = highByte(pressure);
+  buffer[cursor++] = lowByte(pressure);
   buffer[cursor++] = highByte(humidity);
   buffer[cursor++] = lowByte(humidity);
-  buffer[cursor++] = highByte(value.gas_resistance);
-  buffer[cursor++] = lowByte(value.gas_resistance);
+  buffer[cursor++] = highByte(iaq);
+  buffer[cursor++] = lowByte(iaq);
 #endif
 }
 
@@ -131,6 +145,8 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   writeUint8(msg);
 }
 
+void PayloadConvert::addVoltage(uint16_t value) { writeUint16(value); }
+
 void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.lorasf);
   writeUint8(value.txpower);
@@ -142,7 +158,16 @@ void PayloadConvert::addConfig(configData_t value) {
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
               value.blescan ? true : false, value.wifiant ? true : false,
-              value.vendorfilter ? true : false, value.gpsmode ? true : false);
+              value.vendorfilter ? true : false,
+              value.monitormode ? true : false);
+  writeBitmap(value.payloadmask && GPS_DATA ? true : false,
+              value.payloadmask && ALARM_DATA ? true : false,
+              value.payloadmask && MEMS_DATA ? true : false,
+              value.payloadmask && COUNT_DATA ? true : false,
+              value.payloadmask && SENSOR1_DATA ? true : false,
+              value.payloadmask && SENSOR2_DATA ? true : false,
+              value.payloadmask && SENSOR3_DATA ? true : false,
+              value.payloadmask && BATT_DATA ? true : false);
   writeVersion(value.version);
 }
 
@@ -165,12 +190,20 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 }
 
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+  uint8_t length = buf[0];
+  memcpy(buffer, buf + 1, length);
+  cursor += length; // length of buffer
+#endif
+}
+
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
-  writeTemperature(value.temperature);
-  writeUint16(value.pressure);
-  writeHumidity(value.humidity);
-  writeUint16(value.gas_resistance);
+  writeFloat(value.temperature);
+  writePressure(value.pressure);
+  writeUFloat(value.humidity);
+  writeUFloat(value.iaq);
 #endif
 }
 
@@ -207,8 +240,13 @@ void PayloadConvert::writeUint16(uint16_t i) { intToBytes(cursor, i, 2); }
 
 void PayloadConvert::writeUint8(uint8_t i) { intToBytes(cursor, i, 1); }
 
-void PayloadConvert::writeHumidity(float humidity) {
-  int16_t h = (int16_t)(humidity * 100);
+void PayloadConvert::writeUFloat(float value) {
+  int16_t h = (int16_t)(value * 100);
+  intToBytes(cursor, h, 2);
+}
+
+void PayloadConvert::writePressure(float value) {
+  int16_t h = (int16_t)(value);
   intToBytes(cursor, h, 2);
 }
 
@@ -216,9 +254,9 @@ void PayloadConvert::writeHumidity(float humidity) {
  * Uses a 16bit two's complement with two decimals, so the range is
  * -327.68 to +327.67 degrees
  */
-void PayloadConvert::writeTemperature(float temperature) {
-  int16_t t = (int16_t)(temperature * 100);
-  if (temperature < 0) {
+void PayloadConvert::writeFloat(float value) {
+  int16_t t = (int16_t)(value * 100);
+  if (value < 0) {
     t = ~-t;
     t = t + 1;
   }
@@ -278,6 +316,16 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   buffer[cursor++] = rssi;
 }
 
+void PayloadConvert::addVoltage(uint16_t value) {
+   uint16_t volt = value / 10;
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_BATT_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_ANALOG_INPUT;
+  buffer[cursor++] = highByte(volt);
+  buffer[cursor++] = lowByte(volt);
+}
+
 void PayloadConvert::addConfig(configData_t value) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_ADR_CHANNEL;
@@ -328,6 +376,17 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif // HAS_GPS
 }
 
+void PayloadConvert::addSensor(uint8_t buf[]) {
+#ifdef HAS_SENSORS
+// to come
+/*
+  uint8_t length = buf[0];
+  memcpy(buffer, buf+1, length);
+  cursor += length; // length of buffer
+*/
+#endif
+}
+
 void PayloadConvert::addBME(bmeStatus_t value) {
 #ifdef HAS_BME
 
@@ -335,11 +394,10 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   // 0.1°C per bit => -3276,7 .. +3276,7 °C
   int16_t temperature = (int16_t)(value.temperature * 10.0);
   // 0.1 hPa per bit => 0 .. 6553,6 hPa
-  uint16_t pressure = value.pressure * 10;
+  uint16_t pressure = (uint16_t)(value.pressure * 10);
   // 0.5% per bit => 0 .. 128 %C
   uint8_t humidity = (uint8_t)(value.humidity * 2.0);
-  // 0.01 Ohm per bit => 0 .. 655,36 Ohm
-  uint16_t gas = value.gas_resistance * 100;
+  int16_t iaq = (int16_t)(value.iaq);
 
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
@@ -359,11 +417,11 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   buffer[cursor++] = LPP_HUMIDITY; // 1 byte 0.5 % Unsigned
   buffer[cursor++] = humidity;
 #if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_GAS_CHANNEL;
+  buffer[cursor++] = LPP_AIR_CHANNEL;
 #endif
-  buffer[cursor++] = LPP_ANALOG_INPUT; // 2 bytes 0.01 Signed
-  buffer[cursor++] = highByte(gas);
-  buffer[cursor++] = lowByte(gas);
+  buffer[cursor++] = LPP_LUMINOSITY; // 2 bytes, 1.0 unsigned
+  buffer[cursor++] = highByte(iaq);
+  buffer[cursor++] = lowByte(iaq);
 #endif // HAS_BME
 }
 

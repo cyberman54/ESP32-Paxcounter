@@ -13,6 +13,7 @@ extern gpsStatus_t
     gps_status; // Make struct for storing gps data globally available
 extern TaskHandle_t GpsTask;
 
+int gps_init(void);
 void gps_read(void);
 void gps_loop(void *pvParameters);
 

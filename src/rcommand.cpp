@@ -8,8 +8,6 @@ static const char TAG[] = "main";
 // helper function
 void do_reset() {
   ESP_LOGI(TAG, "Remote command: restart device");
-  if (irqHandlerTask != NULL)
-    vTaskDelete(irqHandlerTask);
   LMIC_shutdown();
   vTaskDelay(3000 / portTICK_PERIOD_MS);
   esp_restart();
@@ -127,7 +125,35 @@ void set_display(uint8_t val[]) {
 
 void set_gps(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set GPS mode to %s", val[0] ? "on" : "off");
-  cfg.gpsmode = val[0] ? 1 : 0;
+  if (val[0]) {
+    cfg.payloadmask |= (uint8_t)GPS_DATA; // set bit in mask
+  } else {
+    cfg.payloadmask &= ~(uint8_t)GPS_DATA; // clear bit in mask
+  }
+}
+
+void set_sensor(uint8_t val[]) {
+#ifdef HAS_SENSORS
+  switch (val[0]) { // check if valid sensor number 1...4
+  case 1:
+  case 2:
+  case 3:
+    break; // valid sensor number -> continue
+  default:
+    ESP_LOGW(
+        TAG,
+        "Remote command set sensor mode called with invalid sensor number");
+    return; // invalid sensor number -> exit
+  }
+
+  ESP_LOGI(TAG, "Remote command: set sensor #%d mode to %s", val[0],
+           val[1] ? "on" : "off");
+
+  if (val[1])
+    cfg.payloadmask |= sensor_mask(val[0]); // set bit
+  else
+    cfg.payloadmask &= ~sensor_mask(val[0]); // clear bit
+#endif
 }
 
 void set_beacon(uint8_t val[]) {
@@ -265,8 +291,9 @@ cmd_t table[] = {
     {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
-    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
-    {0x84, get_gps, 0, false},          {0x85, get_bme, 0, false},
+    {0x13, set_sensor, 2, true},        {0x80, get_config, 0, false},
+    {0x81, get_status, 0, false},       {0x84, get_gps, 0, false},
+    {0x85, get_bme, 0, false},
 };
 
 const uint8_t cmdtablesize =

@@ -68,28 +68,30 @@ void start_ota_update() {
   ESP_LOGI(TAG, "Starting Wifi OTA update");
   display(1, "**", WIFI_SSID);
 
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  int i = WIFI_MAX_TRY, j = OTA_MAX_TRY;
+  uint8_t i = WIFI_MAX_TRY;
   int ret = 1; // 0 = finished, 1 = retry, -1 = abort
 
-  ESP_LOGI(TAG, "Trying to connect to %s", WIFI_SSID);
-
   while (i--) {
+    ESP_LOGI(TAG, "Trying to connect to %s, attempt %u of %u", WIFI_SSID,
+             WIFI_MAX_TRY - i, WIFI_MAX_TRY);
+    vTaskDelay(10000 / portTICK_PERIOD_MS); // wait for stable connect
     if (WiFi.status() == WL_CONNECTED) {
       // we now have wifi connection and try to do an OTA over wifi update
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
       display(1, "OK", "WiFi connected");
       // do a number of tries to update firmware limited by OTA_MAX_TRY
+      uint8_t j = OTA_MAX_TRY;
       while ((j--) && (ret > 0)) {
         ESP_LOGI(TAG, "Starting OTA update, attempt %u of %u", OTA_MAX_TRY - j,
                  OTA_MAX_TRY);
         ret = do_ota_update();
       }
-      goto end;
+      if (WiFi.status() == WL_CONNECTED)
+        goto end; // OTA update finished or OTA max attemps reached
     }
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
     WiFi.reconnect();
   }
 
@@ -118,6 +120,10 @@ int do_ota_update() {
   // Fetch the latest firmware version
   ESP_LOGI(TAG, "Checking latest firmware version on server");
   display(2, "**", "checking version");
+
+  if (WiFi.status() != WL_CONNECTED)
+    return 1;
+
   const String latest = bintray.getLatestVersion();
 
   if (latest.length() == 0) {
@@ -133,6 +139,8 @@ int do_ota_update() {
   display(2, "OK", latest.c_str());
 
   display(3, "**", "");
+  if (WiFi.status() != WL_CONNECTED)
+    return 1;
   String firmwarePath = bintray.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format");
@@ -146,9 +154,7 @@ int do_ota_update() {
   WiFiClientSecure client;
 
   client.setCACert(bintray.getCertificate(currentHost));
-  // client.setTimeout(RESPONSE_TIMEOUT_MS);
-  // --> causing error [E][WiFiClient.cpp:236] setSocketOption(): 1006 : 9
-  // so we unfortunately need patched update.cpp which sets the stream timeout
+  client.setTimeout(RESPONSE_TIMEOUT_MS);
 
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
