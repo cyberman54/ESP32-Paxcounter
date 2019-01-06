@@ -110,7 +110,6 @@ void bme_loop(void *pvParameters) {
   while (xSemaphoreTake(I2Caccess, portMAX_DELAY) == pdTRUE) {
 
     if (iaqSensor.run()) { // If new data is available
-      iaqSensor.run();
       bme_status.raw_temperature = iaqSensor.rawTemperature;
       bme_status.raw_humidity = iaqSensor.rawHumidity;
       bme_status.temperature = iaqSensor.temperature;
