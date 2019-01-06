@@ -353,9 +353,8 @@ void setup() {
     ESP_LOGI(TAG, "Starting BMEloop...");
     xTaskCreatePinnedToCore(bme_loop,  // task function
                             "bmeloop", // name of task
-                            4096,      // stack size of task
+                            2048,      // stack size of task
                             (void *)1, // parameter of the task
-                            //0,         // priority of the task
                             1,         // priority of the task
                             &BmeTask,  // task handle
                             1);        // CPU core

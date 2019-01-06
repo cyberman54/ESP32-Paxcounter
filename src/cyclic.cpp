@@ -33,20 +33,25 @@ void doHousekeeping() {
 #endif
 
   // task storage debugging //
-  ESP_LOGD(TAG, "Wifiloop %d bytes left",
-           uxTaskGetStackHighWaterMark(wifiSwitchTask));
-  ESP_LOGD(TAG, "IRQhandler %d bytes left",
-           uxTaskGetStackHighWaterMark(irqHandlerTask));
+  ESP_LOGD(TAG, "Wifiloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(wifiSwitchTask),
+           eTaskGetState(wifiSwitchTask));
+  ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(irqHandlerTask),
+           eTaskGetState(irqHandlerTask));
 #ifdef HAS_GPS
-  ESP_LOGD(TAG, "Gpsloop %d bytes left", uxTaskGetStackHighWaterMark(GpsTask));
+  ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
 #ifdef HAS_BME
-  ESP_LOGD(TAG, "Bmeloop %d bytes left", uxTaskGetStackHighWaterMark(BmeTask));
+  ESP_LOGD(TAG, "Bmeloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-  ESP_LOGD(TAG, "LEDloop %d bytes left",
-           uxTaskGetStackHighWaterMark(ledLoopTask));
+  ESP_LOGD(TAG, "LEDloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(ledLoopTask),
+           eTaskGetState(ledLoopTask));
 #endif
 
 // read battery voltage into global variable
@@ -55,10 +60,10 @@ void doHousekeeping() {
   ESP_LOGI(TAG, "Voltage: %dmV", batt_voltage);
 #endif
 
-// display BME sensor data if present
+// display BME sensor data
 #ifdef HAS_BME
-  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f | IAQacc: %d", bme_status.temperature, bme_status.iaq, bme_status.iaq_accuracy);
-  updateState();
+  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f | IAQacc: %d",
+           bme_status.temperature, bme_status.iaq, bme_status.iaq_accuracy);
 #endif
 
   // check free heap memory
@@ -66,13 +71,13 @@ void doHousekeeping() {
     ESP_LOGI(TAG,
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
-             ESP.getMinFreeHeap() , ESP.getFreeHeap());
+             ESP.getMinFreeHeap(), ESP.getFreeHeap());
     SendPayload(COUNTERPORT); // send data before clearing counters
     reset_counters();         // clear macs container and reset all counters
     get_salt();               // get new salt for salting hashes
 
-    if (ESP.getMinFreeHeap()  <= MEM_LOW) // check again
-      do_reset(); // memory leak, reset device
+    if (ESP.getMinFreeHeap() <= MEM_LOW) // check again
+      do_reset();                        // memory leak, reset device
   }
 
 // check free PSRAM memory
@@ -84,7 +89,7 @@ void doHousekeeping() {
     get_salt();               // get new salt for salting hashes
 
     if (ESP.getMinFreePsram() <= MEM_LOW) // check again
-      do_reset();                      // memory leak, reset device
+      do_reset();                         // memory leak, reset device
   }
 #endif
 

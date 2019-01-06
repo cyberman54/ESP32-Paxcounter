@@ -8,8 +8,6 @@ static const char TAG[] = "main";
 bmeStatus_t bme_status;
 TaskHandle_t BmeTask;
 
-Bsec iaqSensor;
-
 bsec_virtual_sensor_t sensorList[10] = {
     BSEC_OUTPUT_RAW_TEMPERATURE,
     BSEC_OUTPUT_RAW_PRESSURE,
@@ -23,7 +21,10 @@ bsec_virtual_sensor_t sensorList[10] = {
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
 };
 
+uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
 uint16_t stateUpdateCounter = 0;
+
+Bsec iaqSensor;
 
 // initialize BME680 sensor
 int bme_init(void) {
@@ -105,25 +106,25 @@ void bme_loop(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
 #ifdef HAS_BME
-  while (checkIaqSensorStatus()) {
+  // block i2c bus access
+  while (xSemaphoreTake(I2Caccess, portMAX_DELAY) == pdTRUE) {
 
-    // block i2c bus access
-    if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
-        pdTRUE) {
-      if (iaqSensor.run()) { // If new data is available
-        bme_status.raw_temperature = iaqSensor.rawTemperature;
-        bme_status.raw_humidity = iaqSensor.rawHumidity;
-        bme_status.temperature = iaqSensor.temperature;
-        bme_status.humidity = iaqSensor.humidity;
-        bme_status.pressure =
-            (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
-        bme_status.iaq = iaqSensor.iaqEstimate;
-        bme_status.iaq_accuracy = iaqSensor.iaqAccuracy;
-        bme_status.gas = iaqSensor.gasResistance;
-      }
-      xSemaphoreGive(I2Caccess); // release i2c bus access
+    if (iaqSensor.run()) { // If new data is available
+      iaqSensor.run();
+      bme_status.raw_temperature = iaqSensor.rawTemperature;
+      bme_status.raw_humidity = iaqSensor.rawHumidity;
+      bme_status.temperature = iaqSensor.temperature;
+      bme_status.humidity = iaqSensor.humidity;
+      bme_status.pressure =
+          (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
+      bme_status.iaq = iaqSensor.iaqEstimate;
+      bme_status.iaq_accuracy = iaqSensor.iaqAccuracy;
+      bme_status.gas = iaqSensor.gasResistance;
+      updateState();
     }
-  }
+    xSemaphoreGive(I2Caccess); // release i2c bus access
+
+  } // while
 #endif
   ESP_LOGE(TAG, "BME task ended");
   vTaskDelete(BmeTask); // should never be reached
@@ -131,7 +132,6 @@ void bme_loop(void *pvParameters) {
 } // bme_loop()
 
 void loadState(void) {
-  uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
   if (cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] == BSEC_MAX_STATE_BLOB_SIZE) {
     // Existing state in NVS stored
     ESP_LOGI(TAG, "restoring BSEC state from NVRAM");
@@ -145,11 +145,10 @@ void loadState(void) {
 
 void updateState(void) {
   bool update = false;
-  uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
 
   if (stateUpdateCounter == 0) {
-    // first state update when IAQ accuracy is >= 3
-    if (iaqSensor.iaqAccuracy >= 3) {
+    // first state update when IAQ accuracy is >= 1
+    if (iaqSensor.iaqAccuracy >= 1) {
       update = true;
       stateUpdateCounter++;
     }

@@ -74,7 +74,7 @@ void switchWifiChannel(void *parameter) {
     channel =
         (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-    ESP_LOGD(TAG, "Wifi set channel %d", channel);
+    //ESP_LOGD(TAG, "Wifi set channel %d", channel);
   }
   vTaskDelete(NULL); // shoud never be reached
 }
