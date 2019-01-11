@@ -53,9 +53,11 @@ Target platform must be selected in [platformio.ini](https://github.com/cyberman
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
 
 <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
-<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A>, <A HREF="https://www.thingiverse.com/thing:3041339">T-BEAM</A> for example.<br>
+<A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A>, <A HREF="https://www.thingiverse.com/thing:3041339">T-BEAM</A>,  
+<A HREF="https://www.thingiverse.com/thing:3203177">T-BEAM parts</A> for example.<br>
 
-<b>Power consumption</b> was metered at around 450 - 1000mW, depending on board and user settings in paxcounter.conf. If you are limited on battery, you may want to save around 30% power by disabling bluetooth (commenting out line *#define BLECOUNTER* in paxcounter.conf).
+<b>Power consumption</b> was metered at around 450 - 1000mW, depending on board and user settings in paxcounter.conf.
+By default bluetooth sniffing is disabled (line *#define BLECOUNTER* in paxcounter.conf is commented out). Enabling bluetooth costs 30% more power + 30% flash storage for the software stack. Proof of concept showed that for passenger flow metering wifi sniffing shows better results than bluetooth sniffing. If you enable bluetooth be aware that this goes on expense of wifi sniffing results, because then wifi and bt stack must share the 2,4 GHz RF ressources of ESP32. If you need to sniff wifi and bt in parallel and need best possible results, use two boards - one for wifi only and one for bt only - and add counted results.
 
 # Preparing
 
@@ -150,7 +152,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 **Port #1:** Paxcount data
 
 	byte 1-2:	Number of unique pax, first seen on Wifi
-	byte 3-4:	Number of unique pax, first seen on Bluetooth [0 if BT disabled]
+	byte 3-4:	Number of unique pax, first seen on Bluetooth [omited if BT disabled]
+	bytes 5-17: GPS data, if present, in same format as for Port #4
 
 **Port #2:** Device status query result
 

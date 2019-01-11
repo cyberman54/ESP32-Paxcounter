@@ -22,7 +22,7 @@
 //#define LMIC_USE_INTERRUPTS
 
 //time sync via LoRaWAN network, is not yet supported by TTN (LoRaWAN spec v1.0.3)
-#define LMIC_ENABLE_DeviceTimeReq 1
+//#define LMIC_ENABLE_DeviceTimeReq 1
 
 // 16 μs per tick
 // LMIC requires ticks to be 15.5μs - 100 μs long
@@ -34,7 +34,7 @@
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) this value if you are
 // limited on battery.
-#define CLOCK_ERROR_PROCENTAGE 20
+#define CLOCK_ERROR_PROCENTAGE 3
 
 // Set this to 1 to enable some basic debug output (using printf) about
 // RF settings used during transmission and reception. Set to 2 to
@@ -89,10 +89,12 @@
 // implementation is optimized for speed on 32-bit processors using
 // fairly big lookup tables, but it takes up big amounts of flash on the
 // AVR architecture.
-#define USE_ORIGINAL_AES
+//#define USE_ORIGINAL_AES
 //
 // This selects the AES implementation written by Ideetroon for their
 // own LoRaWAN library. It also uses lookup tables, but smaller
 // byte-oriented ones, making it use a lot less flash space (but it is
 // also about twice as slow as the original).
 // #define USE_IDEETRON_AES
+//
+#define USE_MBEDTLS_AES

@@ -5,12 +5,24 @@ function Decoder(bytes, port) {
 
     var decoded = {};
 
+    if (bytes.length === 0)  {
+        return {};
+    }
+
     if (port === 1) {
-        // only counter data, no gps
+        // only wifi counter data, no gps
+        if (bytes.length === 2) {
+            return decode(bytes, [uint16], ['wifi']);
+        }
+        // wifi + ble counter data, no gps
         if (bytes.length === 4) {
             return decode(bytes, [uint16, uint16], ['wifi', 'ble']);
         }
-        // combined counter and gps data
+        // combined wifi counter and gps data
+        if (bytes.length === 15) {
+            return decode(bytes, [uint16, latLng, latLng, uint8, hdop, uint16], ['wifi', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+        }
+        // combined wifi + ble counter and gps data
         if (bytes.length === 17) {
             return decode(bytes, [uint16, uint16, latLng, latLng, uint8, hdop, uint16], ['wifi', 'ble', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
         }
@@ -44,6 +56,11 @@ function Decoder(bytes, port) {
     if (port === 7) {
         // BME680 sensor data     
         return decode(bytes, [float, uint16, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
+    }
+
+    if (port === 8) {
+        // battery voltage      
+        return decode(bytes, [uint16], ['voltage']);
     }
 
 }
