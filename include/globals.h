@@ -8,7 +8,7 @@
 #include <set>
 #include <array>
 #include <algorithm>
-#include "Mallocator.h"
+#include "mallocator.h"
 //#include "inc/bsec_datatypes.h"
 #include "../lib/Bosch-BSEC/src/inc/bsec_datatypes.h"
 
