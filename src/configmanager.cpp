@@ -25,13 +25,15 @@ void defaultConfig() {
   cfg.blescantime =
       BLESCANINTERVAL /
       10;          // BT channel scan cycle [seconds/100], default 1 (= 10ms)
-  cfg.blescan = 1; // 0=disabled, 1=enabled
+  cfg.blescan = 0; // 0=disabled, 1=enabled
   cfg.wifiant = 0; // 0=internal, 1=external (for LoPy/LoPy4)
   cfg.vendorfilter = 1;       // 0=disabled, 1=enabled
   cfg.rgblum = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
   cfg.monitormode = 0;        // 0=disabled, 1=enabled
   cfg.runmode = 0;            // 0=normal, 1=update
   cfg.payloadmask = 0xFF;     // all payload switched on
+  cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = {
+      0}; // init BSEC state for BME680 sensor
 
   strncpy(cfg.version, PROGVERSION, sizeof(cfg.version) - 1);
 }
@@ -77,7 +79,14 @@ void saveConfig() {
     int8_t flash8 = 0;
     int16_t flash16 = 0;
     size_t required_size;
+    uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE + 1];
     char storedversion[10];
+
+    if (nvs_get_blob(my_handle, "bsecstate", bsecstate_buffer,
+                     &required_size) != ESP_OK ||
+        memcmp(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE + 1) != 0)
+      nvs_set_blob(my_handle, "bsecstate", cfg.bsecstate,
+                   BSEC_MAX_STATE_BLOB_SIZE + 1);
 
     if (nvs_get_str(my_handle, "version", storedversion, &required_size) !=
             ESP_OK ||
@@ -202,7 +211,14 @@ void loadConfig() {
       migrateVersion();
     }
 
-    // overwrite defaults with valid values from NVRAM
+    // populate pre set defaults with current values from NVRAM
+
+    if (nvs_get_blob(my_handle, "bsecstate", NULL, &required_size) == ESP_OK) {
+      nvs_get_blob(my_handle, "bsecstate", cfg.bsecstate, &required_size);
+      ESP_LOGI(TAG, "bsecstate = %d",
+               cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE]);
+    };
+
     if (nvs_get_i8(my_handle, "lorasf", &flash8) == ESP_OK) {
       cfg.lorasf = flash8;
       ESP_LOGI(TAG, "lorasf = %d", flash8);
@@ -317,9 +333,9 @@ void loadConfig() {
 
     if (nvs_get_i8(my_handle, "payloadmask", &flash8) == ESP_OK) {
       cfg.payloadmask = flash8;
-      ESP_LOGI(TAG, "payloadmask = %u", flash8);
+      ESP_LOGI(TAG, "payloadmask = %d", flash8);
     } else {
-      ESP_LOGI(TAG, "payloadmask set to default %u", cfg.payloadmask);
+      ESP_LOGI(TAG, "payloadmask set to default %d", cfg.payloadmask);
       saveConfig();
     }
 

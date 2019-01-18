@@ -7,8 +7,11 @@ function Decoder(bytes, port) {
   if (port === 1) {
     var i = 0;
 
-    decoded.wifi = (bytes[i++] << 8) | bytes[i++];
-    decoded.ble = (bytes[i++] << 8) | bytes[i++];
+    if (bytes.length >= 2) {
+    decoded.wifi = (bytes[i++] << 8) | bytes[i++];}
+    
+    if (bytes.length >= 4) {
+    decoded.ble = (bytes[i++] << 8) | bytes[i++];}
 
     if (bytes.length > 4) {
       decoded.latitude = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);

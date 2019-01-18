@@ -7,6 +7,7 @@
 #include "lorawan.h"
 #include "macsniff.h"
 #include <rom/rtc.h>
+#include "cyclic.h"
 
 // table of remote commands and assigned functions
 typedef struct {

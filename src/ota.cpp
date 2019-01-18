@@ -77,7 +77,7 @@ void start_ota_update() {
   while (i--) {
     ESP_LOGI(TAG, "Trying to connect to %s, attempt %u of %u", WIFI_SSID,
              WIFI_MAX_TRY - i, WIFI_MAX_TRY);
-    vTaskDelay(10000 / portTICK_PERIOD_MS); // wait for stable connect
+    delay(10000); // wait for stable connect
     if (WiFi.status() == WL_CONNECTED) {
       // we now have wifi connection and try to do an OTA over wifi update
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
@@ -98,13 +98,13 @@ void start_ota_update() {
   // wifi did not connect
   ESP_LOGI(TAG, "Could not connect to %s", WIFI_SSID);
   display(1, " E", "no WiFi connect");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  delay(5000);
 
 end:
   switch_LED(LED_OFF);
   ESP_LOGI(TAG, "Rebooting to %s firmware", (ret == 0) ? "new" : "current");
   display(5, "**", ""); // mark line rebooting
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  delay(5000);
   ESP.restart();
 
 } // start_ota_update

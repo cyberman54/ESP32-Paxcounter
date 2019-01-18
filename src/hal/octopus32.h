@@ -11,11 +11,9 @@
 // disable brownout detection (avoid unexpected reset on some boards)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-// enable only if device has these sensors, otherwise comment these lines
-// BME680 sensor on I2C bus
 // Octopus32 has a pre-populated BME680 on i2c addr 0x76
 #define HAS_BME GPIO_NUM_23, GPIO_NUM_22 // SDA, SCL
-//#define HAS_BME 0x76
+#define BME_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
 
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
