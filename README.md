@@ -7,6 +7,7 @@
 <img src="img/Paxcounter-ttgo.jpg">
 <img src="img/Paxcounter-lolin.gif">
 <img src="img/Paxcounter-Screen.png">
+<img src="img/paxcounter-curves.jpg">
 
 # Use case
 
