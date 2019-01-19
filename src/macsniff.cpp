@@ -119,7 +119,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
              "%d Bytes left",
              added ? "new  " : "known",
              sniff_type == MAC_SNIFF_WIFI ? "WiFi" : "BLTH", rssi, buff,
-             hashedmac, macs_wifi, macs_ble, ESP.getFreeHeap());
+             hashedmac, macs_wifi, macs_ble, getFreeRAM());
+
 #ifdef VENDORFILTER
   } else {
     // Very noisy

@@ -61,7 +61,7 @@ void IRAM_ATTR SendCycleIRQ() {
 
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits, NULL);
+    xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits, NULL);
   portYIELD_FROM_ISR();
 }
 #endif
