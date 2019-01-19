@@ -28,7 +28,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 *LoRa & SPI*:
 
 - Heltec: LoRa-32
-- TTGO: T3_v1, T3_v2, T3_v2.1, T-Beam
+- TTGO: T1, T2, T3, T-Beam, T-Fox
 - Pycom: LoPy, LoPy4, FiPy
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
@@ -49,6 +49,7 @@ Depending on board hardware following features are supported:
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
 - Environmental sensor (Bosch BME680 I2C)
+- Real Time Clock (Maxim DS3231 I2C)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -77,6 +78,8 @@ To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA 
 If your device has a fixed DEVEUI enter this in your local loraconf.h file. During compile time this DEVEUI will be grabbed from loraconf.h and inserted in the code.
 
 If your device has silicon **Unique ID** which is stored in serial EEPROM Microchip 24AA02E64 you don't need to change anything. The Unique ID will be read during startup and DEVEUI will be generated from it, overriding settings in loraconf.h.
+
+If your device has a **real time clock** date/time of rtc will be updated bei either LoRaWAN network or GPS time (if present).
 
 # Building
 
