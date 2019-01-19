@@ -17,6 +17,11 @@
 #include <Wire.h>
 #endif
 
+// Needed for RTC time sync if RTC present on board
+#ifdef HAS_RTC
+#include "rtc.h"
+#endif
+
 extern QueueHandle_t LoraSendQueue;
 
 void onEvent(ev_t ev);

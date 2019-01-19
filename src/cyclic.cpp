@@ -128,6 +128,16 @@ void do_timesync() {
   if (gps.time.isValid()) {
     setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
             gps.date.day(), gps.date.month(), gps.date.year());
+#ifdef HAS_RTC
+    RtcDateTime now;
+    now.year = gps.time.year();
+    now.month = gps.date.month();
+    now.dayOfMonth = gps.date.day();
+    now.hour = gps.time.hour();
+    now.minute = gps.time.minute();
+    now.second = gps.time.second();
+    set_rtc(now);
+#endif
     ESP_LOGI(TAG, "Time synced by GPS to %02d:%02d:%02d", hour(), minute(),
              second());
     return;

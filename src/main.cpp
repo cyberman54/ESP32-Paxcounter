@@ -171,6 +171,12 @@ void setup() {
                           0);           // CPU core
 #endif
 
+// initialize RTC
+#ifdef HAS_RTC
+  strcat_P(features, " RTC");
+  assert(rtc_init());
+#endif
+
   // initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
   strcat_P(features, " ANT");
