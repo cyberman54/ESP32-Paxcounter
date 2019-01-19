@@ -5,8 +5,6 @@
 #include <Wire.h> // must be included here so that Arduino library object file references work
 #include <RtcDS3231.h>
 
-extern RtcDS3231<TwoWire> Rtc; // Make RTCDS3231 instance globally availabe
-
 int rtc_init(void);
 int set_rtc(uint32_t UTCTime);
 int set_rtc(RtcDateTime now);
