@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 // Hardware related definitions for generic ESP32 boards
+// generic.h is kitchensink with all available options
 
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no LoRa
 #define HAS_SPI 1  // comment out if device shall not send data via SPI
@@ -46,6 +47,9 @@
 #define MY_OLED_SDA (4)
 #define MY_OLED_SCL (15)
 #define MY_OLED_RST (16)
+
+// Pins for on board DS3231 RTC chip
+#define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
