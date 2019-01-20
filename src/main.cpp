@@ -175,12 +175,10 @@ void setup() {
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
-  setTime(get_rtc());
-  ESP_LOGI(TAG, "Time synced by RTC to %02d:%02d:%02d", hour(), minute(),
-           second());
+  sync_rtctime();
 #endif
 
-  // initialize wifi antenna
+// initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
   strcat_P(features, " ANT");
   antenna_init();
@@ -321,7 +319,7 @@ void setup() {
   ESP_LOGI(TAG, "Features:%s", features);
 
 #ifdef HAS_LORA
-  // output LoRaWAN keys to console
+// output LoRaWAN keys to console
 #ifdef VERBOSE
   showLoraKeys();
 #endif
@@ -355,7 +353,7 @@ void setup() {
                           &wifiSwitchTask,   // task handle
                           0);                // CPU core
 
-  // initialize bme
+// initialize bme
 #ifdef HAS_BME
   strcat_P(features, " BME");
   if (bme_init()) {
@@ -379,7 +377,7 @@ void setup() {
   timerAlarmEnable(homeCycle);
   timerAlarmEnable(channelSwitch);
 
-  // start button interrupt
+// start button interrupt
 #ifdef HAS_BUTTON
 #ifdef BUTTON_PULLUP
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);

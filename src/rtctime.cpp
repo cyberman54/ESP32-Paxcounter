@@ -1,6 +1,6 @@
 #ifdef HAS_RTC
 
-#include "rtc.h"
+#include "rtctime.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -15,7 +15,7 @@ int rtc_init() {
   // return = 0 -> error / return = 1 -> success
 
   // block i2c bus access
-  if (xSemaphoreTake(I2Caccess, (2 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
+  if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
       pdTRUE) {
 
     Wire.begin(HAS_RTC);
@@ -24,7 +24,8 @@ int rtc_init() {
     RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
 
     if (!Rtc.IsDateTimeValid()) {
-      ESP_LOGW(TAG, "RTC has no valid RTC date/time, setting to compilation date");
+      ESP_LOGW(TAG,
+               "RTC has no valid RTC date/time, setting to compilation date");
       Rtc.SetDateTime(compiled);
       RTC_state = useless;
     }
@@ -61,59 +62,84 @@ error:
 
 } // rtc_init()
 
-int set_rtc(uint32_t UTCTime, clock_state_t state) {
+int set_rtctime(uint32_t UTCTime, clock_state_t state) {
   // return = 0 -> error / return = 1 -> success
-#ifdef HAS_RTC
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, 2 * DISPLAYREFRESH_MS) == pdTRUE) {
+  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+#ifdef TIME_SYNC_INTERVAL_RTC
+    // shortly stop sync.
+    setSyncProvider(NULL);
+#endif
     Rtc.SetDateTime(RtcDateTime(UTCTime));
+#ifdef TIME_SYNC_INTERVAL_RTC
+    // restart sync.
+    setSyncProvider(get_rtctime);
+#endif
     xSemaphoreGive(I2Caccess); // release i2c bus access
     RTC_state = state;
     return 1;
-  } // while
+  }
   return 0;
-#endif
-} // set_rtc()
+} // set_rtctime()
 
-int set_rtc(RtcDateTime now, clock_state_t state) {
+int set_rtctime(RtcDateTime now, clock_state_t state) {
   // return = 0 -> error / return = 1 -> success
-#ifdef HAS_RTC
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, 2 * DISPLAYREFRESH_MS) == pdTRUE) {
+  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+#ifdef TIME_SYNC_INTERVAL_RTC
+    // shortly stop sync.
+    setSyncProvider(NULL);
+#endif
     Rtc.SetDateTime(now);
+#ifdef TIME_SYNC_INTERVAL_RTC
+    // restart sync.
+    setSyncProvider(get_rtctime);
+#endif
     xSemaphoreGive(I2Caccess); // release i2c bus access
     RTC_state = state;
     return 1;
-  } // while
+  }
   return 0;
-#endif
-} // set_rtc()
+} // set_rtctime()
 
-uint32_t get_rtc() {
-#ifdef HAS_RTC
+time_t get_rtctime() {
+  time_t rslt = now();
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, 2 * DISPLAYREFRESH_MS) == pdTRUE) {
-    if (!Rtc.IsDateTimeValid()) {
+  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+    if (!Rtc.IsDateTimeValid())
       ESP_LOGW(TAG, "RTC lost confidence in the DateTime");
-      return 0;
-    }
+    else
+      rslt = (time_t)(Rtc.GetDateTime()).Epoch32Time();
     xSemaphoreGive(I2Caccess); // release i2c bus access
-    return Rtc.GetDateTime();
-  } // while
-  return 0;
-#endif
+    return rslt;
+  }
+  return rslt;
 } // get_rtc()
 
-float get_rtc_temp() {
-#ifdef HAS_RTC
+void sync_rtctime() {
+  time_t t = get_rtctime();
+  ESP_LOGI(TAG, "RTC has set system time to %02d/%02d/%d %02d:%02d:%02d",
+           month(t), day(t), year(t), hour(t), minute(t), second(t));
+#ifdef TIME_SYNC_INTERVAL_RTC
+  setSyncInterval((time_t)TIME_SYNC_INTERVAL_RTC);
+  //setSyncProvider(get_rtctime); // <<<-- BUG here, causes watchdog timer1 group reboot
+  setSyncProvider(NULL); // dummy supressing time sync, to be removed after bug is solved
+  if (timeStatus() != timeSet) {
+    ESP_LOGE(TAG, "Unable to sync with the RTC");
+  } else {
+    ESP_LOGI(TAG, "RTC has set the system time");
+  }
+#endif
+} // sync_rtctime;
+
+float get_rtctemp() {
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, 2 * DISPLAYREFRESH_MS) == pdTRUE) {
+  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
     RtcTemperature temp = Rtc.GetTemperature();
     xSemaphoreGive(I2Caccess); // release i2c bus access
     return temp.AsFloatDegC();
   } // while
   return 0;
-#endif
 } // get_rtc()
 
 #endif // HAS_RTC

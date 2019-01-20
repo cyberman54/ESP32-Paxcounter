@@ -19,7 +19,7 @@
 
 // Needed for RTC time sync if RTC present on board
 #ifdef HAS_RTC
-#include "rtc.h"
+#include "rtctime.h"
 #endif
 
 extern QueueHandle_t LoraSendQueue;

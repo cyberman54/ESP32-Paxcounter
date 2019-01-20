@@ -1,5 +1,5 @@
-#ifndef _RTC_H
-#define _RTC_H
+#ifndef _RTCTIME_H
+#define _RTCTIME_H
 
 #include "globals.h"
 #include <Wire.h> // must be included here so that Arduino library object file references work
@@ -14,9 +14,11 @@ typedef enum {
 } clock_state_t;
 
 int rtc_init(void);
-int set_rtc(uint32_t UTCTime, clock_state_t state);
-int set_rtc(RtcDateTime now, clock_state_t state);
-uint32_t get_rtc();
-float get_rtc_temp();
+void sync_rtctime(void);
+int set_rtctime(uint32_t UTCTime, clock_state_t state);
+int set_rtctime(RtcDateTime now, clock_state_t state);
+void sync_rtctime(void);
+time_t get_rtctime(void);
+float get_rtctemp(void);
 
-#endif
+#endif // _RTCTIME_H

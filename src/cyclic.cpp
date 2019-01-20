@@ -136,7 +136,7 @@ void do_timesync() {
     now.hour = gps.time.hour();
     now.minute = gps.time.minute();
     now.second = gps.time.second();
-    set_rtc(now, synced_GPS);
+    set_rtctime(now, synced_GPS);
 #endif
     ESP_LOGI(TAG, "Time synced by GPS to %02d:%02d:%02d", hour(), minute(),
              second());
@@ -151,13 +151,6 @@ void do_timesync() {
   // Schedule a network time request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
-#endif
-
-// use on board time if board has RTC
-#ifdef HAS_RTC
-  setTime(get_rtc());
-  ESP_LOGI(TAG, "Time synced by RTC to %02d:%02d:%02d", hour(), minute(),
-           second());
 #endif
 
 #endif // TIME_SYNC_INTERVAL
