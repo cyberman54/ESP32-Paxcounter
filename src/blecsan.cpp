@@ -1,5 +1,3 @@
-#ifdef BLECOUNTER
-
 /* code snippets taken from
 https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 */
@@ -243,8 +241,6 @@ esp_err_t register_ble_callback(void) {
   return ESP_OK;
 
 } // register_ble_callback
-
-#endif // BLECOUNTER
 
 void start_BLEscan(void) {
 #ifdef BLECOUNTER
