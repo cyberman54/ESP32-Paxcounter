@@ -175,6 +175,9 @@ void setup() {
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
+  setTime(get_rtc());
+  ESP_LOGI(TAG, "Time synced by RTC to %02d:%02d:%02d", hour(), minute(),
+           second());
 #endif
 
   // initialize wifi antenna

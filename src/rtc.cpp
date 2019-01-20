@@ -7,6 +7,8 @@ static const char TAG[] = "main";
 
 RtcDS3231<TwoWire> Rtc(Wire);
 
+clock_state_t RTC_state = useless;
+
 // initialize RTC
 int rtc_init() {
 
@@ -24,6 +26,7 @@ int rtc_init() {
     if (!Rtc.IsDateTimeValid()) {
       ESP_LOGW(TAG, "RTC has no valid RTC date/time, setting to compilation date");
       Rtc.SetDateTime(compiled);
+      RTC_state = useless;
     }
 
     if (!Rtc.GetIsRunning()) {
@@ -32,10 +35,12 @@ int rtc_init() {
     }
 
     RtcDateTime now = Rtc.GetDateTime();
+    RTC_state = reserve;
 
     if (now < compiled) {
       ESP_LOGI(TAG, "RTC date/time is older than compilation date, updating)");
       Rtc.SetDateTime(compiled);
+      RTC_state = useless;
     }
 
     // configure RTC chip
@@ -56,26 +61,28 @@ error:
 
 } // rtc_init()
 
-int set_rtc(uint32_t UTCTime) {
+int set_rtc(uint32_t UTCTime, clock_state_t state) {
   // return = 0 -> error / return = 1 -> success
 #ifdef HAS_RTC
   // block i2c bus access
   while (xSemaphoreTake(I2Caccess, 2 * DISPLAYREFRESH_MS) == pdTRUE) {
     Rtc.SetDateTime(RtcDateTime(UTCTime));
     xSemaphoreGive(I2Caccess); // release i2c bus access
+    RTC_state = state;
     return 1;
   } // while
   return 0;
 #endif
 } // set_rtc()
 
-int set_rtc(RtcDateTime now) {
+int set_rtc(RtcDateTime now, clock_state_t state) {
   // return = 0 -> error / return = 1 -> success
 #ifdef HAS_RTC
   // block i2c bus access
   while (xSemaphoreTake(I2Caccess, 2 * DISPLAYREFRESH_MS) == pdTRUE) {
     Rtc.SetDateTime(now);
     xSemaphoreGive(I2Caccess); // release i2c bus access
+    RTC_state = state;
     return 1;
   } // while
   return 0;
