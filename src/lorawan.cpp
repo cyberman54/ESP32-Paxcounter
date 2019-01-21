@@ -456,8 +456,10 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   // Update system time with  time read from the network
   setTime(*pUserUTCTime);
 #ifdef HAS_RTC
-  set_rtctime(*pUserUTCTime, synced_LORA);
+  set_rtctime(*pUserUTCTime);
 #endif
-      ESP_LOGI(TAG, "Time synced by LoRa network to %02d:%02d:%02d", hour(),
-               minute(), second());
+  time_t t = now();
+  ESP_LOGI(TAG,
+           "LORA Network has set system time to %02d/%02d/%d %02d:%02d:%02d",
+           month(t), day(t), year(t), hour(t), minute(t), second(t));
 }

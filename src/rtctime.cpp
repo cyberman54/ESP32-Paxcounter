@@ -7,10 +7,8 @@ static const char TAG[] = "main";
 
 RtcDS3231<TwoWire> Rtc(Wire);
 
-clock_state_t RTC_state = useless;
-
 // initialize RTC
-int rtc_init() {
+int rtc_init(void) {
 
   // return = 0 -> error / return = 1 -> success
 
@@ -27,7 +25,6 @@ int rtc_init() {
       ESP_LOGW(TAG,
                "RTC has no valid RTC date/time, setting to compilation date");
       Rtc.SetDateTime(compiled);
-      RTC_state = useless;
     }
 
     if (!Rtc.GetIsRunning()) {
@@ -36,12 +33,10 @@ int rtc_init() {
     }
 
     RtcDateTime now = Rtc.GetDateTime();
-    RTC_state = reserve;
 
     if (now < compiled) {
       ESP_LOGI(TAG, "RTC date/time is older than compilation date, updating)");
       Rtc.SetDateTime(compiled);
-      RTC_state = useless;
     }
 
     // configure RTC chip
@@ -62,77 +57,60 @@ error:
 
 } // rtc_init()
 
-int set_rtctime(uint32_t UTCTime, clock_state_t state) {
+int set_rtctime(uint32_t UTCTime) {
   // return = 0 -> error / return = 1 -> success
   // block i2c bus access
   while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
-#ifdef TIME_SYNC_INTERVAL_RTC
-    // shortly stop sync.
-    setSyncProvider(NULL);
-#endif
     Rtc.SetDateTime(RtcDateTime(UTCTime));
-#ifdef TIME_SYNC_INTERVAL_RTC
-    // restart sync.
-    setSyncProvider(get_rtctime);
-#endif
     xSemaphoreGive(I2Caccess); // release i2c bus access
-    RTC_state = state;
     return 1;
   }
   return 0;
 } // set_rtctime()
 
-int set_rtctime(RtcDateTime now, clock_state_t state) {
+int set_rtctime(RtcDateTime t) {
   // return = 0 -> error / return = 1 -> success
   // block i2c bus access
   while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
-#ifdef TIME_SYNC_INTERVAL_RTC
-    // shortly stop sync.
-    setSyncProvider(NULL);
-#endif
-    Rtc.SetDateTime(now);
-#ifdef TIME_SYNC_INTERVAL_RTC
-    // restart sync.
-    setSyncProvider(get_rtctime);
-#endif
+    Rtc.SetDateTime(t);
     xSemaphoreGive(I2Caccess); // release i2c bus access
-    RTC_state = state;
     return 1;
   }
   return 0;
 } // set_rtctime()
 
-time_t get_rtctime() {
-  time_t rslt = now();
+time_t get_rtctime(void) {
+  // never call now() in this function, would cause recursion!
+  time_t tt = 0;
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
-    if (!Rtc.IsDateTimeValid())
+  if (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+    if (!Rtc.IsDateTimeValid()) {
       ESP_LOGW(TAG, "RTC lost confidence in the DateTime");
-    else
-      rslt = (time_t)(Rtc.GetDateTime()).Epoch32Time();
+    } else {
+      RtcDateTime t = Rtc.GetDateTime();
+      tt = t.Epoch32Time();
+    }
     xSemaphoreGive(I2Caccess); // release i2c bus access
-    return rslt;
+    return tt;
   }
-  return rslt;
-} // get_rtc()
+  return tt;
+} // get_rtctime()
 
-void sync_rtctime() {
-  time_t t = get_rtctime();
-  ESP_LOGI(TAG, "RTC has set system time to %02d/%02d/%d %02d:%02d:%02d",
-           month(t), day(t), year(t), hour(t), minute(t), second(t));
+void sync_rtctime(void) {
 #ifdef TIME_SYNC_INTERVAL_RTC
-  setSyncInterval((time_t)TIME_SYNC_INTERVAL_RTC);
-  //setSyncProvider(get_rtctime); // <<<-- BUG here, causes watchdog timer1 group reboot
-  setSyncProvider(NULL); // dummy supressing time sync, to be removed after bug is solved
+  setSyncProvider(&get_rtctime);
+  setSyncInterval(TIME_SYNC_INTERVAL_RTC);
   if (timeStatus() != timeSet) {
     ESP_LOGE(TAG, "Unable to sync with the RTC");
   } else {
-    ESP_LOGI(TAG, "RTC has set the system time");
+    time_t t = now();
+    ESP_LOGI(TAG, "RTC has set system time to %02d/%02d/%d %02d:%02d:%02d",
+             month(t), day(t), year(t), hour(t), minute(t), second(t));
   }
 #endif
 } // sync_rtctime;
 
-float get_rtctemp() {
+float get_rtctemp(void) {
   // block i2c bus access
   while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
     RtcTemperature temp = Rtc.GetTemperature();
@@ -141,5 +119,18 @@ float get_rtctemp() {
   } // while
   return 0;
 } // get_rtc()
+
+time_t gpsTimeSync(void) {
+#ifdef HAS_GPS
+  tmElements_t tm;
+  tm.Second = gps.time.second();
+  tm.Minute = gps.time.minute();
+  tm.Hour = gps.time.hour();
+  tm.Day = gps.date.day();
+  tm.Month = gps.date.month();
+  tm.Year = CalendarYrToTm(gps.date.year());
+  return makeTime(tm);
+#endif // HAS_GPS
+}
 
 #endif // HAS_RTC

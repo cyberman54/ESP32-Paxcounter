@@ -123,32 +123,34 @@ void reset_counters() {
 void do_timesync() {
 #ifdef TIME_SYNC_INTERVAL
 
-// sync time & date by GPS if we have valid gps time
+// set system time to time source GPS, if we have valid gps time
 #ifdef HAS_GPS
   if (gps.time.isValid()) {
     setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
             gps.date.day(), gps.date.month(), gps.date.year());
+// set RTC time to time source GPS, if RTC is present
 #ifdef HAS_RTC
-    RtcDateTime now;
-    now.year = gps.time.year();
-    now.month = gps.date.month();
-    now.dayOfMonth = gps.date.day();
-    now.hour = gps.time.hour();
-    now.minute = gps.time.minute();
-    now.second = gps.time.second();
-    set_rtctime(now, synced_GPS);
+    RtcDateTime t;
+    t.year = gps.time.year();
+    t.month = gps.date.month();
+    t.dayOfMonth = gps.date.day();
+    t.hour = gps.time.hour();
+    t.minute = gps.time.minute();
+    t.second = gps.time.second();
+    set_rtctime(t);
 #endif
-    ESP_LOGI(TAG, "Time synced by GPS to %02d:%02d:%02d", hour(), minute(),
-             second());
+    time_t t = now();
+    ESP_LOGI(TAG, "GPS has set system time to %02d/%02d/%d %02d:%02d:%02d",
+             month(t), day(t), year(t), hour(t), minute(t), second(t));
     return;
   } else {
     ESP_LOGI(TAG, "No valid GPS time");
   }
 #endif // HAS_GPS
 
-// sync time by LoRa Network if network supports DevTimeReq
+// set system time to time source LoRa Network, if network supports DevTimeReq
 #ifdef LMIC_ENABLE_DeviceTimeReq
-  // Schedule a network time request at the next possible time
+  // Schedule a network time sync request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
 #endif
