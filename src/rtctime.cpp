@@ -97,17 +97,19 @@ time_t get_rtctime(void) {
 } // get_rtctime()
 
 void sync_rtctime(void) {
-#ifdef TIME_SYNC_INTERVAL_RTC
-  setSyncProvider(&get_rtctime);
-  setSyncInterval(TIME_SYNC_INTERVAL_RTC);
   if (timeStatus() != timeSet) {
     ESP_LOGE(TAG, "Unable to sync with the RTC");
   } else {
     time_t t = now();
+    setTime(t);
     ESP_LOGI(TAG, "RTC has set system time to %02d/%02d/%d %02d:%02d:%02d",
              month(t), day(t), year(t), hour(t), minute(t), second(t));
   }
+#ifdef TIME_SYNC_INTERVAL_RTC
+  setSyncProvider(&get_rtctime);
+  setSyncInterval(TIME_SYNC_INTERVAL_RTC);
 #endif
+
 } // sync_rtctime;
 
 float get_rtctemp(void) {
