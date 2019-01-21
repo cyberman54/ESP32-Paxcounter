@@ -147,6 +147,13 @@ void setup() {
   strcat_P(features, " PSRAM");
 #endif
 
+// set low power mode to off
+#ifdef HAS_LOWPOWER_SWITCH
+  pinMode(HAS_LED, OUTPUT);
+  digitalWrite(HAS_LOWPOWER_SWITCH, HIGH);
+  strcat_P(features, " LPWR");
+#endif
+
   // initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
