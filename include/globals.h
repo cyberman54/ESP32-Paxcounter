@@ -67,8 +67,8 @@ typedef struct {
 } MessageBuffer_t;
 
 typedef struct {
-  uint32_t latitude;
-  uint32_t longitude;
+  int32_t latitude;
+  int32_t longitude;
   uint8_t satellites;
   uint16_t hdop;
   uint16_t altitude;
