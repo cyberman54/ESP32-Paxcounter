@@ -71,7 +71,7 @@ typedef struct {
   int32_t longitude;
   uint8_t satellites;
   uint16_t hdop;
-  uint16_t altitude;
+  int16_t altitude;
 } gpsStatus_t;
 
 typedef struct {
