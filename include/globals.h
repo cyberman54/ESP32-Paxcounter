@@ -9,7 +9,6 @@
 #include <array>
 #include <algorithm>
 #include "mallocator.h"
-//#include "inc/bsec_datatypes.h"
 #include "../lib/Bosch-BSEC/src/inc/bsec_datatypes.h"
 
 // sniffing types
