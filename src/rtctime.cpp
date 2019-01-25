@@ -42,6 +42,7 @@ int rtc_init(void) {
     // configure RTC chip
     Rtc.Enable32kHzPin(false);
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
+
   } else {
     ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
     goto error;

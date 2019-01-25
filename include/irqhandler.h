@@ -5,6 +5,7 @@
 #define BUTTON_IRQ 0x02
 #define SENDCOUNTER_IRQ 0x04
 #define CYCLIC_IRQ 0x08
+#define IF482_IRQ 0x10
 
 #include "globals.h"
 #include "cyclic.h"
@@ -24,5 +25,11 @@ void IRAM_ATTR DisplayIRQ();
 #include "button.h"
 void IRAM_ATTR ButtonIRQ();
 #endif
+
+#ifdef HAS_IF482
+#include "if482.h"
+void IRAM_ATTR IF482IRQ();
+#endif
+
 
 #endif

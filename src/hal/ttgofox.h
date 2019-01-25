@@ -10,7 +10,6 @@
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define HAS_LED NOT_A_PIN // green on board LED is useless, is GPIO25, which switches power for Lora+Display
-//#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_LOWPOWER_SWITCH GPIO_NUM_25 // switches power for LoRa chip + display (0 = off / 1 = on)
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
@@ -23,6 +22,11 @@
 
 // Pins for on board DS3231 RTC chip
 #define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
+#define RTC_INT GPIO_NUM_34 // interrupt input from rtc
+
+// Settings for IF482 interface
+#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_15 // IF482 serial port parameters
+#define IF482_PORT 1 // serial port 1
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 

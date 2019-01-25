@@ -18,6 +18,8 @@ typedef enum {
   synced_GPS = 4   // best possible quality, clock is driven by GPS
 } clock_state_t;
 
+extern RtcDS3231<TwoWire> Rtc; // make RTC instance globally available
+
 int rtc_init(void);
 void sync_rtctime(void);
 int set_rtctime(uint32_t UTCTime);
