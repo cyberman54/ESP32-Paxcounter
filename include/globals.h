@@ -35,6 +35,10 @@
 #define BLE_MODE (0x40)
 #define SCREEN_MODE (0x80)
 
+// I2C bus access control
+#define I2C_MUTEX_LOCK()    xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) != pdTRUE
+#define I2C_MUTEX_UNLOCK()  xSemaphoreGive(I2Caccess)
+
 // Struct holding devices's runtime configuration
 typedef struct {
   uint8_t lorasf;      // 7-12, lora spreadfactor

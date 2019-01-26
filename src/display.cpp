@@ -99,8 +99,7 @@ void init_display(const char *Productname, const char *Version) {
 void refreshtheDisplay() {
 
   // block i2c bus access
-  if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
-      pdTRUE) {
+  if (I2C_MUTEX_LOCK()) {
 
     // set display on/off according to current device configuration
     if (DisplayState != cfg.screenon) {
@@ -193,7 +192,7 @@ void refreshtheDisplay() {
 
 #endif // HAS_LORA
 
-    xSemaphoreGive(I2Caccess); // release i2c bus access
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
   }
 
 } // refreshDisplay()

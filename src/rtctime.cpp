@@ -13,8 +13,7 @@ int rtc_init(void) {
   // return = 0 -> error / return = 1 -> success
 
   // block i2c bus access
-  if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
-      pdTRUE) {
+  if (I2C_MUTEX_LOCK()) {
 
     Wire.begin(HAS_RTC);
     Rtc.Begin();
@@ -48,12 +47,12 @@ int rtc_init(void) {
     goto error;
   }
 
-  xSemaphoreGive(I2Caccess); // release i2c bus access
+  I2C_MUTEX_UNLOCK(); // release i2c bus access
   ESP_LOGI(TAG, "RTC initialized");
   return 1;
 
 error:
-  xSemaphoreGive(I2Caccess); // release i2c bus access
+  I2C_MUTEX_UNLOCK(); // release i2c bus access
   return 0;
 
 } // rtc_init()
@@ -61,9 +60,9 @@ error:
 int set_rtctime(uint32_t UTCTime) {
   // return = 0 -> error / return = 1 -> success
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+  if (I2C_MUTEX_LOCK()) {
     Rtc.SetDateTime(RtcDateTime(UTCTime));
-    xSemaphoreGive(I2Caccess); // release i2c bus access
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
     return 1;
   }
   return 0;
@@ -72,9 +71,9 @@ int set_rtctime(uint32_t UTCTime) {
 int set_rtctime(RtcDateTime t) {
   // return = 0 -> error / return = 1 -> success
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+  if (I2C_MUTEX_LOCK()) {
     Rtc.SetDateTime(t);
-    xSemaphoreGive(I2Caccess); // release i2c bus access
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
     return 1;
   }
   return 0;
@@ -84,14 +83,14 @@ time_t get_rtctime(void) {
   // never call now() in this function, would cause recursion!
   time_t tt = 0;
   // block i2c bus access
-  if (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+  if (I2C_MUTEX_LOCK()) {
     if (!Rtc.IsDateTimeValid()) {
       ESP_LOGW(TAG, "RTC lost confidence in the DateTime");
     } else {
       RtcDateTime t = Rtc.GetDateTime();
       tt = t.Epoch32Time();
     }
-    xSemaphoreGive(I2Caccess); // release i2c bus access
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
     return tt;
   }
   return tt;
@@ -115,9 +114,9 @@ void sync_rtctime(void) {
 
 float get_rtctemp(void) {
   // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, DISPLAYREFRESH_MS) == pdTRUE) {
+  if (I2C_MUTEX_LOCK()) {
     RtcTemperature temp = Rtc.GetTemperature();
-    xSemaphoreGive(I2Caccess); // release i2c bus access
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
     return temp.AsFloatDegC();
   } // while
   return 0;
