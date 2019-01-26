@@ -118,6 +118,6 @@ String if482Telegram(time_t t) {
 }
 
 // interrupt triggered routine
-void sendIF482(time_t t) { IF482.println(if482Telegram(t)); }
+void sendIF482(time_t t) { IF482.print(if482Telegram(t)); }
 
 #endif // HAS_IF482
