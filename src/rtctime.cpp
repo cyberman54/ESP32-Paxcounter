@@ -124,17 +124,4 @@ float get_rtctemp(void) {
   return 0;
 } // get_rtc()
 
-time_t gpsTimeSync(void) {
-#ifdef HAS_GPS
-  tmElements_t tm;
-  tm.Second = gps.time.second();
-  tm.Minute = gps.time.minute();
-  tm.Hour = gps.time.hour();
-  tm.Day = gps.date.day();
-  tm.Month = gps.date.month();
-  tm.Year = CalendarYrToTm(gps.date.year());
-  return makeTime(tm);
-#endif // HAS_GPS
-}
-
 #endif // HAS_RTC

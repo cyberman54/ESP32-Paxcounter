@@ -27,6 +27,5 @@ int set_rtctime(RtcDateTime now);
 void sync_rtctime(void);
 time_t get_rtctime(void);
 float get_rtctemp(void);
-time_t gpsTimeSync(void);
 
 #endif // _RTCTIME_H
