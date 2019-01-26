@@ -183,6 +183,10 @@ void setup() {
   strcat_P(features, " RTC");
   assert(rtc_init());
   sync_rtctime();
+#ifdef HAS_IF482
+  strcat_P(features, " IF482");
+  if482_init();
+#endif
 #endif
 
 // initialize wifi antenna
