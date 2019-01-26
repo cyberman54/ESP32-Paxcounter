@@ -80,53 +80,44 @@ void if482_init(void) {
   // use rtc 1Hz clock for triggering IF482 telegram send
   Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
   Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
-
-  // setup external interupt for active low RTC INT pin
-  attachInterrupt(RTC_INT, IF482IRQ, FALLING);
+  pinMode(RTC_INT, INPUT_PULLUP);
 
   ESP_LOGI(TAG, "IF482 generator initialized");
 
 } // if482_init
 
-char *if482Telegram(time_t t) {
+String if482Telegram(time_t t) {
 
-  static char out[17] = {0}; // 16 bytes IF482 telegram + null termination char
-  char buf[14] = {0};
-
-  strcat_P(out, "O"); // <STX>
+  char mon;
+  char buf[14] = "000000F000000";
+  char out[17];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
 
   case timeSet: // time is set and is synced
-    strcat_P(out, "A");
+    mon = 'A';
     break;
 
   case timeNeedsSync: // time had been set but sync attempt did not succeed
-    strcat_P(out, "M");
+    mon = 'M';
     break;
 
   default: // time not set, no valid time
-    strcat_P(out, "?");
+    mon = '?';
     break;
 
   } // switch
 
-  strcat_P(out, "L"); // local time
+  if (!timeNotSet) // do we have valid time?
+    snprintf(buf, sizeof buf, "%02u%02u%02u%1u%02u%02u%02u", year(t)-2000, month(t),
+             day(t), weekday(t), hour(t), minute(t), second(t));
 
-  if (!timeNotSet) { // do we have valid time?
-    sprintf(buf, "%02u%02u%02u%1u%02u%02u%02u", year(t), month(t), day(t),
-            weekday(t), hour(t), minute(t), second(t));
-    strcat(out, buf);
-  } else {
-    strcat_P(out, "000000F000000");
-  }
-
-  strcat_P(out, "\r"); // <ETX>
+  snprintf(out, sizeof out, "O%cL%s\r", mon, buf);
 
   return out;
 }
 
 // interrupt triggered routine
-void sendIF482(time_t t) { IF482.write(if482Telegram(t)); }
+void sendIF482(time_t t) { IF482.println(if482Telegram(t)); }
 
 #endif // HAS_IF482

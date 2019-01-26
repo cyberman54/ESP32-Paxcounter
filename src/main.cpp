@@ -397,6 +397,12 @@ void setup() {
 #endif
 #endif // HAS_BUTTON
 
+// start RTC interrupt
+#if defined HAS_IF482 && defined HAS_RTC
+  // setup external interupt for active low RTC INT pin
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
+#endif
+
 } // setup()
 
 void loop() {
