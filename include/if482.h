@@ -4,7 +4,10 @@
 #include "globals.h"
 #include "irqhandler.h"
 
-void if482_init(void);
-void sendIF482(time_t t);
+extern TaskHandle_t IF482Task;
+
+int if482_init(void);
+void if482_loop(void *pvParameters);
+void IRAM_ATTR IF482IRQ(void);
 
 #endif

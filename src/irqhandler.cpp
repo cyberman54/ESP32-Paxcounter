@@ -18,12 +18,6 @@ void irqHandler(void *pvParameters) {
         &InterruptStatus, // Receives the notification value
         portMAX_DELAY);   // wait forever (missing error handling here...)
 
-// IF482 interrupt?
-#ifdef HAS_IF482
-    if (InterruptStatus & IF482_IRQ)
-      sendIF482(now());
-#endif
-
 // button pressed?
 #ifdef HAS_BUTTON
     if (InterruptStatus & BUTTON_IRQ)
@@ -75,13 +69,6 @@ void IRAM_ATTR DisplayIRQ() {
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits, NULL);
-  portYIELD_FROM_ISR();
-}
-#endif
-
-#ifdef HAS_IF482
-void IRAM_ATTR IF482IRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, IF482_IRQ, eSetBits, NULL);
   portYIELD_FROM_ISR();
 }
 #endif

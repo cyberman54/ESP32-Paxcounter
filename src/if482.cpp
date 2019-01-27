@@ -69,10 +69,12 @@ not evaluated by model BU-190
 // Local logging tag
 static const char TAG[] = "main";
 
-HardwareSerial IF482(1); // use UART #1
+TaskHandle_t IF482Task;
+
+HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
 // initialize and configure GPS
-void if482_init(void) {
+int if482_init(void) {
 
   // open serial interface
   IF482.begin(HAS_IF482);
@@ -84,6 +86,8 @@ void if482_init(void) {
 
   ESP_LOGI(TAG, "IF482 generator initialized");
 
+  return 1;
+
 } // if482_init
 
 String if482Telegram(time_t t) {
@@ -93,31 +97,64 @@ String if482Telegram(time_t t) {
   char out[17];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
-
-  case timeSet: // time is set and is synced
+  case timeSet:           // time is set and is synced
     mon = 'A';
     break;
-
   case timeNeedsSync: // time had been set but sync attempt did not succeed
     mon = 'M';
     break;
-
   default: // time not set, no valid time
     mon = '?';
     break;
-
   } // switch
 
   if (!timeNotSet) // do we have valid time?
-    snprintf(buf, sizeof buf, "%02u%02u%02u%1u%02u%02u%02u", year(t)-2000, month(t),
-             day(t), weekday(t), hour(t), minute(t), second(t));
+    snprintf(buf, sizeof buf, "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
+             month(t), day(t), weekday(t), hour(t), minute(t), second(t));
 
   snprintf(out, sizeof out, "O%cL%s\r", mon, buf);
-
   return out;
 }
 
-// interrupt triggered routine
-void sendIF482(time_t t) { IF482.print(if482Telegram(t)); }
+void if482_loop(void *pvParameters) {
+
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+
+  TickType_t wakeTime;
+  time_t t, tt;
+  const TickType_t shotTime = pdMS_TO_TICKS(IF482_OFFSET);
+
+  // wait until begin of a new second
+  t = tt = now();
+  do {
+    tt = now();
+  } while (t == tt);
+
+  const TickType_t startTime = xTaskGetTickCount();
+
+  // task remains in blocked state until it is notified by isr
+  for (;;) {
+    xTaskNotifyWait(
+        0x00,           // don't clear any bits on entry
+        ULONG_MAX,      // clear all bits on exit
+        &wakeTime,      // receives moment of call from isr
+        portMAX_DELAY); // wait forever (missing error handling here...)
+
+    t = now();
+    wakeTime -= startTime;
+
+    // now we're synced to start of second t and wait
+    // until it's time to start transmit telegram for t+1
+    vTaskDelayUntil(&wakeTime, shotTime);
+    IF482.print(if482Telegram(t + 1));
+  }
+  vTaskDelete(IF482Task); // shoud never be reached
+} // if482_loop()
+
+// interrupt service routine triggered by RTC 1Hz precise clock
+void IRAM_ATTR IF482IRQ() {
+  xTaskNotifyFromISR(IF482Task, xTaskGetTickCountFromISR(), eSetBits, NULL);
+  portYIELD_FROM_ISR();
+}
 
 #endif // HAS_IF482

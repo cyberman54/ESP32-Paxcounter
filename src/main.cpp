@@ -29,6 +29,7 @@ Task          Core  Prio  Purpose
 ====================================================================================
 wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
+if482loop     1     3     serial feed of IF482 time telegrams
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
@@ -44,11 +45,15 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 (irqhandler, bmeloop)
 
 ESP32 hardware timers
-==========================
- 0	Trigger display refresh
- 1	Trigger Wifi channel switch
- 2	Trigger send payload cycle
- 3	Trigger housekeeping cycle
+================================
+ 0	triggers display refresh
+ 1	triggers Wifi channel switch
+ 2	triggers send payload cycle
+ 3	triggers housekeeping cycle
+
+ RTC hardware timer (if present)
+================================
+ triggers IF482 clock generator
 
 */
 
@@ -185,9 +190,18 @@ void setup() {
   sync_rtctime();
 #ifdef HAS_IF482
   strcat_P(features, " IF482");
-  if482_init();
-#endif
-#endif
+  if (if482_init()) {
+    ESP_LOGI(TAG, "Starting IF482loop...");
+    xTaskCreatePinnedToCore(if482_loop,  // task function
+                            "if482loop", // name of task
+                            2048,        // stack size of task
+                            (void *)1,   // parameter of the task
+                            3,           // priority of the task
+                            &IF482Task,  // task handle
+                            0);          // CPU core
+  }
+#endif // HAS_IF482
+#endif // HAS_RTC
 
 // initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH

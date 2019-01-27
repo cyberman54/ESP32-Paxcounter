@@ -25,8 +25,7 @@
 #define RTC_INT GPIO_NUM_34 // interrupt input from rtc
 
 // Settings for IF482 interface
-#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_15 // IF482 serial port parameters
-#define IF482_PORT 1 // serial port 1
+//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 

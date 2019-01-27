@@ -140,4 +140,8 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 #include "bme680mems.h"
 #endif
 
+#ifdef HAS_IF482
+#include "if482.h"
+#endif
+
 #endif
