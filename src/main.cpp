@@ -29,6 +29,7 @@ Task          Core  Prio  Purpose
 ====================================================================================
 wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
+if482loop     1     3     serial feed of IF482 time telegrams
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
@@ -44,11 +45,15 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 (irqhandler, bmeloop)
 
 ESP32 hardware timers
-==========================
- 0	Trigger display refresh
- 1	Trigger Wifi channel switch
- 2	Trigger send payload cycle
- 3	Trigger housekeeping cycle
+================================
+ 0	triggers display refresh
+ 1	triggers Wifi channel switch
+ 2	triggers send payload cycle
+ 3	triggers housekeeping cycle
+
+ RTC hardware timer (if present)
+================================
+ triggers IF482 clock generator
 
 */
 
@@ -147,6 +152,13 @@ void setup() {
   strcat_P(features, " PSRAM");
 #endif
 
+// set low power mode to off
+#ifdef HAS_LOWPOWER_SWITCH
+  pinMode(HAS_LED, OUTPUT);
+  digitalWrite(HAS_LOWPOWER_SWITCH, HIGH);
+  strcat_P(features, " LPWR");
+#endif
+
   // initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
@@ -161,7 +173,7 @@ void setup() {
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   // start led loop
-  ESP_LOGI(TAG, "Starting LEDloop...");
+  ESP_LOGI(TAG, "Starting LED Controller...");
   xTaskCreatePinnedToCore(ledLoop,      // task function
                           "ledloop",    // name of task
                           1024,         // stack size of task
@@ -171,7 +183,26 @@ void setup() {
                           0);           // CPU core
 #endif
 
-  // initialize wifi antenna
+// initialize RTC
+#ifdef HAS_RTC
+  strcat_P(features, " RTC");
+  assert(rtc_init());
+  sync_rtctime();
+#ifdef HAS_IF482
+  strcat_P(features, " IF482");
+  assert(if482_init());
+  ESP_LOGI(TAG, "Starting IF482 Generator...");
+  xTaskCreatePinnedToCore(if482_loop,  // task function
+                          "if482loop", // name of task
+                          2048,        // stack size of task
+                          (void *)1,   // parameter of the task
+                          3,           // priority of the task
+                          &IF482Task,  // task handle
+                          0);          // CPU core
+#endif                                 // HAS_IF482
+#endif                                 // HAS_RTC
+
+// initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
   strcat_P(features, " ANT");
   antenna_init();
@@ -233,7 +264,7 @@ void setup() {
 #ifdef HAS_GPS
   strcat_P(features, " GPS");
   if (gps_init()) {
-    ESP_LOGI(TAG, "Starting GPSloop...");
+    ESP_LOGI(TAG, "Starting GPS Feed...");
     xTaskCreatePinnedToCore(gps_loop,  // task function
                             "gpsloop", // name of task
                             2048,      // stack size of task
@@ -312,7 +343,7 @@ void setup() {
   ESP_LOGI(TAG, "Features:%s", features);
 
 #ifdef HAS_LORA
-  // output LoRaWAN keys to console
+// output LoRaWAN keys to console
 #ifdef VERBOSE
   showLoraKeys();
 #endif
@@ -327,7 +358,7 @@ void setup() {
   get_salt(); // get new 16bit for salting hashes
 
   // start state machine
-  ESP_LOGI(TAG, "Starting IRQ Handler...");
+  ESP_LOGI(TAG, "Starting Interrupt Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
                           "irqhandler",    // name of task
                           4096,            // stack size of task
@@ -346,11 +377,11 @@ void setup() {
                           &wifiSwitchTask,   // task handle
                           0);                // CPU core
 
-  // initialize bme
+// initialize bme
 #ifdef HAS_BME
   strcat_P(features, " BME");
   if (bme_init()) {
-    ESP_LOGI(TAG, "Starting BMEloop...");
+    ESP_LOGI(TAG, "Starting Bluetooth sniffer...");
     xTaskCreatePinnedToCore(bme_loop,  // task function
                             "bmeloop", // name of task
                             2048,      // stack size of task
@@ -361,7 +392,8 @@ void setup() {
   }
 #endif
 
-  // start timer triggered interrupts
+  assert(irqHandlerTask != NULL); // has interrupt handler task started?
+                                  // start timer triggered interrupts
   ESP_LOGI(TAG, "Starting Interrupts...");
 #ifdef HAS_DISPLAY
   timerAlarmEnable(displaytimer);
@@ -370,7 +402,7 @@ void setup() {
   timerAlarmEnable(homeCycle);
   timerAlarmEnable(channelSwitch);
 
-  // start button interrupt
+// start button interrupt
 #ifdef HAS_BUTTON
 #ifdef BUTTON_PULLUP
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
@@ -378,6 +410,14 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
 #endif
 #endif // HAS_BUTTON
+
+// start RTC interrupt
+#if defined HAS_IF482 && defined HAS_RTC
+  // setup external interupt for active low RTC INT pin
+  assert(IF482Task != NULL); // has if482loop task started?
+  ESP_LOGI(TAG, "Starting IF482 output...");
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
+#endif
 
 } // setup()
 

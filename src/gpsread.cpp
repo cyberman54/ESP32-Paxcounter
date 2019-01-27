@@ -10,7 +10,7 @@ gpsStatus_t gps_status;
 TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
-HardwareSerial GPS_Serial(1);
+HardwareSerial GPS_Serial(1); // use UART #1
 #endif
 
 // initialize and configure GPS

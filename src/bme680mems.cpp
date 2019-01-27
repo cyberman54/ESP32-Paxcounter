@@ -32,8 +32,7 @@ int bme_init(void) {
   // return = 0 -> error / return = 1 -> success
 
   // block i2c bus access
-  if (xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==
-      pdTRUE) {
+  if (I2C_MUTEX_LOCK()) {
 
     Wire.begin(HAS_BME);
     iaqSensor.begin(BME_ADDR, Wire);
@@ -62,17 +61,16 @@ int bme_init(void) {
       ESP_LOGE(TAG, "BSEC subscription error");
       goto error;
     }
-
   } else {
     ESP_LOGE(TAG, "I2c bus busy - BME680 initialization error");
     goto error;
   }
 
-  xSemaphoreGive(I2Caccess); // release i2c bus access
+  I2C_MUTEX_UNLOCK(); // release i2c bus access
   return 1;
 
 error:
-  xSemaphoreGive(I2Caccess); // release i2c bus access
+  I2C_MUTEX_UNLOCK(); // release i2c bus access
   return 0;
 
 } // bme_init()
@@ -106,24 +104,24 @@ void bme_loop(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
 #ifdef HAS_BME
-  // block i2c bus access
-  while (xSemaphoreTake(I2Caccess, portMAX_DELAY) == pdTRUE) {
-
-    if (iaqSensor.run()) { // If new data is available
-      bme_status.raw_temperature = iaqSensor.rawTemperature;
-      bme_status.raw_humidity = iaqSensor.rawHumidity;
-      bme_status.temperature = iaqSensor.temperature;
-      bme_status.humidity = iaqSensor.humidity;
-      bme_status.pressure =
-          (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
-      bme_status.iaq = iaqSensor.iaqEstimate;
-      bme_status.iaq_accuracy = iaqSensor.iaqAccuracy;
-      bme_status.gas = iaqSensor.gasResistance;
-      updateState();
+  while (1) {
+    // block i2c bus access
+    if (I2C_MUTEX_LOCK()) {
+      if (iaqSensor.run()) { // If new data is available
+        bme_status.raw_temperature = iaqSensor.rawTemperature;
+        bme_status.raw_humidity = iaqSensor.rawHumidity;
+        bme_status.temperature = iaqSensor.temperature;
+        bme_status.humidity = iaqSensor.humidity;
+        bme_status.pressure =
+            (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
+        bme_status.iaq = iaqSensor.iaqEstimate;
+        bme_status.iaq_accuracy = iaqSensor.iaqAccuracy;
+        bme_status.gas = iaqSensor.gasResistance;
+        updateState();
+      }
+      I2C_MUTEX_UNLOCK();
     }
-    xSemaphoreGive(I2Caccess); // release i2c bus access
-
-  } // while
+  }
 #endif
   ESP_LOGE(TAG, "BME task ended");
   vTaskDelete(BmeTask); // should never be reached

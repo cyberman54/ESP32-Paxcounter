@@ -11,6 +11,11 @@
 #include "bme680mems.h"
 #endif
 
+// Needed for RTC time sync if RTC present on board
+#ifdef HAS_RTC
+#include "rtctime.h"
+#endif
+
 void doHousekeeping(void);
 void do_timesync(void);
 uint64_t uptime(void);

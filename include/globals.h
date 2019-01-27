@@ -9,7 +9,6 @@
 #include <array>
 #include <algorithm>
 #include "mallocator.h"
-//#include "inc/bsec_datatypes.h"
 #include "../lib/Bosch-BSEC/src/inc/bsec_datatypes.h"
 
 // sniffing types
@@ -35,6 +34,10 @@
 #define ANTENNA_MODE (0x20)
 #define BLE_MODE (0x40)
 #define SCREEN_MODE (0x80)
+
+// I2C bus access control
+#define I2C_MUTEX_LOCK()    xSemaphoreTake(I2Caccess, (DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) == pdTRUE
+#define I2C_MUTEX_UNLOCK()  xSemaphoreGive(I2Caccess)
 
 // Struct holding devices's runtime configuration
 typedef struct {
@@ -135,6 +138,10 @@ extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
 
 #ifdef HAS_BME
 #include "bme680mems.h"
+#endif
+
+#ifdef HAS_IF482
+#include "if482.h"
 #endif
 
 #endif
