@@ -1,5 +1,27 @@
 #ifdef HAS_DISPLAY
 
+/*
+
+Display-Mask (128 x 64 pixel):
+
+ |          111111
+ |0123456789012345
+------------------
+0|PAX:aabbccddee
+1|PAX:aabbccddee
+2|B:a.bcV  Sats:ab
+3|BLTH:abcde SF:ab
+4|WIFI:abcde ch:ab
+5|RLIM:abcd abcdKB
+6|xxxxxxxxxxxxxxxx
+6|20:27:00* 27.Feb
+7|yyyyyyyyyyyyyyab
+  
+line 6: x = Text for LORA status OR time/date
+line 7: y = Text for LMIC status; ab = payload queue
+
+*/
+
 // Basic Config
 #include "globals.h"
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
@@ -18,6 +40,10 @@ const char lora_datarate[] = {"1211100908078CNA1211109C8C7C"};
 #elif defined(CFG_in866)
 const char lora_datarate[] = {"121110090807FSNA"};
 #endif
+
+// helper arry for converting month values to text
+char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 uint8_t volatile DisplayState = 0;
 
@@ -144,7 +170,7 @@ void refreshtheDisplay() {
 #ifdef BLECOUNTER
     u8x8.setCursor(0, 3);
     if (cfg.blescan)
-      u8x8.printf("BLTH:%-4d", macs_ble);
+      u8x8.printf("BLTH:%-5d", macs_ble);
     else
       u8x8.printf("%s", "BLTH:off");
 #endif
@@ -162,7 +188,7 @@ void refreshtheDisplay() {
 
     // update wifi counter + channel display (line 4)
     u8x8.setCursor(0, 4);
-    u8x8.printf("WIFI:%-4d", macs_wifi);
+    u8x8.printf("WIFI:%-5d", macs_wifi);
     u8x8.setCursor(11, 4);
     u8x8.printf("ch:%02d", channel);
 
@@ -173,9 +199,18 @@ void refreshtheDisplay() {
     u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
 #ifdef HAS_LORA
-    // update LoRa status display (line 6)
+
     u8x8.setCursor(0, 6);
+#ifndef HAS_RTC
+    // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
+#else
+    // update time/date display (line 6)
+    time_t t = now();
+    u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
+                timeStatus() == timeSet ? '*' : '?', day(t),
+                printmonth[month(t)]);
+#endif
 
     // update LMiC event display (line 7)
     u8x8.setCursor(0, 7);
