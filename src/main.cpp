@@ -414,7 +414,8 @@ void setup() {
 // start RTC interrupt
 #if defined HAS_IF482 && defined HAS_RTC
   // setup external interupt for active low RTC INT pin
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
+  if (IF482IRQ != NULL) // has if482loop task started?
+    attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
 #endif
 
 } // setup()

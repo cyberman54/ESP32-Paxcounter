@@ -130,7 +130,7 @@ void if482_loop(void *pvParameters) {
     tt = now();
   } while (t == tt);
 
-  const TickType_t startTime = xTaskGetTickCount();
+  const TickType_t startOffset = xTaskGetTickCount();
 
   // task remains in blocked state until it is notified by isr
   for (;;) {
@@ -141,12 +141,12 @@ void if482_loop(void *pvParameters) {
         portMAX_DELAY); // wait forever (missing error handling here...)
 
     t = now();
-    wakeTime -= startTime;
+    wakeTime -= startOffset;
 
     // now we're synced to start of second t and wait
     // until it's time to start transmit telegram for t+1
     vTaskDelayUntil(&wakeTime, shotTime);
-    IF482.print(if482Telegram(t + 1));
+    IF482.print(if482Telegram(t+1));
   }
   vTaskDelete(IF482Task); // shoud never be reached
 } // if482_loop()
