@@ -130,26 +130,23 @@ void do_timesync() {
             gps.date.day(), gps.date.month(), gps.date.year());
 // set RTC time to time source GPS, if RTC is present
 #ifdef HAS_RTC
-    RtcDateTime t =
-        RtcDateTime(gps.date.year(), gps.date.month(), gps.date.day(),
-                    gps.time.hour(), gps.time.minute(), gps.time.second());
-    set_rtctime(t);
+    if (!set_rtctime(RtcDateTime(now())))
+      ESP_LOGE(TAG, "RTC set time failure");
 #endif
-    time_t tt = now();
+    time_t tt = myTZ.toLocal(now());
     ESP_LOGI(TAG, "GPS has set system time to %02d/%02d/%d %02d:%02d:%02d",
              month(tt), day(tt), year(tt), hour(tt), minute(tt), second(tt));
     return;
   } else {
     ESP_LOGI(TAG, "No valid GPS time");
   }
-#endif // HAS_GPS
 
-// set system time to time source LoRa Network, if network supports DevTimeReq
-#ifdef LMIC_ENABLE_DeviceTimeReq
+  // set system time to time source LoRa Network, if network supports DevTimeReq
+#elif defined LMIC_ENABLE_DeviceTimeReq
   // Schedule a network time sync request at the next possible time
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
   ESP_LOGI(TAG, "Network time request scheduled");
-#endif
+#endif // HAS_GPS
 
 #endif // TIME_SYNC_INTERVAL
 } // do_timesync()

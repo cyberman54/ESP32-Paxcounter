@@ -173,7 +173,7 @@ void setup() {
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   // start led loop
-  ESP_LOGI(TAG, "Starting LEDloop...");
+  ESP_LOGI(TAG, "Starting LED Controller...");
   xTaskCreatePinnedToCore(ledLoop,      // task function
                           "ledloop",    // name of task
                           1024,         // stack size of task
@@ -190,18 +190,17 @@ void setup() {
   sync_rtctime();
 #ifdef HAS_IF482
   strcat_P(features, " IF482");
-  if (if482_init()) {
-    ESP_LOGI(TAG, "Starting IF482loop...");
-    xTaskCreatePinnedToCore(if482_loop,  // task function
-                            "if482loop", // name of task
-                            2048,        // stack size of task
-                            (void *)1,   // parameter of the task
-                            3,           // priority of the task
-                            &IF482Task,  // task handle
-                            0);          // CPU core
-  }
-#endif // HAS_IF482
-#endif // HAS_RTC
+  assert(if482_init());
+  ESP_LOGI(TAG, "Starting IF482 Generator...");
+  xTaskCreatePinnedToCore(if482_loop,  // task function
+                          "if482loop", // name of task
+                          2048,        // stack size of task
+                          (void *)1,   // parameter of the task
+                          3,           // priority of the task
+                          &IF482Task,  // task handle
+                          0);          // CPU core
+#endif                                 // HAS_IF482
+#endif                                 // HAS_RTC
 
 // initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
@@ -265,7 +264,7 @@ void setup() {
 #ifdef HAS_GPS
   strcat_P(features, " GPS");
   if (gps_init()) {
-    ESP_LOGI(TAG, "Starting GPSloop...");
+    ESP_LOGI(TAG, "Starting GPS Feed...");
     xTaskCreatePinnedToCore(gps_loop,  // task function
                             "gpsloop", // name of task
                             2048,      // stack size of task
@@ -359,7 +358,7 @@ void setup() {
   get_salt(); // get new 16bit for salting hashes
 
   // start state machine
-  ESP_LOGI(TAG, "Starting IRQ Handler...");
+  ESP_LOGI(TAG, "Starting Interrupt Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
                           "irqhandler",    // name of task
                           4096,            // stack size of task
@@ -382,7 +381,7 @@ void setup() {
 #ifdef HAS_BME
   strcat_P(features, " BME");
   if (bme_init()) {
-    ESP_LOGI(TAG, "Starting BMEloop...");
+    ESP_LOGI(TAG, "Starting Bluetooth sniffer...");
     xTaskCreatePinnedToCore(bme_loop,  // task function
                             "bmeloop", // name of task
                             2048,      // stack size of task
@@ -393,7 +392,8 @@ void setup() {
   }
 #endif
 
-  // start timer triggered interrupts
+  assert(irqHandlerTask != NULL); // has interrupt handler task started?
+                                  // start timer triggered interrupts
   ESP_LOGI(TAG, "Starting Interrupts...");
 #ifdef HAS_DISPLAY
   timerAlarmEnable(displaytimer);
@@ -414,8 +414,9 @@ void setup() {
 // start RTC interrupt
 #if defined HAS_IF482 && defined HAS_RTC
   // setup external interupt for active low RTC INT pin
-  if (IF482IRQ != NULL) // has if482loop task started?
-    attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
+  assert(IF482Task != NULL); // has if482loop task started?
+  ESP_LOGI(TAG, "Starting IF482 output...");
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
 #endif
 
 } // setup()

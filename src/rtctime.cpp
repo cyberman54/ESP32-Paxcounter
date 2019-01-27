@@ -5,7 +5,12 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-RtcDS3231<TwoWire> Rtc(Wire);
+RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
+
+// set Time Zone, fetch user setting from paxcounter.conf
+TimeChangeRule myDST = DAYLIGHT_TIME;
+TimeChangeRule mySTD = STANDARD_TIME;
+Timezone myTZ(myDST, mySTD);
 
 // initialize RTC
 int rtc_init(void) {
@@ -34,7 +39,7 @@ int rtc_init(void) {
     RtcDateTime now = Rtc.GetDateTime();
 
     if (now < compiled) {
-      ESP_LOGI(TAG, "RTC date/time is older than compilation date, updating)");
+      ESP_LOGI(TAG, "RTC date/time is older than compilation date, updating");
       Rtc.SetDateTime(compiled);
     }
 
@@ -80,12 +85,12 @@ int set_rtctime(RtcDateTime t) {
 } // set_rtctime()
 
 time_t get_rtctime(void) {
-  // never call now() in this function, would cause recursion!
+  // never call now() in this function, this would cause a recursion!
   time_t tt = 0;
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
     if (!Rtc.IsDateTimeValid()) {
-      ESP_LOGW(TAG, "RTC lost confidence in the DateTime");
+      ESP_LOGW(TAG, "RTC has no confident time");
     } else {
       RtcDateTime t = Rtc.GetDateTime();
       tt = t.Epoch32Time();
@@ -99,16 +104,21 @@ time_t get_rtctime(void) {
 void sync_rtctime(void) {
   if (timeStatus() != timeSet) { // do we need time sync?
     time_t t = get_rtctime();
-    if (t) { // do we have valid time by RTC?
+    if (t) { // have we got a valid time from RTC?
       setTime(t);
+      time_t tt = myTZ.toLocal(t);
       ESP_LOGI(TAG, "RTC has set system time to %02d/%02d/%d %02d:%02d:%02d",
-               month(t), day(t), year(t), hour(t), minute(t), second(t));
+               month(tt), day(tt), year(tt), hour(tt), minute(tt), second(tt));
     } else
-      ESP_LOGE(TAG, "RTC has no confident time, not synced");
+      ESP_LOGW(TAG, "System time was not synced");
   }
 
 #ifdef TIME_SYNC_INTERVAL_RTC
-  setSyncProvider(&get_rtctime);
+  setSyncProvider(&get_rtctime); // does not sync if callback function returns 0
+  if (timeStatus() != timeSet)
+    ESP_LOGI("Unable to sync with the RTC");
+  else
+    ESP_LOGI("RTC has set the system time");
   setSyncInterval(TIME_SYNC_INTERVAL_RTC);
 #endif
 

@@ -140,7 +140,7 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-    t = now();
+    t = myTZ.toLocal(now());
     wakeTime -= startOffset;
 
     // now we're synced to start of second t and wait

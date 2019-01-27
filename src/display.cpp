@@ -209,7 +209,7 @@ void refreshtheDisplay() {
     u8x8.printf("%-16s", display_line6);
 #else
     // update time/date display (line 6)
-    time_t t = now();
+    time_t t = myTZ.toLocal(now());
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
                 timeStatus() == timeSet ? '*' : '?', day(t),
                 printmonth[month(t)]);
