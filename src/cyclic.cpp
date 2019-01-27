@@ -130,18 +130,14 @@ void do_timesync() {
             gps.date.day(), gps.date.month(), gps.date.year());
 // set RTC time to time source GPS, if RTC is present
 #ifdef HAS_RTC
-    RtcDateTime t;
-    t.year = gps.time.year();
-    t.month = gps.date.month();
-    t.dayOfMonth = gps.date.day();
-    t.hour = gps.time.hour();
-    t.minute = gps.time.minute();
-    t.second = gps.time.second();
+    RtcDateTime t =
+        RtcDateTime(gps.date.year(), gps.date.month(), gps.date.day(),
+                    gps.time.hour(), gps.time.minute(), gps.time.second());
     set_rtctime(t);
 #endif
-    time_t t = now();
+    time_t tt = now();
     ESP_LOGI(TAG, "GPS has set system time to %02d/%02d/%d %02d:%02d:%02d",
-             month(t), day(t), year(t), hour(t), minute(t), second(t));
+             month(tt), day(tt), year(tt), hour(tt), minute(tt), second(tt));
     return;
   } else {
     ESP_LOGI(TAG, "No valid GPS time");
