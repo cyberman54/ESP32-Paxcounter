@@ -132,10 +132,10 @@ void do_timesync() {
 #ifdef HAS_RTC
     if (!set_rtctime(RtcDateTime(now())))
       ESP_LOGE(TAG, "RTC set time failure");
-#endif
     time_t tt = myTZ.toLocal(now());
     ESP_LOGI(TAG, "GPS has set system time to %02d/%02d/%d %02d:%02d:%02d",
              month(tt), day(tt), year(tt), hour(tt), minute(tt), second(tt));
+#endif
     return;
   } else {
     ESP_LOGI(TAG, "No valid GPS time");
