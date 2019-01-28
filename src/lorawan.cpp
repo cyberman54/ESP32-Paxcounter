@@ -453,7 +453,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   uint32_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
   *pUserUTCTime += requestDelaySec;
 
-  // Update system time with  time read from the network
+  // Update system time with time read from the network
   setTime(*pUserUTCTime);
 #ifdef HAS_RTC
   if (!set_rtctime(*pUserUTCTime))

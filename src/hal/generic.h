@@ -41,7 +41,7 @@
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
 #define HAS_GPS 1 // use if board has GPS
-#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M or 7M with default configuration
+#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_17, GPIO_NUM_16 // UBlox NEO 6M or 7M with default configuration
 
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (4)
@@ -50,6 +50,10 @@
 
 // Pins for on board DS3231 RTC chip
 #define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
+#define RTC_INT GPIO_NUM_34 // interrupt input from rtc
+
+// Settings for IF482 interface
+#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 

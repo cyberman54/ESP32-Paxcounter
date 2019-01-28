@@ -192,7 +192,13 @@ void setup() {
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
-  sync_rtctime();
+  setSyncProvider(&get_rtctime);
+  if (timeStatus() != timeSet)
+    ESP_LOGI(TAG, "Unable to sync system time with RTC");
+  else
+    ESP_LOGI(TAG, "RTC has set the system time");
+  setSyncInterval(TIME_SYNC_INTERVAL_RTC);
+
 #ifdef HAS_IF482
   strcat_P(features, " IF482");
   assert(if482_init());
@@ -205,6 +211,7 @@ void setup() {
                           &IF482Task,  // task handle
                           0);          // CPU core
 #endif                                 // HAS_IF482
+
 #endif                                 // HAS_RTC
 
 // initialize wifi antenna
@@ -415,6 +422,15 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
 #endif
 #endif // HAS_BUTTON
+
+#ifdef HAS_GPS
+  setSyncProvider(&get_gpstime);
+  if (timeStatus() != timeSet)
+    ESP_LOGI(TAG, "Unable to sync system time with GPS");
+  else
+    ESP_LOGI(TAG, "GPS has set the system time");
+  setSyncInterval(TIME_SYNC_INTERVAL_GPS);
+#endif
 
 // start RTC interrupt
 #if defined HAS_IF482 && defined HAS_RTC
