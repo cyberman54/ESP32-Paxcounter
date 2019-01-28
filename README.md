@@ -7,7 +7,6 @@
 <img src="img/Paxcounter-ttgo.jpg">
 <img src="img/Paxcounter-lolin.gif">
 <img src="img/Paxcounter-Screen.png">
-<img src="img/paxcounter-curves.jpg">
 <img src="img/TTGO-case.jpg">
 <img src="img/TTGO-curves.jpg">
 
@@ -61,7 +60,7 @@ Some <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thin
 <A HREF="https://www.thingiverse.com/thing:2670713">Heltec</A>, 
 <A HREF="https://www.thingiverse.com/thing:2811127">TTGOv2</A>, 
 <A HREF="https://www.thingiverse.com/thing:3005574">TTGOv2.1</A>, 
-<A HREF="https://www.thingiverse.com/thing:3385109">TTGO</A>
+<A HREF="https://www.thingiverse.com/thing:3385109">TTGO</A>,
 <A HREF="https://www.thingiverse.com/thing:3041339">T-BEAM</A>, 
 <A HREF="https://www.thingiverse.com/thing:3203177">T-BEAM parts</A>, 
 for example.<br>
