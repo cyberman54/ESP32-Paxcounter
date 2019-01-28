@@ -7,11 +7,6 @@ static const char TAG[] = "main";
 
 RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 
-// set Time Zone, fetch user setting from paxcounter.conf
-TimeChangeRule myDST = DAYLIGHT_TIME;
-TimeChangeRule mySTD = STANDARD_TIME;
-Timezone myTZ(myDST, mySTD);
-
 // initialize RTC
 int rtc_init(void) {
 
