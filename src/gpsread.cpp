@@ -53,6 +53,32 @@ void gps_read() {
            gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
 }
 
+// helper function to convert gps date/time into time_t
+time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
+                   uint8_t mm, uint8_t ss) {
+  tmElements_t tm;
+  tm.Year = YYYY - 1970; // note year argument is offset from 1970 in time.h
+  tm.Month = MM;
+  tm.Day = DD;
+  tm.Hour = hh;
+  tm.Minute = mm;
+  tm.Second = ss;
+  return makeTime(tm);
+}
+
+// function to fetch current time from gps
+time_t get_gpstime(void) {
+  // never call now() in this function, this would cause a recursion!
+  time_t t = 0;
+  if (gps.time.age() < 1500) {
+    t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
+                    gps.time.hour(), gps.time.minute(), gps.time.second());
+  } else {
+    ESP_LOGW(TAG, "GPS has no confident time");
+  }
+  return t;
+} // get_gpstime()
+
 // GPS serial feed FreeRTos Task
 void gps_loop(void *pvParameters) {
 

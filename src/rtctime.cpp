@@ -62,11 +62,11 @@ error:
 
 } // rtc_init()
 
-int set_rtctime(uint32_t UTCTime) {
+int set_rtctime(uint32_t t) {
   // return = 0 -> error / return = 1 -> success
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
-    Rtc.SetDateTime(RtcDateTime(UTCTime));
+    Rtc.SetDateTime(RtcDateTime(t));
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     return 1;
   }
@@ -86,43 +86,19 @@ int set_rtctime(RtcDateTime t) {
 
 time_t get_rtctime(void) {
   // never call now() in this function, this would cause a recursion!
-  time_t tt = 0;
+  time_t t = 0;
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
-    if (!Rtc.IsDateTimeValid()) {
-      ESP_LOGW(TAG, "RTC has no confident time");
+    if (Rtc.IsDateTimeValid()) {
+      RtcDateTime tt = Rtc.GetDateTime();
+      t = tt.Epoch32Time();
     } else {
-      RtcDateTime t = Rtc.GetDateTime();
-      tt = t.Epoch32Time();
+      ESP_LOGW(TAG, "RTC has no confident time");
     }
     I2C_MUTEX_UNLOCK(); // release i2c bus access
-    return tt;
   }
-  return tt;
+  return t;
 } // get_rtctime()
-
-void sync_rtctime(void) {
-  if (timeStatus() != timeSet) { // do we need time sync?
-    time_t t = get_rtctime();
-    if (t) { // have we got a valid time from RTC?
-      setTime(t);
-      time_t tt = myTZ.toLocal(t);
-      ESP_LOGI(TAG, "RTC has set system time to %02d/%02d/%d %02d:%02d:%02d",
-               month(tt), day(tt), year(tt), hour(tt), minute(tt), second(tt));
-    } else
-      ESP_LOGW(TAG, "System time was not synced");
-  }
-
-#ifdef TIME_SYNC_INTERVAL_RTC
-  setSyncProvider(&get_rtctime); // does not sync if callback function returns 0
-  if (timeStatus() != timeSet)
-    ESP_LOGI("Unable to sync with the RTC");
-  else
-    ESP_LOGI("RTC has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_RTC);
-#endif
-
-} // sync_rtctime;
 
 float get_rtctemp(void) {
   // block i2c bus access
@@ -132,6 +108,6 @@ float get_rtctemp(void) {
     return temp.AsFloatDegC();
   } // while
   return 0;
-} // get_rtc()
+} // get_rtctemp()
 
 #endif // HAS_RTC

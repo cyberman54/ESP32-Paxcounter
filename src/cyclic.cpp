@@ -7,8 +7,8 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-uint32_t userUTCTime; // Seconds since the UTC epoch
-unsigned long nextTimeSync = millis();
+time_t userUTCTime; // Seconds since the UTC epoch
+unsigned long nextLoraTimeSync = millis();
 
 // do all housekeeping
 void doHousekeeping() {
@@ -23,12 +23,14 @@ void doHousekeeping() {
   spi_housekeeping();
   lora_housekeeping();
 
-// time sync once per TIME_SYNC_INTERVAL
-#ifdef TIME_SYNC_INTERVAL
-  if (millis() >= nextTimeSync) {
-    nextTimeSync =
-        millis() + TIME_SYNC_INTERVAL * 60000; // set up next time sync period
-    do_timesync();
+// do cyclic time sync with LORA network
+#ifdef TIME_SYNC_INTERVAL_LORA
+  if (millis() >= nextLoraTimeSync) {
+    nextLoraTimeSync = millis() + TIME_SYNC_INTERVAL_LORA *
+                                      60000; // set up next time sync period
+    // Schedule a network time sync request at the next possible time
+    LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
+    ESP_LOGI(TAG, "LORAWAN time request scheduled");
   }
 #endif
 
@@ -119,37 +121,6 @@ void reset_counters() {
   macs_wifi = 0;
   macs_ble = 0;
 }
-
-void do_timesync() {
-#ifdef TIME_SYNC_INTERVAL
-
-// set system time to time source GPS, if we have valid gps time
-#ifdef HAS_GPS
-  if (gps.time.isValid()) {
-    setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
-            gps.date.day(), gps.date.month(), gps.date.year());
-// set RTC time to time source GPS, if RTC is present
-#ifdef HAS_RTC
-    if (!set_rtctime(RtcDateTime(now())))
-      ESP_LOGE(TAG, "RTC set time failure");
-#endif
-    time_t tt = myTZ.toLocal(now());
-    ESP_LOGI(TAG, "GPS has set system time to %02d/%02d/%d %02d:%02d:%02d",
-             month(tt), day(tt), year(tt), hour(tt), minute(tt), second(tt));
-    return;
-  } else {
-    ESP_LOGI(TAG, "No valid GPS time");
-  }
-
-  // set system time to time source LoRa Network, if network supports DevTimeReq
-#elif defined LMIC_ENABLE_DeviceTimeReq
-  // Schedule a network time sync request at the next possible time
-  LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
-  ESP_LOGI(TAG, "Network time request scheduled");
-#endif // HAS_GPS
-
-#endif // TIME_SYNC_INTERVAL
-} // do_timesync()
 
 #ifndef VERBOSE
 int redirect_log(const char *fmt, va_list args) {
