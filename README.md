@@ -8,6 +8,8 @@
 <img src="img/Paxcounter-lolin.gif">
 <img src="img/Paxcounter-Screen.png">
 <img src="img/paxcounter-curves.jpg">
+<img src="img/TTGO-case.jpg">
+<img src="img/TTGO-curves.jpg">
 
 # Use case
 
