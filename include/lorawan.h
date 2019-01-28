@@ -3,7 +3,6 @@
 
 #include "globals.h"
 #include "rcommand.h"
-#include <TimeLib.h>
 
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>

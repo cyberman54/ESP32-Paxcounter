@@ -2,8 +2,6 @@
 #define _RTCTIME_H
 
 #include "globals.h"
-#include <Time.h>
-#include <Timezone.h>
 #include <Wire.h> // must be included here so that Arduino library object file references work
 #include <RtcDS3231.h>
 
@@ -20,7 +18,6 @@ typedef enum {
 } clock_state_t;
 
 extern RtcDS3231<TwoWire> Rtc; // make RTC instance globally available
-extern Timezone myTZ; // make Timezone myTZ globally available
 
 int rtc_init(void);
 int set_rtctime(uint32_t UTCTime);

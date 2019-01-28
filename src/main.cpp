@@ -77,6 +77,11 @@ std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
+// set Time Zone, fetch user setting from paxcounter.conf
+TimeChangeRule myDST = DAYLIGHT_TIME;
+TimeChangeRule mySTD = STANDARD_TIME;
+Timezone myTZ(myDST, mySTD);
+
 // local Tag for logging
 static const char TAG[] = "main";
 

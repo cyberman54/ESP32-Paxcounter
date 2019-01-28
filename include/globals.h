@@ -4,6 +4,10 @@
 // The mother of all embedded development...
 #include <Arduino.h>
 
+// Time functions
+#include <Time.h>
+#include <Timezone.h>
+
 // std::set for unified array functions
 #include <set>
 #include <array>
@@ -102,6 +106,7 @@ extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
 extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
+extern Timezone myTZ; // make Timezone myTZ globally available
 
 // application includes
 #include "led.h"
