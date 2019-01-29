@@ -25,11 +25,11 @@
 #define RTC_INT GPIO_NUM_34 // interrupt input from rtc
 
 // Settings for IF482 interface
-//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
+#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
 
 // Settings for external GPS chip
-//#define HAS_GPS 1 // use on board GPS
-//#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_17, GPIO_NUM_16 // UBlox NEO 6M or 7M with default configuration
+#define HAS_GPS 1 // use on board GPS
+#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_17, GPIO_NUM_16 // UBlox NEO 6M or 7M with default configuration
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 

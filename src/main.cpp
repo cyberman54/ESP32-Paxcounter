@@ -197,7 +197,8 @@ void setup() {
     ESP_LOGI(TAG, "Unable to sync system time with RTC");
   else
     ESP_LOGI(TAG, "RTC has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_RTC);
+  setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
+#endif // HAS_RTC
 
 #ifdef HAS_IF482
   strcat_P(features, " IF482");
@@ -211,8 +212,6 @@ void setup() {
                           &IF482Task,  // task handle
                           0);          // CPU core
 #endif                                 // HAS_IF482
-
-#endif                                 // HAS_RTC
 
 // initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
@@ -427,13 +426,18 @@ void setup() {
   setSyncProvider(&get_gpstime);
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with GPS");
-  else
+  else {
     ESP_LOGI(TAG, "GPS has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_GPS);
+#ifdef HAS_RTC
+    if (set_rtctime(now()))
+      ESP_LOGE(TAG, "RTC set time failure");
+#endif
+  }
+  setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
 #endif
 
 // start RTC interrupt
-#if defined HAS_IF482 && defined HAS_RTC
+#if defined HAS_IF482 && defined RTC_INT
   // setup external interupt for active low RTC INT pin
   assert(IF482Task != NULL); // has if482loop task started?
   ESP_LOGI(TAG, "Starting IF482 output...");

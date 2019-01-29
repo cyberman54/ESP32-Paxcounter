@@ -455,12 +455,9 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
 
   // Update system time with time read from the network
   setTime(*pUserUTCTime);
+  ESP_LOGI(TAG, "LoRaWAN network has set the system time");
 #ifdef HAS_RTC
-  if (!set_rtctime(*pUserUTCTime))
+  if (set_rtctime(*pUserUTCTime))
     ESP_LOGE(TAG, "RTC set time failure");
 #endif
-  time_t t = myTZ.toLocal(now());
-  ESP_LOGI(TAG,
-           "LORA Network has set system time to %02d/%02d/%d %02d:%02d:%02d",
-           month(t), day(t), year(t), hour(t), minute(t), second(t));
 }
