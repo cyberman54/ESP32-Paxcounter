@@ -429,7 +429,7 @@ void setup() {
   else {
     ESP_LOGI(TAG, "GPS has set the system time");
 #ifdef HAS_RTC
-    if (set_rtctime(now()))
+    if (!set_rtctime(now()))
       ESP_LOGE(TAG, "RTC set time failure");
 #endif
   }

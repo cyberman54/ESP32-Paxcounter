@@ -9,19 +9,11 @@
 #include "gpsread.h"
 #endif
 
-typedef enum {
-  useless = 0,     // waiting for good enough signal
-  dirty = 1,       // time data available but inconfident
-  reserve = 2,     // clock was once synced but now may deviate
-  synced_LORA = 3, // clock driven by LORAWAN network
-  synced_GPS = 4   // best possible quality, clock is driven by GPS
-} clock_state_t;
-
 extern RtcDS3231<TwoWire> Rtc; // make RTC instance globally available
 
 int rtc_init(void);
-int set_rtctime(uint32_t UTCTime);
-int set_rtctime(RtcDateTime now);
+int set_rtctime(RtcDateTime t);
+int set_rtctime(uint32_t t);
 void sync_rtctime(void);
 time_t get_rtctime(void);
 float get_rtctemp(void);
