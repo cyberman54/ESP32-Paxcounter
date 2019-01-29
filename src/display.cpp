@@ -139,6 +139,12 @@ void refreshtheDisplay() {
 
     uint8_t msgWaiting;
     char buff[16]; // 16 chars line buffer
+    const char timeNosyncSymbol = '?';
+#ifdef HAS_IF482
+    const char timesyncSymbol = '°';
+#else
+    const char timesyncSymbol = '*';
+#endif
 
     // update counter (lines 0-1)
     snprintf(
@@ -210,10 +216,15 @@ void refreshtheDisplay() {
 #else
     // update time/date display (line 6)
     time_t t = myTZ.toLocal(now());
+    char timeState =
+        timeStatus() == timeSet ? timesyncSymbol : timeNosyncSymbol;
+#ifdef RTC_INT // make timestatus symbol blinking
+    if (second(t) % 2)
+      timeState = ' ';
+#endif         // RTC_INT
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
-                timeStatus() == timeSet ? '*' : '?', day(t),
-                printmonth[month(t)]);
-#endif
+                timeState, day(t), printmonth[month(t)]);
+#endif         // HAS_RTC
 
     // update LMiC event display (line 7)
     u8x8.setCursor(0, 7);
