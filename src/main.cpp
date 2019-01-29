@@ -197,7 +197,7 @@ void setup() {
     ESP_LOGI(TAG, "Unable to sync system time with RTC");
   else
     ESP_LOGI(TAG, "RTC has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_RTC);
+  setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
 #endif // HAS_RTC
 
 #ifdef HAS_IF482
@@ -426,9 +426,14 @@ void setup() {
   setSyncProvider(&get_gpstime);
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with GPS");
-  else
+  else {
     ESP_LOGI(TAG, "GPS has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_GPS);
+#ifdef HAS_RTC
+    if (set_rtctime(now()))
+      ESP_LOGE(TAG, "RTC set time failure");
+#endif
+  }
+  setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
 #endif
 
 // start RTC interrupt

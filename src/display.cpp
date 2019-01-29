@@ -141,7 +141,7 @@ void refreshtheDisplay() {
     char buff[16]; // 16 chars line buffer
     const char timeNosyncSymbol = '?';
 #ifdef HAS_IF482
-    const char timesyncSymbol = '°';
+    const char timesyncSymbol = '+';
 #else
     const char timesyncSymbol = '*';
 #endif

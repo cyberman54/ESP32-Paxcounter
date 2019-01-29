@@ -73,10 +73,6 @@ time_t get_gpstime(void) {
   if (gps.time.age() < 1500) {
     t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
-#ifdef HAS_RTC
-    if (!set_rtctime(t))
-      ESP_LOGE(TAG, "RTC set time failure");
-#endif
   } else {
     ESP_LOGW(TAG, "GPS has no confident time");
   }
