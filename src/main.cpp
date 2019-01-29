@@ -198,6 +198,7 @@ void setup() {
   else
     ESP_LOGI(TAG, "RTC has set the system time");
   setSyncInterval(TIME_SYNC_INTERVAL_RTC);
+#endif // HAS_RTC
 
 #ifdef HAS_IF482
   strcat_P(features, " IF482");
@@ -211,8 +212,6 @@ void setup() {
                           &IF482Task,  // task handle
                           0);          // CPU core
 #endif                                 // HAS_IF482
-
-#endif                                 // HAS_RTC
 
 // initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
@@ -433,7 +432,7 @@ void setup() {
 #endif
 
 // start RTC interrupt
-#if defined HAS_IF482 && defined HAS_RTC
+#if defined HAS_IF482 && defined RTC_INT
   // setup external interupt for active low RTC INT pin
   assert(IF482Task != NULL); // has if482loop task started?
   ESP_LOGI(TAG, "Starting IF482 output...");
