@@ -27,7 +27,6 @@ Uused tasks and timers:
 
 Task          Core  Prio  Purpose
 ====================================================================================
-wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
 if482loop     1     3     serial feed of IF482 time telegrams
 spiloop       0     2     reads/writes data on spi interface
@@ -37,7 +36,7 @@ looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by irq
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
-IDLE          1     0     ESP32 arduino scheduler
+IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
 
@@ -47,7 +46,7 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 ESP32 hardware timers
 ================================
  0	triggers display refresh
- 1	triggers Wifi channel switch
+ 1  unused (reserved for DCF77)
  2	triggers send payload cycle
  3	triggers housekeeping cycle
 
@@ -67,7 +66,7 @@ uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
            *displaytimer = NULL; // irq tasks
-TaskHandle_t irqHandlerTask, wifiSwitchTask;
+TaskHandle_t irqHandlerTask;
 SemaphoreHandle_t I2Caccess;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
@@ -305,11 +304,6 @@ void setup() {
   timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
 
-  // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  channelSwitch = timerBegin(1, 800, true);
-  timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
-  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PLAIN");
@@ -343,7 +337,7 @@ void setup() {
 #endif
 #endif
 
-  // start wifi in monitor mode and start channel rotation task on core 0
+  // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
@@ -360,16 +354,6 @@ void setup() {
                           1,               // priority of the task
                           &irqHandlerTask, // task handle
                           1);              // CPU core
-
-  // start wifi channel rotation task
-  ESP_LOGI(TAG, "Starting Wifi Channel rotation...");
-  xTaskCreatePinnedToCore(switchWifiChannel, // task function
-                          "wifiloop",        // name of task
-                          2048,              // stack size of task
-                          NULL,              // parameter of the task
-                          4,                 // priority of the task
-                          &wifiSwitchTask,   // task handle
-                          0);                // CPU core
 
 // initialize bme
 #ifdef HAS_BME
@@ -394,7 +378,6 @@ void setup() {
 #endif
   timerAlarmEnable(sendCycle);
   timerAlarmEnable(homeCycle);
-  timerAlarmEnable(channelSwitch);
 
 // start button interrupt
 #ifdef HAS_BUTTON

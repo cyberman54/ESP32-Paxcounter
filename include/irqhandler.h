@@ -11,7 +11,6 @@
 #include "senddata.h"
 
 void irqHandler(void *pvParameters);
-void IRAM_ATTR ChannelSwitchIRQ();
 void IRAM_ATTR homeCycleIRQ();
 void IRAM_ATTR SendCycleIRQ();
 

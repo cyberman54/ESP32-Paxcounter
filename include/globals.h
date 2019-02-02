@@ -105,8 +105,9 @@ extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
-extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
-extern Timezone myTZ; // make Timezone myTZ globally available
+extern TaskHandle_t irqHandlerTask;
+extern TimerHandle_t WifiChanTimer;
+extern Timezone myTZ;
 
 // application includes
 #include "led.h"

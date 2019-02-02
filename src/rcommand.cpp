@@ -67,8 +67,8 @@ void set_sendcycle(uint8_t val[]) {
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
-  // update channel rotation interrupt
-  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 10000, true);
+  // update Wifi channel rotation timer period
+  xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10), 100 );
 
   ESP_LOGI(TAG,
            "Remote command: set Wifi channel switch interval to %.1f seconds",

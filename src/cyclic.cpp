@@ -41,7 +41,7 @@ void doHousekeeping() {
   if ((millis() >= nextRTCTimeSync) && (timeStatus() == timeSet)) {
     nextRTCTimeSync = millis() + TIME_WRITE_INTERVAL_RTC *
                                      60000; // set up next time sync period
-    if (!set_rtctime(now())) // epoch time
+    if (!set_rtctime(now()))                // epoch time
       ESP_LOGE(TAG, "RTC set time failure");
     else
       ESP_LOGI(TAG, "RTC time updated");
@@ -49,9 +49,6 @@ void doHousekeeping() {
 #endif
 
   // task storage debugging //
-  ESP_LOGD(TAG, "Wifiloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(wifiSwitchTask),
-           eTaskGetState(wifiSwitchTask));
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));

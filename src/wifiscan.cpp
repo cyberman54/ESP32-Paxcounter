@@ -7,6 +7,8 @@
 // Local logging tag
 static const char TAG[] = "wifi";
 
+TimerHandle_t WifiChanTimer;
+
 static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
                                       WIFI_CHANNEL_MAX, 100,
                                       WIFI_COUNTRY_POLICY_MANUAL};
@@ -43,10 +45,17 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
     mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
 }
 
+// Software-timer driven Wifi channel rotation callback function
+void switchWifiChannel(TimerHandle_t xTimer) {
+    channel =
+        (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
+    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+  }
+
 void wifi_sniffer_init(void) {
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  cfg.nvs_enable = 0;        // we don't need any wifi settings from NVRAM
-  cfg.wifi_task_core_id = 0; // we want wifi task running on core 0
+  wifi_init_config_t wificfg = WIFI_INIT_CONFIG_DEFAULT();
+  wificfg.nvs_enable = 0;        // we don't need any wifi settings from NVRAM
+  wificfg.wifi_task_core_id = 0; // we want wifi task running on core 0
   wifi_promiscuous_filter_t filter = {
       // .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
       .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
@@ -54,7 +63,7 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_coex_preference_set(
       ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
 
-  ESP_ERROR_CHECK(esp_wifi_init(&cfg)); // configure Wifi with cfg
+  ESP_ERROR_CHECK(esp_wifi_init(&wificfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
       esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
   ESP_ERROR_CHECK(
@@ -65,16 +74,11 @@ void wifi_sniffer_init(void) {
       esp_wifi_set_promiscuous_filter(&filter)); // set MAC frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
-}
 
-// Wifi channel rotation task
-void switchWifiChannel(void *parameter) {
-  while (1) {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // waiting for channel switch timer
-    channel =
-        (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
-    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-    //ESP_LOGD(TAG, "Wifi set channel %d", channel);
-  }
-  vTaskDelete(NULL); // shoud never be reached
+  // setup wifi channel rotation timer
+  WifiChanTimer =
+      xTimerCreate("WifiChannelTimer", pdMS_TO_TICKS(cfg.wifichancycle * 10),
+                   pdTRUE, (void *)0, switchWifiChannel);
+  assert(WifiChanTimer);
+  xTimerStart(WifiChanTimer, 0);
 }

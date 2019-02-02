@@ -44,11 +44,6 @@ void irqHandler(void *pvParameters) {
 // esp32 hardware timer triggered interrupt service routines
 // they notify the irq handler task
 
-void IRAM_ATTR ChannelSwitchIRQ() {
-  xTaskNotifyGive(wifiSwitchTask);
-  portYIELD_FROM_ISR();
-}
-
 void IRAM_ATTR homeCycleIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
   portYIELD_FROM_ISR();
