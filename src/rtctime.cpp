@@ -57,16 +57,19 @@ error:
 
 } // rtc_init()
 
-int set_rtctime(RtcDateTime t) {
+int set_rtctime(time_t t) { // t is epoch time starting 1.1.1970
   if (I2C_MUTEX_LOCK()) {
-    Rtc.SetDateTime(t);
+    Rtc.SetDateTime(RtcDateTime(t));
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     return 1;           // success
   }
   return 0; // failure
 } // set_rtctime()
 
-int set_rtctime(uint32_t t) { return set_rtctime(RtcDateTime(t)); };
+int set_rtctime(uint32_t t) { // t is epoch seconds starting 1.1.1970
+  return set_rtctime(static_cast<time_t>(t));
+  // set_rtctime()
+}
 
 time_t get_rtctime(void) {
   // never call now() in this function, this would cause a recursion!

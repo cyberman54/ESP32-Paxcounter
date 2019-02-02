@@ -38,10 +38,10 @@ void doHousekeeping() {
 // do cyclic write back system time to RTC if we have an external time source
 #if (defined TIME_SYNC_INTERVAL_LORA || defined TIME_SYNC_INTERVAL_GPS) &&     \
     defined HAS_RTC
-  if ((millis() >= nextRTCTimeSync) && timeSet) {
+  if ((millis() >= nextRTCTimeSync) && (timeStatus() == timeSet)) {
     nextRTCTimeSync = millis() + TIME_WRITE_INTERVAL_RTC *
                                      60000; // set up next time sync period
-    if (!set_rtctime(now()))
+    if (!set_rtctime(now())) // epoch time
       ESP_LOGE(TAG, "RTC set time failure");
     else
       ESP_LOGI(TAG, "RTC time updated");

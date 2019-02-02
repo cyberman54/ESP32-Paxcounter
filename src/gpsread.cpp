@@ -70,9 +70,12 @@ time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
 time_t get_gpstime(void) {
   // never call now() in this function, this would cause a recursion!
   time_t t = 0;
-  if (gps.time.age() < 1500) {
+  if ((gps.time.age() < 1500) && (gps.time.isValid())) {
     t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
+    ESP_LOGD(TAG, "GPS time: %d/%d/%d %d:%d:%d", gps.date.year(),
+             gps.date.month(), gps.date.day(), gps.time.hour(),
+             gps.time.minute(), gps.time.second());
   } else {
     ESP_LOGW(TAG, "GPS has no confident time");
   }
