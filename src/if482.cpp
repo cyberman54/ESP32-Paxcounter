@@ -95,12 +95,15 @@ int if482_init(void) {
   IF482.begin(HAS_IF482);
 
   // use external rtc 1Hz clock for triggering IF482 telegram
-  Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-  Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+  if (I2C_MUTEX_LOCK()) {
+    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+    I2C_MUTEX_UNLOCK();
+  } else {
+    ESP_LOGE(TAG, "I2c bus busy - IF482 initialization error");
+    return 0;
+  }
   pinMode(RTC_INT, INPUT_PULLUP);
-
-  ESP_LOGI(TAG, "IF482 generator initialized");
-
   return 1;
 
 } // if482_init

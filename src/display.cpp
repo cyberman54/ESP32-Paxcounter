@@ -59,66 +59,72 @@ void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
 
 void init_display(const char *Productname, const char *Version) {
 
-  // show startup screen
-  uint8_t buf[32];
-  u8x8.begin();
-  u8x8.setFont(u8x8_font_chroma48medium8_r);
-  u8x8.clear();
-  u8x8.setFlipMode(0);
-  u8x8.setInverseFont(1);
-  u8x8.draw2x2String(0, 0, Productname);
-  u8x8.setInverseFont(0);
-  u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
-  u8x8.clear();
-  u8x8.setFlipMode(1);
-  u8x8.setInverseFont(1);
-  u8x8.draw2x2String(0, 0, Productname);
-  u8x8.setInverseFont(0);
-  u8x8.draw2x2String(2, 2, Productname);
-  delay(1500);
+  // block i2c bus access
+  if (I2C_MUTEX_LOCK()) {
 
-  u8x8.setFlipMode(0);
-  u8x8.clear();
+    // show startup screen
+    uint8_t buf[32];
+    u8x8.begin();
+    u8x8.setFont(u8x8_font_chroma48medium8_r);
+    u8x8.clear();
+    u8x8.setFlipMode(0);
+    u8x8.setInverseFont(1);
+    u8x8.draw2x2String(0, 0, Productname);
+    u8x8.setInverseFont(0);
+    u8x8.draw2x2String(2, 2, Productname);
+    delay(500);
+    u8x8.clear();
+    u8x8.setFlipMode(1);
+    u8x8.setInverseFont(1);
+    u8x8.draw2x2String(0, 0, Productname);
+    u8x8.setInverseFont(0);
+    u8x8.draw2x2String(2, 2, Productname);
+    delay(500);
+
+    u8x8.setFlipMode(0);
+    u8x8.clear();
 
 #ifdef DISPLAY_FLIP
-  u8x8.setFlipMode(1);
+    u8x8.setFlipMode(1);
 #endif
 
 // Display chip information
 #ifdef VERBOSE
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  u8x8.printf("ESP32 %d cores\nWiFi%s%s\n", chip_info.cores,
-              (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-              (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-  u8x8.printf("ESP Rev.%d\n", chip_info.revision);
-  u8x8.printf("%dMB %s Flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+    u8x8.printf("ESP32 %d cores\nWiFi%s%s\n", chip_info.cores,
+                (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+                (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+    u8x8.printf("ESP Rev.%d\n", chip_info.revision);
+    u8x8.printf("%dMB %s Flash\n", spi_flash_get_chip_size() / (1024 * 1024),
+                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int."
+                                                              : "ext.");
 #endif // VERBOSE
 
-  u8x8.print(Productname);
-  u8x8.print(" v");
-  u8x8.println(PROGVERSION);
+    u8x8.print(Productname);
+    u8x8.print(" v");
+    u8x8.println(PROGVERSION);
 
 #ifdef HAS_LORA
-  u8x8.println("DEVEUI:");
-  os_getDevEui((u1_t *)buf);
-  DisplayKey(buf, 8, true);
+    u8x8.println("DEVEUI:");
+    os_getDevEui((u1_t *)buf);
+    DisplayKey(buf, 8, true);
+    delay(3000);
 #endif // HAS_LORA
-
-  delay(3000);
-  u8x8.clear();
-  u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
-  u8x8.draw2x2String(0, 0, "PAX:0");
+    u8x8.clear();
+    u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
+    u8x8.draw2x2String(0, 0, "PAX:0");
 #ifdef BLECOUNTER
-  u8x8.setCursor(0, 3);
-  u8x8.printf("BLTH:0");
+    u8x8.setCursor(0, 3);
+    u8x8.printf("BLTH:0");
 #endif
-  u8x8.setCursor(0, 4);
-  u8x8.printf("WIFI:0");
-  u8x8.setCursor(0, 5);
-  u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
+    u8x8.setCursor(0, 4);
+    u8x8.printf("WIFI:0");
+    u8x8.setCursor(0, 5);
+    u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
+
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+  }
 
 } // init_display
 
