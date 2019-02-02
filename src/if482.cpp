@@ -95,17 +95,22 @@ int if482_init(void) {
   IF482.begin(HAS_IF482);
 
   // use external rtc 1Hz clock for triggering IF482 telegram
-  Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-  Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+  if (I2C_MUTEX_LOCK()) {
+    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+    I2C_MUTEX_UNLOCK();
+  } else {
+    ESP_LOGE(TAG, "I2c bus busy - IF482 initialization error");
+    return 0;
+  }
   pinMode(RTC_INT, INPUT_PULLUP);
-
-  ESP_LOGI(TAG, "IF482 generator initialized");
-
   return 1;
 
 } // if482_init
 
-String if482Telegram(time_t t) {
+String if482Telegram(time_t tt) {
+
+  time_t t = myTZ.toLocal(tt);
 
   char mon;
   char buf[14] = "000000F000000";
@@ -123,7 +128,8 @@ String if482Telegram(time_t t) {
     break;
   } // switch
 
-  if (!timeNotSet) // do we have valid time?
+  if ((timeStatus() == timeSet) ||
+      (timeStatus() == timeNeedsSync)) // do we have valid time?
     snprintf(buf, sizeof buf, "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
              month(t), day(t), weekday(t), hour(t), minute(t), second(t));
 
@@ -137,15 +143,18 @@ void if482_loop(void *pvParameters) {
 
   TickType_t wakeTime;
   time_t t, tt;
-  const TickType_t shotTime = pdMS_TO_TICKS(IF482_OFFSET);
+  const TickType_t timeOffset =
+      pdMS_TO_TICKS(IF482_OFFSET); // duration of telegram transmit
+  const TickType_t startTime = xTaskGetTickCount(); // now
 
-  // wait until begin of a new second to sync clock signal and absolute time
+  // wait until begin of a new second
   t = tt = now();
   do {
     tt = now();
   } while (t == tt);
 
-  const TickType_t startOffset = xTaskGetTickCount();
+  // take timestamp at moment of start of new second
+  const TickType_t shotTime = xTaskGetTickCount() - startTime - timeOffset;
 
   // task remains in blocked state until it is notified by isr
   for (;;) {
@@ -155,13 +164,10 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-    t = myTZ.toLocal(now());
-    wakeTime -= startOffset;
-
-    // now we're synced to start of second t and wait
-    // until it's time to start transmit telegram for t+1
-    vTaskDelayUntil(&wakeTime, shotTime);
-    IF482.print(if482Telegram(t + 1));
+    // now we're synced to start of second tt and wait
+    // until it's time to start transmit telegram for tt+1
+    vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
+    IF482.print(if482Telegram(now() + 1));
   }
   vTaskDelete(IF482Task); // shoud never be reached
 } // if482_loop()

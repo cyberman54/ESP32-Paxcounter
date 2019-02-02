@@ -92,15 +92,11 @@ void setup() {
 
   char features[100] = "";
 
-  if (I2Caccess == NULL) // Check that semaphore has not already been created
-  {
-    I2Caccess = xSemaphoreCreateMutex(); // Create a mutex semaphore we will use
-                                         // to manage the i2c bus
-    if ((I2Caccess) != NULL)
-      xSemaphoreGive((I2Caccess)); // Flag the i2c bus available for use
-  }
+  I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
+  if ((I2Caccess) != NULL)
+    xSemaphoreGive((I2Caccess)); // Flag the i2c bus available for use
 
-  // disable brownout detection
+    // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
@@ -187,31 +183,6 @@ void setup() {
                           &ledLoopTask, // task handle
                           0);           // CPU core
 #endif
-
-// initialize RTC
-#ifdef HAS_RTC
-  strcat_P(features, " RTC");
-  assert(rtc_init());
-  setSyncProvider(&get_rtctime);
-  if (timeStatus() != timeSet)
-    ESP_LOGI(TAG, "Unable to sync system time with RTC");
-  else
-    ESP_LOGI(TAG, "RTC has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
-#endif // HAS_RTC
-
-#ifdef HAS_IF482
-  strcat_P(features, " IF482");
-  assert(if482_init());
-  ESP_LOGI(TAG, "Starting IF482 Generator...");
-  xTaskCreatePinnedToCore(if482_loop,  // task function
-                          "if482loop", // name of task
-                          2048,        // stack size of task
-                          (void *)1,   // parameter of the task
-                          3,           // priority of the task
-                          &IF482Task,  // task handle
-                          0);          // CPU core
-#endif                                 // HAS_IF482
 
 // initialize wifi antenna
 #ifdef HAS_ANTENNA_SWITCH
@@ -312,7 +283,7 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
-  init_display(PRODUCTNAME, PROGVERSION);
+  init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
 
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
@@ -349,6 +320,18 @@ void setup() {
 #elif PAYLOAD_ENCODER == 4
   strcat_P(features, " LPPPKD");
 #endif
+
+// initialize RTC
+#ifdef HAS_RTC
+  strcat_P(features, " RTC");
+  assert(rtc_init());
+  setSyncProvider(&get_rtctime);
+  if (timeStatus() != timeSet)
+    ESP_LOGI(TAG, "Unable to sync system time with RTC");
+  else
+    ESP_LOGI(TAG, "RTC has set the system time");
+  setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
+#endif // HAS_RTC
 
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
@@ -429,18 +412,27 @@ void setup() {
   else {
     ESP_LOGI(TAG, "GPS has set the system time");
 #ifdef HAS_RTC
-    if (set_rtctime(now()))
+    if (!set_rtctime(now())) // epoch time
       ESP_LOGE(TAG, "RTC set time failure");
 #endif
   }
   setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
 #endif
 
-// start RTC interrupt
 #if defined HAS_IF482 && defined RTC_INT
+  strcat_P(features, " IF482");
+  assert(if482_init());
+  ESP_LOGI(TAG, "Starting IF482 Generator...");
+  xTaskCreatePinnedToCore(if482_loop,  // task function
+                          "if482loop", // name of task
+                          2048,        // stack size of task
+                          (void *)1,   // parameter of the task
+                          3,           // priority of the task
+                          &IF482Task,  // task handle
+                          0);          // CPU core
+
   // setup external interupt for active low RTC INT pin
   assert(IF482Task != NULL); // has if482loop task started?
-  ESP_LOGI(TAG, "Starting IF482 output...");
   attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
 #endif
 

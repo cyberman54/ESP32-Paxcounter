@@ -457,7 +457,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   setTime(*pUserUTCTime);
   ESP_LOGI(TAG, "LoRaWAN network has set the system time");
 #ifdef HAS_RTC
-  if (set_rtctime(*pUserUTCTime))
+  if (!set_rtctime(*pUserUTCTime)) // epoch time
     ESP_LOGE(TAG, "RTC set time failure");
 #endif
 }

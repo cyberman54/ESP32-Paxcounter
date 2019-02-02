@@ -9,6 +9,7 @@ static const char TAG[] = "main";
 
 time_t userUTCTime; // Seconds since the UTC epoch
 unsigned long nextLoraTimeSync = millis();
+unsigned long nextRTCTimeSync = millis() + TIME_WRITE_INTERVAL_RTC * 60000;
 
 // do all housekeeping
 void doHousekeeping() {
@@ -31,6 +32,19 @@ void doHousekeeping() {
     // Schedule a network time sync request at the next possible time
     LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
     ESP_LOGI(TAG, "LORAWAN time request scheduled");
+  }
+#endif
+
+// do cyclic write back system time to RTC if we have an external time source
+#if (defined TIME_SYNC_INTERVAL_LORA || defined TIME_SYNC_INTERVAL_GPS) &&     \
+    defined HAS_RTC
+  if ((millis() >= nextRTCTimeSync) && (timeStatus() == timeSet)) {
+    nextRTCTimeSync = millis() + TIME_WRITE_INTERVAL_RTC *
+                                     60000; // set up next time sync period
+    if (!set_rtctime(now())) // epoch time
+      ESP_LOGE(TAG, "RTC set time failure");
+    else
+      ESP_LOGI(TAG, "RTC time updated");
   }
 #endif
 
