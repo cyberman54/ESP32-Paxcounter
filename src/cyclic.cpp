@@ -85,7 +85,7 @@ void doHousekeeping() {
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
              ESP.getMinFreeHeap(), ESP.getFreeHeap());
-    SendPayload(COUNTERPORT); // send data before clearing counters
+    SendPayload(COUNTERPORT, prio_high); // send data before clearing counters
     reset_counters();         // clear macs container and reset all counters
     get_salt();               // get new salt for salting hashes
 
@@ -97,7 +97,7 @@ void doHousekeeping() {
 #ifdef BOARD_HAS_PSRAM
   if (ESP.getMinFreePsram() <= MEM_LOW) {
     ESP_LOGI(TAG, "PSRAM full, counter cleared");
-    SendPayload(COUNTERPORT); // send data before clearing counters
+    SendPayload(COUNTERPORT, prio_high); // send data before clearing counters
     reset_counters();         // clear macs container and reset all counters
     get_salt();               // get new salt for salting hashes
 

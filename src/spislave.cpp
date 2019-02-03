@@ -66,7 +66,8 @@ void spi_slave_task(void *param) {
     uint8_t *messageSize = txbuf + 3;
     *messageSize = msg.MessageSize;
     memcpy(txbuf + HEADER_SIZE, &msg.Message, msg.MessageSize);
-    // calculate crc16 checksum over txbuf and insert checksum at pos 0+1 of txbuf
+    // calculate crc16 checksum over txbuf and insert checksum at pos 0+1 of
+    // txbuf
     uint16_t *crc = (uint16_t *)txbuf;
     *crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
 
@@ -87,7 +88,8 @@ void spi_slave_task(void *param) {
     // wait until spi master clocks out the data, and read results in rx buffer
     ESP_LOGI(TAG, "Prepared SPI transaction for %zu byte(s)", transaction_size);
     ESP_LOG_BUFFER_HEXDUMP(TAG, txbuf, transaction_size, ESP_LOG_DEBUG);
-    ESP_ERROR_CHECK_WITHOUT_ABORT(spi_slave_transmit(HSPI_HOST, &spi_transaction, portMAX_DELAY));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(
+        spi_slave_transmit(HSPI_HOST, &spi_transaction, portMAX_DELAY));
     ESP_LOG_BUFFER_HEXDUMP(TAG, rxbuf, transaction_size, ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Transaction finished with size %zu bits",
              spi_transaction.trans_len);
@@ -103,7 +105,7 @@ esp_err_t spi_init() {
 #ifndef HAS_SPI
   return ESP_OK;
 #else
-
+  assert(SEND_QUEUE_SIZE);
   SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (SPISendQueue == 0) {
     ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");
@@ -148,11 +150,20 @@ esp_err_t spi_init() {
 #endif
 }
 
-void spi_enqueuedata(MessageBuffer_t *message) {
+void spi_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   // enqueue message in SPI send queue
 #ifdef HAS_SPI
-  BaseType_t ret =
-      xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
+  BaseType_t ret;
+  switch (prio) {
+  case prio_high:
+    ret = xQueueSendToFront(SPISendQueue, (void *)message, (TickType_t)0);
+    break;
+  case prio_low:
+  case prio_normal:
+  default:
+    ret = xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
+    break;
+  }
   if (ret == pdTRUE) {
     ESP_LOGI(TAG, "%d byte(s) enqueued for SPI interface",
              message->MessageSize);
