@@ -145,12 +145,14 @@ void refreshtheDisplay() {
 
     uint8_t msgWaiting;
     char buff[16]; // 16 chars line buffer
+#if defined HAS_RTC || defined HAS_GPS
     const char timeNosyncSymbol = '?';
-#ifdef HAS_IF482
+#if defined HAS_IF482 || defined HAS_DCF77
     const char timesyncSymbol = '+';
 #else
     const char timesyncSymbol = '*';
 #endif
+#endif // HAS_RTC
 
     // update counter (lines 0-1)
     snprintf(
@@ -214,17 +216,16 @@ void refreshtheDisplay() {
     u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
 #ifdef HAS_LORA
-
     u8x8.setCursor(0, 6);
-#ifndef HAS_RTC
+#if (!defined HAS_RTC) && (!defined HAS_GPS)
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
-#else
+#else          // HAS_RTC or HAS_GPS
     // update time/date display (line 6)
     time_t t = myTZ.toLocal(now());
     char timeState =
         timeStatus() == timeSet ? timesyncSymbol : timeNosyncSymbol;
-#ifdef RTC_INT // make timestatus symbol blinking
+#ifdef RTC_INT // make timestatus symbol blinking if pps line
     if (second(t) % 2)
       timeState = ' ';
 #endif         // RTC_INT

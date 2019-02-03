@@ -28,7 +28,8 @@ Uused tasks and timers:
 Task          Core  Prio  Purpose
 ====================================================================================
 ledloop       0     3     blinks LEDs
-if482loop     1     3     serial feed of IF482 time telegrams
+if482loop     0     3     generates serial feed of IF482 time telegrams
+dcf77loop     0     3     generates DCF77 timeframe pulses
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
@@ -46,13 +47,13 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 ESP32 hardware timers
 ================================
  0	triggers display refresh
- 1  unused (reserved for DCF77)
+ 1  triggers DCF77 clock signal
  2	triggers send payload cycle
  3	triggers housekeeping cycle
 
  RTC hardware timer (if present)
 ================================
- triggers IF482 clock generator
+ triggers IF482 clock signal
 
 */
 
@@ -64,8 +65,12 @@ char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
-hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
-           *displaytimer = NULL; // irq tasks
+
+hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
+#ifdef HAS_DISPLAY
+hw_timer_t *displaytimer = NULL;
+#endif
+
 TaskHandle_t irqHandlerTask;
 SemaphoreHandle_t I2Caccess;
 
@@ -327,6 +332,16 @@ void setup() {
   setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
 #endif // HAS_RTC
 
+#if defined HAS_DCF77
+  strcat_P(features, " DCF77");
+  assert(dcf77_init());
+#endif
+
+#if defined HAS_IF482 && defined RTC_INT
+  strcat_P(features, " IF482");
+  assert(if482_init());
+#endif
+
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
 
@@ -403,8 +418,6 @@ void setup() {
 #endif
 
 #if defined HAS_IF482 && defined RTC_INT
-  strcat_P(features, " IF482");
-  assert(if482_init());
   ESP_LOGI(TAG, "Starting IF482 Generator...");
   xTaskCreatePinnedToCore(if482_loop,  // task function
                           "if482loop", // name of task
@@ -417,6 +430,24 @@ void setup() {
   // setup external interupt for active low RTC INT pin
   assert(IF482Task != NULL); // has if482loop task started?
   attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
+#endif
+
+#if defined HAS_DCF77
+  ESP_LOGI(TAG, "Starting DCF77 Generator...");
+  xTaskCreatePinnedToCore(dcf77_loop,  // task function
+                          "dcf77loop", // name of task
+                          2048,        // stack size of task
+                          (void *)1,   // parameter of the task
+                          3,           // priority of the task
+                          &DCF77Task,  // task handle
+                          0);          // CPU core
+
+  // setup 100ms clock signal for DCF77 generator using esp32 hardware timer 1
+  assert(DCF77Task != NULL); // has dcf77 task started?
+  dcfCycle = timerBegin(1, 8000, true);
+  timerAttachInterrupt(dcfCycle, &DCF77IRQ, true);
+  timerAlarmWrite(dcfCycle, 1000, true);
+  timerAlarmEnable(dcfCycle);
 #endif
 
 } // setup()

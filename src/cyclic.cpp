@@ -60,6 +60,10 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "Bmeloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
 #endif
+#ifdef HAS_DCF77
+  ESP_LOGD(TAG, "DCF77loop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(DCF77Task), eTaskGetState(DCF77Task));
+#endif
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   ESP_LOGD(TAG, "LEDloop %d bytes left | Taskstate = %d",
@@ -79,6 +83,11 @@ void doHousekeeping() {
            bme_status.temperature, bme_status.iaq, bme_status.iaq_accuracy);
 #endif
 
+// generate DCF77 timeframes
+#ifdef HAS_DCF77
+  sendDCF77();
+#endif
+
   // check free heap memory
   if (ESP.getMinFreeHeap() <= MEM_LOW) {
     ESP_LOGI(TAG,
@@ -86,8 +95,8 @@ void doHousekeeping() {
              "free heap = %d bytes)",
              ESP.getMinFreeHeap(), ESP.getFreeHeap());
     SendPayload(COUNTERPORT, prio_high); // send data before clearing counters
-    reset_counters();         // clear macs container and reset all counters
-    get_salt();               // get new salt for salting hashes
+    reset_counters(); // clear macs container and reset all counters
+    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreeHeap() <= MEM_LOW) // check again
       do_reset();                        // memory leak, reset device
@@ -98,8 +107,8 @@ void doHousekeeping() {
   if (ESP.getMinFreePsram() <= MEM_LOW) {
     ESP_LOGI(TAG, "PSRAM full, counter cleared");
     SendPayload(COUNTERPORT, prio_high); // send data before clearing counters
-    reset_counters();         // clear macs container and reset all counters
-    get_salt();               // get new salt for salting hashes
+    reset_counters(); // clear macs container and reset all counters
+    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreePsram() <= MEM_LOW) // check again
       do_reset();                         // memory leak, reset device

@@ -2,7 +2,6 @@
 #define _IF482_H
 
 #include "globals.h"
-#include "irqhandler.h"
 
 extern TaskHandle_t IF482Task;
 

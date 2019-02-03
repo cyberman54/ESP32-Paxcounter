@@ -73,7 +73,7 @@ time_t get_gpstime(void) {
   if ((gps.time.age() < 1500) && (gps.time.isValid())) {
     t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
-    ESP_LOGD(TAG, "GPS time: %d/%d/%d %d:%d:%d", year(t), month(t), day(t),
+    ESP_LOGD(TAG, "GPS time: %4d/%02d/%02d %02d:%02d:%02d", year(t), month(t), day(t),
              hour(t), minute(t), second(t));
   } else {
     ESP_LOGW(TAG, "GPS has no confident time");
