@@ -83,11 +83,6 @@ void doHousekeeping() {
            bme_status.temperature, bme_status.iaq, bme_status.iaq_accuracy);
 #endif
 
-// generate DCF77 timeframes
-#ifdef HAS_DCF77
-  sendDCF77();
-#endif
-
   // check free heap memory
   if (ESP.getMinFreeHeap() <= MEM_LOW) {
     ESP_LOGI(TAG,

@@ -145,14 +145,14 @@ void refreshtheDisplay() {
 
     uint8_t msgWaiting;
     char buff[16]; // 16 chars line buffer
-#if defined HAS_RTC || defined HAS_GPS
+#if (defined HAS_DCF77) || (defined HAS_IF482)
     const char timeNosyncSymbol = '?';
-#if defined HAS_IF482 || defined HAS_DCF77
+#if (defined HAS_IF482)
     const char timesyncSymbol = '+';
 #else
     const char timesyncSymbol = '*';
 #endif
-#endif // HAS_RTC
+#endif
 
     // update counter (lines 0-1)
     snprintf(
@@ -217,21 +217,20 @@ void refreshtheDisplay() {
 
 #ifdef HAS_LORA
     u8x8.setCursor(0, 6);
-#if (!defined HAS_RTC) && (!defined HAS_GPS)
+#if (!defined HAS_DCF77) && (!defined HAS_IF482)
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
-#else          // HAS_RTC or HAS_GPS
+#else // we want a time display instead LoRa status
     // update time/date display (line 6)
     time_t t = myTZ.toLocal(now());
     char timeState =
         timeStatus() == timeSet ? timesyncSymbol : timeNosyncSymbol;
-#ifdef RTC_INT // make timestatus symbol blinking if pps line
-    if (second(t) % 2)
+    // make timestatus symbol blinking if pps line
+    if ((BitsPending) && (second(t) % 2))
       timeState = ' ';
-#endif         // RTC_INT
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
                 timeState, day(t), printmonth[month(t)]);
-#endif         // HAS_RTC
+#endif
 
     // update LMiC event display (line 7)
     u8x8.setCursor(0, 7);

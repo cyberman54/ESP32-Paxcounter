@@ -15,10 +15,6 @@
 #include "rtctime.h"
 #endif
 
-#ifdef HAS_DCF77
-#include "dcf77.h"
-#endif
-
 void doHousekeeping(void);
 uint64_t uptime(void);
 void reset_counters(void);

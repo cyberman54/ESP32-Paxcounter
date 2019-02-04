@@ -103,7 +103,20 @@ int if482_init(void) {
     ESP_LOGE(TAG, "I2c bus busy - IF482 initialization error");
     return 0;
   }
+
+  xTaskCreatePinnedToCore(if482_loop,  // task function
+                          "if482loop", // name of task
+                          2048,        // stack size of task
+                          (void *)1,   // parameter of the task
+                          3,           // priority of the task
+                          &IF482Task,  // task handle
+                          0);          // CPU core
+
+  assert(IF482Task); // has if482loop task started?
+  // setup external interupt for active low RTC INT pin
   pinMode(RTC_INT, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
+
   return 1;
 
 } // if482_init
@@ -134,6 +147,8 @@ String if482Telegram(time_t tt) {
              month(t), day(t), weekday(t), hour(t), minute(t), second(t));
 
   snprintf(out, sizeof out, "O%cL%s\r", mon, buf);
+  ESP_LOGD(TAG, "IF482 = %s", out);
+
   return out;
 }
 
@@ -152,6 +167,8 @@ void if482_loop(void *pvParameters) {
   do {
     tt = now();
   } while (t == tt);
+  
+  BitsPending = true; // start blink in display
 
   // take timestamp at moment of start of new second
   const TickType_t shotTime = xTaskGetTickCount() - startTime - timeOffset;
@@ -169,6 +186,7 @@ void if482_loop(void *pvParameters) {
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
     IF482.print(if482Telegram(now() + 1));
   }
+  BitsPending = false; // stop blink in display
   vTaskDelete(IF482Task); // shoud never be reached
 } // if482_loop()
 

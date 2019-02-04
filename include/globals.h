@@ -102,6 +102,7 @@ extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage; // display values
 extern hw_timer_t *sendCycle, *displaytimer;
 extern SemaphoreHandle_t I2Caccess;
+extern bool volatile BitsPending;
 
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
