@@ -337,9 +337,8 @@ void setup() {
   strcat_P(features, " DCF77");
 #endif
 
-#if defined HAS_IF482 && defined RTC_INT
+#if (defined HAS_IF482) && (defined RTC_INT)
   strcat_P(features, " IF482");
-  assert(if482_init());
 #endif
 
   // show compiled features
@@ -417,9 +416,9 @@ void setup() {
   setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
 #endif
 
-#if defined HAS_IF482 && defined DCF_77
+#if (defined HAS_IF482) && (defined DCF_77)
 #error "You may define at most one of HAS_IF482 or DCF_77"
-#elif defined HAS_IF482 && defined RTC_INT
+#elif (defined HAS_IF482) && (defined RTC_INT)
   ESP_LOGI(TAG, "Starting IF482 Generator...");
   assert(if482_init());
 #elif defined HAS_DCF77

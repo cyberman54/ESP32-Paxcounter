@@ -88,8 +88,11 @@ TaskHandle_t IF482Task;
 
 HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
-// initialize and configure GPS
+// initialize and configure IF482 Generator
 int if482_init(void) {
+
+  // setup external interupt for active low RTC INT pin
+  pinMode(RTC_INT, INPUT_PULLUP);
 
   // open serial interface
   IF482.begin(HAS_IF482);
@@ -113,8 +116,6 @@ int if482_init(void) {
                           0);          // CPU core
 
   assert(IF482Task); // has if482loop task started?
-  // setup external interupt for active low RTC INT pin
-  pinMode(RTC_INT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
 
   return 1;
@@ -124,10 +125,7 @@ int if482_init(void) {
 String if482Telegram(time_t tt) {
 
   time_t t = myTZ.toLocal(tt);
-
-  char mon;
-  char buf[14] = "000000F000000";
-  char out[17];
+  char mon, buf[14], out[17];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
   case timeSet:           // time is set and is synced
@@ -141,14 +139,16 @@ String if482Telegram(time_t tt) {
     break;
   } // switch
 
-  if ((timeStatus() == timeSet) ||
-      (timeStatus() == timeNeedsSync)) // do we have valid time?
-    snprintf(buf, sizeof buf, "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
+  // do we have confident time/date?
+  if ((timeStatus() == timeSet) || (timeStatus() == timeNeedsSync))
+    snprintf(buf, sizeof(buf), "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
              month(t), day(t), weekday(t), hour(t), minute(t), second(t));
+  else
+    snprintf(buf, sizeof(buf), "000000F000000"); // no confident time/date
 
-  snprintf(out, sizeof out, "O%cL%s\r", mon, buf);
+  // output IF482 telegram
+  snprintf(out, sizeof(out), "O%cL%s\r", mon, buf);
   ESP_LOGD(TAG, "IF482 = %s", out);
-
   return out;
 }
 
@@ -167,7 +167,7 @@ void if482_loop(void *pvParameters) {
   do {
     tt = now();
   } while (t == tt);
-  
+
   BitsPending = true; // start blink in display
 
   // take timestamp at moment of start of new second
@@ -186,7 +186,7 @@ void if482_loop(void *pvParameters) {
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
     IF482.print(if482Telegram(now() + 1));
   }
-  BitsPending = false; // stop blink in display
+  BitsPending = false;    // stop blink in display
   vTaskDelete(IF482Task); // shoud never be reached
 } // if482_loop()
 
