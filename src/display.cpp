@@ -42,8 +42,8 @@ const char lora_datarate[] = {"121110090807FSNA"};
 #endif
 
 // helper arry for converting month values to text
-char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 uint8_t volatile DisplayState = 0;
 
