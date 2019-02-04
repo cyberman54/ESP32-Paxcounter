@@ -18,8 +18,8 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA OLED_SDA
-#define MY_OLED_SCL OLED_SCL
+#define MY_OLED_SDA (21)
+#define MY_OLED_SCL (22)
 #define MY_OLED_RST U8X8_PIN_NONE
 
 // Pins for LORA chip SPI interface come from board file, we need some
