@@ -25,6 +25,8 @@ uint8_t DCFtimeframe[DCF77_FRAME_SIZE];
 // initialize and configure DCF77 output
 int dcf77_init(void) {
 
+  BitsPending = false;
+
   pinMode(HAS_DCF77, OUTPUT);
   digitalWrite(HAS_DCF77, HIGH);
 
@@ -42,9 +44,13 @@ int dcf77_init(void) {
   ESP_LOGD(TAG, "Starting DCF pulse...");
   dcfCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
   timerAttachInterrupt(dcfCycle, &DCF77IRQ, true);
-  timerAlarmWrite(dcfCycle, 2000, true); // 100ms cycle
+  timerAlarmWrite(dcfCycle, 1000, true); // 100ms cycle
+
+  // wait until beginning of next minute, then start DCF pulse
+  do {
+    delay(2);
+  } while (second());
   timerAlarmEnable(dcfCycle);
-  xTaskNotify(DCF77Task, 0, eNoAction);
 
   return 1; // success
 
@@ -100,62 +106,69 @@ void generateTimeframe(time_t t) {
   DCFtimeframe[59] = dcf_off;
   // !! missing code here for leap second !!
 
-  // for debug: print the DCF77 frame buffer
-  char out[DCF77_FRAME_SIZE + 1];
-  uint8_t i;
-  for (i = 0; i < DCF77_FRAME_SIZE; i++) {
-    out[i] = DCFtimeframe[i] + '0'; // convert int digit to printable ascii
-  }
-  out[DCF77_FRAME_SIZE] = '\0'; // string termination char
-  ESP_LOGD(TAG, "DCF Timeframe = %s", out);
+  /*
+    // for debug: print the DCF77 frame buffer
+    char out[DCF77_FRAME_SIZE + 1];
+    uint8_t i;
+    for (i = 0; i < DCF77_FRAME_SIZE; i++) {
+      out[i] = DCFtimeframe[i] + '0'; // convert int digit to printable ascii
+    }
+    out[DCF77_FRAME_SIZE] = '\0'; // string termination char
+    ESP_LOGD(TAG, "DCF Timeframe = %s", out);
+  */
 }
 
-// called every 100msec by hardware time
+// helper function to convert gps date/time into time_t
+time_t nextMinute(time_t t) {
+  tmElements_t tm;
+  breakTime(t, tm);
+  tm.Minute++;
+  tm.Second = 0;
+  return makeTime(tm);
+}
+
+// called every 100msec by hardware timer to pulse out DCF signal
 void DCF_Out() {
 
   static uint8_t bit = 0;
   static uint8_t pulse = 0;
 
   if (!BitsPending) {
-    // prepare next frame to send
-    generateTimeframe(now());
+    // prepare frame for next minute to send
+    generateTimeframe(nextMinute(now()));
+    // start blinking symbol on display and kick off timer
     BitsPending = true;
-    // wait until next minute, then kick off hardware timer and first DCF pulse
-    do {
-      delay(2);
-    } while (second());
   }
 
-  // ticker out current frame
-  while (BitsPending) {
+  // ticker out current DCF frame
+  if (BitsPending) {
     switch (pulse++) {
 
     case 0: // start of second -> start of timeframe for logic signal
       if (DCFtimeframe[bit] != dcf_off)
         digitalWrite(HAS_DCF77, LOW);
-      return;
+      break;
 
     case 1: // 100ms after start of second -> end of timeframe for logic 0
       if (DCFtimeframe[bit] == dcf_zero)
         digitalWrite(HAS_DCF77, HIGH);
-      return;
+      break;
 
     case 2: // 200ms after start of second -> end of timeframe for logic 1
       digitalWrite(HAS_DCF77, HIGH);
-      return;
+      break;
 
     case 9: // last pulse before next second starts
       pulse = 0;
-      if (bit++ != DCF77_FRAME_SIZE)
-        return;
-      else { // end of DCF77 frame (59th second)
+      if (bit++ == (DCF77_FRAME_SIZE - 1)) // end of DCF77 frame (59th second)
+      {
         bit = 0;
         BitsPending = false;
       };
       break;
 
     }; // switch
-  };   // while
+  };   // if
 
 } // DCF_Out()
 
@@ -179,8 +192,8 @@ void dcf77_loop(void *pvParameters) {
 
     DCF_Out();
   }
-  BitsPending = false;    // stop blink in display
-  vTaskDelete(DCF77Task); // shoud never be reached
+  BitsPending = false; // stop blink in display, should never be reached
+  vTaskDelete(DCF77Task);
 } // dcf77_loop()
 
 #endif // HAS_DCF77
