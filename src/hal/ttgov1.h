@@ -17,9 +17,9 @@
 #define HAS_BUTTON KEY_BUILTIN
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA OLED_SDA
-#define MY_OLED_SCL OLED_SCL
-#define MY_OLED_RST OLED_RST
+#define MY_OLED_SDA (15)
+#define MY_OLED_SCL (4)
+#define MY_OLED_RST (16)
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC
