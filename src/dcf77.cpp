@@ -2,8 +2,10 @@
 // Emulate a DCF77 radio receiver
 //
 // parts of this code werde adapted from source:
-//
 https://www.elektormagazine.com/labs/dcf77-emulator-with-esp8266-elektor-labs-version-150713
+//
+// a nice & free logic test program for DCF77 can be found here:
+https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 //
 */
 
@@ -25,10 +27,11 @@ uint8_t DCFtimeframe[DCF77_FRAME_SIZE];
 // initialize and configure DCF77 output
 int dcf77_init(void) {
 
+  time_t t, tt;
   BitsPending = false;
 
   pinMode(HAS_DCF77, OUTPUT);
-  digitalWrite(HAS_DCF77, HIGH);
+  set_DCF77_pin(dcf_low);
 
   xTaskCreatePinnedToCore(dcf77_loop,  // task function
                           "dcf77loop", // name of task
@@ -46,34 +49,25 @@ int dcf77_init(void) {
   timerAttachInterrupt(dcfCycle, &DCF77IRQ, true);
   timerAlarmWrite(dcfCycle, 1000, true); // 100ms cycle
 
-  // wait until beginning of next minute, then start DCF pulse
+  // wait until beginning of next second, then kick off first DCF pulse and
+  // start timer interrupt
+
+  t = tt = now();
   do {
-    delay(2);
-  } while (second());
+    tt = now();
+  } while (t == tt);
+
+  DCF_Out(second(tt));
   timerAlarmEnable(dcfCycle);
 
   return 1; // success
 
 } // ifdcf77_init
 
-uint8_t dec2bcd(uint8_t dec, uint8_t startpos, uint8_t endpos,
-                uint8_t pArray[]) {
-
-  uint8_t data = (dec < 10) ? dec : ((dec / 10) << 4) + (dec % 10);
-  uint8_t parity = 0;
-
-  for (uint8_t n = startpos; n <= endpos; n++) {
-    pArray[n] = (data & 1) ? dcf_one : dcf_zero;
-    parity += (data & 1);
-    data >>= 1;
-  }
-
-  return parity;
-}
-
-void generateTimeframe(time_t t) {
+void generateTimeframe(time_t tt) {
 
   uint8_t ParityCount;
+  time_t t = myTZ.toLocal(tt); // convert to local time
 
   // ENCODE HEAD
   // bits 0..19 initialized with zeros
@@ -118,24 +112,15 @@ void generateTimeframe(time_t t) {
   */
 }
 
-// helper function to convert gps date/time into time_t
-time_t nextMinute(time_t t) {
-  tmElements_t tm;
-  breakTime(t, tm);
-  tm.Minute++;
-  tm.Second = 0;
-  return makeTime(tm);
-}
-
 // called every 100msec by hardware timer to pulse out DCF signal
-void DCF_Out() {
+void DCF_Out(uint8_t startsec) {
 
-  static uint8_t bit = 0;
+  static uint8_t bit = startsec;
   static uint8_t pulse = 0;
 
   if (!BitsPending) {
-    // prepare frame for next minute to send
-    generateTimeframe(nextMinute(now()));
+    // prepare frame to send for next minute
+    generateTimeframe(now() + 61);
     // start blinking symbol on display and kick off timer
     BitsPending = true;
   }
@@ -146,16 +131,16 @@ void DCF_Out() {
 
     case 0: // start of second -> start of timeframe for logic signal
       if (DCFtimeframe[bit] != dcf_off)
-        digitalWrite(HAS_DCF77, LOW);
+        set_DCF77_pin(dcf_low);
       break;
 
     case 1: // 100ms after start of second -> end of timeframe for logic 0
       if (DCFtimeframe[bit] == dcf_zero)
-        digitalWrite(HAS_DCF77, HIGH);
+        set_DCF77_pin(dcf_high);
       break;
 
     case 2: // 200ms after start of second -> end of timeframe for logic 1
-      digitalWrite(HAS_DCF77, HIGH);
+      set_DCF77_pin(dcf_high);
       break;
 
     case 9: // last pulse before next second starts
@@ -190,10 +175,46 @@ void dcf77_loop(void *pvParameters) {
         NULL,
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-    DCF_Out();
+    DCF_Out(0);
   }
   BitsPending = false; // stop blink in display, should never be reached
   vTaskDelete(DCF77Task);
 } // dcf77_loop()
+
+// helper function to convert decimal to bcd digit
+uint8_t dec2bcd(uint8_t dec, uint8_t startpos, uint8_t endpos,
+                uint8_t pArray[]) {
+
+  uint8_t data = (dec < 10) ? dec : ((dec / 10) << 4) + (dec % 10);
+  uint8_t parity = 0;
+
+  for (uint8_t n = startpos; n <= endpos; n++) {
+    pArray[n] = (data & 1) ? dcf_one : dcf_zero;
+    parity += (data & 1);
+    data >>= 1;
+  }
+
+  return parity;
+}
+
+// helper function to switch GPIO line with DCF77 signal
+void set_DCF77_pin(dcf_pinstate state) {
+  switch (state) {
+  case dcf_low:
+#ifdef DCF77_ACTIVE_LOW
+    digitalWrite(HAS_DCF77, HIGH);
+#else
+    digitalWrite(HAS_DCF77, LOW);
+#endif
+    break;
+  case dcf_high:
+#ifdef DCF77_ACTIVE_LOW
+    digitalWrite(HAS_DCF77, LOW);
+#else
+    digitalWrite(HAS_DCF77, HIGH);
+#endif
+    break;
+  } // switch
+} // DCF77_pulse
 
 #endif // HAS_DCF77
