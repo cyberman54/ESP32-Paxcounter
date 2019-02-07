@@ -152,7 +152,6 @@ void if482_loop(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
   TickType_t wakeTime;
-  time_t t, tt;
   const TickType_t timeOffset =
       pdMS_TO_TICKS(IF482_OFFSET); // duration of telegram transmit
   const TickType_t startTime = xTaskGetTickCount(); // now
@@ -172,8 +171,7 @@ void if482_loop(void *pvParameters) {
         portMAX_DELAY); // wait forever (missing error handling here...)
 
 #if !defined RTC_CLK || (RTC_CLK == IF482_PULSE_DURATION) // we don't need clock rescaling
-    // now we're synced to start of second tt and wait
-    // until it's time to start transmit telegram for tt+1
+    // wait until it's time to start transmit telegram for next second
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
     IF482.print(IF482_Out(now() + 1));
 

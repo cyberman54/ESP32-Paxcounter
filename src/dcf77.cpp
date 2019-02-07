@@ -1,9 +1,6 @@
 /*
 // Emulate a DCF77 radio receiver
 //
-// parts of this code werde adapted from source:
-https://www.elektormagazine.com/labs/dcf77-emulator-with-esp8266-elektor-labs-version-150713
-//
 // a nice & free logic test program for DCF77 can be found here:
 https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 //
@@ -25,7 +22,6 @@ uint8_t DCFtimeframe[DCF77_FRAME_SIZE];
 // initialize and configure DCF77 output
 int dcf77_init(void) {
 
-  time_t t, tt;
   BitsPending = false;
 
   pinMode(HAS_DCF77, OUTPUT);
