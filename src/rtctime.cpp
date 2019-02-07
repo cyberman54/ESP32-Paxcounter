@@ -7,6 +7,9 @@ static const char TAG[] = "main";
 
 RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 
+TaskHandle_t ClockTask;
+hw_timer_t *clockCycle = NULL;
+
 // initialize RTC
 int rtc_init(void) {
 
@@ -96,5 +99,66 @@ float get_rtctemp(void) {
   } // while
   return 0;
 } // get_rtctemp()
+
+int pps_init() {
+// we have hardware pps signal as time base
+#if defined RTC_INT && defined RTC_CLK
+
+  // setup external interupt for active low RTC INT pin
+  pinMode(RTC_INT, INPUT_PULLUP);
+
+  // setup external rtc 1Hz clock as pulse per second clock
+  ESP_LOGI(TAG, "Time base external clock");
+  if (I2C_MUTEX_LOCK()) {
+    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+    I2C_MUTEX_UNLOCK();
+  } else {
+    ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
+    return 0; // failure
+  }
+  return 1; // success
+#endif
+}
+
+int pps_init(uint32_t pps_freq) {
+  // if we don't have hardware pps we use ESP32 hardware timer
+  if (pps_freq) {
+    ESP_LOGI(TAG, "Time base ESP32 clock");
+    clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler
+    timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
+    timerAlarmWrite(clockCycle, 10 * pps_freq, true);
+  } else {
+    ESP_LOGE(TAG, "Invalid pps clock frequency");
+    return 0; // failure
+  }
+  return 1; // success
+}
+
+void pps_start() {
+#ifdef RTC_INT // start external clock
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
+#else // start internal clock
+  timerAlarmEnable(clockCycle);
+#endif
+}
+
+// helper function to sync phase of DCF output signal to start of second t
+uint8_t sync_clock(time_t t) {
+  time_t tt = t;
+  // delay until start of next second
+  do {
+    tt = now();
+  } while (t == tt);
+  ESP_LOGI(TAG, "Sync on Sec %d", second(tt));
+  return second(tt);
+}
+
+// interrupt service routine triggered by either rtc pps or esp32 hardware
+// timer
+void IRAM_ATTR CLOCKIRQ() {
+  xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
+  portYIELD_FROM_ISR();
+}
 
 #endif // HAS_RTC

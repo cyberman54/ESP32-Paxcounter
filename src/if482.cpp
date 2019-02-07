@@ -1,4 +1,4 @@
-#if defined HAS_IF482 && defined RTC_INT
+#if defined HAS_IF482
 
 /* NOTE:
 The IF482 Generator needs an high precise 1 Hz clock signal which cannot be
@@ -84,15 +84,16 @@ not evaluated by model BU-190
 // Local logging tag
 static const char TAG[] = "main";
 
-TaskHandle_t IF482Task;
+#define IF482_FRAME_SIZE (17)
+#define IF482_PULSE_DURATION (1000)
 
 HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
 // initialize and configure IF482 Generator
 int if482_init(void) {
 
-  // setup external interupt for active low RTC INT pin
-  pinMode(RTC_INT, INPUT_PULLUP);
+  // open serial interface
+  IF482.begin(HAS_IF482);
 
   // start if482 serial output feed task
   xTaskCreatePinnedToCore(if482_loop,  // task function
@@ -100,49 +101,26 @@ int if482_init(void) {
                           2048,        // stack size of task
                           (void *)1,   // parameter of the task
                           3,           // priority of the task
-                          &IF482Task,  // task handle
+                          &ClockTask,  // task handle
                           0);          // CPU core
 
-  assert(IF482Task); // has if482loop task started?
+  assert(ClockTask); // has clock task started?
 
-  // open serial interface
-  IF482.begin(HAS_IF482);
-
-  // if we have hardware pps signal we use it as precise time base
-#ifdef RTC_INT
-// assure we know clock freq
-#ifndef RTC_CLK
-#error "No RTC clock cycle defined in board hal file"
-#endif
-  // use external rtc 1Hz clock for triggering IF482 telegram
-  if (I2C_MUTEX_LOCK()) {
-    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
-    I2C_MUTEX_UNLOCK();
-  } else {
-    ESP_LOGE(TAG, "I2c bus busy - IF482 initialization error");
-    return 0; // failure
-  }
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
-
-// no RTC, thus we use less precise ESP32 hardware timer
+#if defined RTC_INT && (RTC_CLK == IF482_PULSE_DURATION)
+  pps_init(); // use pps clock
 #else
-  // setup 1000ms clock signal for IF482 generator using esp32 hardware timer 1
-  ESP_LOGD(TAG, "Starting IF482 pulse...");
-  dcfCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
-  timerAttachInterrupt(dcfCycle, &IF482IRQ, true);
-  timerAlarmWrite(dcfCycle, 10000, true); // 1000ms cycle
-  timerAlarmEnable(dcfCycle);
+  pps_init(IF482_PULSE_DURATION); // use esp32 clock
 #endif
+
+  pps_start(); // start pulse
 
   return 1; // success
-
 } // if482_init
 
 String IF482_Out(time_t tt) {
 
   time_t t = myTZ.toLocal(tt);
-  char mon, buf[14], out[17];
+  char mon, buf[14], out[IF482_FRAME_SIZE];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
   case timeSet:           // time is set and is synced
@@ -179,12 +157,7 @@ void if482_loop(void *pvParameters) {
       pdMS_TO_TICKS(IF482_OFFSET); // duration of telegram transmit
   const TickType_t startTime = xTaskGetTickCount(); // now
 
-  // wait until begin of a new second
-  t = tt = now();
-  do {
-    tt = now();
-  } while (t == tt);
-
+  sync_clock(now());  // wait until begin of a new second
   BitsPending = true; // start blink in display
 
   // take timestamp at moment of start of new second
@@ -198,17 +171,18 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
+#if !defined RTC_CLK || (RTC_CLK == IF482_PULSE_DURATION) // we don't need clock rescaling
     // now we're synced to start of second tt and wait
     // until it's time to start transmit telegram for tt+1
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
     IF482.print(IF482_Out(now() + 1));
+
+#else // we need clock rescaling by software timer
+                                 /*
+                                 not yet implemented for IF482
+                                 */
+#endif
   }
 } // if482_loop()
-
-// interrupt service routine triggered by RTC 1Hz precise clock
-void IRAM_ATTR IF482IRQ() {
-  xTaskNotifyFromISR(IF482Task, xTaskGetTickCountFromISR(), eSetBits, NULL);
-  portYIELD_FROM_ISR();
-}
 
 #endif // HAS_IF482

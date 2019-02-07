@@ -140,7 +140,7 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 # Clock controller
 
-Paxcounter can be used to sync a clock which has DCF77 or IF482 time telegram input with an external time source. Supported external time sources are GPS time, LORAWAN network time (v1.1) or on board RTC time. The precision of the generated DCF77 / IF482 signal depends on precision of used on board time base. Supported are both external time base (e.g. pps pin of GPS chip or oscillator output of RTC chip) and ESP32 internal clock. Selection of time base and clock frequency must be given by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h).
+Paxcounter can be used to sync a clock which has DCF77 or IF482 time telegram input with an external time source. Use case of this function is to have paxcounter hardware integrated in clocks, and use it for both counting of pax and controlling the clock. Supported external time sources are GPS time, LORAWAN network time (v1.1) and on board RTC time. Precision of the synthetic DCF77 signal depends on precision of on board available time base. Supported are both external time base (e.g. pps pin of GPS chip or oscillator output of RTC chip) and ESP32 internal clock. Selection of time base and clock frequency is done by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h).
 
 # Payload format
 

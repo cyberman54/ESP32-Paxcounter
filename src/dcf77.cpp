@@ -16,9 +16,6 @@ https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 // Local logging tag
 static const char TAG[] = "main";
 
-TaskHandle_t DCF77Task;
-hw_timer_t *dcfCycle = NULL;
-
 #define DCF77_FRAME_SIZE (60)
 #define DCF77_PULSE_DURATION (100)
 
@@ -39,51 +36,19 @@ int dcf77_init(void) {
                           2048,        // stack size of task
                           (void *)1,   // parameter of the task
                           3,           // priority of the task
-                          &DCF77Task,  // task handle
+                          &ClockTask,  // task handle
                           0);          // CPU core
 
-  assert(DCF77Task); // has dcf77 task started?
+  assert(ClockTask); // has clock task started?
 
-#ifdef RTC_INT // if we have hardware pps signal we use it as precise time base
-
-#ifndef RTC_CLK // assure we know external clock freq
-#error "External clock cycle not defined in board hal file"
+#if defined RTC_INT && (RTC_CLK == DCF77_PULSE_DURATION)
+  pps_init(); // use pps clock
+#else
+  pps_init(DCF77_PULSE_DURATION); // use esp32 clock
 #endif
 
-  // setup external interupt for active low RTC INT pin
-  pinMode(RTC_INT, INPUT_PULLUP);
-
-  // setup external rtc 1Hz clock for triggering DCF77 telegram
-  ESP_LOGI(TAG, "Time base external clock");
-  if (I2C_MUTEX_LOCK()) {
-    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
-    I2C_MUTEX_UNLOCK();
-  } else {
-    ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
-    return 0; // failure
-  }
-
-#else // if we don't have pps signal from RTC we use ESP32 hardware timer
-
-#define RTC_CLK (DCF77_PULSE_DURATION) // setup clock cycle
-  ESP_LOGI(TAG, "Time base ESP32 clock");
-  dcfCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
-  timerAttachInterrupt(dcfCycle, &DCF77IRQ, true);
-  timerAlarmWrite(dcfCycle, 10 * RTC_CLK, true); // 100ms
-
-#endif
-
-  // wait until beginning of next second, then kick off first DCF pulse and
-  // start clock signal
-
-  DCF_Out(sync_clock(now()));
-
-#ifdef RTC_INT // start external clock
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), DCF77IRQ, FALLING);
-#else // start internal clock
-  timerAlarmEnable(dcfCycle);
-#endif
+  DCF_Out(sync_clock(now())); // sync DCF time on next second
+  pps_start();                // start pulse
 
   return 1; // success
 } // ifdcf77_init
@@ -157,9 +122,8 @@ void dcf77_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-#if (RTC_CLK == DCF77_PULSE_DURATION)
-    DCF_Out(0); // we don't need clock rescaling
-
+#if !defined RTC_CLK || (RTC_CLK == DCF77_PULSE_DURATION) // we don't need clock rescaling
+    DCF_Out(0);
 #else // we need clock rescaling by software timer
     for (uint8_t i = 1; i <= RTC_CLK / DCF77_PULSE_DURATION; i++) {
       DCF_Out(0);
@@ -252,25 +216,5 @@ void set_DCF77_pin(dcf_pinstate state) {
     break;
   } // switch
 } // DCF77_pulse
-
-// helper function to sync phase of DCF output signal to start of second t
-uint8_t sync_clock(time_t t) {
-  time_t tt = t;
-
-  // delay until start of next second
-  do {
-    tt = now();
-  } while (t == tt);
-
-  ESP_LOGI(TAG, "Sync on Sec %d", second(tt));
-
-  return second(tt);
-}
-
-// interrupt service routine triggered by external interrupt or internal timer
-void IRAM_ATTR DCF77IRQ() {
-  xTaskNotifyFromISR(DCF77Task, xTaskGetTickCountFromISR(), eSetBits, NULL);
-  portYIELD_FROM_ISR();
-}
 
 #endif // HAS_DCF77
