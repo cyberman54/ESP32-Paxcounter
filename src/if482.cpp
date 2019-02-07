@@ -94,19 +94,7 @@ int if482_init(void) {
   // setup external interupt for active low RTC INT pin
   pinMode(RTC_INT, INPUT_PULLUP);
 
-  // open serial interface
-  IF482.begin(HAS_IF482);
-
-  // use external rtc 1Hz clock for triggering IF482 telegram
-  if (I2C_MUTEX_LOCK()) {
-    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
-    I2C_MUTEX_UNLOCK();
-  } else {
-    ESP_LOGE(TAG, "I2c bus busy - IF482 initialization error");
-    return 0;
-  }
-
+  // start if482 serial output feed task
   xTaskCreatePinnedToCore(if482_loop,  // task function
                           "if482loop", // name of task
                           2048,        // stack size of task
@@ -116,13 +104,42 @@ int if482_init(void) {
                           0);          // CPU core
 
   assert(IF482Task); // has if482loop task started?
+
+  // open serial interface
+  IF482.begin(HAS_IF482);
+
+  // if we have hardware pps signal we use it as precise time base
+#ifdef RTC_INT
+// assure we know clock freq
+#ifndef RTC_CLK
+#error "No RTC clock cycle defined in board hal file"
+#endif
+  // use external rtc 1Hz clock for triggering IF482 telegram
+  if (I2C_MUTEX_LOCK()) {
+    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+    I2C_MUTEX_UNLOCK();
+  } else {
+    ESP_LOGE(TAG, "I2c bus busy - IF482 initialization error");
+    return 0; // failure
+  }
   attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
 
-  return 1;
+// no RTC, thus we use less precise ESP32 hardware timer
+#else
+  // setup 1000ms clock signal for IF482 generator using esp32 hardware timer 1
+  ESP_LOGD(TAG, "Starting IF482 pulse...");
+  dcfCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
+  timerAttachInterrupt(dcfCycle, &IF482IRQ, true);
+  timerAlarmWrite(dcfCycle, 10000, true); // 1000ms cycle
+  timerAlarmEnable(dcfCycle);
+#endif
+
+  return 1; // success
 
 } // if482_init
 
-String if482Telegram(time_t tt) {
+String IF482_Out(time_t tt) {
 
   time_t t = myTZ.toLocal(tt);
   char mon, buf[14], out[17];
@@ -184,10 +201,8 @@ void if482_loop(void *pvParameters) {
     // now we're synced to start of second tt and wait
     // until it's time to start transmit telegram for tt+1
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
-    IF482.print(if482Telegram(now() + 1));
+    IF482.print(IF482_Out(now() + 1));
   }
-  BitsPending = false;    // stop blink in display
-  vTaskDelete(IF482Task); // shoud never be reached
 } // if482_loop()
 
 // interrupt service routine triggered by RTC 1Hz precise clock

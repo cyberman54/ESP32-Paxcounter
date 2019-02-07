@@ -19,7 +19,8 @@ static const char TAG[] = "main";
 TaskHandle_t DCF77Task;
 hw_timer_t *dcfCycle = NULL;
 
-#define DCF77_FRAME_SIZE 60
+#define DCF77_FRAME_SIZE (60)
+#define DCF77_PULSE_DURATION (100)
 
 // array of dcf pulses for three minutes
 uint8_t DCFtimeframe[DCF77_FRAME_SIZE];
@@ -43,14 +44,38 @@ int dcf77_init(void) {
 
   assert(DCF77Task); // has dcf77 task started?
 
-  // setup 100ms clock signal for DCF77 generator using esp32 hardware timer 1
-  ESP_LOGD(TAG, "Starting DCF pulse...");
+  // if we have hardware pps signal we use it as precise time base
+#ifdef RTC_INT
+
+#ifndef RTC_CLK // assure we know external clock freq
+#error "External clock cycle not defined in board hal file"
+#endif
+
+  // setup external interupt for active low RTC INT pin
+  pinMode(RTC_INT, INPUT_PULLUP);
+
+  // setup external rtc 1Hz clock for triggering DCF77 telegram
+  ESP_LOGI(TAG, "Time base external clock");
+  if (I2C_MUTEX_LOCK()) {
+    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+    I2C_MUTEX_UNLOCK();
+  } else {
+    ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
+    return 0; // failure
+  }
+
+// if we don't have pps signal from RTC we emulate it using ESP32 hardware timer
+#else
+#define RTC_CLK (DCF77_PULSE_DURATION) // setup clock cycle
+  ESP_LOGI(TAG, "Time base ESP32 clock");
   dcfCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
   timerAttachInterrupt(dcfCycle, &DCF77IRQ, true);
-  timerAlarmWrite(dcfCycle, 1000, true); // 100ms cycle
+  timerAlarmWrite(dcfCycle, 10 * RTC_CLK, true); // RTC_CLK / 1sec = 100ms
+#endif
 
   // wait until beginning of next second, then kick off first DCF pulse and
-  // start timer interrupt
+  // start clock signal
 
   t = tt = now();
   do {
@@ -58,10 +83,14 @@ int dcf77_init(void) {
   } while (t == tt);
 
   DCF_Out(second(tt));
+
+#ifdef RTC_INT // start external clock
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), DCF77IRQ, FALLING);
+#else // start internal clock
   timerAlarmEnable(dcfCycle);
+#endif
 
   return 1; // success
-
 } // ifdcf77_init
 
 void generateTimeframe(time_t tt) {
@@ -113,9 +142,9 @@ void generateTimeframe(time_t tt) {
 }
 
 // called every 100msec by hardware timer to pulse out DCF signal
-void DCF_Out(uint8_t startsec) {
+void DCF_Out(uint8_t startOffset) {
 
-  static uint8_t bit = startsec;
+  static uint8_t bit = startOffset;
   static uint8_t pulse = 0;
 
   if (!BitsPending) {
@@ -143,7 +172,7 @@ void DCF_Out(uint8_t startsec) {
       set_DCF77_pin(dcf_high);
       break;
 
-    case 9: // last pulse before next second starts
+    case 9: // 900ms after start -> last pulse before next second starts
       pulse = 0;
       if (bit++ == (DCF77_FRAME_SIZE - 1)) // end of DCF77 frame (59th second)
       {
@@ -154,31 +183,33 @@ void DCF_Out(uint8_t startsec) {
 
     }; // switch
   };   // if
-
 } // DCF_Out()
-
-// interrupt service routine triggered each 100ms by ESP32 hardware timer
-void IRAM_ATTR DCF77IRQ() {
-  xTaskNotifyFromISR(DCF77Task, 0, eNoAction, NULL);
-  portYIELD_FROM_ISR();
-}
 
 void dcf77_loop(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
+  TickType_t wakeTime;
+
   // task remains in blocked state until it is notified by isr
   for (;;) {
     xTaskNotifyWait(
-        0x00,      // don't clear any bits on entry
-        ULONG_MAX, // clear all bits on exit
-        NULL,
+        0x00,           // don't clear any bits on entry
+        ULONG_MAX,      // clear all bits on exit
+        &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-    DCF_Out(0);
-  }
-  BitsPending = false; // stop blink in display, should never be reached
-  vTaskDelete(DCF77Task);
+#if (!defined RTC_INT) || (RTC_CLK == DCF77_PULSE_DURATION)
+    DCF_Out(0); // we don't need clock rescaling
+
+#else // we need clock rescaling by software timer
+    for (uint8_t i = 1; i <= RTC_CLK / DCF77_PULSE_DURATION; i++) {
+      DCF_Out(0);
+      vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION));
+    } // for
+#endif
+
+  } // for
 } // dcf77_loop()
 
 // helper function to convert decimal to bcd digit
@@ -216,5 +247,11 @@ void set_DCF77_pin(dcf_pinstate state) {
     break;
   } // switch
 } // DCF77_pulse
+
+// interrupt service routine triggered by external interrupt or internal timer
+void IRAM_ATTR DCF77IRQ() {
+  xTaskNotifyFromISR(DCF77Task, xTaskGetTickCountFromISR(), eSetBits, NULL);
+  portYIELD_FROM_ISR();
+}
 
 #endif // HAS_DCF77

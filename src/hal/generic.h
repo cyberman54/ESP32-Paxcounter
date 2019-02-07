@@ -51,6 +51,7 @@
 // Pins for on board DS3231 RTC chip
 #define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
 #define RTC_INT GPIO_NUM_34 // interrupt input from rtc
+#define RTC_CLK (1000) // frequency of RTC clock signal in ms
 
 // Settings for IF482 interface
 #define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
