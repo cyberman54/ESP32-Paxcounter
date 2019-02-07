@@ -17,5 +17,6 @@ void DCF_Out(uint8_t startsec);
 void generateTimeframe(time_t t);
 void set_DCF77_pin(dcf_pinstate state);
 uint8_t dec2bcd(uint8_t dec, uint8_t startpos, uint8_t endpos, uint8_t pArray[]);
+uint8_t sync_clock(time_t t);
 
 #endif
