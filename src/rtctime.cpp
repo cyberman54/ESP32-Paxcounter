@@ -1,14 +1,14 @@
-#ifdef HAS_RTC
-
 #include "rtctime.h"
 
 // Local logging tag
 static const char TAG[] = "main";
 
-RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
-
 TaskHandle_t ClockTask;
 hw_timer_t *clockCycle = NULL;
+
+#ifdef HAS_RTC // we have hardware RTC
+
+RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 
 // initialize RTC
 int rtc_init(void) {
@@ -100,9 +100,11 @@ float get_rtctemp(void) {
   return 0;
 } // get_rtctemp()
 
-int pps_init() {
-// we have hardware pps signal as time base
-#if defined RTC_INT && defined RTC_CLK
+#endif // HAS_RTC
+
+int pps_init(uint32_t clk_freq_Hz) {
+// use fixed pulse clock as time base
+#if defined RTC_INT && (RTC_CLK == clk_freq_Hz)
 
   // setup external interupt for active low RTC INT pin
   pinMode(RTC_INT, INPUT_PULLUP);
@@ -118,21 +120,20 @@ int pps_init() {
     return 0; // failure
   }
   return 1; // success
-#endif
-}
 
-int pps_init(uint32_t pps_freq) {
-  // if we don't have hardware pps we use ESP32 hardware timer
-  if (pps_freq) {
+#else
+  // use clock with adjustable frequency
+  if (clk_freq_Hz) {
     ESP_LOGI(TAG, "Time base ESP32 clock");
     clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler
     timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
-    timerAlarmWrite(clockCycle, 10 * pps_freq, true);
+    timerAlarmWrite(clockCycle, 100 * clk_freq_Hz, true);
   } else {
-    ESP_LOGE(TAG, "Invalid pps clock frequency");
+    ESP_LOGE(TAG, "Invalid pulse clock frequency");
     return 0; // failure
   }
   return 1; // success
+#endif
 }
 
 void pps_start() {
@@ -160,5 +161,3 @@ void IRAM_ATTR CLOCKIRQ() {
   xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
   portYIELD_FROM_ISR();
 }
-
-#endif // HAS_RTC
