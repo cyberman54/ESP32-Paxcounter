@@ -6,7 +6,11 @@ https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 //
 */
 
-#if defined HAS_DCF77
+#ifdef HAS_DCF77
+
+#ifdef IF_482
+#error  "You must define at most one of IF482 or DCF_77"
+#endif
 
 #include "dcf77.h"
 
@@ -15,6 +19,11 @@ static const char TAG[] = "main";
 
 #define DCF77_FRAME_SIZE (60)
 #define DCF77_PULSE_DURATION (100)
+#ifdef RTC_CLK
+#define PPS (RTC_CLK / DCF77_PULSE_DURATION)
+#else
+#define PPS DCF77_PULSE_DURATION
+#endif
 
 // array of dcf pulses for three minutes
 uint8_t DCFtimeframe[DCF77_FRAME_SIZE];
@@ -37,12 +46,7 @@ int dcf77_init(void) {
 
   assert(ClockTask); // has clock task started?
 
-#if defined RTC_INT && (RTC_CLK == DCF77_PULSE_DURATION)
-  pps_init(); // use pps clock
-#else
-  pps_init(DCF77_PULSE_DURATION); // use esp32 clock
-#endif
-
+  pps_init(PPS);              // setup pulse
   DCF_Out(sync_clock(now())); // sync DCF time on next second
   pps_start();                // start pulse
 
@@ -118,10 +122,10 @@ void dcf77_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-#if !defined RTC_CLK || (RTC_CLK == DCF77_PULSE_DURATION) // we don't need clock rescaling
+#if (PPS == DCF77_PULSE_DURATION) // we don't need clock rescaling
     DCF_Out(0);
 #else // we need clock rescaling by software timer
-    for (uint8_t i = 1; i <= RTC_CLK / DCF77_PULSE_DURATION; i++) {
+    for (uint8_t i = 1; i <= PPS; i++) {
       DCF_Out(0);
       vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION));
     }

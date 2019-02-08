@@ -65,7 +65,7 @@ char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
-bool volatile BitsPending = false; // DCF77 or IF482 ticker indicator
+bool volatile BitsPending = false;  // DCF77 or IF482 ticker indicator
 
 hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
 #ifdef HAS_DISPLAY
@@ -416,9 +416,7 @@ void setup() {
   setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
 #endif
 
-#if (defined HAS_IF482) && (defined DCF_77)
-#error "You may define at most one of HAS_IF482 or DCF_77"
-#elif defined HAS_IF482
+#ifdef HAS_IF482
   ESP_LOGI(TAG, "Starting IF482 Generator...");
   assert(if482_init());
 #elif defined HAS_DCF77

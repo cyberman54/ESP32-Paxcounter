@@ -22,7 +22,6 @@ time_t get_rtctime(void);
 float get_rtctemp(void);
 void IRAM_ATTR CLOCKIRQ();
 int pps_init(uint32_t pps_freq);
-int pps_init();
 void pps_start();
 uint8_t sync_clock(time_t t);
 
