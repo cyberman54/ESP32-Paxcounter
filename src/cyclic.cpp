@@ -61,8 +61,8 @@ void doHousekeeping() {
            uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
 #endif
 #ifdef HAS_DCF77
-  ESP_LOGD(TAG, "DCF77loop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(DCF77Task), eTaskGetState(DCF77Task));
+  ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(ClockTask), eTaskGetState(ClockTask));
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)

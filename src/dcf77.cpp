@@ -9,7 +9,7 @@ https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 #ifdef HAS_DCF77
 
 #ifdef IF_482
-#error  "You must define at most one of IF482 or DCF_77"
+#error "You must define at most one of IF482 or DCF77"
 #endif
 
 #include "dcf77.h"
@@ -19,8 +19,9 @@ static const char TAG[] = "main";
 
 #define DCF77_FRAME_SIZE (60)
 #define DCF77_PULSE_DURATION (100)
-#ifdef RTC_CLK
-#define PPS (RTC_CLK / DCF77_PULSE_DURATION)
+
+#if defined RTC_INT && defined RTC_CLK
+#define PPS RTC_CLK
 #else
 #define PPS DCF77_PULSE_DURATION
 #endif
@@ -63,10 +64,14 @@ void DCF_Out(uint8_t startOffset) {
 #endif
 
   if (!BitsPending) {
-    // prepare frame to send for next minute
-    generateTimeframe(now() + DCF77_FRAME_SIZE + 1);
-    // start blinking symbol on display and kick off timer
-    BitsPending = true;
+    // do we have confident time/date?
+    if ((timeStatus() == timeSet) || (timeStatus() == timeNeedsSync)) {
+      // prepare frame to send for next minute
+      generateTimeframe(now() + DCF77_FRAME_SIZE + 1);
+      // start blinking symbol on display and kick off timer
+      BitsPending = true;
+    } else
+      return;
   }
 
   // ticker out current DCF frame
@@ -124,11 +129,14 @@ void dcf77_loop(void *pvParameters) {
 
 #if (PPS == DCF77_PULSE_DURATION) // we don't need clock rescaling
     DCF_Out(0);
-#else // we need clock rescaling by software timer
-    for (uint8_t i = 1; i <= PPS; i++) {
+#elif (PPS > DCF77_PULSE_DURATION) // we need upclocking
+    for (uint8_t i = 1; i <= PPS / DCF77_PULSE_DURATION; i++) {
       DCF_Out(0);
       vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION));
     }
+#elif (PPS < DCF77_PULSE_DURATION) // we need downclocking
+    vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION - PPS));
+    DCF_Out(0);
 #endif
   } // for
 } // dcf77_loop()

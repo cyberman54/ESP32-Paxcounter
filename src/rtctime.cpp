@@ -102,9 +102,9 @@ float get_rtctemp(void) {
 
 #endif // HAS_RTC
 
-int pps_init(uint32_t clk_freq_Hz) {
+int pps_init(uint32_t clk_freq_ms) {
 // use fixed pulse clock as time base
-#if defined RTC_INT && (RTC_CLK == clk_freq_Hz)
+#if defined RTC_INT && defined RTC_CLK
 
   // setup external interupt for active low RTC INT pin
   pinMode(RTC_INT, INPUT_PULLUP);
@@ -123,11 +123,11 @@ int pps_init(uint32_t clk_freq_Hz) {
 
 #else
   // use clock with adjustable frequency
-  if (clk_freq_Hz) {
+  if (clk_freq_ms) {
     ESP_LOGI(TAG, "Time base ESP32 clock");
-    clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler
+    clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
     timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
-    timerAlarmWrite(clockCycle, 100 * clk_freq_Hz, true);
+    timerAlarmWrite(clockCycle, 10 * clk_freq_ms, true); //ms
   } else {
     ESP_LOGE(TAG, "Invalid pulse clock frequency");
     return 0; // failure

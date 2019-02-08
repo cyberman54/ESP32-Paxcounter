@@ -80,7 +80,7 @@ not evaluated by model BU-190
 #ifdef HAS_IF482
 
 #ifdef HAS_DCF77
-#error "You must define at most one of IF482 or DCF_77"
+#error "You must define at most one of IF482 or DCF77"
 #endif
 
 #include "if482.h"
@@ -90,8 +90,9 @@ static const char TAG[] = "main";
 
 #define IF482_FRAME_SIZE (17)
 #define IF482_PULSE_DURATION (1000)
+
 #ifdef RTC_CLK
-#define PPS (RTC_CLK / IF482_PULSE_DURATION)
+#define PPS RTC_CLK
 #else
 #define PPS IF482_PULSE_DURATION
 #endif
@@ -174,14 +175,20 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-#if (PPS == DCF77_PULSE_DURATION) // we don't need clock rescaling
+#if (PPS == IF482_PULSE_DURATION) // we don't need clock rescaling
     // wait until it's time to start transmit telegram for next second
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
     IF482.print(IF482_Out(now() + 1));
-#else // we need clock rescaling by software timer
-    /*
-    not yet implemented for IF482
-    */
+#elif (PPS > IF482_PULSE_DURATION) // we need upclocking
+    for (uint8_t i = 1; i <= PPS / IF482_PULSE_DURATION; i++) {
+      vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
+      IF482.print(IF482_Out(now() + 1));
+    }
+#elif (PPS < IF482_PULSE_DURATION) // we need downclocking
+    IF482.print(IF482_Out(now() + 1));
+    vTaskDelayUntil(&wakeTime,
+                    shotTime - PPS); // sets waketime to moment of shot
+
 #endif
   }
 } // if482_loop()
