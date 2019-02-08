@@ -1,3 +1,5 @@
+#if defined HAS_IF482
+
 /* NOTE:
 The IF482 Generator needs an high precise 1 Hz clock signal which cannot be
 acquired in suitable precision on the ESP32 SoC itself. Additional clocking
@@ -77,12 +79,6 @@ not evaluated by model BU-190
 */
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef HAS_IF482
-
-#ifdef HAS_DCF77
-#error "You must define at most one of IF482 or DCF_77"
-#endif
-
 #include "if482.h"
 
 // Local logging tag
@@ -90,11 +86,6 @@ static const char TAG[] = "main";
 
 #define IF482_FRAME_SIZE (17)
 #define IF482_PULSE_DURATION (1000)
-#ifdef RTC_CLK
-#define PPS (RTC_CLK / IF482_PULSE_DURATION)
-#else
-#define PPS IF482_PULSE_DURATION
-#endif
 
 HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
@@ -115,8 +106,13 @@ int if482_init(void) {
 
   assert(ClockTask); // has clock task started?
 
-  pps_init(PPS); // setup pulse
-  pps_start();   // start pulse
+#if defined RTC_INT && (RTC_CLK == IF482_PULSE_DURATION)
+  pps_init(); // use pps clock
+#else
+  pps_init(IF482_PULSE_DURATION); // use esp32 clock
+#endif
+
+  pps_start(); // start pulse
 
   return 1; // success
 } // if482_init
@@ -174,14 +170,15 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-#if (PPS == DCF77_PULSE_DURATION) // we don't need clock rescaling
+#if !defined RTC_CLK || (RTC_CLK == IF482_PULSE_DURATION) // we don't need clock rescaling
     // wait until it's time to start transmit telegram for next second
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
     IF482.print(IF482_Out(now() + 1));
+
 #else // we need clock rescaling by software timer
-    /*
-    not yet implemented for IF482
-    */
+                                 /*
+                                 not yet implemented for IF482
+                                 */
 #endif
   }
 } // if482_loop()
