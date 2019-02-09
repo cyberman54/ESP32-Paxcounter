@@ -103,7 +103,7 @@ float get_rtctemp(void) {
 #endif // HAS_RTC
 
 // helper function to setup a pulse for time synchronisation
-int pps_init(uint32_t pulse_period_ms) {
+int timepulse_init(uint32_t pulse_period_ms) {
 
 // use time pulse from GPS as time base with fixed 1Hz frequency
 #if defined GPS_INT && defined GPS_CLK
@@ -150,7 +150,7 @@ int pps_init(uint32_t pulse_period_ms) {
 #endif
 }
 
-void pps_start() {
+void timepulse_start() {
 #ifdef GPS_INT // start external clock
   attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
 #elif defined RTC_INT // start external clock

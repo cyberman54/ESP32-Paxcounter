@@ -120,8 +120,8 @@ int if482_init(void) {
 
   assert(ClockTask); // has clock task started?
 
-  pps_init(PPS); // setup pulse
-  pps_start();   // start pulse
+  timepulse_init(PPS); // setup pulse
+  timepulse_start();   // start pulse
 
   return 1; // success
 } // if482_init

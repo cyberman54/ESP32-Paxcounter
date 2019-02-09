@@ -50,9 +50,9 @@ int dcf77_init(void) {
 
   assert(ClockTask); // has clock task started?
 
-  pps_init(PPS);              // setup pulse
+  timepulse_init(PPS);              // setup pulse
   DCF_Out(sync_clock(now())); // sync DCF time on next second
-  pps_start();                // start pulse
+  timepulse_start();                // start pulse
 
   return 1; // success
 } // ifdcf77_init
