@@ -40,25 +40,28 @@
 
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
-#define HAS_GPS 1 // use if board has GPS
-#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_17, GPIO_NUM_16 // UBlox NEO 6M or 7M with default configuration
+// GPS settings
+#define HAS_GPS 1 // use on board GPS
+#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M
+#define GPS_INT GPIO_NUM_34 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO34
+#define GPS_CLK (1000) // pulse length 100ms, accuracy +/- 3 *e-8 [nanoseconds] = 0,95sec / year
 
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (4)
 #define MY_OLED_SCL (15)
 #define MY_OLED_RST (16)
 
-// Pins for on board DS3231 RTC chip
+// Settings for on board DS3231 RTC chip
 #define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
-#define RTC_INT GPIO_NUM_34 // interrupt input from rtc
-#define RTC_CLK (1000) // frequency of RTC clock signal in ms
+#define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
+#define RTC_CLK (1000) // pulse length 1000ms
 
 // Settings for IF482 interface
-#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
+//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
 
 // Settings for DCF77 interface
 #define HAS_DCF77 GPIO_NUM_1
-//#define DCF77_ACTIVE_LOW 1
+#define DCF77_ACTIVE_LOW 1
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
