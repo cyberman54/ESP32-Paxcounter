@@ -16,5 +16,6 @@ int gps_init(void);
 void gps_read(void);
 void gps_loop(void *pvParameters);
 time_t get_gpstime(void);
+int gps_config();
 
 #endif

@@ -20,8 +20,11 @@ static const char TAG[] = "main";
 #define DCF77_FRAME_SIZE (60)
 #define DCF77_PULSE_DURATION (100)
 
+// select internal / external clock
 #if defined RTC_INT && defined RTC_CLK
 #define PPS RTC_CLK
+#elif defined GPS_INT && defined GPS_CLK
+#define PPS GPS_CLK
 #else
 #define PPS DCF77_PULSE_DURATION
 #endif
@@ -127,13 +130,16 @@ void dcf77_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
+// select clock scale
 #if (PPS == DCF77_PULSE_DURATION) // we don't need clock rescaling
     DCF_Out(0);
+
 #elif (PPS > DCF77_PULSE_DURATION) // we need upclocking
     for (uint8_t i = 1; i <= PPS / DCF77_PULSE_DURATION; i++) {
       DCF_Out(0);
       vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION));
     }
+
 #elif (PPS < DCF77_PULSE_DURATION) // we need downclocking
     vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION - PPS));
     DCF_Out(0);

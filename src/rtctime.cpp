@@ -102,8 +102,10 @@ float get_rtctemp(void) {
 
 #endif // HAS_RTC
 
-int pps_init(uint32_t clk_freq_ms) {
-// use fixed pulse clock as time base
+// helper function to setup a pulse for time synchronisation
+int pps_init(uint32_t pulse_period_ms) {
+
+// use pulse from on board RTC chip as time base with fixed frequency
 #if defined RTC_INT && defined RTC_CLK
 
   // setup external interupt for active low RTC INT pin
@@ -121,13 +123,16 @@ int pps_init(uint32_t clk_freq_ms) {
   }
   return 1; // success
 
+  #elif defined RTC_INT && defined HAS_GPS
+
 #else
-  // use clock with adjustable frequency
-  if (clk_freq_ms) {
+  // use ESP32 hardware timer as time base with adjustable frequency
+  if (pulse_period_ms) {
     ESP_LOGI(TAG, "Time base ESP32 clock");
-    clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
+    clockCycle =
+        timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
     timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
-    timerAlarmWrite(clockCycle, 10 * clk_freq_ms, true); //ms
+    timerAlarmWrite(clockCycle, 10 * pulse_period_ms, true); // ms
   } else {
     ESP_LOGE(TAG, "Invalid pulse clock frequency");
     return 0; // failure
@@ -138,7 +143,8 @@ int pps_init(uint32_t clk_freq_ms) {
 
 void pps_start() {
 #ifdef RTC_INT // start external clock
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
+  //attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, RISING);
 #else // start internal clock
   timerAlarmEnable(clockCycle);
 #endif
