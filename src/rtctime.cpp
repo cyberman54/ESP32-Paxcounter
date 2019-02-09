@@ -105,8 +105,18 @@ float get_rtctemp(void) {
 // helper function to setup a pulse for time synchronisation
 int pps_init(uint32_t pulse_period_ms) {
 
+// use time pulse from GPS as time base with fixed 1Hz frequency
+#if defined GPS_INT && defined GPS_CLK
+
+// setup external interupt for active low RTC INT pin
+  pinMode(GPS_INT, INPUT_PULLDOWN);
+
+  // setup external rtc 1Hz clock as pulse per second clock
+  ESP_LOGI(TAG, "Time base GPS timepulse");
+  return 1; // success
+
 // use pulse from on board RTC chip as time base with fixed frequency
-#if defined RTC_INT && defined RTC_CLK
+#elif defined RTC_INT && defined RTC_CLK
 
   // setup external interupt for active low RTC INT pin
   pinMode(RTC_INT, INPUT_PULLUP);
@@ -123,9 +133,7 @@ int pps_init(uint32_t pulse_period_ms) {
   }
   return 1; // success
 
-  #elif defined RTC_INT && defined HAS_GPS
-
-#else
+ #else
   // use ESP32 hardware timer as time base with adjustable frequency
   if (pulse_period_ms) {
     ESP_LOGI(TAG, "Time base ESP32 clock");
@@ -138,13 +146,15 @@ int pps_init(uint32_t pulse_period_ms) {
     return 0; // failure
   }
   return 1; // success
+
 #endif
 }
 
 void pps_start() {
-#ifdef RTC_INT // start external clock
-  //attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, RISING);
+#ifdef GPS_INT // start external clock
+  attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
+#elif defined RTC_INT // start external clock
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
 #else // start internal clock
   timerAlarmEnable(clockCycle);
 #endif
