@@ -19,8 +19,12 @@
 #define HAS_BUTTON GPIO_NUM_39 // on board button (next to reset)
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
+
+// GPS settings
 #define HAS_GPS 1 // use on board GPS
-#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M or 7M with default configuration
+#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M
+//#define GPS_INT GPIO_NUM_34 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO34
+//#define GPS_CLK (1000) // pulse length 100ms, accuracy +/- 3 *e-8 [nanoseconds] = 0,95sec / year
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
@@ -33,6 +37,12 @@
 //#define MY_OLED_SCL SCL
 //#define MY_OLED_RST U8X8_PIN_NONE
 //#define DISPLAY_FLIP  1 // use if display is rotated
+
+// Settings for DCF77 interface
+//#define HAS_DCF77 GPIO_NUM_13
+
+// Settings for IF482 interface
+//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
 
 // user defined sensors (if connected)
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors

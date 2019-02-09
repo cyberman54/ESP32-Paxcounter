@@ -2,7 +2,7 @@
 #include "senddata.h"
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
-void SendPayload(uint8_t port) {
+void SendPayload(uint8_t port, sendprio_t prio) {
 
   MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
 
@@ -24,8 +24,8 @@ void SendPayload(uint8_t port) {
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
   // enqueue message in device's send queues
-  lora_enqueuedata(&SendBuffer);
-  spi_enqueuedata(&SendBuffer);
+  lora_enqueuedata(&SendBuffer, prio);
+  spi_enqueuedata(&SendBuffer, prio);
 
 } // SendPayload
 
@@ -55,7 +55,7 @@ void sendCounter() {
       }
 #endif
 
-      SendPayload(COUNTERPORT);
+      SendPayload(COUNTERPORT, prio_normal);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
         reset_counters(); // clear macs container and reset all counters
@@ -68,7 +68,7 @@ void sendCounter() {
     case MEMS_DATA:
       payload.reset();
       payload.addBME(bme_status);
-      SendPayload(BMEPORT);
+      SendPayload(BMEPORT, prio_normal);
       break;
 #endif
 
@@ -79,7 +79,7 @@ void sendCounter() {
         gps_read();
         payload.reset();
         payload.addGPS(gps_status);
-        SendPayload(GPSPORT);
+        SendPayload(GPSPORT, prio_high);
       } else
         ESP_LOGD(TAG, "No valid GPS position");
       break;
@@ -89,17 +89,17 @@ void sendCounter() {
     case SENSOR1_DATA:
       payload.reset();
       payload.addSensor(sensor_read(1));
-      SendPayload(SENSOR1PORT);
+      SendPayload(SENSOR1PORT, prio_normal);
       break;
     case SENSOR2_DATA:
       payload.reset();
       payload.addSensor(sensor_read(2));
-      SendPayload(SENSOR2PORT);
+      SendPayload(SENSOR2PORT, prio_normal);
       break;
     case SENSOR3_DATA:
       payload.reset();
       payload.addSensor(sensor_read(3));
-      SendPayload(SENSOR3PORT);
+      SendPayload(SENSOR3PORT, prio_normal);
       break;
 #endif
 
@@ -107,7 +107,7 @@ void sendCounter() {
     case BATT_DATA:
       payload.reset();
       payload.addVoltage(read_voltage());
-      SendPayload(BATTPORT);
+      SendPayload(BATTPORT, prio_normal);
       break;
 #endif
 

@@ -11,7 +11,6 @@
 #include "bme680mems.h"
 #endif
 
-// Needed for RTC time sync if RTC present on board
 #ifdef HAS_RTC
 #include "rtctime.h"
 #endif

@@ -1,5 +1,3 @@
-#if defined HAS_IF482 && defined RTC_INT
-
 /* NOTE:
 The IF482 Generator needs an high precise 1 Hz clock signal which cannot be
 acquired in suitable precision on the ESP32 SoC itself. Additional clocking
@@ -79,42 +77,58 @@ not evaluated by model BU-190
 */
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifdef HAS_IF482
+
+#ifdef HAS_DCF77
+#error You must define at most one of IF482 or DCF77!
+#endif
+
 #include "if482.h"
 
 // Local logging tag
 static const char TAG[] = "main";
 
-TaskHandle_t IF482Task;
+#define IF482_FRAME_SIZE (17)
+#define IF482_PULSE_DURATION (1000)
+
+// select internal / external clock
+#if defined RTC_INT && defined RTC_CLK
+#define PPS RTC_CLK
+#elif defined GPS_INT && defined GPS_CLK
+#define PPS GPS_CLK
+#else
+#define PPS IF482_PULSE_DURATION
+#endif
 
 HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
-// initialize and configure GPS
+// initialize and configure IF482 Generator
 int if482_init(void) {
 
   // open serial interface
   IF482.begin(HAS_IF482);
 
-  // use external rtc 1Hz clock for triggering IF482 telegram
-  if (I2C_MUTEX_LOCK()) {
-    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
-    I2C_MUTEX_UNLOCK();
-  } else {
-    ESP_LOGE(TAG, "I2c bus busy - IF482 initialization error");
-    return 0;
-  }
-  pinMode(RTC_INT, INPUT_PULLUP);
-  return 1;
+  // start if482 serial output feed task
+  xTaskCreatePinnedToCore(if482_loop,  // task function
+                          "if482loop", // name of task
+                          2048,        // stack size of task
+                          (void *)1,   // parameter of the task
+                          3,           // priority of the task
+                          &ClockTask,  // task handle
+                          0);          // CPU core
 
+  assert(ClockTask); // has clock task started?
+
+  timepulse_init(PPS); // setup pulse
+  timepulse_start();   // start pulse
+
+  return 1; // success
 } // if482_init
 
-String if482Telegram(time_t tt) {
+String IF482_Out(time_t tt) {
 
   time_t t = myTZ.toLocal(tt);
-
-  char mon;
-  char buf[14] = "000000F000000";
-  char out[17];
+  char mon, buf[14], out[IF482_FRAME_SIZE];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
   case timeSet:           // time is set and is synced
@@ -128,12 +142,16 @@ String if482Telegram(time_t tt) {
     break;
   } // switch
 
-  if ((timeStatus() == timeSet) ||
-      (timeStatus() == timeNeedsSync)) // do we have valid time?
-    snprintf(buf, sizeof buf, "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
+  // do we have confident time/date?
+  if ((timeStatus() == timeSet) || (timeStatus() == timeNeedsSync))
+    snprintf(buf, sizeof(buf), "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
              month(t), day(t), weekday(t), hour(t), minute(t), second(t));
+  else
+    snprintf(buf, sizeof(buf), "000000F000000"); // no confident time/date
 
-  snprintf(out, sizeof out, "O%cL%s\r", mon, buf);
+  // output IF482 telegram
+  snprintf(out, sizeof(out), "O%cL%s\r", mon, buf);
+  ESP_LOGD(TAG, "IF482 = %s", out);
   return out;
 }
 
@@ -142,16 +160,12 @@ void if482_loop(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
   TickType_t wakeTime;
-  time_t t, tt;
   const TickType_t timeOffset =
       pdMS_TO_TICKS(IF482_OFFSET); // duration of telegram transmit
   const TickType_t startTime = xTaskGetTickCount(); // now
 
-  // wait until begin of a new second
-  t = tt = now();
-  do {
-    tt = now();
-  } while (t == tt);
+  sync_clock(now());  // wait until begin of a new second
+  BitsPending = true; // start blink in display
 
   // take timestamp at moment of start of new second
   const TickType_t shotTime = xTaskGetTickCount() - startTime - timeOffset;
@@ -164,18 +178,22 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-    // now we're synced to start of second tt and wait
-    // until it's time to start transmit telegram for tt+1
+// select clock scale
+#if (PPS == IF482_PULSE_DURATION) // we don't need clock rescaling
+    // wait until it's time to start transmit telegram for next second
     vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
-    IF482.print(if482Telegram(now() + 1));
-  }
-  vTaskDelete(IF482Task); // shoud never be reached
-} // if482_loop()
+    IF482.print(IF482_Out(now() + 1));
 
-// interrupt service routine triggered by RTC 1Hz precise clock
-void IRAM_ATTR IF482IRQ() {
-  xTaskNotifyFromISR(IF482Task, xTaskGetTickCountFromISR(), eSetBits, NULL);
-  portYIELD_FROM_ISR();
-}
+#elif (PPS > IF482_PULSE_DURATION) // we need upclocking
+    for (uint8_t i = 1; i <= PPS / IF482_PULSE_DURATION; i++) {
+      vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
+      IF482.print(IF482_Out(now() + 1));
+    }
+
+#elif (PPS < IF482_PULSE_DURATION) // we need downclocking, not yet implemented
+#error Timepulse is too low for IF482!
+#endif
+  }
+} // if482_loop()
 
 #endif // HAS_IF482

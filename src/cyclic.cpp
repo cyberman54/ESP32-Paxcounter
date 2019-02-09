@@ -41,7 +41,7 @@ void doHousekeeping() {
   if ((millis() >= nextRTCTimeSync) && (timeStatus() == timeSet)) {
     nextRTCTimeSync = millis() + TIME_WRITE_INTERVAL_RTC *
                                      60000; // set up next time sync period
-    if (!set_rtctime(now())) // epoch time
+    if (!set_rtctime(now()))                // epoch time
       ESP_LOGE(TAG, "RTC set time failure");
     else
       ESP_LOGI(TAG, "RTC time updated");
@@ -49,9 +49,6 @@ void doHousekeeping() {
 #endif
 
   // task storage debugging //
-  ESP_LOGD(TAG, "Wifiloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(wifiSwitchTask),
-           eTaskGetState(wifiSwitchTask));
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
@@ -62,6 +59,10 @@ void doHousekeeping() {
 #ifdef HAS_BME
   ESP_LOGD(TAG, "Bmeloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
+#endif
+#ifdef HAS_DCF77
+  ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(ClockTask), eTaskGetState(ClockTask));
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
@@ -88,9 +89,9 @@ void doHousekeeping() {
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
              ESP.getMinFreeHeap(), ESP.getFreeHeap());
-    SendPayload(COUNTERPORT); // send data before clearing counters
-    reset_counters();         // clear macs container and reset all counters
-    get_salt();               // get new salt for salting hashes
+    SendPayload(COUNTERPORT, prio_high); // send data before clearing counters
+    reset_counters(); // clear macs container and reset all counters
+    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreeHeap() <= MEM_LOW) // check again
       do_reset();                        // memory leak, reset device
@@ -100,9 +101,9 @@ void doHousekeeping() {
 #ifdef BOARD_HAS_PSRAM
   if (ESP.getMinFreePsram() <= MEM_LOW) {
     ESP_LOGI(TAG, "PSRAM full, counter cleared");
-    SendPayload(COUNTERPORT); // send data before clearing counters
-    reset_counters();         // clear macs container and reset all counters
-    get_salt();               // get new salt for salting hashes
+    SendPayload(COUNTERPORT, prio_high); // send data before clearing counters
+    reset_counters(); // clear macs container and reset all counters
+    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreePsram() <= MEM_LOW) // check again
       do_reset();                         // memory leak, reset device

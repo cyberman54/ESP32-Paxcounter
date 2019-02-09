@@ -82,7 +82,7 @@ private:
   uint8_t cursor;
 
 #else
-#error "No valid payload converter defined"
+#error No valid payload converter defined!
 #endif
 };
 

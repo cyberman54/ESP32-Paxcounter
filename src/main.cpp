@@ -27,33 +27,33 @@ Uused tasks and timers:
 
 Task          Core  Prio  Purpose
 ====================================================================================
-wifiloop      0     4     rotates wifi channels
 ledloop       0     3     blinks LEDs
-if482loop     1     3     serial feed of IF482 time telegrams
+if482loop     0     3     generates serial feed of IF482 time telegrams
+dcf77loop     0     3     generates DCF77 timeframe pulses
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
-irqhandler    1     1     executes tasks triggered by irq
+irqhandler    1     1     executes tasks triggered by hw irq, see table below
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
-IDLE          1     0     ESP32 arduino scheduler
+IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
 
 Tasks using i2c bus all must have same priority, because using mutex semaphore
 (irqhandler, bmeloop)
 
-ESP32 hardware timers
+ESP32 hardware irq timers
 ================================
  0	triggers display refresh
- 1	triggers Wifi channel switch
+ 1  triggers DCF77 clock signal
  2	triggers send payload cycle
  3	triggers housekeeping cycle
 
  RTC hardware timer (if present)
 ================================
- triggers IF482 clock generator
+ triggers IF482 clock signal
 
 */
 
@@ -65,9 +65,14 @@ char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
-hw_timer_t *channelSwitch = NULL, *sendCycle = NULL, *homeCycle = NULL,
-           *displaytimer = NULL; // irq tasks
-TaskHandle_t irqHandlerTask, wifiSwitchTask;
+bool volatile BitsPending = false;  // DCF77 or IF482 ticker indicator
+
+hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
+#ifdef HAS_DISPLAY
+hw_timer_t *displaytimer = NULL;
+#endif
+
+TaskHandle_t irqHandlerTask;
 SemaphoreHandle_t I2Caccess;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
@@ -93,7 +98,7 @@ void setup() {
   char features[100] = "";
 
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
-  if ((I2Caccess) != NULL)
+  if (I2Caccess)
     xSemaphoreGive((I2Caccess)); // Flag the i2c bus available for use
 
     // disable brownout detection
@@ -305,11 +310,6 @@ void setup() {
   timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
   timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
 
-  // setup channel rotation trigger IRQ using esp32 hardware timer 1
-  channelSwitch = timerBegin(1, 800, true);
-  timerAttachInterrupt(channelSwitch, &ChannelSwitchIRQ, true);
-  timerAlarmWrite(channelSwitch, cfg.wifichancycle * 1000, true);
-
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PLAIN");
@@ -333,6 +333,14 @@ void setup() {
   setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
 #endif // HAS_RTC
 
+#if defined HAS_DCF77
+  strcat_P(features, " DCF77");
+#endif
+
+#if (defined HAS_IF482) && (defined RTC_INT)
+  strcat_P(features, " IF482");
+#endif
+
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
 
@@ -343,7 +351,7 @@ void setup() {
 #endif
 #endif
 
-  // start wifi in monitor mode and start channel rotation task on core 0
+  // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
   wifi_sniffer_init();
   // initialize salt value using esp_random() called by random() in
@@ -360,16 +368,6 @@ void setup() {
                           1,               // priority of the task
                           &irqHandlerTask, // task handle
                           1);              // CPU core
-
-  // start wifi channel rotation task
-  ESP_LOGI(TAG, "Starting Wifi Channel rotation...");
-  xTaskCreatePinnedToCore(switchWifiChannel, // task function
-                          "wifiloop",        // name of task
-                          2048,              // stack size of task
-                          NULL,              // parameter of the task
-                          4,                 // priority of the task
-                          &wifiSwitchTask,   // task handle
-                          0);                // CPU core
 
 // initialize bme
 #ifdef HAS_BME
@@ -394,7 +392,6 @@ void setup() {
 #endif
   timerAlarmEnable(sendCycle);
   timerAlarmEnable(homeCycle);
-  timerAlarmEnable(channelSwitch);
 
 // start button interrupt
 #ifdef HAS_BUTTON
@@ -419,21 +416,12 @@ void setup() {
   setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
 #endif
 
-#if defined HAS_IF482 && defined RTC_INT
-  strcat_P(features, " IF482");
-  assert(if482_init());
+#ifdef HAS_IF482
   ESP_LOGI(TAG, "Starting IF482 Generator...");
-  xTaskCreatePinnedToCore(if482_loop,  // task function
-                          "if482loop", // name of task
-                          2048,        // stack size of task
-                          (void *)1,   // parameter of the task
-                          3,           // priority of the task
-                          &IF482Task,  // task handle
-                          0);          // CPU core
-
-  // setup external interupt for active low RTC INT pin
-  assert(IF482Task != NULL); // has if482loop task started?
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), IF482IRQ, FALLING);
+  assert(if482_init());
+#elif defined HAS_DCF77
+  ESP_LOGI(TAG, "Starting DCF77 Generator...");
+  assert(dcf77_init());
 #endif
 
 } // setup()

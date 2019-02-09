@@ -18,6 +18,11 @@ int gps_init(void) {
 
   int ret = 1;
 
+  if (!gps_config()) {
+    ESP_LOGE(TAG, "GPS chip initializiation error");
+    return 0;
+  }
+
 #if defined GPS_SERIAL
   GPS_Serial.begin(GPS_SERIAL);
   ESP_LOGI(TAG, "Using serial GPS");
@@ -40,6 +45,21 @@ int gps_init(void) {
 
   return ret;
 } // gps_init()
+
+// detect gps chipset type and configure it with device specific settings
+int gps_config() {
+  int rslt = 1; // success
+#if defined GPS_SERIAL
+
+  /* to come */
+
+#elif defined GPS_I2C
+
+  /* to come */
+
+#endif
+  return rslt;
+}
 
 // read GPS data and cast to global struct
 void gps_read() {
@@ -73,9 +93,8 @@ time_t get_gpstime(void) {
   if ((gps.time.age() < 1500) && (gps.time.isValid())) {
     t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
-    ESP_LOGD(TAG, "GPS time: %d/%d/%d %d:%d:%d", gps.date.year(),
-             gps.date.month(), gps.date.day(), gps.time.hour(),
-             gps.time.minute(), gps.time.second());
+    ESP_LOGD(TAG, "GPS time: %4d/%02d/%02d %02d:%02d:%02d", year(t), month(t),
+             day(t), hour(t), minute(t), second(t));
   } else {
     ESP_LOGW(TAG, "GPS has no confident time");
   }

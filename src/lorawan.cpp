@@ -358,6 +358,7 @@ esp_err_t lora_stack_init() {
 #ifndef HAS_LORA
   return ESP_OK; // continue main program
 #else
+  assert(SEND_QUEUE_SIZE);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
     ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
@@ -397,11 +398,20 @@ esp_err_t lora_stack_init() {
 #endif
 }
 
-void lora_enqueuedata(MessageBuffer_t *message) {
+void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   // enqueue message in LORA send queue
 #ifdef HAS_LORA
-  BaseType_t ret =
-      xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
+  BaseType_t ret;
+  switch (prio) {
+  case prio_high:
+  ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
+    break;
+  case prio_low:
+  case prio_normal:
+  default:
+    ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
+    break;
+  }
   if (ret == pdTRUE) {
     ESP_LOGI(TAG, "%d bytes enqueued for LORA interface", message->MessageSize);
   } else {

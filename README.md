@@ -51,7 +51,7 @@ Depending on board hardware following features are supported:
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
 - Environmental sensor (Bosch BME680 I2C)
 - Real Time Clock (Maxim DS3231 I2C)
-- IF482 time telegram generator (serial port)
+- IF482 (serial) and DCF77 (gpio) time telegram generator
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -137,6 +137,10 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Blue blink: LoRaWAN data transmit in progress or pending
 - Red long blink: LoRaWAN stack error
 - White long blink: Known Beacon detected
+
+# Clock controller
+
+Paxcounter can be used to sync a clock which has DCF77 or IF482 time telegram input with an external time source. Use case of this function is to have paxcounter hardware integrated in clocks, and use it for both counting of pax and controlling the clock. Supported external time sources are GPS time, LORAWAN network time (v1.1) and on board RTC time. Precision of the synthetic DCF77 signal depends on precision of on board available time base. Supported are both external time base (e.g. timepulse pin of GPS chip or oscillator output of RTC chip) and internal ESP32 hardware timer. Selection of time base and clock frequency is done by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h).
 
 # Payload format
 

@@ -92,21 +92,25 @@ typedef struct {
   float gas;             // raw gas sensor signal
 } bmeStatus_t;
 
+enum sendprio_t { prio_low, prio_normal, prio_high };
+
 // global variables
 extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage; // display values
-extern hw_timer_t *channelSwitch, *sendCycle, *displaytimer;
+extern hw_timer_t *sendCycle, *displaytimer;
 extern SemaphoreHandle_t I2Caccess;
+extern bool volatile BitsPending;
 
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
-extern TaskHandle_t irqHandlerTask, wifiSwitchTask;
-extern Timezone myTZ; // make Timezone myTZ globally available
+extern TaskHandle_t irqHandlerTask;
+extern TimerHandle_t WifiChanTimer;
+extern Timezone myTZ;
 
 // application includes
 #include "led.h"
@@ -147,6 +151,10 @@ extern Timezone myTZ; // make Timezone myTZ globally available
 
 #ifdef HAS_IF482
 #include "if482.h"
+#endif
+
+#ifdef HAS_DCF77
+#include "dcf77.h"
 #endif
 
 #endif
