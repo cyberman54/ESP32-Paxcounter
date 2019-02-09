@@ -9,7 +9,7 @@ https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 #ifdef HAS_DCF77
 
 #ifdef IF_482
-#error "You must define at most one of IF482 or DCF77"
+#error You must define at most one of IF482 or DCF77!
 #endif
 
 #include "dcf77.h"
@@ -50,9 +50,9 @@ int dcf77_init(void) {
 
   assert(ClockTask); // has clock task started?
 
-  timepulse_init(PPS);              // setup pulse
+  timepulse_init(PPS);        // setup pulse
   DCF_Out(sync_clock(now())); // sync DCF time on next second
-  timepulse_start();                // start pulse
+  timepulse_start();          // start pulse
 
   return 1; // success
 } // ifdcf77_init
@@ -140,9 +140,8 @@ void dcf77_loop(void *pvParameters) {
       vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION));
     }
 
-#elif (PPS < DCF77_PULSE_DURATION) // we need downclocking
-    vTaskDelayUntil(&wakeTime, pdMS_TO_TICKS(DCF77_PULSE_DURATION - PPS));
-    DCF_Out(0);
+#elif (PPS < DCF77_PULSE_DURATION) // we need downclocking, not yet implemented
+#error Timepulse is too low for DCF77!
 #endif
   } // for
 } // dcf77_loop()

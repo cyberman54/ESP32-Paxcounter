@@ -437,5 +437,5 @@ void PayloadConvert::addButton(uint8_t value) {
 }
 
 #else
-#error "No valid payload converter defined"
+#error No valid payload converter defined!
 #endif

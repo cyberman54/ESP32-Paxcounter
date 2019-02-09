@@ -80,7 +80,7 @@ not evaluated by model BU-190
 #ifdef HAS_IF482
 
 #ifdef HAS_DCF77
-#error "You must define at most one of IF482 or DCF77"
+#error You must define at most one of IF482 or DCF77!
 #endif
 
 #include "if482.h"
@@ -99,7 +99,6 @@ static const char TAG[] = "main";
 #else
 #define PPS IF482_PULSE_DURATION
 #endif
-
 
 HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
@@ -191,10 +190,8 @@ void if482_loop(void *pvParameters) {
       IF482.print(IF482_Out(now() + 1));
     }
 
-#elif (PPS < IF482_PULSE_DURATION) // we need downclocking
-    IF482.print(IF482_Out(now() + 1));
-    vTaskDelayUntil(&wakeTime,
-                    shotTime - PPS); // sets waketime to moment of shot
+#elif (PPS < IF482_PULSE_DURATION) // we need downclocking, not yet implemented
+#error Timepulse is too low for IF482!
 #endif
   }
 } // if482_loop()
