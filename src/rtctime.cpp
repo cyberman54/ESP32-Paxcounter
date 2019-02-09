@@ -108,11 +108,16 @@ int timepulse_init(uint32_t pulse_period_ms) {
 // use time pulse from GPS as time base with fixed 1Hz frequency
 #if defined GPS_INT && defined GPS_CLK
 
-// setup external interupt for active low RTC INT pin
+  // setup external interupt for active low RTC INT pin
   pinMode(GPS_INT, INPUT_PULLDOWN);
-
   // setup external rtc 1Hz clock as pulse per second clock
-  ESP_LOGI(TAG, "Time base GPS timepulse");
+  ESP_LOGI(TAG, "Time base: GPS timepulse");
+  switch (GPS_CLK) {
+  case 1000:
+    break; // default GPS timepulse 1000ms
+  default:
+    goto pulse_period_error;
+  }
   return 1; // success
 
 // use pulse from on board RTC chip as time base with fixed frequency
@@ -120,11 +125,19 @@ int timepulse_init(uint32_t pulse_period_ms) {
 
   // setup external interupt for active low RTC INT pin
   pinMode(RTC_INT, INPUT_PULLUP);
-
   // setup external rtc 1Hz clock as pulse per second clock
-  ESP_LOGI(TAG, "Time base external clock");
+  ESP_LOGI(TAG, "Time base: external RTC timepulse");
   if (I2C_MUTEX_LOCK()) {
-    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+    switch (RTC_CLK) {
+    case 1000: // 1000ms
+      Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+      break;
+    case 1: // 1ms
+      Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1kHz);
+      break;
+    default:
+      goto pulse_period_error;
+    }
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
     I2C_MUTEX_UNLOCK();
   } else {
@@ -133,21 +146,23 @@ int timepulse_init(uint32_t pulse_period_ms) {
   }
   return 1; // success
 
- #else
+#else
   // use ESP32 hardware timer as time base with adjustable frequency
   if (pulse_period_ms) {
-    ESP_LOGI(TAG, "Time base ESP32 clock");
+    ESP_LOGI(TAG, "Time base: ESP32 hardware timer");
     clockCycle =
         timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
     timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
     timerAlarmWrite(clockCycle, 10 * pulse_period_ms, true); // ms
-  } else {
-    ESP_LOGE(TAG, "Invalid pulse clock frequency");
-    return 0; // failure
-  }
+  } else
+    goto pulse_period_error;
   return 1; // success
 
 #endif
+
+pulse_period_error:
+  ESP_LOGE(TAG, "Unknown timepulse period value");
+  return 0; // failure
 }
 
 void timepulse_start() {
@@ -155,7 +170,7 @@ void timepulse_start() {
   attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
 #elif defined RTC_INT // start external clock
   attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
-#else // start internal clock
+#else                 // start internal clock
   timerAlarmEnable(clockCycle);
 #endif
 }
