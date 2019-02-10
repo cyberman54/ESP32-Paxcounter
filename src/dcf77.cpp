@@ -39,6 +39,7 @@ int dcf77_init(void) {
 
   pinMode(HAS_DCF77, OUTPUT);
   set_DCF77_pin(dcf_low);
+  timepulse_init(PPS); // setup timepulse
 
   xTaskCreatePinnedToCore(dcf77_loop,  // task function
                           "dcf77loop", // name of task
@@ -49,8 +50,6 @@ int dcf77_init(void) {
                           0);          // CPU core
 
   assert(ClockTask); // has clock task started?
-
-  timepulse_init(PPS);        // setup pulse
   DCF_Out(sync_clock(now())); // sync DCF time on next second
   timepulse_start();          // start pulse
 

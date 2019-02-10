@@ -136,6 +136,7 @@ int timepulse_init(uint32_t pulse_period_ms) {
       Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1kHz);
       break;
     default:
+      I2C_MUTEX_UNLOCK();
       goto pulse_period_error;
     }
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);

@@ -107,6 +107,8 @@ int if482_init(void) {
 
   // open serial interface
   IF482.begin(HAS_IF482);
+  // setup timepulse
+  timepulse_init(PPS);
 
   // start if482 serial output feed task
   xTaskCreatePinnedToCore(if482_loop,  // task function
@@ -118,9 +120,7 @@ int if482_init(void) {
                           0);          // CPU core
 
   assert(ClockTask); // has clock task started?
-
-  timepulse_init(PPS); // setup pulse
-  timepulse_start();   // start pulse
+  timepulse_start(); // start pulse
 
   return 1; // success
 } // if482_init
@@ -161,7 +161,7 @@ void if482_loop(void *pvParameters) {
 
   TickType_t wakeTime;
   const TickType_t timeOffset =
-      pdMS_TO_TICKS(IF482_OFFSET); // duration of telegram transmit
+      tx_time(HAS_IF482); // duration of telegram transmit
   const TickType_t startTime = xTaskGetTickCount(); // now
 
   sync_clock(now());  // wait until begin of a new second
@@ -195,5 +195,16 @@ void if482_loop(void *pvParameters) {
 #endif
   }
 } // if482_loop()
+
+// helper function to calculate IF482 telegram serial tx time from serial
+// settings
+TickType_t tx_time(unsigned long baud, uint32_t config, int8_t rxPin,
+                   int8_t txPins) {
+
+  uint32_t datenbits = ((config & 0x0c) >> 2) + 5;
+  uint32_t startbits = ((config & 0x20) >> 5) + 1;
+  return pdMS_TO_TICKS(
+      round(((datenbits + startbits + 1) * IF482_FRAME_SIZE * 1000.0 / baud)));
+}
 
 #endif // HAS_IF482
