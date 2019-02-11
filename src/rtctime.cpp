@@ -1,5 +1,7 @@
 #include "rtctime.h"
 
+#define I2C_DELAY (12) // 12ms is i2c delay when saving time to RTC chip
+
 // Local logging tag
 static const char TAG[] = "main";
 
@@ -60,11 +62,13 @@ error:
 
 } // rtc_init()
 
-int set_rtctime(time_t t) { // t is epoch time starting 1.1.1970
+int set_rtctime(time_t t) { // t is seconds epoch time starting 1.1.1970
   if (I2C_MUTEX_LOCK()) {
-    Rtc.SetDateTime(RtcDateTime(t));
+    time_t tt = sync_clock(t); // wait for top of second
+    Rtc.SetDateTime(RtcDateTime(tt));
     I2C_MUTEX_UNLOCK(); // release i2c bus access
-    return 1;           // success
+    ESP_LOGI(TAG, "RTC calibrated");
+    return 1; // success
   }
   return 0; // failure
 } // set_rtctime()
@@ -176,15 +180,11 @@ void timepulse_start() {
 #endif
 }
 
-// helper function to sync phase of DCF output signal to start of second t
-uint8_t sync_clock(time_t t) {
-  time_t tt = t;
-  // delay until start of next second
-  do {
-    tt = now();
-  } while (t == tt);
-  ESP_LOGI(TAG, "Sync on Sec %d", second(tt));
-  return second(tt);
+// helper function to sync time_t of top of next second
+time_t sync_clock(time_t t) {
+  while (millis() % 1000)
+    ; // wait for milli seconds to be zero before setting new time
+  return (now());
 }
 
 // interrupt service routine triggered by either rtc pps or esp32 hardware

@@ -115,19 +115,19 @@ int if482_init(void) {
                           "if482loop", // name of task
                           2048,        // stack size of task
                           (void *)1,   // parameter of the task
-                          3,           // priority of the task
+                          4,           // priority of the task
                           &ClockTask,  // task handle
                           0);          // CPU core
 
   assert(ClockTask); // has clock task started?
-  timepulse_start(); // start pulse
+  // timepulse_start(); // start pulse
 
   return 1; // success
 } // if482_init
 
 String IF482_Out(time_t tt) {
 
-  time_t t = myTZ.toLocal(tt);
+  time_t t = 1 + myTZ.toLocal(tt);
   char mon, buf[14], out[IF482_FRAME_SIZE];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
@@ -159,18 +159,32 @@ void if482_loop(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
+  time_t tOut;
   TickType_t wakeTime;
-  const TickType_t timeOffset =
-      tx_time(HAS_IF482); // duration of telegram transmit
-  const TickType_t startTime = xTaskGetTickCount(); // now
+  const TickType_t tTx = tx_time(HAS_IF482); // duration of telegram transmit
+  BitsPending = true;                        // start blink in display
 
-  sync_clock(now());  // wait until begin of a new second
-  BitsPending = true; // start blink in display
+  // phase 1: sync task on top of second
 
-  // take timestamp at moment of start of new second
-  const TickType_t shotTime = xTaskGetTickCount() - startTime - timeOffset;
+  sync_clock(now());
 
-  // task remains in blocked state until it is notified by isr
+  const TickType_t t0 = xTaskGetTickCount(); // moment of start top of second
+
+  timepulse_start(); // start timepulse
+
+  xTaskNotifyWait(
+      0x00,           // don't clear any bits on entry
+      ULONG_MAX,      // clear all bits on exit
+      &wakeTime,      // receives moment of call from isr
+      portMAX_DELAY); // wait forever (missing error handling here...)
+
+  const TickType_t tOffset = wakeTime - t0;
+  const TickType_t tShot =
+      (tOffset < tTx) ? (1000 - tOffset - tTx) : (tOffset - tTx);
+
+  ESP_LOGI(TAG, "IF482 signal synced with precision %dms", 1000 - tOffset);
+
+  // phase 2: sync task on time pulse interrupt
   for (;;) {
     xTaskNotifyWait(
         0x00,           // don't clear any bits on entry
@@ -178,22 +192,25 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
+    tOut = now() + 1; // next second after waketime
+
 // select clock scale
 #if (PPS == IF482_PULSE_DURATION) // we don't need clock rescaling
     // wait until it's time to start transmit telegram for next second
-    vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
-    IF482.print(IF482_Out(now() + 1));
+    vTaskDelayUntil(&wakeTime, tShot); // sets waketime to moment of tShot
+    IF482.print(IF482_Out(tOut));
 
 #elif (PPS > IF482_PULSE_DURATION) // we need upclocking
     for (uint8_t i = 1; i <= PPS / IF482_PULSE_DURATION; i++) {
-      vTaskDelayUntil(&wakeTime, shotTime); // sets waketime to moment of shot
-      IF482.print(IF482_Out(now() + 1));
+      vTaskDelayUntil(&wakeTime, tShot); // sets waketime to moment of shot
+      IF482.print(IF482_Out(tOut));
     }
 
 #elif (PPS < IF482_PULSE_DURATION) // we need downclocking, not yet implemented
 #error Timepulse is too low for IF482!
 #endif
-  }
+  } // forever
+
 } // if482_loop()
 
 // helper function to calculate IF482 telegram serial tx time from serial

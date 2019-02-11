@@ -23,6 +23,6 @@ float get_rtctemp(void);
 void IRAM_ATTR CLOCKIRQ();
 int timepulse_init(uint32_t pps_freq);
 void timepulse_start();
-uint8_t sync_clock(time_t t);
+time_t sync_clock(time_t t);
 
 #endif // _RTCTIME_H
