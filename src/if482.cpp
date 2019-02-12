@@ -127,7 +127,7 @@ int if482_init(void) {
 
 String IF482_Out(time_t tt) {
 
-  time_t t = 1 + myTZ.toLocal(tt);
+  time_t t = myTZ.toLocal(tt);
   char mon, buf[14], out[IF482_FRAME_SIZE];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
@@ -159,16 +159,17 @@ void if482_loop(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-  time_t tOut;
   TickType_t wakeTime;
   const TickType_t tTx = tx_time(HAS_IF482); // duration of telegram transmit
   BitsPending = true;                        // start blink in display
 
   // phase 1: sync task on top of second
 
-  sync_clock(now());
-
   const TickType_t t0 = xTaskGetTickCount(); // moment of start top of second
+
+  sync_clock(now()); // delay until top of second
+
+  // const TickType_t t0 = xTaskGetTickCount(); // moment of start top of second
 
   timepulse_start(); // start timepulse
 
@@ -182,7 +183,7 @@ void if482_loop(void *pvParameters) {
   const TickType_t tShot =
       (tOffset < tTx) ? (1000 - tOffset - tTx) : (tOffset - tTx);
 
-  ESP_LOGI(TAG, "IF482 signal synced with precision %dms", 1000 - tOffset);
+  ESP_LOGI(TAG, "IF482 signal synced with clock, tShot=%dms", tShot);
 
   // phase 2: sync task on time pulse interrupt
   for (;;) {
@@ -192,18 +193,16 @@ void if482_loop(void *pvParameters) {
         &wakeTime,      // receives moment of call from isr
         portMAX_DELAY); // wait forever (missing error handling here...)
 
-    tOut = now() + 1; // next second after waketime
-
 // select clock scale
 #if (PPS == IF482_PULSE_DURATION) // we don't need clock rescaling
     // wait until it's time to start transmit telegram for next second
     vTaskDelayUntil(&wakeTime, tShot); // sets waketime to moment of tShot
-    IF482.print(IF482_Out(tOut));
+    IF482.print(IF482_Out(now() + 1));
 
 #elif (PPS > IF482_PULSE_DURATION) // we need upclocking
     for (uint8_t i = 1; i <= PPS / IF482_PULSE_DURATION; i++) {
       vTaskDelayUntil(&wakeTime, tShot); // sets waketime to moment of shot
-      IF482.print(IF482_Out(tOut));
+      IF482.print(IF482_Out(now() + 1));
     }
 
 #elif (PPS < IF482_PULSE_DURATION) // we need downclocking, not yet implemented
@@ -213,15 +212,14 @@ void if482_loop(void *pvParameters) {
 
 } // if482_loop()
 
-// helper function to calculate IF482 telegram serial tx time from serial
-// settings
+// calculate serial tx time from IF482 serial settings
 TickType_t tx_time(unsigned long baud, uint32_t config, int8_t rxPin,
                    int8_t txPins) {
 
   uint32_t datenbits = ((config & 0x0c) >> 2) + 5;
-  uint32_t startbits = ((config & 0x20) >> 5) + 1;
+  uint32_t stopbits = ((config & 0x20) >> 5) + 1;
   return pdMS_TO_TICKS(
-      round(((datenbits + startbits + 1) * IF482_FRAME_SIZE * 1000.0 / baud)));
+      round(((1 + datenbits + stopbits) * IF482_FRAME_SIZE * 1000.0 / baud)));
 }
 
 #endif // HAS_IF482
