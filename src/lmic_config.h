@@ -33,7 +33,8 @@
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) this value if you are
-// limited on battery.
+// limited on battery. 
+// ATTN: VALUES > 7 WILL CAUSE RECEPTION AND JOIN PROBLEMS WITH HIGH SF RATES
 #define CLOCK_ERROR_PROCENTAGE 3
 
 // Set this to 1 to enable some basic debug output (using printf) about
