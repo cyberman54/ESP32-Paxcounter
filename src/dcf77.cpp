@@ -49,17 +49,17 @@ int dcf77_init(void) {
                           &ClockTask,  // task handle
                           0);          // CPU core
 
-  assert(ClockTask); // has clock task started?
-  DCF_Out(sync_clock(now())); // sync DCF time on next second
-  timepulse_start();          // start pulse
+  assert(ClockTask);                  // has clock task started?
+  DCF_Out(second(now())); // sync DCF time on next second
+  timepulse_start();                  // start pulse
 
   return 1; // success
 } // ifdcf77_init
 
 // called every 100msec by hardware timer to pulse out DCF signal
-void DCF_Out(uint8_t startOffset) {
+void DCF_Out(uint8_t startOffset_sec) {
 
-  static uint8_t bit = startOffset;
+  static uint8_t bit = startOffset_sec;
   static uint8_t pulse = 0;
 #ifdef TIME_SYNC_INTERVAL_DCF
   static uint32_t nextDCFsync = millis() + TIME_SYNC_INTERVAL_DCF * 60000;
@@ -103,7 +103,7 @@ void DCF_Out(uint8_t startOffset) {
 // recalibrate clock after a fixed timespan, do this in 59th second
 #ifdef TIME_SYNC_INTERVAL_DCF
         if ((millis() >= nextDCFsync)) {
-          sync_clock(now()); // in second 58,90x -> waiting for second 59
+          sync_clock(now()); // waiting for second 59
           nextDCFsync = millis() + TIME_SYNC_INTERVAL_DCF *
                                        60000; // set up next time sync period
         }
