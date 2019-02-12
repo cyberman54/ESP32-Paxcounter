@@ -41,7 +41,7 @@ void doHousekeeping() {
   if ((millis() >= nextRTCTimeSync) && (timeStatus() == timeSet)) {
     nextRTCTimeSync = millis() + TIME_WRITE_INTERVAL_RTC *
                                      60000; // set up next time sync period
-    if (!set_rtctime(now()))                // epoch time
+    if (!set_rtctime(now()))    // epoch time
       ESP_LOGE(TAG, "RTC set time failure");
     else
       ESP_LOGI(TAG, "RTC time updated");

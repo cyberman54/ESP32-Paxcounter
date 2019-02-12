@@ -73,7 +73,7 @@ hw_timer_t *displaytimer = NULL;
 #endif
 
 TaskHandle_t irqHandlerTask;
-SemaphoreHandle_t I2Caccess;
+SemaphoreHandle_t I2Caccess, TimePulse;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -99,7 +99,12 @@ void setup() {
 
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
   if (I2Caccess)
-    xSemaphoreGive((I2Caccess)); // Flag the i2c bus available for use
+    xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
+
+  TimePulse = xSemaphoreCreateMutex(); // for time pulse flip
+  if (TimePulse)
+    xSemaphoreTake(TimePulse, (TickType_t)10);
+    // Block TimePulse since we have no pulse yet
 
     // disable brownout detection
 #ifdef DISABLE_BROWNOUT

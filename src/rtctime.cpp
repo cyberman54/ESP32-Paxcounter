@@ -191,5 +191,8 @@ time_t sync_clock(time_t t) {
 // timer
 void IRAM_ATTR CLOCKIRQ() {
   xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
+#ifdef GPS_INT
+  xSemaphoreGiveFromISR(TimePulse, NULL);
+#endif
   portYIELD_FROM_ISR();
 }
