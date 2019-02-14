@@ -13,6 +13,7 @@ extern RtcDS3231<TwoWire> Rtc; // make RTC instance globally available
 
 extern TaskHandle_t ClockTask;
 extern hw_timer_t *clockCycle;
+extern bool volatile TimePulseTick;
 
 int rtc_init(void);
 int set_rtctime(uint32_t t);
@@ -23,6 +24,6 @@ float get_rtctemp(void);
 void IRAM_ATTR CLOCKIRQ();
 int timepulse_init(uint32_t pps_freq);
 void timepulse_start();
-time_t sync_clock(time_t t);
+void sync_clock(void);
 
 #endif // _RTCTIME_H

@@ -221,15 +221,12 @@ void refreshtheDisplay() {
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
 #else // we want a time display instead LoRa status
-    // update time/date display (line 6)
     time_t t = myTZ.toLocal(now());
     char timeState =
-        timeStatus() == timeSet ? timesyncSymbol : timeNosyncSymbol;
-    // make timestatus symbol blinking if pps line
-    if ((BitsPending) && (second(t) % 2))
-      timeState = ' ';
-    u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
-                timeState, day(t), printmonth[month(t)]);
+        (timeStatus() == timeSet) ? timesyncSymbol : timeNosyncSymbol;
+    char timePulse = TimePulseTick ? '.' : ':';
+    u8x8.printf("%02d:%02d%c%02d%c %2d.%3s", hour(t), minute(t), timePulse,
+                second(t), timeState, day(t), printmonth[month(t)]);
 #endif
 
     // update LMiC event display (line 7)

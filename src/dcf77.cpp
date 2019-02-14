@@ -17,6 +17,8 @@ https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 // Local logging tag
 static const char TAG[] = "main";
 
+bool volatile BitsPending = false;
+
 #define DCF77_FRAME_SIZE (60)
 #define DCF77_PULSE_DURATION (100)
 
@@ -35,8 +37,6 @@ uint8_t DCFtimeframe[DCF77_FRAME_SIZE];
 // initialize and configure DCF77 output
 int dcf77_init(void) {
 
-  BitsPending = false;
-
   pinMode(HAS_DCF77, OUTPUT);
   set_DCF77_pin(dcf_low);
   timepulse_init(PPS); // setup timepulse
@@ -49,9 +49,9 @@ int dcf77_init(void) {
                           &ClockTask,  // task handle
                           0);          // CPU core
 
-  assert(ClockTask);                  // has clock task started?
+  assert(ClockTask);      // has clock task started?
   DCF_Out(second(now())); // sync DCF time on next second
-  timepulse_start();                  // start pulse
+  timepulse_start();      // start pulse
 
   return 1; // success
 } // ifdcf77_init
@@ -70,7 +70,7 @@ void DCF_Out(uint8_t startOffset_sec) {
     if ((timeStatus() == timeSet) || (timeStatus() == timeNeedsSync)) {
       // prepare frame to send for next minute
       generateTimeframe(now() + DCF77_FRAME_SIZE + 1);
-      // start blinking symbol on display and kick off timer
+      // kick off output of telegram
       BitsPending = true;
     } else
       return;
@@ -103,7 +103,7 @@ void DCF_Out(uint8_t startOffset_sec) {
 // recalibrate clock after a fixed timespan, do this in 59th second
 #ifdef TIME_SYNC_INTERVAL_DCF
         if ((millis() >= nextDCFsync)) {
-          sync_clock(now()); // waiting for second 59
+          sync_clock(); // waiting for second 59
           nextDCFsync = millis() + TIME_SYNC_INTERVAL_DCF *
                                        60000; // set up next time sync period
         }

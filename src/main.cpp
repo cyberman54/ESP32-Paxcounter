@@ -65,7 +65,6 @@ char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
-bool volatile BitsPending = false;  // DCF77 or IF482 ticker indicator
 
 hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
 #ifdef HAS_DISPLAY
@@ -97,16 +96,14 @@ void setup() {
 
   char features[100] = "";
 
+  // create some semaphores for syncing / mutexing tasks
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
   if (I2Caccess)
     xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
 
-  TimePulse = xSemaphoreCreateMutex(); // for time pulse flip
-  if (TimePulse)
-    xSemaphoreTake(TimePulse, (TickType_t)10);
-    // Block TimePulse since we have no pulse yet
+  TimePulse = xSemaphoreCreateBinary(); // as signal that shows time pulse flip
 
-    // disable brownout detection
+  // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
@@ -146,10 +143,21 @@ void setup() {
            ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
   ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
            ESP.getFlashChipSpeed());
-  ESP_LOGI(TAG, "Wifi/BT software coexist version: %s", esp_coex_version_get());
+  ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
+
+#ifdef HAS_LORA
+  ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
+           LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
+
+  ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
+           ARDUINO_LMIC_VERSION_GET_MAJOR(ARDUINO_LMIC_VERSION),
+           ARDUINO_LMIC_VERSION_GET_MINOR(ARDUINO_LMIC_VERSION),
+           ARDUINO_LMIC_VERSION_GET_PATCH(ARDUINO_LMIC_VERSION),
+           ARDUINO_LMIC_VERSION_GET_LOCAL(ARDUINO_LMIC_VERSION));
+#endif
 
 #ifdef HAS_GPS
-  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
+  ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
 #endif // verbose
@@ -330,7 +338,7 @@ void setup() {
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
-  setSyncProvider(&get_rtctime);
+  setSyncProvider(&get_rtctime); // sync time now and then
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with RTC");
   else
@@ -408,7 +416,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 #ifdef HAS_GPS
-  setSyncProvider(&get_gpstime);
+  setSyncProvider(&get_gpstime); // sync time now and then
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with GPS");
   else {

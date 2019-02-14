@@ -161,16 +161,11 @@ void if482_loop(void *pvParameters) {
 
   TickType_t wakeTime;
   const TickType_t tTx = tx_time(HAS_IF482); // duration of telegram transmit
-  BitsPending = true;                        // start blink in display
 
   // phase 1: sync task on top of second
 
   const TickType_t t0 = xTaskGetTickCount(); // moment of start top of second
-
-  sync_clock(now()); // delay until top of second
-
-  // const TickType_t t0 = xTaskGetTickCount(); // moment of start top of second
-
+  sync_clock(); // delay until top of second
   timepulse_start(); // start timepulse
 
   xTaskNotifyWait(

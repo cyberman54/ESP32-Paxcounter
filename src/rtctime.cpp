@@ -7,104 +7,7 @@ static const char TAG[] = "main";
 
 TaskHandle_t ClockTask;
 hw_timer_t *clockCycle = NULL;
-
-#ifdef HAS_RTC // we have hardware RTC
-
-RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
-
-// initialize RTC
-int rtc_init(void) {
-
-  // return = 0 -> error / return = 1 -> success
-
-  // block i2c bus access
-  if (I2C_MUTEX_LOCK()) {
-
-    Wire.begin(HAS_RTC);
-    Rtc.Begin();
-
-    RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-
-    if (!Rtc.IsDateTimeValid()) {
-      ESP_LOGW(TAG,
-               "RTC has no valid RTC date/time, setting to compilation date");
-      Rtc.SetDateTime(compiled);
-    }
-
-    if (!Rtc.GetIsRunning()) {
-      ESP_LOGI(TAG, "RTC not running, starting now");
-      Rtc.SetIsRunning(true);
-    }
-
-    RtcDateTime now = Rtc.GetDateTime();
-
-    if (now < compiled) {
-      ESP_LOGI(TAG, "RTC date/time is older than compilation date, updating");
-      Rtc.SetDateTime(compiled);
-    }
-
-    // configure RTC chip
-    Rtc.Enable32kHzPin(false);
-    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
-
-  } else {
-    ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
-    goto error;
-  }
-
-  I2C_MUTEX_UNLOCK(); // release i2c bus access
-  ESP_LOGI(TAG, "RTC initialized");
-  return 1;
-
-error:
-  I2C_MUTEX_UNLOCK(); // release i2c bus access
-  return 0;
-
-} // rtc_init()
-
-int set_rtctime(time_t t) { // t is seconds epoch time starting 1.1.1970
-  if (I2C_MUTEX_LOCK()) {
-    time_t tt = sync_clock(t); // wait for top of second
-    Rtc.SetDateTime(RtcDateTime(tt));
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-    ESP_LOGI(TAG, "RTC calibrated");
-    return 1; // success
-  }
-  return 0; // failure
-} // set_rtctime()
-
-int set_rtctime(uint32_t t) { // t is epoch seconds starting 1.1.1970
-  return set_rtctime(static_cast<time_t>(t));
-  // set_rtctime()
-}
-
-time_t get_rtctime(void) {
-  // never call now() in this function, this would cause a recursion!
-  time_t t = 0;
-  // block i2c bus access
-  if (I2C_MUTEX_LOCK()) {
-    if (Rtc.IsDateTimeValid()) {
-      RtcDateTime tt = Rtc.GetDateTime();
-      t = tt.Epoch32Time();
-    } else {
-      ESP_LOGW(TAG, "RTC has no confident time");
-    }
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }
-  return t;
-} // get_rtctime()
-
-float get_rtctemp(void) {
-  // block i2c bus access
-  if (I2C_MUTEX_LOCK()) {
-    RtcTemperature temp = Rtc.GetTemperature();
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-    return temp.AsFloatDegC();
-  } // while
-  return 0;
-} // get_rtctemp()
-
-#endif // HAS_RTC
+bool volatile TimePulseTick = false;
 
 // helper function to setup a pulse for time synchronisation
 int timepulse_init(uint32_t pulse_period_ms) {
@@ -170,29 +73,139 @@ pulse_period_error:
   return 0; // failure
 }
 
-void timepulse_start() {
-#ifdef GPS_INT // start external clock
+void timepulse_start(void) {
+#ifdef GPS_INT // start external clock gps pps line
   attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
-#elif defined RTC_INT // start external clock
+#elif defined RTC_INT // start external clock rtc
   attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
-#else                 // start internal clock
+#else                 // start internal clock esp32 hardware timer
   timerAlarmEnable(clockCycle);
 #endif
 }
 
 // helper function to sync time_t of top of next second
-time_t sync_clock(time_t t) {
+void sync_clock(void) {
+// do we have a second time pulse? Then wait for next pulse
+#if defined(RTC_INT) || defined(GPS_INT)
+  // sync on top of next second by timepulse
+  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)) == pdTRUE) {
+    ESP_LOGI(TAG, "clock synced by timepulse");
+    return;
+  } else
+    ESP_LOGW(TAG, "Missing timepulse, thus clock can't be synced by second");
+#endif
+  // no external timepulse, thus we must use less precise internal system clock
   while (millis() % 1000)
     ; // wait for milli seconds to be zero before setting new time
-  return (now());
+  ESP_LOGI(TAG, "clock synced by systime");
+  return;
 }
 
 // interrupt service routine triggered by either rtc pps or esp32 hardware
 // timer
 void IRAM_ATTR CLOCKIRQ() {
   xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
-#ifdef GPS_INT
-  xSemaphoreGiveFromISR(TimePulse, NULL);
+#if defined(GPS_INT) || defined(RTC_INT)
+  xSemaphoreGiveFromISR(TimePulse, pdFALSE);
+  TimePulseTick = !TimePulseTick; // flip ticker
 #endif
   portYIELD_FROM_ISR();
 }
+
+#ifdef HAS_RTC // we have hardware RTC
+
+RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
+
+// initialize RTC
+int rtc_init(void) {
+
+  // return = 0 -> error / return = 1 -> success
+
+  // block i2c bus access
+  if (I2C_MUTEX_LOCK()) {
+
+    Wire.begin(HAS_RTC);
+    Rtc.Begin();
+
+    RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+
+    if (!Rtc.IsDateTimeValid()) {
+      ESP_LOGW(TAG,
+               "RTC has no valid RTC date/time, setting to compilation date");
+      Rtc.SetDateTime(compiled);
+    }
+
+    if (!Rtc.GetIsRunning()) {
+      ESP_LOGI(TAG, "RTC not running, starting now");
+      Rtc.SetIsRunning(true);
+    }
+
+    RtcDateTime now = Rtc.GetDateTime();
+
+    if (now < compiled) {
+      ESP_LOGI(TAG, "RTC date/time is older than compilation date, updating");
+      Rtc.SetDateTime(compiled);
+    }
+
+    // configure RTC chip
+    Rtc.Enable32kHzPin(false);
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
+
+  } else {
+    ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
+    goto error;
+  }
+
+  I2C_MUTEX_UNLOCK(); // release i2c bus access
+  ESP_LOGI(TAG, "RTC initialized");
+  return 1;
+
+error:
+  I2C_MUTEX_UNLOCK(); // release i2c bus access
+  return 0;
+
+} // rtc_init()
+
+int set_rtctime(time_t t) { // t is seconds epoch time starting 1.1.1970
+  if (I2C_MUTEX_LOCK()) {
+    sync_clock(); // wait for top of second
+    Rtc.SetDateTime(RtcDateTime(t));
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+    ESP_LOGI(TAG, "RTC calibrated");
+    return 1; // success
+  }
+  return 0; // failure
+} // set_rtctime()
+
+int set_rtctime(uint32_t t) { // t is epoch seconds starting 1.1.1970
+  return set_rtctime(static_cast<time_t>(t));
+  // set_rtctime()
+}
+
+time_t get_rtctime(void) {
+  // never call now() in this function, this would cause a recursion!
+  time_t t = 0;
+  // block i2c bus access
+  if (I2C_MUTEX_LOCK()) {
+    if (Rtc.IsDateTimeValid()) {
+      RtcDateTime tt = Rtc.GetDateTime();
+      t = tt.Epoch32Time();
+    } else {
+      ESP_LOGW(TAG, "RTC has no confident time");
+    }
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+  }
+  return t;
+} // get_rtctime()
+
+float get_rtctemp(void) {
+  // block i2c bus access
+  if (I2C_MUTEX_LOCK()) {
+    RtcTemperature temp = Rtc.GetTemperature();
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+    return temp.AsFloatDegC();
+  } // while
+  return 0;
+} // get_rtctemp()
+
+#endif // HAS_RTC
