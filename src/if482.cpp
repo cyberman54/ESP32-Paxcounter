@@ -91,15 +91,6 @@ static const char TAG[] = "main";
 #define IF482_FRAME_SIZE (17)
 #define IF482_PULSE_DURATION (1000)
 
-// select internal / external clock
-#if defined RTC_INT && defined RTC_CLK
-#define PPS RTC_CLK
-#elif defined GPS_INT && defined GPS_CLK
-#define PPS GPS_CLK
-#else
-#define PPS IF482_PULSE_DURATION
-#endif
-
 HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
 // initialize and configure IF482 Generator
@@ -108,7 +99,7 @@ int if482_init(void) {
   // open serial interface
   IF482.begin(HAS_IF482);
   // setup timepulse
-  timepulse_init(PPS);
+  timepulse_init();
 
   // start if482 serial output feed task
   xTaskCreatePinnedToCore(if482_loop,  // task function
@@ -165,8 +156,8 @@ void if482_loop(void *pvParameters) {
   // phase 1: sync task on top of second
 
   const TickType_t t0 = xTaskGetTickCount(); // moment of start top of second
-  sync_clock(); // delay until top of second
-  timepulse_start(); // start timepulse
+  sync_clock();                              // delay until top of second
+  timepulse_start();                         // start timepulse
 
   xTaskNotifyWait(
       0x00,           // don't clear any bits on entry
@@ -200,9 +191,10 @@ void if482_loop(void *pvParameters) {
       IF482.print(IF482_Out(now() + 1));
     }
 
-#elif (PPS < IF482_PULSE_DURATION) // we need downclocking, not yet implemented
-#error Timepulse is too low for IF482!
+#else // we need downclocking, not yet implemented
+#error Timepulse too fast for IF482 generator
 #endif
+
   } // forever
 
 } // if482_loop()

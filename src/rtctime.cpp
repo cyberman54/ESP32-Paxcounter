@@ -1,7 +1,5 @@
 #include "rtctime.h"
 
-#define I2C_DELAY (12) // 12ms is i2c delay when saving time to RTC chip
-
 // Local logging tag
 static const char TAG[] = "main";
 
@@ -9,45 +7,31 @@ TaskHandle_t ClockTask;
 hw_timer_t *clockCycle = NULL;
 bool volatile TimePulseTick = false;
 
-// helper function to setup a pulse for time synchronisation
-int timepulse_init(uint32_t pulse_period_ms) {
+// helper function to setup a pulse per second for time synchronisation
+int timepulse_init() {
 
 // use time pulse from GPS as time base with fixed 1Hz frequency
-#if defined GPS_INT && defined GPS_CLK
+#ifdef GPS_INT
 
   // setup external interupt for active low RTC INT pin
   pinMode(GPS_INT, INPUT_PULLDOWN);
   // setup external rtc 1Hz clock as pulse per second clock
   ESP_LOGI(TAG, "Time base: GPS timepulse");
-  switch (GPS_CLK) {
-  case 1000:
-    break; // default GPS timepulse 1000ms
-  default:
-    goto pulse_period_error;
-  }
   return 1; // success
 
 // use pulse from on board RTC chip as time base with fixed frequency
-#elif defined RTC_INT && defined RTC_CLK
+#elif defined RTC_INT
 
   // setup external interupt for active low RTC INT pin
   pinMode(RTC_INT, INPUT_PULLUP);
+
   // setup external rtc 1Hz clock as pulse per second clock
-  ESP_LOGI(TAG, "Time base: external RTC timepulse");
   if (I2C_MUTEX_LOCK()) {
-    switch (RTC_CLK) {
-    case 1000: // 1000ms
-      Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-      break;
-    case 1: // 1ms
-      Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1kHz);
-      break;
-    default:
-      I2C_MUTEX_UNLOCK();
-      goto pulse_period_error;
-    }
+    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
     I2C_MUTEX_UNLOCK();
+    ESP_LOGI(TAG, "Time base: external RTC timepulse");
+    return 1; // success
   } else {
     ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
     return 0; // failure
@@ -56,22 +40,14 @@ int timepulse_init(uint32_t pulse_period_ms) {
 
 #else
   // use ESP32 hardware timer as time base with adjustable frequency
-  if (pulse_period_ms) {
-    ESP_LOGI(TAG, "Time base: ESP32 hardware timer");
-    clockCycle =
-        timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
-    timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
-    timerAlarmWrite(clockCycle, 10 * pulse_period_ms, true); // ms
-  } else
-    goto pulse_period_error;
+  clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
+  timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
+  timerAlarmWrite(clockCycle, 10000, true); // 1000ms
+  ESP_LOGI(TAG, "Time base: ESP32 hardware timer");
   return 1; // success
 
 #endif
-
-pulse_period_error:
-  ESP_LOGE(TAG, "Unknown timepulse period value");
-  return 0; // failure
-}
+} // timepulse_init
 
 void timepulse_start(void) {
 #ifdef GPS_INT // start external clock gps pps line
@@ -83,21 +59,13 @@ void timepulse_start(void) {
 #endif
 }
 
-// helper function to sync time_t of top of next second
+// helper function to sync time_t of top of a second
 void sync_clock(void) {
-// do we have a second time pulse? Then wait for next pulse
-#if defined(RTC_INT) || defined(GPS_INT)
   // sync on top of next second by timepulse
-  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)) == pdTRUE) {
+  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(PPS)) == pdTRUE)
     ESP_LOGI(TAG, "clock synced by timepulse");
-    return;
-  } else
-    ESP_LOGW(TAG, "Missing timepulse, thus clock can't be synced by second");
-#endif
-  // no external timepulse, thus we must use less precise internal system clock
-  while (millis() % 1000)
-    ; // wait for milli seconds to be zero before setting new time
-  ESP_LOGI(TAG, "clock synced by systime");
+  else
+    ESP_LOGW(TAG, "Missing timepulse, clock not synced");
   return;
 }
 
@@ -105,8 +73,8 @@ void sync_clock(void) {
 // timer
 void IRAM_ATTR CLOCKIRQ() {
   xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
-#if defined(GPS_INT) || defined(RTC_INT)
-  xSemaphoreGiveFromISR(TimePulse, pdFALSE);
+#if defined GPS_INT || defined RTC_INT
+  xSemaphoreGiveFromISR(TimePulse, NULL);
   TimePulseTick = !TimePulseTick; // flip ticker
 #endif
   portYIELD_FROM_ISR();

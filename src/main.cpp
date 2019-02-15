@@ -338,7 +338,7 @@ void setup() {
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
-  setSyncProvider(&get_rtctime); // sync time now and then
+  setSyncProvider(get_rtctime); // sync time now and then
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with RTC");
   else
@@ -350,7 +350,7 @@ void setup() {
   strcat_P(features, " DCF77");
 #endif
 
-#if (defined HAS_IF482) && (defined RTC_INT)
+#if defined HAS_IF482 && defined RTC_INT
   strcat_P(features, " IF482");
 #endif
 
@@ -416,7 +416,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 #ifdef HAS_GPS
-  setSyncProvider(&get_gpstime); // sync time now and then
+  setSyncProvider(get_gpstime); // sync time now and then
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with GPS");
   else {

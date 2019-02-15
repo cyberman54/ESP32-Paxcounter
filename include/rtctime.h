@@ -22,7 +22,7 @@ void sync_rtctime(void);
 time_t get_rtctime(void);
 float get_rtctemp(void);
 void IRAM_ATTR CLOCKIRQ();
-int timepulse_init(uint32_t pps_freq);
+int timepulse_init(void);
 void timepulse_start();
 void sync_clock(void);
 

@@ -43,6 +43,9 @@
 #define I2C_MUTEX_LOCK()    xSemaphoreTake(I2Caccess, (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) == pdTRUE
 #define I2C_MUTEX_UNLOCK()  xSemaphoreGive(I2Caccess)
 
+// time pulse frequency 1Hz
+#define PPS (1000)
+
 // Struct holding devices's runtime configuration
 typedef struct {
   uint8_t lorasf;      // 7-12, lora spreadfactor
