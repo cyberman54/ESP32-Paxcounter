@@ -16,7 +16,7 @@ void irqHandler(void *pvParameters) {
         0x00,             // Don't clear any bits on entry
         ULONG_MAX,        // Clear all bits on exit
         &InterruptStatus, // Receives the notification value
-        portMAX_DELAY);   // wait forever (missing error handling here...)
+        portMAX_DELAY);   // wait forever
 
 // button pressed?
 #ifdef HAS_BUTTON

@@ -88,8 +88,8 @@ time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
 
 // function to fetch current time from gps
 time_t get_gpstime(void) {
-  // !! never call now() in this function, this would break this function
-  // to be used as SyncProvider due to recursive call to now()
+  // !! never call now() or delay in this function, this would break this
+  // function to be used as SyncProvider for Time.h
 
   if ((gps.time.age() < 1500) && (gps.time.isValid())) {
     // get current gps time
@@ -98,9 +98,7 @@ time_t get_gpstime(void) {
                     gps.time.hour(), gps.time.minute(), gps.time.second());
     ESP_LOGD(TAG, "GPS time: %4d/%02d/%02d %02d:%02d:%02d", year(t), month(t),
              day(t), hour(t), minute(t), second(t));
-    // sync on top of next second by timepulse
-    sync_clock();
-    return t + 1;
+    return t;
   } else {
     ESP_LOGW(TAG, "GPS has no confident time");
     return 0; // sync failure, 0 effects calling SyncProvider() to not set time

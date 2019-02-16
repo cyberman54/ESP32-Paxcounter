@@ -79,46 +79,21 @@ not evaluated by model BU-190
 
 #ifdef HAS_IF482
 
-#ifdef HAS_DCF77
-#error You must define at most one of IF482 or DCF77!
-#endif
-
 #include "if482.h"
 
 // Local logging tag
 static const char TAG[] = "main";
 
-#define IF482_FRAME_SIZE (17)
-#define IF482_PULSE_DURATION (1000)
-
 HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 
-// initialize and configure IF482 Generator
-int if482_init(void) {
+// called by timepulse interrupt to ticker out DCF signal
+void IF482_Pulse(time_t startTime) {
+  IF482.print(IF482_Frame(startTime + 1)); // if482 telegram for next second
+}
 
-  // open serial interface
-  IF482.begin(HAS_IF482);
-  // setup timepulse
-  timepulse_init();
+String IF482_Frame(time_t startTime) {
 
-  // start if482 serial output feed task
-  xTaskCreatePinnedToCore(if482_loop,  // task function
-                          "if482loop", // name of task
-                          2048,        // stack size of task
-                          (void *)1,   // parameter of the task
-                          4,           // priority of the task
-                          &ClockTask,  // task handle
-                          0);          // CPU core
-
-  assert(ClockTask); // has clock task started?
-  // timepulse_start(); // start pulse
-
-  return 1; // success
-} // if482_init
-
-String IF482_Out(time_t tt) {
-
-  time_t t = myTZ.toLocal(tt);
+  time_t t = myTZ.toLocal(startTime);
   char mon, buf[14], out[IF482_FRAME_SIZE];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
@@ -134,7 +109,7 @@ String IF482_Out(time_t tt) {
   } // switch
 
   // do we have confident time/date?
-  if ((timeStatus() == timeSet) || (timeStatus() == timeNeedsSync))
+  if (timeStatus() == timeSet)
     snprintf(buf, sizeof(buf), "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
              month(t), day(t), weekday(t), hour(t), minute(t), second(t));
   else
@@ -146,62 +121,9 @@ String IF482_Out(time_t tt) {
   return out;
 }
 
-void if482_loop(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
-
-  TickType_t wakeTime;
-  const TickType_t tTx = tx_time(HAS_IF482); // duration of telegram transmit
-
-  // phase 1: sync task on top of second
-
-  const TickType_t t0 = xTaskGetTickCount(); // moment of start top of second
-  sync_clock();                              // delay until top of second
-  timepulse_start();                         // start timepulse
-
-  xTaskNotifyWait(
-      0x00,           // don't clear any bits on entry
-      ULONG_MAX,      // clear all bits on exit
-      &wakeTime,      // receives moment of call from isr
-      portMAX_DELAY); // wait forever (missing error handling here...)
-
-  const TickType_t tOffset = wakeTime - t0;
-  const TickType_t tShot =
-      (tOffset < tTx) ? (1000 - tOffset - tTx) : (tOffset - tTx);
-
-  ESP_LOGI(TAG, "IF482 signal synced with clock, tShot=%dms", tShot);
-
-  // phase 2: sync task on time pulse interrupt
-  for (;;) {
-    xTaskNotifyWait(
-        0x00,           // don't clear any bits on entry
-        ULONG_MAX,      // clear all bits on exit
-        &wakeTime,      // receives moment of call from isr
-        portMAX_DELAY); // wait forever (missing error handling here...)
-
-// select clock scale
-#if (PPS == IF482_PULSE_DURATION) // we don't need clock rescaling
-    // wait until it's time to start transmit telegram for next second
-    vTaskDelayUntil(&wakeTime, tShot); // sets waketime to moment of tShot
-    IF482.print(IF482_Out(now() + 1));
-
-#elif (PPS > IF482_PULSE_DURATION) // we need upclocking
-    for (uint8_t i = 1; i <= PPS / IF482_PULSE_DURATION; i++) {
-      vTaskDelayUntil(&wakeTime, tShot); // sets waketime to moment of shot
-      IF482.print(IF482_Out(now() + 1));
-    }
-
-#else // we need downclocking, not yet implemented
-#error Timepulse too fast for IF482 generator
-#endif
-
-  } // forever
-
-} // if482_loop()
-
 // calculate serial tx time from IF482 serial settings
-TickType_t tx_time(unsigned long baud, uint32_t config, int8_t rxPin,
-                   int8_t txPins) {
+TickType_t tx_Ticks(unsigned long baud, uint32_t config, int8_t rxPin,
+                    int8_t txPins) {
 
   uint32_t datenbits = ((config & 0x0c) >> 2) + 5;
   uint32_t stopbits = ((config & 0x20) >> 5) + 1;

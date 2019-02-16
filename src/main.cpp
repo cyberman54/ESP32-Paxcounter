@@ -338,6 +338,7 @@ void setup() {
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
+  sync_TimePulse();             // wait for next start of second
   setSyncProvider(get_rtctime); // sync time now and then
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with RTC");
@@ -416,6 +417,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 #ifdef HAS_GPS
+  sync_TimePulse();             // wait for next start of second
   setSyncProvider(get_gpstime); // sync time now and then
   if (timeStatus() != timeSet)
     ESP_LOGI(TAG, "Unable to sync system time with GPS");
@@ -429,12 +431,9 @@ void setup() {
   setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
 #endif
 
-#ifdef HAS_IF482
-  ESP_LOGI(TAG, "Starting IF482 Generator...");
-  assert(if482_init());
-#elif defined HAS_DCF77
-  ESP_LOGI(TAG, "Starting DCF77 Generator...");
-  assert(dcf77_init());
+#if defined HAS_IF482 || defined HAS_DCF77
+  ESP_LOGI(TAG, "Starting Clock Controller...");
+  clock_init();
 #endif
 
 } // setup()

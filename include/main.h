@@ -17,5 +17,5 @@
 #include "led.h"
 #include "spislave.h"
 #include "lorawan.h"
-
+#include "clockcontroller.h"
 #endif

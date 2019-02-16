@@ -16,7 +16,7 @@ int timepulse_init() {
   // setup external interupt for active low RTC INT pin
   pinMode(GPS_INT, INPUT_PULLDOWN);
   // setup external rtc 1Hz clock as pulse per second clock
-  ESP_LOGI(TAG, "Time base: GPS timepulse");
+  ESP_LOGI(TAG, "Time base: external (GPS)");
   return 1; // success
 
 // use pulse from on board RTC chip as time base with fixed frequency
@@ -30,7 +30,7 @@ int timepulse_init() {
     Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
     I2C_MUTEX_UNLOCK();
-    ESP_LOGI(TAG, "Time base: external RTC timepulse");
+    ESP_LOGI(TAG, "Time base: external (RTC)");
     return 1; // success
   } else {
     ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
@@ -41,9 +41,9 @@ int timepulse_init() {
 #else
   // use ESP32 hardware timer as time base with adjustable frequency
   clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
-  timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
+  //timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
   timerAlarmWrite(clockCycle, 10000, true); // 1000ms
-  ESP_LOGI(TAG, "Time base: ESP32 hardware timer");
+  ESP_LOGI(TAG, "Time base: internal (ESP32 hardware timer)");
   return 1; // success
 
 #endif
@@ -55,18 +55,30 @@ void timepulse_start(void) {
 #elif defined RTC_INT // start external clock rtc
   attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
 #else                 // start internal clock esp32 hardware timer
+  timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
   timerAlarmEnable(clockCycle);
 #endif
 }
 
-// helper function to sync time_t of top of a second
-void sync_clock(void) {
+// helper function to sync systime on start of next second
+int sync_SysTime(time_t t) {
+  if (sync_TimePulse()) {
+    setTime(t + 1);
+    ESP_LOGD(TAG, "Systime synced on timepulse");
+    return 1; // success
+  } else
+    return 0; // failure
+}
+
+// helper function to sync moment on timepulse
+int sync_TimePulse(void) {
   // sync on top of next second by timepulse
-  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(PPS)) == pdTRUE)
-    ESP_LOGI(TAG, "clock synced by timepulse");
+  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(PPS)) == pdTRUE) {
+    return 1;
+  } // success
   else
-    ESP_LOGW(TAG, "Missing timepulse, clock not synced");
-  return;
+    ESP_LOGW(TAG, "Missing timepulse, time not synced");
+  return 0; // failure
 }
 
 // interrupt service routine triggered by either rtc pps or esp32 hardware
@@ -136,7 +148,6 @@ error:
 
 int set_rtctime(time_t t) { // t is seconds epoch time starting 1.1.1970
   if (I2C_MUTEX_LOCK()) {
-    sync_clock(); // wait for top of second
     Rtc.SetDateTime(RtcDateTime(t));
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     ESP_LOGI(TAG, "RTC calibrated");
@@ -151,7 +162,8 @@ int set_rtctime(uint32_t t) { // t is epoch seconds starting 1.1.1970
 }
 
 time_t get_rtctime(void) {
-  // never call now() in this function, this would cause a recursion!
+  // !! never call now() or delay in this function, this would break this
+  // function to be used as SyncProvider for Time.h
   time_t t = 0;
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {

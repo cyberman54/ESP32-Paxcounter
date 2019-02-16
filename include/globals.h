@@ -40,11 +40,17 @@
 #define SCREEN_MODE (0x80)
 
 // I2C bus access control
-#define I2C_MUTEX_LOCK()    xSemaphoreTake(I2Caccess, (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) == pdTRUE
-#define I2C_MUTEX_UNLOCK()  xSemaphoreGive(I2Caccess)
+#define I2C_MUTEX_LOCK()                                                       \
+  xSemaphoreTake(I2Caccess, (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==   \
+      pdTRUE
+#define I2C_MUTEX_UNLOCK() xSemaphoreGive(I2Caccess)
 
-// time pulse frequency 1Hz
-#define PPS (1000)
+// Clock controller settings
+#define PPS (1000) // on board time pulse frequency in ms
+#define IF482_FRAME_SIZE (17)
+#define IF482_PULSE_LENGTH (1000)
+#define DCF77_FRAME_SIZE (60)
+#define DCF77_PULSE_LENGTH (100)
 
 // Struct holding devices's runtime configuration
 typedef struct {
@@ -66,7 +72,8 @@ typedef struct {
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
   char version[10];      // Firmware version
-  uint8_t bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
+  uint8_t
+      bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
 } configData_t;
 
 // Struct holding payload for data send queue
@@ -149,14 +156,6 @@ extern Timezone myTZ;
 
 #ifdef HAS_BME
 #include "bme680mems.h"
-#endif
-
-#ifdef HAS_IF482
-#include "if482.h"
-#endif
-
-#ifdef HAS_DCF77
-#include "dcf77.h"
 #endif
 
 #endif

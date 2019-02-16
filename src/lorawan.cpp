@@ -6,7 +6,7 @@ static const char TAG[] = "lora";
 
 #ifdef HAS_LORA
 
-#if CLOCK_ERROR_PROCENTAGE > 7 
+#if CLOCK_ERROR_PROCENTAGE > 7
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
 #endif
 
@@ -408,7 +408,7 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   BaseType_t ret;
   switch (prio) {
   case prio_high:
-  ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
+    ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   case prio_low:
   case prio_normal:
@@ -471,7 +471,8 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   setTime(*pUserUTCTime);
   ESP_LOGI(TAG, "LoRaWAN network has set the system time");
 #ifdef HAS_RTC
-  if (!set_rtctime(*pUserUTCTime)) // epoch time
+  sync_TimePulse();                // wait for next start of second
+  if (!set_rtctime(*pUserUTCTime+1)) // epoch time
     ESP_LOGE(TAG, "RTC set time failure");
 #endif
 }
