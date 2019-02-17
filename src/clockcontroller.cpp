@@ -59,8 +59,8 @@ void clock_loop(void *pvParameters) { // ClockTask
 
 #elif defined HAS_DCF77
 
-    if (ts == DCF77_FRAME_SIZE - 1) // moment to reload frame?
-      DCF77_Frame(t1(t));           // generate next frame
+    if (second(t) == DCF77_FRAME_SIZE - 1) // moment to reload frame?
+      DCF77_Frame(t1(t));                  // generate next frame
 
     if (DCFpulse[DCF77_FRAME_SIZE] ==
         minute(t1(t)))  // do he have a recent frame?
