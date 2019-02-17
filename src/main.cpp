@@ -27,9 +27,8 @@ Uused tasks and timers:
 
 Task          Core  Prio  Purpose
 ====================================================================================
+clockloop     0     4     generates realtime telegrams for external clock
 ledloop       0     3     blinks LEDs
-if482loop     0     3     generates serial feed of IF482 time telegrams
-dcf77loop     0     3     generates DCF77 timeframe pulses
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
@@ -65,15 +64,15 @@ char display_line6[16], display_line7[16]; // display buffers
 uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
-bool volatile BitsPending = false;  // DCF77 or IF482 ticker indicator
 
 hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
 #ifdef HAS_DISPLAY
 hw_timer_t *displaytimer = NULL;
 #endif
 
-TaskHandle_t irqHandlerTask;
-SemaphoreHandle_t I2Caccess;
+TaskHandle_t irqHandlerTask, ClockTask;
+SemaphoreHandle_t I2Caccess, TimePulse;
+bool volatile TimePulseTick = false;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -97,11 +96,14 @@ void setup() {
 
   char features[100] = "";
 
+  // create some semaphores for syncing / mutexing tasks
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
   if (I2Caccess)
-    xSemaphoreGive((I2Caccess)); // Flag the i2c bus available for use
+    xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
 
-    // disable brownout detection
+  TimePulse = xSemaphoreCreateBinary(); // as signal that shows time pulse flip
+
+  // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
@@ -141,10 +143,21 @@ void setup() {
            ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
   ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
            ESP.getFlashChipSpeed());
-  ESP_LOGI(TAG, "Wifi/BT software coexist version: %s", esp_coex_version_get());
+  ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
+
+#ifdef HAS_LORA
+  ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
+           LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
+
+  ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
+           ARDUINO_LMIC_VERSION_GET_MAJOR(ARDUINO_LMIC_VERSION),
+           ARDUINO_LMIC_VERSION_GET_MINOR(ARDUINO_LMIC_VERSION),
+           ARDUINO_LMIC_VERSION_GET_PATCH(ARDUINO_LMIC_VERSION),
+           ARDUINO_LMIC_VERSION_GET_LOCAL(ARDUINO_LMIC_VERSION));
+#endif
 
 #ifdef HAS_GPS
-  ESP_LOGI(TAG, "TinyGPS+ v%s", TinyGPSPlus::libraryVersion());
+  ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
 #endif // verbose
@@ -321,23 +334,17 @@ void setup() {
   strcat_P(features, " LPPPKD");
 #endif
 
-// initialize RTC
+  // initialize RTC
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
-  setSyncProvider(&get_rtctime);
-  if (timeStatus() != timeSet)
-    ESP_LOGI(TAG, "Unable to sync system time with RTC");
-  else
-    ESP_LOGI(TAG, "RTC has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
-#endif // HAS_RTC
+#endif
 
 #if defined HAS_DCF77
   strcat_P(features, " DCF77");
 #endif
 
-#if (defined HAS_IF482) && (defined RTC_INT)
+#if defined HAS_IF482
   strcat_P(features, " IF482");
 #endif
 
@@ -350,6 +357,13 @@ void setup() {
   showLoraKeys();
 #endif
 #endif
+
+  // start pps timepulse
+  ESP_LOGI(TAG, "Starting timepulse...");
+  if (timepulse_init()) // setup timepulse
+    timepulse_start();  // start pulse
+  else
+    ESP_LOGE(TAG, "No timepulse, systime will not be synced!");
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
@@ -403,31 +417,38 @@ void setup() {
 #endif // HAS_BUTTON
 
 #ifdef HAS_GPS
-  setSyncProvider(&get_gpstime);
-  if (timeStatus() != timeSet)
-    ESP_LOGI(TAG, "Unable to sync system time with GPS");
-  else {
-    ESP_LOGI(TAG, "GPS has set the system time");
+  // sync systime on next timepulse
+  ESP_LOGI(TAG, "GPS is setting system time");
+  if (sync_SysTime(get_gpstime())) {
+    //setSyncProvider(get_gpstime); // reset sync cycle on top of second
+    //setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
+    // calibrate RTC
 #ifdef HAS_RTC
-    if (!set_rtctime(now())) // epoch time
-      ESP_LOGE(TAG, "RTC set time failure");
+    set_rtctime(now()); // epoch time
 #endif
-  }
-  setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
-#endif
+  } else
+    ESP_LOGI(TAG, "Unable to sync system time with GPS");
+#endif // HAS_GPS
 
-#ifdef HAS_IF482
-  ESP_LOGI(TAG, "Starting IF482 Generator...");
-  assert(if482_init());
-#elif defined HAS_DCF77
-  ESP_LOGI(TAG, "Starting DCF77 Generator...");
-  assert(dcf77_init());
+    // initialize systime from timesource
+#ifdef HAS_RTC
+  // sync systime on next timepulse
+  ESP_LOGI(TAG, "RTC is setting system time");
+  if (sync_SysTime(get_rtctime())) {
+    //setSyncProvider(get_rtctime); // reset sync cycle on top of second
+    //setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
+  } else
+    ESP_LOGI(TAG, "Unable to sync system time with RTC");
+#endif // HAS_RTC
+
+#if defined HAS_IF482 || defined HAS_DCF77
+  ESP_LOGI(TAG, "Starting Clock Controller...");
+  clock_init();
 #endif
 
 } // setup()
 
 void loop() {
-
   while (1) {
 #ifdef HAS_LORA
     os_runloop_once(); // execute lmic scheduled jobs and events

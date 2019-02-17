@@ -6,6 +6,10 @@ static const char TAG[] = "lora";
 
 #ifdef HAS_LORA
 
+#if CLOCK_ERROR_PROCENTAGE > 7
+#warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
+#endif
+
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
 
@@ -395,7 +399,7 @@ esp_err_t lora_stack_init() {
   }
 
   return ESP_OK; // continue main program
-#endif
+#endif // HAS_LORA
 }
 
 void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
@@ -404,7 +408,7 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   BaseType_t ret;
   switch (prio) {
   case prio_high:
-  ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
+    ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   case prio_low:
   case prio_normal:
@@ -435,6 +439,7 @@ void lora_housekeeping(void) {
 
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess) {
+#ifdef HAS_LORA
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
   uint32_t *pUserUTCTime = (uint32_t *)pVoidUserUTCTime;
   lmic_time_reference_t lmicTimeReference;
@@ -464,10 +469,14 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  setTime(*pUserUTCTime);
-  ESP_LOGI(TAG, "LoRaWAN network has set the system time");
+  if (sync_TimePulse()) {              // wait for start of next second
+    if (sync_SysTime(*pUserUTCTime)) { // do we have a valid time?
 #ifdef HAS_RTC
-  if (!set_rtctime(*pUserUTCTime)) // epoch time
-    ESP_LOGE(TAG, "RTC set time failure");
+      set_rtctime(now()); // epoch time
 #endif
-}
+      ESP_LOGI(TAG, "LORA has set the system time");
+    }
+  } else
+    ESP_LOGI(TAG, "Unable to sync system time with LORA");
+#endif // HAS_LORA
+} // user_request_network_time_callback

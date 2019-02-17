@@ -8,6 +8,7 @@
 // Hardware related definitions for Pycom LoPy4 Board
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
+#define LORA_RST  LMIC_UNUSED_PIN // reset pin of lora chip is not wired von LoPy4
 
 //#defin HAS_SPI 1        // comment out if device shall not send data via SPI
 // pin definitions for local wired SPI slave interface

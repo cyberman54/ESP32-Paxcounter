@@ -40,8 +40,10 @@
 #define SCREEN_MODE (0x80)
 
 // I2C bus access control
-#define I2C_MUTEX_LOCK()    xSemaphoreTake(I2Caccess, (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) == pdTRUE
-#define I2C_MUTEX_UNLOCK()  xSemaphoreGive(I2Caccess)
+#define I2C_MUTEX_LOCK()                                                       \
+  xSemaphoreTake(I2Caccess, (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==   \
+      pdTRUE
+#define I2C_MUTEX_UNLOCK() xSemaphoreGive(I2Caccess)
 
 // Struct holding devices's runtime configuration
 typedef struct {
@@ -63,7 +65,8 @@ typedef struct {
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
   char version[10];      // Firmware version
-  uint8_t bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
+  uint8_t
+      bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
 } configData_t;
 
 // Struct holding payload for data send queue
@@ -94,21 +97,19 @@ typedef struct {
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 
-// global variables
+extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
+extern std::array<uint64_t, 0xff>::iterator it;
+extern std::array<uint64_t, 0xff> beacons;
+
 extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage; // display values
+extern bool volatile TimePulseTick;
 extern hw_timer_t *sendCycle, *displaytimer;
-extern SemaphoreHandle_t I2Caccess;
-extern bool volatile BitsPending;
-
-extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
-extern std::array<uint64_t, 0xff>::iterator it;
-extern std::array<uint64_t, 0xff> beacons;
-
-extern TaskHandle_t irqHandlerTask;
+extern SemaphoreHandle_t I2Caccess, TimePulse;
+extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 
@@ -147,14 +148,6 @@ extern Timezone myTZ;
 
 #ifdef HAS_BME
 #include "bme680mems.h"
-#endif
-
-#ifdef HAS_IF482
-#include "if482.h"
-#endif
-
-#ifdef HAS_DCF77
-#include "dcf77.h"
 #endif
 
 #endif

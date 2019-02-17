@@ -22,8 +22,7 @@
 
 // Settings for on board DS3231 RTC chip
 #define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
-//#define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
-//#define RTC_CLK (1000) // pulse length 1000ms
+#define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
 
 // Settings for IF482 interface
 //#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters

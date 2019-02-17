@@ -139,7 +139,7 @@ void refreshtheDisplay() {
       u8x8.setPowerSave(!cfg.screenon);
     }
 
-    // if display is switched off we don't refresh it and save time
+    // if display is switched off we don't refresh it to relax cpu
     if (!DisplayState)
       return;
 
@@ -220,16 +220,13 @@ void refreshtheDisplay() {
 #if (!defined HAS_DCF77) && (!defined HAS_IF482)
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
-#else // we want a time display instead LoRa status
-    // update time/date display (line 6)
+#else // we want a systime display instead LoRa status
     time_t t = myTZ.toLocal(now());
     char timeState =
-        timeStatus() == timeSet ? timesyncSymbol : timeNosyncSymbol;
-    // make timestatus symbol blinking if pps line
-    if ((BitsPending) && (second(t) % 2))
-      timeState = ' ';
-    u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
-                timeState, day(t), printmonth[month(t)]);
+        (timeStatus() == timeSet) ? timesyncSymbol : timeNosyncSymbol;
+    char timePulse = TimePulseTick ? '.' : ':';
+    u8x8.printf("%02d:%02d%c%02d%c %2d.%3s", hour(t), minute(t), timePulse,
+                second(t), timeState, day(t), printmonth[month(t)]);
 #endif
 
     // update LMiC event display (line 7)
