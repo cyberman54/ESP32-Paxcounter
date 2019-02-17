@@ -43,7 +43,7 @@
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
 #define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M
-#define GPS_INT GPIO_NUM_34 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO34
+#define GPS_INT GPIO_NUM_13 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO13
 
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (4)
