@@ -45,13 +45,6 @@
       pdTRUE
 #define I2C_MUTEX_UNLOCK() xSemaphoreGive(I2Caccess)
 
-// Clock controller settings
-#define PPS (1000) // on board time pulse frequency in ms
-#define IF482_FRAME_SIZE (17)
-#define IF482_PULSE_LENGTH (1000)
-#define DCF77_FRAME_SIZE (60)
-#define DCF77_PULSE_LENGTH (100)
-
 // Struct holding devices's runtime configuration
 typedef struct {
   uint8_t lorasf;      // 7-12, lora spreadfactor
@@ -104,20 +97,19 @@ typedef struct {
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 
-// global variables
+extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
+extern std::array<uint64_t, 0xff>::iterator it;
+extern std::array<uint64_t, 0xff> beacons;
+
 extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage; // display values
+extern bool volatile TimePulseTick;
 extern hw_timer_t *sendCycle, *displaytimer;
 extern SemaphoreHandle_t I2Caccess, TimePulse;
-
-extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
-extern std::array<uint64_t, 0xff>::iterator it;
-extern std::array<uint64_t, 0xff> beacons;
-
-extern TaskHandle_t irqHandlerTask;
+extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 

@@ -5,15 +5,14 @@
 #include "senddata.h"
 #include "rcommand.h"
 #include "spislave.h"
+#include "rtctime.h"
 #include <lmic.h>
 
 #ifdef HAS_BME
 #include "bme680mems.h"
 #endif
 
-#ifdef HAS_RTC
-#include "rtctime.h"
-#endif
+
 
 void doHousekeeping(void);
 uint64_t uptime(void);

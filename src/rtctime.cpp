@@ -3,9 +3,7 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-TaskHandle_t ClockTask;
 hw_timer_t *clockCycle = NULL;
-bool volatile TimePulseTick = false;
 
 // helper function to setup a pulse per second for time synchronisation
 int timepulse_init() {
@@ -41,7 +39,6 @@ int timepulse_init() {
 #else
   // use ESP32 hardware timer as time base with adjustable frequency
   clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
-  //timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
   timerAlarmWrite(clockCycle, 10000, true); // 1000ms
   ESP_LOGI(TAG, "Time base: internal (ESP32 hardware timer)");
   return 1; // success
@@ -60,36 +57,40 @@ void timepulse_start(void) {
 #endif
 }
 
-// helper function to sync systime on start of next second
-int sync_SysTime(time_t t) {
-  if (sync_TimePulse()) {
-    setTime(t + 1);
-    ESP_LOGD(TAG, "Systime synced on timepulse");
-    return 1; // success
-  } else
-    return 0; // failure
-}
-
-// helper function to sync moment on timepulse
-int sync_TimePulse(void) {
-  // sync on top of next second by timepulse
-  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(PPS)) == pdTRUE) {
-    return 1;
-  } // success
-  else
-    ESP_LOGW(TAG, "Missing timepulse, time not synced");
-  return 0; // failure
-}
-
-// interrupt service routine triggered by either rtc pps or esp32 hardware
-// timer
-void IRAM_ATTR CLOCKIRQ() {
-  xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
+// interrupt service routine triggered by either pps or esp32 hardware timer
+void IRAM_ATTR CLOCKIRQ(void) {
+  if (ClockTask != NULL)
+    xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
 #if defined GPS_INT || defined RTC_INT
   xSemaphoreGiveFromISR(TimePulse, NULL);
   TimePulseTick = !TimePulseTick; // flip ticker
 #endif
   portYIELD_FROM_ISR();
+}
+
+// helper function to sync systime on start of next second
+int sync_SysTime(time_t t) {
+  if (sync_TimePulse() && (t)) { // wait for start of next second by timepulse
+    setTime(t + 1);
+    ESP_LOGD(TAG, "Systime synced on second");
+    return 1; // success
+  } else
+    return 0; // failure
+}
+
+int sync_SysTime(uint32_t t) { // t is epoch seconds starting 1.1.1970
+  return sync_SysTime(static_cast<time_t>(t));
+}
+
+// helper function to sync moment on timepulse
+int sync_TimePulse(void) {
+  // sync on top of next second by timepulse
+  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1100)) == pdTRUE) {
+    return 1;
+  } // success
+  else
+    ESP_LOGW(TAG, "Missing timepulse, time not synced");
+  return 0; // failure
 }
 
 #ifdef HAS_RTC // we have hardware RTC
@@ -153,6 +154,7 @@ int set_rtctime(time_t t) { // t is seconds epoch time starting 1.1.1970
     ESP_LOGI(TAG, "RTC calibrated");
     return 1; // success
   }
+  ESP_LOGE(TAG, "RTC set time failure");
   return 0; // failure
 } // set_rtctime()
 

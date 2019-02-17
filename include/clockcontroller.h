@@ -11,5 +11,6 @@
 
 void clock_init(void);
 void clock_loop(void *pvParameters);
+time_t telegram_time(void);
 
 #endif // _CLOCKCONTROLLER_H

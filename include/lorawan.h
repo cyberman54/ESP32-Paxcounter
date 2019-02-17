@@ -10,16 +10,14 @@
 #include <SPI.h>
 #include <arduino_lmic_hal_boards.h>
 #include "loraconf.h"
+#include "rtctime.h"
 
 // Needed for 24AA02E64, does not hurt anything if included and not used
 #ifdef MCP_24AA02E64_I2C_ADDRESS
 #include <Wire.h>
 #endif
 
-// Needed for RTC time sync if RTC present on board
-#ifdef HAS_RTC
-#include "rtctime.h"
-#endif
+
 
 extern QueueHandle_t LoraSendQueue;
 

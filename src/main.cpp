@@ -27,9 +27,8 @@ Uused tasks and timers:
 
 Task          Core  Prio  Purpose
 ====================================================================================
+clockloop     0     4     generates realtime telegrams for external clock
 ledloop       0     3     blinks LEDs
-if482loop     0     3     generates serial feed of IF482 time telegrams
-dcf77loop     0     3     generates DCF77 timeframe pulses
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
@@ -71,8 +70,9 @@ hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
 hw_timer_t *displaytimer = NULL;
 #endif
 
-TaskHandle_t irqHandlerTask;
+TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
+bool volatile TimePulseTick = false;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -334,24 +334,17 @@ void setup() {
   strcat_P(features, " LPPPKD");
 #endif
 
-// initialize RTC
+  // initialize RTC
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
-  sync_TimePulse();             // wait for next start of second
-  setSyncProvider(get_rtctime); // sync time now and then
-  if (timeStatus() != timeSet)
-    ESP_LOGI(TAG, "Unable to sync system time with RTC");
-  else
-    ESP_LOGI(TAG, "RTC has set the system time");
-  setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
-#endif // HAS_RTC
+#endif
 
 #if defined HAS_DCF77
   strcat_P(features, " DCF77");
 #endif
 
-#if defined HAS_IF482 && defined RTC_INT
+#if defined HAS_IF482
   strcat_P(features, " IF482");
 #endif
 
@@ -364,6 +357,13 @@ void setup() {
   showLoraKeys();
 #endif
 #endif
+
+  // start pps timepulse
+  ESP_LOGI(TAG, "Starting timepulse...");
+  if (timepulse_init()) // setup timepulse
+    timepulse_start();  // start pulse
+  else
+    ESP_LOGE(TAG, "No timepulse, systime will not be synced!");
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
@@ -417,19 +417,29 @@ void setup() {
 #endif // HAS_BUTTON
 
 #ifdef HAS_GPS
-  sync_TimePulse();             // wait for next start of second
-  setSyncProvider(get_gpstime); // sync time now and then
-  if (timeStatus() != timeSet)
-    ESP_LOGI(TAG, "Unable to sync system time with GPS");
-  else {
-    ESP_LOGI(TAG, "GPS has set the system time");
+  // sync systime on next timepulse
+  ESP_LOGI(TAG, "GPS is setting system time");
+  if (sync_SysTime(get_gpstime())) {
+    //setSyncProvider(get_gpstime); // reset sync cycle on top of second
+    //setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
+    // calibrate RTC
 #ifdef HAS_RTC
-    if (!set_rtctime(now())) // epoch time
-      ESP_LOGE(TAG, "RTC set time failure");
+    set_rtctime(now()); // epoch time
 #endif
-  }
-  setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
-#endif
+  } else
+    ESP_LOGI(TAG, "Unable to sync system time with GPS");
+#endif // HAS_GPS
+
+    // initialize systime from timesource
+#ifdef HAS_RTC
+  // sync systime on next timepulse
+  ESP_LOGI(TAG, "RTC is setting system time");
+  if (sync_SysTime(get_rtctime())) {
+    //setSyncProvider(get_rtctime); // reset sync cycle on top of second
+    //setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
+  } else
+    ESP_LOGI(TAG, "Unable to sync system time with RTC");
+#endif // HAS_RTC
 
 #if defined HAS_IF482 || defined HAS_DCF77
   ESP_LOGI(TAG, "Starting Clock Controller...");
@@ -439,7 +449,6 @@ void setup() {
 } // setup()
 
 void loop() {
-
   while (1) {
 #ifdef HAS_LORA
     os_runloop_once(); // execute lmic scheduled jobs and events
