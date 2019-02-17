@@ -4,6 +4,9 @@
 // a nice & free logic test program for DCF77 can be found here:
 https://www-user.tu-chemnitz.de/~heha/viewzip.cgi/hs/Funkuhr.zip/
 //
+// a DCF77 digital scope for Arduino boards can be found here:
+https://github.com/udoklein/dcf77
+//
 */
 
 #ifdef HAS_DCF77

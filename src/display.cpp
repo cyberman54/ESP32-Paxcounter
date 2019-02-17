@@ -221,7 +221,7 @@ void refreshtheDisplay() {
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
 #else // we want a systime display instead LoRa status
-    time_t t = myTZ.toLocal(now());
+    time_t t = myTZ.toLocal(best_time());
     char timeState =
         (timeStatus() == timeSet) ? timesyncSymbol : timeNosyncSymbol;
     char timePulse = TimePulseTick ? '.' : ':';

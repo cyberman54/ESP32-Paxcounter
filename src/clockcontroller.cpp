@@ -40,7 +40,7 @@ void clock_loop(void *pvParameters) { // ClockTask
 
 // preload first DCF frame before start
 #ifdef HAS_DCF77
-  DCF77_Frame(t1(telegram_time()));
+  DCF77_Frame(t1(best_time()));
 #endif
 
   // output time telegram for second following sec beginning with timepulse
@@ -51,7 +51,7 @@ void clock_loop(void *pvParameters) { // ClockTask
     if (timeStatus() == timeNotSet) // do we have valid time?
       continue;
 
-    t = telegram_time(); // time to send to clock
+    t = best_time(); // time to send to clock
 
 #if defined HAS_IF482
 
@@ -70,25 +70,5 @@ void clock_loop(void *pvParameters) { // ClockTask
 
   } // for
 } // clock_loop()
-
-// helper function to fetch current second from most precise time source
-time_t telegram_time(void) {
-  time_t t;
-
-#ifdef HAS_GPS // gps is our primary time source if present
-  t = get_gpstime();
-  if (t) // did we get a valid time?
-    return t;
-#endif
-
-#ifdef HAS_RTC // rtc is our secondary time source if present
-  t = get_rtctime();
-  if (t)
-    return t;
-#endif
-
-  // else we use systime as fallback source
-  return now();
-}
 
 #endif // HAS_IF482 || defined HAS_DCF77
