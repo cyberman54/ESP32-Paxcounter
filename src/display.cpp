@@ -41,6 +41,16 @@ const char lora_datarate[] = {"1211100908078CNA1211109C8C7C"};
 const char lora_datarate[] = {"121110090807FSNA"};
 #endif
 
+// time display symbols
+#if defined HAS_GPS || defined HAS_RTC
+const char timeNosyncSymbol = '?';
+#if defined HAS_IF482
+const char timesyncSymbol = '+';
+#elif defined HAS_DCF77
+const char timesyncSymbol = '*';
+#endif
+#endif
+
 // helper arry for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -130,6 +140,11 @@ void init_display(const char *Productname, const char *Version) {
 
 void refreshtheDisplay() {
 
+  uint8_t msgWaiting;
+  char timeSync, timeState;
+  char buff[16]; // 16 chars line buffer
+  time_t t;
+
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
 
@@ -142,17 +157,6 @@ void refreshtheDisplay() {
     // if display is switched off we don't refresh it to relax cpu
     if (!DisplayState)
       return;
-
-    uint8_t msgWaiting;
-    char buff[16]; // 16 chars line buffer
-#if (defined HAS_DCF77) || (defined HAS_IF482)
-    const char timeNosyncSymbol = '?';
-#if (defined HAS_IF482)
-    const char timesyncSymbol = '+';
-#else
-    const char timesyncSymbol = '*';
-#endif
-#endif
 
     // update counter (lines 0-1)
     snprintf(
@@ -221,12 +225,12 @@ void refreshtheDisplay() {
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
 #else // we want a systime display instead LoRa status
-    time_t t = myTZ.toLocal(best_time());
-    char timeState =
-        (timeStatus() == timeSet) ? timesyncSymbol : timeNosyncSymbol;
-    char timePulse = TimePulseTick ? '.' : ':';
-    u8x8.printf("%02d:%02d%c%02d%c %2d.%3s", hour(t), minute(t), timePulse,
-                second(t), timeState, day(t), printmonth[month(t)]);
+    t = myTZ.toLocal(best_time());
+    timeSync = (timeStatus() == timeSet) ? timesyncSymbol : timeNosyncSymbol;
+    timeState = TimePulseTick ? timeSync : ' ';
+    TimePulseTick = false;
+    u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
+                timeState, day(t), printmonth[month(t)]);
 #endif
 
     // update LMiC event display (line 7)
