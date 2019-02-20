@@ -93,7 +93,7 @@ time_t get_gpstime(void) {
 
   time_t t = 0; // 0 effects calling SyncProvider() to not set time
 
-  if ((gps.time.age() < 1500) && (gps.time.isValid())) {
+  if ((gps.time.age() < 1000) && (gps.time.isValid())) {
     // get current gps time
     t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
