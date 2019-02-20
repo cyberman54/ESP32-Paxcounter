@@ -3,6 +3,7 @@
 
 #include <U8x8lib.h>
 #include "cyclic.h"
+#include "rtctime.h"
 
 extern uint8_t volatile DisplayState;
 extern HAS_DISPLAY u8x8;

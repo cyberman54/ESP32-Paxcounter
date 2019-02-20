@@ -25,11 +25,13 @@ public:
 MyHalConfig_t myHalConfig{};
 
 // LMIC pin mapping
+
 const lmic_pinmap lmic_pins = {
     .nss = LORA_CS,
     .rxtx = LMIC_UNUSED_PIN,
-    .rst = LORA_RST,
-    .dio = {LORA_IRQ, LORA_IO1, LORA_IO2},
+    .rst = LORA_RST == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_RST,
+    .dio = {LORA_IRQ, LORA_IO1,
+            LORA_IO2 == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IO2},
     // optional: set polarity of rxtx pin.
     .rxtx_rx_active = 0,
     // optional: set RSSI cal for listen-before-talk

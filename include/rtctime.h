@@ -23,5 +23,6 @@ void timepulse_start(void);
 int sync_TimePulse(void);
 int sync_SysTime(time_t);
 int sync_SysTime(uint32_t t);
+time_t best_time(void);
 
 #endif // _RTCTIME_H

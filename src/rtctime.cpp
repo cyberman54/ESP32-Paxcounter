@@ -93,6 +93,30 @@ int sync_TimePulse(void) {
   return 0; // failure
 }
 
+// helper function to fetch current second from most precise time source
+time_t best_time(void) {
+
+  time_t t;
+
+#ifdef HAS_GPS // gps is our primary time source if present
+  t = get_gpstime();
+  if (t) // did we get a valid time?
+    return t;
+#endif
+
+  /*
+  // Reading RTC time from chip take too long on i2c bus, causes jitter
+  #ifdef HAS_RTC // rtc is our secondary time source if present
+    t = get_rtctime();
+    if (t)
+      return t;
+  #endif
+  */
+
+  // else we use systime as fallback source
+  return now();
+}
+
 #ifdef HAS_RTC // we have hardware RTC
 
 RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
@@ -166,14 +190,12 @@ int set_rtctime(uint32_t t) { // t is epoch seconds starting 1.1.1970
 time_t get_rtctime(void) {
   // !! never call now() or delay in this function, this would break this
   // function to be used as SyncProvider for Time.h
-  time_t t = 0;
+  time_t t = 0; // 0 effects calling SyncProvider() to not set time
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
     if (Rtc.IsDateTimeValid()) {
       RtcDateTime tt = Rtc.GetDateTime();
       t = tt.Epoch32Time();
-    } else {
-      ESP_LOGW(TAG, "RTC has no confident time");
     }
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   }

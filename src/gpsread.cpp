@@ -91,16 +91,14 @@ time_t get_gpstime(void) {
   // !! never call now() or delay in this function, this would break this
   // function to be used as SyncProvider for Time.h
 
+  time_t t = 0; // 0 effects calling SyncProvider() to not set time
+
   if ((gps.time.age() < 1500) && (gps.time.isValid())) {
     // get current gps time
-    time_t t =
-        tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
+    t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
-    return t;
-  } else {
-    ESP_LOGW(TAG, "GPS has no confident time");
-    return 0; // sync failure, 0 effects calling SyncProvider() to not set time
   }
+  return t;
 } // get_gpstime()
 
 // GPS serial feed FreeRTos Task
