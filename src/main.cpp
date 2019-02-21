@@ -65,14 +65,15 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
-#ifdef HAS_DISPLAY
-hw_timer_t *displaytimer = NULL;
-#endif
+hw_timer_t *sendCycle = NULL, *homeCycle = NULL, *clockCycle = NULL, *displaytimer = NULL;
 
 TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
 bool volatile TimePulseTick = false;
+bool TimeIsSynced = false;
+time_t LastSyncTime = 0;
+
+RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -359,11 +360,12 @@ void setup() {
 #endif
 
   // start pps timepulse
-  ESP_LOGI(TAG, "Starting timepulse...");
+  ESP_LOGI(TAG, "Starting Timepulse...");
   if (timepulse_init()) // setup timepulse
     timepulse_start();  // start pulse
   else
-    ESP_LOGE(TAG, "No timepulse, systime will not be synced!");
+    ESP_LOGE(TAG, "No timepulse, time will not be synced!");
+  time_sync();
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
@@ -415,31 +417,6 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
 #endif
 #endif // HAS_BUTTON
-
-#ifdef HAS_GPS
-  // sync systime on next timepulse
-  ESP_LOGI(TAG, "GPS is setting system time");
-  if (sync_SysTime(get_gpstime())) {
-    //setSyncProvider(get_gpstime); // reset sync cycle on top of second
-    //setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
-    // calibrate RTC
-#ifdef HAS_RTC
-    set_rtctime(now()); // epoch time
-#endif
-  } else
-    ESP_LOGI(TAG, "Unable to sync system time with GPS");
-#endif // HAS_GPS
-
-    // initialize systime from timesource
-#ifdef HAS_RTC
-  // sync systime on next timepulse
-  ESP_LOGI(TAG, "RTC is setting system time");
-  if (sync_SysTime(get_rtctime())) {
-    //setSyncProvider(get_rtctime); // reset sync cycle on top of second
-    //setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
-  } else
-    ESP_LOGI(TAG, "Unable to sync system time with RTC");
-#endif // HAS_RTC
 
 #if defined HAS_IF482 || defined HAS_DCF77
   ESP_LOGI(TAG, "Starting Clock Controller...");

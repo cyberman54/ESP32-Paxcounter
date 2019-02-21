@@ -5,7 +5,7 @@
 #include "senddata.h"
 #include "rcommand.h"
 #include "spislave.h"
-#include "rtctime.h"
+#include "timemanager.h"
 #include <lmic.h>
 
 #ifdef HAS_BME

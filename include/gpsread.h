@@ -2,6 +2,7 @@
 #define _GPSREAD_H
 
 #include <TinyGPS++.h> // library for parsing NMEA data
+#include <RtcDateTime.h>
 
 #ifdef GPS_I2C // Needed for reading from I2C Bus
 #include <Wire.h>

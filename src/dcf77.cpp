@@ -26,8 +26,6 @@ void DCF_Pulse(time_t t) {
 
   TickType_t startTime = xTaskGetTickCount();
 
-  ESP_LOGD(TAG, "DCF77 sec %d", sec);
-
   // induce 10 pulses
   for (uint8_t pulse = 0; pulse <= 9; pulse++) {
 
@@ -63,8 +61,6 @@ void IRAM_ATTR DCF77_Frame(time_t tt) {
 
   uint8_t Parity;
   time_t t = myTZ.toLocal(tt); // convert to local time
-
-  ESP_LOGD(TAG, "DCF77 minute %d", minute(t));
 
   // ENCODE HEAD
   // secs 0..19 initialized with zeros
