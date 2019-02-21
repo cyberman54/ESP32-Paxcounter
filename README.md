@@ -1,7 +1,7 @@
 # ESP32-Paxcounter
 **Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 LoRa IoT boards**
 
---> see development branch of this repository for latest alpha version <--
+Tutorial (in german language): https://www.heise.de/select/make/2019/1/1551099236518668
 
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
@@ -388,3 +388,4 @@ Thanks to
 - [Charles Hallard](https://github.com/hallard) for major code contributions to this project
 - [robbi5](https://github.com/robbi5) for the payload converter
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
+- [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
