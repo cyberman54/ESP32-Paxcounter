@@ -13,14 +13,18 @@
 #include "dcf77.h"
 #endif
 
+time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
+                   uint8_t mm, uint8_t ss);
 void clock_init(void);
 void clock_loop(void *pvParameters);
 void time_sync(void);
-bool wait_for_pulse(void);
+int wait_for_pulse(void);
 int syncTime(time_t);
 int syncTime(uint32_t t);
 void IRAM_ATTR CLOCKIRQ(void);
 int timepulse_init(void);
 void timepulse_start(void);
+int TimeIsValid(time_t t);
+time_t compiledUTC(void);
 
 #endif // _timemanager_H

@@ -65,15 +65,14 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *sendCycle = NULL, *homeCycle = NULL, *clockCycle = NULL, *displaytimer = NULL;
+hw_timer_t *sendCycle = NULL, *homeCycle = NULL, *clockCycle = NULL,
+           *displaytimer = NULL;
 
 TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
 bool volatile TimePulseTick = false;
 bool TimeIsSynced = false;
 time_t LastSyncTime = 0;
-
-RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -82,7 +81,7 @@ std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
-// set Time Zone, fetch user setting from paxcounter.conf
+// set Time Zone for user setting from paxcounter.conf
 TimeChangeRule myDST = DAYLIGHT_TIME;
 TimeChangeRule mySTD = STANDARD_TIME;
 Timezone myTZ(myDST, mySTD);
@@ -97,7 +96,7 @@ void setup() {
 
   char features[100] = "";
 
-  // create some semaphores for syncing / mutexing tasks
+    // create some semaphores for syncing / mutexing tasks
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
   if (I2Caccess)
     xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use

@@ -115,7 +115,6 @@ extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern time_t LastSyncTime;
-extern RtcDateTime compiled;
 
 // application includes
 #include "led.h"

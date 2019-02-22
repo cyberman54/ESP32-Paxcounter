@@ -134,8 +134,7 @@ void init_display(const char *Productname, const char *Version) {
     u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }
-
+  }                     // mutex
 } // init_display
 
 void refreshtheDisplay() {
@@ -155,8 +154,10 @@ void refreshtheDisplay() {
     }
 
     // if display is switched off we don't refresh it to relax cpu
-    if (!DisplayState)
+    if (!DisplayState) {
+      I2C_MUTEX_UNLOCK(); // release i2c bus access
       return;
+    }
 
     // update counter (lines 0-1)
     snprintf(
@@ -226,12 +227,11 @@ void refreshtheDisplay() {
     u8x8.printf("%-16s", display_line6);
 #else // we want a systime display instead LoRa status
     t = myTZ.toLocal(now());
-    timePulse = (timeStatus() == timeSet) ? timePulseSymbol : timeNoPulseSymbol;
-    timeState = TimePulseTick ? timeSync : ' ';
+    timePulse = TimeIsSynced ? timePulseSymbol : timeNoPulseSymbol;
+    timeState = TimePulseTick ? timePulse : ' ';
     TimePulseTick = false;
-    u8x8.printf("%02d:%02d%c%02d%c %2d.%3s", hour(t), minute(t),
-                TimeIsSynced ? ':' : '.', second(t), timeState, day(t),
-                printmonth[month(t)]);
+    u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
+                timeState, day(t), printmonth[month(t)]);
 #endif
 
     // update LMiC event display (line 7)
@@ -250,8 +250,7 @@ void refreshtheDisplay() {
 #endif // HAS_LORA
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }
-
+  }                     // mutex
 } // refreshDisplay()
 
 #endif // HAS_DISPLAY

@@ -7,7 +7,7 @@
 // Local logging tag
 static const char TAG[] = "main";
 
-time_t userUTCTime; // Seconds since the UTC epoch
+time_t userUTCTime; // Seconds since the UTC in seconds GPS time starting 1.1.2000
 
 // do all housekeeping
 void doHousekeeping() {

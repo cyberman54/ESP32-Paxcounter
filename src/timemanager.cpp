@@ -5,7 +5,7 @@ static const char TAG[] = "main";
 
 void time_sync() {
   // synchonization of systime with external time source (GPS/LORA)
-  // function is frequently called from cyclic.cpp
+  // frequently called from cyclic.cpp
 
 #ifdef TIME_SYNC_INTERVAL
 
@@ -25,12 +25,11 @@ void time_sync() {
 #ifdef HAS_RTC
   if (TimeIsSynced) { // recalibrate RTC, if we have one
     set_rtctime(now());
-  } 
-  else { // we switch to fallback time after a while
+  } else { // we switch to fallback time after a while
     if ((lastTimeSync >= (TIME_SYNC_TIMEOUT * 60000)) ||
-        !LastSyncTime) {       // sync stil due -> use RTC as fallback source
+        !LastSyncTime) { // sync is still due -> use RTC as fallback source
       syncTime(get_rtctime()); // sync with RTC time
-      TimeIsSynced = false;    // 
+      TimeIsSynced = false;
     }
   }
 #endif
@@ -40,33 +39,33 @@ void time_sync() {
 
 // helper function to sync time on start of next second
 int syncTime(time_t t) {
-  if (t) {
+  if (TimeIsValid(t)) {
     TimeIsSynced = wait_for_pulse(); // wait for next 1pps timepulse
     setTime(t);
     adjustTime(1);        // forward time to next second
     LastSyncTime = now(); // store time of this sync
-    ESP_LOGD(TAG, "System time was set to %02d:%02d:%02d", hour(t), minute(t),
+    ESP_LOGD(TAG, "Time was set to %02d:%02d:%02d", hour(t), minute(t),
              second(t));
     return 1; // success
   } else {
-    ESP_LOGD(TAG, "System time sync attempt failed");
+    ESP_LOGD(TAG, "Time sync attempt failed");
     TimeIsSynced = false;
     return 0;
   }
   // failure
 }
 
-int syncTime(uint32_t t) { // t is epoch seconds starting 1.1.1970
+int syncTime(uint32_t t) { // t is UTC time in seconds epoch
   return syncTime(static_cast<time_t>(t));
 }
 
 // helper function to sync moment on timepulse
-bool wait_for_pulse(void) {
+int wait_for_pulse(void) {
   // sync on top of next second with 1pps timepulse
   if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)) == pdTRUE)
-    return true; // success
+    return 1; // success
   ESP_LOGD(TAG, "Missing timepulse");
-  return false;
+  return 0; // failure
 }
 
 // helper function to setup a pulse per second for time synchronisation
@@ -95,7 +94,7 @@ int timepulse_init() {
     ESP_LOGI(TAG, "Timepulse: external (RTC)");
     return 1; // success
   } else {
-    ESP_LOGE(TAG, "I2c bus busy - RTC initialization error");
+    ESP_LOGE(TAG, "RTC initialization error, I2C bus busy");
     return 0; // failure
   }
   return 1; // success
@@ -130,6 +129,34 @@ void IRAM_ATTR CLOCKIRQ(void) {
   TimePulseTick = !TimePulseTick; // flip ticker
 #endif
   portYIELD_FROM_ISR();
+}
+
+// helper function to check plausibility of a time
+int TimeIsValid(time_t t) {
+  // is it a time in the past? we use compile date to guess
+  ESP_LOGD(TAG, "t=%d, tt=%d, valid: %s", t, compiledUTC(),
+           (t >= compiledUTC()) ? "yes" : "no");
+  return (t >= compiledUTC());
+}
+
+// helper function to convert compile time to UTC time
+time_t compiledUTC(void) {
+  time_t t = RtcDateTime(__DATE__, __TIME__).Epoch32Time();
+  return myTZ.toUTC(t);
+}
+
+// helper function to convert gps date/time into time_t
+time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
+                   uint8_t mm, uint8_t ss) {
+  tmElements_t tm;
+  tm.Year =
+      CalendarYrToTm(YYYY); // year offset from 1970 in time.h
+  tm.Month = MM;
+  tm.Day = DD;
+  tm.Hour = hh;
+  tm.Minute = mm;
+  tm.Second = ss;
+  return makeTime(tm);
 }
 
 #if defined HAS_IF482 || defined HAS_DCF77

@@ -73,19 +73,6 @@ void gps_read() {
            gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
 }
 
-// helper function to convert gps date/time into time_t
-time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
-                   uint8_t mm, uint8_t ss) {
-  tmElements_t tm;
-  tm.Year = YYYY - 1970; // note year argument is offset from 1970 in time.h
-  tm.Month = MM;
-  tm.Day = DD;
-  tm.Hour = hh;
-  tm.Minute = mm;
-  tm.Second = ss;
-  return makeTime(tm);
-}
-
 // function to fetch current time from gps
 time_t get_gpstime(void) {
   // !! never call now() or delay in this function, this would break this
@@ -93,8 +80,10 @@ time_t get_gpstime(void) {
 
   time_t t = 0;
 
-  if ((gps.time.age() < 900) && (gps.time.isValid()) &&
-      (gps.date.year() >= compiled.Year())) {
+  if ((gps.time.age() < 950) && (gps.time.isValid())) {
+
+    ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s", gps.time.age(),
+             gps.time.isValid() ? "yes" : "no");
 
     // use recent gps time
     t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
