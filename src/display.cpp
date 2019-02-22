@@ -41,16 +41,6 @@ const char lora_datarate[] = {"1211100908078CNA1211109C8C7C"};
 const char lora_datarate[] = {"121110090807FSNA"};
 #endif
 
-// time display symbols
-#if defined HAS_GPS || defined HAS_RTC
-const char timeNoPulseSymbol = '?';
-#if defined HAS_IF482
-const char timePulseSymbol = '+';
-#elif defined HAS_DCF77
-const char timePulseSymbol = '*';
-#endif
-#endif
-
 // helper arry for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -139,8 +129,18 @@ void init_display(const char *Productname, const char *Version) {
 
 void refreshtheDisplay() {
 
+  // time display symbols
+  const char timeNotSetSymbol = '?';
+#if defined HAS_IF482
+  const char timeIsSetSymbol = '+';
+#elif defined HAS_DCF77
+  const char timeIsSetSymbol = '*';
+#else
+  const char timeIsSetSymbol = '#';
+#endif
+
   uint8_t msgWaiting;
-  char timePulse, timeState;
+  char timeIsSet, timeState;
   char buff[16]; // 16 chars line buffer
   time_t t;
 
@@ -227,8 +227,9 @@ void refreshtheDisplay() {
     u8x8.printf("%-16s", display_line6);
 #else // we want a systime display instead LoRa status
     t = myTZ.toLocal(now());
-    timePulse = TimeIsSynced ? timePulseSymbol : timeNoPulseSymbol;
-    timeState = TimePulseTick ? timePulse : ' ';
+    timeIsSet =
+        (timeStatus() == timeNotSet) ? timeNotSetSymbol : timeIsSetSymbol;
+    timeState = TimePulseTick ? ' ' : timeIsSet;
     TimePulseTick = false;
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
                 timeState, day(t), printmonth[month(t)]);

@@ -11,16 +11,16 @@ void time_sync() {
 
   time_t lastTimeSync = now() - LastSyncTime; // check if a sync is due
 
-  if ((lastTimeSync >= (TIME_SYNC_INTERVAL * 60000)) || !LastSyncTime)
-  // is it time to sync with external source?
+  if ((lastTimeSync >= (TIME_SYNC_INTERVAL * 60000)) || !LastSyncTime) {
+    // is it time to sync with external source?
 #ifdef HAS_GPS
     syncTime(get_gpstime()); // attempt sync with GPS time
-#elif defined HAS_LORA && defined TIME_SYNC_LORA
-    LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
-#else
-  {
-  } // no time source -> no sync
 #endif
+#if defined HAS_LORA && defined TIME_SYNC_LORA
+    if (!TimeIsSynced) // no GPS sync -> try lora sync
+      LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
+#endif
+  }
 
 #ifdef HAS_RTC
   if (TimeIsSynced) { // recalibrate RTC, if we have one
@@ -149,8 +149,7 @@ time_t compiledUTC(void) {
 time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
                    uint8_t mm, uint8_t ss) {
   tmElements_t tm;
-  tm.Year =
-      CalendarYrToTm(YYYY); // year offset from 1970 in time.h
+  tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in time.h
   tm.Month = MM;
   tm.Day = DD;
   tm.Hour = hh;
