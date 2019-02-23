@@ -48,7 +48,6 @@ uint16_t read_voltage() {
 #ifdef BATT_FACTOR
   voltage *= BATT_FACTOR;
 #endif
-  ESP_LOGD(TAG, "Raw: %d / Voltage: %dmV", adc_reading, voltage);
   return voltage;
 #else
   return 0;
