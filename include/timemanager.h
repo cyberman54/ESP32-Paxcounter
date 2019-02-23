@@ -20,7 +20,6 @@ void clock_loop(void *pvParameters);
 void time_sync(void);
 int wait_for_pulse(void);
 int syncTime(time_t const t, uint8_t const timesource);
-int syncTime(uint32_t const t, uint8_t const timesource);
 void IRAM_ATTR CLOCKIRQ(void);
 int timepulse_init(void);
 void timepulse_start(void);

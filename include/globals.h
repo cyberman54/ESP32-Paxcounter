@@ -114,7 +114,7 @@ extern SemaphoreHandle_t I2Caccess, TimePulse;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
-extern time_t LastSyncTime, userUTCTime;
+extern time_t lastSyncTime, userUTCTime;
 
 // application includes
 #include "led.h"

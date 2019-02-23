@@ -89,16 +89,19 @@ HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 // triggered by timepulse to ticker out DCF signal
 void IF482_Pulse(time_t t) {
 
+  static const TickType_t txDelay =
+      pdMS_TO_TICKS(IF482_PULSE_LENGTH) - tx_Ticks(HAS_IF482);
+
   TickType_t startTime = xTaskGetTickCount();
-  static const TickType_t txDelay = pdMS_TO_TICKS(IF482_PULSE_LENGTH) - tx_Ticks(HAS_IF482);
-  vTaskDelayUntil(&startTime, txDelay);
-  IF482.print(IF482_Frame(t+1)); // note: if482 telegram for *next* second
+
+  vTaskDelayUntil(&startTime, txDelay); // wait until moment to fire
+  IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
 }
 
 String IRAM_ATTR IF482_Frame(time_t startTime) {
 
   time_t t = myTZ.toLocal(startTime);
-  char mon, buf[14], out[IF482_FRAME_SIZE];
+  char mon, out[IF482_FRAME_SIZE];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
   case timeSet:           // time is set and is synced
@@ -113,9 +116,10 @@ String IRAM_ATTR IF482_Frame(time_t startTime) {
   } // switch
 
   // generate IF482 telegram
-  snprintf(buf, sizeof(buf), "%02u%02u%02u%1u%02u%02u%02u", year(t) - 2000,
-           month(t), day(t), weekday(t), hour(t), minute(t), second(t));
-  snprintf(out, sizeof(out), "O%cL%s\r", mon, buf);
+  snprintf(out, sizeof(out), "O%cL%02u%02u%02u%1u%02u%02u%02u\r", mon,
+           year(t) - 2000, month(t), day(t), weekday(t), hour(t), minute(t),
+           second(t));
+
   ESP_LOGD(TAG, "IF482 = %s", out);
   return out;
 }
@@ -124,13 +128,13 @@ String IRAM_ATTR IF482_Frame(time_t startTime) {
 TickType_t tx_Ticks(unsigned long baud, uint32_t config, int8_t rxPin,
                     int8_t txPins) {
 
-  uint32_t datenbits = ((config & 0x0c) >> 2) + 5;
+  uint32_t databits = ((config & 0x0c) >> 2) + 5;
   uint32_t stopbits = ((config & 0x20) >> 5) + 1;
-  uint32_t tx_delay =
-      (2 + datenbits + stopbits) * IF482_FRAME_SIZE * 1000.0 / baud;
+  uint32_t txTime =
+      (databits + stopbits + 2) * IF482_FRAME_SIZE * 1000.0 / baud;
   // +2 ms margin for the startbit and the clock's processing time
 
-  return pdMS_TO_TICKS(round(tx_delay));
+  return pdMS_TO_TICKS(round(txTime));
 }
 
 #endif // HAS_IF482

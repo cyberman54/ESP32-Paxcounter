@@ -443,7 +443,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess) {
 #ifdef HAS_LORA
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
-  uint32_t *pUserUTCTime = (uint32_t *)pVoidUserUTCTime;
+  time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
   lmic_time_reference_t lmicTimeReference;
 
   if (flagSuccess != 1) {
@@ -468,11 +468,11 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   ostime_t ticksRequestSent = lmicTimeReference.tLocal;
   // Add the delay between the instant the time was transmitted and
   // the current time
-  uint32_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
+  time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
   *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (syncTime(*pUserUTCTime, lora)) { // do we have a valid time?
+  if (syncTime(*pUserUTCTime, lora)) { // have we got a valid time?
 #ifdef HAS_RTC
     if (TimeIsSynced)
       set_rtctime(now()); // UTC time

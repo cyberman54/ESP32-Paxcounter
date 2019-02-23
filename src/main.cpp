@@ -72,7 +72,7 @@ TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
 bool volatile TimePulseTick = false;
 bool TimeIsSynced = false;
-time_t LastSyncTime = 0, userUTCTime = 0;
+time_t lastSyncTime = 0, userUTCTime = 0;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
