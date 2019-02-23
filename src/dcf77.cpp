@@ -18,7 +18,7 @@ static const char TAG[] = "main";
 
 // array of dcf pulses for one minute, secs 0..16 and 20 are never touched, so
 // we initialize them statically to avoid dumb recalculation every minute
-static uint8_t DCFpulse[DCF77_FRAME_SIZE] = {
+uint8_t DCFpulse[DCF77_FRAME_SIZE + 1] = {
     dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero,
     dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero,
     dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_zero, dcf_one};
@@ -63,7 +63,7 @@ void DCF_Pulse(time_t t) {
   } // for
 } // DCF_Pulse()
 
-uint8_t IRAM_ATTR DCF77_Frame(time_t tt) {
+void IRAM_ATTR DCF77_Frame(time_t tt) {
 
   uint8_t Parity;
   time_t t = myTZ.toLocal(tt); // convert to local time
@@ -94,8 +94,8 @@ uint8_t IRAM_ATTR DCF77_Frame(time_t tt) {
   // ENCODE MARK (sec 59)
   DCFpulse[59] = dcf_off; // !! missing code here for leap second !!
 
-  // return the minute for which this frame is generated
-  return minute(t);
+  // timestamp this frame with it's minute
+  DCFpulse[60] = minute(t);
 
 } // DCF77_Frame()
 

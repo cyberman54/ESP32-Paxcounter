@@ -13,9 +13,10 @@ enum dcf_pinstate { dcf_low, dcf_high };
 #endif
 
 enum dcf_pulses { dcf_off, dcf_zero, dcf_one };
+extern uint8_t DCFpulse[];
 
 void DCF_Pulse(time_t t);
-uint8_t IRAM_ATTR DCF77_Frame(time_t t);
+void IRAM_ATTR DCF77_Frame(time_t t);
 uint8_t IRAM_ATTR dec2bcd(uint8_t dec, uint8_t startpos, uint8_t endpos,
                           uint8_t pArray[]);
 uint8_t IRAM_ATTR setParityBit(uint8_t p);

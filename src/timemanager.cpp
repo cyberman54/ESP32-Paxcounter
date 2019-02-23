@@ -190,14 +190,13 @@ void clock_loop(void *pvParameters) { // ClockTask
 
   TickType_t wakeTime;
   time_t t;
-  uint8_t current_frame;
 
 #define t1(t) (t + DCF77_FRAME_SIZE + 1) // future time for next DCF77 frame
 #define t2(t) (t + 1) // future time for sync with 1pps trigger
 
 // preload first DCF frame before start
 #ifdef HAS_DCF77
-  current_frame = DCF77_Frame(t1(now()));
+  DCF77_Frame(t1(now()));
 #endif
 
   // output time telegram for second following sec beginning with timepulse
@@ -217,9 +216,9 @@ void clock_loop(void *pvParameters) { // ClockTask
 #elif defined HAS_DCF77
 
     if (second(t) == DCF77_FRAME_SIZE - 1) // is it time to load new frame?
-      current_frame = DCF77_Frame(t1(t));  // generate next frame
+      DCF77_Frame(t1(t));                  // generate next frame
 
-    if (current_frame ==
+    if (DCFpulse[DCF77_FRAME_SIZE] ==
         minute(t1(t)))  // have recent frame? (pulses could be missed!)
       DCF_Pulse(t2(t)); // then output next second of this frame
 
