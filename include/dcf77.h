@@ -12,13 +12,12 @@ enum dcf_pinstate { dcf_high, dcf_low };
 enum dcf_pinstate { dcf_low, dcf_high };
 #endif
 
-enum dcf_pulses { dcf_off, dcf_zero, dcf_one };
-extern uint8_t DCFpulse[];
+enum DCF77_Pulses { dcf_Z, dcf_0, dcf_1 };
 
-void DCF_Pulse(time_t t);
-void IRAM_ATTR DCF77_Frame(time_t t);
-uint8_t IRAM_ATTR dec2bcd(uint8_t dec, uint8_t startpos, uint8_t endpos,
-                          uint8_t pArray[]);
-uint8_t IRAM_ATTR setParityBit(uint8_t p);
+void DCF77_Pulse(time_t t, uint8_t const *DCFpulse);
+uint8_t *IRAM_ATTR DCF77_Frame(time_t const t);
+uint8_t IRAM_ATTR dec2bcd(uint8_t const dec, uint8_t const startpos, uint8_t const endpos,
+                          uint8_t *DCFpulse);
+uint8_t IRAM_ATTR setParityBit(uint8_t const p);
 
 #endif

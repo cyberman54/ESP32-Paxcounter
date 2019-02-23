@@ -74,7 +74,7 @@ int timepulse_init() {
 // use time pulse from GPS as time base with fixed 1Hz frequency
 #ifdef GPS_INT
 
-  // setup external interupt for active low RTC INT pin
+  // setup external interupt pin for GPS INT output
   pinMode(GPS_INT, INPUT_PULLDOWN);
   // setup external rtc 1Hz clock as pulse per second clock
   ESP_LOGI(TAG, "Timepulse: external (GPS)");
@@ -83,7 +83,7 @@ int timepulse_init() {
 // use pulse from on board RTC chip as time base with fixed frequency
 #elif defined RTC_INT
 
-  // setup external interupt for active low RTC INT pin
+  // setup external interupt pin for active low RTC INT output
   pinMode(RTC_INT, INPUT_PULLUP);
 
   // setup external rtc 1Hz clock as pulse per second clock
@@ -196,7 +196,8 @@ void clock_loop(void *pvParameters) { // ClockTask
 
 // preload first DCF frame before start
 #ifdef HAS_DCF77
-  DCF77_Frame(t1(now()));
+  uint8_t *DCFpulse;
+  DCFpulse = DCF77_Frame(t1(now()));
 #endif
 
   // output time telegram for second following sec beginning with timepulse
@@ -216,11 +217,11 @@ void clock_loop(void *pvParameters) { // ClockTask
 #elif defined HAS_DCF77
 
     if (second(t) == DCF77_FRAME_SIZE - 1) // is it time to load new frame?
-      DCF77_Frame(t1(t));                  // generate next frame
+      DCFpulse = DCF77_Frame(t1(t));      // generate next frame
 
     if (DCFpulse[DCF77_FRAME_SIZE] ==
-        minute(t1(t)))  // have recent frame? (pulses could be missed!)
-      DCF_Pulse(t2(t)); // then output next second of this frame
+        minute(t1(t))) // have recent frame? (pulses could be missed!)
+      DCF77_Pulse(t2(t), DCFpulse); // then output next second of this frame
 
 #endif
 
