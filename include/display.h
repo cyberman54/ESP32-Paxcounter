@@ -4,7 +4,9 @@
 #include <U8x8lib.h>
 #include "cyclic.h"
 
-extern uint8_t volatile DisplayState;
+extern uint8_t DisplayState;
+extern char timeSource;
+
 extern HAS_DISPLAY u8x8;
 
 void init_display(const char *Productname, const char *Version);

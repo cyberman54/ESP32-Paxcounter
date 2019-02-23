@@ -86,7 +86,7 @@ time_t get_gpstime(void) {
              gps.time.isValid() ? "yes" : "no");
 
     // use recent gps time
-    t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
+    t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
 
     ESP_LOGD(TAG, "GPS time: %02d.%02d.%04d %02d:%02d:%02d", gps.date.day(),

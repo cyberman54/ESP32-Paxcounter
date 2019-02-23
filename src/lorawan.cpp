@@ -460,7 +460,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
 
   // Update userUTCTime, considering the difference between the GPS and UTC
   // time, and the leap seconds
-  // !!! DANGER !!! This code will expire in the year when next leap second happenes
+  // !!! DANGER !!! This code will expire in next year with leap second
   *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
   // Current time, in ticks
   ostime_t ticksNow = os_getTime();
@@ -472,12 +472,11 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (syncTime(*pUserUTCTime)) { // do we have a valid time?
+  if (syncTime(*pUserUTCTime, lora)) { // do we have a valid time?
 #ifdef HAS_RTC
     if (TimeIsSynced)
       set_rtctime(now()); // UTC time
 #endif
-    LastSyncTime = now(); // remember time of this sync event
     ESP_LOGI(TAG, "LORA has set the system time");
   } else
     ESP_LOGI(TAG, "Unable to sync system time with LORA");

@@ -45,7 +45,8 @@ const char lora_datarate[] = {"121110090807FSNA"};
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-uint8_t volatile DisplayState = 0;
+uint8_t DisplayState = 0;
+char timeSource = '?';
 
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
@@ -128,16 +129,6 @@ void init_display(const char *Productname, const char *Version) {
 } // init_display
 
 void refreshtheDisplay() {
-
-  // time display symbols
-  const char timeNotSetSymbol = '?';
-#if defined HAS_IF482
-  const char timeIsSetSymbol = '+';
-#elif defined HAS_DCF77
-  const char timeIsSetSymbol = '*';
-#else
-  const char timeIsSetSymbol = '#';
-#endif
 
   uint8_t msgWaiting;
   char timeIsSet, timeState;
@@ -227,8 +218,7 @@ void refreshtheDisplay() {
     u8x8.printf("%-16s", display_line6);
 #else // we want a systime display instead LoRa status
     t = myTZ.toLocal(now());
-    timeIsSet =
-        (timeStatus() == timeNotSet) ? timeNotSetSymbol : timeIsSetSymbol;
+    timeIsSet = (timeStatus() == timeNotSet) ? '#' : timeSource;
     timeState = TimePulseTick ? ' ' : timeIsSet;
     TimePulseTick = false;
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),

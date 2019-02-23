@@ -14,11 +14,12 @@ void time_sync() {
   if ((lastTimeSync >= (TIME_SYNC_INTERVAL * 60000)) || !LastSyncTime) {
     // is it time to sync with external source?
 #ifdef HAS_GPS
-    syncTime(get_gpstime()); // attempt sync with GPS time
+    if (syncTime(get_gpstime(), pps)) // attempt sync with GPS time
 #endif
 #if defined HAS_LORA && defined TIME_SYNC_LORA
-    if (!TimeIsSynced) // no GPS sync -> try lora sync
-      LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
+      if (!TimeIsSynced) // no GPS sync -> try lora sync
+        LMIC_requestNetworkTime(user_request_network_time_callback,
+                                &userUTCTime);
 #endif
   }
 
@@ -28,8 +29,8 @@ void time_sync() {
   } else { // we switch to fallback time after a while
     if ((lastTimeSync >= (TIME_SYNC_TIMEOUT * 60000)) ||
         !LastSyncTime) { // sync is still due -> use RTC as fallback source
-      syncTime(get_rtctime()); // sync with RTC time
-      TimeIsSynced = false;
+      if (syncTime(get_rtctime(), rtc)) // sync with RTC time
+        TimeIsSynced = false;
     }
   }
 #endif
@@ -38,25 +39,31 @@ void time_sync() {
 } // time_sync()
 
 // helper function to sync time on start of next second
-int syncTime(time_t t) {
+int syncTime(time_t const t, uint8_t const timesource) {
+
+  // symbol to display current time source
+  const char timeSetSymbols[] = {'G', 'R', 'L', '~' };
+
   if (TimeIsValid(t)) {
     TimeIsSynced = wait_for_pulse(); // wait for next 1pps timepulse
     setTime(t);
     adjustTime(1);        // forward time to next second
     LastSyncTime = now(); // store time of this sync
+    timeSource = timeSetSymbols[timesource];
     ESP_LOGD(TAG, "Time was set to %02d:%02d:%02d", hour(t), minute(t),
              second(t));
     return 1; // success
   } else {
     ESP_LOGD(TAG, "Time sync attempt failed");
+    timeSource = timeSetSymbols[unsynced];
     TimeIsSynced = false;
     return 0;
   }
   // failure
 }
 
-int syncTime(uint32_t t) { // t is UTC time in seconds epoch
-  return syncTime(static_cast<time_t>(t));
+int syncTime(uint32_t const t, uint8_t const timesource) { // t is UTC time in seconds epoch
+  return syncTime(static_cast<time_t>(t), timesource);
 }
 
 // helper function to sync moment on timepulse
@@ -132,7 +139,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 }
 
 // helper function to check plausibility of a time
-int TimeIsValid(time_t t) {
+int TimeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
   ESP_LOGD(TAG, "t=%d, tt=%d, valid: %s", t, compiledUTC(),
            (t >= compiledUTC()) ? "yes" : "no");
@@ -146,7 +153,7 @@ time_t compiledUTC(void) {
 }
 
 // helper function to convert gps date/time into time_t
-time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
+time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
                    uint8_t mm, uint8_t ss) {
   tmElements_t tm;
   tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in time.h
@@ -217,7 +224,7 @@ void clock_loop(void *pvParameters) { // ClockTask
 #elif defined HAS_DCF77
 
     if (second(t) == DCF77_FRAME_SIZE - 1) // is it time to load new frame?
-      DCFpulse = DCF77_Frame(t1(t));      // generate next frame
+      DCFpulse = DCF77_Frame(t1(t));       // generate next frame
 
     if (DCFpulse[DCF77_FRAME_SIZE] ==
         minute(t1(t))) // have recent frame? (pulses could be missed!)
