@@ -6,14 +6,18 @@
 #define DCF77_FRAME_SIZE (60)
 #define DCF77_PULSE_LENGTH (100)
 
-extern uint8_t DCFpulse[];
+#ifdef DCF77_ACTIVE_LOW
+enum dcf_pinstate { dcf_high, dcf_low };
+#else
+enum dcf_pinstate { dcf_low, dcf_high };
+#endif
 
 enum dcf_pulses { dcf_off, dcf_zero, dcf_one };
-enum dcf_pinstate { dcf_low, dcf_high };
 
 void DCF_Pulse(time_t t);
-void IRAM_ATTR DCF77_Frame(time_t t);
-void set_DCF77_pin(dcf_pinstate state);
-uint8_t dec2bcd(uint8_t dec, uint8_t startpos, uint8_t endpos, uint8_t pArray[]);
+uint8_t IRAM_ATTR DCF77_Frame(time_t t);
+uint8_t IRAM_ATTR dec2bcd(uint8_t dec, uint8_t startpos, uint8_t endpos,
+                          uint8_t pArray[]);
+uint8_t IRAM_ATTR setParityBit(uint8_t p);
 
 #endif
