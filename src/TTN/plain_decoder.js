@@ -10,7 +10,7 @@ function Decoder(bytes, port) {
     if (bytes.length >= 2) {
     decoded.wifi = (bytes[i++] << 8) | bytes[i++];}
     
-    if (bytes.length >= 4) {
+    if (bytes.length === 4 || bytes.length > 15) {
     decoded.ble = (bytes[i++] << 8) | bytes[i++];}
 
     if (bytes.length > 4) {
@@ -59,6 +59,12 @@ function Decoder(bytes, port) {
     decoded.pressure = ((bytes[i++] << 8) | bytes[i++]);
     decoded.humidity = ((bytes[i++] << 8) | bytes[i++]);
     decoded.air = ((bytes[i++] << 8) | bytes[i++]);
+  }
+  
+  if (port === 8) {
+    var i = 0;
+    if (bytes.length >= 2) {
+    decoded.battery = (bytes[i++] << 8) | bytes[i++];}
   }
 
   return decoded;
