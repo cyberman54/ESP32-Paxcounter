@@ -237,6 +237,10 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
   	byte 1-2:	Battery or USB Voltage [mV], 0 if no battery probe
 
+**Port #9:** Time/Date
+
+  	byte 1-2:	board's local time/date in UNIX epoch (number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds) 
+
 # Remote control
 
 The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
@@ -357,6 +361,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 0x85 get BME680 sensor data
 
 	Device answers with BME680 sensor data set on Port 7.
+
+0x86 get time/date
+
+	Device answers with it's local time/date (UTC Unix epoch) on Port 9.
 
 	
 # License
