@@ -49,6 +49,7 @@ public:
   void addBME(bmeStatus_t value);
   void addButton(uint8_t value);
   void addSensor(uint8_t[]);
+  void addTime(time_t value);
 
 #if PAYLOAD_ENCODER == 1 // format plain
 
