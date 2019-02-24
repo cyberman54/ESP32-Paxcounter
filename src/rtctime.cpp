@@ -59,8 +59,6 @@ uint8_t set_rtctime(time_t t) { // t is UTC in seconds epoch time
 } // set_rtctime()
 
 time_t get_rtctime(void) {
-  // !! never call now() or delay in this function, this would break this
-  // function to be used as SyncProvider for Time.h
   time_t t = 0;
   if (I2C_MUTEX_LOCK()) {
     if (Rtc.IsDateTimeValid() && Rtc.GetIsRunning()) {

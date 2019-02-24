@@ -17,10 +17,9 @@
 #include <Wire.h>
 #endif
 
-
-
 extern QueueHandle_t LoraSendQueue;
 
+esp_err_t lora_stack_init();
 void onEvent(ev_t ev);
 void gen_lora_deveui(uint8_t *pdeveui);
 void RevBytes(unsigned char *b, size_t c);
@@ -36,7 +35,7 @@ void lora_queuereset(void);
 void lora_housekeeping(void);
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess);
-
-esp_err_t lora_stack_init();
+time_t set_loratime(time_t t);
+time_t get_loratime(void);
 
 #endif

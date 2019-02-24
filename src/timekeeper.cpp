@@ -6,23 +6,24 @@ static const char TAG[] = "main";
 // symbol to display current time source
 const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
+getExternalTime TimeSourcePtr; // pointer to time source function
+
 void time_sync() {
-  // synchonization of systime with external time source (GPS/LORA)
-  // frequently called from cyclic.cpp
+  // check synchonization of systime, called by cyclic.cpp
 
 #ifdef TIME_SYNC_INTERVAL
 
-  if (timeStatus() == timeSet)
+  if (timeStatus() == timeSet) // timeStatus() is flipped in Time.h
     return;
 
 #ifdef HAS_GPS
-  if (syncTime(get_gpstime(), _gps))
+  if (syncTime(get_gpstime, _gps))
     return; // attempt sync with GPS time
 #endif
 
 // no GPS -> fallback to RTC time while trying lora sync
 #ifdef HAS_RTC
-  if (!syncTime(get_rtctime(), _rtc)) // sync with RTC time
+  if (!syncTime(get_rtctime, _rtc)) // sync with RTC time
     ESP_LOGW(TAG, "no confident RTC time");
 #endif
 
@@ -34,28 +35,43 @@ void time_sync() {
 #endif // TIME_SYNC_INTERVAL
 } // time_sync()
 
-// sync time on start of next second
-uint8_t syncTime(time_t const t, timesource_t const caller) {
+// sync time on start of next second from GPS or RTC
+uint8_t syncTime(getExternalTime getTimeFunction, timesource_t const caller) {
+
+  TimeSourcePtr = getTimeFunction;
+  time_t t;
+
+  if (!TimeSourcePtr)
+    goto error;
+
+  if ((caller == _gps || caller == _rtc))           // ticking timesource?
+    xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // then wait on pps
+
+  t = TimeSourcePtr(); // get time from given timesource
+
   if (TimeIsValid(t)) {
-    uint8_t const TimeIsPulseSynced =
-        wait_for_pulse(); // wait for next 1pps timepulse
-    setTime(t);           // sync time and reset timeStatus() to timeSet
-    adjustTime(1);        // forward time to next second
+    if (caller == _gps) // gps time concerns past second
+      t++;
+    setTime(t); // flips timeStatus() in Time.h
     timeSource = caller;
     ESP_LOGD(TAG, "Time source %c set time to %02d:%02d:%02d",
              timeSetSymbols[timeSource], hour(t), minute(t), second(t));
-#ifdef HAS_RTC
-    if ((TimeIsPulseSynced) && (caller != _rtc))
-      set_rtctime(now());
-#endif
-    return 1; // success
 
-  } else {
-    ESP_LOGD(TAG, "Time source %c sync attempt failed", timeSetSymbols[caller]);
-    timeSource = _unsynced;
-    return 0; // failure
+#ifdef HAS_RTC
+    if (caller != _rtc)
+      set_rtctime(t);
+#endif
+
+    return 1; // success
   }
+
+error:
+  ESP_LOGD(TAG, "Time source %c sync attempt failed", timeSetSymbols[caller]);
+  timeSource = _unsynced;
+  return 0; // failure
+
 } // syncTime()
+
 
 // callback function called by Time.h in interval set in main.cpp
 time_t syncProvider_CB(void) {
@@ -63,14 +79,6 @@ time_t syncProvider_CB(void) {
   return 0;
 }
 
-// helper function to sync moment on timepulse
-uint8_t wait_for_pulse(void) {
-  // sync on top of next second with 1pps timepulse
-  if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1010)) == pdTRUE)
-    return 1; // success
-  ESP_LOGD(TAG, "Missing timepulse");
-  return 0; // failure
-}
 
 // helper function to setup a pulse per second for time synchronisation
 uint8_t timepulse_init() {
@@ -209,7 +217,8 @@ void clock_loop(void *pvParameters) { // ClockTask
     xTaskNotifyWait(0x00, ULONG_MAX, &wakeTime,
                     portMAX_DELAY); // wait for timepulse
 
-    if (timeStatus() == timeNotSet) // no confident time -> no output to clock
+    // no confident time -> suppress clock output
+    if (timeStatus() == timeNotSet)
       continue;
 
     t = now(); // payload to send to clock

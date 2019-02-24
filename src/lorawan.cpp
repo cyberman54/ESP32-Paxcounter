@@ -472,9 +472,19 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (syncTime(*pUserUTCTime, _lora)) { // have we got a valid time?
-    ESP_LOGI(TAG, "LORA has set the system time");
-  } else
-    ESP_LOGI(TAG, "Unable to sync system time with LORA");
+  set_loratime(*pUserUTCTime); // store time in time sync provider function
+  if (syncTime(get_loratime, _lora))
+    ESP_LOGI(TAG, "Received recent time from LoRa");
+  else
+    ESP_LOGI(TAG, "Invalid time received from LoRa");
 #endif // HAS_LORA
 } // user_request_network_time_callback
+
+time_t set_loratime(time_t t) {
+  static time_t loratime = 0; // stores time for retrieval
+  if (t > loratime)
+    loratime = t; // store time if it is recent
+  return loratime;
+}
+
+time_t get_loratime(void) { return set_loratime(0); }

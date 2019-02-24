@@ -75,9 +75,6 @@ void gps_read() {
 
 // function to fetch current time from gps
 time_t get_gpstime(void) {
-  // !! never call now() or delay in this function, this would break this
-  // function to be used as SyncProvider for Time.h
-
   time_t t = 0;
 
   if ((gps.time.age() < 950) && (gps.time.isValid())) {
@@ -87,11 +84,11 @@ time_t get_gpstime(void) {
 
     // use recent gps time
     t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
-                    gps.time.hour(), gps.time.minute(), gps.time.second());
+                  gps.time.hour(), gps.time.minute(), gps.time.second());
 
-    ESP_LOGD(TAG, "GPS time: %02d.%02d.%04d %02d:%02d:%02d", gps.date.day(),
-             gps.date.month(), gps.date.year(), gps.time.hour(),
-             gps.time.minute(), gps.time.second());
+    // ESP_LOGD(TAG, "GPS time: %02d.%02d.%04d %02d:%02d:%02d", gps.date.day(),
+    //         gps.date.month(), gps.date.year(), gps.time.hour(),
+    //         gps.time.minute(), gps.time.second());
   }
   return t;
 } // get_gpstime()
