@@ -13,13 +13,13 @@ void time_sync() {
     return;
 
 #ifdef HAS_GPS
-  if (syncTime(get_gpstime(), pps))
+  if (syncTime(get_gpstime(), _gps))
     return; // attempt sync with GPS time
 #endif
 
-// no GPS -> fallback to RTC time
+// no GPS -> fallback to RTC time while trying lora sync
 #ifdef HAS_RTC
-  if (!syncTime(get_rtctime(), rtc)) // sync with RTC time
+  if (!syncTime(get_rtctime(), _rtc)) // sync with RTC time
     ESP_LOGW(TAG, "no confident RTC time");
 #endif
 
@@ -40,20 +40,20 @@ uint8_t syncTime(time_t const t, uint8_t const caller) {
   if (TimeIsValid(t)) {
     uint8_t const TimeIsPulseSynced =
         wait_for_pulse(); // wait for next 1pps timepulse
-    setTime(t);
-    adjustTime(1); // forward time to next second
+    setTime(t);           // sync time and reset timeStatus() to timeSet
+    adjustTime(1);        // forward time to next second
     timeSource = timeSetSymbols[caller];
     ESP_LOGD(TAG, "Time source %c set time to %02d:%02d:%02d", timeSource,
              hour(t), minute(t), second(t));
 #ifdef HAS_RTC
-    if ((TimeIsPulseSynced) && (caller != rtc))
+    if ((TimeIsPulseSynced) && (caller != _rtc))
       set_rtctime(now());
 #endif
     return 1; // success
 
   } else {
     ESP_LOGD(TAG, "Time source %c sync attempt failed", timeSetSymbols[caller]);
-    timeSource = timeSetSymbols[unsynced];
+    timeSource = timeSetSymbols[_unsynced];
     return 0; // failure
   }
 } // syncTime()

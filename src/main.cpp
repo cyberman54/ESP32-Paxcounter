@@ -361,8 +361,10 @@ void setup() {
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
   timepulse_start();
-  time_sync();                              // sync time
+  time_sync(); // sync time
+#ifdef TIME_SYNC_INTERVAL
   setSyncInterval(TIME_SYNC_INTERVAL * 60); // controls timeStatus()
+#endif
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");

@@ -13,7 +13,7 @@
 #include "dcf77.h"
 #endif
 
-enum timesources { pps, rtc, lora, unsynced };
+enum timesources { _gps, _rtc, _lora, _unsynced };
 
 void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);

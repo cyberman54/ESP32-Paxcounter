@@ -8,7 +8,7 @@ static const char TAG[] = "main";
 RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 
 // initialize RTC
-int rtc_init(void) {
+uint8_t rtc_init(void) {
 
   if (I2C_MUTEX_LOCK()) { // block i2c bus access
 
@@ -24,6 +24,7 @@ int rtc_init(void) {
       Rtc.SetIsRunning(true);
     }
 
+    // If you want to initialize a fresh RTC to compiled time, use this code
     /*
         RtcDateTime tt = Rtc.GetDateTime();
         time_t t = tt.Epoch32Time(); // sec2000 -> epoch
@@ -45,7 +46,7 @@ int rtc_init(void) {
 
 } // rtc_init()
 
-int set_rtctime(time_t t) { // t is UTC in seconds epoch time
+uint8_t set_rtctime(time_t t) { // t is UTC in seconds epoch time
   if (I2C_MUTEX_LOCK()) {
     Rtc.SetDateTime(RtcDateTime(t - SECS_YR_2000)); // epoch -> sec2000
     I2C_MUTEX_UNLOCK();
@@ -56,11 +57,6 @@ int set_rtctime(time_t t) { // t is UTC in seconds epoch time
     return 0;
   } // failure
 } // set_rtctime()
-
-int set_rtctime(uint32_t t) { // t is UTC in seconds epoch time
-  return set_rtctime(static_cast<time_t>(t));
-  // set_rtctime()
-}
 
 time_t get_rtctime(void) {
   // !! never call now() or delay in this function, this would break this

@@ -472,7 +472,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (syncTime(*pUserUTCTime, lora)) { // have we got a valid time?
+  if (syncTime(*pUserUTCTime, _lora)) { // have we got a valid time?
     ESP_LOGI(TAG, "LORA has set the system time");
   } else
     ESP_LOGI(TAG, "Unable to sync system time with LORA");

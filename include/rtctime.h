@@ -8,9 +8,8 @@
 
 extern RtcDS3231<TwoWire> Rtc; // make RTC instance globally available
 
-int rtc_init(void);
-int set_rtctime(uint32_t t);
-int set_rtctime(time_t t);
+uint8_t rtc_init(void);
+uint8_t set_rtctime(time_t t);
 void sync_rtctime(void);
 time_t get_rtctime(void);
 float get_rtctemp(void);
