@@ -5,7 +5,7 @@
 #include "cyclic.h"
 
 extern uint8_t DisplayState;
-extern char timeSource;
+extern timesource_t timeSource;
 
 extern HAS_DISPLAY u8x8;
 

@@ -97,6 +97,7 @@ typedef struct {
 } bmeStatus_t;
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
+enum timesource_t { _gps, _rtc, _lora, _unsynced };
 
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;

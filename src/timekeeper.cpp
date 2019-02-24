@@ -3,6 +3,9 @@
 // Local logging tag
 static const char TAG[] = "main";
 
+// symbol to display current time source
+const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
+
 void time_sync() {
   // synchonization of systime with external time source (GPS/LORA)
   // frequently called from cyclic.cpp
@@ -31,20 +34,16 @@ void time_sync() {
 #endif // TIME_SYNC_INTERVAL
 } // time_sync()
 
-// helper function to sync time on start of next second
-uint8_t syncTime(time_t const t, uint8_t const caller) {
-
-  // symbol to display current time source
-  const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
-
+// sync time on start of next second
+uint8_t syncTime(time_t const t, timesource_t const caller) {
   if (TimeIsValid(t)) {
     uint8_t const TimeIsPulseSynced =
         wait_for_pulse(); // wait for next 1pps timepulse
     setTime(t);           // sync time and reset timeStatus() to timeSet
     adjustTime(1);        // forward time to next second
-    timeSource = timeSetSymbols[caller];
-    ESP_LOGD(TAG, "Time source %c set time to %02d:%02d:%02d", timeSource,
-             hour(t), minute(t), second(t));
+    timeSource = caller;
+    ESP_LOGD(TAG, "Time source %c set time to %02d:%02d:%02d",
+             timeSetSymbols[timeSource], hour(t), minute(t), second(t));
 #ifdef HAS_RTC
     if ((TimeIsPulseSynced) && (caller != _rtc))
       set_rtctime(now());
@@ -53,10 +52,16 @@ uint8_t syncTime(time_t const t, uint8_t const caller) {
 
   } else {
     ESP_LOGD(TAG, "Time source %c sync attempt failed", timeSetSymbols[caller]);
-    timeSource = timeSetSymbols[_unsynced];
+    timeSource = _unsynced;
     return 0; // failure
   }
 } // syncTime()
+
+// callback function called by Time.h in interval set in main.cpp
+time_t syncProvider_CB(void) {
+  timeSource = _unsynced;
+  return 0;
+}
 
 // helper function to sync moment on timepulse
 uint8_t wait_for_pulse(void) {
@@ -204,7 +209,7 @@ void clock_loop(void *pvParameters) { // ClockTask
     xTaskNotifyWait(0x00, ULONG_MAX, &wakeTime,
                     portMAX_DELAY); // wait for timepulse
 
-    if (timeStatus() != timeSet) // no confident time -> no output to clock
+    if (timeStatus() == timeNotSet) // no confident time -> no output to clock
       continue;
 
     t = now(); // payload to send to clock
