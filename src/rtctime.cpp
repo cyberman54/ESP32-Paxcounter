@@ -24,14 +24,16 @@ int rtc_init(void) {
       Rtc.SetIsRunning(true);
     }
 
-    RtcDateTime tt = Rtc.GetDateTime();
-    time_t t = tt.Epoch32Time(); // sec2000 -> epoch
+    /*
+        RtcDateTime tt = Rtc.GetDateTime();
+        time_t t = tt.Epoch32Time(); // sec2000 -> epoch
 
-    if (!Rtc.IsDateTimeValid() || !TimeIsValid(t)) {
-      ESP_LOGW(TAG, "RTC has no recent time, setting to compilation date");
-      Rtc.SetDateTime(
-          RtcDateTime(compiledUTC() - SECS_YR_2000)); // epoch -> sec2000
-    }
+        if (!Rtc.IsDateTimeValid() || !TimeIsValid(t)) {
+          ESP_LOGW(TAG, "RTC has no recent time, setting to compilation date");
+          Rtc.SetDateTime(
+              RtcDateTime(compiledUTC() - SECS_YR_2000)); // epoch -> sec2000
+        }
+    */
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     ESP_LOGI(TAG, "RTC initialized");

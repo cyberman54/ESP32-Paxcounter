@@ -71,8 +71,7 @@ hw_timer_t *sendCycle = NULL, *homeCycle = NULL, *clockCycle = NULL,
 TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
 bool volatile TimePulseTick = false;
-bool TimeIsSynced = false;
-time_t lastSyncTime = 0, userUTCTime = 0;
+time_t userUTCTime = 0;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -96,7 +95,7 @@ void setup() {
 
   char features[100] = "";
 
-    // create some semaphores for syncing / mutexing tasks
+  // create some semaphores for syncing / mutexing tasks
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
   if (I2Caccess)
     xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
@@ -358,13 +357,12 @@ void setup() {
 #endif
 #endif
 
-  // start pps timepulse
-  ESP_LOGI(TAG, "Starting Timepulse...");
-  if (timepulse_init()) // setup timepulse
-    timepulse_start();  // start pulse
-  else
-    ESP_LOGE(TAG, "No timepulse, time will not be synced!");
-  time_sync();
+  // start pps timepulse and timekeepr
+  ESP_LOGI(TAG, "Starting Timekeeper...");
+  assert(timepulse_init()); // setup timepulse
+  timepulse_start();
+  time_sync();                              // sync time
+  setSyncInterval(TIME_SYNC_INTERVAL * 60); // controls timeStatus()
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");

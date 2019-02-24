@@ -108,13 +108,12 @@ extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage; // display values
 extern bool volatile TimePulseTick; // one-pulse-per-second flags set by GPS or RTC
-extern bool TimeIsSynced;
 extern hw_timer_t *sendCycle, *displaytimer, *clockCycle;
 extern SemaphoreHandle_t I2Caccess, TimePulse;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
-extern time_t lastSyncTime, userUTCTime;
+extern time_t userUTCTime;
 
 // application includes
 #include "led.h"

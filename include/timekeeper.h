@@ -1,5 +1,5 @@
-#ifndef _timemanager_H
-#define _timemanager_H
+#ifndef _timekeeper_H
+#define _timekeeper_H
 
 #include "globals.h"
 #include "rtctime.h"
@@ -15,17 +15,17 @@
 
 enum timesources { pps, rtc, lora, unsynced };
 
+void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);
 void clock_loop(void *pvParameters);
 void time_sync(void);
-int wait_for_pulse(void);
-int syncTime(time_t const t, uint8_t const timesource);
-void IRAM_ATTR CLOCKIRQ(void);
-int timepulse_init(void);
 void timepulse_start(void);
-int TimeIsValid(time_t const t);
+uint8_t wait_for_pulse(void);
+uint8_t syncTime(time_t const t, uint8_t const caller);
+uint8_t timepulse_init(void);
+uint8_t TimeIsValid(time_t const t);
 time_t compiledUTC(void);
 time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
                    uint8_t mm, uint8_t ss);
 
-#endif // _timemanager_H
+#endif // _timekeeper_H

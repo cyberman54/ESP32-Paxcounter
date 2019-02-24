@@ -473,10 +473,6 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
 
   // Update system time with time read from the network
   if (syncTime(*pUserUTCTime, lora)) { // have we got a valid time?
-#ifdef HAS_RTC
-    if (TimeIsSynced)
-      set_rtctime(now()); // UTC time
-#endif
     ESP_LOGI(TAG, "LORA has set the system time");
   } else
     ESP_LOGI(TAG, "Unable to sync system time with LORA");

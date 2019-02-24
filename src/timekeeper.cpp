@@ -1,4 +1,4 @@
-#include "timemanager.h"
+#include "timekeeper.h"
 
 // Local logging tag
 static const char TAG[] = "main";
@@ -9,66 +9,57 @@ void time_sync() {
 
 #ifdef TIME_SYNC_INTERVAL
 
-  static time_t ageOfTime = 0;
-
-  ageOfTime = now() - lastSyncTime; // check if a sync is due
-
-  // is it time to sync with external source or did we never sync yet?
-  if ((ageOfTime >= (TIME_SYNC_INTERVAL * 60000)) || !lastSyncTime) {
+  if (timeStatus() == timeSet)
+    return;
 
 #ifdef HAS_GPS
-    syncTime(get_gpstime(), pps); // attempt sync with GPS time
+  if (syncTime(get_gpstime(), pps))
+    return; // attempt sync with GPS time
 #endif
 
-#if defined HAS_LORA && defined TIME_SYNC_LORA
-    if (!TimeIsSynced) // no GPS sync -> try lora sync
-      LMIC_requestNetworkTime(user_request_network_time_callback,
-                              &userUTCTime);
-#endif
-  }
-
+// no GPS -> fallback to RTC time
 #ifdef HAS_RTC
-  if (TimeIsSynced) { // recalibrate RTC, if we have one
-    set_rtctime(now());
-  } else { // we switch to fallback time after a while
-    if ((ageOfTime >= (TIME_SYNC_TIMEOUT * 60000)) ||
-        !lastSyncTime) { // sync is still due -> use RTC as fallback source
-      if (!syncTime(get_rtctime(), rtc)) // sync with RTC time
-        ESP_LOGW(TAG, "no valid time");
-      TimeIsSynced = false;
-    }
-  }
+  if (!syncTime(get_rtctime(), rtc)) // sync with RTC time
+    ESP_LOGW(TAG, "no confident RTC time");
+#endif
+
+// try lora sync if we have
+#if defined HAS_LORA && defined TIME_SYNC_LORA
+  LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
 #endif // TIME_SYNC_INTERVAL
 } // time_sync()
 
 // helper function to sync time on start of next second
-int syncTime(time_t const t, uint8_t const timesource) {
+uint8_t syncTime(time_t const t, uint8_t const caller) {
 
   // symbol to display current time source
-  const char timeSetSymbols[] = {'G', 'R', 'L', '~'};
+  const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
   if (TimeIsValid(t)) {
-    TimeIsSynced = wait_for_pulse(); // wait for next 1pps timepulse
+    uint8_t const TimeIsPulseSynced =
+        wait_for_pulse(); // wait for next 1pps timepulse
     setTime(t);
-    adjustTime(1);        // forward time to next second
-    lastSyncTime = now(); // store time of this sync
-    timeSource = timeSetSymbols[timesource];
+    adjustTime(1); // forward time to next second
+    timeSource = timeSetSymbols[caller];
     ESP_LOGD(TAG, "Time source %c set time to %02d:%02d:%02d", timeSource,
              hour(t), minute(t), second(t));
+#ifdef HAS_RTC
+    if ((TimeIsPulseSynced) && (caller != rtc))
+      set_rtctime(now());
+#endif
     return 1; // success
+
   } else {
+    ESP_LOGD(TAG, "Time source %c sync attempt failed", timeSetSymbols[caller]);
     timeSource = timeSetSymbols[unsynced];
-    TimeIsSynced = false;
-    ESP_LOGD(TAG, "Time source %c sync attempt failed", timeSource);
-    return 0;
+    return 0; // failure
   }
-  // failure
-}
+} // syncTime()
 
 // helper function to sync moment on timepulse
-int wait_for_pulse(void) {
+uint8_t wait_for_pulse(void) {
   // sync on top of next second with 1pps timepulse
   if (xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1010)) == pdTRUE)
     return 1; // success
@@ -77,7 +68,7 @@ int wait_for_pulse(void) {
 }
 
 // helper function to setup a pulse per second for time synchronisation
-int timepulse_init() {
+uint8_t timepulse_init() {
 
 // use time pulse from GPS as time base with fixed 1Hz frequency
 #ifdef GPS_INT
@@ -140,7 +131,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 }
 
 // helper function to check plausibility of a time
-int TimeIsValid(time_t const t) {
+uint8_t TimeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
   ESP_LOGD(TAG, "t=%d, tt=%d, valid: %s", t, compiledUTC(),
            (t >= compiledUTC()) ? "yes" : "no");
@@ -202,9 +193,9 @@ void clock_loop(void *pvParameters) { // ClockTask
 #define t1(t) (t + DCF77_FRAME_SIZE + 1) // future time for next DCF77 frame
 #define t2(t) (t + 1) // future time for sync with 1pps trigger
 
-// preload first DCF frame before start
+  // preload first DCF frame before start
 #ifdef HAS_DCF77
-  uint8_t *DCFpulse;
+  uint8_t *DCFpulse; // pointer on array with DCF pulse bits
   DCFpulse = DCF77_Frame(t1(now()));
 #endif
 
@@ -213,7 +204,7 @@ void clock_loop(void *pvParameters) { // ClockTask
     xTaskNotifyWait(0x00, ULONG_MAX, &wakeTime,
                     portMAX_DELAY); // wait for timepulse
 
-    if (timeStatus() == timeNotSet) // do we have valid time?
+    if (timeStatus() != timeSet) // no confident time -> no output to clock
       continue;
 
     t = now(); // payload to send to clock
