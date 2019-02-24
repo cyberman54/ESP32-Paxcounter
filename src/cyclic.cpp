@@ -19,7 +19,6 @@ void doHousekeeping() {
 
   spi_housekeeping();
   lora_housekeeping();
-  time_sync();
 
   // task storage debugging //
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",

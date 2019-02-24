@@ -8,22 +8,23 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
 getExternalTime TimeSourcePtr; // pointer to time source function
 
-void time_sync() {
+time_t time_sync() {
   // check synchonization of systime, called by cyclic.cpp
+
+  time_t t = 0;
 
 #ifdef TIME_SYNC_INTERVAL
 
-  if (timeStatus() == timeSet) // timeStatus() is flipped in Time.h
-    return;
-
 #ifdef HAS_GPS
-  if (syncTime(get_gpstime, _gps))
-    return; // attempt sync with GPS time
+  t = syncTime(get_gpstime, _gps);
+  if (t)
+    return t; // attempt sync with GPS time
 #endif
 
 // no GPS -> fallback to RTC time while trying lora sync
 #ifdef HAS_RTC
-  if (!syncTime(get_rtctime, _rtc)) // sync with RTC time
+  t = syncTime(get_rtctime, _rtc); // sync with RTC time
+  if (!t)
     ESP_LOGW(TAG, "no confident RTC time");
 #endif
 
@@ -33,26 +34,25 @@ void time_sync() {
 #endif
 
 #endif // TIME_SYNC_INTERVAL
+
+  return t;
 } // time_sync()
 
 // sync time on start of next second from GPS or RTC
-uint8_t syncTime(getExternalTime getTimeFunction, timesource_t const caller) {
+time_t syncTime(getExternalTime getTimeFunction, timesource_t const caller) {
 
-  TimeSourcePtr = getTimeFunction;
   time_t t;
-
+  TimeSourcePtr = getTimeFunction;
   if (!TimeSourcePtr)
     goto error;
 
-  if ((caller == _gps || caller == _rtc))           // ticking timesource?
-    xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // then wait on pps
+  xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
 
   t = TimeSourcePtr(); // get time from given timesource
 
   if (TimeIsValid(t)) {
     if (caller == _gps) // gps time concerns past second
       t++;
-    setTime(t); // flips timeStatus() in Time.h
     timeSource = caller;
     ESP_LOGD(TAG, "Time source %c set time to %02d:%02d:%02d",
              timeSetSymbols[timeSource], hour(t), minute(t), second(t));
@@ -62,7 +62,7 @@ uint8_t syncTime(getExternalTime getTimeFunction, timesource_t const caller) {
       set_rtctime(t);
 #endif
 
-    return 1; // success
+    return t; // success
   }
 
 error:
@@ -71,14 +71,6 @@ error:
   return 0; // failure
 
 } // syncTime()
-
-
-// callback function called by Time.h in interval set in main.cpp
-time_t syncProvider_CB(void) {
-  timeSource = _unsynced;
-  return 0;
-}
-
 
 // helper function to setup a pulse per second for time synchronisation
 uint8_t timepulse_init() {

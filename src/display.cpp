@@ -132,7 +132,7 @@ void refreshtheDisplay() {
 
   uint8_t msgWaiting;
   char timeState, buff[16];
-  time_t t;
+  time_t t = myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
@@ -216,8 +216,7 @@ void refreshtheDisplay() {
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
 #else // we want a systime display instead LoRa status
-    t = myTZ.toLocal(now());
-    timeState = TimePulseTick ? ' ' :  timeSetSymbols[timeSource];
+    timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
                 timeState, day(t), printmonth[month(t)]);

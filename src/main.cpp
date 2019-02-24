@@ -363,9 +363,8 @@ void setup() {
   timepulse_start();
 #ifdef TIME_SYNC_INTERVAL
   setSyncInterval(TIME_SYNC_INTERVAL * 60); // controls timeStatus() via Time.h
-  setSyncProvider(syncProvider_CB); // is called by Time.h
+  setSyncProvider(time_sync); // is called by Time.h
 #endif
-  time_sync(); // sync time
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");

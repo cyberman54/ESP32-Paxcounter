@@ -35,7 +35,4 @@ void lora_queuereset(void);
 void lora_housekeeping(void);
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess);
-time_t set_loratime(time_t t);
-time_t get_loratime(void);
-
 #endif
