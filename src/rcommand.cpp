@@ -274,13 +274,9 @@ void get_bme(uint8_t val[]) {
 
 void get_time(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get time");
-#ifdef HAS_BME
   payload.reset();
-  payload.addtime(now());
+  payload.addTime(now());
   SendPayload(TIMEPORT, prio_high);
-#else
-  ESP_LOGW(TAG, "BME680 sensor not supported");
-#endif
 };
 
 // assign previously defined functions to set of numeric remote commands
