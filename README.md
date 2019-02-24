@@ -235,11 +235,11 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #8:** Battery voltage data (only if device has feature BATT)
 
-  	byte 1-2:	Battery or USB Voltage [mV], 0 if no battery probe
+  	bytes 1-2:	Battery or USB Voltage [mV], 0 if no battery probe
 
 **Port #9:** Time/Date
 
-  	byte 1-2:	board's local time/date in UNIX epoch (number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds) 
+  	bytes 1-4:	board's local time/date in UNIX epoch (number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds) 
 
 # Remote control
 
