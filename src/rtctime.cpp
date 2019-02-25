@@ -67,7 +67,7 @@ time_t get_rtctime(void) {
     }
     I2C_MUTEX_UNLOCK();
   }
-  return t;
+  return TimeIsValid(t);
 } // get_rtctime()
 
 float get_rtctemp(void) {

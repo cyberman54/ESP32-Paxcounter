@@ -20,12 +20,13 @@ void clock_init(void);
 void clock_loop(void *pvParameters);
 time_t time_sync(void);
 void timepulse_start(void);
-time_t syncTime(getExternalTime getTimeFunction, timesource_t const caller);
 uint8_t timepulse_init(void);
-uint8_t TimeIsValid(time_t const t);
+time_t TimeIsValid(time_t const t);
 time_t syncProvider_CB(void);
 time_t compiledUTC(void);
 time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh, uint8_t mm,
                  uint8_t ss);
+TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
+                    int8_t rxPin, int8_t txPins);
 
 #endif // _timekeeper_H

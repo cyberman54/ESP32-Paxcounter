@@ -13,18 +13,26 @@ time_t time_sync() {
 
   time_t t = 0;
 
-#ifdef TIME_SYNC_INTERVAL
-
 #ifdef HAS_GPS
-  t = syncTime(get_gpstime, _gps);
-  if (t)
-    return t; // attempt sync with GPS time
+  xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
+  ESP_LOGD(TAG, "micros = %d", micros());
+  t = get_gpstime();
+  if (t) {
+    t++; // gps time concerns past second, so we add one second
+#ifdef HAS_RTC
+    set_rtctime(t); // calibrate RTC
+#endif
+    timeSource = _gps;
+    goto exit;
+  }
 #endif
 
 // no GPS -> fallback to RTC time while trying lora sync
 #ifdef HAS_RTC
-  t = syncTime(get_rtctime, _rtc); // sync with RTC time
-  if (!t)
+  t = get_rtctime();
+  if (t)
+    timeSource = _rtc;
+  else
     ESP_LOGW(TAG, "no confident RTC time");
 #endif
 
@@ -33,44 +41,17 @@ time_t time_sync() {
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
-#endif // TIME_SYNC_INTERVAL
+exit:
+  ESP_LOGD(TAG, "micros = %d", micros());
+  if (t)
+    ESP_LOGD(TAG, "Time was set by %c to %02d:%02d:%02d",
+             timeSetSymbols[timeSource], hour(t), minute(t), second(t));
+  else
+    timeSource = _unsynced;
 
   return t;
+
 } // time_sync()
-
-// sync time on start of next second from GPS or RTC
-time_t syncTime(getExternalTime getTimeFunction, timesource_t const caller) {
-
-  time_t t;
-  TimeSourcePtr = getTimeFunction;
-  if (!TimeSourcePtr)
-    goto error;
-
-  xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
-
-  t = TimeSourcePtr(); // get time from given timesource
-
-  if (TimeIsValid(t)) {
-    if (caller == _gps) // gps time concerns past second
-      t++;
-    timeSource = caller;
-    ESP_LOGD(TAG, "Time source %c set time to %02d:%02d:%02d",
-             timeSetSymbols[timeSource], hour(t), minute(t), second(t));
-
-#ifdef HAS_RTC
-    if (caller != _rtc)
-      set_rtctime(t);
-#endif
-
-    return t; // success
-  }
-
-error:
-  ESP_LOGD(TAG, "Time source %c sync attempt failed", timeSetSymbols[caller]);
-  timeSource = _unsynced;
-  return 0; // failure
-
-} // syncTime()
 
 // helper function to setup a pulse per second for time synchronisation
 uint8_t timepulse_init() {
@@ -136,11 +117,11 @@ void IRAM_ATTR CLOCKIRQ(void) {
 }
 
 // helper function to check plausibility of a time
-uint8_t TimeIsValid(time_t const t) {
+time_t TimeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
   ESP_LOGD(TAG, "t=%d, tt=%d, valid: %s", t, compiledUTC(),
            (t >= compiledUTC()) ? "yes" : "no");
-  return (t >= compiledUTC());
+  return (t >= compiledUTC() ? t : 0);
 }
 
 // helper function to convert compile time to UTC time
@@ -160,6 +141,18 @@ time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh, uint8_t mm,
   tm.Minute = mm;
   tm.Second = ss;
   return makeTime(tm);
+}
+
+// helper function to calculate serial transmit time
+TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
+                    int8_t rxPin, int8_t txPins) {
+
+  uint32_t databits = ((config & 0x0c) >> 2) + 5;
+  uint32_t stopbits = ((config & 0x20) >> 5) + 1;
+  uint32_t txTime = (databits + stopbits + 2) * framesize * 1000.0 / baud;
+  // +1 ms margin for the startbit +1 ms for pending processing time
+
+  return round(txTime);
 }
 
 #if defined HAS_IF482 || defined HAS_DCF77

@@ -474,6 +474,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   // Update system time with time read from the network
   if (TimeIsValid(*pUserUTCTime)) {
     setTime(*pUserUTCTime);
+    timeSource = _lora;
     ESP_LOGI(TAG, "Received recent time from LoRa");
     }
   else

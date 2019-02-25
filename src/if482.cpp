@@ -90,7 +90,7 @@ HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 void IF482_Pulse(time_t t) {
 
   static const TickType_t txDelay =
-      pdMS_TO_TICKS(IF482_PULSE_LENGTH) - tx_Ticks(HAS_IF482);
+      pdMS_TO_TICKS(IF482_PULSE_LENGTH - tx_Ticks(IF482_FRAME_SIZE, HAS_IF482));
 
   TickType_t startTime = xTaskGetTickCount();
 
@@ -122,19 +122,6 @@ String IRAM_ATTR IF482_Frame(time_t startTime) {
 
   ESP_LOGD(TAG, "IF482 = %s", out);
   return out;
-}
-
-// calculate serial tx time from IF482 serial settings
-TickType_t tx_Ticks(unsigned long baud, uint32_t config, int8_t rxPin,
-                    int8_t txPins) {
-
-  uint32_t databits = ((config & 0x0c) >> 2) + 5;
-  uint32_t stopbits = ((config & 0x20) >> 5) + 1;
-  uint32_t txTime =
-      (databits + stopbits + 2) * IF482_FRAME_SIZE * 1000.0 / baud;
-  // +2 ms margin for the startbit and the clock's processing time
-
-  return pdMS_TO_TICKS(round(txTime));
 }
 
 #endif // HAS_IF482
