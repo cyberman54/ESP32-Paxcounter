@@ -1,7 +1,7 @@
 #include "globals.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 #ifdef HAS_BATTERY_PROBE
 esp_adc_cal_characteristics_t *adc_characs =

@@ -3,7 +3,7 @@
 #include "rcommand.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 // helper function
 void do_reset() {

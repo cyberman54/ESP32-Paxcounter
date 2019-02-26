@@ -34,9 +34,13 @@ void SendPayload(uint8_t port, sendprio_t prio) {
   }
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
-  // enqueue message in device's send queues
+// enqueue message in device's send queues
+#ifdef HAS_LORA
   lora_enqueuedata(&SendBuffer, prio);
+#endif
+#ifdef HAS_SPI
   spi_enqueuedata(&SendBuffer, prio);
+#endif
 
 } // SendPayload
 
@@ -130,6 +134,10 @@ void sendCounter() {
 } // sendCounter()
 
 void flushQueues() {
+#ifdef HAS_LORA
   lora_queuereset();
+#endif
+#ifdef HAS_SPI
   spi_queuereset();
+#endif
 }
