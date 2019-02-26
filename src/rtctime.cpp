@@ -1,7 +1,7 @@
 #include "rtctime.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 #ifdef HAS_RTC // we have hardware RTC
 

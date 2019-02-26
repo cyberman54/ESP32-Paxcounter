@@ -18,7 +18,7 @@ extern const char timeSetSymbols[];
 void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);
 void clock_loop(void *pvParameters);
-time_t time_sync(void);
+void timeSync(void);
 void timepulse_start(void);
 uint8_t timepulse_init(void);
 time_t TimeIsValid(time_t const t);

@@ -9,10 +9,14 @@
 #include <Wire.h>
 #endif
 
+#define NMEA_FRAME_SIZE 80 // NEMA has a maxium of 80 bytes per record
+#define NMEA_BUFFERTIME 50 // 50ms safety time regardless
+
 extern TinyGPSPlus gps; // Make TinyGPS++ instance globally availabe
 extern gpsStatus_t
     gps_status; // Make struct for storing gps data globally available
 extern TaskHandle_t GpsTask;
+extern TickType_t const gpsDelay_ticks; // time to NMEA arrival
 
 int gps_init(void);
 void gps_read(void);

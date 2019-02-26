@@ -5,7 +5,7 @@
 #include "cyclic.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 // do all housekeeping
 void doHousekeeping() {
@@ -17,8 +17,12 @@ void doHousekeeping() {
   if (cfg.runmode == 1)
     do_reset();
 
+#ifdef HAS_SPI
   spi_housekeeping();
+#endif
+#ifdef HAS_LORA
   lora_housekeeping();
+#endif
 
   // task storage debugging //
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",

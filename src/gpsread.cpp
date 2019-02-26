@@ -3,7 +3,7 @@
 #include "globals.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 TinyGPSPlus gps;
 gpsStatus_t gps_status;
@@ -11,6 +11,10 @@ TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
 HardwareSerial GPS_Serial(1); // use UART #1
+TickType_t const gpsDelay_ticks = pdMS_TO_TICKS(1000 - NMEA_BUFFERTIME) -
+                                  tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL);
+#else
+TickType_t const gpsDelay_ticks = pdMS_TO_TICKS(1000 - NMEA_BUFFERTIME);
 #endif
 
 // initialize and configure GPS
@@ -22,6 +26,13 @@ int gps_init(void) {
     ESP_LOGE(TAG, "GPS chip initializiation error");
     return 0;
   }
+
+// set timeout for reading recent time from GPS
+#ifdef GPS_SERIAL // serial GPS
+
+#else // I2C GPS
+
+#endif
 
 #if defined GPS_SERIAL
   GPS_Serial.begin(GPS_SERIAL);
@@ -76,20 +87,12 @@ void gps_read() {
 // function to fetch current time from gps
 time_t get_gpstime(void) {
 
-#define NMEA_FRAME_SIZE 80 // NEMA has a maxium of 80 bytes per record
-#define NMEA_BUFFER 50     // 50ms safety time regardless
+  // set time to wait for arrive next recent NMEA time record
+  static const uint32_t gpsDelay_ms = gpsDelay_ticks / portTICK_PERIOD_MS;
 
   time_t t = 0;
 
-// set timeout for reading recent time from GPS
-#ifdef GPS_SERIAL // serial GPS
-  static const TickType_t txDelay =
-      pdMS_TO_TICKS(1000 - NMEA_BUFFER - tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL));
-#else // I2C GPS
-  static const TickType_t txDelay = 1000 - NMEA_BUFFER;
-#endif
-
-  if ((gps.time.age() < txDelay) && (gps.time.isValid())) {
+  if ((gps.time.age() < gpsDelay_ms) && (gps.time.isValid())) {
 
     ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s", gps.time.age(),
              gps.time.isValid() ? "yes" : "no");

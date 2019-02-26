@@ -41,13 +41,13 @@
 #define SCREEN_MODE (0x80)
 
 // I2C bus access control
-#define I2C_MUTEX_LOCK()
-xSemaphoreTake(I2Caccess,
-               (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) == pdTRUE
+#define I2C_MUTEX_LOCK()                                                       \
+  xSemaphoreTake(I2Caccess, (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==   \
+      pdTRUE
 #define I2C_MUTEX_UNLOCK() xSemaphoreGive(I2Caccess)
 
-    // Struct holding devices's runtime configuration
-    typedef struct {
+// Struct holding devices's runtime configuration
+typedef struct {
   uint8_t lorasf;      // 7-12, lora spreadfactor
   uint8_t txpower;     // 2-15, lora tx power
   uint8_t adrmode;     // 0=disabled, 1=enabled
@@ -108,8 +108,8 @@ extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                   // display values
-extern bool volatile TimePulseTick; // one-pulse-per-second flags set by GPS or
-                                    // RTC
+extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
+extern timesource_t timeSource;
 extern hw_timer_t *sendCycle, *displaytimer, *clockCycle;
 extern SemaphoreHandle_t I2Caccess, TimePulse;
 extern TaskHandle_t irqHandlerTask, ClockTask;

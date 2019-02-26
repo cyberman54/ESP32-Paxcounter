@@ -1,7 +1,8 @@
 #ifndef _PAYLOAD_H_
 #define _PAYLOAD_H_
 
-// MyDevices CayenneLPP channels for dynamic sensor payload format
+// MyDevices CayenneLPP 1.0 channels for Synamic sensor payload format
+// all payload goes out on LoRa FPort 1
 #if (PAYLOAD_ENCODER == 3)
 
 #define LPP_GPS_CHANNEL 20
@@ -19,7 +20,7 @@
 
 #endif
 
-// MyDevices CayenneLPP types
+// MyDevices CayenneLPP 2.0 types for Packed Sensor Payload, not using channels, but different FPorts
 #define LPP_GPS 136          // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01m
 #define LPP_TEMPERATURE 103  // 2 bytes, 0.1°C signed MSB
 #define LPP_DIGITAL_INPUT 0  // 1 byte

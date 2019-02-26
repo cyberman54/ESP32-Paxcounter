@@ -1,57 +1,64 @@
 #include "timekeeper.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 // symbol to display current time source
 const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
 getExternalTime TimeSourcePtr; // pointer to time source function
 
-time_t time_sync() {
-  // check synchonization of systime, called by cyclic.cpp
+
+// syncs systime from external time source and sets/reads RTC, called by
+// cyclic.cpp
+void timeSync(void) {
 
   time_t t = 0;
 
 #ifdef HAS_GPS
-  xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
-  ESP_LOGD(TAG, "micros = %d", micros());
-  t = get_gpstime();
-  if (t) {
-    t++; // gps time concerns past second, so we add one second
+    // do we have a valid GPS time?
+    if (get_gpstime()) { // then let's sync GPS time on top of second
+
+      xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
+      vTaskDelay(gpsDelay_ticks);
+      t = get_gpstime(); // fetch time from recent NEMA record
+      if (t) {
+        t++; // gps time concerns past second, so we add one
+        xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
+        setTime(t);
 #ifdef HAS_RTC
-    set_rtctime(t); // calibrate RTC
+        set_rtctime(t); // calibrate RTC
 #endif
-    timeSource = _gps;
-    goto exit;
-  }
+        timeSource = _gps;
+        goto exit;
+      }
+    }
 #endif
 
 // no GPS -> fallback to RTC time while trying lora sync
 #ifdef HAS_RTC
-  t = get_rtctime();
-  if (t)
-    timeSource = _rtc;
-  else
-    ESP_LOGW(TAG, "no confident RTC time");
+    t = get_rtctime();
+    if (t) {
+      setTime(t);
+      timeSource = _rtc;
+    } else
+      ESP_LOGW(TAG, "no confident RTC time");
 #endif
 
 // try lora sync if we have
 #if defined HAS_LORA && defined TIME_SYNC_LORA
-  LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
+    LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
 exit:
-  ESP_LOGD(TAG, "micros = %d", micros());
-  if (t)
-    ESP_LOGD(TAG, "Time was set by %c to %02d:%02d:%02d",
-             timeSetSymbols[timeSource], hour(t), minute(t), second(t));
-  else
-    timeSource = _unsynced;
 
-  return t;
+    if (t)
+      ESP_LOGD(TAG, "Time was set by %c to %02d:%02d:%02d",
+               timeSetSymbols[timeSource], hour(t), minute(t), second(t));
+    else
+      timeSource = _unsynced;
 
-} // time_sync()
+} // timeSync()
 
 // helper function to setup a pulse per second for time synchronisation
 uint8_t timepulse_init() {
@@ -119,8 +126,6 @@ void IRAM_ATTR CLOCKIRQ(void) {
 // helper function to check plausibility of a time
 time_t TimeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
-  ESP_LOGD(TAG, "t=%d, tt=%d, valid: %s", t, compiledUTC(),
-           (t >= compiledUTC()) ? "yes" : "no");
   return (t >= compiledUTC() ? t : 0);
 }
 

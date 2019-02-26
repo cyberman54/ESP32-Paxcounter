@@ -52,7 +52,7 @@ ESP32 hardware irq timers
 
  RTC hardware timer (if present)
 ================================
- triggers IF482 clock signal
+ triggers pps 1 sec impulse
 
 */
 
@@ -72,6 +72,7 @@ TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
 bool volatile TimePulseTick = false;
 time_t userUTCTime = 0;
+timesource_t timeSource = _unsynced;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -86,7 +87,7 @@ TimeChangeRule mySTD = STANDARD_TIME;
 Timezone myTZ(myDST, mySTD);
 
 // local Tag for logging
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 void setup() {
 
@@ -283,14 +284,14 @@ void setup() {
 // initialize LoRa
 #ifdef HAS_LORA
   strcat_P(features, " LORA");
-#endif
   assert(lora_stack_init() == ESP_OK);
+#endif
 
 // initialize SPI
 #ifdef HAS_SPI
   strcat_P(features, " SPI");
-#endif
   assert(spi_init() == ESP_OK);
+#endif
 
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
@@ -361,10 +362,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
   timepulse_start();
-#ifdef TIME_SYNC_INTERVAL
-  setSyncInterval(TIME_SYNC_INTERVAL * 60); // controls timeStatus() via Time.h
-  setSyncProvider(time_sync); // is called by Time.h
-#endif
+  timeSync();
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
