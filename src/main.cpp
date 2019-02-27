@@ -27,11 +27,11 @@ Uused tasks and timers:
 
 Task          Core  Prio  Purpose
 ====================================================================================
-clockloop     0     4     generates realtime telegrams for external clock
 ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
+clockloop     1     4     generates realtime telegrams for external clock
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by hw irq, see table below
 gpsloop       1     2     reads data from GPS via serial or i2c
@@ -362,7 +362,6 @@ void setup() {
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
   timepulse_start();
-  timeSync();
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
@@ -417,6 +416,7 @@ void setup() {
 
 #if defined HAS_IF482 || defined HAS_DCF77
   ESP_LOGI(TAG, "Starting Clock Controller...");
+  timeSync();
   clock_init();
 #endif
 

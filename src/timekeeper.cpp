@@ -8,7 +8,6 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
 getExternalTime TimeSourcePtr; // pointer to time source function
 
-
 // syncs systime from external time source and sets/reads RTC, called by
 // cyclic.cpp
 void timeSync(void) {
@@ -16,47 +15,36 @@ void timeSync(void) {
   time_t t = 0;
 
 #ifdef HAS_GPS
-    // do we have a valid GPS time?
-    if (get_gpstime()) { // then let's sync GPS time on top of second
-
-      xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
-      vTaskDelay(gpsDelay_ticks);
-      t = get_gpstime(); // fetch time from recent NEMA record
-      if (t) {
-        t++; // gps time concerns past second, so we add one
-        xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
-        setTime(t);
+  xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1100)); // wait for pps
+  t = get_gpstime(); // fetch recent time from last NEMA record
+  if (t) {
+    / t++; // last NMEA record concerns past second, so we add one
+    ESP_LOGD(TAG, "millis: %d, second: %d", millis(), second(t));
+    setTime(t);
 #ifdef HAS_RTC
-        set_rtctime(t); // calibrate RTC
+    set_rtctime(t); // calibrate RTC
 #endif
-        timeSource = _gps;
-        goto exit;
-      }
-    }
+    timeSource = _gps;
+    return;
+  }
 #endif
 
 // no GPS -> fallback to RTC time while trying lora sync
 #ifdef HAS_RTC
-    t = get_rtctime();
-    if (t) {
-      setTime(t);
-      timeSource = _rtc;
-    } else
-      ESP_LOGW(TAG, "no confident RTC time");
+  t = get_rtctime();
+  if (t) {
+    setTime(t);
+    timeSource = _rtc;
+  }
 #endif
 
 // try lora sync if we have
 #if defined HAS_LORA && defined TIME_SYNC_LORA
-    LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
+  LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
-exit:
-
-    if (t)
-      ESP_LOGD(TAG, "Time was set by %c to %02d:%02d:%02d",
-               timeSetSymbols[timeSource], hour(t), minute(t), second(t));
-    else
-      timeSource = _unsynced;
+  if (!t)
+    timeSource = _unsynced;
 
 } // timeSync()
 
@@ -66,7 +54,7 @@ uint8_t timepulse_init() {
 // use time pulse from GPS as time base with fixed 1Hz frequency
 #ifdef GPS_INT
 
-  // setup external interupt pin for GPS INT output
+  // setup external interupt pin for rising edge GPS INT
   pinMode(GPS_INT, INPUT_PULLDOWN);
   // setup external rtc 1Hz clock as pulse per second clock
   ESP_LOGI(TAG, "Timepulse: external (GPS)");
@@ -75,7 +63,7 @@ uint8_t timepulse_init() {
 // use pulse from on board RTC chip as time base with fixed frequency
 #elif defined RTC_INT
 
-  // setup external interupt pin for active low RTC INT output
+  // setup external interupt pin for falling edge RTC INT
   pinMode(RTC_INT, INPUT_PULLUP);
 
   // setup external rtc 1Hz clock as pulse per second clock
@@ -114,12 +102,15 @@ void timepulse_start(void) {
 
 // interrupt service routine triggered by either pps or esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
+
   if (ClockTask != NULL)
-    xTaskNotifyFromISR(ClockTask, xTaskGetTickCountFromISR(), eSetBits, NULL);
+    xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits, NULL);
+
 #if defined GPS_INT || defined RTC_INT
-  xSemaphoreGiveFromISR(TimePulse, NULL);
+  xSemaphoreGiveFromISR(TimePulse, &xHigherPriorityTaskWoken);
   TimePulseTick = !TimePulseTick; // flip ticker
 #endif
+
   portYIELD_FROM_ISR();
 }
 
@@ -181,7 +172,7 @@ void clock_init(void) {
                           (void *)1,   // task parameter
                           4,           // priority of the task
                           &ClockTask,  // task handle
-                          0);          // CPU core
+                          1);          // CPU core
 
   assert(ClockTask); // has clock task started?
 } // clock_init
@@ -191,10 +182,11 @@ void clock_loop(void *pvParameters) { // ClockTask
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
   TickType_t wakeTime;
+  uint32_t ppstime;
   time_t t;
 
-#define t1(t) (t + DCF77_FRAME_SIZE + 1) // future time for next DCF77 frame
-#define t2(t) (t + 1) // future time for sync with 1pps trigger
+#define t1(t) (t + DCF77_FRAME_SIZE + 1) // future minute for next DCF77 frame
+#define t2(t) (t + 1) // future second after sync with 1pps trigger
 
   // preload first DCF frame before start
 #ifdef HAS_DCF77
@@ -204,14 +196,14 @@ void clock_loop(void *pvParameters) { // ClockTask
 
   // output time telegram for second following sec beginning with timepulse
   for (;;) {
-    xTaskNotifyWait(0x00, ULONG_MAX, &wakeTime,
+    xTaskNotifyWait(0x00, ULONG_MAX, &ppstime,
                     portMAX_DELAY); // wait for timepulse
 
     // no confident time -> suppress clock output
     if (timeStatus() == timeNotSet)
       continue;
 
-    t = now(); // payload to send to clock
+    t = time_t(ppstime);
 
 #if defined HAS_IF482
 
@@ -222,8 +214,10 @@ void clock_loop(void *pvParameters) { // ClockTask
     if (second(t) == DCF77_FRAME_SIZE - 1) // is it time to load new frame?
       DCFpulse = DCF77_Frame(t1(t));       // generate next frame
 
-    if (DCFpulse[DCF77_FRAME_SIZE] ==
-        minute(t1(t))) // have recent frame? (pulses could be missed!)
+    if (DCFpulse[DCF77_FRAME_SIZE] !=
+        minute(t1(t))) // have recent frame? (timepulses could be missed!)
+      continue;
+    else
       DCF77_Pulse(t2(t), DCFpulse); // then output next second of this frame
 
 #endif

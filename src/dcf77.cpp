@@ -22,6 +22,8 @@ void DCF77_Pulse(time_t t, uint8_t const *DCFpulse) {
   TickType_t startTime = xTaskGetTickCount();
   uint8_t sec = second(t);
 
+  ESP_LOGD (TAG, "DCF second %d", sec);
+
   // induce 10 pulses
   for (uint8_t pulse = 0; pulse <= 9; pulse++) {
 
