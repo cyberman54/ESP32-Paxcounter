@@ -21,24 +21,28 @@
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
 
 // GPS settings
-//#define HAS_GPS 1 // use on board GPS
-//#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M
-//#define GPS_INT GPIO_NUM_34 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO34
+#define HAS_GPS 1 // use on board GPS
+#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M
+#define GPS_INT GPIO_NUM_34 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO34
+
+// Settings for on board DS3231 RTC chip
+//#define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
+//#define RTC_INT GPIO_NUM_13 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-//#define HAS_BME SDA, SCL
-//#define BME_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
+#define HAS_BME SDA, SCL
+#define BME_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
 
 // display (if connected)
-//#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
-//#define MY_OLED_SDA SDA
-//#define MY_OLED_SCL SCL
-//#define MY_OLED_RST U8X8_PIN_NONE
+#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+#define MY_OLED_SDA SDA
+#define MY_OLED_SCL SCL
+#define MY_OLED_RST U8X8_PIN_NONE
 //#define DISPLAY_FLIP  1 // use if display is rotated
 
 // Settings for DCF77 interface
-//#define HAS_DCF77 GPIO_NUM_13
+#define HAS_DCF77 GPIO_NUM_13
 
 // Settings for IF482 interface
 //#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters

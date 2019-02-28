@@ -18,7 +18,7 @@ void timeSync(void) {
   xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1100)); // wait for pps
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
-    / t++; // last NMEA record concerns past second, so we add one
+    t++; // last NMEA record concerns past second, so we add one
     ESP_LOGD(TAG, "millis: %d, second: %d", millis(), second(t));
     setTime(t);
 #ifdef HAS_RTC
@@ -107,7 +107,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
     xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits, NULL);
 
 #if defined GPS_INT || defined RTC_INT
-  xSemaphoreGiveFromISR(TimePulse, &xHigherPriorityTaskWoken);
+  xSemaphoreGiveFromISR(TimePulse, NULL);
   TimePulseTick = !TimePulseTick; // flip ticker
 #endif
 
