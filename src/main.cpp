@@ -358,10 +358,13 @@ void setup() {
 #endif
 #endif
 
-  // start pps timepulse and timekeepr
+  // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
   timepulse_start();
+  // set time source and sync time
+  setSyncInterval(TIME_SYNC_INTERVAL * 60);
+  setSyncProvider(&timeProvider);
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
@@ -413,10 +416,6 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
 #endif
 #endif // HAS_BUTTON
-
-  // set time source
-  setSyncInterval(TIME_SYNC_INTERVAL * 60);
-  setSyncProvider(&timeProvider);
 
 #if defined HAS_IF482 || defined HAS_DCF77
   ESP_LOGI(TAG, "Starting Clock Controller...");
