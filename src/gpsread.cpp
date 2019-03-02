@@ -92,14 +92,17 @@ time_t get_gpstime(void) {
 
   time_t t = 0;
 
-  if ((gps.time.age() < gpsDelay_ms) && (gps.time.isValid()) && (gps.date.isValid())) {
+  if ((gps.time.age() < gpsDelay_ms) && (gps.time.isValid()) &&
+      (gps.date.isValid())) {
 
-      ESP_LOGD(TAG, "GPS time age: %dms, second: %d, is valid: %s", gps.time.age(), gps.time.second(),
-               gps.time.isValid() ? "yes" : "no");
+    ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s, second: %d,",
+             gps.time.age(),
+             (gps.time.isValid() && gps.date.isValid()) ? "yes" : "no",
+             gps.time.second());
 
-      t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
-                    gps.time.hour(), gps.time.minute(), gps.time.second());
-    }
+    t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
+                  gps.time.hour(), gps.time.minute(), gps.time.second());
+  }
   return timeIsValid(t);
 } // get_gpstime()
 

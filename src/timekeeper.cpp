@@ -101,7 +101,6 @@ void timepulse_start(void) {
 void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken;
-
   time_t t = SyncToPPS(); // calibrates UTC systime, see Time.h
   xHigherPriorityTaskWoken = pdFALSE;
 
