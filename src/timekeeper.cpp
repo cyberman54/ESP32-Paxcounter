@@ -189,8 +189,8 @@ void clock_loop(void *taskparameter) { // ClockTask
   // caveat: don't use now() in this task, it will cause a race condition
   // due to concurrent access to i2c bus for setting rtc via SyncProvider!
 
-#define nextsec(t) (t + 1)                // next second
-#define nextmin(t) (t + SECS_PER_MIN + 1) // next minute
+#define nextsec(t) (t + 1)                    // next second
+#define nextmin(t) (t + DCF77_FRAME_SIZE + 1) // next minute
 
   uint32_t printtime;
   time_t t = *((time_t *)taskparameter); // UTC time seconds
