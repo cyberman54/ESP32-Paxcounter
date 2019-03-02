@@ -131,7 +131,7 @@ void refreshtheDisplay() {
 
   uint8_t msgWaiting;
   char timeState, buff[16];
-  time_t t = myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
+  const time_t t = myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {

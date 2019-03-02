@@ -15,10 +15,8 @@ time_t timeProvider(void) {
   time_t t = 0;
 
 #ifdef HAS_GPS
-  // xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1100)); // wait for pps
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
-    // t++; // last NMEA record concerns past second, so we add one
 #ifdef HAS_RTC
     set_rtctime(t); // calibrate RTC
 #endif
@@ -102,10 +100,10 @@ void timepulse_start(void) {
 // interrupt service routine triggered by either pps or esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
-  SyncToPPS(); // calibrate systime from Time.h
+  time_t t = SyncToPPS(); // calibrates UTC systime, see Time.h
 
   if (ClockTask != NULL)
-    xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits, NULL);
+    xTaskNotifyFromISR(ClockTask, uint32_t(t), eSetBits, NULL);
 
 #if defined GPS_INT || defined RTC_INT
   xSemaphoreGiveFromISR(TimePulse, NULL);
@@ -167,61 +165,61 @@ void clock_init(void) {
   pinMode(HAS_DCF77, OUTPUT);
 #endif
 
-  xTaskCreatePinnedToCore(clock_loop,  // task function
-                          "clockloop", // name of task
-                          2048,        // stack size of task
-                          (void *)1,   // task parameter
-                          4,           // priority of the task
-                          &ClockTask,  // task handle
-                          1);          // CPU core
+  userUTCTime = now();
+
+  xTaskCreatePinnedToCore(clock_loop,           // task function
+                          "clockloop",          // name of task
+                          2048,                 // stack size of task
+                          (void *)&userUTCTime, // start time as task parameter
+                          4,                    // priority of the task
+                          &ClockTask,           // task handle
+                          1);                   // CPU core
 
   assert(ClockTask); // has clock task started?
 } // clock_init
 
-void clock_loop(void *pvParameters) { // ClockTask
+void clock_loop(void *taskparameter) { // ClockTask
 
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+  // caveat: don't use now() in this task, it will cause a race condition
+  // due to concurrent access to i2c bus for setting rtc via SyncProvider!
 
-  TickType_t wakeTime;
+#define nextsec(t) (t + 1)                // next second
+#define nextmin(t) (t + SECS_PER_MIN + 1) // next minute
+
   uint32_t printtime;
-  time_t t;
-
-#define t1(t) (t + DCF77_FRAME_SIZE + 1) // future minute for next DCF77 frame
-#define t2(t) (t + 1) // future second after sync with 1pps trigger
+  time_t t = *((time_t *)taskparameter); // UTC time seconds
 
   // preload first DCF frame before start
 #ifdef HAS_DCF77
   uint8_t *DCFpulse; // pointer on array with DCF pulse bits
-  DCFpulse = DCF77_Frame(t1(now()));
+  DCFpulse = DCF77_Frame(nextmin(t));
 #endif
 
-  // output time telegram for second following sec beginning with timepulse
+  // output the next second's pulse after timepulse arrived
   for (;;) {
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
                     portMAX_DELAY); // wait for timepulse
 
-    // no confident time -> suppress clock output
+    // no confident time -> we suppress clock output
     if (timeStatus() == timeNotSet)
       continue;
 
-    t = time_t(printtime);
+    t = time_t(printtime); // UTC time seconds
 
 #if defined HAS_IF482
 
-    // IF482_Pulse(t2(t)); // next second
-    IF482_Pulse(t); // next second
+    IF482_Pulse(nextsec(t));
 
 #elif defined HAS_DCF77
 
     if (second(t) == DCF77_FRAME_SIZE - 1) // is it time to load new frame?
-      DCFpulse = DCF77_Frame(t1(t));       // generate next frame
+      DCFpulse = DCF77_Frame(nextmin(t));  // generate frame for next minute
 
-    if (DCFpulse[DCF77_FRAME_SIZE] !=
-        minute(t1(t))) // have recent frame? (timepulses could be missed!)
-      continue;
+    if (minute(nextmin(t)) ==            // do we still have a recent frame?
+        DCFpulse[DCF77_FRAME_SIZE])      // (timepulses could be missed!)
+      DCF77_Pulse(t, DCFpulse); // then output current second's pulse
     else
-      // DCF77_Pulse(t2(t), DCFpulse); // then output next second of this frame
-      DCF77_Pulse(t, DCFpulse); // then output next second of this frame
+      continue; // no recent frame -> we suppress clock output
 
 #endif
 
