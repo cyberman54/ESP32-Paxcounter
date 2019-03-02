@@ -456,7 +456,7 @@ void PayloadConvert::addButton(uint8_t value) {
 void PayloadConvert::addTime(time_t value) {
 #if (PAYLOAD_ENCODER == 4)
   uint32_t t = (uint32_t)value;
-  uint32_t tx_period = (uint32_t)SEND_SECS * 2;
+  uint32_t tx_period = (uint32_t)SEND_CYCLE * 2;
   buffer[cursor++] = 0x03; // set config mask to UTCTime + TXPeriod
   // UTCTime in seconds
   buffer[cursor++] = (byte)((t & 0xFF000000) >> 24);

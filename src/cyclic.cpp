@@ -7,6 +7,10 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+Ticker housekeeper;
+
+void housekeeping() { xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits); }
+
 // do all housekeeping
 void doHousekeeping() {
 

@@ -6,11 +6,11 @@ static const char TAG[] = __FILE__;
 // symbol to display current time source
 const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
-getExternalTime TimeSourcePtr; // pointer to time source function
+Ticker timesyncer;
+
+void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 time_t timeProvider(void) {
-
-  ESP_LOGD(TAG, "time synched");
 
   time_t t = 0;
 
@@ -33,7 +33,7 @@ time_t timeProvider(void) {
   }
 #endif
 
-// kick off asychron lora sync if we have
+// kick off asychronous lora sync if we have
 #if defined HAS_LORA && defined TIME_SYNC_LORA
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
@@ -101,11 +101,11 @@ void timepulse_start(void) {
 void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken;
-  time_t t = SyncToPPS(); // calibrates UTC systime, see Time.h
+  SyncToPPS(); // calibrates UTC systime, see Time.h
   xHigherPriorityTaskWoken = pdFALSE;
 
   if (ClockTask != NULL)
-    xTaskNotifyFromISR(ClockTask, uint32_t(t), eSetBits,
+    xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                        &xHigherPriorityTaskWoken);
 
 #if defined GPS_INT || defined RTC_INT

@@ -95,7 +95,7 @@ time_t get_gpstime(void) {
   if ((gps.time.age() < gpsDelay_ms) && (gps.time.isValid()) &&
       (gps.date.isValid())) {
 
-    ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s, second: %d,",
+    ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s, second: %d",
              gps.time.age(),
              (gps.time.isValid() && gps.date.isValid()) ? "yes" : "no",
              gps.time.second());

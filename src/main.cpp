@@ -313,16 +313,6 @@ void setup() {
   timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
 #endif
 
-  // setup send cycle trigger IRQ using esp32 hardware timer 2
-  sendCycle = timerBegin(2, 8000, true);
-  timerAttachInterrupt(sendCycle, &SendCycleIRQ, true);
-  timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
-
-  // setup house keeping cycle trigger IRQ using esp32 hardware timer 3
-  homeCycle = timerBegin(3, 8000, true);
-  timerAttachInterrupt(homeCycle, &homeCycleIRQ, true);
-  timerAlarmWrite(homeCycle, HOMECYCLE * 10000, true);
-
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PLAIN");
@@ -356,19 +346,6 @@ void setup() {
 #ifdef VERBOSE
   showLoraKeys();
 #endif
-#endif
-
-#if defined HAS_IF482 || defined HAS_DCF77
-  // start pps timepulse
-  ESP_LOGI(TAG, "Starting Timekeeper...");
-  assert(timepulse_init()); // setup timepulse
-  timepulse_start();
-#endif
-
-#ifdef TIME_SYNC_INTERVAL
-  // set time source and sync time
-  setSyncInterval(TIME_SYNC_INTERVAL * 60);
-  setSyncProvider(&timeProvider);
 #endif
 
   // start wifi in monitor mode and start channel rotation timer
@@ -406,12 +383,12 @@ void setup() {
 
   assert(irqHandlerTask != NULL); // has interrupt handler task started?
                                   // start timer triggered interrupts
-  ESP_LOGI(TAG, "Starting Interrupts...");
+  ESP_LOGI(TAG, "Starting Timers...");
 #ifdef HAS_DISPLAY
   timerAlarmEnable(displaytimer);
 #endif
-  timerAlarmEnable(sendCycle);
-  timerAlarmEnable(homeCycle);
+  sendcycler.attach(SEND_CYCLE, sendcycle);
+  housekeeper.attach(HOMECYCLE, housekeeping);
 
 // start button interrupt
 #ifdef HAS_BUTTON
@@ -422,7 +399,19 @@ void setup() {
 #endif
 #endif // HAS_BUTTON
 
+#ifdef TIME_SYNC_INTERVAL
+  // start pps timepulse
+  ESP_LOGI(TAG, "Starting Timekeeper...");
+  assert(timepulse_init()); // setup timepulse
+  timepulse_start();
+  timeSync(); // init systime
+  timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
+#endif
+
 #if defined HAS_IF482 || defined HAS_DCF77
+#ifndef TIME_SYNC_INTERVAL
+#error you must define TIME_SNYC_INTERVAL in paxcounter.conf
+#endif
   ESP_LOGI(TAG, "Starting Clock Controller...");
   clock_init();
 #endif

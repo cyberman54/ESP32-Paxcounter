@@ -260,10 +260,9 @@ time_t sysUnsyncedTime = 0; // the time sysTime unadjusted by sync
 #endif
 
 #ifdef usePPS
-time_t SyncToPPS() {
+void SyncToPPS() {
   sysTime++;
   prevMicros = micros();
-  return sysTime;
 }
 #endif
 

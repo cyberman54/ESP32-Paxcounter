@@ -8,6 +8,7 @@
 #include <Time.h>
 #include <Timezone.h>
 #include <RtcDateTime.h>
+#include <Ticker.h>
 
 // std::set for unified array functions
 #include <set>

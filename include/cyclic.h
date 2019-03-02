@@ -11,6 +11,9 @@
 #include "bme680mems.h"
 #endif
 
+extern Ticker housekeeper;
+
+void housekeeping(void);
 void doHousekeeping(void);
 uint64_t uptime(void);
 void reset_counters(void);

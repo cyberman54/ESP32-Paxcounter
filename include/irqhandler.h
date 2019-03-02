@@ -5,6 +5,7 @@
 #define BUTTON_IRQ 0x02
 #define SENDCOUNTER_IRQ 0x04
 #define CYCLIC_IRQ 0x08
+#define TIMESYNC_IRQ 0x10
 
 #include "globals.h"
 #include "cyclic.h"
@@ -12,8 +13,6 @@
 #include "timekeeper.h"
 
 void irqHandler(void *pvParameters);
-void IRAM_ATTR homeCycleIRQ();
-void IRAM_ATTR SendCycleIRQ();
 
 #ifdef HAS_DISPLAY
 #include "display.h"

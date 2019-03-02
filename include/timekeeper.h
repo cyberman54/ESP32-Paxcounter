@@ -4,6 +4,7 @@
 #include "globals.h"
 #include "rtctime.h"
 #include "TimeLib.h"
+#include "irqhandler.h"
 
 #ifdef HAS_GPS
 #include "gpsread.h"
@@ -15,11 +16,13 @@
 #endif
 
 extern const char timeSetSymbols[];
+extern Ticker timesyncer;
 
 void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);
 void clock_loop(void *pvParameters);
 void timepulse_start(void);
+void timeSync(void);
 uint8_t timepulse_init(void);
 time_t timeIsValid(time_t const t);
 time_t timeProvider(void);
