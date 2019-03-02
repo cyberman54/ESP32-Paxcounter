@@ -29,7 +29,7 @@ uint8_t rtc_init(void) {
         RtcDateTime tt = Rtc.GetDateTime();
         time_t t = tt.Epoch32Time(); // sec2000 -> epoch
 
-        if (!Rtc.IsDateTimeValid() || !TimeIsValid(t)) {
+        if (!Rtc.IsDateTimeValid() || !timeIsValid(t)) {
           ESP_LOGW(TAG, "RTC has no recent time, setting to compilation date");
           Rtc.SetDateTime(
               RtcDateTime(compiledUTC() - SECS_YR_2000)); // epoch -> sec2000
@@ -67,7 +67,7 @@ time_t get_rtctime(void) {
     }
     I2C_MUTEX_UNLOCK();
   }
-  return TimeIsValid(t);
+  return timeIsValid(t);
 } // get_rtctime()
 
 float get_rtctemp(void) {

@@ -32,7 +32,6 @@ void irqHandler(void *pvParameters) {
     // are cyclic tasks due?
     if (InterruptStatus & CYCLIC_IRQ) {
       doHousekeeping();
-      timeSync();
     }
 
     // is time to send the payload?

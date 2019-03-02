@@ -8,24 +8,22 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
 getExternalTime TimeSourcePtr; // pointer to time source function
 
-// syncs systime from external time source and sets/reads RTC, called by
-// cyclic.cpp
-void timeSync(void) {
+time_t timeProvider(void) {
+
+  ESP_LOGD(TAG, "time synched");
 
   time_t t = 0;
 
 #ifdef HAS_GPS
-  xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1100)); // wait for pps
+  // xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1100)); // wait for pps
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
-    t++; // last NMEA record concerns past second, so we add one
-    ESP_LOGD(TAG, "millis: %d, second: %d", millis(), second(t));
-    setTime(t);
+    // t++; // last NMEA record concerns past second, so we add one
 #ifdef HAS_RTC
     set_rtctime(t); // calibrate RTC
 #endif
     timeSource = _gps;
-    return;
+    return t;
   }
 #endif
 
@@ -33,12 +31,11 @@ void timeSync(void) {
 #ifdef HAS_RTC
   t = get_rtctime();
   if (t) {
-    setTime(t);
     timeSource = _rtc;
   }
 #endif
 
-// try lora sync if we have
+// kick off asychron lora sync if we have
 #if defined HAS_LORA && defined TIME_SYNC_LORA
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
@@ -46,7 +43,9 @@ void timeSync(void) {
   if (!t)
     timeSource = _unsynced;
 
-} // timeSync()
+  return t;
+
+} // timeProvider()
 
 // helper function to setup a pulse per second for time synchronisation
 uint8_t timepulse_init() {
@@ -103,6 +102,8 @@ void timepulse_start(void) {
 // interrupt service routine triggered by either pps or esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
+  SyncToPPS(); // calibrate systime from Time.h
+
   if (ClockTask != NULL)
     xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits, NULL);
 
@@ -115,15 +116,15 @@ void IRAM_ATTR CLOCKIRQ(void) {
 }
 
 // helper function to check plausibility of a time
-time_t TimeIsValid(time_t const t) {
+time_t timeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
   return (t >= compiledUTC() ? t : 0);
 }
 
 // helper function to convert compile time to UTC time
 time_t compiledUTC(void) {
-  time_t t = RtcDateTime(__DATE__, __TIME__).Epoch32Time();
-  return myTZ.toUTC(t);
+  static time_t t = myTZ.toUTC(RtcDateTime(__DATE__, __TIME__).Epoch32Time());
+  return t;
 }
 
 // helper function to convert gps date/time into time_t
@@ -182,7 +183,7 @@ void clock_loop(void *pvParameters) { // ClockTask
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
   TickType_t wakeTime;
-  uint32_t ppstime;
+  uint32_t printtime;
   time_t t;
 
 #define t1(t) (t + DCF77_FRAME_SIZE + 1) // future minute for next DCF77 frame
@@ -196,18 +197,19 @@ void clock_loop(void *pvParameters) { // ClockTask
 
   // output time telegram for second following sec beginning with timepulse
   for (;;) {
-    xTaskNotifyWait(0x00, ULONG_MAX, &ppstime,
+    xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
                     portMAX_DELAY); // wait for timepulse
 
     // no confident time -> suppress clock output
     if (timeStatus() == timeNotSet)
       continue;
 
-    t = time_t(ppstime);
+    t = time_t(printtime);
 
 #if defined HAS_IF482
 
-    IF482_Pulse(t2(t)); // next second
+    // IF482_Pulse(t2(t)); // next second
+    IF482_Pulse(t); // next second
 
 #elif defined HAS_DCF77
 
@@ -218,7 +220,8 @@ void clock_loop(void *pvParameters) { // ClockTask
         minute(t1(t))) // have recent frame? (timepulses could be missed!)
       continue;
     else
-      DCF77_Pulse(t2(t), DCFpulse); // then output next second of this frame
+      // DCF77_Pulse(t2(t), DCFpulse); // then output next second of this frame
+      DCF77_Pulse(t, DCFpulse); // then output next second of this frame
 
 #endif
 

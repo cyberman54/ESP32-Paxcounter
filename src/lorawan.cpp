@@ -464,7 +464,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (TimeIsValid(*pUserUTCTime)) {
+  if (timeIsValid(*pUserUTCTime)) {
     xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
     setTime(*pUserUTCTime + 1);
     timeSource = _lora;

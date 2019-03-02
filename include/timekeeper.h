@@ -3,6 +3,7 @@
 
 #include "globals.h"
 #include "rtctime.h"
+#include "TimeLib.h"
 
 #ifdef HAS_GPS
 #include "gpsread.h"
@@ -18,11 +19,10 @@ extern const char timeSetSymbols[];
 void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);
 void clock_loop(void *pvParameters);
-void timeSync(void);
 void timepulse_start(void);
 uint8_t timepulse_init(void);
-time_t TimeIsValid(time_t const t);
-time_t syncProvider_CB(void);
+time_t timeIsValid(time_t const t);
+time_t timeProvider(void);
 time_t compiledUTC(void);
 time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh, uint8_t mm,
                  uint8_t ss);

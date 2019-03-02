@@ -100,7 +100,7 @@ time_t get_gpstime(void) {
       t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
     }
-  return TimeIsValid(t);
+  return timeIsValid(t);
 } // get_gpstime()
 
 // GPS serial feed FreeRTos Task

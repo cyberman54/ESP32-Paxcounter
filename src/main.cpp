@@ -414,9 +414,12 @@ void setup() {
 #endif
 #endif // HAS_BUTTON
 
+  // set time source
+  setSyncInterval(TIME_SYNC_INTERVAL * 60);
+  setSyncProvider(&timeProvider);
+
 #if defined HAS_IF482 || defined HAS_DCF77
   ESP_LOGI(TAG, "Starting Clock Controller...");
-  timeSync();
   clock_init();
 #endif
 
