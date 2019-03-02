@@ -214,7 +214,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #if defined HAS_IF482
 
-    IF482_Pulse(nextsec(t));
+    IF482_Pulse(t);
 
 #elif defined HAS_DCF77
 
