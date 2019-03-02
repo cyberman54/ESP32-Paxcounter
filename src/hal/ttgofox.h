@@ -25,16 +25,16 @@
 #define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
 
 // Settings for IF482 interface
-//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
+#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
 
 // Settings for DCF77 interface
 //#define HAS_DCF77 GPIO_NUM_14
 //#define DCF77_ACTIVE_LOW 1
 
 // Settings for external GPS chip
-//#define HAS_GPS 1 // use on board GPS
-//#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_17, GPIO_NUM_16 // UBlox NEO 6M or 7M with default configuration
-//#define GPS_INT GPIO_NUM_13
+#define HAS_GPS 1 // use on board GPS
+#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_17, GPIO_NUM_16 // UBlox NEO 6M or 7M with default configuration
+#define GPS_INT GPIO_NUM_13
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
