@@ -100,17 +100,23 @@ void timepulse_start(void) {
 // interrupt service routine triggered by either pps or esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
+  BaseType_t xHigherPriorityTaskWoken;
+
   time_t t = SyncToPPS(); // calibrates UTC systime, see Time.h
+  xHigherPriorityTaskWoken = pdFALSE;
 
   if (ClockTask != NULL)
-    xTaskNotifyFromISR(ClockTask, uint32_t(t), eSetBits, NULL);
+    xTaskNotifyFromISR(ClockTask, uint32_t(t), eSetBits,
+                       &xHigherPriorityTaskWoken);
 
 #if defined GPS_INT || defined RTC_INT
-  xSemaphoreGiveFromISR(TimePulse, NULL);
+  xSemaphoreGiveFromISR(TimePulse, &xHigherPriorityTaskWoken);
   TimePulseTick = !TimePulseTick; // flip ticker
 #endif
 
-  portYIELD_FROM_ISR();
+  // yield only if we should
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
 }
 
 // helper function to check plausibility of a time
@@ -215,9 +221,9 @@ void clock_loop(void *taskparameter) { // ClockTask
     if (second(t) == DCF77_FRAME_SIZE - 1) // is it time to load new frame?
       DCFpulse = DCF77_Frame(nextmin(t));  // generate frame for next minute
 
-    if (minute(nextmin(t)) ==            // do we still have a recent frame?
-        DCFpulse[DCF77_FRAME_SIZE])      // (timepulses could be missed!)
-      DCF77_Pulse(t, DCFpulse); // then output current second's pulse
+    if (minute(nextmin(t)) ==       // do we still have a recent frame?
+        DCFpulse[DCF77_FRAME_SIZE]) // (timepulses could be missed!)
+      DCF77_Pulse(t, DCFpulse);     // then output current second's pulse
     else
       continue; // no recent frame -> we suppress clock output
 

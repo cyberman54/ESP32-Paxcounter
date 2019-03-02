@@ -358,13 +358,18 @@ void setup() {
 #endif
 #endif
 
+#if defined HAS_IF482 || defined HAS_DCF77
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
   timepulse_start();
+#endif
+
+#ifdef TIME_SYNC_INTERVAL
   // set time source and sync time
   setSyncInterval(TIME_SYNC_INTERVAL * 60);
   setSyncProvider(&timeProvider);
+#endif
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
