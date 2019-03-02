@@ -27,11 +27,11 @@ Uused tasks and timers:
 
 Task          Core  Prio  Purpose
 ====================================================================================
-clockloop     0     4     generates realtime telegrams for external clock
 ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
+clockloop     1     4     generates realtime telegrams for external clock
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by hw irq, see table below
 gpsloop       1     2     reads data from GPS via serial or i2c
@@ -52,7 +52,7 @@ ESP32 hardware irq timers
 
  RTC hardware timer (if present)
 ================================
- triggers IF482 clock signal
+ triggers pps 1 sec impulse
 
 */
 
@@ -65,14 +65,14 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *sendCycle = NULL, *homeCycle = NULL;
-#ifdef HAS_DISPLAY
-hw_timer_t *displaytimer = NULL;
-#endif
+hw_timer_t *sendCycle = NULL, *homeCycle = NULL, *clockCycle = NULL,
+           *displaytimer = NULL;
 
 TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
 bool volatile TimePulseTick = false;
+time_t userUTCTime = 0;
+timesource_t timeSource = _unsynced;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
@@ -81,13 +81,13 @@ std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
-// set Time Zone, fetch user setting from paxcounter.conf
+// set Time Zone for user setting from paxcounter.conf
 TimeChangeRule myDST = DAYLIGHT_TIME;
 TimeChangeRule mySTD = STANDARD_TIME;
 Timezone myTZ(myDST, mySTD);
 
 // local Tag for logging
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 void setup() {
 
@@ -284,14 +284,14 @@ void setup() {
 // initialize LoRa
 #ifdef HAS_LORA
   strcat_P(features, " LORA");
-#endif
   assert(lora_stack_init() == ESP_OK);
+#endif
 
 // initialize SPI
 #ifdef HAS_SPI
   strcat_P(features, " SPI");
-#endif
   assert(spi_init() == ESP_OK);
+#endif
 
 #ifdef VENDORFILTER
   strcat_P(features, " OUIFLT");
@@ -358,12 +358,10 @@ void setup() {
 #endif
 #endif
 
-  // start pps timepulse
-  ESP_LOGI(TAG, "Starting timepulse...");
-  if (timepulse_init()) // setup timepulse
-    timepulse_start();  // start pulse
-  else
-    ESP_LOGE(TAG, "No timepulse, systime will not be synced!");
+  // start pps timepulse and timekeepr
+  ESP_LOGI(TAG, "Starting Timekeeper...");
+  assert(timepulse_init()); // setup timepulse
+  timepulse_start();
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
@@ -416,30 +414,9 @@ void setup() {
 #endif
 #endif // HAS_BUTTON
 
-#ifdef HAS_GPS
-  // sync systime on next timepulse
-  ESP_LOGI(TAG, "GPS is setting system time");
-  if (sync_SysTime(get_gpstime())) {
-    //setSyncProvider(get_gpstime); // reset sync cycle on top of second
-    //setSyncInterval(TIME_SYNC_INTERVAL_GPS * 60);
-    // calibrate RTC
-#ifdef HAS_RTC
-    set_rtctime(now()); // epoch time
-#endif
-  } else
-    ESP_LOGI(TAG, "Unable to sync system time with GPS");
-#endif // HAS_GPS
-
-    // initialize systime from timesource
-#ifdef HAS_RTC
-  // sync systime on next timepulse
-  ESP_LOGI(TAG, "RTC is setting system time");
-  if (sync_SysTime(get_rtctime())) {
-    //setSyncProvider(get_rtctime); // reset sync cycle on top of second
-    //setSyncInterval(TIME_SYNC_INTERVAL_RTC * 60);
-  } else
-    ESP_LOGI(TAG, "Unable to sync system time with RTC");
-#endif // HAS_RTC
+  // set time source
+  setSyncInterval(TIME_SYNC_INTERVAL * 60);
+  setSyncProvider(&timeProvider);
 
 #if defined HAS_IF482 || defined HAS_DCF77
   ESP_LOGI(TAG, "Starting Clock Controller...");

@@ -22,6 +22,8 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 */
 
+#ifdef HAS_SPI
+
 #include "spislave.h"
 
 #include <driver/spi_slave.h>
@@ -102,9 +104,6 @@ void spi_slave_task(void *param) {
 }
 
 esp_err_t spi_init() {
-#ifndef HAS_SPI
-  return ESP_OK;
-#else
   assert(SEND_QUEUE_SIZE);
   SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (SPISendQueue == 0) {
@@ -146,13 +145,10 @@ esp_err_t spi_init() {
   }
 
   return ret;
-
-#endif
 }
 
 void spi_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   // enqueue message in SPI send queue
-#ifdef HAS_SPI
   BaseType_t ret;
   switch (prio) {
   case prio_high:
@@ -170,17 +166,12 @@ void spi_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   } else {
     ESP_LOGW(TAG, "SPI sendqueue is full");
   }
-#endif
 }
 
-void spi_queuereset(void) {
-#ifdef HAS_SPI
-  xQueueReset(SPISendQueue);
-#endif
-}
+void spi_queuereset(void) { xQueueReset(SPISendQueue); }
 
 void spi_housekeeping(void) {
-#ifdef HAS_SPI
   ESP_LOGD(TAG, "spiloop %d bytes left", uxTaskGetStackHighWaterMark(spiTask));
-#endif
 }
+
+#endif // HAS_SPI

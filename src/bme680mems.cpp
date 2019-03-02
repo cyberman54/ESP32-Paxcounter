@@ -3,7 +3,7 @@
 #include "bme680mems.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 bmeStatus_t bme_status;
 TaskHandle_t BmeTask;

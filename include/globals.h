@@ -7,6 +7,7 @@
 // Time functions
 #include <Time.h>
 #include <Timezone.h>
+#include <RtcDateTime.h>
 
 // std::set for unified array functions
 #include <set>
@@ -96,6 +97,7 @@ typedef struct {
 } bmeStatus_t;
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
+enum timesource_t { _gps, _rtc, _lora, _unsynced };
 
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
@@ -105,13 +107,15 @@ extern configData_t cfg;                      // current device configuration
 extern char display_line6[], display_line7[]; // screen buffers
 extern uint8_t volatile channel;              // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
-    batt_voltage; // display values
-extern bool volatile TimePulseTick;
-extern hw_timer_t *sendCycle, *displaytimer;
+    batt_voltage;                   // display values
+extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
+extern timesource_t timeSource;
+extern hw_timer_t *sendCycle, *displaytimer, *clockCycle;
 extern SemaphoreHandle_t I2Caccess, TimePulse;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
+extern time_t userUTCTime;
 
 // application includes
 #include "led.h"

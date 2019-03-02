@@ -8,24 +8,39 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 
   SendBuffer.MessageSize = payload.getSize();
   switch (PAYLOAD_ENCODER) {
-  case 1:
-  case 2:
+  case 1: // plain -> no mapping
+  case 2: // packed -> no mapping
     SendBuffer.MessagePort = port;
     break;
-  case 3:
-    SendBuffer.MessagePort = LPP1PORT;
+  case 3: // Cayenne LPP dynamic -> all payload goes out on same port
+    SendBuffer.MessagePort = CAYENNE_LPP1;
     break;
-  case 4:
-    SendBuffer.MessagePort = LPP2PORT;
+  case 4: // Cayenne LPP packed -> we need to map some paxcounter ports
+    SendBuffer.MessagePort = CAYENNE_LPP2;
+    switch (SendBuffer.MessagePort) {
+    case COUNTERPORT:
+      SendBuffer.MessagePort = CAYENNE_LPP2;
+      break;
+    case RCMDPORT:
+      SendBuffer.MessagePort = CAYENNE_ACTUATOR;
+      break;
+    case TIMEPORT:
+      SendBuffer.MessagePort = CAYENNE_DEVICECONFIG;
+      break;
+    }
     break;
   default:
     SendBuffer.MessagePort = port;
   }
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
-  // enqueue message in device's send queues
+// enqueue message in device's send queues
+#ifdef HAS_LORA
   lora_enqueuedata(&SendBuffer, prio);
+#endif
+#ifdef HAS_SPI
   spi_enqueuedata(&SendBuffer, prio);
+#endif
 
 } // SendPayload
 
@@ -119,6 +134,10 @@ void sendCounter() {
 } // sendCounter()
 
 void flushQueues() {
+#ifdef HAS_LORA
   lora_queuereset();
+#endif
+#ifdef HAS_SPI
   spi_queuereset();
+#endif
 }

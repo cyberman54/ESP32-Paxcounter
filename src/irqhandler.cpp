@@ -1,7 +1,7 @@
 #include "irqhandler.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 // irq handler task, handles all our application level interrupts
 void irqHandler(void *pvParameters) {
@@ -12,11 +12,10 @@ void irqHandler(void *pvParameters) {
 
   // task remains in blocked state until it is notified by an irq
   for (;;) {
-    xTaskNotifyWait(
-        0x00,             // Don't clear any bits on entry
-        ULONG_MAX,        // Clear all bits on exit
-        &InterruptStatus, // Receives the notification value
-        portMAX_DELAY);   // wait forever
+    xTaskNotifyWait(0x00,             // Don't clear any bits on entry
+                    ULONG_MAX,        // Clear all bits on exit
+                    &InterruptStatus, // Receives the notification value
+                    portMAX_DELAY);   // wait forever
 
 // button pressed?
 #ifdef HAS_BUTTON
@@ -31,8 +30,9 @@ void irqHandler(void *pvParameters) {
 #endif
 
     // are cyclic tasks due?
-    if (InterruptStatus & CYCLIC_IRQ)
+    if (InterruptStatus & CYCLIC_IRQ) {
       doHousekeeping();
+    }
 
     // is time to send the payload?
     if (InterruptStatus & SENDCOUNTER_IRQ)

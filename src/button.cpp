@@ -4,7 +4,7 @@
 #include "button.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 void readButton() {
     ESP_LOGI(TAG, "Button pressed");

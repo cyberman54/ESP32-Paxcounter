@@ -3,7 +3,7 @@
 #include "globals.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 TinyGPSPlus gps;
 gpsStatus_t gps_status;
@@ -11,6 +11,10 @@ TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
 HardwareSerial GPS_Serial(1); // use UART #1
+TickType_t const gpsDelay_ticks = pdMS_TO_TICKS(1000 - NMEA_BUFFERTIME) -
+                                  tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL);
+#else
+TickType_t const gpsDelay_ticks = pdMS_TO_TICKS(1000 - NMEA_BUFFERTIME);
 #endif
 
 // initialize and configure GPS
@@ -22,6 +26,13 @@ int gps_init(void) {
     ESP_LOGE(TAG, "GPS chip initializiation error");
     return 0;
   }
+
+// set timeout for reading recent time from GPS
+#ifdef GPS_SERIAL // serial GPS
+
+#else // I2C GPS
+
+#endif
 
 #if defined GPS_SERIAL
   GPS_Serial.begin(GPS_SERIAL);
@@ -73,32 +84,23 @@ void gps_read() {
            gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
 }
 
-// helper function to convert gps date/time into time_t
-time_t tmConvert_t(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh,
-                   uint8_t mm, uint8_t ss) {
-  tmElements_t tm;
-  tm.Year = YYYY - 1970; // note year argument is offset from 1970 in time.h
-  tm.Month = MM;
-  tm.Day = DD;
-  tm.Hour = hh;
-  tm.Minute = mm;
-  tm.Second = ss;
-  return makeTime(tm);
-}
-
 // function to fetch current time from gps
 time_t get_gpstime(void) {
-  // !! never call now() or delay in this function, this would break this
-  // function to be used as SyncProvider for Time.h
 
-  time_t t = 0; // 0 effects calling SyncProvider() to not set time
+  // set time to wait for arrive next recent NMEA time record
+  static const uint32_t gpsDelay_ms = gpsDelay_ticks / portTICK_PERIOD_MS;
 
-  if ((gps.time.age() < 1500) && (gps.time.isValid())) {
-    // get current gps time
-    t = tmConvert_t(gps.date.year(), gps.date.month(), gps.date.day(),
+  time_t t = 0;
+
+  if ((gps.time.age() < gpsDelay_ms) && (gps.time.isValid()) && (gps.date.isValid())) {
+
+      ESP_LOGD(TAG, "GPS time age: %dms, second: %d, is valid: %s", gps.time.age(), gps.time.second(),
+               gps.time.isValid() ? "yes" : "no");
+
+      t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
                     gps.time.hour(), gps.time.minute(), gps.time.second());
-  }
-  return t;
+    }
+  return timeIsValid(t);
 } // get_gpstime()
 
 // GPS serial feed FreeRTos Task

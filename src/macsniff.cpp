@@ -7,7 +7,7 @@
 #endif
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 uint16_t salt;
 

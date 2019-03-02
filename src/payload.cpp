@@ -126,6 +126,14 @@ void PayloadConvert::addButton(uint8_t value) {
 #endif
 }
 
+void PayloadConvert::addTime(time_t value) {
+  uint32_t time = (uint32_t)value;
+  buffer[cursor++] = (byte)((time & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((time & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((time & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((time & 0x000000FF));
+}
+
 /* ---------------- packed format with LoRa serialization Encoder ----------
  */
 // derived from
@@ -133,7 +141,9 @@ void PayloadConvert::addButton(uint8_t value) {
 
 #elif PAYLOAD_ENCODER == 2
 
-void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) { writeUint16(value); }
+void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
+  writeUint16(value);
+}
 
 void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   writeUint8(rssi);
@@ -208,6 +218,11 @@ void PayloadConvert::addButton(uint8_t value) {
 #endif
 }
 
+void PayloadConvert::addTime(time_t value) {
+  uint32_t time = (uint32_t)value;
+  writeUint32(time);
+}
+
 void PayloadConvert::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
     buffer[x + pos] = (byte)(i >> (x * 8));
@@ -275,14 +290,16 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 }
 
 /* ---------------- Cayenne LPP 2.0 format ---------- */
-// see specs http://community.mydevices.com/t/cayenne-lpp-2-0/7510
+// see specs 
+// http://community.mydevices.com/t/cayenne-lpp-2-0/7510 (LPP 2.0)
+// https://github.com/myDevicesIoT/cayenne-docs/blob/master/docs/LORA.md (LPP 1.0)
 // PAYLOAD_ENCODER == 3 -> Dynamic Sensor Payload, using channels -> FPort 1
 // PAYLOAD_ENCODER == 4 -> Packed Sensor Payload, not using channels -> FPort 2
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
-  switch(snifftype) {
+  switch (snifftype) {
   case MAC_SNIFF_WIFI:
 #if (PAYLOAD_ENCODER == 3)
     buffer[cursor++] = LPP_COUNT_WIFI_CHANNEL;
@@ -434,6 +451,24 @@ void PayloadConvert::addButton(uint8_t value) {
   buffer[cursor++] = LPP_DIGITAL_INPUT;
   buffer[cursor++] = value;
 #endif // HAS_BUTTON
+}
+
+void PayloadConvert::addTime(time_t value) {
+#if (PAYLOAD_ENCODER == 4)
+  uint32_t t = (uint32_t)value;
+  uint32_t tx_period = (uint32_t)SEND_SECS * 2;
+  buffer[cursor++] = 0x03; // set config mask to UTCTime + TXPeriod
+  // UTCTime in seconds
+  buffer[cursor++] = (byte)((t & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((t & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((t & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((t & 0x000000FF));
+  // TXPeriod in seconds
+  buffer[cursor++] = (byte)((tx_period & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((tx_period & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((tx_period & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((tx_period & 0x000000FF));
+#endif
 }
 
 #else

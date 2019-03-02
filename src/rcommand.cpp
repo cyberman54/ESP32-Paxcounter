@@ -3,7 +3,7 @@
 #include "rcommand.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 // helper function
 void do_reset() {
@@ -68,7 +68,7 @@ void set_sendcycle(uint8_t val[]) {
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
   // update Wifi channel rotation timer period
-  xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10), 100 );
+  xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10), 100);
 
   ESP_LOGI(TAG,
            "Remote command: set Wifi channel switch interval to %.1f seconds",
@@ -244,9 +244,8 @@ void get_status(uint8_t val[]) {
   uint16_t voltage = 0;
 #endif
   payload.reset();
-  payload.addStatus(voltage, uptime() / 1000, temperatureRead(),
-                    getFreeRAM(), rtc_get_reset_reason(0),
-                    rtc_get_reset_reason(1));
+  payload.addStatus(voltage, uptime() / 1000, temperatureRead(), getFreeRAM(),
+                    rtc_get_reset_reason(0), rtc_get_reset_reason(1));
   SendPayload(STATUSPORT, prio_high);
 };
 
@@ -273,6 +272,13 @@ void get_bme(uint8_t val[]) {
 #endif
 };
 
+void get_time(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: get time");
+  payload.reset();
+  payload.addTime(now());
+  SendPayload(TIMEPORT, prio_high);
+};
+
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, #bytes params,
 // flag (true = do make settings persistent / false = don't)
@@ -289,7 +295,7 @@ cmd_t table[] = {
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
     {0x13, set_sensor, 2, true},        {0x80, get_config, 0, false},
     {0x81, get_status, 0, false},       {0x84, get_gps, 0, false},
-    {0x85, get_bme, 0, false},
+    {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
 };
 
 const uint8_t cmdtablesize =

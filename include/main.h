@@ -17,6 +17,5 @@
 #include "led.h"
 #include "spislave.h"
 #include "lorawan.h"
-#include "rtctime.h"
-#include "clockcontroller.h"
+#include "timekeeper.h"
 #endif

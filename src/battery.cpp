@@ -1,7 +1,7 @@
 #include "globals.h"
 
 // Local logging tag
-static const char TAG[] = "main";
+static const char TAG[] = __FILE__;
 
 #ifdef HAS_BATTERY_PROBE
 esp_adc_cal_characteristics_t *adc_characs =
@@ -48,7 +48,6 @@ uint16_t read_voltage() {
 #ifdef BATT_FACTOR
   voltage *= BATT_FACTOR;
 #endif
-  ESP_LOGD(TAG, "Raw: %d / Voltage: %dmV", adc_reading, voltage);
   return voltage;
 #else
   return 0;

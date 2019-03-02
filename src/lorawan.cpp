@@ -358,12 +358,7 @@ void lora_send(osjob_t *job) {
                       lora_send);
 }
 
-#endif // HAS_LORA
-
 esp_err_t lora_stack_init() {
-#ifndef HAS_LORA
-  return ESP_OK; // continue main program
-#else
   assert(SEND_QUEUE_SIZE);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
@@ -401,12 +396,10 @@ esp_err_t lora_stack_init() {
   }
 
   return ESP_OK; // continue main program
-#endif // HAS_LORA
 }
 
 void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   // enqueue message in LORA send queue
-#ifdef HAS_LORA
   BaseType_t ret;
   switch (prio) {
   case prio_high:
@@ -423,27 +416,26 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   } else {
     ESP_LOGW(TAG, "LORA sendqueue is full");
   }
-#endif
 }
 
-void lora_queuereset(void) {
-#ifdef HAS_LORA
-  xQueueReset(LoraSendQueue);
-#endif
-}
+void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
 void lora_housekeeping(void) {
-#ifdef HAS_LORA
-// ESP_LOGD(TAG, "loraloop %d bytes left",
-// uxTaskGetStackHighWaterMark(LoraTask));
-#endif
+  // ESP_LOGD(TAG, "loraloop %d bytes left",
+  // uxTaskGetStackHighWaterMark(LoraTask));
 }
 
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess) {
-#ifdef HAS_LORA
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
-  uint32_t *pUserUTCTime = (uint32_t *)pVoidUserUTCTime;
+  time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
+
+  // A struct that will be populated by LMIC_getNetworkTimeReference.
+  // It contains the following fields:
+  //  - tLocal: the value returned by os_GetTime() when the time
+  //            request was sent to the gateway, and
+  //  - tNetwork: the seconds between the GPS epoch and the time
+  //              the gateway received the time request
   lmic_time_reference_t lmicTimeReference;
 
   if (flagSuccess != 1) {
@@ -459,7 +451,8 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   }
 
   // Update userUTCTime, considering the difference between the GPS and UTC
-  // epoch, and the leap seconds
+  // time, and the leap seconds
+  // !!! DANGER !!! This code will expire in next year with leap second
   *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
   // Current time, in ticks
   ostime_t ticksNow = os_getTime();
@@ -467,18 +460,17 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   ostime_t ticksRequestSent = lmicTimeReference.tLocal;
   // Add the delay between the instant the time was transmitted and
   // the current time
-  uint32_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
+  time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
   *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (sync_TimePulse()) {              // wait for start of next second
-    if (sync_SysTime(*pUserUTCTime)) { // do we have a valid time?
-#ifdef HAS_RTC
-      set_rtctime(now()); // epoch time
-#endif
-      ESP_LOGI(TAG, "LORA has set the system time");
-    }
+  if (timeIsValid(*pUserUTCTime)) {
+    xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
+    setTime(*pUserUTCTime + 1);
+    timeSource = _lora;
+    ESP_LOGI(TAG, "Received recent time from LoRa");
   } else
-    ESP_LOGI(TAG, "Unable to sync system time with LORA");
-#endif // HAS_LORA
+    ESP_LOGI(TAG, "Invalid time received from LoRa");
 } // user_request_network_time_callback
+
+#endif // HAS_LORA

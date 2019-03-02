@@ -41,21 +41,11 @@ const char lora_datarate[] = {"1211100908078CNA1211109C8C7C"};
 const char lora_datarate[] = {"121110090807FSNA"};
 #endif
 
-// time display symbols
-#if defined HAS_GPS || defined HAS_RTC
-const char timeNosyncSymbol = '?';
-#if defined HAS_IF482
-const char timesyncSymbol = '+';
-#elif defined HAS_DCF77
-const char timesyncSymbol = '*';
-#endif
-#endif
-
 // helper arry for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-uint8_t volatile DisplayState = 0;
+uint8_t DisplayState = 0;
 
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
@@ -134,16 +124,14 @@ void init_display(const char *Productname, const char *Version) {
     u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }
-
+  }                     // mutex
 } // init_display
 
 void refreshtheDisplay() {
 
   uint8_t msgWaiting;
-  char timeSync, timeState;
-  char buff[16]; // 16 chars line buffer
-  time_t t;
+  char timeState, buff[16];
+  time_t t = myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
@@ -155,8 +143,10 @@ void refreshtheDisplay() {
     }
 
     // if display is switched off we don't refresh it to relax cpu
-    if (!DisplayState)
+    if (!DisplayState) {
+      I2C_MUTEX_UNLOCK(); // release i2c bus access
       return;
+    }
 
     // update counter (lines 0-1)
     snprintf(
@@ -225,9 +215,7 @@ void refreshtheDisplay() {
     // update LoRa status display (line 6)
     u8x8.printf("%-16s", display_line6);
 #else // we want a systime display instead LoRa status
-    t = myTZ.toLocal(best_time());
-    timeSync = (timeStatus() == timeSet) ? timesyncSymbol : timeNosyncSymbol;
-    timeState = TimePulseTick ? timeSync : ' ';
+    timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
                 timeState, day(t), printmonth[month(t)]);
@@ -249,8 +237,7 @@ void refreshtheDisplay() {
 #endif // HAS_LORA
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }
-
+  }                     // mutex
 } // refreshDisplay()
 
 #endif // HAS_DISPLAY

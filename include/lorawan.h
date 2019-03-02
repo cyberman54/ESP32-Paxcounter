@@ -3,6 +3,7 @@
 
 #include "globals.h"
 #include "rcommand.h"
+#include "timekeeper.h"
 
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
@@ -10,17 +11,15 @@
 #include <SPI.h>
 #include <arduino_lmic_hal_boards.h>
 #include "loraconf.h"
-#include "rtctime.h"
 
 // Needed for 24AA02E64, does not hurt anything if included and not used
 #ifdef MCP_24AA02E64_I2C_ADDRESS
 #include <Wire.h>
 #endif
 
-
-
 extern QueueHandle_t LoraSendQueue;
 
+esp_err_t lora_stack_init();
 void onEvent(ev_t ev);
 void gen_lora_deveui(uint8_t *pdeveui);
 void RevBytes(unsigned char *b, size_t c);
@@ -36,7 +35,4 @@ void lora_queuereset(void);
 void lora_housekeeping(void);
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess);
-
-esp_err_t lora_stack_init();
-
 #endif
