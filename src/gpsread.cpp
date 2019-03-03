@@ -11,10 +11,6 @@ TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
 HardwareSerial GPS_Serial(1); // use UART #1
-TickType_t const gpsDelay_ticks = pdMS_TO_TICKS(1000 - NMEA_BUFFERTIME) -
-                                  tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL);
-#else
-TickType_t const gpsDelay_ticks = pdMS_TO_TICKS(1000 - NMEA_BUFFERTIME);
 #endif
 
 // initialize and configure GPS
@@ -26,13 +22,6 @@ int gps_init(void) {
     ESP_LOGE(TAG, "GPS chip initializiation error");
     return 0;
   }
-
-// set timeout for reading recent time from GPS
-#ifdef GPS_SERIAL // serial GPS
-
-#else // I2C GPS
-
-#endif
 
 #if defined GPS_SERIAL
   GPS_Serial.begin(GPS_SERIAL);
@@ -88,20 +77,25 @@ void gps_read() {
 time_t get_gpstime(void) {
 
   // set time to wait for arrive next recent NMEA time record
-  static const uint32_t gpsDelay_ms = gpsDelay_ticks / portTICK_PERIOD_MS;
+  static const uint32_t gpsDelay_ms = 500;
 
   time_t t = 0;
 
-  if ((gps.time.age() < gpsDelay_ms) && (gps.time.isValid()) &&
-      (gps.date.isValid())) {
+  for (uint8_t i = 0; i <= 9; i++) { // trying to get a recent time.age
 
-    ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s, second: %d",
-             gps.time.age(),
-             (gps.time.isValid() && gps.date.isValid()) ? "yes" : "no",
-             gps.time.second());
+    if ((gps.time.age() < gpsDelay_ms) && (gps.time.isValid()) &&
+        (gps.date.isValid())) {
 
-    t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
-                  gps.time.hour(), gps.time.minute(), gps.time.second());
+      ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s, second: %d, trials: %d",
+               gps.time.age(),
+               (gps.time.isValid() && gps.date.isValid()) ? "yes" : "no",
+               gps.time.second(), i);
+
+      t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
+                    gps.time.hour(), gps.time.minute(), gps.time.second());
+
+      break; // exit for
+    }
   }
   return timeIsValid(t);
 } // get_gpstime()
