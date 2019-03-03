@@ -19,7 +19,7 @@ void defaultConfig() {
   cfg.screenon = 1;           // 0=disabled, 1=enabled
   cfg.countermode = 0;        // 0=cyclic, 1=cumulative, 2=cyclic confirmed
   cfg.rssilimit = 0;          // threshold for rssilimiter, negative value!
-  cfg.sendcycle = SEND_CYCLE;  // payload send cycle [seconds/2]
+  cfg.sendcycle = SENDCYCLE;  // payload send cycle [seconds/2]
   cfg.wifichancycle =
       WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
   cfg.blescantime =

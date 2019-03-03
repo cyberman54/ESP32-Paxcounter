@@ -45,10 +45,8 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
- 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in paxcounter.conf)
- 1  ppsIRQ -> pps clock irq -> 1sec
- 2	unused
- 3	unused
+ 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in
+paxcounter.conf) 1  ppsIRQ -> pps clock irq -> 1sec 2	unused 3	unused
 
 
 // Interrupt routines
@@ -316,15 +314,6 @@ void setup() {
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
   init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
-
-  // setup display refresh trigger IRQ using esp32 hardware timer
-  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
-  displayIRQ = timerBegin(0, 80, true);
-  // interrupt handler DisplayIRQ, triggered by edge
-  timerAttachInterrupt(displayIRQ, &DisplayIRQ, true);
-  // reload interrupt after each trigger of display refresh cycle
-  timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
 #endif
 
 // show payload encoder
@@ -395,16 +384,25 @@ void setup() {
   }
 #endif
 
+  // starting timers and interrupts
   assert(irqHandlerTask != NULL); // has interrupt handler task started?
-                                  // start timer triggered interrupts
   ESP_LOGI(TAG, "Starting Timers...");
+
+  // display interrupt
 #ifdef HAS_DISPLAY
+  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+  displayIRQ = timerBegin(0, 80, true);
+  timerAttachInterrupt(displayIRQ, &DisplayIRQ, true);
+  timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
   timerAlarmEnable(displayIRQ);
 #endif
-  sendcycler.attach(SEND_CYCLE * 2, sendcycle);
+
+  // cyclic function interrupts
+  sendcycler.attach(SENDCYCLE * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
 
-// start button interrupt
+// button interrupt
 #ifdef HAS_BUTTON
 #ifdef BUTTON_PULLUP
   attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
@@ -424,7 +422,7 @@ void setup() {
 
 #if defined HAS_IF482 || defined HAS_DCF77
 #ifndef TIME_SYNC_INTERVAL
-#error you must define TIME_SNYC_INTERVAL in paxcounter.conf
+#error for clock controller function TIME_SNYC_INTERVAL must be defined in paxcounter.conf
 #endif
   ESP_LOGI(TAG, "Starting Clock Controller...");
   clock_init();
