@@ -58,9 +58,8 @@ void set_rssi(uint8_t val[]) {
 
 void set_sendcycle(uint8_t val[]) {
   cfg.sendcycle = val[0];
-  // update send cycle interrupt
-  timerAlarmWrite(sendCycle, cfg.sendcycle * 2 * 10000, true);
-  // reload interrupt after each trigger of channel switch cycle
+  // update send cycle interrupt [seconds
+  sendcycler.attach(cfg.sendcycle * 2, sendcycle);
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
 }

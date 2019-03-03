@@ -23,17 +23,17 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 //////////////////////// ESP32-Paxcounter \\\\\\\\\\\\\\\\\\\\\\\\\\
 
-Uused tasks and timers:
+// Tasks and timers:
 
 Task          Core  Prio  Purpose
-====================================================================================
+-------------------------------------------------------------------------------
 ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 clockloop     1     4     generates realtime telegrams for external clock
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
-irqhandler    1     1     executes tasks triggered by hw irq, see table below
+irqhandler    1     1     executes tasks triggered by timer irq
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
@@ -43,16 +43,31 @@ Low priority numbers denote low priority tasks.
 Tasks using i2c bus all must have same priority, because using mutex semaphore
 (irqhandler, bmeloop)
 
-ESP32 hardware irq timers
-================================
- 0	triggers display refresh
- 1  triggers DCF77 clock signal
- 2	triggers send payload cycle
- 3	triggers housekeeping cycle
+// ESP32 hardware timers
+-------------------------------------------------------------------------------
+ 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in paxcounter.conf)
+ 1  ppsIRQ -> pps clock irq -> 1sec
+ 2	unused
+ 3	unused
 
- RTC hardware timer (if present)
-================================
- triggers pps 1 sec impulse
+
+// Interrupt routines
+-------------------------------------------------------------------------------
+
+fired by hardware
+DisplayIRQ      -> esp32 timer 0  -> irqhandler.cpp
+CLOCKIRQ        -> esp32 timer 1  -> timekeeper.cpp
+ButtonIRQ       -> external gpio  -> irqhandler.cpp
+
+fired by software (Ticker.h)
+TIMESYNC_IRQ    -> timeSync()     -> timerkeeper.cpp
+CYLCIC_IRQ      -> housekeeping() -> cyclic.cpp
+SENDCYCLE_IRQ   -> sendcycle()    -> senddata.cpp
+
+
+// External RTC timer (if present)
+-------------------------------------------------------------------------------
+triggers pps 1 sec impulse
 
 */
 
@@ -65,8 +80,7 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *sendCycle = NULL, *homeCycle = NULL, *clockCycle = NULL,
-           *displaytimer = NULL;
+hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL;
 
 TaskHandle_t irqHandlerTask, ClockTask;
 SemaphoreHandle_t I2Caccess, TimePulse;
@@ -306,11 +320,11 @@ void setup() {
   // setup display refresh trigger IRQ using esp32 hardware timer
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
-  displaytimer = timerBegin(0, 80, true);
+  displayIRQ = timerBegin(0, 80, true);
   // interrupt handler DisplayIRQ, triggered by edge
-  timerAttachInterrupt(displaytimer, &DisplayIRQ, true);
+  timerAttachInterrupt(displayIRQ, &DisplayIRQ, true);
   // reload interrupt after each trigger of display refresh cycle
-  timerAlarmWrite(displaytimer, DISPLAYREFRESH_MS * 1000, true);
+  timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
 #endif
 
 // show payload encoder
@@ -385,9 +399,9 @@ void setup() {
                                   // start timer triggered interrupts
   ESP_LOGI(TAG, "Starting Timers...");
 #ifdef HAS_DISPLAY
-  timerAlarmEnable(displaytimer);
+  timerAlarmEnable(displayIRQ);
 #endif
-  sendcycler.attach(SEND_CYCLE, sendcycle);
+  sendcycler.attach(SEND_CYCLE * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
 
 // start button interrupt

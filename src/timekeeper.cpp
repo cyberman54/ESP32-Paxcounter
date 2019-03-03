@@ -78,8 +78,8 @@ uint8_t timepulse_init() {
 
 #else
   // use ESP32 hardware timer as time base with adjustable frequency
-  clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
-  timerAlarmWrite(clockCycle, 10000, true); // 1000ms
+  ppsIRQ = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
+  timerAlarmWrite(ppsIRQ, 10000, true); // 1000ms
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
   return 1; // success
 
@@ -92,8 +92,8 @@ void timepulse_start(void) {
 #elif defined RTC_INT // start external clock rtc
   attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
 #else                 // start internal clock esp32 hardware timer
-  timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
-  timerAlarmEnable(clockCycle);
+  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
+  timerAlarmEnable(ppsIRQ);
 #endif
 }
 

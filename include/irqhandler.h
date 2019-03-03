@@ -3,7 +3,7 @@
 
 #define DISPLAY_IRQ 0x01
 #define BUTTON_IRQ 0x02
-#define SENDCOUNTER_IRQ 0x04
+#define SENDCYCLE_IRQ 0x04
 #define CYCLIC_IRQ 0x08
 #define TIMESYNC_IRQ 0x10
 

@@ -3,7 +3,7 @@
 
 Ticker sendcycler;
 
-void sendcycle() { xTaskNotify(irqHandlerTask, SENDCOUNTER_IRQ, eSetBits); }
+void sendcycle() { xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits); }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port, sendprio_t prio) {
