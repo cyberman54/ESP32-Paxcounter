@@ -465,9 +465,9 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
 
   // Update system time with time read from the network
   if (timeIsValid(*pUserUTCTime)) {
-    xSemaphoreTake(TimePulse, pdMS_TO_TICKS(1000)); // wait for pps
-    setTime(*pUserUTCTime + 1);
+    setTime(*pUserUTCTime);
     timeSource = _lora;
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
     ESP_LOGI(TAG, "Received recent time from LoRa");
   } else
     ESP_LOGI(TAG, "Invalid time received from LoRa");

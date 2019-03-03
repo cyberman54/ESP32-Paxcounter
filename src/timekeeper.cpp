@@ -21,6 +21,7 @@ time_t timeProvider(void) {
     set_rtctime(t); // calibrate RTC
 #endif
     timeSource = _gps;
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
     return t;
   }
 #endif
@@ -30,6 +31,7 @@ time_t timeProvider(void) {
   t = get_rtctime();
   if (t) {
     timeSource = _rtc;
+    timesyncer.attach(60, timeSync); // short retry
   }
 #endif
 
@@ -38,8 +40,10 @@ time_t timeProvider(void) {
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
-  if (!t)
+  if (!t) {
     timeSource = _unsynced;
+    timesyncer.attach(60, timeSync); // short retry
+  }
 
   return t;
 
@@ -78,7 +82,7 @@ uint8_t timepulse_init() {
 
 #else
   // use ESP32 hardware timer as time base with adjustable frequency
-  ppsIRQ = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
+  ppsIRQ = timerBegin(1, 8000, true);   // set 80 MHz prescaler to 1/10000 sec
   timerAlarmWrite(ppsIRQ, 10000, true); // 1000ms
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
   return 1; // success
