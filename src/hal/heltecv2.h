@@ -7,8 +7,9 @@
 
 // Hardware related definitions for Heltec V2 LoRa-32 Board
 
-//#define HAS_BME 0x77  // BME680 sensor on I2C bus (SDI=21/SCL=22); comment out
-//if not present
+// BME680 sensor on I2C bus (SDI=21/SCL=22); comment out if not present
+//#define HAS_BME GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
+//#define BME_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1
