@@ -36,6 +36,8 @@ looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by timer irq
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
+timesync_ans  1     0     temporary task for receiving time sync requests
+timesync_req  1     0     temporary task for sending time sync requests
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.

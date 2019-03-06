@@ -35,8 +35,11 @@ time_t timeProvider(void) {
   }
 #endif
 
+// kick off asychronous DB timesync if we have
+#ifdef DBTIMESYNC
+  send_DBtime_req();
 // kick off asychronous lora sync if we have
-#if defined HAS_LORA && defined TIME_SYNC_LORA
+#elif defined HAS_LORA && defined TIME_SYNC_LORA
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 

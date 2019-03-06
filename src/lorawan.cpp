@@ -224,6 +224,12 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_TXCOMPLETE:
+
+#ifdef DBTIMESYNC
+    if (!(LMIC.txrxFlags & TXRX_ACK) && time_sync_seqNo)
+      time_sync_messages[time_sync_seqNo - 1] = LMIC.txend;
+#endif
+
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
                                                : PSTR("TX_COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
