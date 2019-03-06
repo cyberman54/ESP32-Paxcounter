@@ -9,7 +9,9 @@
 #include <rom/rtc.h>
 #include "cyclic.h"
 #include "timekeeper.h"
+#ifdef DBTIMESYNC
 #include "DBtimesync.h"
+#endif
 
 // table of remote commands and assigned functions
 typedef struct {
