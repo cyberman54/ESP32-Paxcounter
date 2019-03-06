@@ -11,3 +11,5 @@
 .gcc-flags.json
 src/loraconf.h
 src/ota.conf
+src/DBtimesync.cpp
+include/DBtimesync.h
