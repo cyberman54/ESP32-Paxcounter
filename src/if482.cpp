@@ -72,7 +72,7 @@ U: UTC time (not supported by all systems),
 L: Local Time
 
 ***) Day of week:
-not evaluated by model BU-190
+not evaluated by model BU-190, use "F" instead for this model
 
 */
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ void IF482_Pulse(time_t t) {
 String IRAM_ATTR IF482_Frame(time_t startTime) {
 
   time_t t = myTZ.toLocal(startTime);
-  char mon, out[IF482_FRAME_SIZE];
+  char mon, out[IF482_FRAME_SIZE + 1];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
   case timeSet:           // time is set and is synced
