@@ -8,6 +8,8 @@
 #include "macsniff.h"
 #include <rom/rtc.h>
 #include "cyclic.h"
+#include "timekeeper.h"
+#include "DBtimesync.h"
 
 // table of remote commands and assigned functions
 typedef struct {

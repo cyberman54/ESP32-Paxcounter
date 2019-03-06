@@ -8,6 +8,7 @@
 #include <Time.h>
 #include <Timezone.h>
 #include <RtcDateTime.h>
+#include <Ticker.h>
 
 // std::set for unified array functions
 #include <set>
@@ -110,7 +111,7 @@ extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                   // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
-extern hw_timer_t *sendCycle, *displaytimer, *clockCycle;
+extern hw_timer_t *displayIRQ, *ppsIRQ;
 extern SemaphoreHandle_t I2Caccess, TimePulse;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;

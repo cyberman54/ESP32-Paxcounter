@@ -6,11 +6,11 @@ static const char TAG[] = __FILE__;
 // symbol to display current time source
 const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
-getExternalTime TimeSourcePtr; // pointer to time source function
+Ticker timesyncer;
+
+void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 time_t timeProvider(void) {
-
-  ESP_LOGD(TAG, "time synched");
 
   time_t t = 0;
 
@@ -21,6 +21,7 @@ time_t timeProvider(void) {
     set_rtctime(t); // calibrate RTC
 #endif
     timeSource = _gps;
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
     return t;
   }
 #endif
@@ -30,16 +31,22 @@ time_t timeProvider(void) {
   t = get_rtctime();
   if (t) {
     timeSource = _rtc;
+    timesyncer.attach(60, timeSync); // short retry
   }
 #endif
 
-// kick off asychron lora sync if we have
-#if defined HAS_LORA && defined TIME_SYNC_LORA
+// kick off asychronous DB timesync if we have
+#ifdef DBTIMESYNC
+  send_DBtime_req();
+// kick off asychronous lora sync if we have
+#elif defined HAS_LORA && defined TIME_SYNC_LORA
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
-  if (!t)
+  if (!t) {
     timeSource = _unsynced;
+    timesyncer.attach(60, timeSync); // short retry
+  }
 
   return t;
 
@@ -78,8 +85,8 @@ uint8_t timepulse_init() {
 
 #else
   // use ESP32 hardware timer as time base with adjustable frequency
-  clockCycle = timerBegin(1, 8000, true); // set 80 MHz prescaler to 1/10000 sec
-  timerAlarmWrite(clockCycle, 10000, true); // 1000ms
+  ppsIRQ = timerBegin(1, 8000, true);   // set 80 MHz prescaler to 1/10000 sec
+  timerAlarmWrite(ppsIRQ, 10000, true); // 1000ms
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
   return 1; // success
 
@@ -92,8 +99,8 @@ void timepulse_start(void) {
 #elif defined RTC_INT // start external clock rtc
   attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
 #else                 // start internal clock esp32 hardware timer
-  timerAttachInterrupt(clockCycle, &CLOCKIRQ, true);
-  timerAlarmEnable(clockCycle);
+  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
+  timerAlarmEnable(ppsIRQ);
 #endif
 }
 
@@ -101,12 +108,11 @@ void timepulse_start(void) {
 void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken;
-
-  time_t t = SyncToPPS(); // calibrates UTC systime, see Time.h
+  SyncToPPS(); // calibrates UTC systime, see Time.h
   xHigherPriorityTaskWoken = pdFALSE;
 
   if (ClockTask != NULL)
-    xTaskNotifyFromISR(ClockTask, uint32_t(t), eSetBits,
+    xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                        &xHigherPriorityTaskWoken);
 
 #if defined GPS_INT || defined RTC_INT
@@ -214,7 +220,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #if defined HAS_IF482
 
-    IF482_Pulse(t);
+    IF482_Pulse(nextsec(t));
 
 #elif defined HAS_DCF77
 

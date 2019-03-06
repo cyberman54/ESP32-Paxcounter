@@ -290,11 +290,12 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 }
 
 /* ---------------- Cayenne LPP 2.0 format ---------- */
-// see specs 
+// see specs
 // http://community.mydevices.com/t/cayenne-lpp-2-0/7510 (LPP 2.0)
-// https://github.com/myDevicesIoT/cayenne-docs/blob/master/docs/LORA.md (LPP 1.0)
-// PAYLOAD_ENCODER == 3 -> Dynamic Sensor Payload, using channels -> FPort 1
-// PAYLOAD_ENCODER == 4 -> Packed Sensor Payload, not using channels -> FPort 2
+// https://github.com/myDevicesIoT/cayenne-docs/blob/master/docs/LORA.md
+// (LPP 1.0) PAYLOAD_ENCODER == 3 -> Dynamic Sensor Payload, using channels ->
+// FPort 1 PAYLOAD_ENCODER == 4 -> Packed Sensor Payload, not using channels ->
+// FPort 2
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
@@ -456,7 +457,7 @@ void PayloadConvert::addButton(uint8_t value) {
 void PayloadConvert::addTime(time_t value) {
 #if (PAYLOAD_ENCODER == 4)
   uint32_t t = (uint32_t)value;
-  uint32_t tx_period = (uint32_t)SEND_SECS * 2;
+  uint32_t tx_period = (uint32_t)SENDCYCLE * 2;
   buffer[cursor++] = 0x03; // set config mask to UTCTime + TXPeriod
   // UTCTime in seconds
   buffer[cursor++] = (byte)((t & 0xFF000000) >> 24);

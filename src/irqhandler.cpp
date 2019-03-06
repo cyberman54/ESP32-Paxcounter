@@ -30,12 +30,17 @@ void irqHandler(void *pvParameters) {
 #endif
 
     // are cyclic tasks due?
-    if (InterruptStatus & CYCLIC_IRQ) {
+    if (InterruptStatus & CYCLIC_IRQ)
       doHousekeeping();
-    }
+
+#ifdef TIME_SYNC_INTERVAL
+    // is time to be synced?
+    if (InterruptStatus & TIMESYNC_IRQ)
+      setTime(timeProvider());
+#endif
 
     // is time to send the payload?
-    if (InterruptStatus & SENDCOUNTER_IRQ)
+    if (InterruptStatus & SENDCYCLE_IRQ)
       sendCounter();
   }
   vTaskDelete(NULL); // shoud never be reached
@@ -44,26 +49,28 @@ void irqHandler(void *pvParameters) {
 // esp32 hardware timer triggered interrupt service routines
 // they notify the irq handler task
 
-void IRAM_ATTR homeCycleIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
-  portYIELD_FROM_ISR();
-}
-
-void IRAM_ATTR SendCycleIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, SENDCOUNTER_IRQ, eSetBits, NULL);
-  portYIELD_FROM_ISR();
-}
-
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits, NULL);
-  portYIELD_FROM_ISR();
+  BaseType_t xHigherPriorityTaskWoken;
+  xHigherPriorityTaskWoken = pdFALSE;
+
+  xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits,
+                     &xHigherPriorityTaskWoken);
+
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
 }
 #endif
 
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits, NULL);
-  portYIELD_FROM_ISR();
+  BaseType_t xHigherPriorityTaskWoken;
+  xHigherPriorityTaskWoken = pdFALSE;
+
+  xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
+                     &xHigherPriorityTaskWoken);
+
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
 }
 #endif
