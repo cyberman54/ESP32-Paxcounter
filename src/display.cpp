@@ -89,7 +89,7 @@ void init_display(const char *Productname, const char *Version) {
 #endif
 
 // Display chip information
-#ifdef VERBOSE
+#if(VERBOSE)
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
     u8x8.printf("ESP32 %d cores\nWiFi%s%s\n", chip_info.cores,
