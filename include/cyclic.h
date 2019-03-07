@@ -17,7 +17,6 @@ void housekeeping(void);
 void doHousekeeping(void);
 uint64_t uptime(void);
 void reset_counters(void);
-int redirect_log(const char *fmt, va_list args);
 uint32_t getFreeRAM();
 
 #endif

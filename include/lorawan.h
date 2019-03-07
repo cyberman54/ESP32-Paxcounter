@@ -4,7 +4,7 @@
 #include "globals.h"
 #include "rcommand.h"
 #include "timekeeper.h"
-#ifdef DBTIMESYNC
+#if(DBTIMESYNC)
 #include "DBtimesync.h"
 #endif
 

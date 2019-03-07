@@ -38,7 +38,7 @@ void set_reset(uint8_t val[]) {
     break;
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
-#ifdef USE_OTA
+#if(USE_OTA)
     sprintf(display_line6, "Software update");
     cfg.runmode = 1;
 #else
@@ -306,7 +306,7 @@ cmd_t table[] = {{0x01, set_rssi, 1, true},
                  {0x84, get_gps, 0, false},
                  {0x85, get_bme, 0, false},
                  {0x86, get_time, 0, false}
-#ifdef DBTIMESYNC
+#if(DBTIMESYNC)
                  ,
                  {TIME_ANS_OPCODE, recv_DBtime_ans, 0, false},
                  {TIME_SYNC_OPCODE, force_DBtime_sync, 0, false}

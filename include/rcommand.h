@@ -9,7 +9,7 @@
 #include <rom/rtc.h>
 #include "cyclic.h"
 #include "timekeeper.h"
-#ifdef DBTIMESYNC
+#if(DBTIMESYNC)
 #include "DBtimesync.h"
 #endif
 

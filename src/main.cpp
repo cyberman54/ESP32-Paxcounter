@@ -105,9 +105,6 @@ static const char TAG[] = __FILE__;
 
 void setup() {
 
-  // disable the default wifi logging
-  esp_log_level_set("wifi", ESP_LOG_NONE);
-
   char features[100] = "";
 
   // create some semaphores for syncing / mutexing tasks
@@ -124,19 +121,18 @@ void setup() {
 #endif
 
   // setup debug output or silence device
-#ifdef VERBOSE
+#if(VERBOSE)
   Serial.begin(115200);
   esp_log_level_set("*", ESP_LOG_VERBOSE);
 #else
   // mute logs completely by redirecting them to silence function
   esp_log_level_set("*", ESP_LOG_NONE);
-  esp_log_set_vprintf(redirect_log);
 #endif
 
   ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
 
   // print chip information on startup if in verbose mode
-#ifdef VERBOSE
+#if(VERBOSE)
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
   ESP_LOGI(TAG,
@@ -162,13 +158,14 @@ void setup() {
 #ifdef HAS_LORA
   ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
            LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
-
   ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
            ARDUINO_LMIC_VERSION_GET_MAJOR(ARDUINO_LMIC_VERSION),
            ARDUINO_LMIC_VERSION_GET_MINOR(ARDUINO_LMIC_VERSION),
            ARDUINO_LMIC_VERSION_GET_PATCH(ARDUINO_LMIC_VERSION),
            ARDUINO_LMIC_VERSION_GET_LOCAL(ARDUINO_LMIC_VERSION));
-#endif
+  ESP_LOGI(TAG, "DEVEUI: ");
+  showLoraKeys();
+#endif // HAS_LORA
 
 #ifdef HAS_GPS
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
@@ -230,7 +227,7 @@ void setup() {
   batt_voltage = read_voltage();
 #endif
 
-#ifdef USE_OTA
+#if(USE_OTA)
   strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
   if (cfg.runmode == 1) {
@@ -242,7 +239,7 @@ void setup() {
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or switch off bluetooth, if not compiled
-#ifdef BLECOUNTER
+#if(BLECOUNTER)
   strcat_P(features, " BLE");
   if (cfg.blescan) {
     ESP_LOGI(TAG, "Starting Bluetooth...");
@@ -251,10 +248,7 @@ void setup() {
     btStop();
 #else
   // remove bluetooth stack to gain more free memory
-  ESP_ERROR_CHECK(esp_bluedroid_disable());
-  ESP_ERROR_CHECK(esp_bluedroid_deinit());
   btStop();
-  ESP_ERROR_CHECK(esp_bt_controller_deinit());
   ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
   ESP_ERROR_CHECK(esp_coex_preference_set((
       esp_coex_prefer_t)ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
@@ -307,7 +301,7 @@ void setup() {
   assert(spi_init() == ESP_OK);
 #endif
 
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
   strcat_P(features, " OUIFLT");
 #endif
 
@@ -345,13 +339,6 @@ void setup() {
 
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
-
-#ifdef HAS_LORA
-// output LoRaWAN keys to console
-#ifdef VERBOSE
-  showLoraKeys();
-#endif
-#endif
 
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
