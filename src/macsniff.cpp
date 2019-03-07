@@ -2,7 +2,7 @@
 // Basic Config
 #include "globals.h"
 
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
 #include "vendor_array.h"
 #endif
 
@@ -49,7 +49,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
   int8_t beaconID;    // beacon number in test monitor mode
   uint16_t hashedmac; // temporary buffer for generated hash value
   uint32_t addr2int;  // temporary buffer for shortened MAC
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
   uint32_t vendor2int; // temporary buffer for Vendor OUI
 #endif
 
@@ -58,7 +58,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
   addr2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[3] << 8) |
              ((uint32_t)paddr[4] << 16) | ((uint32_t)paddr[5] << 24);
 
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
   vendor2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[1] << 8) |
                ((uint32_t)paddr[0] << 16);
   // use OUI vendor filter list only on Wifi, not on BLE
@@ -88,7 +88,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         blink_LED(COLOR_GREEN, 50);
 #endif
       }
-#ifdef BLECOUNTER
+#if(BLECOUNTER)
       else if (sniff_type == MAC_SNIFF_BLE) {
         macs_ble++; // increment BLE Macs counter
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
@@ -121,7 +121,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
              sniff_type == MAC_SNIFF_WIFI ? "WiFi" : "BLTH", rssi, buff,
              hashedmac, macs_wifi, macs_ble, getFreeRAM());
 
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
   } else {
     // Very noisy
     // ESP_LOGD(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X",

@@ -124,7 +124,7 @@ void setup() {
 #endif
 
   // setup debug output or silence device
-#ifdef VERBOSE
+#if(VERBOSE)
   Serial.begin(115200);
   esp_log_level_set("*", ESP_LOG_VERBOSE);
 #else
@@ -136,7 +136,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
 
   // print chip information on startup if in verbose mode
-#ifdef VERBOSE
+#if(VERBOSE)
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
   ESP_LOGI(TAG,
@@ -230,7 +230,7 @@ void setup() {
   batt_voltage = read_voltage();
 #endif
 
-#ifdef USE_OTA
+#if(USE_OTA)
   strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
   if (cfg.runmode == 1) {
@@ -242,7 +242,7 @@ void setup() {
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or switch off bluetooth, if not compiled
-#ifdef BLECOUNTER
+#if(BLECOUNTER)
   strcat_P(features, " BLE");
   if (cfg.blescan) {
     ESP_LOGI(TAG, "Starting Bluetooth...");
@@ -307,7 +307,7 @@ void setup() {
   assert(spi_init() == ESP_OK);
 #endif
 
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
   strcat_P(features, " OUIFLT");
 #endif
 
@@ -348,7 +348,7 @@ void setup() {
 
 #ifdef HAS_LORA
 // output LoRaWAN keys to console
-#ifdef VERBOSE
+#if(VERBOSE)
   showLoraKeys();
 #endif
 #endif

@@ -38,7 +38,7 @@ void set_reset(uint8_t val[]) {
     break;
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
-#ifdef USE_OTA
+#if(USE_OTA)
     sprintf(display_line6, "Software update");
     cfg.runmode = 1;
 #else
