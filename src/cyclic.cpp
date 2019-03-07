@@ -117,7 +117,7 @@ void reset_counters() {
   macs_ble = 0;
 }
 
-#ifndef VERBOSE
+#if(VERBOSE)
 int redirect_log(const char *fmt, va_list args) {
   // do nothing
   return 0;
