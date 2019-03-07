@@ -146,7 +146,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
         break;
       }
 
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
 
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
@@ -210,7 +210,7 @@ esp_err_t register_ble_callback(void) {
       .scan_type = BLE_SCAN_TYPE_PASSIVE,
       .own_addr_type = BLE_ADDR_TYPE_RANDOM,
 
-#ifdef VENDORFILTER
+#if(VENDORFILTER)
       .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
   // ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for broadcasting
   // data in broadcast applications (e.g., Beacons), so we don't want them in
@@ -234,7 +234,7 @@ esp_err_t register_ble_callback(void) {
 } // register_ble_callback
 
 void start_BLEscan(void) {
-#ifdef BLECOUNTER
+#if(BLECOUNTER)
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
 
   ESP_ERROR_CHECK(esp_coex_preference_set(
@@ -254,7 +254,7 @@ void start_BLEscan(void) {
 } // start_BLEscan
 
 void stop_BLEscan(void) {
-#ifdef BLECOUNTER
+#if(BLECOUNTER)
   ESP_LOGI(TAG, "Shutting down bluetooth scanner ...");
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
   ESP_ERROR_CHECK(esp_bluedroid_disable());

@@ -242,7 +242,7 @@ void setup() {
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or switch off bluetooth, if not compiled
-#ifdef BLECOUNTER
+#if(BLECOUNTER)
   strcat_P(features, " BLE");
   if (cfg.blescan) {
     ESP_LOGI(TAG, "Starting Bluetooth...");
