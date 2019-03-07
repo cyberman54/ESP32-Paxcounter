@@ -116,10 +116,3 @@ void reset_counters() {
   macs_wifi = 0;
   macs_ble = 0;
 }
-
-#if(VERBOSE)
-int redirect_log(const char *fmt, va_list args) {
-  // do nothing
-  return 0;
-}
-#endif
