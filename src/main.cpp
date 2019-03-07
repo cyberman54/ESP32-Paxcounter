@@ -362,7 +362,7 @@ void setup() {
 #ifdef HAS_BME
   strcat_P(features, " BME");
   if (bme_init()) {
-    ESP_LOGI(TAG, "Starting Bluetooth sniffer...");
+    ESP_LOGI(TAG, "Starting BME sensor...");
     xTaskCreatePinnedToCore(bme_loop,  // task function
                             "bmeloop", // name of task
                             2048,      // stack size of task

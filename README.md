@@ -28,7 +28,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 
 *LoRa & SPI*:
 
-- Heltec: LoRa-32
+- Heltec: LoRa-32 v1 and v2
 - TTGO: T1, T2, T3, T-Beam, T-Fox
 - Pycom: LoPy, LoPy4, FiPy
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
@@ -66,7 +66,7 @@ Some <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thin
 for example.<br>
 
 <b>Power consumption</b> was metered at around 450 - 1000mW, depending on board and user settings in paxcounter.conf.
-By default bluetooth sniffing is disabled (line *#define BLECOUNTER* in paxcounter.conf is commented out). Enabling bluetooth costs 30% more power + 30% flash storage for the software stack. Proof of concept showed that for passenger flow metering wifi sniffing shows better results than bluetooth sniffing. If you enable bluetooth be aware that this goes on expense of wifi sniffing results, because then wifi and bt stack must share the 2,4 GHz RF ressources of ESP32. If you need to sniff wifi and bt in parallel and need best possible results, use two boards - one for wifi only and one for bt only - and add counted results.
+By default bluetooth sniffing is disabled (#define *BLECOUNTER* 0 in paxcounter.conf). Enabling bluetooth costs 30% more power + 30% flash storage for the software stack. Proof of concept showed that for passenger flow metering wifi sniffing shows better results than bluetooth sniffing. If you enable bluetooth be aware that this goes on expense of wifi sniffing results, because then wifi and bt stack must share the 2,4 GHz RF ressources of ESP32. If you need to sniff wifi and bt in parallel and need best possible results, use two boards - one for wifi only and one for bt only - and add counted results.
 
 # Preparing
 
@@ -80,13 +80,13 @@ Before compiling the code,
 
 - **create file ota.conf in your local /src directory** using the template [ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates. If you want to push own OTA updates you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
-To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown as well on the device's display (if it has one) as on the serial console for copying it to your LoRaWAN network server settings.
+To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown on the device's display (if it has one). It is also printed on the serial console for copying it, if you set *verbose 1* in paxcounter.conf and *debug_level 3* in platformio.ini.
 
 If your device has a fixed DEVEUI enter this in your local loraconf.h file. During compile time this DEVEUI will be grabbed from loraconf.h and inserted in the code.
 
 If your device has silicon **Unique ID** which is stored in serial EEPROM Microchip 24AA02E64 you don't need to change anything. The Unique ID will be read during startup and DEVEUI will be generated from it, overriding settings in loraconf.h.
 
-If your device has a **real time clock** date/time of rtc will be updated bei either LoRaWAN network or GPS time (if present).
+If your device has a **real time clock** it can be updated bei either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORA* in paxcounter.conf.
 
 # Building
 
