@@ -225,7 +225,7 @@ void onEvent(ev_t ev) {
 
   case EV_TXCOMPLETE:
 
-#if(DBTIMESYNC)
+#if(ServertimeSYNC)
     if (!(LMIC.txrxFlags & TXRX_ACK) && time_sync_seqNo)
       time_sync_messages[time_sync_seqNo - 1] = LMIC.txend;
 #endif

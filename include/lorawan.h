@@ -4,8 +4,8 @@
 #include "globals.h"
 #include "rcommand.h"
 #include "timekeeper.h"
-#if(DBTIMESYNC)
-#include "DBtimesync.h"
+#if(ServertimeSYNC)
+#include "Servertimesync.h"
 #endif
 
 // LMIC-Arduino LoRaWAN Stack

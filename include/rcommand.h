@@ -9,8 +9,8 @@
 #include <rom/rtc.h>
 #include "cyclic.h"
 #include "timekeeper.h"
-#if(DBTIMESYNC)
-#include "DBtimesync.h"
+#if(ServertimeSYNC)
+#include "Servertimesync.h"
 #endif
 
 // table of remote commands and assigned functions
