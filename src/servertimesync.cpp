@@ -1,3 +1,12 @@
+/*
+/////////////////////// LICENSE NOTE for servertimesync.cpp /////////////////////////////////
+PLEASE NOTE: There is a patent filed for the time sync algorithm used in the following code.
+The shown implementation example is covered by the repository's licencse, but you may not be 
+eligible to deploy the algorith in applications without granted license by the patent holder.
+/////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
 #ifdef ServertimeSYNC
 
 #include "Servertimesync.h"
