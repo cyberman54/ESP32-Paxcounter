@@ -23,7 +23,7 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   buffer[cursor++] = lowByte(value);
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
+void PayloadConvert::add2Bytes(int8_t rssi, uint8_t msg) {
   buffer[cursor++] = rssi;
   buffer[cursor++] = msg;
 }
@@ -145,7 +145,7 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   writeUint16(value);
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
+void PayloadConvert::add2Bytes(int8_t rssi, uint8_t msg) {
   writeUint8(rssi);
   writeUint8(msg);
 }
@@ -322,7 +322,7 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   }
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
+void PayloadConvert::add2Bytes(int8_t rssi, uint8_t msg) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_ALARM_CHANNEL;
 #endif

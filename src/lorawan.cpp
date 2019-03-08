@@ -155,7 +155,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
 #endif // MCP 24AA02E64
 }
 
-#if(VERBOSE)
+#if (VERBOSE)
 
 // Display OTAA keys
 void showLoraKeys(void) {
@@ -225,9 +225,13 @@ void onEvent(ev_t ev) {
 
   case EV_TXCOMPLETE:
 
-#if(ServertimeSYNC)
-    if (!(LMIC.txrxFlags & TXRX_ACK) && time_sync_seqNo)
-      time_sync_messages[time_sync_seqNo - 1] = LMIC.txend;
+#if (TIME_SYNC_TIMESERVER)
+    // if last packet sent was a timesync request was sent, store TX timestamp
+    if (LMIC.pendTxPort == TIMEPORT) {
+      time_sync_messages[time_sync_seqNo] = osticks2ms(LMIC.txend);
+      ESP_LOGD(TAG, "Timeserver request #%d was sent at %d",
+               time_sync_seqNo, time_sync_messages[time_sync_seqNo]);
+    }
 #endif
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
@@ -243,6 +247,7 @@ void onEvent(ev_t ev) {
       if ((LMIC.txrxFlags & TXRX_PORT) &&
           (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT))
         rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+
     }
     break;
 
@@ -385,15 +390,15 @@ esp_err_t lora_stack_init() {
   // in src/lmic_config.h if you are limited on battery.
   LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
   // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power. Set
-  // the transmission power to 14 dBi (25 mW).
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
   LMIC_setDrTxpow(DR_SF7, 14);
 
 #if defined(CFG_US915) || defined(CFG_au921)
-  // in the US, with TTN, it saves join time if we start on subband 1 (channels
-  // 8-15). This will get overridden after the join by parameters from the
-  // network. If working with other networks or in other regions, this will need
-  // to be changed.
+  // in the US, with TTN, it saves join time if we start on subband 1
+  // (channels 8-15). This will get overridden after the join by parameters
+  // from the network. If working with other networks or in other regions,
+  // this will need to be changed.
   LMIC_selectSubBand(1);
 #endif
 

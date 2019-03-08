@@ -33,7 +33,7 @@ void irqHandler(void *pvParameters) {
     if (InterruptStatus & CYCLIC_IRQ)
       doHousekeeping();
 
-#ifdef TIME_SYNC_INTERVAL
+#if (TIME_SYNC_INTERVAL)
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ)
       setTime(timeProvider());

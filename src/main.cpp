@@ -400,7 +400,7 @@ void setup() {
 #endif
 #endif // HAS_BUTTON
 
-#ifdef TIME_SYNC_INTERVAL
+#if(TIME_SYNC_INTERVAL)
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
@@ -410,7 +410,7 @@ void setup() {
 #endif
 
 #if defined HAS_IF482 || defined HAS_DCF77
-#ifndef TIME_SYNC_INTERVAL
+#if (!TIME_SYNC_INTERVAL)
 #error for clock controller function TIME_SNYC_INTERVAL must be defined in paxcounter.conf
 #endif
   ESP_LOGI(TAG, "Starting Clock Controller...");

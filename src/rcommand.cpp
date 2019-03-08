@@ -306,10 +306,10 @@ cmd_t table[] = {{0x01, set_rssi, 1, true},
                  {0x84, get_gps, 0, false},
                  {0x85, get_bme, 0, false},
                  {0x86, get_time, 0, false}
-#if(ServertimeSYNC)
+#if(TIME_SYNC_TIMESERVER)
                  ,
-                 {TIME_ANS_OPCODE, recv_Servertime_ans, 5, false},
-                 {TIME_SYNC_OPCODE, force_Servertime_sync, 0, false}
+                 {TIME_SYNC_ANS_OPCODE, recv_Servertime_ans, 5, false},
+                 {TIME_SYNC_START_OPCODE, force_Servertime_sync, 0, false}
 #endif
 };
 
