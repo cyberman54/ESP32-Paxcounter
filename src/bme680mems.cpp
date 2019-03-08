@@ -1,4 +1,4 @@
-#ifdef HAS_BME
+#ifdef HAS_BME680
 
 #include "bme680mems.h"
 
@@ -34,8 +34,8 @@ int bme_init(void) {
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
 
-    Wire.begin(HAS_BME);
-    iaqSensor.begin(BME_ADDR, Wire);
+    Wire.begin(HAS_BME680);
+    iaqSensor.begin(BME680_ADDR, Wire);
 
     ESP_LOGI(TAG, "BSEC v%d.%d.%d.%d", iaqSensor.version.major,
              iaqSensor.version.minor, iaqSensor.version.major_bugfix,
@@ -103,7 +103,7 @@ void bme_loop(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-#ifdef HAS_BME
+#ifdef HAS_BME680
   while (1) {
     // block i2c bus access
     if (I2C_MUTEX_LOCK()) {
@@ -168,4 +168,4 @@ void updateState(void) {
   }
 }
 
-#endif // HAS_BME
+#endif // HAS_BME680
