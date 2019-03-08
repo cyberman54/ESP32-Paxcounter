@@ -1,9 +1,9 @@
 /*
 
-///-->  IMPORTANT LICENSE NOTE for this file <--///
+///--> IMPORTANT LICENSE NOTE for this file <--///
 
 PLEASE NOTE: There is a patent filed for the time sync algorithm used in the
-followin code in this file. This shown implementation example is covered by the
+code of this file. The shown implementation example is covered by the
 repository's licencse, but you may not be eligible to deploy the applied
 algorithm in applications without granted license for the algorithm by the
 patent holder.
@@ -122,8 +122,7 @@ void process_Servertime_sync_ans(void *taskparameter) {
     // calculate time diff from set of collected timestamps
     if (time_diff / TIME_SYNC_SAMPLES) {
       NetworkTime = now() + time_diff;
-      ESP_LOGI(TAG, "Timesync finished, time offset=%d seconds",
-               time_diff);
+      ESP_LOGI(TAG, "Timesync finished, time offset=%d seconds", time_diff);
       // Update system time with time read from the network
       if (timeIsValid(NetworkTime)) {
         setTime(NetworkTime);
