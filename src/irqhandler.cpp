@@ -35,8 +35,11 @@ void irqHandler(void *pvParameters) {
 
 #if (TIME_SYNC_INTERVAL)
     // is time to be synced?
-    if (InterruptStatus & TIMESYNC_IRQ)
-      setTime(timeProvider());
+    if (InterruptStatus & TIMESYNC_IRQ) {
+      time_t t = timeProvider();
+      if (timeIsValid(t))
+        setTime(t);
+    }
 #endif
 
     // is time to send the payload?

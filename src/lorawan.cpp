@@ -175,6 +175,8 @@ void showLoraKeys(void) {
 
 void onEvent(ev_t ev) {
   char buff[24] = "";
+  uint32_t now_micros;
+
   switch (ev) {
 
   case EV_SCAN_TIMEOUT:
@@ -227,11 +229,10 @@ void onEvent(ev_t ev) {
 
 #if (TIME_SYNC_TIMESERVER)
     // if last packet sent was a timesync request was sent, store TX timestamp
-    if (LMIC.pendTxPort == TIMEPORT) {
-      time_sync_messages[time_sync_seqNo] = osticks2ms(LMIC.txend);
-      ESP_LOGD(TAG, "Timeserver request #%d was sent at %d",
-               time_sync_seqNo, time_sync_messages[time_sync_seqNo]);
-    }
+    if ((LMIC.pendTxPort == TIMEPORT) &&
+        (LMIC.pendTxData[0] == TIME_SYNC_REQ_OPCODE))
+      store_time_sync_req(now(now_micros), now_micros);
+      // maybe using more precise osticks2ms(LMIC.txend) here?
 #endif
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
@@ -247,7 +248,6 @@ void onEvent(ev_t ev) {
       if ((LMIC.txrxFlags & TXRX_PORT) &&
           (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT))
         rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-
     }
     break;
 
@@ -462,8 +462,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   }
 
   // Update userUTCTime, considering the difference between the GPS and UTC
-  // time, and the leap seconds
-  // !!! DANGER !!! This code will expire in next year with leap second
+  // time, and the leap seconds until year 2019
   *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
   // Current time, in ticks
   ostime_t ticksNow = os_getTime();

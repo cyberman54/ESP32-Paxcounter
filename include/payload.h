@@ -16,11 +16,12 @@
 #define LPP_MSG_CHANNEL 28
 #define LPP_HUMIDITY_CHANNEL 29
 #define LPP_BAROMETER_CHANNEL 30
-#define LPP_AIR_CHANNEL 31 
+#define LPP_AIR_CHANNEL 31
 
 #endif
 
-// MyDevices CayenneLPP 2.0 types for Packed Sensor Payload, not using channels, but different FPorts
+// MyDevices CayenneLPP 2.0 types for Packed Sensor Payload, not using channels,
+// but different FPorts
 #define LPP_GPS 136          // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01m
 #define LPP_TEMPERATURE 103  // 2 bytes, 0.1°C signed MSB
 #define LPP_DIGITAL_INPUT 0  // 1 byte
@@ -40,11 +41,13 @@ public:
   void reset(void);
   uint8_t getSize(void);
   uint8_t *getBuffer(void);
+  void addByte(uint8_t value);
+  void addWord(uint16_t value);
   void addCount(uint16_t value, uint8_t sniffytpe);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp, uint32_t mem,
                  uint8_t reset1, uint8_t reset2);
-  void add2Bytes(int8_t rssi, uint8_t message);
+  void addAlarm(int8_t rssi, uint8_t message);
   void addVoltage(uint16_t value);
   void addGPS(gpsStatus_t value);
   void addBME(bmeStatus_t value);
@@ -72,7 +75,7 @@ private:
   void writeFloat(float value);
   void writeUFloat(float value);
   void writePressure(float value);
-  void writeVersion(char * version);
+  void writeVersion(char *version);
   void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
                    bool h);
 

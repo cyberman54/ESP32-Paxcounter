@@ -106,7 +106,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
           blink_LED(COLOR_WHITE, 2000);
 #endif
           payload.reset();
-          payload.add2Bytes(rssi, beaconID);
+          payload.addAlarm(rssi, beaconID);
           SendPayload(BEACONPORT, prio_high);
         }
       };

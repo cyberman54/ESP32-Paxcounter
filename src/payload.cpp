@@ -18,12 +18,19 @@ uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
 #if PAYLOAD_ENCODER == 1
 
+void PayloadConvert::addByte(uint8_t value) { buffer[cursor++] = (value); }
+
+void PayloadConvert::addWord(uint16_t value) {
+  buffer[cursor++] = lowByte(value);
+  buffer[cursor++] = highByte(value);
+}
+
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   buffer[cursor++] = highByte(value);
   buffer[cursor++] = lowByte(value);
 }
 
-void PayloadConvert::add2Bytes(int8_t rssi, uint8_t msg) {
+void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   buffer[cursor++] = rssi;
   buffer[cursor++] = msg;
 }
@@ -141,11 +148,15 @@ void PayloadConvert::addTime(time_t value) {
 
 #elif PAYLOAD_ENCODER == 2
 
+void PayloadConvert::addByte(uint8_t value) { writeUint8(value); }
+
+void PayloadConvert::addWord(uint16_t value) { writeUint16(value); }
+
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   writeUint16(value);
 }
 
-void PayloadConvert::add2Bytes(int8_t rssi, uint8_t msg) {
+void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
   writeUint8(rssi);
   writeUint8(msg);
 }
@@ -299,6 +310,16 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
 
+void PayloadConvert::addByte(uint8_t value) { 
+  /* 
+  not implemented
+  */ }
+
+void PayloadConvert::addWord(uint16_t value) { 
+  /*
+  not implemented
+  */ }
+
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   switch (snifftype) {
   case MAC_SNIFF_WIFI:
@@ -322,7 +343,7 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   }
 }
 
-void PayloadConvert::add2Bytes(int8_t rssi, uint8_t msg) {
+void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_ALARM_CHANNEL;
 #endif
