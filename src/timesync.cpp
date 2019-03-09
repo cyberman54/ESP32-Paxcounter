@@ -28,7 +28,7 @@ void send_Servertime_req() {
 
   // if a timesync handshake is pending then exit
   if (time_sync_pending) {
-    ESP_LOGI(TAG, "Timeserver sync request already running");
+    ESP_LOGI(TAG, "Timeserver sync request already pending");
     return;
   } else {
     ESP_LOGI(TAG, "Timeserver sync request started");
@@ -54,20 +54,20 @@ void send_Servertime_req() {
 }
 
 // process timeserver timestamp response, called from rcommand.cpp
-void recv_Servertime_ans(uint8_t val[]) {
+void recv_Servertime_ans(uint8_t buf[], uint8_t buf_len) {
 
-  // if no timesync handshake is pending then exit
-  if (!time_sync_pending)
+  // if no timesync handshake is pending or invalid buffer then exit
+  if ((!time_sync_pending) || (buf_len != TIME_SYNC_FRAME_LENGTH))
     return;
 
-  uint8_t seq_no = val[0];
+  uint8_t seq_no = buf[0];
   uint32_t timestamp_sec = 0, timestamp_ms = 0;
 
   for (int i = 1; i <= 4; i++) {
-    timestamp_sec = (timestamp_sec << 8) | val[i];
+    timestamp_sec = (timestamp_sec << 8) | buf[i];
     time_sync_answers[seq_no].seconds = timestamp_sec;
   }
-  timestamp_ms = 4 * val[5];
+  timestamp_ms = 4 * buf[5];
   time_sync_answers[seq_no].fractions = timestamp_ms;
 
   ESP_LOGD(TAG, "Timeserver answer #%d received: timestamp=%d.%03d", seq_no,
@@ -93,14 +93,13 @@ void process_Servertime_sync_req(void *taskparameter) {
 
     // send sync request to server
     payload.reset();
-    payload.addWord(TIME_SYNC_REQ_OPCODE | time_sync_seqNo << 8);
+    payload.addByte(time_sync_seqNo);
     SendPayload(TIMEPORT, prio_high);
-    ESP_LOGD(TAG, "Timeserver request #%d enqeued", time_sync_seqNo);
 
     // send dummy packet to trigger receive answer
     payload.reset();
-    payload.addByte(TIME_SYNC_STEP_OPCODE);
-    SendPayload(TIMEPORT, prio_low); // open receive slot for answer
+    payload.addByte(0x99);           // flush
+    SendPayload(RCMDPORT, prio_low); // open receive slot for answer
 
     // process answer
     if ((xTaskNotifyWait(0x00, ULONG_MAX, &seq_no,
@@ -124,9 +123,8 @@ void process_Servertime_sync_req(void *taskparameter) {
   time_offset =
       (time_diff_sec + time_diff_ms / 1000.0f) / (TIME_SYNC_SAMPLES * 1.0f);
 
-  // ESP_LOGD(TAG, "Timesync time offset=%.3f", time_offset);
-  ESP_LOGD(TAG, "Timesync time offset=%d.%03d", time_diff_sec / TIME_SYNC_SAMPLES,
-           time_diff_ms / TIME_SYNC_SAMPLES);
+  ESP_LOGD(TAG, "Timesync time offset=%d.%03d",
+           time_diff_sec / TIME_SYNC_SAMPLES, time_diff_ms / TIME_SYNC_SAMPLES);
 
   if (time_offset >= TIME_SYNC_TRIGGER) {
 
@@ -171,10 +169,5 @@ void store_time_sync_req(time_t secs, uint32_t micros) {
   ESP_LOGD(TAG, "Timeserver request #%d sent at %d.%03d", time_sync_seqNo,
            time_sync_messages[k].seconds, time_sync_messages[k].fractions);
 }
-
-void force_Servertime_sync(uint8_t val[]) {
-  ESP_LOGI(TAG, "Timesync requested by timeserver");
-  timeSync();
-};
 
 #endif

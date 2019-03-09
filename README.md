@@ -366,6 +366,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	Device answers with it's local time/date (UTC Unix epoch) on Port 9.
 
+0x87 set time/date
+
+	Device synchronizes it's time/date by calling the preconfigured time source.
+
 	
 # License
 

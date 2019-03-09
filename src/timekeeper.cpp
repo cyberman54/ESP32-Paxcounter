@@ -1,5 +1,13 @@
 #include "timekeeper.h"
 
+#ifndef HAS_LORA
+#if (TIME_SYNC_TIMESERVER)
+#error TIME_SYNC_TIMESERVER defined, but device has no LORA configured
+#elif (TIME_SYNC_LORAWAN)
+#error TIME_SYNC_LORAWAN defined, but device has no LORA configured
+#endif
+#endif
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -35,11 +43,11 @@ time_t timeProvider(void) {
   }
 #endif
 
-// kick off asychronous DB timesync if we have
-#if(TIME_SYNC_TIMESERVER)
+// kick off asychronous Lora timeserver timesync if we have
+#if (TIME_SYNC_TIMESERVER)
   send_Servertime_req();
-// kick off asychronous lora sync if we have
-#elif defined HAS_LORA && (TIME_SYNC_LORAWAN)
+// kick off asychronous lora network sync if we have
+#elif (TIME_SYNC_LORAWAN)
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 

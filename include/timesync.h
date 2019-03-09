@@ -6,13 +6,10 @@
 #include "timekeeper.h"
 
 #define TIME_SYNC_SAMPLES 1    // number of time requests for averaging
-#define TIME_SYNC_CYCLE 60     // seconds between two time requests
+#define TIME_SYNC_CYCLE 30     // seconds between two time requests
 #define TIME_SYNC_TIMEOUT 120  // timeout seconds waiting for timeserver answer
 #define TIME_SYNC_TRIGGER 1.0f // time deviation threshold triggering time sync
-#define TIME_SYNC_START_OPCODE 0x90 // start time sync (server -> node)
-#define TIME_SYNC_STEP_OPCODE 0x91 // step to next sync request (node -> server)
-#define TIME_SYNC_REQ_OPCODE 0x92 // node request at timeserver (node -> server)
-#define TIME_SYNC_ANS_OPCODE 0x93 // timeserver answer to node (server -> node)
+#define TIME_SYNC_FRAME_LENGTH 0x06 // timeserver answer frame length
 
 typedef struct {
   uint32_t seconds;
@@ -24,9 +21,8 @@ extern uint8_t time_sync_seqNo;
 extern bool time_sync_pending;
 
 void send_Servertime_req(void);
-void recv_Servertime_ans(uint8_t val[]);
+void recv_Servertime_ans(uint8_t buf[], uint8_t buf_len);
 void process_Servertime_sync_req(void *taskparameter);
-void force_Servertime_sync(uint8_t val[]);
 void store_time_sync_req(time_t secs, uint32_t micros);
 
 #endif

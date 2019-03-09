@@ -228,11 +228,10 @@ void onEvent(ev_t ev) {
   case EV_TXCOMPLETE:
 
 #if (TIME_SYNC_TIMESERVER)
-    // if last packet sent was a timesync request was sent, store TX timestamp
-    if ((LMIC.pendTxPort == TIMEPORT) &&
-        (LMIC.pendTxData[0] == TIME_SYNC_REQ_OPCODE))
+    // if last packet sent was a timesync request, store TX timestamp
+    if (LMIC.pendTxPort == TIMEPORT)
       store_time_sync_req(now(now_micros), now_micros);
-      // maybe using more precise osticks2ms(LMIC.txend) here?
+      // maybe use more precise osticks2ms(LMIC.txend) here?
 #endif
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
@@ -244,7 +243,13 @@ void onEvent(ev_t ev) {
                LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
       sprintf(display_line6, "RSSI -%d SNR %d", LMIC.rssi, LMIC.snr / 4);
 
-      // check if command is received on command port, then call interpreter
+      // check if this is a timesync answer, then call timesync processor
+#if (TIME_SYNC_TIMESERVER)
+      if ((LMIC.txrxFlags & TXRX_PORT) &&
+          (LMIC.frame[LMIC.dataBeg - 1] == TIMEPORT))
+        recv_Servertime_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+#endif
+      // check if this an opcode, then call rcommand interpreter
       if ((LMIC.txrxFlags & TXRX_PORT) &&
           (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT))
         rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
@@ -422,11 +427,8 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
     ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   }
-  if (ret == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes enqueued for LORA interface", message->MessageSize);
-  } else {
+  if (ret != pdTRUE)
     ESP_LOGW(TAG, "LORA sendqueue is full");
-  }
 }
 
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
