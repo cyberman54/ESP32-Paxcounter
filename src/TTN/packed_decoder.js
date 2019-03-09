@@ -63,6 +63,18 @@ function Decoder(bytes, port) {
         return decode(bytes, [uint16], ['voltage']);
     }
 
+    if (port === 9) {
+        // timesync request
+        if (bytes.length === 1) {
+        decoded.timesync_opcode = bytes[0];
+        }
+        if (bytes.length === 2) {
+        decoded.timesync_opcode = bytes[0];
+        decoded.timesync_seqno = bytes[1];
+        }
+        return decoded;
+        }
+
 }
 
 
