@@ -16,10 +16,6 @@ typedef struct {
   uint8_t fractions; // 1/250ths second = 4 milliseconds resolution
 } time_sync_message_t;
 
-extern time_sync_message_t time_sync_messages[], time_sync_answers[];
-extern uint8_t time_sync_seqNo;
-extern bool time_sync_pending;
-
 void send_Servertime_req(void);
 void recv_Servertime_ans(uint8_t buf[], uint8_t buf_len);
 void process_Servertime_sync_req(void *taskparameter);

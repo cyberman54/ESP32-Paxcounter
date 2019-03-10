@@ -20,11 +20,6 @@ uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
 void PayloadConvert::addByte(uint8_t value) { buffer[cursor++] = (value); }
 
-void PayloadConvert::addWord(uint16_t value) {
-  buffer[cursor++] = lowByte(value);
-  buffer[cursor++] = highByte(value);
-}
-
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   buffer[cursor++] = highByte(value);
   buffer[cursor++] = lowByte(value);
@@ -149,8 +144,6 @@ void PayloadConvert::addTime(time_t value) {
 #elif PAYLOAD_ENCODER == 2
 
 void PayloadConvert::addByte(uint8_t value) { writeUint8(value); }
-
-void PayloadConvert::addWord(uint16_t value) { writeUint16(value); }
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   writeUint16(value);
@@ -312,11 +305,6 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 
 void PayloadConvert::addByte(uint8_t value) { 
   /* 
-  not implemented
-  */ }
-
-void PayloadConvert::addWord(uint16_t value) { 
-  /*
   not implemented
   */ }
 

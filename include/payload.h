@@ -42,7 +42,6 @@ public:
   uint8_t getSize(void);
   uint8_t *getBuffer(void);
   void addByte(uint8_t value);
-  void addWord(uint16_t value);
   void addCount(uint16_t value, uint8_t sniffytpe);
   void addConfig(configData_t value);
   void addStatus(uint16_t voltage, uint64_t uptime, float cputemp, uint32_t mem,

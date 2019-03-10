@@ -40,16 +40,8 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 
 // enqueue message in device's send queues
 #ifdef HAS_LORA
-/*
-  // pause send any data but timeport data, while timesync handshake is ongoing
-  if (port != TIMEPORT) {
-    if (!time_sync_pending)
-      lora_enqueuedata(&SendBuffer, prio);
-  } else
-*/
-    lora_enqueuedata(&SendBuffer, prio);
+  lora_enqueuedata(&SendBuffer, prio);
 #endif
-
 #ifdef HAS_SPI
   spi_enqueuedata(&SendBuffer, prio);
 #endif

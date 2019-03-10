@@ -11,4 +11,3 @@
 .gcc-flags.json
 src/loraconf.h
 src/ota.conf
-src/NodeRed/Timeserver.json

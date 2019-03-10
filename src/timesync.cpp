@@ -5,8 +5,7 @@
 PLEASE NOTE: There is a patent filed for the time sync algorithm used in the
 code of this file. The shown implementation example is covered by the
 repository's licencse, but you may not be eligible to deploy the applied
-algorithm in applications without granted license for the algorithm by the
-patent holder.
+algorithm in applications without granted license by the patent holder.
 
 */
 
@@ -37,8 +36,8 @@ void send_Servertime_req() {
 
     // clear timestamp array
     for (uint8_t i = 0; i <= TIME_SYNC_SAMPLES + 1; i++) {
-      time_sync_messages[i].seconds = time_sync_answers[i].seconds = 0;
-      time_sync_messages[i].fractions = time_sync_answers[i].fractions = 0;
+      time_sync_messages[i].seconds = time_sync_answers[i].seconds =
+          time_sync_messages[i].fractions = time_sync_answers[i].fractions = 0;
     }
 
     // kick off temporary task for timeserver handshake processing
@@ -63,12 +62,9 @@ void recv_Servertime_ans(uint8_t buf[], uint8_t buf_len) {
   uint8_t seq_no = buf[0];
   uint32_t timestamp_sec = 0, timestamp_ms = 0;
 
-  for (int i = 1; i <= 4; i++) {
-    timestamp_sec = (timestamp_sec << 8) | buf[i];
-    time_sync_answers[seq_no].seconds = timestamp_sec;
-  }
-  timestamp_ms = 4 * buf[5];
-  time_sync_answers[seq_no].fractions = timestamp_ms;
+  for (uint8_t i = 1; i <= 4; i++)
+    time_sync_answers[seq_no].seconds = (timestamp_sec <<= 8) |= buf[i];
+  time_sync_answers[seq_no].fractions = timestamp_ms = 4 * buf[5];
 
   ESP_LOGD(TAG, "Timeserver answer #%d received: timestamp=%d.%03d", seq_no,
            timestamp_sec, timestamp_ms);
@@ -81,8 +77,10 @@ void recv_Servertime_ans(uint8_t buf[], uint8_t buf_len) {
 // task for sending time sync requests
 void process_Servertime_sync_req(void *taskparameter) {
 
-  uint32_t seq_no = 0, time_diff_sec = 0, time_diff_ms = 0;
   time_t time_to_set = 0;
+  uint32_t seq_no = 0;
+  int16_t time_diff_ms = 0;
+  int64_t time_diff_sec = 0;
   float time_offset = 0.0f;
 
   // enqueue timestamp samples in lora sendqueue
@@ -97,46 +95,41 @@ void process_Servertime_sync_req(void *taskparameter) {
     SendPayload(TIMEPORT, prio_high);
 
     // send dummy packet to trigger receive answer
-    payload.reset();
-    payload.addByte(0x99);           // flush
-    SendPayload(RCMDPORT, prio_low); // open receive slot for answer
+    //payload.reset();
+    //payload.addByte(0x99);           // flush
+    //SendPayload(RCMDPORT, prio_low); // to open receive slot for answer
 
     // process answer
     if ((xTaskNotifyWait(0x00, ULONG_MAX, &seq_no,
                          TIME_SYNC_TIMEOUT * 1000 / portTICK_PERIOD_MS) ==
          pdFALSE) ||
         (seq_no != time_sync_seqNo)) {
-      ESP_LOGW(TAG, "Timeserver handshake error");
+      ESP_LOGW(TAG, "Timeserver handshake failed");
       goto finish;
     } // no valid sequence received before timeout
 
     else { // calculate time diff from set of collected timestamps
       uint8_t k = seq_no % TIME_SYNC_SAMPLES;
       time_diff_sec +=
-          time_sync_messages[k].seconds - time_sync_answers[k].seconds;
-      time_diff_ms += 4 * (time_sync_messages[k].fractions -
-                           time_sync_answers[k].fractions);
+          (time_sync_messages[k].seconds - time_sync_answers[k].seconds);
+      time_diff_ms += (4 * (time_sync_messages[k].fractions -
+                            time_sync_answers[k].fractions));
     }
-  }
+  } // for
 
   // calculate time offset and set time if necessary
-  time_offset =
-      (time_diff_sec + time_diff_ms / 1000.0f) / (TIME_SYNC_SAMPLES * 1.0f);
-
-  ESP_LOGD(TAG, "Timesync time offset=%d.%03d",
-           time_diff_sec / TIME_SYNC_SAMPLES, time_diff_ms / TIME_SYNC_SAMPLES);
+  time_offset = (time_diff_sec + time_diff_ms / 1000.0f) / TIME_SYNC_SAMPLES;
+  ESP_LOGD(TAG, "Timesync time offset=%.3f", time_offset);
+  ESP_LOGD(TAG, "Timesync time_diff_ms=%03d", time_diff_ms);
 
   if (time_offset >= TIME_SYNC_TRIGGER) {
-
     // wait until top of second
-    if (time_diff_ms > 0) {
-      vTaskDelay(1000 - time_diff_ms); // clock is fast
-      time_diff_sec--;
-    } else if (time_diff_ms < 0) { // clock is stale
-      vTaskDelay(1000 + time_diff_ms);
-      time_diff_sec++;
-    }
+    if (time_diff_ms > 0) // clock is fast
+      vTaskDelay(pdMS_TO_TICKS(time_diff_ms));
+    else if (time_diff_ms < 0) // clock is slow
+      vTaskDelay(pdMS_TO_TICKS(1000 + time_diff_ms));
 
+    time_diff_sec++;
     time_to_set = time_t(now() + time_diff_sec);
     ESP_LOGD(TAG, "Time to set = %d", time_to_set);
 
@@ -160,7 +153,7 @@ finish:
   vTaskDelete(NULL); // end task
 }
 
-// called from lorawan.cpp immediately after time_sync_req was sent
+// called from lorawan.cpp after time_sync_req was sent
 void store_time_sync_req(time_t secs, uint32_t micros) {
   uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
   time_sync_messages[k].seconds = secs;
