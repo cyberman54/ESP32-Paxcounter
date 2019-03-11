@@ -14,7 +14,7 @@ time_t timeProvider(void) {
 
   time_t t = 0;
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
 #ifdef HAS_RTC
@@ -39,7 +39,7 @@ time_t timeProvider(void) {
 #if(DBTIMESYNC)
   send_DBtime_req();
 // kick off asychronous lora sync if we have
-#elif defined HAS_LORA && (TIME_SYNC_LORA)
+#elif (HAS_LORA) && (TIME_SYNC_LORA)
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 

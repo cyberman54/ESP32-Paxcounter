@@ -4,7 +4,9 @@
 #include "senddata.h"
 #include "cyclic.h"
 #include "configmanager.h"
+#if(HAS_LORA)
 #include "lorawan.h"
+#endif
 #include "macsniff.h"
 #include <rom/rtc.h>
 #include "cyclic.h"

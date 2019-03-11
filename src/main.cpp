@@ -155,7 +155,7 @@ void setup() {
            ESP.getFlashChipSpeed());
   ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
            LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
   ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
@@ -167,7 +167,7 @@ void setup() {
   showLoraKeys();
 #endif // HAS_LORA
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
@@ -269,7 +269,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 // initialize gps
-#ifdef HAS_GPS
+#if(HAS_GPS)
   strcat_P(features, " GPS");
   if (gps_init()) {
     ESP_LOGI(TAG, "Starting GPS Feed...");
@@ -284,13 +284,13 @@ void setup() {
 #endif
 
 // initialize sensors
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
   strcat_P(features, " SENS");
   sensor_init();
 #endif
 
 // initialize LoRa
-#ifdef HAS_LORA
+#if(HAS_LORA)
   strcat_P(features, " LORA");
   assert(lora_stack_init() == ESP_OK);
 #endif
@@ -306,7 +306,7 @@ void setup() {
 #endif
 
 // initialize display
-#ifdef HAS_DISPLAY
+#if(HAS_DISPLAY)
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
   init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
@@ -359,7 +359,7 @@ void setup() {
                           1);              // CPU core
 
 // initialize bme
-#ifdef HAS_BME
+#if(HAS_BME)
   strcat_P(features, " BME");
   if (bme_init()) {
     ESP_LOGI(TAG, "Starting BME sensor...");
@@ -378,7 +378,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting Timers...");
 
   // display interrupt
-#ifdef HAS_DISPLAY
+#if(HAS_DISPLAY)
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
   displayIRQ = timerBegin(0, 80, true);
@@ -421,7 +421,7 @@ void setup() {
 
 void loop() {
   while (1) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
     os_runloop_once(); // execute lmic scheduled jobs and events
 #endif
     delay(2); // yield to CPU

@@ -1,4 +1,4 @@
-#ifdef HAS_GPS
+#if(HAS_GPS)
 
 #include "globals.h"
 

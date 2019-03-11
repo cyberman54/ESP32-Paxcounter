@@ -39,7 +39,7 @@ void SendPayload(uint8_t port, sendprio_t prio) {
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
 // enqueue message in device's send queues
-#ifdef HAS_LORA
+#if(HAS_LORA)
   lora_enqueuedata(&SendBuffer, prio);
 #endif
 #ifdef HAS_SPI
@@ -63,7 +63,7 @@ void sendCounter() {
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
       if (gps.location.isValid()) { // send GPS position only if we have a fix
         gps_read();
         payload.addGPS(gps_status);
@@ -83,7 +83,7 @@ void sendCounter() {
       }
       break;
 
-#ifdef HAS_BME
+#if(HAS_BME)
     case MEMS_DATA:
       payload.reset();
       payload.addBME(bme_status);
@@ -91,7 +91,7 @@ void sendCounter() {
       break;
 #endif
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
     case GPS_DATA:
       // send GPS position only if we have a fix
       if (gps.location.isValid()) {
@@ -104,7 +104,7 @@ void sendCounter() {
       break;
 #endif
 
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
     case SENSOR1_DATA:
       payload.reset();
       payload.addSensor(sensor_read(1));
@@ -138,7 +138,7 @@ void sendCounter() {
 } // sendCounter()
 
 void flushQueues() {
-#ifdef HAS_LORA
+#if(HAS_LORA)
   lora_queuereset();
 #endif
 #ifdef HAS_SPI

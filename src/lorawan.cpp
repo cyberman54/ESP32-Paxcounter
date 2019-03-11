@@ -1,10 +1,12 @@
 // Basic Config
+#if(HAS_LORA)
 #include "lorawan.h"
+#endif
 
 // Local logging Tag
 static const char TAG[] = "lora";
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
 
 #if CLOCK_ERROR_PROCENTAGE > 7
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects

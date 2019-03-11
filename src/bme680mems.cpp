@@ -1,4 +1,4 @@
-#ifdef HAS_BME
+#if(HAS_BME)
 
 #include "bme680mems.h"
 
@@ -103,7 +103,7 @@ void bme_loop(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-#ifdef HAS_BME
+#if(HAS_BME)
   while (1) {
     // block i2c bus access
     if (I2C_MUTEX_LOCK()) {
