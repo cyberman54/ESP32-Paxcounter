@@ -5,7 +5,7 @@
 #include "timesync.h"
 #include "timekeeper.h"
 
-#define TIME_SYNC_SAMPLES 1    // number of time requests for averaging
+#define TIME_SYNC_SAMPLES 3   // number of time requests for averaging
 #define TIME_SYNC_CYCLE 30     // seconds between two time requests
 #define TIME_SYNC_TIMEOUT 120  // timeout seconds waiting for timeserver answer
 #define TIME_SYNC_TRIGGER 1.0f // time deviation threshold triggering time sync
