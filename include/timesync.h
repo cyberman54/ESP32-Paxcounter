@@ -1,7 +1,6 @@
 #ifndef _TIME_SYNC_TIMESERVER_H
 #define _TIME_SYNC_TIMESERVER_H
 
-#include <ctime>
 #include <chrono>
 #include "globals.h"
 #include "timesync.h"
