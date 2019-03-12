@@ -175,7 +175,7 @@ void showLoraKeys(void) {
 
 void onEvent(ev_t ev) {
   char buff[24] = "";
-  uint32_t now_micros;
+  uint32_t now_micros = 0;
 
   switch (ev) {
 
@@ -238,21 +238,27 @@ void onEvent(ev_t ev) {
                                                : PSTR("TX_COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
 
-    if (LMIC.dataLen) {
+    if (LMIC.dataLen) { // did we receive data -> display info
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI -%d SNR %d",
                LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
       sprintf(display_line6, "RSSI -%d SNR %d", LMIC.rssi, LMIC.snr / 4);
 
-      // check if this is a timesync answer, then call timesync processor
+      if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
+        switch (LMIC.frame[LMIC.dataBeg - 1]) {
 #if (TIME_SYNC_TIMESERVER)
-      if ((LMIC.txrxFlags & TXRX_PORT) &&
-          (LMIC.frame[LMIC.dataBeg - 1] == TIMEPORT))
-        recv_Servertime_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+        case TIMEPORT: // timesync answer -> call timesync processor
+          recv_timesync_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+          break;
 #endif
-      // check if this an opcode, then call rcommand interpreter
-      if ((LMIC.txrxFlags & TXRX_PORT) &&
-          (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT))
-        rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+        case RCMDPORT: // opcode -> call rcommand interpreter
+          rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+          break;
+        default: // unknown port -> display info
+          ESP_LOGI(TAG, "Received data on unsupported port #%d",
+                   LMIC.frame[LMIC.dataBeg - 1]);
+          break;
+        }
+      }
     }
     break;
 

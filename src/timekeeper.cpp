@@ -45,7 +45,7 @@ time_t timeProvider(void) {
 
 // kick off asychronous Lora timeserver timesync if we have
 #if (TIME_SYNC_TIMESERVER)
-  send_Servertime_req();
+  send_timesync_req();
 // kick off asychronous lora network sync if we have
 #elif (TIME_SYNC_LORAWAN)
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
@@ -116,7 +116,7 @@ void timepulse_start(void) {
 void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken;
-  SyncToPPS(); // calibrates UTC systime, see Time.h
+  SyncToPPS(); // calibrates UTC systime, see microTime.h
   xHigherPriorityTaskWoken = pdFALSE;
 
   if (ClockTask != NULL)
@@ -149,7 +149,7 @@ time_t compiledUTC(void) {
 time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh, uint8_t mm,
                  uint8_t ss) {
   tmElements_t tm;
-  tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in time.h
+  tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in microTime.h
   tm.Month = MM;
   tm.Day = DD;
   tm.Hour = hh;
