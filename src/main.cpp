@@ -358,17 +358,32 @@ void setup() {
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
-// initialize bme
-#ifdef HAS_BME
-  strcat_P(features, " BME");
+// initialize bme680
+#ifdef HAS_BME680
+  strcat_P(features, " BME280");
   if (bme_init()) {
-    ESP_LOGI(TAG, "Starting BME sensor...");
+    ESP_LOGI(TAG, "Starting BME280 sensor...");
     xTaskCreatePinnedToCore(bme_loop,  // task function
                             "bmeloop", // name of task
                             2048,      // stack size of task
                             (void *)1, // parameter of the task
                             1,         // priority of the task
                             &BmeTask,  // task handle
+                            1);        // CPU core
+  }
+#endif
+
+// initialize BME280
+#ifdef HAS_BME280
+  strcat_P(features, " BME280");
+  if (bme280_init()) {
+    ESP_LOGI(TAG, "Starting BME280 sensor...");
+    xTaskCreatePinnedToCore(bme280_loop,  // task function
+                            "bme280loop", // name of task
+                            2048,      // stack size of task
+                            (void *)1, // parameter of the task
+                            1,         // priority of the task
+                            &Bme280Task,  // task handle
                             1);        // CPU core
   }
 #endif

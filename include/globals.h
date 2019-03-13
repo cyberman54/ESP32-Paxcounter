@@ -151,8 +151,12 @@ extern time_t userUTCTime;
 #include "sensor.h"
 #endif
 
-#ifdef HAS_BME
+#ifdef HAS_BME680
 #include "bme680mems.h"
+#endif
+
+#ifdef HAS_BME280
+#include "bme280.h"
 #endif
 
 #endif
