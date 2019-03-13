@@ -1,4 +1,4 @@
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
 
 /*
 

@@ -131,7 +131,7 @@ extern time_t userUTCTime;
 #include "lorawan.h"
 #endif
 
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
 #include "display.h"
 #endif
 

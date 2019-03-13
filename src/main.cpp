@@ -47,8 +47,10 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
- 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in
-paxcounter.conf) 1  ppsIRQ -> pps clock irq -> 1sec 2	unused 3	unused
+0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in paxcounter.conf)
+1 ppsIRQ -> pps clock irq -> 1sec 
+2	unused 
+3	unused
 
 
 // Interrupt routines
@@ -306,7 +308,7 @@ void setup() {
 #endif
 
 // initialize display
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayState = cfg.screenon;
   init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
@@ -382,7 +384,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting Timers...");
 
   // display interrupt
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
   displayIRQ = timerBegin(0, 80, true);

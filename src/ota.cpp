@@ -48,7 +48,7 @@ void start_ota_update() {
 
   switch_LED(LED_ON);
 
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
   u8x8.begin();
   u8x8.setFont(u8x8_font_chroma48medium8_r);
   u8x8.clear();
@@ -266,7 +266,7 @@ int do_ota_update() {
     goto abort;
   }
 
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
   // register callback function for showing progress while streaming data
   Update.onProgress(&show_progress);
 #endif
@@ -309,7 +309,7 @@ retry:
 
 void display(const uint8_t row, const std::string status,
              const std::string msg) {
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
   u8x8.setCursor(14, row);
   u8x8.print((status.substr(0, 2)).c_str());
   if (!msg.empty()) {
@@ -320,7 +320,7 @@ void display(const uint8_t row, const std::string status,
 #endif
 }
 
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
 // callback function to show download progress while streaming data
 void show_progress(unsigned long current, unsigned long size) {
   char buf[17];

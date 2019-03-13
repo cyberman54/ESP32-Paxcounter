@@ -14,7 +14,7 @@
 
 void irqHandler(void *pvParameters);
 
-#if(HAS_DISPLAY)
+#ifdef HAS_DISPLAY
 #include "display.h"
 void IRAM_ATTR DisplayIRQ();
 #endif
