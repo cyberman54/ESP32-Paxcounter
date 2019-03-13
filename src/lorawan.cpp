@@ -239,9 +239,9 @@ void onEvent(ev_t ev) {
     sprintf(display_line6, " "); // clear previous lmic status
 
     if (LMIC.dataLen) { // did we receive data -> display info
-      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI -%d SNR %d",
+      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
                LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
-      sprintf(display_line6, "RSSI -%d SNR %d", LMIC.rssi, LMIC.snr / 4);
+      sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi, LMIC.snr / 4);
 
       if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
         switch (LMIC.frame[LMIC.dataBeg - 1]) {

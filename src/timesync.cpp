@@ -25,7 +25,7 @@ typedef std::chrono::system_clock myClock;
 typedef myClock::time_point myClock_timepoint;
 typedef std::chrono::duration<long long int, std::ratio<1, 1000>>
     myClock_msecTick;
-// 32bit millisec resolution from epoch until year 2038
+
 myClock_timepoint time_sync_tx[TIME_SYNC_SAMPLES];
 myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
 
@@ -76,7 +76,7 @@ void recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
   time_sync_rx[k] += std::chrono::seconds(timestamp_sec) +
                      std::chrono::milliseconds(timestamp_msec);
 
-  ESP_LOGD(TAG, "Timesync answer #%d rcvd at %d", seq_no,
+  ESP_LOGD(TAG, "Timesync request #%d rcvd at %d", seq_no,
            myClock::to_time_t(time_sync_rx[k]));
 
   // inform processing task
@@ -116,13 +116,13 @@ void process_timesync_req(void *taskparameter) {
       k = seq_no % TIME_SYNC_SAMPLES;
 
       auto t_tx = std::chrono::time_point_cast<std::chrono::milliseconds>(
-          time_sync_tx[k]); // timepoint node after TX_completed
+          time_sync_tx[k]); // timepoint when node TX_completed
       auto t_rx = std::chrono::time_point_cast<std::chrono::milliseconds>(
           time_sync_rx[k]); // timepoint when message was seen on gateway
 
-      time_offset += t_rx - t_tx;
+      time_offset += t_rx - t_tx; // cumulate timepoint diffs
 
-      if (i < TIME_SYNC_SAMPLES - 1)
+      if (i < TIME_SYNC_SAMPLES - 1) // wait until next cycle
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
     }
   } // for
