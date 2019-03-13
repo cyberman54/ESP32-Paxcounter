@@ -157,7 +157,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
 #endif // MCP 24AA02E64
 }
 
-#if(VERBOSE)
+#if (VERBOSE)
 
 // Display OTAA keys
 void showLoraKeys(void) {
@@ -177,6 +177,8 @@ void showLoraKeys(void) {
 
 void onEvent(ev_t ev) {
   char buff[24] = "";
+  uint32_t now_micros = 0;
+
   switch (ev) {
 
   case EV_SCAN_TIMEOUT:
@@ -227,24 +229,38 @@ void onEvent(ev_t ev) {
 
   case EV_TXCOMPLETE:
 
-#if(DBTIMESYNC)
-    if (!(LMIC.txrxFlags & TXRX_ACK) && time_sync_seqNo)
-      time_sync_messages[time_sync_seqNo - 1] = LMIC.txend;
+#if (TIME_SYNC_TIMESERVER)
+    // if last packet sent was a timesync request, store TX timestamp
+    if (LMIC.pendTxPort == TIMEPORT)
+      store_time_sync_req(now(now_micros), now_micros);
+      // maybe use more precise osticks2ms(LMIC.txend) here?
 #endif
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
                                                : PSTR("TX_COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
 
-    if (LMIC.dataLen) {
-      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI -%d SNR %d",
+    if (LMIC.dataLen) { // did we receive data -> display info
+      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
                LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
-      sprintf(display_line6, "RSSI -%d SNR %d", LMIC.rssi, LMIC.snr / 4);
+      sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi, LMIC.snr / 4);
 
-      // check if command is received on command port, then call interpreter
-      if ((LMIC.txrxFlags & TXRX_PORT) &&
-          (LMIC.frame[LMIC.dataBeg - 1] == RCMDPORT))
-        rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+      if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
+        switch (LMIC.frame[LMIC.dataBeg - 1]) {
+#if (TIME_SYNC_TIMESERVER)
+        case TIMEPORT: // timesync answer -> call timesync processor
+          recv_timesync_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+          break;
+#endif
+        case RCMDPORT: // opcode -> call rcommand interpreter
+          rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+          break;
+        default: // unknown port -> display info
+          ESP_LOGI(TAG, "Received data on unsupported port #%d",
+                   LMIC.frame[LMIC.dataBeg - 1]);
+          break;
+        }
+      }
     }
     break;
 
@@ -387,15 +403,15 @@ esp_err_t lora_stack_init() {
   // in src/lmic_config.h if you are limited on battery.
   LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
   // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power. Set
-  // the transmission power to 14 dBi (25 mW).
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
   LMIC_setDrTxpow(DR_SF7, 14);
 
 #if defined(CFG_US915) || defined(CFG_au921)
-  // in the US, with TTN, it saves join time if we start on subband 1 (channels
-  // 8-15). This will get overridden after the join by parameters from the
-  // network. If working with other networks or in other regions, this will need
-  // to be changed.
+  // in the US, with TTN, it saves join time if we start on subband 1
+  // (channels 8-15). This will get overridden after the join by parameters
+  // from the network. If working with other networks or in other regions,
+  // this will need to be changed.
   LMIC_selectSubBand(1);
 #endif
 
@@ -419,11 +435,8 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
     ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   }
-  if (ret == pdTRUE) {
-    ESP_LOGI(TAG, "%d bytes enqueued for LORA interface", message->MessageSize);
-  } else {
+  if (ret != pdTRUE)
     ESP_LOGW(TAG, "LORA sendqueue is full");
-  }
 }
 
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
@@ -459,8 +472,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   }
 
   // Update userUTCTime, considering the difference between the GPS and UTC
-  // time, and the leap seconds
-  // !!! DANGER !!! This code will expire in next year with leap second
+  // time, and the leap seconds until year 2019
   *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
   // Current time, in ticks
   ostime_t ticksNow = os_getTime();

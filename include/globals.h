@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 // Time functions
-#include <Time.h>
+#include "microTime.h"
 #include <Timezone.h>
 #include <RtcDateTime.h>
 #include <Ticker.h>
@@ -151,8 +151,8 @@ extern time_t userUTCTime;
 #include "sensor.h"
 #endif
 
-#if(HAS_BME)
-#include "bme680mems.h"
+#if (HAS_BME)
+#include "bmesensor.h"
 #endif
 
 #endif

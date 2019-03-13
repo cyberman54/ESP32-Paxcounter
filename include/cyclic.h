@@ -9,8 +9,8 @@
 #include <lmic.h>
 #endif
 
-#if(HAS_BME)
-#include "bme680mems.h"
+#if (HAS_BME)
+#include "bmesensor.h"
 #endif
 
 extern Ticker housekeeper;

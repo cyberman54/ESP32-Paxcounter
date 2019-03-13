@@ -1,9 +1,15 @@
-#ifndef _BME680MEMS_H
-#define _BME680MEMS_H
+#ifndef _BMESENSOR_H
+#define _BMESENSOR_H
 
 #include "globals.h"
 #include <Wire.h>
+
+#ifdef HAS_BME680
 #include "../lib/Bosch-BSEC/src/bsec.h"
+#elif defined HAS_BME280
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+#endif
 
 extern bmeStatus_t
     bme_status; // Make struct for storing gps data globally available

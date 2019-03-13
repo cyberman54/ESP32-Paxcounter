@@ -1,0 +1,249 @@
+[
+    {
+        "id": "49e3c067.e782e",
+        "type": "change",
+        "z": "449c1517.e25f4c",
+        "name": "Payload",
+        "rules": [
+            {
+                "t": "change",
+                "p": "topic",
+                "pt": "msg",
+                "from": "up",
+                "fromt": "str",
+                "to": "down",
+                "tot": "str"
+            },
+            {
+                "t": "move",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.payload_raw",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "payload.port",
+                "pt": "msg",
+                "to": "9",
+                "tot": "num"
+            },
+            {
+                "t": "set",
+                "p": "payload.confirmed",
+                "pt": "msg",
+                "to": "false",
+                "tot": "bool"
+            },
+            {
+                "t": "set",
+                "p": "payload.schedule",
+                "pt": "msg",
+                "to": "replace",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 220,
+        "y": 360,
+        "wires": [
+            [
+                "84f1cda2.069e7"
+            ]
+        ]
+    },
+    {
+        "id": "cc140589.dea168",
+        "type": "mqtt in",
+        "z": "449c1517.e25f4c",
+        "name": "listen",
+        "topic": "+/devices/+/up",
+        "qos": "2",
+        "broker": "2a15ab6f.ab2244",
+        "x": 70,
+        "y": 120,
+        "wires": [
+            [
+                "9f4b8dd3.2f0d2"
+            ]
+        ]
+    },
+    {
+        "id": "72d5e7ee.d1eba8",
+        "type": "mqtt out",
+        "z": "449c1517.e25f4c",
+        "name": "send",
+        "topic": "",
+        "qos": "",
+        "retain": "",
+        "broker": "2a15ab6f.ab2244",
+        "x": 690,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "4f97d75.6c87528",
+        "type": "json",
+        "z": "449c1517.e25f4c",
+        "name": "Convert",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 220,
+        "y": 200,
+        "wires": [
+            [
+                "8ed813a9.a9319"
+            ]
+        ]
+    },
+    {
+        "id": "9f4b8dd3.2f0d2",
+        "type": "switch",
+        "z": "449c1517.e25f4c",
+        "name": "Timeport",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "\"port\":9",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 220,
+        "y": 120,
+        "wires": [
+            [
+                "4f97d75.6c87528"
+            ]
+        ]
+    },
+    {
+        "id": "f4c5b6de.f95148",
+        "type": "function",
+        "z": "449c1517.e25f4c",
+        "name": "Time_Sync_Ans",
+        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\n  let buf = new ArrayBuffer(6);\n  let timestamp = (+new Date(msg.payload.metadata.gateways[0].time));\n  \n  var seconds = Math.floor(timestamp/1000);\n  var fractions = (timestamp % 1000) / 4;\n  var seqno = msg.payload.payload_raw[0];\n\n  new DataView(buf).setUint8(0, seqno);\n  new DataView(buf).setUint32(1, seconds);\n  new DataView(buf).setUint8(5, fractions);\n\n  msg.payload = new Buffer(new Uint8Array(buf));\n  \n  return msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 400,
+        "y": 280,
+        "wires": [
+            [
+                "49e3c067.e782e"
+            ]
+        ]
+    },
+    {
+        "id": "dac8aafa.389298",
+        "type": "json",
+        "z": "449c1517.e25f4c",
+        "name": "Convert",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 540,
+        "y": 360,
+        "wires": [
+            [
+                "72d5e7ee.d1eba8"
+            ]
+        ]
+    },
+    {
+        "id": "8ed813a9.a9319",
+        "type": "base64",
+        "z": "449c1517.e25f4c",
+        "name": "Decode",
+        "action": "",
+        "property": "payload.payload_raw",
+        "x": 380,
+        "y": 200,
+        "wires": [
+            [
+                "f868bce2.dde67"
+            ]
+        ]
+    },
+    {
+        "id": "84f1cda2.069e7",
+        "type": "base64",
+        "z": "449c1517.e25f4c",
+        "name": "Encode",
+        "action": "",
+        "property": "payload.payload_raw",
+        "x": 380,
+        "y": 360,
+        "wires": [
+            [
+                "dac8aafa.389298"
+            ]
+        ]
+    },
+    {
+        "id": "6190967b.01f758",
+        "type": "comment",
+        "z": "449c1517.e25f4c",
+        "name": "LoRaWAN Timeserver",
+        "info": "PLEASE NOTE: There is a patent filed for the time sync algorithm used in the\ncode of this file. The shown implementation example is covered by the\nrepository's licencse, but you may not be eligible to deploy the applied\nalgorithm in applications without granted license by the patent holder.",
+        "x": 120,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "f868bce2.dde67",
+        "type": "switch",
+        "z": "449c1517.e25f4c",
+        "name": "Timechecker",
+        "property": "payload.metadata.gateways[0].time",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lte",
+                "v": "payload.metadata.time",
+                "vt": "msg"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 550,
+        "y": 200,
+        "wires": [
+            [
+                "f4c5b6de.f95148"
+            ]
+        ]
+    },
+    {
+        "id": "2a15ab6f.ab2244",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "eu.thethings.network:1883",
+        "broker": "eu.thethings.network",
+        "port": "1883",
+        "tls": "",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    }
+]

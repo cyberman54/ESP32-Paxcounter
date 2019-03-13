@@ -18,6 +18,8 @@ uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
 #if PAYLOAD_ENCODER == 1
 
+void PayloadConvert::addByte(uint8_t value) { buffer[cursor++] = (value); }
+
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   buffer[cursor++] = highByte(value);
   buffer[cursor++] = lowByte(value);
@@ -140,6 +142,8 @@ void PayloadConvert::addTime(time_t value) {
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
 #elif PAYLOAD_ENCODER == 2
+
+void PayloadConvert::addByte(uint8_t value) { writeUint8(value); }
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   writeUint16(value);
@@ -298,6 +302,11 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 // FPort 2
 
 #elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
+
+void PayloadConvert::addByte(uint8_t value) { 
+  /* 
+  not implemented
+  */ }
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   switch (snifftype) {
