@@ -18,8 +18,8 @@
 #define HAS_BUTTON KEY_BUILTIN                        // button "PROG" on board
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (4)
-#define MY_OLED_SCL (15)
+#define MY_OLED_SDA (21)
+#define MY_OLED_SCL (22)
 #define MY_OLED_RST (16)
 
 // Pins for LORA chip SPI interface come from board file, we need some
