@@ -123,15 +123,15 @@ extern time_t userUTCTime;
 #include "payload.h"
 #include "blescan.h"
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
 #include "gpsread.h"
 #endif
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
 #include "lorawan.h"
 #endif
 
-#ifdef HAS_DISPLAY
+#if(HAS_DISPLAY)
 #include "display.h"
 #endif
 
@@ -147,7 +147,7 @@ extern time_t userUTCTime;
 #include "antenna.h"
 #endif
 
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
 #include "sensor.h"
 #endif
 

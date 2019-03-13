@@ -24,7 +24,7 @@ void doHousekeeping() {
 #ifdef HAS_SPI
   spi_housekeeping();
 #endif
-#ifdef HAS_LORA
+#if(HAS_LORA)
   lora_housekeeping();
 #endif
 
@@ -32,7 +32,7 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
-#ifdef HAS_GPS
+#if(HAS_GPS)
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif

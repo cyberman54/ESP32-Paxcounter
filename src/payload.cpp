@@ -80,7 +80,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
-#ifdef HAS_GPS
+#if(HAS_GPS)
   buffer[cursor++] = (byte)((value.latitude & 0xFF000000) >> 24);
   buffer[cursor++] = (byte)((value.latitude & 0x00FF0000) >> 16);
   buffer[cursor++] = (byte)((value.latitude & 0x0000FF00) >> 8);
@@ -98,7 +98,7 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 }
 
 void PayloadConvert::addSensor(uint8_t buf[]) {
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
   uint8_t length = buf[0];
   memcpy(buffer, buf + 1, length);
   cursor += length; // length of buffer
@@ -106,7 +106,7 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
-#ifdef HAS_BME
+#if(HAS_BME)
   int16_t temperature = (int16_t)(value.temperature); // float -> int
   uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
   uint16_t pressure = (uint16_t)(value.pressure);     // float -> int
@@ -191,7 +191,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
-#ifdef HAS_GPS
+#if(HAS_GPS)
   writeLatLng(value.latitude, value.longitude);
   writeUint8(value.satellites);
   writeUint16(value.hdop);
@@ -200,7 +200,7 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 }
 
 void PayloadConvert::addSensor(uint8_t buf[]) {
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
   uint8_t length = buf[0];
   memcpy(buffer, buf + 1, length);
   cursor += length; // length of buffer
@@ -208,7 +208,7 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
-#ifdef HAS_BME
+#if(HAS_BME)
   writeFloat(value.temperature);
   writePressure(value.pressure);
   writeUFloat(value.humidity);
@@ -384,7 +384,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
-#ifdef HAS_GPS
+#if(HAS_GPS)
   int32_t lat = value.latitude / 100;
   int32_t lon = value.longitude / 100;
   int32_t alt = value.altitude * 100;
@@ -405,7 +405,7 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 }
 
 void PayloadConvert::addSensor(uint8_t buf[]) {
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
 // to come
 /*
   uint8_t length = buf[0];
@@ -416,7 +416,7 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
-#ifdef HAS_BME
+#if(HAS_BME)
 
   // data value conversions to meet cayenne data type definition
   // 0.1°C per bit => -3276,7 .. +3276,7 °C

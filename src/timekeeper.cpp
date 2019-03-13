@@ -22,7 +22,7 @@ time_t timeProvider(void) {
 
   time_t t = 0;
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
 #ifdef HAS_RTC

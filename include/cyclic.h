@@ -5,7 +5,9 @@
 #include "senddata.h"
 #include "rcommand.h"
 #include "spislave.h"
+#if(HAS_LORA)
 #include <lmic.h>
+#endif
 
 #if (HAS_BME)
 #include "bmesensor.h"

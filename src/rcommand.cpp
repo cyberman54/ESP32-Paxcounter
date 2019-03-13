@@ -8,7 +8,9 @@ static const char TAG[] = __FILE__;
 // helper function
 void do_reset() {
   ESP_LOGI(TAG, "Remote command: restart device");
+#if(HAS_LORA)
   LMIC_shutdown();
+#endif
   delay(3000);
   esp_restart();
 }
@@ -130,7 +132,7 @@ void set_gps(uint8_t val[]) {
 }
 
 void set_sensor(uint8_t val[]) {
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
   switch (val[0]) { // check if valid sensor number 1...4
   case 1:
   case 2:
@@ -168,7 +170,7 @@ void set_monitor(uint8_t val[]) {
 }
 
 void set_lorasf(uint8_t val[]) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val[0]);
   switch_lora(val[0], cfg.txpower);
 #else
@@ -177,7 +179,7 @@ void set_lorasf(uint8_t val[]) {
 }
 
 void set_loraadr(uint8_t val[]) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s",
            val[0] ? "on" : "off");
   cfg.adrmode = val[0] ? 1 : 0;
@@ -220,7 +222,7 @@ void set_rgblum(uint8_t val[]) {
 };
 
 void set_lorapower(uint8_t val[]) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val[0]);
   switch_lora(cfg.lorasf, val[0]);
 #else
@@ -250,7 +252,7 @@ void get_status(uint8_t val[]) {
 
 void get_gps(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get gps status");
-#ifdef HAS_GPS
+#if(HAS_GPS)
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);

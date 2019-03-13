@@ -24,7 +24,7 @@ void irqHandler(void *pvParameters) {
 #endif
 
 // display needs refresh?
-#ifdef HAS_DISPLAY
+#if(HAS_DISPLAY)
     if (InterruptStatus & DISPLAY_IRQ)
       refreshtheDisplay();
 #endif
@@ -52,7 +52,7 @@ void irqHandler(void *pvParameters) {
 // esp32 hardware timer triggered interrupt service routines
 // they notify the irq handler task
 
-#ifdef HAS_DISPLAY
+#if(HAS_DISPLAY)
 void IRAM_ATTR DisplayIRQ() {
   BaseType_t xHigherPriorityTaskWoken;
   xHigherPriorityTaskWoken = pdFALSE;

@@ -1,4 +1,4 @@
-#ifdef HAS_LORA
+#if(HAS_LORA)
 
 /************************************************************
  * LMIC LoRaWAN configuration
