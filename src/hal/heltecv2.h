@@ -17,6 +17,10 @@
 #define HAS_LED LED_BUILTIN                           // white LED on board
 #define HAS_BUTTON KEY_BUILTIN                        // button "PROG" on board
 
+//#define HAS_BATTERY_PROBE ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
+#define BATT_FACTOR 4 // voltage divider 220k/100k on board
+#define HAS_LOWPOWER_SWITCH GPIO_NUM_21 // switches battery power
+
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (4)
 #define MY_OLED_SCL (15)
