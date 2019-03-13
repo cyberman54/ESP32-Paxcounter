@@ -86,7 +86,7 @@ If your device has a fixed DEVEUI enter this in your local loraconf.h file. Duri
 
 If your device has silicon **Unique ID** which is stored in serial EEPROM Microchip 24AA02E64 you don't need to change anything. The Unique ID will be read during startup and DEVEUI will be generated from it, overriding settings in loraconf.h.
 
-If your device has a **real time clock** it can be updated bei either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORA* in paxcounter.conf.
+If your device has a **real time clock** it can be updated bei either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in paxcounter.conf.
 
 # Building
 
@@ -365,6 +365,10 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 0x86 get time/date
 
 	Device answers with it's local time/date (UTC Unix epoch) on Port 9.
+
+0x87 set time/date
+
+	Device synchronizes it's time/date by calling the preconfigured time source.
 
 	
 # License

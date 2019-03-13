@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 // Time functions
-#include <Time.h>
+#include "microTime.h"
 #include <Timezone.h>
 #include <RtcDateTime.h>
 #include <Ticker.h>
