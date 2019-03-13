@@ -49,7 +49,7 @@ Depending on board hardware following features are supported:
 - Silicon unique ID
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
-- Environmental sensor (Bosch BME680 I2C)
+- Environmental sensor (Bosch BME280/BME680 I2C)
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 

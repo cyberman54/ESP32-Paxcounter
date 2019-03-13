@@ -21,6 +21,9 @@
 #define HAS_BME 1 // Enable BME sensors in general
 #define HAS_BME680 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
 #define BME680_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
+// BME280 sensor on I2C bus
+//#define HAS_BME 1 // Enable BME sensors in general
+//#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
 
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors

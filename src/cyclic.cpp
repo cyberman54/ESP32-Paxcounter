@@ -36,13 +36,9 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
-#ifdef HAS_BME680
+#if (HAS_BME)
   ESP_LOGD(TAG, "Bmeloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
-#endif
-#ifdef HAS_BME280
-  ESP_LOGD(TAG, "Bme280loop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(Bme280Task), eTaskGetState(Bme280Task));
 #endif
 #ifdef HAS_DCF77
   ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",

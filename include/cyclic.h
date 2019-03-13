@@ -7,12 +7,8 @@
 #include "spislave.h"
 #include <lmic.h>
 
-#ifdef HAS_BME680
-#include "bme680mems.h"
-#endif
-
-#ifdef HAS_BME280
-#include "bme280.h"
+#if (HAS_BME)
+#include "bmesensor.h"
 #endif
 
 extern Ticker housekeeper;

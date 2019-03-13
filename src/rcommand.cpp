@@ -262,12 +262,12 @@ void get_gps(uint8_t val[]) {
 
 void get_bme(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get bme680 sensor data");
-#ifdef HAS_BME680
+#if (HAS_BME)
   payload.reset();
   payload.addBME(bme_status);
   SendPayload(BMEPORT, prio_high);
 #else
-  ESP_LOGW(TAG, "BME680 sensor not supported");
+  ESP_LOGW(TAG, "BME sensor not supported");
 #endif
 };
 

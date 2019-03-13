@@ -121,7 +121,7 @@ void setup() {
 #endif
 
   // setup debug output or silence device
-#if(VERBOSE)
+#if (VERBOSE)
   Serial.begin(115200);
   esp_log_level_set("*", ESP_LOG_VERBOSE);
 #else
@@ -132,7 +132,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
 
   // print chip information on startup if in verbose mode
-#if(VERBOSE)
+#if (VERBOSE)
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
   ESP_LOGI(TAG,
@@ -227,7 +227,7 @@ void setup() {
   batt_voltage = read_voltage();
 #endif
 
-#if(USE_OTA)
+#if (USE_OTA)
   strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
   if (cfg.runmode == 1) {
@@ -239,7 +239,7 @@ void setup() {
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or switch off bluetooth, if not compiled
-#if(BLECOUNTER)
+#if (BLECOUNTER)
   strcat_P(features, " BLE");
   if (cfg.blescan) {
     ESP_LOGI(TAG, "Starting Bluetooth...");
@@ -301,7 +301,7 @@ void setup() {
   assert(spi_init() == ESP_OK);
 #endif
 
-#if(VENDORFILTER)
+#if (VENDORFILTER)
   strcat_P(features, " OUIFLT");
 #endif
 
@@ -358,32 +358,21 @@ void setup() {
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
-// initialize bme680
+// initialize BME sensor (BME280/BME680)
+#if (HAS_BME)
 #ifdef HAS_BME680
+  strcat_P(features, " BME680");
+#elif defined HAS_BME280
   strcat_P(features, " BME280");
+#endif
   if (bme_init()) {
-    ESP_LOGI(TAG, "Starting BME280 sensor...");
+    ESP_LOGI(TAG, "Starting BME sensor...");
     xTaskCreatePinnedToCore(bme_loop,  // task function
                             "bmeloop", // name of task
                             2048,      // stack size of task
                             (void *)1, // parameter of the task
                             1,         // priority of the task
                             &BmeTask,  // task handle
-                            1);        // CPU core
-  }
-#endif
-
-// initialize BME280
-#ifdef HAS_BME280
-  strcat_P(features, " BME280");
-  if (bme280_init()) {
-    ESP_LOGI(TAG, "Starting BME280 sensor...");
-    xTaskCreatePinnedToCore(bme280_loop,  // task function
-                            "bme280loop", // name of task
-                            2048,      // stack size of task
-                            (void *)1, // parameter of the task
-                            1,         // priority of the task
-                            &Bme280Task,  // task handle
                             1);        // CPU core
   }
 #endif
@@ -415,7 +404,7 @@ void setup() {
 #endif
 #endif // HAS_BUTTON
 
-#if(TIME_SYNC_INTERVAL)
+#if (TIME_SYNC_INTERVAL)
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
