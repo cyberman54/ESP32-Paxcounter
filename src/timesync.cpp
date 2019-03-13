@@ -13,6 +13,8 @@ algorithm in applications without granted license by the patent holder.
 
 #include "timesync.h"
 
+using namespace std::chrono;
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -73,8 +75,7 @@ void recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
     timestamp_sec = (tmp_sec <<= 8) |= buf[i];
   }
 
-  time_sync_rx[k] += std::chrono::seconds(timestamp_sec) +
-                     std::chrono::milliseconds(timestamp_msec);
+  time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
 
   ESP_LOGD(TAG, "Timesync request #%d rcvd at %d", seq_no,
            myClock::to_time_t(time_sync_rx[k]));
@@ -87,9 +88,9 @@ void recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 // task for sending time sync requests
 void process_timesync_req(void *taskparameter) {
 
-  time_t time_to_set = 0;
   uint8_t k = 0, i = 0;
   uint32_t seq_no = 0;
+  // milliseconds time_offset(0);
   auto time_offset = myClock_msecTick::zero();
 
   // enqueue timestamp samples in lora sendqueue
@@ -115,9 +116,9 @@ void process_timesync_req(void *taskparameter) {
     else { // calculate time diff from collected timestamps
       k = seq_no % TIME_SYNC_SAMPLES;
 
-      auto t_tx = std::chrono::time_point_cast<std::chrono::milliseconds>(
+      auto t_tx = time_point_cast<milliseconds>(
           time_sync_tx[k]); // timepoint when node TX_completed
-      auto t_rx = std::chrono::time_point_cast<std::chrono::milliseconds>(
+      auto t_rx = time_point_cast<milliseconds>(
           time_sync_rx[k]); // timepoint when message was seen on gateway
 
       time_offset += t_rx - t_tx; // cumulate timepoint diffs
@@ -129,27 +130,27 @@ void process_timesync_req(void *taskparameter) {
 
   // calculate time offset from collected diffs and set time if necessary
   time_offset /= TIME_SYNC_SAMPLES;
+
   ESP_LOGD(TAG, "Avg time diff: %lldms", time_offset.count());
 
-  if (abs(time_offset.count()) >= TIME_SYNC_TRIGGER) {
+  if (abs(time_offset.count()) >= TIME_SYNC_TRIGGER) { // milliseconds threshold
 
-    /*
-    // wait until top of second
-    if (time_offset_ms > 0) // clock is fast
-      vTaskDelay(pdMS_TO_TICKS(time_diff_ms));
-    else if (time_offset_ms < 0) // clock is slow
-      vTaskDelay(pdMS_TO_TICKS(1000 + time_offset_ms));
-
-    time_to_set = t - time_t(time_offset_sec + 1);
-    */
-
-    time_t time_to_set = myClock::to_time_t(myClock::now() + time_offset);
+    time_t const time_to_set = now() + 1 + time_offset.count() / 1000;
     ESP_LOGD(TAG, "New UTC epoch time: %d", time_to_set);
 
     // adjust system time
     if (timeIsValid(time_to_set)) {
+
+      // wait until top of second
+      uint16_t const time_offset_msec = time_offset.count() % 1000;
+      ESP_LOGD(TAG, "waiting %dms", 1000 - time_offset_msec);
+      vTaskDelay(pdMS_TO_TICKS(1000 - time_offset_msec));
+
+      // sync timer pps to top of second
+      if (ppsIRQ)
+        timerRestart(ppsIRQ);
+
       setTime(time_to_set);
-      SyncToPPS();
       timeSource = _lora;
       timesyncer.attach(TIME_SYNC_INTERVAL * 60,
                         timeSync); // set to regular repeat
@@ -170,9 +171,7 @@ finish:
 void store_time_sync_req(time_t t_sec, uint32_t t_microsec) {
 
   uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
-
-  time_sync_tx[k] +=
-      std::chrono::seconds(t_sec) + std::chrono::microseconds(t_microsec);
+  time_sync_tx[k] += seconds(t_sec) + microseconds(t_microsec);
 
   ESP_LOGD(TAG, "Timesync request #%d sent at %d", time_sync_seqNo,
            myClock::to_time_t(time_sync_tx[k]));
