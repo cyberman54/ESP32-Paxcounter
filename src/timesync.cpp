@@ -61,11 +61,11 @@ void send_timesync_req() {
 }
 
 // process timeserver timestamp answer, called from lorawan.cpp
-void recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
+int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 
   // if no timesync handshake is pending or spurious buffer then exit
   if ((!lora_time_sync_pending) || (buf_len != TIME_SYNC_FRAME_LENGTH))
-    return;
+    return 0; // failure
 
   uint8_t seq_no = buf[0], k = seq_no % TIME_SYNC_SAMPLES;
   uint16_t timestamp_msec = 4 * buf[5]; // convert 1/250th sec fractions to ms
@@ -75,7 +75,10 @@ void recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
     timestamp_sec = (tmp_sec <<= 8) |= buf[i];
   }
 
-  time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
+  if (timestamp_sec + timestamp_msec) // field validation: timestamp not 0 ?
+    time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
+  else
+    return 0; // failure
 
   ESP_LOGD(TAG, "Timesync request #%d rcvd at %d", seq_no,
            myClock::to_time_t(time_sync_rx[k]));
@@ -83,6 +86,8 @@ void recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
   // inform processing task
   if (timeSyncReqTask)
     xTaskNotify(timeSyncReqTask, seq_no, eSetBits);
+
+  return 1; // success
 }
 
 // task for sending time sync requests
@@ -92,6 +97,8 @@ void process_timesync_req(void *taskparameter) {
   uint32_t seq_no = 0;
   // milliseconds time_offset(0);
   auto time_offset = myClock_msecTick::zero();
+  int time_offset_msec;
+  time_t time_to_set;
 
   // enqueue timestamp samples in lora sendqueue
   for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
@@ -123,26 +130,28 @@ void process_timesync_req(void *taskparameter) {
 
       time_offset += t_rx - t_tx; // cumulate timepoint diffs
 
+      ESP_LOGD(TAG, "time_offset: %lldms", time_offset.count());
+
       if (i < TIME_SYNC_SAMPLES - 1) // wait until next cycle
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
     }
   } // for
 
   // calculate time offset from collected diffs and set time if necessary
-  time_offset /= TIME_SYNC_SAMPLES;
-
   ESP_LOGD(TAG, "Avg time diff: %lldms", time_offset.count());
+  time_offset /= TIME_SYNC_SAMPLES;
+  // 1 sec floor round + 1sec wait for top of second
+  time_to_set = now() + 2 + time_offset.count() / 1000;
+  ESP_LOGD(TAG, "Calculated UTC epoch time: %d", time_to_set);
 
-  if (abs(time_offset.count()) >= TIME_SYNC_TRIGGER) { // milliseconds threshold
+  // adjust system time
+  if (timeIsValid(time_to_set)) {
 
-    time_t const time_to_set = now() + 1 + time_offset.count() / 1000;
-    ESP_LOGD(TAG, "New UTC epoch time: %d", time_to_set);
-
-    // adjust system time
-    if (timeIsValid(time_to_set)) {
+    if (abs(time_offset.count()) >=
+        TIME_SYNC_TRIGGER) { // milliseconds threshold
 
       // wait until top of second
-      uint16_t const time_offset_msec = time_offset.count() % 1000;
+      time_offset_msec = abs(time_offset.count()) % 1000;
       ESP_LOGD(TAG, "waiting %dms", 1000 - time_offset_msec);
       vTaskDelay(pdMS_TO_TICKS(1000 - time_offset_msec));
 
@@ -156,9 +165,9 @@ void process_timesync_req(void *taskparameter) {
                         timeSync); // set to regular repeat
       ESP_LOGI(TAG, "Timesync finished, time was adjusted");
     } else
-      ESP_LOGW(TAG, "Invalid time received from timeserver");
+      ESP_LOGI(TAG, "Timesync finished, time is up to date");
   } else
-    ESP_LOGI(TAG, "Timesync finished, time is up to date");
+    ESP_LOGW(TAG, "Invalid time received from timeserver");
 
 finish:
 
@@ -168,10 +177,10 @@ finish:
 }
 
 // called from lorawan.cpp after time_sync_req was sent
-void store_time_sync_req(time_t t_sec, uint32_t t_microsec) {
+void store_time_sync_req(time_t t_millisec) {
 
   uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
-  time_sync_tx[k] += seconds(t_sec) + microseconds(t_microsec);
+  time_sync_tx[k] += milliseconds(t_millisec);
 
   ESP_LOGD(TAG, "Timesync request #%d sent at %d", time_sync_seqNo,
            myClock::to_time_t(time_sync_tx[k]));

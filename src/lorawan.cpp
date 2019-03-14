@@ -1,12 +1,12 @@
 // Basic Config
-#if(HAS_LORA)
+#if (HAS_LORA)
 #include "lorawan.h"
 #endif
 
 // Local logging Tag
 static const char TAG[] = "lora";
 
-#if(HAS_LORA)
+#if (HAS_LORA)
 
 #if CLOCK_ERROR_PROCENTAGE > 7
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
@@ -231,9 +231,13 @@ void onEvent(ev_t ev) {
 
 #if (TIME_SYNC_TIMESERVER)
     // if last packet sent was a timesync request, store TX timestamp
-    if (LMIC.pendTxPort == TIMEPORT)
-      store_time_sync_req(now(now_micros), now_micros);
-      // maybe use more precise osticks2ms(LMIC.txend) here?
+    if (LMIC.pendTxPort == TIMEPORT) {
+      // store_time_sync_req(now(now_micros), now_micros);
+      // adjust sampled OS time back in time to the nearest second boundary
+      //const ostime_t tAdjust = LMIC.netDeviceTimeFrac * ms2osticks(1000) / 256;
+      //store_time_sync_req(osticks2ms(LMIC.txend - tAdjust)); // milliseconds
+      store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
+    }
 #endif
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
