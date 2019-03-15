@@ -187,7 +187,7 @@ void setup() {
 // set low power mode to off
 #ifdef HAS_LOWPOWER_SWITCH
   pinMode(HAS_LOWPOWER_SWITCH, OUTPUT);
-  digitalWrite(HAS_LOWPOWER_SWITCH, HIGH);
+  digitalWrite(HAS_LOWPOWER_SWITCH, LOW);
   strcat_P(features, " LPWR");
 #endif
 

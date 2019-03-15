@@ -127,22 +127,6 @@
         ]
     },
     {
-        "id": "f4c5b6de.f95148",
-        "type": "function",
-        "z": "449c1517.e25f4c",
-        "name": "Time_Sync_Ans",
-        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\n  let buf = new ArrayBuffer(6);\n  let timestamp = (+new Date(msg.payload.metadata.gateways[0].time));\n  \n  var seconds = Math.floor(timestamp/1000);\n  var fractions = (timestamp % 1000) / 4;\n  var seqno = msg.payload.payload_raw[0];\n\n  new DataView(buf).setUint8(0, seqno);\n  new DataView(buf).setUint32(1, seconds);\n  new DataView(buf).setUint8(5, fractions);\n\n  msg.payload = new Buffer(new Uint8Array(buf));\n  \n  return msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 400,
-        "y": 280,
-        "wires": [
-            [
-                "49e3c067.e782e"
-            ]
-        ]
-    },
-    {
         "id": "dac8aafa.389298",
         "type": "json",
         "z": "449c1517.e25f4c",
@@ -219,7 +203,23 @@
         "y": 200,
         "wires": [
             [
-                "f4c5b6de.f95148"
+                "595229b0.5df3d8"
+            ]
+        ]
+    },
+    {
+        "id": "595229b0.5df3d8",
+        "type": "function",
+        "z": "449c1517.e25f4c",
+        "name": "Time_Sync_Ans",
+        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\n  let timestamp = (+new Date(msg.payload.metadata.gateways[0].time));\n  let timestamp_server = (+new Date(msg.payload.metadata.time));\n  \n  if ((timestamp < timestamp_server) && (timestamp > 0)) {\n   \n  var seconds = Math.floor(timestamp/1000);\n  var fractions = (timestamp % 1000) / 4;\n  var seqno = msg.payload.payload_raw[0];\n\n  let buf = new ArrayBuffer(6);\n  new DataView(buf).setUint8(0, seqno);\n  new DataView(buf).setUint32(1, seconds);\n  new DataView(buf).setUint8(5, fractions);\n\n  msg.payload = new Buffer(new Uint8Array(buf));\n  \n  return msg;\n}\n\nelse\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 380,
+        "y": 280,
+        "wires": [
+            [
+                "49e3c067.e782e"
             ]
         ]
     },

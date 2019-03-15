@@ -155,15 +155,18 @@ void process_timesync_req(void *taskparameter) {
       ESP_LOGD(TAG, "waiting %dms", 1000 - time_offset_msec);
       vTaskDelay(pdMS_TO_TICKS(1000 - time_offset_msec));
 
-      setTime(time_to_set);
       // sync timer pps to top of second
-      if (ppsIRQ)
-        timerWrite(ppsIRQ, 10000); // fire interrupt
+      if (ppsIRQ) {
+        timerRestart(ppsIRQ); // reset pps timer
+        CLOCKIRQ(); // fire clock pps interrupt
+      }
 
+      setTime(time_to_set);
       timeSource = _lora;
       timesyncer.attach(TIME_SYNC_INTERVAL * 60,
                         timeSync); // set to regular repeat
-      ESP_LOGI(TAG, "Timesync finished, time adjusted by %lld ms", time_offset.count());
+      ESP_LOGI(TAG, "Timesync finished, time adjusted by %lld ms",
+               time_offset.count());
     } else
       ESP_LOGI(TAG, "Timesync finished, time not adjusted, is up to date");
   } else
