@@ -39,7 +39,7 @@ void SendPayload(uint8_t port, sendprio_t prio) {
   memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
 
 // enqueue message in device's send queues
-#if(HAS_LORA)
+#if (HAS_LORA)
   lora_enqueuedata(&SendBuffer, prio);
 #endif
 #ifdef HAS_SPI
@@ -62,18 +62,6 @@ void sendCounter() {
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
-
-#if(HAS_GPS)
-      if (gps.location.isValid()) { // send GPS position only if we have a fix
-        gps_read();
-        payload.addGPS(gps_status);
-      } else {
-        ESP_LOGD(
-            TAG,
-            "No valid GPS position. GPS data not appended to counter data.");
-      }
-#endif
-
       SendPayload(COUNTERPORT, prio_normal);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
@@ -83,7 +71,7 @@ void sendCounter() {
       }
       break;
 
-#if(HAS_BME)
+#if (HAS_BME)
     case MEMS_DATA:
       payload.reset();
       payload.addBME(bme_status);
@@ -91,7 +79,7 @@ void sendCounter() {
       break;
 #endif
 
-#if(HAS_GPS)
+#if (HAS_GPS)
     case GPS_DATA:
       // send GPS position only if we have a fix
       if (gps.location.isValid()) {
@@ -104,7 +92,7 @@ void sendCounter() {
       break;
 #endif
 
-#if(HAS_SENSORS)
+#if (HAS_SENSORS)
     case SENSOR1_DATA:
       payload.reset();
       payload.addSensor(sensor_read(1));
@@ -138,7 +126,7 @@ void sendCounter() {
 } // sendCounter()
 
 void flushQueues() {
-#if(HAS_LORA)
+#if (HAS_LORA)
   lora_queuereset();
 #endif
 #ifdef HAS_SPI
