@@ -170,7 +170,6 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1-2:	Number of unique pax, first seen on Wifi
 	byte 3-4:	Number of unique pax, first seen on Bluetooth [omited if BT disabled]
-	bytes 5-17: GPS data, if present, in same format as for Port #4
 
 **Port #2:** Device status query result
 
