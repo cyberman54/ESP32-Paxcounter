@@ -16,6 +16,8 @@
 #include "irqhandler.h"
 #include "led.h"
 #include "spislave.h"
+#if(HAS_LORA)
 #include "lorawan.h"
+#endif
 #include "timekeeper.h"
 #endif

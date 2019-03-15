@@ -4,13 +4,15 @@
 #include "senddata.h"
 #include "cyclic.h"
 #include "configmanager.h"
+#if(HAS_LORA)
 #include "lorawan.h"
+#endif
 #include "macsniff.h"
 #include <rom/rtc.h>
 #include "cyclic.h"
 #include "timekeeper.h"
-#if(DBTIMESYNC)
-#include "DBtimesync.h"
+#if(TIME_SYNC_TIMESERVER)
+#include "timesync.h"
 #endif
 
 // table of remote commands and assigned functions

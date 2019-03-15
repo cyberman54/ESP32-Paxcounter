@@ -105,7 +105,7 @@ void init_display(const char *Productname, const char *Version) {
     u8x8.print(" v");
     u8x8.println(PROGVERSION);
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
     u8x8.println("DEVEUI:");
     os_getDevEui((u1_t *)buf);
     DisplayKey(buf, 8, true);
@@ -163,7 +163,7 @@ void refreshtheDisplay() {
 #endif
 
 // update GPS status (line 2)
-#ifdef HAS_GPS
+#if(HAS_GPS)
     // have we ever got valid gps data?
     if (gps.passedChecksum() > 0) {
       u8x8.setCursor(9, 2);
@@ -186,7 +186,7 @@ void refreshtheDisplay() {
       u8x8.printf("%s", "BLTH:off");
 #endif
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
     u8x8.setCursor(11, 3);
     u8x8.printf("SF:");
     if (cfg.adrmode) // if ADR=on then display SF value inverse
@@ -209,7 +209,7 @@ void refreshtheDisplay() {
     u8x8.setCursor(10, 5);
     u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
     u8x8.setCursor(0, 6);
 #if (!defined HAS_DCF77) && (!defined HAS_IF482)
     // update LoRa status display (line 6)

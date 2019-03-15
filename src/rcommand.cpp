@@ -8,7 +8,9 @@ static const char TAG[] = __FILE__;
 // helper function
 void do_reset() {
   ESP_LOGI(TAG, "Remote command: restart device");
+#if(HAS_LORA)
   LMIC_shutdown();
+#endif
   delay(3000);
   esp_restart();
 }
@@ -38,7 +40,7 @@ void set_reset(uint8_t val[]) {
     break;
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
-#if(USE_OTA)
+#if (USE_OTA)
     sprintf(display_line6, "Software update");
     cfg.runmode = 1;
 #else
@@ -130,7 +132,7 @@ void set_gps(uint8_t val[]) {
 }
 
 void set_sensor(uint8_t val[]) {
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
   switch (val[0]) { // check if valid sensor number 1...4
   case 1:
   case 2:
@@ -168,7 +170,7 @@ void set_monitor(uint8_t val[]) {
 }
 
 void set_lorasf(uint8_t val[]) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val[0]);
   switch_lora(val[0], cfg.txpower);
 #else
@@ -177,7 +179,7 @@ void set_lorasf(uint8_t val[]) {
 }
 
 void set_loraadr(uint8_t val[]) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "Remote command: set LoRa ADR mode to %s",
            val[0] ? "on" : "off");
   cfg.adrmode = val[0] ? 1 : 0;
@@ -220,7 +222,7 @@ void set_rgblum(uint8_t val[]) {
 };
 
 void set_lorapower(uint8_t val[]) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val[0]);
   switch_lora(cfg.lorasf, val[0]);
 #else
@@ -250,7 +252,7 @@ void get_status(uint8_t val[]) {
 
 void get_gps(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get gps status");
-#ifdef HAS_GPS
+#if(HAS_GPS)
   gps_read();
   payload.reset();
   payload.addGPS(gps_status);
@@ -262,12 +264,12 @@ void get_gps(uint8_t val[]) {
 
 void get_bme(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get bme680 sensor data");
-#ifdef HAS_BME
+#if (HAS_BME)
   payload.reset();
   payload.addBME(bme_status);
   SendPayload(BMEPORT, prio_high);
 #else
-  ESP_LOGW(TAG, "BME680 sensor not supported");
+  ESP_LOGW(TAG, "BME sensor not supported");
 #endif
 };
 
@@ -278,40 +280,35 @@ void get_time(uint8_t val[]) {
   SendPayload(TIMEPORT, prio_high);
 };
 
+void set_time(uint8_t val[]) {
+  ESP_LOGI(TAG, "Timesync requested by timeserver");
+  timeSync();
+};
+
+void set_flush(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: flush");
+  // does nothing
+  // used to open receive window on LoRaWAN class a nodes
+};
+
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, #bytes params,
 // flag (true = do make settings persistent / false = don't)
 //
-cmd_t table[] = {{0x01, set_rssi, 1, true},
-                 {0x02, set_countmode, 1, true},
-                 {0x03, set_gps, 1, true},
-                 {0x04, set_display, 1, true},
-                 {0x05, set_lorasf, 1, true},
-                 {0x06, set_lorapower, 1, true},
-                 {0x07, set_loraadr, 1, true},
-                 {0x08, set_screensaver, 1, true},
-                 {0x09, set_reset, 1, true},
-                 {0x0a, set_sendcycle, 1, true},
-                 {0x0b, set_wifichancycle, 1, true},
-                 {0x0c, set_blescantime, 1, true},
-                 {0x0d, set_vendorfilter, 1, false},
-                 {0x0e, set_blescan, 1, true},
-                 {0x0f, set_wifiant, 1, true},
-                 {0x10, set_rgblum, 1, true},
-                 {0x11, set_monitor, 1, true},
-                 {0x12, set_beacon, 7, false},
-                 {0x13, set_sensor, 2, true},
-                 {0x80, get_config, 0, false},
-                 {0x81, get_status, 0, false},
-                 {0x84, get_gps, 0, false},
-                 {0x85, get_bme, 0, false},
-                 {0x86, get_time, 0, false}
-#if(DBTIMESYNC)
-                 ,
-                 {TIME_ANS_OPCODE, recv_DBtime_ans, 0, false},
-                 {TIME_SYNC_OPCODE, force_DBtime_sync, 0, false}
-#endif
-};
+cmd_t table[] = {
+    {0x01, set_rssi, 1, true},          {0x02, set_countmode, 1, true},
+    {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
+    {0x05, set_lorasf, 1, true},        {0x06, set_lorapower, 1, true},
+    {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
+    {0x09, set_reset, 1, true},         {0x0a, set_sendcycle, 1, true},
+    {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
+    {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
+    {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
+    {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
+    {0x13, set_sensor, 2, true},        {0x80, get_config, 0, false},
+    {0x81, get_status, 0, false},       {0x84, get_gps, 0, false},
+    {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
+    {0x87, set_time, 0, false},         {0x99, set_flush, 0, false}};
 
 const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table

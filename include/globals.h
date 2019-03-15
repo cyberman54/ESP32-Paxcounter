@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 // Time functions
-#include <Time.h>
+#include "microTime.h"
 #include <Timezone.h>
 #include <RtcDateTime.h>
 #include <Ticker.h>
@@ -123,11 +123,11 @@ extern time_t userUTCTime;
 #include "payload.h"
 #include "blescan.h"
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
 #include "gpsread.h"
 #endif
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
 #include "lorawan.h"
 #endif
 
@@ -147,12 +147,12 @@ extern time_t userUTCTime;
 #include "antenna.h"
 #endif
 
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
 #include "sensor.h"
 #endif
 
-#ifdef HAS_BME
-#include "bme680mems.h"
+#if (HAS_BME)
+#include "bmesensor.h"
 #endif
 
 #endif

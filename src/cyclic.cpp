@@ -24,7 +24,7 @@ void doHousekeeping() {
 #ifdef HAS_SPI
   spi_housekeeping();
 #endif
-#ifdef HAS_LORA
+#if(HAS_LORA)
   lora_housekeeping();
 #endif
 
@@ -32,11 +32,11 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
-#ifdef HAS_GPS
+#if(HAS_GPS)
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
-#ifdef HAS_BME
+#if (HAS_BME)
   ESP_LOGD(TAG, "Bmeloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
 #endif
@@ -58,9 +58,15 @@ void doHousekeeping() {
 #endif
 
 // display BME sensor data
-#ifdef HAS_BME
+#ifdef HAS_BME680
   ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f | IAQacc: %d",
            bme_status.temperature, bme_status.iaq, bme_status.iaq_accuracy);
+#endif
+
+// display BME280 sensor data
+#ifdef HAS_BME280
+  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | Humidity: %.2f | Pressure: %.0f",
+           bme_status.temperature, bme_status.humidity, bme_status.pressure);
 #endif
 
   // check free heap memory

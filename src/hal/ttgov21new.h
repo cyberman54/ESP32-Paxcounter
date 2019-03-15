@@ -13,6 +13,11 @@
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
+// enable only if device has these sensors, otherwise comment these lines
+// BME280 sensor on I2C bus
+//#define HAS_BME 1 // Enable BME sensors in general
+//#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
+
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define HAS_LED (25) // green on board LED
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7

@@ -47,8 +47,10 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
- 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in
-paxcounter.conf) 1  ppsIRQ -> pps clock irq -> 1sec 2	unused 3	unused
+0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in paxcounter.conf)
+1 ppsIRQ -> pps clock irq -> 1sec 
+2	unused 
+3	unused
 
 
 // Interrupt routines
@@ -121,7 +123,7 @@ void setup() {
 #endif
 
   // setup debug output or silence device
-#if(VERBOSE)
+#if (VERBOSE)
   Serial.begin(115200);
   esp_log_level_set("*", ESP_LOG_VERBOSE);
 #else
@@ -132,7 +134,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
 
   // print chip information on startup if in verbose mode
-#if(VERBOSE)
+#if (VERBOSE)
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
   ESP_LOGI(TAG,
@@ -155,7 +157,7 @@ void setup() {
            ESP.getFlashChipSpeed());
   ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
 
-#ifdef HAS_LORA
+#if(HAS_LORA)
   ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
            LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
   ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
@@ -167,7 +169,7 @@ void setup() {
   showLoraKeys();
 #endif // HAS_LORA
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
@@ -227,7 +229,7 @@ void setup() {
   batt_voltage = read_voltage();
 #endif
 
-#if(USE_OTA)
+#if (USE_OTA)
   strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
   if (cfg.runmode == 1) {
@@ -239,7 +241,7 @@ void setup() {
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or switch off bluetooth, if not compiled
-#if(BLECOUNTER)
+#if (BLECOUNTER)
   strcat_P(features, " BLE");
   if (cfg.blescan) {
     ESP_LOGI(TAG, "Starting Bluetooth...");
@@ -269,7 +271,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 // initialize gps
-#ifdef HAS_GPS
+#if(HAS_GPS)
   strcat_P(features, " GPS");
   if (gps_init()) {
     ESP_LOGI(TAG, "Starting GPS Feed...");
@@ -284,13 +286,13 @@ void setup() {
 #endif
 
 // initialize sensors
-#ifdef HAS_SENSORS
+#if(HAS_SENSORS)
   strcat_P(features, " SENS");
   sensor_init();
 #endif
 
 // initialize LoRa
-#ifdef HAS_LORA
+#if(HAS_LORA)
   strcat_P(features, " LORA");
   assert(lora_stack_init() == ESP_OK);
 #endif
@@ -301,7 +303,7 @@ void setup() {
   assert(spi_init() == ESP_OK);
 #endif
 
-#if(VENDORFILTER)
+#if (VENDORFILTER)
   strcat_P(features, " OUIFLT");
 #endif
 
@@ -358,9 +360,13 @@ void setup() {
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
-// initialize bme
-#ifdef HAS_BME
-  strcat_P(features, " BME");
+// initialize BME sensor (BME280/BME680)
+#if (HAS_BME)
+#ifdef HAS_BME680
+  strcat_P(features, " BME680");
+#elif defined HAS_BME280
+  strcat_P(features, " BME280");
+#endif
   if (bme_init()) {
     ESP_LOGI(TAG, "Starting BME sensor...");
     xTaskCreatePinnedToCore(bme_loop,  // task function
@@ -400,7 +406,7 @@ void setup() {
 #endif
 #endif // HAS_BUTTON
 
-#ifdef TIME_SYNC_INTERVAL
+#if (TIME_SYNC_INTERVAL)
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
@@ -410,7 +416,7 @@ void setup() {
 #endif
 
 #if defined HAS_IF482 || defined HAS_DCF77
-#ifndef TIME_SYNC_INTERVAL
+#if (!TIME_SYNC_INTERVAL)
 #error for clock controller function TIME_SNYC_INTERVAL must be defined in paxcounter.conf
 #endif
   ESP_LOGI(TAG, "Starting Clock Controller...");
@@ -421,7 +427,7 @@ void setup() {
 
 void loop() {
   while (1) {
-#ifdef HAS_LORA
+#if(HAS_LORA)
     os_runloop_once(); // execute lmic scheduled jobs and events
 #endif
     delay(2); // yield to CPU

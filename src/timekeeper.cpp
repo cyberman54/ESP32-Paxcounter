@@ -1,5 +1,13 @@
 #include "timekeeper.h"
 
+#ifndef HAS_LORA
+#if (TIME_SYNC_TIMESERVER)
+#error TIME_SYNC_TIMESERVER defined, but device has no LORA configured
+#elif (TIME_SYNC_LORAWAN)
+#error TIME_SYNC_LORAWAN defined, but device has no LORA configured
+#endif
+#endif
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -14,7 +22,7 @@ time_t timeProvider(void) {
 
   time_t t = 0;
 
-#ifdef HAS_GPS
+#if(HAS_GPS)
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
 #ifdef HAS_RTC
@@ -35,11 +43,11 @@ time_t timeProvider(void) {
   }
 #endif
 
-// kick off asychronous DB timesync if we have
-#if(DBTIMESYNC)
-  send_DBtime_req();
-// kick off asychronous lora sync if we have
-#elif defined HAS_LORA && (TIME_SYNC_LORA)
+// kick off asychronous Lora timeserver timesync if we have
+#if (TIME_SYNC_TIMESERVER)
+  send_timesync_req();
+// kick off asychronous lora network sync if we have
+#elif (TIME_SYNC_LORAWAN)
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
@@ -108,7 +116,7 @@ void timepulse_start(void) {
 void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken;
-  SyncToPPS(); // calibrates UTC systime, see Time.h
+  SyncToPPS(); // calibrates UTC systime, see microTime.h
   xHigherPriorityTaskWoken = pdFALSE;
 
   if (ClockTask != NULL)
@@ -141,7 +149,7 @@ time_t compiledUTC(void) {
 time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh, uint8_t mm,
                  uint8_t ss) {
   tmElements_t tm;
-  tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in time.h
+  tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in microTime.h
   tm.Month = MM;
   tm.Day = DD;
   tm.Hour = hh;

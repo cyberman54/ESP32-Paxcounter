@@ -67,6 +67,12 @@ function Decoder(bytes, port) {
     decoded.battery = (bytes[i++] << 8) | bytes[i++];}
   }
 
+  if (port === 9) {
+    if (bytes.length === 1) {
+    decoded.timesync_seqno = bytes[0];
+    }
+  }
+
   return decoded;
 
 }
