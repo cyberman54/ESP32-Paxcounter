@@ -140,8 +140,8 @@ void process_timesync_req(void *taskparameter) {
   // calculate time offset from collected diffs and set time if necessary
   ESP_LOGD(TAG, "Avg time diff: %lldms", time_offset.count());
   time_offset /= TIME_SYNC_SAMPLES;
-  // 1 sec floor round + 1sec wait for top of second
-  time_to_set = now() + 2 + time_offset.count() / 1000;
+  // 1sec wait for top of second
+  time_to_set = now() + time_offset.count() / 1000 + 1;
   ESP_LOGD(TAG, "Calculated UTC epoch time: %d", time_to_set);
 
   // adjust system time
@@ -155,17 +155,17 @@ void process_timesync_req(void *taskparameter) {
       ESP_LOGD(TAG, "waiting %dms", 1000 - time_offset_msec);
       vTaskDelay(pdMS_TO_TICKS(1000 - time_offset_msec));
 
+      setTime(time_to_set);
       // sync timer pps to top of second
       if (ppsIRQ)
-        timerRestart(ppsIRQ);
+        timerWrite(ppsIRQ, 10000); // fire interrupt
 
-      setTime(time_to_set);
       timeSource = _lora;
       timesyncer.attach(TIME_SYNC_INTERVAL * 60,
                         timeSync); // set to regular repeat
-      ESP_LOGI(TAG, "Timesync finished, time was adjusted");
+      ESP_LOGI(TAG, "Timesync finished, time adjusted by %lld ms", time_offset.count());
     } else
-      ESP_LOGI(TAG, "Timesync finished, time is up to date");
+      ESP_LOGI(TAG, "Timesync finished, time not adjusted, is up to date");
   } else
     ESP_LOGW(TAG, "Invalid time received from timeserver");
 
