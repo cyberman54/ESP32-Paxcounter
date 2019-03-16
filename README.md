@@ -138,9 +138,13 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Red long blink: LoRaWAN stack error
 - White long blink: Known Beacon detected
 
+# Sensors and Peripherals
+
+You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [*sensors.cpp*](src/sensors.cpp). Sensor payload transmit can be switched by remote control command 0x13 sent to Port 2. Bosch BME280 / BME680 environment sensors are supported. Enable *flag lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you want to use Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value for BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported an configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options.
+
 # Clock controller
 
-Paxcounter can be used to sync a clock which has DCF77 or IF482 time telegram input with an external time source. Use case of this function is to have paxcounter hardware integrated in clocks, and use it for both counting of pax and controlling the clock. Supported external time sources are GPS time, LORAWAN network time (v1.1) and on board RTC time. Precision of the synthetic DCF77 signal depends on precision of on board available time base. Supported are both external time base (e.g. timepulse pin of GPS chip or oscillator output of RTC chip) and internal ESP32 hardware timer. Selection of time base and clock frequency is done by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h).
+Paxcounter can be used to sync a clock which has DCF77 or IF482 time telegram input with. Use case of this function is to have paxcounter hardware integrated in clocks, and use it for both counting of pax and controlling the clock. Supported external time sources are GPS time, LORAWAN network time (v1.1) and on board RTC time. Precision of the synthetic DCF77 signal depends on precision of on board available time base. Supported are both external time base (e.g. timepulse pin of GPS chip or oscillator output of RTC chip) and internal ESP32 hardware timer. Selection of time base and clock frequency is done by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h).
 
 # Payload format
 
