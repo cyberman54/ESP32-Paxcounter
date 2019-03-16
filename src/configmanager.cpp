@@ -31,7 +31,7 @@ void defaultConfig() {
   cfg.rgblum = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
   cfg.monitormode = 0;        // 0=disabled, 1=enabled
   cfg.runmode = 0;            // 0=normal, 1=update
-  cfg.payloadmask = 0xFF;     // all payload switched on
+  cfg.payloadmask = 0x08;     // transmit counter data only
   cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = {
       0}; // init BSEC state for BME680 sensor
 
