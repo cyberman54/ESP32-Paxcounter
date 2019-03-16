@@ -140,22 +140,22 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 # Sensors and Peripherals
 
-You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensors.cpp*](src/sensors.cpp). Bosch BME280 / BME680 environment sensors are supported. Enable *flag lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value for BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported an configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options.
+You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensors.cpp*](src/sensors.cpp). Bosch BME280 / BME680 environment sensors are supported. Enable *flag lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value for BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, can be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options.
 
-Output of sensor data is switched by bitmask register. The mask value can be adjusted during runtime by remote control command 0x13 sent to Port 2. Default mask (0x08) can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
+Output of user sensor data can be switched by user remote control command 0x13 sent to Port 2. 
 
-bit		default		sensor / data
-0		0			GPS
-1		0			Beacon alarm
-2		0			Environment sensor (BME280/BME680)
-3		1			Paxcounter (Wifi / BLE)
-4		0			User sensor #1
-5		0			User sensor #2
-6		0			User sensor #3
-7		0			Battery voltage
-8		0			reserved
+Output of sensor and peripheral data is internally switched by a bitmask register. Default mask (0xFF) can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
 
-Note: By default transmit off all sensor data except counter data is disabled to respect networks fair use policies. If you configure sensors, you must switch on data transmit in payload mask to get values.
+bit		sensor / data
+0		GPS
+1		Beacon alarm
+2		Environment sensor (BME280/BME680)
+3		Paxcounter (Wifi + BLE)
+4		User sensor #1
+5		User sensor #2
+6		User sensor #3
+7		Battery voltage
+8		reserved
 
 # Clock controller
 
