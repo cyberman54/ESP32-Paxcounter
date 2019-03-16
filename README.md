@@ -146,7 +146,7 @@ Output of user sensor data can be switched by user remote control command 0x13 s
 
 Output of sensor and peripheral data is internally switched by a bitmask register. Default mask (0xFF) can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
 
-| bit | sensor/data   |
+| Bit | Sensordata    |
 |-----|---------------|
 | 0   | GPS           |
 | 1   | Beacon alarm  |
