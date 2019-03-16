@@ -65,7 +65,7 @@ void doHousekeeping() {
 
 // display BME280 sensor data
 #ifdef HAS_BME280
-  ESP_LOGI(TAG, "BME680 Temp: %.2f°C | Humidity: %.2f | Pressure: %.0f",
+  ESP_LOGI(TAG, "BME280 Temp: %.2f°C | Humidity: %.2f | Pressure: %.0f",
            bme_status.temperature, bme_status.humidity, bme_status.pressure);
 #endif
 
