@@ -191,9 +191,15 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
   uint16_t timestamp_msec = 4 * buf[5]; // convert 1/250th sec fractions to ms
   uint32_t timestamp_sec = 0, tmp_sec = 0;
 
-  for (uint8_t i = 1; i <= 4; i++) {
-    timestamp_sec = (tmp_sec <<= 8) |= buf[i];
-  }
+  // get the timeserver time.
+  // The first 4 bytes contain the UTC seconds since unix epoch.
+  // Octet order is little endian. Casts are necessary, because buf is an array
+  // of single byte values, and they might overflow when shifted
+  timestamp_sec = ((uint32_t)buf[1]) | (((uint32_t)buf[2]) << 8) |
+                  (((uint32_t)buf[3]) << 16) | (((uint32_t)buf[4]) << 24);
+
+  // The 5th byte contains the fractional seconds in 2^-8 second steps
+  timestamp_msec = 4 * buf[5];
 
   if (timestamp_sec + timestamp_msec) // field validation: timestamp not 0 ?
     time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
