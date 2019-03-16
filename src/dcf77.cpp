@@ -22,7 +22,9 @@ void DCF77_Pulse(time_t t, uint8_t const *DCFpulse) {
   TickType_t startTime = xTaskGetTickCount();
   uint8_t sec = second(t);
 
-  ESP_LOGD (TAG, "DCF second %d", sec);
+  t = myTZ.toLocal(now());
+  ESP_LOGD(TAG, "[%02d:%02d:%02d.%03d] DCF second %d", hour(t), minute(t),
+           second(t), millisecond(), sec);
 
   // induce 10 pulses
   for (uint8_t pulse = 0; pulse <= 9; pulse++) {
@@ -100,8 +102,8 @@ uint8_t *IRAM_ATTR DCF77_Frame(time_t const tt) {
 } // DCF77_Frame()
 
 // helper function to convert decimal to bcd digit
-uint8_t IRAM_ATTR dec2bcd(uint8_t const dec, uint8_t const startpos, uint8_t const endpos,
-                          uint8_t *DCFpulse) {
+uint8_t IRAM_ATTR dec2bcd(uint8_t const dec, uint8_t const startpos,
+                          uint8_t const endpos, uint8_t *DCFpulse) {
 
   uint8_t data = (dec < 10) ? dec : ((dec / 10) << 4) + (dec % 10);
   uint8_t parity = 0;
@@ -116,6 +118,8 @@ uint8_t IRAM_ATTR dec2bcd(uint8_t const dec, uint8_t const startpos, uint8_t con
 }
 
 // helper function to encode parity
-uint8_t IRAM_ATTR setParityBit(uint8_t const p) { return ((p & 1) ? dcf_1 : dcf_0); }
+uint8_t IRAM_ATTR setParityBit(uint8_t const p) {
+  return ((p & 1) ? dcf_1 : dcf_0);
+}
 
 #endif // HAS_DCF77

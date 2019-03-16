@@ -22,7 +22,7 @@ time_t timeProvider(void) {
 
   time_t t = 0;
 
-#if(HAS_GPS)
+#if (HAS_GPS)
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
 #ifdef HAS_RTC
@@ -219,11 +219,11 @@ void clock_loop(void *taskparameter) { // ClockTask
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
                     portMAX_DELAY); // wait for timepulse
 
-    // no confident time -> we suppress clock output
-    if (timeStatus() == timeNotSet)
-      continue;
-
     t = time_t(printtime); // UTC time seconds
+
+    // no confident time -> suppress clock output
+    if ((timeStatus() == timeNotSet) || !(timeIsValid(t)))
+      continue;
 
 #if defined HAS_IF482
 

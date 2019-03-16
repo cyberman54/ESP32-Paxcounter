@@ -90,15 +90,15 @@ HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
 void IF482_Pulse(time_t t) {
 
   static const TickType_t txDelay =
-      pdMS_TO_TICKS(IF482_PULSE_LENGTH - tx_Ticks(IF482_FRAME_SIZE, HAS_IF482));
+      pdMS_TO_TICKS(1000) - tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
 
   vTaskDelay(txDelay);             // wait until moment to fire
   IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
 }
 
-String IRAM_ATTR IF482_Frame(time_t startTime) {
+String IRAM_ATTR IF482_Frame(time_t printTime) {
 
-  time_t t = myTZ.toLocal(startTime);
+  time_t t = myTZ.toLocal(printTime);
   char mon, out[IF482_FRAME_SIZE + 1];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
@@ -118,7 +118,9 @@ String IRAM_ATTR IF482_Frame(time_t startTime) {
            year(t) - 2000, month(t), day(t), weekday(t), hour(t), minute(t),
            second(t));
 
-  ESP_LOGD(TAG, "IF482 = %s", out);
+  t = myTZ.toLocal(now());
+  ESP_LOGD(TAG, "[%02d:%02d:%02d.%03d] IF482 = %s", hour(t), minute(t),
+           second(t), millisecond(), out);
   return out;
 }
 
