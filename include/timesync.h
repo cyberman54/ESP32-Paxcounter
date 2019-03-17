@@ -11,6 +11,7 @@
 #define TIME_SYNC_TIMEOUT 120 // timeout seconds waiting for timeserver answer
 #define TIME_SYNC_TRIGGER 100 // time deviation in millisec triggering a sync
 #define TIME_SYNC_FRAME_LENGTH 0x06 // timeserver answer frame length
+#define TIME_SYNC_FIXUP 0 // calibration millisec to fixup processing time
 
 void send_timesync_req(void);
 int recv_timesync_ans(uint8_t buf[], uint8_t buf_len);

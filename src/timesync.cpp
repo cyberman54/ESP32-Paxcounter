@@ -124,6 +124,8 @@ void process_timesync_req(void *taskparameter) {
   // calculate absolute time offset with millisecond precision using time base
   // of LMIC os, since we use LMIC's ostime_t txEnd as tx timestamp
   time_offset += milliseconds(osticks2ms(os_getTime()));
+  // apply calibration factor for processing time
+  time_offset += milliseconds(TIME_SYNC_FIXUP);
   // convert to seconds
   time_to_set = static_cast<time_t>(myClock_secTick(time_offset).count());
   // calculate fraction milliseconds
@@ -138,9 +140,9 @@ void process_timesync_req(void *taskparameter) {
         TIME_SYNC_TRIGGER) { // milliseconds threshold
 
       // wait until top of second
-      ESP_LOGD(TAG, "[%0.3f] waiting %d ms", millis() / 1000.0,
-               1000 - time_to_set_fraction_msec);
-      vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
+      uint16_t const wait_ms = 1000 - time_to_set_fraction_msec;
+      ESP_LOGD(TAG, "[%0.3f] waiting %d ms", millis() / 1000.0, wait_ms);
+      vTaskDelay(pdMS_TO_TICKS(wait_ms));
 
       // sync timer pps to top of second
       if (ppsIRQ) {
