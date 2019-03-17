@@ -1,8 +1,6 @@
 /* configmanager persists runtime configuration using NVRAM of ESP32*/
 
 #include "globals.h"
-#include <nvs.h>
-#include <nvs_flash.h>
 
 // Local logging tag
 static const char TAG[] = "flash";
@@ -335,7 +333,7 @@ void loadConfig() {
       cfg.payloadmask = flash8;
       ESP_LOGI(TAG, "payloadmask = %d", flash8);
     } else {
-      ESP_LOGI(TAG, "payloadmask set to default %d", cfg.payloadmask);
+      ESP_LOGI(TAG, "payloadmask set to default %d", std::bitset<8>(cfg.payloadmask));
       saveConfig();
     }
 
