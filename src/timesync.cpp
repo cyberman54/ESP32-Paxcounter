@@ -20,8 +20,8 @@ static const char TAG[] = __FILE__;
 
 TaskHandle_t timeSyncReqTask;
 
-static uint8_t time_sync_seqNo{};
-static bool lora_time_sync_pending{false};
+static uint8_t time_sync_seqNo = 0;
+static bool lora_time_sync_pending = false;
 
 typedef std::chrono::system_clock myClock;
 typedef myClock::time_point myClock_timepoint;
@@ -44,8 +44,8 @@ void send_timesync_req() {
 
     lora_time_sync_pending = true;
 
-    // initialize timestamp array
-    for (uint8_t i{}; i < TIME_SYNC_SAMPLES; i++)
+    // clear timestamp array
+    for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++)
       time_sync_tx[i] = time_sync_rx[i] = myClock_timepoint();
 
     // kick off temporary task for timeserver handshake processing
@@ -63,12 +63,11 @@ void send_timesync_req() {
 // task for sending time sync requests
 void process_timesync_req(void *taskparameter) {
 
-  uint8_t k{};
+  uint32_t seq_no = 0, time_to_set_us, time_to_set_ms;
   uint16_t time_to_set_fraction_msec;
-  uint32_t seq_no{}, time_to_set_us;
-  long long int time_to_set_ms;
+  uint8_t k = 0, i = 0;
   time_t time_to_set;
-  auto time_offset{myClock_msecTick::zero()};
+  auto time_offset = myClock_msecTick::zero();
 
   // wait until we are joined
   while (!LMIC.devaddr) {
@@ -76,7 +75,7 @@ void process_timesync_req(void *taskparameter) {
   }
 
   // enqueue timestamp samples in lora sendqueue
-  for (uint8_t i{}; i < TIME_SYNC_SAMPLES; i++) {
+  for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
 
     // wrap around seqNo 0 .. 254
     time_sync_seqNo = (time_sync_seqNo >= 255) ? 0 : time_sync_seqNo + 1;
@@ -122,27 +121,28 @@ void process_timesync_req(void *taskparameter) {
   ESP_LOGD(TAG, "[%0.3f] avg time diff: %0.3f sec", millis() / 1000.0,
            myClock_secTick(time_offset).count());
 
-  // calculate absolute time with millisecond precision
-  time_to_set_ms = (long long)now(time_to_set_us) * 1000LL +
-                   time_to_set_us / 1000LL + time_offset.count();
+  // calculate absolute time offset with millisecond precision using time base
+  // of LMIC os, since we use LMIC's ostime_t txEnd as tx timestamp
+  time_offset += milliseconds(osticks2ms(os_getTime()));
+  // apply calibration factor for processing time
+  time_offset += milliseconds(TIME_SYNC_FIXUP);
   // convert to seconds
-  time_to_set = (time_t)(time_to_set_ms / 1000LL);
+  time_to_set = static_cast<time_t>(myClock_secTick(time_offset).count());
   // calculate fraction milliseconds
-  time_to_set_fraction_msec = (uint16_t)(time_to_set_ms % 1000LL);
+  time_to_set_fraction_msec = static_cast<uint16_t>(time_offset.count() % 1000);
 
   ESP_LOGD(TAG, "[%0.3f] Calculated UTC epoch time: %d.%03d sec",
            millis() / 1000.0, time_to_set, time_to_set_fraction_msec);
 
   // adjust system time
   if (timeIsValid(time_to_set)) {
-
     if (abs(time_offset.count()) >=
         TIME_SYNC_TRIGGER) { // milliseconds threshold
 
       // wait until top of second
-      ESP_LOGD(TAG, "[%0.3f] waiting %d ms", millis() / 1000.0,
-               1000 - time_to_set_fraction_msec);
-      vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
+      uint16_t const wait_ms = 1000 - time_to_set_fraction_msec;
+      ESP_LOGD(TAG, "[%0.3f] waiting %d ms", millis() / 1000.0, wait_ms);
+      vTaskDelay(pdMS_TO_TICKS(wait_ms));
 
       // sync timer pps to top of second
       if (ppsIRQ) {
@@ -150,9 +150,12 @@ void process_timesync_req(void *taskparameter) {
         CLOCKIRQ();           // fire clock pps interrupt
       }
 
-      setTime(time_to_set + 1);
-      timeSource = _lora;
+      setTime(++time_to_set); // +1 sec after waiting for top of seceond
+#ifdef HAS_RTC
+      set_rtctime(time_to_set); // calibrate RTC if we have one
+#endif
 
+      timeSource = _lora;
       timesyncer.attach(TIME_SYNC_INTERVAL * 60,
                         timeSync); // set to regular repeat
       ESP_LOGI(TAG, "[%0.3f] Timesync finished, time adjusted by %.3f sec",
@@ -170,15 +173,15 @@ finish:
 }
 
 // called from lorawan.cpp after time_sync_req was sent
-void store_time_sync_req(uint32_t t_millisec) {
+void store_time_sync_req(uint32_t t_txEnd_ms) {
 
-  uint8_t k{time_sync_seqNo % TIME_SYNC_SAMPLES};
+  uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
 
-  time_sync_tx[k] += milliseconds(t_millisec);
+  time_sync_tx[k] += milliseconds(t_txEnd_ms);
 
   ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
-           millis() / 1000.0, time_sync_seqNo, t_millisec / 1000,
-           t_millisec % 1000);
+           millis() / 1000.0, time_sync_seqNo, t_txEnd_ms / 1000,
+           t_txEnd_ms % 1000);
 }
 
 // process timeserver timestamp answer, called from lorawan.cpp
@@ -188,16 +191,16 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
   if ((!lora_time_sync_pending) || (buf_len != TIME_SYNC_FRAME_LENGTH))
     return 0; // failure
 
-  uint8_t seq_no{buf[0]}, k{seq_no % TIME_SYNC_SAMPLES};
+  uint8_t seq_no = buf[0], k = seq_no % TIME_SYNC_SAMPLES;
   uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
   uint32_t timestamp_sec;
 
   // get the timeserver time.
   // The first 4 bytes contain the UTC seconds since unix epoch.
-  // Octet order is little endian. Casts are necessary, because buf is an array
+  // Octet order is big endian. Casts are necessary, because buf is an array
   // of single byte values, and they might overflow when shifted
-  timestamp_sec = ((uint32_t)buf[1]) | (((uint32_t)buf[2]) << 8) |
-                  (((uint32_t)buf[3]) << 16) | (((uint32_t)buf[4]) << 24);
+  timestamp_sec = ((uint32_t)buf[4]) | (((uint32_t)buf[3]) << 8) |
+                  (((uint32_t)buf[2]) << 16) | (((uint32_t)buf[1]) << 24);
 
   // The 5th byte contains the fractional seconds in 2^-8 second steps
   timestamp_msec = 4 * buf[5];
