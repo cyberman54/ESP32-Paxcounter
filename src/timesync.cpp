@@ -20,8 +20,8 @@ static const char TAG[] = __FILE__;
 
 TaskHandle_t timeSyncReqTask;
 
-static uint8_t time_sync_seqNo = 0;
-static bool lora_time_sync_pending = false;
+static uint8_t time_sync_seqNo{};
+static bool lora_time_sync_pending{false};
 
 typedef std::chrono::system_clock myClock;
 typedef myClock::time_point myClock_timepoint;
@@ -45,7 +45,7 @@ void send_timesync_req() {
     lora_time_sync_pending = true;
 
     // initialize timestamp array
-    for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++)
+    for (uint8_t i{}; i < TIME_SYNC_SAMPLES; i++)
       time_sync_tx[i] = time_sync_rx[i] = myClock_timepoint();
 
     // kick off temporary task for timeserver handshake processing
@@ -63,12 +63,12 @@ void send_timesync_req() {
 // task for sending time sync requests
 void process_timesync_req(void *taskparameter) {
 
-  uint32_t seq_no = 0, time_to_set_us;
-  long long int time_to_set_ms;
+  uint8_t k{};
   uint16_t time_to_set_fraction_msec;
-  uint8_t k = 0, i = 0;
+  uint32_t seq_no{}, time_to_set_us;
+  long long int time_to_set_ms;
   time_t time_to_set;
-  auto time_offset = myClock_msecTick::zero();
+  auto time_offset{myClock_msecTick::zero()};
 
   // wait until we are joined
   while (!LMIC.devaddr) {
@@ -76,7 +76,7 @@ void process_timesync_req(void *taskparameter) {
   }
 
   // enqueue timestamp samples in lora sendqueue
-  for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
+  for (uint8_t i{}; i < TIME_SYNC_SAMPLES; i++) {
 
     // wrap around seqNo 0 .. 254
     time_sync_seqNo = (time_sync_seqNo >= 255) ? 0 : time_sync_seqNo + 1;
@@ -172,7 +172,8 @@ finish:
 // called from lorawan.cpp after time_sync_req was sent
 void store_time_sync_req(uint32_t t_millisec) {
 
-  uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
+  uint8_t k{time_sync_seqNo % TIME_SYNC_SAMPLES};
+
   time_sync_tx[k] += milliseconds(t_millisec);
 
   ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
@@ -187,9 +188,9 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
   if ((!lora_time_sync_pending) || (buf_len != TIME_SYNC_FRAME_LENGTH))
     return 0; // failure
 
-  uint8_t seq_no = buf[0], k = seq_no % TIME_SYNC_SAMPLES;
-  uint16_t timestamp_msec = 4 * buf[5]; // convert 1/250th sec fractions to ms
-  uint32_t timestamp_sec = 0, tmp_sec = 0;
+  uint8_t seq_no{buf[0]}, k{seq_no % TIME_SYNC_SAMPLES};
+  uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
+  uint32_t timestamp_sec;
 
   // get the timeserver time.
   // The first 4 bytes contain the UTC seconds since unix epoch.
@@ -201,7 +202,7 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
   // The 5th byte contains the fractional seconds in 2^-8 second steps
   timestamp_msec = 4 * buf[5];
 
-  if (timestamp_sec + timestamp_msec) // field validation: timestamp not 0 ?
+  if ((timestamp_sec) || (timestamp_msec)) // field validation: time not 0 ?
     time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
   else
     return 0; // failure
