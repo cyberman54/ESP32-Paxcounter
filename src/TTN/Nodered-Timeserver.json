@@ -138,7 +138,8 @@
         "y": 360,
         "wires": [
             [
-                "72d5e7ee.d1eba8"
+                "72d5e7ee.d1eba8",
+                "f8749724.1ff9f8"
             ]
         ]
     },
@@ -203,25 +204,39 @@
         "y": 200,
         "wires": [
             [
-                "595229b0.5df3d8"
+                "831ab883.d6a238"
             ]
         ]
     },
     {
-        "id": "595229b0.5df3d8",
+        "id": "831ab883.d6a238",
         "type": "function",
         "z": "449c1517.e25f4c",
-        "name": "Time_Sync_Ans",
-        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\n  let timestamp = (+new Date(msg.payload.metadata.gateways[0].time));\n  let timestamp_server = (+new Date(msg.payload.metadata.time));\n  \n  if ((timestamp < timestamp_server) && (timestamp > 0)) {\n   \n  var seconds = Math.floor(timestamp/1000);\n  var fractions = (timestamp % 1000) / 4;\n  var seqno = msg.payload.payload_raw[0];\n\n  let buf = new ArrayBuffer(6);\n  new DataView(buf).setUint8(0, seqno);\n  new DataView(buf).setUint32(1, seconds);\n  new DataView(buf).setUint8(5, fractions);\n\n  msg.payload = new Buffer(new Uint8Array(buf));\n  \n  return msg;\n}\n\nelse\n\nreturn null;",
+        "name": "Generate Time Answer",
+        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\nvar gateways = msg.payload.metadata.gateways;\nvar gateway_time = gateways.map(gw => new Date(gw.time));\nvar server_time = new Date(msg.payload.metadata.time);\n\ngateway_time.sort();\n\nvar gw_timestamps = gateway_time.filter(function (element) {\n  return element > 0;\n});\n\nvar timestamp = gw_timestamps[0];\n\nif (timestamp < server_time) {\n\n  var seconds = Math.floor(timestamp/1000);\n  var fractions = (timestamp % 1000) / 4;\n  var seqno = msg.payload.payload_raw[0];\n\n  let buf = new ArrayBuffer(6);\n  new DataView(buf).setUint8(0, seqno);\n  new DataView(buf).setUint32(1, seconds);\n  new DataView(buf).setUint8(5, fractions);\n\n  msg.payload = new Buffer(new Uint8Array(buf));\n  \n  return msg;\n\n}\n\nelse\n\nreturn null;",
         "outputs": 1,
         "noerr": 0,
-        "x": 380,
+        "x": 420,
         "y": 280,
         "wires": [
             [
                 "49e3c067.e782e"
             ]
         ]
+    },
+    {
+        "id": "f8749724.1ff9f8",
+        "type": "debug",
+        "z": "449c1517.e25f4c",
+        "name": "time_sync_ans",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "x": 720,
+        "y": 280,
+        "wires": []
     },
     {
         "id": "2a15ab6f.ab2244",
