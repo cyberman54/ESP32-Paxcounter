@@ -5,7 +5,6 @@
 #include "timekeeper.h"
 
 #define IF482_FRAME_SIZE (17)
-#define IF482_PULSE_LENGTH (1000)
 
 extern HardwareSerial IF482;
 

@@ -150,12 +150,16 @@ esp_err_t spi_init() {
 void spi_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   // enqueue message in SPI send queue
   BaseType_t ret;
+  MessageBuffer_t DummyBuffer;
   switch (prio) {
   case prio_high:
+    // clear space in queue if full, then fallthrough to normal
+    if (!uxQueueSpacesAvailable(SPISendQueue))
+      xQueueReceive(SPISendQueue, &DummyBuffer, (TickType_t)0);
+  case prio_normal:
     ret = xQueueSendToFront(SPISendQueue, (void *)message, (TickType_t)0);
     break;
   case prio_low:
-  case prio_normal:
   default:
     ret = xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
     break;

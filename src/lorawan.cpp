@@ -232,10 +232,6 @@ void onEvent(ev_t ev) {
 #if (TIME_SYNC_TIMESERVER)
     // if last packet sent was a timesync request, store TX timestamp
     if (LMIC.pendTxPort == TIMEPORT) {
-      // store_time_sync_req(now(now_micros), now_micros);
-      // adjust sampled OS time back in time to the nearest second boundary
-      //const ostime_t tAdjust = LMIC.netDeviceTimeFrac * ms2osticks(1000) / 256;
-      //store_time_sync_req(osticks2ms(LMIC.txend - tAdjust)); // milliseconds
       store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
     }
 #endif
@@ -244,7 +240,7 @@ void onEvent(ev_t ev) {
                                                : PSTR("TX_COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
 
-    if (LMIC.dataLen) { // did we receive data -> display info
+    if (LMIC.dataLen) { // did we receive payload data -> display info
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
                LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
       sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi, LMIC.snr / 4);
@@ -429,12 +425,16 @@ esp_err_t lora_stack_init() {
 void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   // enqueue message in LORA send queue
   BaseType_t ret;
+  MessageBuffer_t DummyBuffer;
   switch (prio) {
   case prio_high:
+    // clear space in queue if full, then fallthrough to normal
+    if (uxQueueSpacesAvailable == 0)
+      xQueueReceive(LoraSendQueue, &DummyBuffer, (TickType_t)0);
+  case prio_normal:
     ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   case prio_low:
-  case prio_normal:
   default:
     ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
