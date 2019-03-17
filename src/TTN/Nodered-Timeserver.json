@@ -48,8 +48,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 220,
-        "y": 360,
+        "x": 200,
+        "y": 400,
         "wires": [
             [
                 "84f1cda2.069e7"
@@ -82,7 +82,7 @@
         "retain": "",
         "broker": "2a15ab6f.ab2244",
         "x": 690,
-        "y": 360,
+        "y": 400,
         "wires": []
     },
     {
@@ -135,11 +135,10 @@
         "action": "",
         "pretty": false,
         "x": 540,
-        "y": 360,
+        "y": 400,
         "wires": [
             [
-                "72d5e7ee.d1eba8",
-                "f8749724.1ff9f8"
+                "72d5e7ee.d1eba8"
             ]
         ]
     },
@@ -166,7 +165,7 @@
         "action": "",
         "property": "payload.payload_raw",
         "x": 380,
-        "y": 360,
+        "y": 400,
         "wires": [
             [
                 "dac8aafa.389298"
@@ -213,30 +212,39 @@
         "type": "function",
         "z": "449c1517.e25f4c",
         "name": "Generate Time Answer",
-        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\nvar gateways = msg.payload.metadata.gateways;\nvar gateway_time = gateways.map(gw => new Date(gw.time));\nvar server_time = new Date(msg.payload.metadata.time);\n\ngateway_time.sort();\n\nvar gw_timestamps = gateway_time.filter(function (element) {\n  return element > 0;\n});\n\nvar timestamp = gw_timestamps[0];\n\nif (timestamp < server_time) {\n\n  var seconds = Math.floor(timestamp/1000);\n  var fractions = (timestamp % 1000) / 4;\n  var seqno = msg.payload.payload_raw[0];\n\n  let buf = new ArrayBuffer(6);\n  new DataView(buf).setUint8(0, seqno);\n  new DataView(buf).setUint32(1, seconds);\n  new DataView(buf).setUint8(5, fractions);\n\n  msg.payload = new Buffer(new Uint8Array(buf));\n  \n  return msg;\n\n}\n\nelse\n\nreturn null;",
-        "outputs": 1,
+        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\nfunction timecompare(a, b) {\n  \n  const timeA = a.time;\n  const timeB = b.time;\n\n  let comparison = 0;\n  if (timeA > timeB) {\n    comparison = 1;\n  } else if (timeA < timeB) {\n    comparison = -1;\n  }\n  return comparison;\n}\n\nlet confidence = 2000; // max millisecond diff gateway time to server time\n\nvar gateways = msg.payload.metadata.gateways;\nvar gateway_time = gateways.map(gw => {\n    return {\n      time: new Date(gw.time),\n      eui: gw.gtw_id,\n      }\n  });\nvar server_time = new Date(msg.payload.metadata.time);\n\n// validate all gateway timestamps against lorawan server_time (which is assumed to be recent)\nvar gw_timestamps = gateway_time.filter(function (element) {\n  return ((element.time > (server_time - confidence) && element.time <= server_time));\n});\n\n// if no timestamp left, we have no valid one and exit\nif (gw_timestamps.length === 0) return null;\n\n// sort time array in ascending order to find most recent timestamp for time answer\ngw_timestamps.sort(timecompare);\n\nvar timestamp = gw_timestamps[0].time;\nvar eui = gw_timestamps[0].eui;\n\nvar seconds = Math.floor(timestamp/1000);\nvar fractions = (timestamp % 1000) / 4;\nvar seqno = msg.payload.payload_raw[0];\n\nlet buf = new ArrayBuffer(6);\nnew DataView(buf).setUint8(0, seqno);\nnew DataView(buf).setUint32(1, seconds);\nnew DataView(buf).setUint8(5, fractions);\n\nmsg.payload = new Buffer(new Uint8Array(buf));\nvar infoMsg = { payload: eui };\n\nreturn [infoMsg, msg];",
+        "outputs": 2,
         "noerr": 0,
-        "x": 420,
-        "y": 280,
+        "x": 380,
+        "y": 300,
         "wires": [
+            [
+                "37722d4b.08e3c2",
+                "8712a5ac.ed18e8"
+            ],
             [
                 "49e3c067.e782e"
             ]
+        ],
+        "outputLabels": [
+            "gw_eui",
+            "time_sync_ans"
         ]
     },
     {
-        "id": "f8749724.1ff9f8",
+        "id": "37722d4b.08e3c2",
         "type": "debug",
         "z": "449c1517.e25f4c",
-        "name": "time_sync_ans",
-        "active": false,
-        "tosidebar": true,
+        "name": "Timeserver Gw",
+        "active": true,
+        "tosidebar": false,
         "console": false,
         "tostatus": true,
         "complete": "payload",
-        "x": 720,
-        "y": 280,
-        "wires": []
+        "x": 660,
+        "y": 260,
+        "wires": [],
+        "icon": "node-red/bridge.png"
     },
     {
         "id": "2a15ab6f.ab2244",
