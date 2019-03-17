@@ -3,7 +3,6 @@
 
 #include <nvs.h>
 #include <nvs_flash.h>
-#include <bitset>
 
 void eraseConfig(void);
 void saveConfig(void);

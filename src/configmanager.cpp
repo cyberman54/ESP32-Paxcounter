@@ -82,7 +82,8 @@ void saveConfig() {
 
     if (nvs_get_blob(my_handle, "bsecstate", bsecstate_buffer,
                      &required_size) != ESP_OK ||
-        memcmp(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE + 1) != 0)
+        memcmp(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE + 1) !=
+            0)
       nvs_set_blob(my_handle, "bsecstate", cfg.bsecstate,
                    BSEC_MAX_STATE_BLOB_SIZE + 1);
 
@@ -213,8 +214,7 @@ void loadConfig() {
 
     if (nvs_get_blob(my_handle, "bsecstate", NULL, &required_size) == ESP_OK) {
       nvs_get_blob(my_handle, "bsecstate", cfg.bsecstate, &required_size);
-      ESP_LOGI(TAG, "bsecstate = %d",
-               cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE]);
+      ESP_LOGI(TAG, "bsecstate = %d", cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE]);
     };
 
     if (nvs_get_i8(my_handle, "lorasf", &flash8) == ESP_OK) {
@@ -331,9 +331,9 @@ void loadConfig() {
 
     if (nvs_get_i8(my_handle, "payloadmask", &flash8) == ESP_OK) {
       cfg.payloadmask = flash8;
-      ESP_LOGI(TAG, "payloadmask = %d", flash8);
+      ESP_LOGI(TAG, "payloadmask = %hhu", flash8);
     } else {
-      ESP_LOGI(TAG, "payloadmask set to default %d", std::bitset<8>(cfg.payloadmask));
+      ESP_LOGI(TAG, "payloadmask set to default %hhu", cfg.payloadmask);
       saveConfig();
     }
 
