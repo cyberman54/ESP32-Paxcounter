@@ -46,9 +46,9 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
-0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in paxcounter.conf)
-1 ppsIRQ -> pps clock irq -> 1sec 
-2	unused 
+0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
+1 ppsIRQ -> pps clock irq -> 1sec
+2	unused
 3	unused
 
 
@@ -156,7 +156,7 @@ void setup() {
            ESP.getFlashChipSpeed());
   ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
 
-#if(HAS_LORA)
+#if (HAS_LORA)
   ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
            LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
   ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
@@ -167,7 +167,7 @@ void setup() {
   showLoraKeys();
 #endif // HAS_LORA
 
-#if(HAS_GPS)
+#if (HAS_GPS)
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
@@ -185,7 +185,12 @@ void setup() {
 // set low power mode to off
 #ifdef HAS_LOWPOWER_SWITCH
   pinMode(HAS_LOWPOWER_SWITCH, OUTPUT);
+#if (LOW_POWER_ACTIVE_LOW)
+  digitalWrite(HAS_LOWPOWER_SWITCH, HIGH);
+#else
   digitalWrite(HAS_LOWPOWER_SWITCH, LOW);
+#endif
+
   strcat_P(features, " LPWR");
 #endif
 
@@ -269,7 +274,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 // initialize gps
-#if(HAS_GPS)
+#if (HAS_GPS)
   strcat_P(features, " GPS");
   if (gps_init()) {
     ESP_LOGI(TAG, "Starting GPS Feed...");
@@ -284,13 +289,13 @@ void setup() {
 #endif
 
 // initialize sensors
-#if(HAS_SENSORS)
+#if (HAS_SENSORS)
   strcat_P(features, " SENS");
   sensor_init();
 #endif
 
 // initialize LoRa
-#if(HAS_LORA)
+#if (HAS_LORA)
   strcat_P(features, " LORA");
   assert(lora_stack_init() == ESP_OK);
 #endif
@@ -425,7 +430,7 @@ void setup() {
 
 void loop() {
   while (1) {
-#if(HAS_LORA)
+#if (HAS_LORA)
     os_runloop_once(); // execute lmic scheduled jobs and events
 #endif
     delay(2); // yield to CPU

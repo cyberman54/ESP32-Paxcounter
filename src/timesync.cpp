@@ -37,7 +37,7 @@ void send_timesync_req() {
 
   // if a timesync handshake is pending then exit
   if (lora_time_sync_pending) {
-    ESP_LOGI(TAG, "Timeserver sync request already pending");
+    // ESP_LOGI(TAG, "Timeserver sync request already pending");
     return;
   } else {
     ESP_LOGI(TAG, "[%0.3f] Timeserver sync request started", millis() / 1000.0);
@@ -90,7 +90,8 @@ void process_timesync_req(void *taskparameter) {
                          pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) ||
         (seq_no != time_sync_seqNo)) {
 
-      ESP_LOGW(TAG, "[%0.3f] Timeserver handshake failed", millis() / 1000.0);
+      ESP_LOGW(TAG, "[%0.3f] Timeserver error: handshake timed out",
+               millis() / 1000.0);
       goto finish;
     } // no valid sequence received before timeout
 
@@ -161,9 +162,12 @@ void process_timesync_req(void *taskparameter) {
       ESP_LOGI(TAG, "[%0.3f] Timesync finished, time adjusted by %.3f sec",
                millis() / 1000.0, myClock_secTick(time_offset).count());
     } else
-      ESP_LOGI(TAG, "Timesync finished, time not adjusted, is up to date");
+      ESP_LOGI(TAG,
+               "[%0.3f] Timesync finished, time is up to date",
+               millis() / 1000.0);
   } else
-    ESP_LOGW(TAG, "Invalid time received from timeserver");
+    ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
+             millis() / 1000.0);
 
 finish:
 
@@ -188,36 +192,54 @@ void store_time_sync_req(uint32_t t_txEnd_ms) {
 int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 
   // if no timesync handshake is pending or spurious buffer then exit
-  if ((!lora_time_sync_pending) || (buf_len != TIME_SYNC_FRAME_LENGTH))
+  if (!lora_time_sync_pending)
     return 0; // failure
 
-  uint8_t seq_no = buf[0], k = seq_no % TIME_SYNC_SAMPLES;
-  uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
-  uint32_t timestamp_sec;
+  // if no time is available or spurious buffer then exit
+  if (buf_len != TIME_SYNC_FRAME_LENGTH) {
+    if (buf[0] == 0xff)
+      ESP_LOGI(TAG, "[%0.3f] Timeserver error: no confident time available",
+               millis() / 1000.0);
+    else
+      ESP_LOGW(TAG, "[%0.3f] Timeserver error: spurious data received",
+               millis() / 1000.0);
+    return 0; // failure
+  }
 
-  // get the timeserver time.
-  // The first 4 bytes contain the UTC seconds since unix epoch.
-  // Octet order is big endian. Casts are necessary, because buf is an array
-  // of single byte values, and they might overflow when shifted
-  timestamp_sec = ((uint32_t)buf[4]) | (((uint32_t)buf[3]) << 8) |
-                  (((uint32_t)buf[2]) << 16) | (((uint32_t)buf[1]) << 24);
+  else { // we received a probably valid time frame
 
-  // The 5th byte contains the fractional seconds in 2^-8 second steps
-  timestamp_msec = 4 * buf[5];
+    uint8_t seq_no = buf[0], k = seq_no % TIME_SYNC_SAMPLES;
+    uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
+    uint32_t timestamp_sec;
 
-  if ((timestamp_sec) || (timestamp_msec)) // field validation: time not 0 ?
+    // fetch timeserver time from 4 bytes containing the UTC seconds since unix
+    // epoch. Octet order is big endian. Casts are necessary, because buf is an
+    // array of single byte values, and they might overflow when shifted
+    timestamp_sec = ((uint32_t)buf[4]) | (((uint32_t)buf[3]) << 8) |
+                    (((uint32_t)buf[2]) << 16) | (((uint32_t)buf[1]) << 24);
+
+    // the 5th byte contains the fractional seconds in 2^-8 second steps
+    timestamp_msec = 4 * buf[5];
+
+    // construct the timepoint when message was seen on gateway
     time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
-  else
-    return 0; // failure
 
-  ESP_LOGD(TAG, "[%0.3f] Timesync request #%d rcvd at %d.%03d",
-           millis() / 1000.0, seq_no, timestamp_sec, timestamp_msec);
+    // guess if the timepoint is recent by comparing with code compile date
+    if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
+      ESP_LOGD(TAG, "[%0.3f] Timesync request #%d rcvd at %d.%03d",
+               millis() / 1000.0, seq_no, timestamp_sec, timestamp_msec);
 
-  // inform processing task
-  if (timeSyncReqTask)
-    xTaskNotify(timeSyncReqTask, seq_no, eSetBits);
+      // inform processing task
+      if (timeSyncReqTask)
+        xTaskNotify(timeSyncReqTask, seq_no, eSetBits);
 
-  return 1; // success
+      return 1; // success
+    } else {
+      ESP_LOGW(TAG, "[%0.3f] Timeserver error: outdated time received",
+               millis() / 1000.0);
+      return 0; // failure
+    }
+  }
 }
 
 #endif
