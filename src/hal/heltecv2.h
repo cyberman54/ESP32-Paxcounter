@@ -20,7 +20,8 @@
 
 //#define HAS_BATTERY_PROBE ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
 //#define BATT_FACTOR 4 // voltage divider 220k/100k on board
-//#define HAS_LOWPOWER_SWITCH GPIO_NUM_21 // switches battery power
+//#define HAS_LOWPOWER_SWITCH GPIO_NUM_21 // switches battery power, Vext control 0 = on / 1 = off
+//#define LOW_POWER_ACTIVE_LOW 1
 
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (4)
