@@ -78,7 +78,7 @@ void process_timesync_req(void *taskparameter) {
   for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
 
     // wrap around seqNo 0 .. 254
-    time_sync_seqNo = (time_sync_seqNo >= 255) ? 0 : time_sync_seqNo + 1;
+    time_sync_seqNo = (time_sync_seqNo < 255) ? time_sync_seqNo + 1 : 0;
 
     // send sync request to server
     payload.reset();
@@ -150,7 +150,7 @@ void process_timesync_req(void *taskparameter) {
       vTaskDelay(pdMS_TO_TICKS(wait_ms));
 
 #if !defined(GPS_INT) && !defined(RTC_INT)
-      // sync timer pps to top of second
+      // sync esp32 hardware timer based pps to top of second
       timerRestart(ppsIRQ); // reset pps timer
       CLOCKIRQ();           // fire clock pps interrupt
       time_to_set++;        // advance time 1 second
