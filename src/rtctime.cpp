@@ -49,6 +49,10 @@ uint8_t rtc_init(void) {
 uint8_t set_rtctime(time_t t) { // t is UTC in seconds epoch time
   if (I2C_MUTEX_LOCK()) {
     Rtc.SetDateTime(RtcDateTime(t - SECS_YR_2000)); // epoch -> sec2000
+#ifdef RTC_INT // sync rtc 1Hz pulse on top of second
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone); // off
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock); // start
+#endif
     I2C_MUTEX_UNLOCK();
     ESP_LOGI(TAG, "RTC time synced");
     return 1; // success

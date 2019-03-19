@@ -124,7 +124,6 @@ void IRAM_ATTR CLOCKIRQ(void) {
                        &xHigherPriorityTaskWoken);
 
 #if defined GPS_INT || defined RTC_INT
-  xSemaphoreGiveFromISR(TimePulse, &xHigherPriorityTaskWoken);
   TimePulseTick = !TimePulseTick; // flip ticker
 #endif
 

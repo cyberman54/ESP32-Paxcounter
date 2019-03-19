@@ -109,10 +109,14 @@ void process_timesync_req(void *taskparameter) {
         // wait until next cycle
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
       } else {
-        // send flush to open a receive window for last time_sync_ans
-        payload.reset();
-        payload.addByte(0x99);
-        SendPayload(RCMDPORT, prio_high);
+        // send flush to open a receive window for last time_sync_answer
+        // payload.reset();
+        // payload.addByte(0x99);
+        // SendPayload(RCMDPORT, prio_high);
+
+        // Send a payload-less message to open a receive window for last
+        // time_sync_answer
+        void LMIC_sendAlive();
       }
     }
   } // for
@@ -145,13 +149,15 @@ void process_timesync_req(void *taskparameter) {
       ESP_LOGD(TAG, "[%0.3f] waiting %d ms", millis() / 1000.0, wait_ms);
       vTaskDelay(pdMS_TO_TICKS(wait_ms));
 
+#if !defined(GPS_INT) && !defined(RTC_INT)
       // sync timer pps to top of second
-      if (ppsIRQ) {
-        timerRestart(ppsIRQ); // reset pps timer
-        CLOCKIRQ();           // fire clock pps interrupt
-      }
+      timerRestart(ppsIRQ); // reset pps timer
+      CLOCKIRQ();           // fire clock pps interrupt
+      time_to_set++;        // advance time 1 second
+#endif
 
-      setTime(++time_to_set); // +1 sec after waiting for top of seceond
+      setTime(time_to_set); // set the time on top of second
+
 #ifdef HAS_RTC
       set_rtctime(time_to_set); // calibrate RTC if we have one
 #endif
@@ -162,8 +168,7 @@ void process_timesync_req(void *taskparameter) {
       ESP_LOGI(TAG, "[%0.3f] Timesync finished, time adjusted by %.3f sec",
                millis() / 1000.0, myClock_secTick(time_offset).count());
     } else
-      ESP_LOGI(TAG,
-               "[%0.3f] Timesync finished, time is up to date",
+      ESP_LOGI(TAG, "[%0.3f] Timesync finished, time is up to date",
                millis() / 1000.0);
   } else
     ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
@@ -212,9 +217,9 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
     uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
     uint32_t timestamp_sec;
 
-    // fetch timeserver time from 4 bytes containing the UTC seconds since unix
-    // epoch. Octet order is big endian. Casts are necessary, because buf is an
-    // array of single byte values, and they might overflow when shifted
+    // fetch timeserver time from 4 bytes containing the UTC seconds since
+    // unix epoch. Octet order is big endian. Casts are necessary, because buf
+    // is an array of single byte values, and they might overflow when shifted
     timestamp_sec = ((uint32_t)buf[4]) | (((uint32_t)buf[3]) << 8) |
                     (((uint32_t)buf[2]) << 16) | (((uint32_t)buf[1]) << 24);
 

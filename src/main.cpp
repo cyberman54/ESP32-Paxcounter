@@ -84,7 +84,7 @@ uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL;
 
 TaskHandle_t irqHandlerTask, ClockTask;
-SemaphoreHandle_t I2Caccess, TimePulse;
+SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
 time_t userUTCTime = 0;
 timesource_t timeSource = _unsynced;
@@ -112,8 +112,6 @@ void setup() {
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
   if (I2Caccess)
     xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
-
-  TimePulse = xSemaphoreCreateBinary(); // as signal that shows time pulse flip
 
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT

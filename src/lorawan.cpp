@@ -491,13 +491,13 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   if (timeIsValid(*pUserUTCTime)) {
     setTime(*pUserUTCTime);
 #ifdef HAS_RTC
-    set_rtctime(*pUserUTCTime); // calibrate RTC if we have one
+      set_rtctime(*pUserUTCTime); // calibrate RTC if we have one
 #endif
-    timeSource = _lora;
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
-    ESP_LOGI(TAG, "Received recent time from LoRa");
-  } else
-    ESP_LOGI(TAG, "Invalid time received from LoRa");
-} // user_request_network_time_callback
+      timeSource = _lora;
+      timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
+      ESP_LOGI(TAG, "Received recent time from LoRa");
+    } else
+      ESP_LOGI(TAG, "Invalid time received from LoRa");
+  } // user_request_network_time_callback
 
 #endif // HAS_LORA
