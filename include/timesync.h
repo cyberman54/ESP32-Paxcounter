@@ -7,11 +7,11 @@
 #include "timekeeper.h"
 
 #define TIME_SYNC_SAMPLES 2   // number of time requests for averaging
-#define TIME_SYNC_CYCLE 20    // seconds between two time requests
-#define TIME_SYNC_TIMEOUT 120 // timeout seconds waiting for timeserver answer
-#define TIME_SYNC_TRIGGER 100 // time deviation in millisec triggering a sync
-#define TIME_SYNC_FRAME_LENGTH 0x06 // timeserver answer frame length
-#define TIME_SYNC_FIXUP 0 // calibration millisec to fixup processing time
+#define TIME_SYNC_CYCLE 20    // delay between two time samples [seconds]
+#define TIME_SYNC_TIMEOUT 120 // timeout waiting for timeserver answer [seconds]
+#define TIME_SYNC_TRIGGER 100 // deviation triggering a time sync [milliseconds]
+#define TIME_SYNC_FRAME_LENGTH 0x06 // timeserver answer frame length [bytes]
+#define TIME_SYNC_FIXUP 0 // calibration to fixup processing time [milliseconds]
 
 void send_timesync_req(void);
 int recv_timesync_ans(uint8_t buf[], uint8_t buf_len);

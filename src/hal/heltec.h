@@ -12,6 +12,9 @@
 //#define HAS_BME680 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
 //#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
 
+// Settings for IF482 interface
+#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_13 // IF482 serial port parameters
+
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1
 

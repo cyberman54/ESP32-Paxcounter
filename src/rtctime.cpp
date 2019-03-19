@@ -24,17 +24,17 @@ uint8_t rtc_init(void) {
       Rtc.SetIsRunning(true);
     }
 
-    // If you want to initialize a fresh RTC to compiled time, use this code
-    /*
-        RtcDateTime tt = Rtc.GetDateTime();
-        time_t t = tt.Epoch32Time(); // sec2000 -> epoch
+#ifdef TIME_SYNC_COMPILEDATE
+    // initialize a blank RTC without battery backup with compiled time
+    RtcDateTime tt = Rtc.GetDateTime();
+    time_t t = tt.Epoch32Time(); // sec2000 -> epoch
 
-        if (!Rtc.IsDateTimeValid() || !timeIsValid(t)) {
-          ESP_LOGW(TAG, "RTC has no recent time, setting to compilation date");
-          Rtc.SetDateTime(
-              RtcDateTime(compiledUTC() - SECS_YR_2000)); // epoch -> sec2000
-        }
-    */
+    if (!Rtc.IsDateTimeValid() || !timeIsValid(t)) {
+      ESP_LOGW(TAG, "RTC has no recent time, setting to compiled time");
+      Rtc.SetDateTime(
+          RtcDateTime(compiledUTC() - SECS_YR_2000)); // epoch -> sec2000
+    }
+#endif
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     ESP_LOGI(TAG, "RTC initialized");
@@ -50,7 +50,7 @@ uint8_t set_rtctime(time_t t) { // t is UTC in seconds epoch time
   if (I2C_MUTEX_LOCK()) {
     Rtc.SetDateTime(RtcDateTime(t - SECS_YR_2000)); // epoch -> sec2000
 #ifdef RTC_INT // sync rtc 1Hz pulse on top of second
-    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone); // off
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);  // off
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock); // start
 #endif
     I2C_MUTEX_UNLOCK();
