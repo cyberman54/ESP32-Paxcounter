@@ -10,7 +10,7 @@
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define HAS_LED NOT_A_PIN // green on board LED is useless, is GPIO25, which switches power for Lora+Display
-#define HAS_LOWPOWER_SWITCH GPIO_NUM_25 // switches power for LoRa chip + display (0 = off / 1 = on)
+//#define HAS_LOWPOWER_SWITCH GPIO_NUM_25 // switches power for LoRa chip + display (0 = off / 1 = on)
 #define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL
 #define BATT_FACTOR 2 // voltage divider 100k/100k on board
 #define HAS_BUTTON GPIO_NUM_36 // on board button (next to reset)
