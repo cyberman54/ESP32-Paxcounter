@@ -19,7 +19,7 @@
 // LMIC LORAWAN STACK SETTINGS
 // --> adapt to your device only if necessary
 
-//#define LMIC_USE_INTERRUPTS
+//#define LMIC_USE_INTERRUPTS 1
 
 //time sync via LoRaWAN network, is not yet supported by TTN (LoRaWAN spec v1.0.3)
 #define LMIC_ENABLE_DeviceTimeReq 1
