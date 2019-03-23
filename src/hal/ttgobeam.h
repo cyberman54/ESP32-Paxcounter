@@ -17,8 +17,8 @@
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define BOARD_HAS_PSRAM // use extra 4MB external RAM
 #define HAS_BUTTON GPIO_NUM_39 // on board button (next to reset)
-#define HAS_BATTERY_PROBE ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
-#define BATT_FACTOR 2 // voltage divider 100k/100k on board
+#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
+#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
