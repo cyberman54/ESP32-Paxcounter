@@ -14,7 +14,13 @@ static const char TAG[] = __FILE__;
 // symbol to display current time source
 const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
+#ifdef HAS_IF482
+HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
+#endif
+
 Ticker timesyncer;
+
+static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
@@ -115,17 +121,21 @@ void timepulse_start(void) {
 // interrupt service routine triggered by either pps or esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
+  portENTER_CRITICAL_ISR(&mux);
   BaseType_t xHigherPriorityTaskWoken;
-  SyncToPPS(); // calibrates UTC systime, see microTime.h
   xHigherPriorityTaskWoken = pdFALSE;
+
+  SyncToPPS(); // calibrates UTC systime, see microTime.h
 
   if (ClockTask != NULL)
     xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                        &xHigherPriorityTaskWoken);
 
-#if defined GPS_INT || defined RTC_INT
-  TimePulseTick = !TimePulseTick; // flip ticker
+#if (defined GPS_INT || defined RTC_INT)
+  TimePulseTick = !TimePulseTick; // flip pulse ticker
 #endif
+
+  portEXIT_CRITICAL_ISR(&mux);
 
   // yield only if we should
   if (xHigherPriorityTaskWoken)
@@ -163,8 +173,8 @@ TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
 
   uint32_t databits = ((config & 0x0c) >> 2) + 5;
   uint32_t stopbits = ((config & 0x20) >> 5) + 1;
-  uint32_t txTime = (databits + stopbits + 2) * framesize * 1000.0 / baud;
-  // +1 ms margin for the startbit +1 ms for pending processing time
+  uint32_t txTime = (databits + stopbits + 1) * framesize * 1000.0 / baud;
+  // +1 for the startbit
 
   return round(txTime);
 }
@@ -207,10 +217,13 @@ void clock_loop(void *taskparameter) { // ClockTask
   uint32_t printtime;
   time_t t = *((time_t *)taskparameter); // UTC time seconds
 
-  // preload first DCF frame before start
 #ifdef HAS_DCF77
-  uint8_t *DCFpulse; // pointer on array with DCF pulse bits
-  DCFpulse = DCF77_Frame(nextmin(t));
+  uint8_t *DCFpulse;                  // pointer on array with DCF pulse bits
+  DCFpulse = DCF77_Frame(nextmin(t)); // load first DCF frame before start
+#elif defined HAS_IF482
+  static TickType_t txDelay =
+      pdMS_TO_TICKS(1000 - 2) - tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
+  // 2ms margin for processing time
 #endif
 
   // output the next second's pulse after timepulse arrived
@@ -226,7 +239,8 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #if defined HAS_IF482
 
-    IF482_Pulse(t);
+    vTaskDelay(txDelay);             // wait until moment to fire
+    IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
 
 #elif defined HAS_DCF77
 

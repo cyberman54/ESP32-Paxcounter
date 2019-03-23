@@ -6,9 +6,10 @@
 #include "TimeLib.h"
 #include "irqhandler.h"
 
-#if(HAS_GPS)
+#ifdef HAS_GPS
 #include "gpsread.h"
 #endif
+
 #ifdef HAS_IF482
 #include "if482.h"
 #elif defined HAS_DCF77

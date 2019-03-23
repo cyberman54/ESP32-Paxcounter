@@ -3,6 +3,8 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+
 // irq handler task, handles all our application level interrupts
 void irqHandler(void *pvParameters) {
 
@@ -54,12 +56,13 @@ void irqHandler(void *pvParameters) {
 
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ() {
+  portENTER_CRITICAL_ISR(&mux);
   BaseType_t xHigherPriorityTaskWoken;
   xHigherPriorityTaskWoken = pdFALSE;
 
   xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
-
+  portEXIT_CRITICAL_ISR(&mux);
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }
@@ -67,11 +70,13 @@ void IRAM_ATTR DisplayIRQ() {
 
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ() {
+  portENTER_CRITICAL_ISR(&mux);
   BaseType_t xHigherPriorityTaskWoken;
   xHigherPriorityTaskWoken = pdFALSE;
 
   xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
+  portEXIT_CRITICAL_ISR(&mux);
 
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();

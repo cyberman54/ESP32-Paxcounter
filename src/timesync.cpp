@@ -54,7 +54,7 @@ void send_timesync_req() {
                               "timesync_req",       // name of task
                               2048,                 // stack size of task
                               (void *)1,            // task parameter
-                              4,                    // priority of the task
+                              2,                    // priority of the task
                               &timeSyncReqTask,     // task handle
                               1);                   // CPU core
   }
@@ -129,10 +129,14 @@ void process_timesync_req(void *taskparameter) {
   // calculate absolute time offset with millisecond precision using time base
   // of LMIC os, since we use LMIC's ostime_t txEnd as tx timestamp
   time_offset += milliseconds(osticks2ms(os_getTime()));
+
   // apply calibration factor for processing time
   time_offset += milliseconds(TIME_SYNC_FIXUP);
-  // convert to seconds
+  // convert to whole seconds
   time_to_set = static_cast<time_t>(myClock_secTick(time_offset).count());
+  // time_to_set =
+  // static_cast<time_t>(duration_cast<seconds>(time_offset).count());
+
   // calculate fraction milliseconds
   time_to_set_fraction_msec = static_cast<uint16_t>(time_offset.count() % 1000);
 
@@ -145,15 +149,14 @@ void process_timesync_req(void *taskparameter) {
         TIME_SYNC_TRIGGER) { // milliseconds threshold
 
       // wait until top of second
-      uint16_t const wait_ms = 1000 - time_to_set_fraction_msec;
-      ESP_LOGD(TAG, "[%0.3f] waiting %d ms", millis() / 1000.0, wait_ms);
-      vTaskDelay(pdMS_TO_TICKS(wait_ms));
+      vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
 
-#if !defined(GPS_INT) && !defined(RTC_INT)
+      time_to_set++; // advance time the one waited second
+
+#if (!defined GPS_INT && !defined RTC_INT)
       // sync esp32 hardware timer based pps to top of second
       timerRestart(ppsIRQ); // reset pps timer
       CLOCKIRQ();           // fire clock pps interrupt
-      time_to_set++;        // advance time 1 second
 #endif
 
       setTime(time_to_set); // set the time on top of second
@@ -193,6 +196,21 @@ void store_time_sync_req(uint32_t t_txEnd_ms) {
            t_txEnd_ms % 1000);
 }
 
+/*
+// called from lorawan.cpp after time_sync_req was sent
+void store_time_sync_req_pwm(void) {
+
+  uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
+
+  time_sync_tx[k] += milliseconds(t_txEnd_ms);
+
+  ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
+           millis() / 1000.0, time_sync_seqNo, t_txEnd_ms / 1000,
+           t_txEnd_ms % 1000);
+}
+*/
+
+
 // process timeserver timestamp answer, called from lorawan.cpp
 int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 
@@ -229,7 +247,7 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
     // construct the timepoint when message was seen on gateway
     time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
 
-    // guess if the timepoint is recent by comparing with code compile date
+    // guess timepoint is recent if newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
       ESP_LOGD(TAG, "[%0.3f] Timesync request #%d rcvd at %d.%03d",
                millis() / 1000.0, seq_no, timestamp_sec, timestamp_msec);
