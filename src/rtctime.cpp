@@ -24,7 +24,7 @@ uint8_t rtc_init(void) {
       Rtc.SetIsRunning(true);
     }
 
-#ifdef TIME_SYNC_COMPILEDATE
+#if (TIME_SYNC_COMPILEDATE)
     // initialize a blank RTC without battery backup with compiled time
     RtcDateTime tt = Rtc.GetDateTime();
     time_t t = tt.Epoch32Time(); // sec2000 -> epoch

@@ -1,4 +1,4 @@
-#ifdef USE_OTA
+#if (USE_OTA)
 
 /*
  Parts of this code:

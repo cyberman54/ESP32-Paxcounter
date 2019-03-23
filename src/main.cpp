@@ -180,7 +180,7 @@ void setup() {
   strcat_P(features, " PSRAM");
 #endif
 
-// set external power mode to off
+// set external power mode
 #ifdef EXT_POWER_SW
   pinMode(EXT_POWER_SW, OUTPUT);
   digitalWrite(EXT_POWER_SW, EXT_POWER_ON);

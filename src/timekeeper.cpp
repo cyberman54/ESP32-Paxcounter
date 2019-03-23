@@ -122,10 +122,9 @@ void timepulse_start(void) {
 void IRAM_ATTR CLOCKIRQ(void) {
 
   portENTER_CRITICAL_ISR(&mux);
-  BaseType_t xHigherPriorityTaskWoken;
-  xHigherPriorityTaskWoken = pdFALSE;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-  SyncToPPS(); // calibrates UTC systime, see microTime.h
+  SyncToPPS(); // calibrates UTC systime and advances it +1, see microTime.h
 
   if (ClockTask != NULL)
     xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
@@ -215,7 +214,8 @@ void clock_loop(void *taskparameter) { // ClockTask
 #define nextmin(t) (t + DCF77_FRAME_SIZE + 1) // next minute
 
   uint32_t printtime;
-  time_t t = *((time_t *)taskparameter); // UTC time seconds
+  time_t t = *((time_t *)taskparameter), last_printtime = 0; // UTC time seconds
+  TickType_t startTime;
 
 #ifdef HAS_DCF77
   uint8_t *DCFpulse;                  // pointer on array with DCF pulse bits
@@ -228,18 +228,24 @@ void clock_loop(void *taskparameter) { // ClockTask
 
   // output the next second's pulse after timepulse arrived
   for (;;) {
+    // ensure the notification state is not already pending
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
                     portMAX_DELAY); // wait for timepulse
 
+    startTime = xTaskGetTickCount();
+
     t = time_t(printtime); // UTC time seconds
 
-    // no confident time -> suppress clock output
-    if ((timeStatus() == timeNotSet) || !(timeIsValid(t)))
+    // no confident or no recent time -> suppress clock output
+    if ((timeStatus() == timeNotSet) || !(timeIsValid(t)) ||
+        (t == last_printtime))
       continue;
+
+    last_printtime = t;
 
 #if defined HAS_IF482
 
-    vTaskDelay(txDelay);             // wait until moment to fire
+    vTaskDelayUntil(&startTime, txDelay); // wait until moment to fire
     IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
 
 #elif defined HAS_DCF77

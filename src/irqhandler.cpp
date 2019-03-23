@@ -56,13 +56,10 @@ void irqHandler(void *pvParameters) {
 
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ() {
-  portENTER_CRITICAL_ISR(&mux);
-  BaseType_t xHigherPriorityTaskWoken;
-  xHigherPriorityTaskWoken = pdFALSE;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
   xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
-  portEXIT_CRITICAL_ISR(&mux);
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }
@@ -70,13 +67,10 @@ void IRAM_ATTR DisplayIRQ() {
 
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ() {
-  portENTER_CRITICAL_ISR(&mux);
-  BaseType_t xHigherPriorityTaskWoken;
-  xHigherPriorityTaskWoken = pdFALSE;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
   xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
-  portEXIT_CRITICAL_ISR(&mux);
 
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();

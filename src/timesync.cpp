@@ -27,7 +27,6 @@ typedef std::chrono::system_clock myClock;
 typedef myClock::time_point myClock_timepoint;
 typedef std::chrono::duration<long long int, std::ratio<1, 1000>>
     myClock_msecTick;
-typedef std::chrono::duration<double> myClock_secTick;
 
 myClock_timepoint time_sync_tx[TIME_SYNC_SAMPLES];
 myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
@@ -63,11 +62,11 @@ void send_timesync_req() {
 // task for sending time sync requests
 void process_timesync_req(void *taskparameter) {
 
-  uint32_t seq_no = 0, time_to_set_us, time_to_set_ms;
-  uint16_t time_to_set_fraction_msec;
   uint8_t k = 0, i = 0;
+  uint16_t time_to_set_fraction_msec;
+  uint32_t seq_no = 0;
   time_t time_to_set;
-  auto time_offset = myClock_msecTick::zero();
+  auto time_offset_ms = myClock_msecTick::zero();
 
   // wait until we are joined
   while (!LMIC.devaddr) {
@@ -98,81 +97,67 @@ void process_timesync_req(void *taskparameter) {
     else { // calculate time diff from collected timestamps
       k = seq_no % TIME_SYNC_SAMPLES;
 
-      auto t_tx = time_point_cast<milliseconds>(
-          time_sync_tx[k]); // timepoint when node TX_completed
-      auto t_rx = time_point_cast<milliseconds>(
-          time_sync_rx[k]); // timepoint when message was seen on gateway
-
-      time_offset += t_rx - t_tx; // cumulate timepoint diffs
+      // cumulate timepoint diffs
+      time_offset_ms += time_point_cast<milliseconds>(time_sync_rx[k]) -
+                        time_point_cast<milliseconds>(time_sync_tx[k]);
 
       if (i < TIME_SYNC_SAMPLES - 1) {
         // wait until next cycle
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
       } else {
         // send flush to open a receive window for last time_sync_answer
-        // payload.reset();
-        // payload.addByte(0x99);
-        // SendPayload(RCMDPORT, prio_high);
-
-        // Send a payload-less message to open a receive window for last
-        // time_sync_answer
-        void LMIC_sendAlive();
+        payload.reset();
+        payload.addByte(0x99);
+        SendPayload(RCMDPORT, prio_high);
+        // Send a alive open a receive window for last time_sync_answer
+        // void LMIC_sendAlive();
       }
     }
   } // for
 
-  // calculate time offset from collected diffs
-  time_offset /= TIME_SYNC_SAMPLES;
-  ESP_LOGD(TAG, "[%0.3f] avg time diff: %0.3f sec", millis() / 1000.0,
-           myClock_secTick(time_offset).count());
+  // average time offset from collected diffs
+  time_offset_ms /= TIME_SYNC_SAMPLES;
 
-  // calculate absolute time offset with millisecond precision using time base
+  // calculate time offset with millisecond precision using time base
   // of LMIC os, since we use LMIC's ostime_t txEnd as tx timestamp
-  time_offset += milliseconds(osticks2ms(os_getTime()));
-
+  time_offset_ms += milliseconds(osticks2ms(os_getTime()));
   // apply calibration factor for processing time
-  time_offset += milliseconds(TIME_SYNC_FIXUP);
-  // convert to whole seconds
-  time_to_set = static_cast<time_t>(myClock_secTick(time_offset).count());
-  // time_to_set =
-  // static_cast<time_t>(duration_cast<seconds>(time_offset).count());
+  time_offset_ms += milliseconds(TIME_SYNC_FIXUP);
 
+  // calculate absolute time in UTC epoch
+  // convert to whole seconds, floor
+  time_to_set = (time_t)(time_offset_ms.count() / 1000) + 1;
   // calculate fraction milliseconds
-  time_to_set_fraction_msec = static_cast<uint16_t>(time_offset.count() % 1000);
+  time_to_set_fraction_msec = (uint16_t)(time_offset_ms.count() % 1000);
 
   ESP_LOGD(TAG, "[%0.3f] Calculated UTC epoch time: %d.%03d sec",
            millis() / 1000.0, time_to_set, time_to_set_fraction_msec);
 
   // adjust system time
   if (timeIsValid(time_to_set)) {
-    if (abs(time_offset.count()) >=
-        TIME_SYNC_TRIGGER) { // milliseconds threshold
 
-      // wait until top of second
-      vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
-
-      time_to_set++; // advance time the one waited second
+    // wait until top of second
+    vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
+    time_to_set++; // advance time 1 sec wait time
 
 #if (!defined GPS_INT && !defined RTC_INT)
-      // sync esp32 hardware timer based pps to top of second
-      timerRestart(ppsIRQ); // reset pps timer
-      CLOCKIRQ();           // fire clock pps interrupt
+    // sync esp32 hardware timer based pps to top of second
+    timerRestart(ppsIRQ); // reset pps timer
+    CLOCKIRQ();           // fire clock pps interrupt
+
+#elif defined HAS_RTC
+    // calibrate RTC and RTC_INT pulse on top of second
+    set_rtctime(time_to_set);
 #endif
 
-      setTime(time_to_set); // set the time on top of second
+    setTime(time_to_set); // set the time on top of second
 
-#ifdef HAS_RTC
-      set_rtctime(time_to_set); // calibrate RTC if we have one
-#endif
+    timeSource = _lora;
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60,
+                      timeSync); // set to regular repeat
+    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
+             millis() / 1000.0);
 
-      timeSource = _lora;
-      timesyncer.attach(TIME_SYNC_INTERVAL * 60,
-                        timeSync); // set to regular repeat
-      ESP_LOGI(TAG, "[%0.3f] Timesync finished, time adjusted by %.3f sec",
-               millis() / 1000.0, myClock_secTick(time_offset).count());
-    } else
-      ESP_LOGI(TAG, "[%0.3f] Timesync finished, time is up to date",
-               millis() / 1000.0);
   } else
     ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
              millis() / 1000.0);
@@ -195,21 +180,6 @@ void store_time_sync_req(uint32_t t_txEnd_ms) {
            millis() / 1000.0, time_sync_seqNo, t_txEnd_ms / 1000,
            t_txEnd_ms % 1000);
 }
-
-/*
-// called from lorawan.cpp after time_sync_req was sent
-void store_time_sync_req_pwm(void) {
-
-  uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
-
-  time_sync_tx[k] += milliseconds(t_txEnd_ms);
-
-  ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
-           millis() / 1000.0, time_sync_seqNo, t_txEnd_ms / 1000,
-           t_txEnd_ms % 1000);
-}
-*/
-
 
 // process timeserver timestamp answer, called from lorawan.cpp
 int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
