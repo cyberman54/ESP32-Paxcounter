@@ -373,7 +373,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
   buffer[cursor++] = LPP_ANALOG_INPUT;
   buffer[cursor++] = highByte(volt);
   buffer[cursor++] = lowByte(volt);
-#endif // HAS_BATTERY_PROBE
+#endif // BAT_MEASURE_ADC
 
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;

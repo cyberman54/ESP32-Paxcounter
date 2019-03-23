@@ -180,16 +180,15 @@ void setup() {
   strcat_P(features, " PSRAM");
 #endif
 
-// set low power mode to off
-#ifdef HAS_LOWPOWER_SWITCH
-  pinMode(HAS_LOWPOWER_SWITCH, OUTPUT);
-#if (LOW_POWER_ACTIVE_LOW)
-  digitalWrite(HAS_LOWPOWER_SWITCH, HIGH);
-#else
-  digitalWrite(HAS_LOWPOWER_SWITCH, LOW);
+// set external power mode to off
+#ifdef EXT_POWER_SW
+  pinMode(EXT_POWER_SW, OUTPUT);
+  digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
+  strcat_P(features, " VEXT");
 #endif
 
-  strcat_P(features, " LPWR");
+#ifdef BAT_MEASURE_EN
+ pinMode(BAT_MEASURE_EN, OUTPUT);
 #endif
 
   // initialize leds
@@ -224,7 +223,7 @@ void setup() {
 #endif
 
 // initialize battery status
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
   strcat_P(features, " BATT");
   calibrate_voltage();
   batt_voltage = read_voltage();
