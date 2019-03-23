@@ -31,6 +31,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 - Heltec: LoRa-32 v1 and v2
 - TTGO: T1, T2, T3, T-Beam, T-Fox
 - Pycom: LoPy, LoPy4, FiPy
+- Radioshuttle.de: [ECO Power Board](https://www.radioshuttle.de/esp32-eco-power/esp32-eco-power-board/)
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 - Adafruit ESP32 Feather + LoRa Wing + OLED Wing, #IoT Octopus32 (Octopus + ESP32 Feather)
@@ -42,9 +43,9 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - Generic ESP32
 
 Depending on board hardware following features are supported:
-- LED (power/status)
-- OLED Display (detailed status)
-- RGB LED (colorized status)
+- LED (shows power & status)
+- OLED Display (shows detailed status)
+- RGB LED (shows colorized status)
 - Button
 - Silicon unique ID
 - Battery voltage monitoring
@@ -52,6 +53,7 @@ Depending on board hardware following features are supported:
 - Environmental sensor (Bosch BME280/BME680 I2C)
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
+- Switch external power / battery
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
