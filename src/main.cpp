@@ -195,8 +195,8 @@ void setup() {
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
-#if (HAS_LED1 != NOT_A_PIN)
-  pinMode(HAS_LED1, OUTPUT);
+#ifdef HAS_TWO_LED
+  pinMode(HAS_TWO_LED, OUTPUT);
   strcat_P(features, " LED1");
 #endif
 // use LED for power display if we have additional RGB LED, else for status
