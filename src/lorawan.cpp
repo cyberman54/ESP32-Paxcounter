@@ -307,7 +307,7 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_JOIN_TXCOMPLETE:
-    strcpy_P(buff, PSTR("JOIN TXCOMPLT"));
+    strcpy_P(buff, PSTR("JOIN WAIT"));
     break;
 
   default:
