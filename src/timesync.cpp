@@ -53,7 +53,7 @@ void send_timesync_req() {
                               "timesync_req",       // name of task
                               2048,                 // stack size of task
                               (void *)1,            // task parameter
-                              2,                    // priority of the task
+                              4,                    // priority of the task
                               &timeSyncReqTask,     // task handle
                               1);                   // CPU core
   }
@@ -104,23 +104,26 @@ void process_timesync_req(void *taskparameter) {
       if (i < TIME_SYNC_SAMPLES - 1) {
         // wait until next cycle
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
-      } else {
-        // send flush to open a receive window for last time_sync_answer
-        payload.reset();
-        payload.addByte(0x99);
-        SendPayload(RCMDPORT, prio_high);
-        // Send a alive open a receive window for last time_sync_answer
-        // void LMIC_sendAlive();
+      } else { // before sending last time sample...
+        // ...send flush to open a receive window for last time_sync_answer
+        // payload.reset();
+        // payload.addByte(0x99);
+        // SendPayload(RCMDPORT, prio_high);
+        // ...send a alive open a receive window for last time_sync_answer
+        LMIC_sendAlive();
       }
     }
   } // for
 
+  // begin of time critical section: lock I2C bus to ensure accurate timing
+  I2C_MUTEX_LOCK();
+
   // average time offset from collected diffs
   time_offset_ms /= TIME_SYNC_SAMPLES;
 
-  // calculate time offset with millisecond precision using time base
-  // of LMIC os, since we use LMIC's ostime_t txEnd as tx timestamp.
-  // apply calibration factor for processing time
+  // calculate time offset with millisecond precision using LMIC's time base,
+  // since we use LMIC's ostime_t txEnd as tx timestamp.
+  // Finally apply calibration const for processing time.
   time_offset_ms +=
       milliseconds(osticks2ms(os_getTime())) + milliseconds(TIME_SYNC_FIXUP);
 
@@ -136,36 +139,31 @@ void process_timesync_req(void *taskparameter) {
   // adjust system time
   if (timeIsValid(time_to_set)) {
 
-#ifdef HAS_RTC
-    // get and lock access to i2c before we start time sync
-    if (I2C_MUTEX_LOCK()) {
-#endif
-
-      // wait until top of second with 4ms precision
-      time_to_set++; // advance time 1 sec wait time
-      vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
+    // wait until top of second with 4ms precision
+    time_to_set++; // advance time 1 sec wait time
+    vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
 
 #ifdef HAS_RTC
-      // set RTC time and, if he have, calibrate RTC_INT pulse on top of second
-      set_rtctime(time_to_set, no_mutex);
-      I2C_MUTEX_UNLOCK();
-    } // release i2c bus access
+    // set RTC time and calibrate RTC_INT pulse on top of second
+    set_rtctime(time_to_set, no_mutex);
 #endif
 
 #if (!defined GPS_INT && !defined RTC_INT)
-      // sync pps timer to top of second
+    // sync pps timer to top of second
     timerRestart(ppsIRQ); // reset pps timer
     CLOCKIRQ();           // fire clock pps
 #endif
 
     setTime(time_to_set); // set the time on top of second
 
+    // end of time critical section: release I2C bus
+    I2C_MUTEX_UNLOCK();
+
     timeSource = _lora;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60,
                       timeSync); // set to regular repeat
     ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
              millis() / 1000.0);
-
   } else
     ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
              millis() / 1000.0);
