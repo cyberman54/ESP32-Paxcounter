@@ -21,7 +21,7 @@
 #define EXT_POWER_OFF   1
 
 #define HAS_LED (2) // on board green LED
-#define HAS_LED1 (12) // on board red LED
+#define HAS_TWO_LED (12) // on board red LED
 //#define HAS_BUTTON (0) // on board button -> don't use, is same as RTC_INT!
 
 // Pins for I2C interface of OLED Display
@@ -36,7 +36,7 @@
 #define RTC_INT GPIO_NUM_0 //
 
 // Settings for IF482 interface
-#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_3, GPIO_NUM_1 // RX, TX
+//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_3, GPIO_NUM_1 // RX, TX
 
 // Settings for DCF77 interface
 //#define HAS_DCF77 GPIO_NUM_14 // JP8 #13
