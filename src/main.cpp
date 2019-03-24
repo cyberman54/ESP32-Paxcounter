@@ -56,14 +56,14 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 -------------------------------------------------------------------------------
 
 fired by hardware
-DisplayIRQ      -> esp32 timer 0  -> irqhandler.cpp
-CLOCKIRQ        -> esp32 timer 1  -> timekeeper.cpp
-ButtonIRQ       -> external gpio  -> irqhandler.cpp
+DisplayIRQ      -> esp32 timer 0  -> irqHandlerTask (Core 1)
+CLOCKIRQ        -> esp32 timer 1  -> ClockTask (Core 1)
+ButtonIRQ       -> external gpio  -> irqHandlerTask (Core 1)
 
 fired by software (Ticker.h)
-TIMESYNC_IRQ    -> timeSync()     -> timerkeeper.cpp
-CYLCIC_IRQ      -> housekeeping() -> cyclic.cpp
-SENDCYCLE_IRQ   -> sendcycle()    -> senddata.cpp
+TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
+CYLCIC_IRQ      -> housekeeping() -> irqHandlerTask (Core 1)
+SENDCYCLE_IRQ   -> sendcycle()    -> irqHandlerTask (Core 1)
 
 
 // External RTC timer (if present)
