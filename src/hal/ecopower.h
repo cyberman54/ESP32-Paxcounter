@@ -20,7 +20,8 @@
 #define EXT_POWER_ON    0
 #define EXT_POWER_OFF   1
 
-#define HAS_LED (12) // on board  LED
+#define HAS_LED (2) // on board green LED
+#define HAS_LED1 (12) // on board red LED
 //#define HAS_BUTTON (0) // on board button -> don't use, is same as RTC_INT!
 
 // Pins for I2C interface of OLED Display

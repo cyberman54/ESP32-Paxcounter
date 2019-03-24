@@ -113,7 +113,7 @@ void setup() {
   if (I2Caccess)
     xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
 
-  // disable brownout detection
+    // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
@@ -188,14 +188,18 @@ void setup() {
 #endif
 
 #ifdef BAT_MEASURE_EN
- pinMode(BAT_MEASURE_EN, OUTPUT);
+  pinMode(BAT_MEASURE_EN, OUTPUT);
 #endif
 
   // initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
-// switch on power LED if we have 2 LEDs, else use it for status
+#if (HAS_LED1 != NOT_A_PIN)
+  pinMode(HAS_LED1, OUTPUT);
+  strcat_P(features, " LED1");
+#endif
+// use LED for power display if we have additional RGB LED, else for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
   strcat_P(features, " RGB");

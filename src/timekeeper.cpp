@@ -130,8 +130,10 @@ void IRAM_ATTR CLOCKIRQ(void) {
     xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                        &xHigherPriorityTaskWoken);
 
+#ifdef HAS_DISPLAY
 #if (defined GPS_INT || defined RTC_INT)
   TimePulseTick = !TimePulseTick; // flip pulse ticker
+#endif
 #endif
 
   portEXIT_CRITICAL_ISR(&mux);
@@ -213,6 +215,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #define nextmin(t) (t + DCF77_FRAME_SIZE + 1) // next minute
 
+  static bool led1_state = false;
   uint32_t printtime;
   time_t t = *((time_t *)taskparameter), last_printtime = 0; // UTC time seconds
   TickType_t startTime;
@@ -242,6 +245,14 @@ void clock_loop(void *taskparameter) { // ClockTask
       continue;
 
     last_printtime = t;
+
+#ifdef HAS_LED1
+    if (led1_state)
+      switch_LED1(LED_OFF);
+    else
+      switch_LED1(LED_ON);
+    led1_state = !led1_state;
+#endif
 
 #if defined HAS_IF482
 

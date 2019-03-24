@@ -107,6 +107,26 @@ void switch_LED(uint8_t state) {
 #endif
 }
 
+void switch_LED1(uint8_t state) {
+#if (HAS_LED1 != NOT_A_PIN)
+  if (state == LED_ON) {
+    // switch LED on
+#ifdef LED1_ACTIVE_LOW
+    digitalWrite(HAS_LED1, LOW);
+#else
+    digitalWrite(HAS_LED1, HIGH);
+#endif
+  } else if (state == LED_OFF) {
+    // switch LED off
+#ifdef LED1_ACTIVE_LOW
+    digitalWrite(HAS_LED1, HIGH);
+#else
+    digitalWrite(HAS_LED1, LOW);
+#endif
+  }
+#endif
+}
+
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   LEDColor = set_color;                 // set color for RGB LED

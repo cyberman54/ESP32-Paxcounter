@@ -89,7 +89,7 @@ void init_display(const char *Productname, const char *Version) {
 #endif
 
 // Display chip information
-#if(VERBOSE)
+#if (VERBOSE)
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
     u8x8.printf("ESP32 %d cores\nWiFi%s%s\n", chip_info.cores,
@@ -105,7 +105,7 @@ void init_display(const char *Productname, const char *Version) {
     u8x8.print(" v");
     u8x8.println(PROGVERSION);
 
-#if(HAS_LORA)
+#if (HAS_LORA)
     u8x8.println("DEVEUI:");
     os_getDevEui((u1_t *)buf);
     DisplayKey(buf, 8, true);
@@ -114,7 +114,7 @@ void init_display(const char *Productname, const char *Version) {
     u8x8.clear();
     u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
     u8x8.draw2x2String(0, 0, "PAX:0");
-#if(BLECOUNTER)
+#if (BLECOUNTER)
     u8x8.setCursor(0, 3);
     u8x8.printf("BLTH:0");
 #endif
@@ -131,7 +131,8 @@ void refreshtheDisplay() {
 
   uint8_t msgWaiting;
   char timeState, buff[16];
-  const time_t t = myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
+  const time_t t =
+      myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
@@ -163,7 +164,7 @@ void refreshtheDisplay() {
 #endif
 
 // update GPS status (line 2)
-#if(HAS_GPS)
+#if (HAS_GPS)
     // have we ever got valid gps data?
     if (gps.passedChecksum() > 0) {
       u8x8.setCursor(9, 2);
@@ -178,7 +179,7 @@ void refreshtheDisplay() {
 #endif
 
     // update bluetooth counter + LoRa SF (line 3)
-#if(BLECOUNTER)
+#if (BLECOUNTER)
     u8x8.setCursor(0, 3);
     if (cfg.blescan)
       u8x8.printf("BLTH:%-5d", macs_ble);
@@ -186,7 +187,7 @@ void refreshtheDisplay() {
       u8x8.printf("%s", "BLTH:off");
 #endif
 
-#if(HAS_LORA)
+#if (HAS_LORA)
     u8x8.setCursor(11, 3);
     u8x8.printf("SF:");
     if (cfg.adrmode) // if ADR=on then display SF value inverse
@@ -209,7 +210,7 @@ void refreshtheDisplay() {
     u8x8.setCursor(10, 5);
     u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
-#if(HAS_LORA)
+#if (HAS_LORA)
     u8x8.setCursor(0, 6);
 #if (!defined HAS_DCF77) && (!defined HAS_IF482)
     // update LoRa status display (line 6)
