@@ -140,10 +140,10 @@ void process_timesync_req(void *taskparameter) {
   if (timeIsValid(time_to_set)) {
 
     // wait until top of second with 4ms precision
-    time_to_set++; // advance time 1 sec wait time
     vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
 
 #ifdef HAS_RTC
+    time_to_set++; // advance time 1 sec wait time
     // set RTC time and calibrate RTC_INT pulse on top of second
     set_rtctime(time_to_set, no_mutex);
 #endif
@@ -151,7 +151,7 @@ void process_timesync_req(void *taskparameter) {
 #if (!defined GPS_INT && !defined RTC_INT)
     // sync pps timer to top of second
     timerRestart(ppsIRQ); // reset pps timer
-    CLOCKIRQ();           // fire clock pps
+    CLOCKIRQ();           // fire clock pps, advances time 1 sec
 #endif
 
     setTime(time_to_set); // set the time on top of second
