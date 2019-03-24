@@ -10,6 +10,7 @@
 
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define HAS_LED NOT_A_PIN // green on board LED is useless, is GPIO25, which switches power for Lora+Display
+
 //#define EXT_POWER_SW GPIO_NUM_25 // switches power for LoRa chip + display (0 = off / 1 = on)
 //#define EXT_POWER_ON    1
 //#define EXT_POWER_OFF   0
