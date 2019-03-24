@@ -503,7 +503,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   if (timeIsValid(*pUserUTCTime)) {
     setTime(*pUserUTCTime);
 #ifdef HAS_RTC
-    set_rtctime(*pUserUTCTime); // calibrate RTC if we have one
+    set_rtctime(*pUserUTCTime, do_mutex); // calibrate RTC if we have one
 #endif
     timeSource = _lora;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
