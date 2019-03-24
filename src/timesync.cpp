@@ -119,10 +119,10 @@ void process_timesync_req(void *taskparameter) {
   time_offset_ms /= TIME_SYNC_SAMPLES;
 
   // calculate time offset with millisecond precision using time base
-  // of LMIC os, since we use LMIC's ostime_t txEnd as tx timestamp
-  time_offset_ms += milliseconds(osticks2ms(os_getTime()));
+  // of LMIC os, since we use LMIC's ostime_t txEnd as tx timestamp.
   // apply calibration factor for processing time
-  time_offset_ms += milliseconds(TIME_SYNC_FIXUP);
+  time_offset_ms +=
+      milliseconds(osticks2ms(os_getTime())) + milliseconds(TIME_SYNC_FIXUP);
 
   // calculate absolute time in UTC epoch
   // convert to whole seconds, floor
@@ -136,18 +136,26 @@ void process_timesync_req(void *taskparameter) {
   // adjust system time
   if (timeIsValid(time_to_set)) {
 
-    // wait until top of second
-    vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
-    time_to_set++; // advance time 1 sec wait time
+#ifdef HAS_RTC
+    // get and lock access to i2c before we start time sync
+    if (I2C_MUTEX_LOCK()) {
+#endif
+
+      // wait until top of second with 4ms precision
+      time_to_set++; // advance time 1 sec wait time
+      vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
+
+#ifdef HAS_RTC
+      // set RTC time and, if he have, calibrate RTC_INT pulse on top of second
+      set_rtctime(time_to_set, no_mutex);
+      I2C_MUTEX_UNLOCK();
+    } // release i2c bus access
+#endif
 
 #if (!defined GPS_INT && !defined RTC_INT)
-    // sync esp32 hardware timer based pps to top of second
+      // sync pps timer to top of second
     timerRestart(ppsIRQ); // reset pps timer
-    CLOCKIRQ();           // fire clock pps interrupt
-
-#elif defined HAS_RTC
-    // calibrate RTC and RTC_INT pulse on top of second
-    set_rtctime(time_to_set);
+    CLOCKIRQ();           // fire clock pps
 #endif
 
     setTime(time_to_set); // set the time on top of second

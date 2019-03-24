@@ -20,8 +20,6 @@ HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 
 Ticker timesyncer;
 
-static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 time_t timeProvider(void) {
@@ -32,7 +30,7 @@ time_t timeProvider(void) {
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
 #ifdef HAS_RTC
-    set_rtctime(t); // calibrate RTC
+    set_rtctime(t, do_mutex); // calibrate RTC
 #endif
     timeSource = _gps;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
@@ -121,7 +119,6 @@ void timepulse_start(void) {
 // interrupt service routine triggered by either pps or esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
-  portENTER_CRITICAL_ISR(&mux);
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
   SyncToPPS(); // calibrates UTC systime and advances it +1, see microTime.h
@@ -136,12 +133,11 @@ void IRAM_ATTR CLOCKIRQ(void) {
 #endif
 #endif
 
-  portEXIT_CRITICAL_ISR(&mux);
-
   // yield only if we should
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }
+
 
 // helper function to check plausibility of a time
 time_t timeIsValid(time_t const t) {
@@ -208,6 +204,7 @@ void clock_init(void) {
   assert(ClockTask); // has clock task started?
 } // clock_init
 
+
 void clock_loop(void *taskparameter) { // ClockTask
 
   // caveat: don't use now() in this task, it will cause a race condition
@@ -224,9 +221,8 @@ void clock_loop(void *taskparameter) { // ClockTask
   uint8_t *DCFpulse;                  // pointer on array with DCF pulse bits
   DCFpulse = DCF77_Frame(nextmin(t)); // load first DCF frame before start
 #elif defined HAS_IF482
-  static TickType_t txDelay =
-      pdMS_TO_TICKS(1000 - 2) - tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
-  // 2ms margin for processing time
+  static TickType_t txDelay = pdMS_TO_TICKS(1000 - IF482_SYNC_FIXUP) -
+                              tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
 #endif
 
   // output the next second's pulse after timepulse arrived
@@ -246,7 +242,8 @@ void clock_loop(void *taskparameter) { // ClockTask
 
     last_printtime = t;
 
-#ifdef HAS_LED1
+// pps blink on secondary LED if we have one
+#ifdef HAS_TWO_LED
     if (led1_state)
       switch_LED1(LED_OFF);
     else
