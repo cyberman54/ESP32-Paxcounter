@@ -43,8 +43,7 @@
 
 // I2C bus access control
 #define I2C_MUTEX_LOCK()                                                       \
-  xSemaphoreTake(I2Caccess, (3 * DISPLAYREFRESH_MS / portTICK_PERIOD_MS)) ==   \
-      pdTRUE
+  xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(3 * DISPLAYREFRESH_MS)) == pdTRUE
 #define I2C_MUTEX_UNLOCK() xSemaphoreGive(I2Caccess)
 
 // Struct holding devices's runtime configuration
@@ -99,7 +98,7 @@ typedef struct {
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
-enum mutexselect_t { no_mutex, do_mutex};
+enum mutexselect_t { no_mutex, do_mutex };
 
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
@@ -124,11 +123,11 @@ extern time_t userUTCTime;
 #include "payload.h"
 #include "blescan.h"
 
-#if(HAS_GPS)
+#if (HAS_GPS)
 #include "gpsread.h"
 #endif
 
-#if(HAS_LORA)
+#if (HAS_LORA)
 #include "lorawan.h"
 #endif
 
@@ -148,7 +147,7 @@ extern time_t userUTCTime;
 #include "antenna.h"
 #endif
 
-#if(HAS_SENSORS)
+#if (HAS_SENSORS)
 #include "sensor.h"
 #endif
 
