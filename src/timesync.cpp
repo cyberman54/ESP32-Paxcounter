@@ -160,8 +160,7 @@ void process_timesync_req(void *taskparameter) {
     I2C_MUTEX_UNLOCK();
 
     timeSource = _lora;
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60,
-                      timeSync); // set to regular repeat
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
     ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
              millis() / 1000.0);
   } else
