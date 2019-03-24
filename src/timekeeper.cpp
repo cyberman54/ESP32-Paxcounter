@@ -43,7 +43,7 @@ time_t timeProvider(void) {
   t = get_rtctime();
   if (t) {
     timeSource = _rtc;
-    timesyncer.attach(60, timeSync); // short retry
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync); // short retry
   }
 #endif
 
@@ -57,7 +57,7 @@ time_t timeProvider(void) {
 
   if (!t) {
     timeSource = _unsynced;
-    timesyncer.attach(60, timeSync); // short retry
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync); // short retry
   }
 
   return t;
@@ -138,7 +138,6 @@ void IRAM_ATTR CLOCKIRQ(void) {
     portYIELD_FROM_ISR();
 }
 
-
 // helper function to check plausibility of a time
 time_t timeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
@@ -203,7 +202,6 @@ void clock_init(void) {
 
   assert(ClockTask); // has clock task started?
 } // clock_init
-
 
 void clock_loop(void *taskparameter) { // ClockTask
 
