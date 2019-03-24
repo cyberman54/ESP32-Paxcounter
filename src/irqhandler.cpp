@@ -3,14 +3,13 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-
 // irq handler task, handles all our application level interrupts
 void irqHandler(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
   uint32_t InterruptStatus;
+  static bool mask_irq = false;
 
   // task remains in blocked state until it is notified by an irq
   for (;;) {
@@ -18,6 +17,16 @@ void irqHandler(void *pvParameters) {
                     ULONG_MAX,        // Clear all bits on exit
                     &InterruptStatus, // Receives the notification value
                     portMAX_DELAY);   // wait forever
+
+    // interrupt handler to be enabled?
+    if (InterruptStatus & UNMASK_IRQ)
+      mask_irq = false;
+    else if (mask_irq)
+      continue; // suppress processing if interrupt handler is disabled
+
+    // interrupt handler to be disabled?
+    if (InterruptStatus & MASK_IRQ)
+      mask_irq = true;
 
 // button pressed?
 #ifdef HAS_BUTTON
