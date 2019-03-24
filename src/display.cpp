@@ -198,35 +198,49 @@ void refreshtheDisplay() {
       u8x8.setInverseFont(0);
 #endif // HAS_LORA
 
-    // update wifi counter + channel display (line 4)
+    // line 4: update wifi counter + channel display
     u8x8.setCursor(0, 4);
     u8x8.printf("WIFI:%-5d", macs_wifi);
     u8x8.setCursor(11, 4);
     u8x8.printf("ch:%02d", channel);
 
-    // update RSSI limiter status & free memory display (line 5)
+    // line 5: update RSSI limiter status & free memory display
     u8x8.setCursor(0, 5);
     u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
     u8x8.setCursor(10, 5);
     u8x8.printf("%4dKB", getFreeRAM() / 1024);
 
-#if (HAS_LORA)
+    // line 6: update time-of-day or LoRa status display
     u8x8.setCursor(0, 6);
-#if (!defined HAS_DCF77) && (!defined HAS_IF482)
-    // update LoRa status display (line 6)
-    u8x8.printf("%-16s", display_line6);
-#else // we want a systime display instead LoRa status
+#if (TIME_SYNC_INTERVAL)
+    // we want a systime display instead LoRa status
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
+// display inverse timeState if clock controller is enabled
+#if (defined HAS_DCF77) || (defined HAS_IF482)
+    u8x8.printf("%02d:%02d:%02d", hour(t), minute(t), second(t), timeState);
+    u8x8.setInverseFont(1);
+    u8x8.printf("%c", timeState);
+    u8x8.setInverseFont(0);
+    u8x8.printf(" %2d.%3s", day(t), printmonth[month(t)]);
+#else
     u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
                 timeState, day(t), printmonth[month(t)]);
+#endif // HAS_DCF77 || HAS_IF482
+
+#else // update LoRa status display
+#if (HAS_LORA)
+    u8x8.printf("%-16s", display_line6);
 #endif
 
-    // update LMiC event display (line 7)
+#endif // TIME_SYNC_INTERVAL
+
+#if (HAS_LORA)
+    // line 7: update LMiC event display
     u8x8.setCursor(0, 7);
     u8x8.printf("%-14s", display_line7);
 
-    // update LoRa send queue display (line 7)
+    // update LoRa send queue display
     msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
     if (msgWaiting) {
       sprintf(buff, "%2d", msgWaiting);
