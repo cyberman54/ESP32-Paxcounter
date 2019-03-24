@@ -159,9 +159,14 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 | 6   | User sensor 3 |
 | 7   | reserved      |
 
-# Clock controller
 
-Paxcounter can be used to sync a clock which has DCF77 or IF482 time telegram input with. Use case of this function is to have paxcounter hardware integrated in clocks, and use it for both counting of pax and controlling the clock. Supported external time sources are GPS time, LORAWAN network time (v1.1) and on board RTC time. Precision of the synthetic DCF77 signal depends on precision of on board available time base. Supported are both external time base (e.g. timepulse pin of GPS chip or oscillator output of RTC chip) and internal ESP32 hardware timer. Selection of time base and clock frequency is done by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h).
+# Time sync
+
+Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Precision of time-of-day depends on local time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). If your LORAWAN network does not support network time, you can run a timeserver application with Node-Red using the [**Timeserver code**](/src/TTN/Nodered-Timeserver.json) in TTN subdirectory. Connect the MQTT nodes in Node-Red to the same LORAWAN application as the paxocunter device.
+
+# Wall clock controller
+
+Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set *#define HAS_IF482* or *#define HAS_DCF77* in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock, to use it for both counting of pax and controlling the clock.  Precision of the synthetic DCF77 signal depends on precision of on board available time base (seetTime sync).
 
 # Payload format
 
