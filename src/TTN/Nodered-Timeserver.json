@@ -49,7 +49,7 @@
         "to": "",
         "reg": false,
         "x": 240,
-        "y": 464,
+        "y": 500,
         "wires": [
             [
                 "84f1cda2.069e7"
@@ -82,7 +82,7 @@
         "retain": "",
         "broker": "2a15ab6f.ab2244",
         "x": 730,
-        "y": 464,
+        "y": 500,
         "wires": []
     },
     {
@@ -135,7 +135,7 @@
         "action": "",
         "pretty": false,
         "x": 580,
-        "y": 464,
+        "y": 500,
         "wires": [
             [
                 "72d5e7ee.d1eba8"
@@ -165,7 +165,7 @@
         "action": "",
         "property": "payload.payload_raw",
         "x": 420,
-        "y": 464,
+        "y": 500,
         "wires": [
             [
                 "dac8aafa.389298"
@@ -212,11 +212,11 @@
         "type": "function",
         "z": "449c1517.e25f4c",
         "name": "Generate Time Answer",
-        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\nfunction timecompare(a, b) {\n  \n  const timeA = a.time;\n  const timeB = b.time;\n\n  let comparison = 0;\n  if (timeA > timeB) {\n    comparison = 1;\n  } else if (timeA < timeB) {\n    comparison = -1;\n  }\n  return comparison;\n}\n\nlet confidence = 2000; // max millisecond diff gateway time to server time\n\nvar gateways = msg.payload.metadata.gateways;\nvar gateway_time = gateways.map(gw => {\n    return {\n      time: new Date(gw.time),\n      eui: gw.gtw_id,\n      }\n  });\nvar server_time = new Date(msg.payload.metadata.time);\n\n// validate all gateway timestamps against lorawan server_time (which is assumed to be recent)\nvar gw_timestamps = gateway_time.filter(function (element) {\n  return ((element.time > (server_time - confidence) && element.time <= server_time));\n});\n\n// if no timestamp left, we have no valid one and exit\nif (gw_timestamps.length === 0) return null;\n\n// sort time array in ascending order to find most recent timestamp for time answer\ngw_timestamps.sort(timecompare);\n\nvar timestamp = gw_timestamps[0].time;\nvar eui = gw_timestamps[0].eui;\nvar offset = server_time - timestamp;\n\nvar seconds = Math.floor(timestamp/1000);\nvar fractions = (timestamp % 1000) / 4;\nvar seqno = msg.payload.payload_raw[0];\n\nlet buf = new ArrayBuffer(6);\nnew DataView(buf).setUint8(0, seqno);\nnew DataView(buf).setUint32(1, seconds);\nnew DataView(buf).setUint8(5, fractions);\n\nmsg.payload = new Buffer(new Uint8Array(buf));\nvar infoMsg = { payload: eui };\nvar offsetMsg = { payload: offset };\n\nreturn [infoMsg, offsetMsg, msg];",
-        "outputs": 3,
+        "func": "/* LoRaWAN Timeserver\n\nconstruct 6 byte timesync_answer from gateway timestamp and node's time_sync_req\n\nbyte    meaning\n0       sequence number (taken from node's time_sync_req)\n1..4    current second (from epoch time 1970)\n5       1/250ths fractions of current second\n\n*/\n\nfunction timecompare(a, b) {\n  \n  const timeA = a.time;\n  const timeB = b.time;\n\n  let comparison = 0;\n  if (timeA > timeB) {\n    comparison = 1;\n  } else if (timeA < timeB) {\n    comparison = -1;\n  }\n  return comparison;\n}\n\nlet confidence = 2000; // max millisecond diff gateway time to server time\n\nvar deviceMsg = { payload: msg.payload.dev_id };\nvar gateways = msg.payload.metadata.gateways;\nvar gateway_time = gateways.map(gw => {\n    return {\n      time: new Date(gw.time),\n      eui: gw.gtw_id,\n      }\n  });\nvar server_time = new Date(msg.payload.metadata.time);\n\n// validate all gateway timestamps against lorawan server_time (which is assumed to be recent)\nvar gw_timestamps = gateway_time.filter(function (element) {\n  return ((element.time > (server_time - confidence) && element.time <= server_time));\n});\n\n// if no timestamp left, we have no valid one and exit\nif (gw_timestamps.length === 0) return [\"n/a\", \"n/a\", deviceMsg, 0xff];\n\n// sort time array in ascending order to find most recent timestamp for time answer\ngw_timestamps.sort(timecompare);\n\nvar timestamp = gw_timestamps[0].time;\nvar eui = gw_timestamps[0].eui;\nvar offset = server_time - timestamp;\n\nvar seconds = Math.floor(timestamp/1000);\nvar fractions = (timestamp % 1000) / 4;\nvar seqno = msg.payload.payload_raw[0];\n\nlet buf = new ArrayBuffer(6);\nnew DataView(buf).setUint8(0, seqno);\nnew DataView(buf).setUint32(1, seconds);\nnew DataView(buf).setUint8(5, fractions);\n\nmsg.payload = new Buffer(new Uint8Array(buf));\nvar euiMsg = { payload: eui };\nvar offsetMsg = { payload: offset };\n\nreturn [euiMsg, offsetMsg, deviceMsg, msg];",
+        "outputs": 4,
         "noerr": 0,
         "x": 360,
-        "y": 320,
+        "y": 340,
         "wires": [
             [
                 "37722d4b.08e3c2",
@@ -227,12 +227,16 @@
                 "46ce842a.614d5c"
             ],
             [
+                "a5dbb4ef.019168"
+            ],
+            [
                 "49e3c067.e782e"
             ]
         ],
         "outputLabels": [
             "gw_eui",
             "offset_ms",
+            "device",
             "time_sync_ans"
         ]
     },
@@ -241,7 +245,7 @@
         "type": "debug",
         "z": "449c1517.e25f4c",
         "name": "Timeserver Gw",
-        "active": true,
+        "active": false,
         "tosidebar": false,
         "console": false,
         "tostatus": true,
@@ -264,7 +268,7 @@
         "format": "{{msg.payload}}",
         "layout": "col-center",
         "x": 810,
-        "y": 340,
+        "y": 336,
         "wires": []
     },
     {
@@ -290,7 +294,7 @@
         "seg1": "",
         "seg2": "",
         "x": 710,
-        "y": 420,
+        "y": 416,
         "wires": []
     },
     {
@@ -302,11 +306,11 @@
         "width": 0,
         "height": 0,
         "name": "Recent server",
-        "label": "",
+        "label": "Gateway",
         "format": "{{msg.payload}}",
         "layout": "col-center",
         "x": 700,
-        "y": 380,
+        "y": 376,
         "wires": []
     },
     {
@@ -318,12 +322,28 @@
         "outputs": 1,
         "noerr": 0,
         "x": 670,
-        "y": 340,
+        "y": 336,
         "wires": [
             [
                 "8712a5ac.ed18e8"
             ]
         ]
+    },
+    {
+        "id": "a5dbb4ef.019168",
+        "type": "ui_text",
+        "z": "449c1517.e25f4c",
+        "group": "edb7cc8d.a3817",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "Recent Device",
+        "label": "Device",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "x": 700,
+        "y": 456,
+        "wires": []
     },
     {
         "id": "2a15ab6f.ab2244",

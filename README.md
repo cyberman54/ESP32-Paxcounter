@@ -31,6 +31,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 - Heltec: LoRa-32 v1 and v2
 - TTGO: T1, T2, T3, T-Beam, T-Fox
 - Pycom: LoPy, LoPy4, FiPy
+- Radioshuttle.de: [ECO Power Board](https://www.radioshuttle.de/esp32-eco-power/esp32-eco-power-board/)
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 - Adafruit ESP32 Feather + LoRa Wing + OLED Wing, #IoT Octopus32 (Octopus + ESP32 Feather)
@@ -42,9 +43,9 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - Generic ESP32
 
 Depending on board hardware following features are supported:
-- LED (power/status)
-- OLED Display (detailed status)
-- RGB LED (colorized status)
+- LED (shows power & status)
+- OLED Display (shows detailed status)
+- RGB LED (shows colorized status)
 - Button
 - Silicon unique ID
 - Battery voltage monitoring
@@ -52,6 +53,7 @@ Depending on board hardware following features are supported:
 - Environmental sensor (Bosch BME280/BME680 I2C)
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
+- Switch external power / battery
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -157,9 +159,14 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 | 6   | User sensor 3 |
 | 7   | reserved      |
 
-# Clock controller
 
-Paxcounter can be used to sync a clock which has DCF77 or IF482 time telegram input with. Use case of this function is to have paxcounter hardware integrated in clocks, and use it for both counting of pax and controlling the clock. Supported external time sources are GPS time, LORAWAN network time (v1.1) and on board RTC time. Precision of the synthetic DCF77 signal depends on precision of on board available time base. Supported are both external time base (e.g. timepulse pin of GPS chip or oscillator output of RTC chip) and internal ESP32 hardware timer. Selection of time base and clock frequency is done by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h).
+# Time sync
+
+Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the [**Timeserver code**](/src/TTN/Nodered-Timeserver.json) in TTN subdirectory. Configure MQTT nodes in Node-Red to the same LORAWAN application as  paxocunter device is using.
+
+# Wall clock controller
+
+Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set *#define HAS_IF482* or *#define HAS_DCF77* in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.
 
 # Payload format
 
@@ -187,8 +194,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #1:** Paxcount data
 
-	byte 1-2:	Number of unique pax, first seen on Wifi
-	byte 3-4:	Number of unique pax, first seen on Bluetooth [omited if BT disabled]
+	byte 1-2:	Number of unique devices, seen on Wifi
+	byte 3-4:	Number of unique devices, seen on Bluetooth [ommited if BT disabled]
 
 **Port #2:** Device status query result
 

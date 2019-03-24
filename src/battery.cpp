@@ -8,7 +8,7 @@ esp_adc_cal_characteristics_t *adc_characs =
     (esp_adc_cal_characteristics_t *)calloc(
         1, sizeof(esp_adc_cal_characteristics_t));
 
-static const adc1_channel_t adc_channel = HAS_BATTERY_PROBE;
+static const adc1_channel_t adc_channel = BAT_MEASURE_ADC;
 static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
 #endif
@@ -43,19 +43,23 @@ uint16_t read_voltage() {
   }
   adc_reading /= NO_OF_SAMPLES;
   // Convert ADC reading to voltage in mV
-  uint16_t voltage =
-      (uint16_t)esp_adc_cal_raw_to_voltage(adc_reading, adc_characs);
-#ifdef BATT_FACTOR
-  voltage *= BATT_FACTOR;
+  uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_characs);
+#ifdef BAT_VOLTAGE_DIVIDER
+  voltage *= BAT_VOLTAGE_DIVIDER;
 #endif
-  return voltage;
+
+#ifdef BAT_MEASURE_EN // turn ext. power off
+  digitalWrite(EXT_POWER_SW, EXT_POWER_OFF);
+#endif
+
+  return (uint16_t)voltage;
 #else
   return 0;
 #endif
 }
 
 bool batt_sufficient() {
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
   uint16_t volts = read_voltage();
   return ((volts < 1000) ||
           (volts > OTA_MIN_BATT)); // no battery or battery sufficient

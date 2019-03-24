@@ -38,5 +38,6 @@ void rgb_set_color(uint16_t hue);
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration);
 void ledLoop(void *parameter);
 void switch_LED(uint8_t state);
+void switch_LED1(uint8_t state);
 
 #endif

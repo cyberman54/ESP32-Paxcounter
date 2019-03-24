@@ -14,6 +14,10 @@ static const char TAG[] = __FILE__;
 // symbol to display current time source
 const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
+#ifdef HAS_IF482
+HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
+#endif
+
 Ticker timesyncer;
 
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
@@ -26,7 +30,7 @@ time_t timeProvider(void) {
   t = get_gpstime(); // fetch recent time from last NEMA record
   if (t) {
 #ifdef HAS_RTC
-    set_rtctime(t); // calibrate RTC
+    set_rtctime(t, do_mutex); // calibrate RTC
 #endif
     timeSource = _gps;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
@@ -115,23 +119,25 @@ void timepulse_start(void) {
 // interrupt service routine triggered by either pps or esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
-  BaseType_t xHigherPriorityTaskWoken;
-  SyncToPPS(); // calibrates UTC systime, see microTime.h
-  xHigherPriorityTaskWoken = pdFALSE;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  SyncToPPS(); // calibrates UTC systime and advances it +1, see microTime.h
 
   if (ClockTask != NULL)
     xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                        &xHigherPriorityTaskWoken);
 
-#if defined GPS_INT || defined RTC_INT
-  xSemaphoreGiveFromISR(TimePulse, &xHigherPriorityTaskWoken);
-  TimePulseTick = !TimePulseTick; // flip ticker
+#ifdef HAS_DISPLAY
+#if (defined GPS_INT || defined RTC_INT)
+  TimePulseTick = !TimePulseTick; // flip pulse ticker
+#endif
 #endif
 
   // yield only if we should
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }
+
 
 // helper function to check plausibility of a time
 time_t timeIsValid(time_t const t) {
@@ -164,8 +170,8 @@ TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
 
   uint32_t databits = ((config & 0x0c) >> 2) + 5;
   uint32_t stopbits = ((config & 0x20) >> 5) + 1;
-  uint32_t txTime = (databits + stopbits + 2) * framesize * 1000.0 / baud;
-  // +1 ms margin for the startbit +1 ms for pending processing time
+  uint32_t txTime = (databits + stopbits + 1) * framesize * 1000.0 / baud;
+  // +1 for the startbit
 
   return round(txTime);
 }
@@ -198,6 +204,7 @@ void clock_init(void) {
   assert(ClockTask); // has clock task started?
 } // clock_init
 
+
 void clock_loop(void *taskparameter) { // ClockTask
 
   // caveat: don't use now() in this task, it will cause a race condition
@@ -205,29 +212,49 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #define nextmin(t) (t + DCF77_FRAME_SIZE + 1) // next minute
 
+  static bool led1_state = false;
   uint32_t printtime;
-  time_t t = *((time_t *)taskparameter); // UTC time seconds
+  time_t t = *((time_t *)taskparameter), last_printtime = 0; // UTC time seconds
+  TickType_t startTime;
 
-  // preload first DCF frame before start
 #ifdef HAS_DCF77
-  uint8_t *DCFpulse; // pointer on array with DCF pulse bits
-  DCFpulse = DCF77_Frame(nextmin(t));
+  uint8_t *DCFpulse;                  // pointer on array with DCF pulse bits
+  DCFpulse = DCF77_Frame(nextmin(t)); // load first DCF frame before start
+#elif defined HAS_IF482
+  static TickType_t txDelay = pdMS_TO_TICKS(1000 - IF482_SYNC_FIXUP) -
+                              tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
 #endif
 
   // output the next second's pulse after timepulse arrived
   for (;;) {
+    // ensure the notification state is not already pending
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
                     portMAX_DELAY); // wait for timepulse
 
+    startTime = xTaskGetTickCount();
+
     t = time_t(printtime); // UTC time seconds
 
-    // no confident time -> suppress clock output
-    if ((timeStatus() == timeNotSet) || !(timeIsValid(t)))
+    // no confident or no recent time -> suppress clock output
+    if ((timeStatus() == timeNotSet) || !(timeIsValid(t)) ||
+        (t == last_printtime))
       continue;
+
+    last_printtime = t;
+
+// pps blink on secondary LED if we have one
+#ifdef HAS_TWO_LED
+    if (led1_state)
+      switch_LED1(LED_OFF);
+    else
+      switch_LED1(LED_ON);
+    led1_state = !led1_state;
+#endif
 
 #if defined HAS_IF482
 
-    IF482_Pulse(t);
+    vTaskDelayUntil(&startTime, txDelay); // wait until moment to fire
+    IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
 
 #elif defined HAS_DCF77
 

@@ -84,18 +84,6 @@ not evaluated by model BU-190, use "F" instead for this model
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-HardwareSerial IF482(2); // use UART #2 (note: #1 may be in use for serial GPS)
-
-// triggered by timepulse to send IF482 signal
-void IF482_Pulse(time_t t) {
-
-  static const TickType_t txDelay =
-      pdMS_TO_TICKS(1000) - tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
-
-  vTaskDelay(txDelay);             // wait until moment to fire
-  IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
-}
-
 String IRAM_ATTR IF482_Frame(time_t printTime) {
 
   time_t t = myTZ.toLocal(printTime);

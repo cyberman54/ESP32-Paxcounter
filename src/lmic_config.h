@@ -19,7 +19,7 @@
 // LMIC LORAWAN STACK SETTINGS
 // --> adapt to your device only if necessary
 
-//#define LMIC_USE_INTERRUPTS
+//#define LMIC_USE_INTERRUPTS 1
 
 //time sync via LoRaWAN network, is not yet supported by TTN (LoRaWAN spec v1.0.3)
 #define LMIC_ENABLE_DeviceTimeReq 1
@@ -35,7 +35,7 @@
 // so consuming more power. You may sharpen (reduce) this value if you are
 // limited on battery. 
 // ATTN: VALUES > 7 WILL CAUSE RECEPTION AND JOIN PROBLEMS WITH HIGH SF RATES
-#define CLOCK_ERROR_PROCENTAGE 3
+#define CLOCK_ERROR_PROCENTAGE 5
 
 // Set this to 1 to enable some basic debug output (using printf) about
 // RF settings used during transmission and reception. Set to 2 to

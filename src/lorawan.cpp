@@ -182,19 +182,19 @@ void onEvent(ev_t ev) {
   switch (ev) {
 
   case EV_SCAN_TIMEOUT:
-    strcpy_P(buff, PSTR("SCAN_TIMEOUT"));
+    strcpy_P(buff, PSTR("SCAN TIMEOUT"));
     break;
 
   case EV_BEACON_FOUND:
-    strcpy_P(buff, PSTR("BEACON_FOUND"));
+    strcpy_P(buff, PSTR("BEACON FOUND"));
     break;
 
   case EV_BEACON_MISSED:
-    strcpy_P(buff, PSTR("BEACON_MISSED"));
+    strcpy_P(buff, PSTR("BEACON MISSED"));
     break;
 
   case EV_BEACON_TRACKED:
-    strcpy_P(buff, PSTR("BEACON_TRACKED"));
+    strcpy_P(buff, PSTR("BEACON TRACKED"));
     break;
 
   case EV_JOINING:
@@ -219,12 +219,16 @@ void onEvent(ev_t ev) {
              cfg.txpower);
     break;
 
+  case EV_RFU1:
+    strcpy_P(buff, PSTR("RFU1"));
+    break;
+
   case EV_JOIN_FAILED:
-    strcpy_P(buff, PSTR("JOIN_FAILED"));
+    strcpy_P(buff, PSTR("JOIN FAILED"));
     break;
 
   case EV_REJOIN_FAILED:
-    strcpy_P(buff, PSTR("REJOIN_FAILED"));
+    strcpy_P(buff, PSTR("REJOIN FAILED"));
     break;
 
   case EV_TXCOMPLETE:
@@ -236,8 +240,8 @@ void onEvent(ev_t ev) {
     }
 #endif
 
-    strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED_ACK")
-                                               : PSTR("TX_COMPLETE"));
+    strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
+                                               : PSTR("TX COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
 
     if (LMIC.dataLen) { // did we receive payload data -> display info
@@ -265,7 +269,7 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_LOST_TSYNC:
-    strcpy_P(buff, PSTR("LOST_TSYNC"));
+    strcpy_P(buff, PSTR("LOST TSYNC"));
     break;
 
   case EV_RESET:
@@ -274,38 +278,46 @@ void onEvent(ev_t ev) {
 
   case EV_RXCOMPLETE:
     // data received in ping slot
-    strcpy_P(buff, PSTR("RX_COMPLETE"));
+    strcpy_P(buff, PSTR("RX COMPLETE"));
     break;
 
   case EV_LINK_DEAD:
-    strcpy_P(buff, PSTR("LINK_DEAD"));
+    strcpy_P(buff, PSTR("LINK DEAD"));
     break;
 
   case EV_LINK_ALIVE:
     strcpy_P(buff, PSTR("LINK_ALIVE"));
     break;
 
+  case EV_SCAN_FOUND:
+    strcpy_P(buff, PSTR("SCAN FOUND"));
+    break;
+
   case EV_TXSTART:
     if (!(LMIC.opmode & OP_JOINING))
-      strcpy_P(buff, PSTR("TX_START"));
+      strcpy_P(buff, PSTR("TX START"));
     break;
 
-  case EV_SCAN_FOUND:
-    strcpy_P(buff, PSTR("SCAN_FOUND"));
+  case EV_TXCANCELED:
+    strcpy_P(buff, PSTR("TX CANCELLED"));
     break;
 
-  case EV_RFU1:
-    strcpy_P(buff, PSTR("RFU1"));
+  case EV_RXSTART:
+    strcpy_P(buff, PSTR("RX START"));
+    break;
+
+  case EV_JOIN_TXCOMPLETE:
+    strcpy_P(buff, PSTR("JOIN WAIT"));
     break;
 
   default:
-    sprintf_P(buff, PSTR("UNKNOWN_EVENT_%d"), ev);
+    sprintf_P(buff, PSTR("LMIC EV %d"), ev);
     break;
   }
 
   // Log & Display if asked
   if (*buff) {
-    ESP_LOGI(TAG, "EV_%s", buff);
+    ESP_LOGI(TAG, "%s", buff);
     sprintf(display_line7, buff);
   }
 }
@@ -491,7 +503,7 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   if (timeIsValid(*pUserUTCTime)) {
     setTime(*pUserUTCTime);
 #ifdef HAS_RTC
-    set_rtctime(*pUserUTCTime); // calibrate RTC if we have one
+    set_rtctime(*pUserUTCTime, do_mutex); // calibrate RTC if we have one
 #endif
     timeSource = _lora;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat

@@ -107,6 +107,26 @@ void switch_LED(uint8_t state) {
 #endif
 }
 
+void switch_LED1(uint8_t state) {
+#ifdef HAS_TWO_LED
+  if (state == LED_ON) {
+    // switch LED on
+#ifdef LED1_ACTIVE_LOW
+    digitalWrite(HAS_TWO_LED, LOW);
+#else
+    digitalWrite(HAS_TWO_LED, HIGH);
+#endif
+  } else if (state == LED_OFF) {
+    // switch LED off
+#ifdef LED1_ACTIVE_LOW
+    digitalWrite(HAS_TWO_LED, HIGH);
+#else
+    digitalWrite(HAS_TWO_LED, LOW);
+#endif
+  }
+#endif // HAS_TWO_LED
+}
+
 void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   LEDColor = set_color;                 // set color for RGB LED
@@ -137,7 +157,7 @@ void ledLoop(void *parameter) {
       // No custom blink, check LoRaWAN state
     } else {
 
-#if(HAS_LORA)
+#if (HAS_LORA)
       // LED indicators for viusalizing LoRaWAN state
       if (LMIC.opmode & (OP_JOINING | OP_REJOIN)) {
         LEDColor = COLOR_YELLOW;

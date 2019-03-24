@@ -36,7 +36,7 @@ looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by timer irq
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
-timesync_req  1     4     temporary task for processing time sync requests
+timesync_req  1     2     temporary task for processing time sync requests
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -46,9 +46,9 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
-0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS in paxcounter.conf)
-1 ppsIRQ -> pps clock irq -> 1sec 
-2	unused 
+0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
+1 ppsIRQ -> pps clock irq -> 1sec
+2	unused
 3	unused
 
 
@@ -56,14 +56,14 @@ Tasks using i2c bus all must have same priority, because using mutex semaphore
 -------------------------------------------------------------------------------
 
 fired by hardware
-DisplayIRQ      -> esp32 timer 0  -> irqhandler.cpp
-CLOCKIRQ        -> esp32 timer 1  -> timekeeper.cpp
-ButtonIRQ       -> external gpio  -> irqhandler.cpp
+DisplayIRQ      -> esp32 timer 0  -> irqHandlerTask (Core 1)
+CLOCKIRQ        -> esp32 timer 1  -> ClockTask (Core 1)
+ButtonIRQ       -> external gpio  -> irqHandlerTask (Core 1)
 
 fired by software (Ticker.h)
-TIMESYNC_IRQ    -> timeSync()     -> timerkeeper.cpp
-CYLCIC_IRQ      -> housekeeping() -> cyclic.cpp
-SENDCYCLE_IRQ   -> sendcycle()    -> senddata.cpp
+TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
+CYLCIC_IRQ      -> housekeeping() -> irqHandlerTask (Core 1)
+SENDCYCLE_IRQ   -> sendcycle()    -> irqHandlerTask (Core 1)
 
 
 // External RTC timer (if present)
@@ -84,7 +84,7 @@ uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL;
 
 TaskHandle_t irqHandlerTask, ClockTask;
-SemaphoreHandle_t I2Caccess, TimePulse;
+SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
 time_t userUTCTime = 0;
 timesource_t timeSource = _unsynced;
@@ -113,9 +113,7 @@ void setup() {
   if (I2Caccess)
     xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
 
-  TimePulse = xSemaphoreCreateBinary(); // as signal that shows time pulse flip
-
-  // disable brownout detection
+    // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
@@ -156,7 +154,7 @@ void setup() {
            ESP.getFlashChipSpeed());
   ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
 
-#if(HAS_LORA)
+#if (HAS_LORA)
   ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
            LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
   ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
@@ -167,7 +165,7 @@ void setup() {
   showLoraKeys();
 #endif // HAS_LORA
 
-#if(HAS_GPS)
+#if (HAS_GPS)
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
@@ -182,18 +180,26 @@ void setup() {
   strcat_P(features, " PSRAM");
 #endif
 
-// set low power mode to off
-#ifdef HAS_LOWPOWER_SWITCH
-  pinMode(HAS_LOWPOWER_SWITCH, OUTPUT);
-  digitalWrite(HAS_LOWPOWER_SWITCH, LOW);
-  strcat_P(features, " LPWR");
+// set external power mode
+#ifdef EXT_POWER_SW
+  pinMode(EXT_POWER_SW, OUTPUT);
+  digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
+  strcat_P(features, " VEXT");
+#endif
+
+#ifdef BAT_MEASURE_EN
+  pinMode(BAT_MEASURE_EN, OUTPUT);
 #endif
 
   // initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
-// switch on power LED if we have 2 LEDs, else use it for status
+#ifdef HAS_TWO_LED
+  pinMode(HAS_TWO_LED, OUTPUT);
+  strcat_P(features, " LED1");
+#endif
+// use LED for power display if we have additional RGB LED, else for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
   strcat_P(features, " RGB");
@@ -221,7 +227,7 @@ void setup() {
 #endif
 
 // initialize battery status
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
   strcat_P(features, " BATT");
   calibrate_voltage();
   batt_voltage = read_voltage();
@@ -269,7 +275,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 // initialize gps
-#if(HAS_GPS)
+#if (HAS_GPS)
   strcat_P(features, " GPS");
   if (gps_init()) {
     ESP_LOGI(TAG, "Starting GPS Feed...");
@@ -284,13 +290,13 @@ void setup() {
 #endif
 
 // initialize sensors
-#if(HAS_SENSORS)
+#if (HAS_SENSORS)
   strcat_P(features, " SENS");
   sensor_init();
 #endif
 
 // initialize LoRa
-#if(HAS_LORA)
+#if (HAS_LORA)
   strcat_P(features, " LORA");
   assert(lora_stack_init() == ESP_OK);
 #endif
@@ -425,7 +431,7 @@ void setup() {
 
 void loop() {
   while (1) {
-#if(HAS_LORA)
+#if (HAS_LORA)
     os_runloop_once(); // execute lmic scheduled jobs and events
 #endif
     delay(2); // yield to CPU
