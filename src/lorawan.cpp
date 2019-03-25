@@ -497,19 +497,10 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   // Add the delay between the instant the time was transmitted and
   // the current time
   time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
-  *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (timeIsValid(*pUserUTCTime)) {
-    setTime(*pUserUTCTime);
-#ifdef HAS_RTC
-    set_rtctime(*pUserUTCTime, do_mutex); // calibrate RTC if we have one
-#endif
-    timeSource = _lora;
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
-    ESP_LOGI(TAG, "Received recent time from LoRa");
-  } else
-    ESP_LOGI(TAG, "Invalid time received from LoRa");
+  adjustTime(*pUserUTCTime + requestDelaySec, 0);
+
 } // user_request_network_time_callback
 
 #endif // HAS_LORA

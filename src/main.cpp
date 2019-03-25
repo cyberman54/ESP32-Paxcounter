@@ -31,7 +31,7 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
-clockloop     1     4     generates realtime telegrams for external clock
+clockloop     1     3     generates realtime telegrams for external clock
 looptask      1     1     arduino core -> runs the LMIC LoRa stack
 irqhandler    1     1     executes tasks triggered by timer irq
 gpsloop       1     2     reads data from GPS via serial or i2c

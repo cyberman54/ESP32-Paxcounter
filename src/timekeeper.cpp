@@ -196,7 +196,7 @@ void clock_init(void) {
                           "clockloop",          // name of task
                           2048,                 // stack size of task
                           (void *)&userUTCTime, // start time as task parameter
-                          4,                    // priority of the task
+                          3,                    // priority of the task
                           &ClockTask,           // task handle
                           1);                   // CPU core
 
