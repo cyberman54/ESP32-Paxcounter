@@ -63,8 +63,9 @@ void send_timesync_req() {
 void process_timesync_req(void *taskparameter) {
 
   uint8_t k = 0;
-  uint32_t seq_no = 0;
+  uint32_t seq_no = 0, time_to_set;
   auto time_offset_ms = myClock_msecTick::zero();
+  uint16_t time_to_set_fraction_msec;
 
   // wait until we are joined
   while (!LMIC.devaddr) {
@@ -109,6 +110,11 @@ void process_timesync_req(void *taskparameter) {
     }
   } // for
 
+  // begin of time critical section: lock I2C bus to ensure accurate timing
+  // don't move the mutex, will impact accuracy of time up to 1 sec!
+  if (!I2C_MUTEX_LOCK())
+    goto error; // failure
+
   // average time offset from collected diffs
   time_offset_ms /= TIME_SYNC_SAMPLES;
 
@@ -119,8 +125,15 @@ void process_timesync_req(void *taskparameter) {
       milliseconds(osticks2ms(os_getTime())) + milliseconds(TIME_SYNC_FIXUP);
 
   // calculate absolute time in UTC epoch: convert to whole seconds, round to
-  // floor, and calculate fraction milliseconds
-  adjustTime(time_offset_ms.count() / 1000 + 1, time_offset_ms.count() % 1000);
+  // ceil, and calculate fraction milliseconds
+  time_to_set = (uint32_t)(time_offset_ms.count() / 1000) + 1;
+  // calculate fraction milliseconds
+  time_to_set_fraction_msec = (uint16_t)(time_offset_ms.count() % 1000);
+
+  adjustTime(time_to_set, time_to_set_fraction_msec);
+
+  // end of time critical section: release I2C bus
+  I2C_MUTEX_UNLOCK();
 
 finish:
   lora_time_sync_pending = false;
@@ -204,17 +217,13 @@ int adjustTime(uint32_t t_sec, uint16_t t_msec) {
 
   time_t time_to_set = (time_t)t_sec;
 
-  // begin of time critical section: lock I2C bus to ensure accurate timing
-  if (!I2C_MUTEX_LOCK())
-    goto error; // failure
-
   ESP_LOGD(TAG, "[%0.3f] Calculated UTC epoch time: %d.%03d sec",
            millis() / 1000.0, time_to_set, t_msec);
 
   if (timeIsValid(time_to_set)) {
 
     // wait until top of second with millisecond precision
-    vTaskDelay(pdMS_TO_TICKS(1000 - t_msec < 1000 ? t_msec : 1000));
+    vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
 
 #ifdef HAS_RTC
     time_to_set++; // advance time 1 sec wait time
@@ -230,9 +239,6 @@ int adjustTime(uint32_t t_sec, uint16_t t_msec) {
 
     setTime(time_to_set); // set the time on top of second
 
-    // end of time critical section: release I2C bus
-    I2C_MUTEX_UNLOCK();
-
     timeSource = _lora;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
     ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
@@ -240,13 +246,6 @@ int adjustTime(uint32_t t_sec, uint16_t t_msec) {
   } else
     ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
              millis() / 1000.0);
-
-  return 0; // success
-
-error:
-  ESP_LOGW(TAG, "[%0.3f] Timesync failed, handshake timed out",
-           millis() / 1000.0);
-  return 1;
 }
 
 #endif
