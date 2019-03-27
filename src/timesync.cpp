@@ -214,7 +214,7 @@ int adjustTime(uint32_t t_sec, uint16_t t_msec) {
   if (timeIsValid(time_to_set)) {
 
     // wait until top of second with millisecond precision
-    vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
+    vTaskDelay(pdMS_TO_TICKS(1000 - t_msec < 1000 ? t_msec : 1000));
 
 #ifdef HAS_RTC
     time_to_set++; // advance time 1 sec wait time
