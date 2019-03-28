@@ -18,6 +18,7 @@ function Converter(decoded, port) {
     }
 
     if (port === 2) {
+        if('voltage' in converted)
         converted.voltage /= 1000;
     }
 
