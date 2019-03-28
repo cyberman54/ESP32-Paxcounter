@@ -63,9 +63,9 @@ void send_timesync_req() {
 void process_timesync_req(void *taskparameter) {
 
   uint8_t k = 0;
+  uint16_t time_to_set_fraction_msec;
   uint32_t seq_no = 0, time_to_set;
   auto time_offset_ms = myClock_msecTick::zero();
-  uint16_t time_to_set_fraction_msec;
 
   // wait until we are joined
   while (!LMIC.devaddr) {
@@ -135,7 +135,6 @@ void process_timesync_req(void *taskparameter) {
   // end of time critical section: release I2C bus
   I2C_MUTEX_UNLOCK();
 
-finish:
   lora_time_sync_pending = false;
   timeSyncReqTask = NULL;
   vTaskDelete(NULL); // end task
@@ -213,7 +212,7 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 }
 
 // adjust system time, calibrate RTC and RTC_INT pps
-int adjustTime(uint32_t t_sec, uint16_t t_msec) {
+int IRAM_ATTR adjustTime(uint32_t t_sec, uint16_t t_msec) {
 
   time_t time_to_set = (time_t)t_sec;
 
