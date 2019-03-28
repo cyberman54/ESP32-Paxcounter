@@ -53,7 +53,7 @@ void send_timesync_req() {
                               "timesync_req",       // name of task
                               2048,                 // stack size of task
                               (void *)1,            // task parameter
-                              4,                    // priority of the task
+                              2,                    // priority of the task
                               &timeSyncReqTask,     // task handle
                               1);                   // CPU core
   }
@@ -62,10 +62,9 @@ void send_timesync_req() {
 // task for sending time sync requests
 void process_timesync_req(void *taskparameter) {
 
-  uint8_t k = 0, i = 0;
+  uint8_t k = 0;
   uint16_t time_to_set_fraction_msec;
-  uint32_t seq_no = 0;
-  time_t time_to_set;
+  uint32_t seq_no = 0, time_to_set;
   auto time_offset_ms = myClock_msecTick::zero();
 
   // wait until we are joined
@@ -87,12 +86,8 @@ void process_timesync_req(void *taskparameter) {
     // process answer, wait for notification from recv_timesync_ans()
     if ((xTaskNotifyWait(0x00, ULONG_MAX, &seq_no,
                          pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) ||
-        (seq_no != time_sync_seqNo)) {
-
-      ESP_LOGW(TAG, "[%0.3f] Timeserver error: handshake timed out",
-               millis() / 1000.0);
-      goto finish;
-    } // no valid sequence received before timeout
+        (seq_no != time_sync_seqNo))
+      goto error; // no valid sequence received before timeout
 
     else { // calculate time diff from collected timestamps
       k = seq_no % TIME_SYNC_SAMPLES;
@@ -116,7 +111,9 @@ void process_timesync_req(void *taskparameter) {
   } // for
 
   // begin of time critical section: lock I2C bus to ensure accurate timing
-  I2C_MUTEX_LOCK();
+  // don't move the mutex, will impact accuracy of time up to 1 sec!
+  if (!I2C_MUTEX_LOCK())
+    goto error; // failure
 
   // average time offset from collected diffs
   time_offset_ms /= TIME_SYNC_SAMPLES;
@@ -127,63 +124,38 @@ void process_timesync_req(void *taskparameter) {
   time_offset_ms +=
       milliseconds(osticks2ms(os_getTime())) + milliseconds(TIME_SYNC_FIXUP);
 
-  // calculate absolute time in UTC epoch
-  // convert to whole seconds, floor
-  time_to_set = (time_t)(time_offset_ms.count() / 1000) + 1;
+  // calculate absolute time in UTC epoch: convert to whole seconds, round to
+  // ceil, and calculate fraction milliseconds
+  time_to_set = (uint32_t)(time_offset_ms.count() / 1000) + 1;
   // calculate fraction milliseconds
   time_to_set_fraction_msec = (uint16_t)(time_offset_ms.count() % 1000);
 
-  ESP_LOGD(TAG, "[%0.3f] Calculated UTC epoch time: %d.%03d sec",
-           millis() / 1000.0, time_to_set, time_to_set_fraction_msec);
+  adjustTime(time_to_set, time_to_set_fraction_msec);
 
-  // adjust system time
-  if (timeIsValid(time_to_set)) {
-
-    // wait until top of second with 4ms precision
-    vTaskDelay(pdMS_TO_TICKS(1000 - time_to_set_fraction_msec));
-
-#ifdef HAS_RTC
-    time_to_set++; // advance time 1 sec wait time
-    // set RTC time and calibrate RTC_INT pulse on top of second
-    set_rtctime(time_to_set, no_mutex);
-#endif
-
-#if (!defined GPS_INT && !defined RTC_INT)
-    // sync pps timer to top of second
-    timerRestart(ppsIRQ); // reset pps timer
-    CLOCKIRQ();           // fire clock pps, advances time 1 sec
-#endif
-
-    setTime(time_to_set); // set the time on top of second
-
-    // end of time critical section: release I2C bus
-    I2C_MUTEX_UNLOCK();
-
-    timeSource = _lora;
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
-    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
-             millis() / 1000.0);
-  } else
-    ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
-             millis() / 1000.0);
+  // end of time critical section: release I2C bus
+  I2C_MUTEX_UNLOCK();
 
 finish:
-
   lora_time_sync_pending = false;
   timeSyncReqTask = NULL;
   vTaskDelete(NULL); // end task
+
+error:
+  ESP_LOGW(TAG, "[%0.3f] Timeserver error: handshake timed out",
+           millis() / 1000.0);
+  goto finish; // end task
 }
 
 // called from lorawan.cpp after time_sync_req was sent
-void store_time_sync_req(uint32_t t_txEnd_ms) {
+void store_time_sync_req(uint32_t timestamp) {
 
   uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
 
-  time_sync_tx[k] += milliseconds(t_txEnd_ms);
+  time_sync_tx[k] += milliseconds(timestamp);
 
   ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
-           millis() / 1000.0, time_sync_seqNo, t_txEnd_ms / 1000,
-           t_txEnd_ms % 1000);
+           millis() / 1000.0, time_sync_seqNo, timestamp / 1000,
+           timestamp % 1000);
 }
 
 // process timeserver timestamp answer, called from lorawan.cpp
@@ -238,6 +210,42 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
       return 0; // failure
     }
   }
+}
+
+// adjust system time, calibrate RTC and RTC_INT pps
+int IRAM_ATTR adjustTime(uint32_t t_sec, uint16_t t_msec) {
+
+  time_t time_to_set = (time_t)t_sec;
+
+  ESP_LOGD(TAG, "[%0.3f] Calculated UTC epoch time: %d.%03d sec",
+           millis() / 1000.0, time_to_set, t_msec);
+
+  if (timeIsValid(time_to_set)) {
+
+    // wait until top of second with millisecond precision
+    vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
+
+#ifdef HAS_RTC
+    time_to_set++; // advance time 1 sec wait time
+    // set RTC time and calibrate RTC_INT pulse on top of second
+    set_rtctime(time_to_set, no_mutex);
+#endif
+
+#if (!defined GPS_INT && !defined RTC_INT)
+    // sync pps timer to top of second
+    timerWrite(ppsIRQ, 0); // reset pps timer
+    CLOCKIRQ();           // fire clock pps, this advances time 1 sec
+#endif
+
+    setTime(time_to_set); // set the time on top of second
+
+    timeSource = _lora;
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
+    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
+             millis() / 1000.0);
+  } else
+    ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
+             millis() / 1000.0);
 }
 
 #endif

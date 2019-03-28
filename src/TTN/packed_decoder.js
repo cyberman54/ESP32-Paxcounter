@@ -30,7 +30,13 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        return decode(bytes, [uint16, uptime, uint8, uint32, uint8, uint8], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'reset1']);
+        if (bytes.length === 17) {
+            return decode(bytes, [uint16, uptime, uint8, uint32, uint8, uint8], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'reset1']);
+        }
+        // epoch time answer
+        if (bytes.length === 4) {
+            return decode(bytes, [uint32], ['time']);
+        }
     }
 
     if (port === 3) {

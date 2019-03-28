@@ -14,5 +14,6 @@ void send_timesync_req(void);
 int recv_timesync_ans(uint8_t buf[], uint8_t buf_len);
 void process_timesync_req(void *taskparameter);
 void store_time_sync_req(uint32_t t_millisec);
+int adjustTime(uint32_t t_sec, uint16_t t_msec);
 
 #endif

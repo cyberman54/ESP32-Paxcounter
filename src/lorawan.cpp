@@ -462,8 +462,8 @@ void lora_housekeeping(void) {
   // uxTaskGetStackHighWaterMark(LoraTask));
 }
 
-void user_request_network_time_callback(void *pVoidUserUTCTime,
-                                        int flagSuccess) {
+void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
+                                                  int flagSuccess) {
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
   time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
 
@@ -487,6 +487,11 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
     return;
   }
 
+  // begin of time critical section: lock I2C bus to ensure accurate timing
+  // don't move the mutex, will impact accuracy of time up to 1 sec!
+  if (!I2C_MUTEX_LOCK())
+    return; // failure
+
   // Update userUTCTime, considering the difference between the GPS and UTC
   // time, and the leap seconds until year 2019
   *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
@@ -497,19 +502,13 @@ void user_request_network_time_callback(void *pVoidUserUTCTime,
   // Add the delay between the instant the time was transmitted and
   // the current time
   time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
-  *pUserUTCTime += requestDelaySec;
 
   // Update system time with time read from the network
-  if (timeIsValid(*pUserUTCTime)) {
-    setTime(*pUserUTCTime);
-#ifdef HAS_RTC
-    set_rtctime(*pUserUTCTime, do_mutex); // calibrate RTC if we have one
-#endif
-    timeSource = _lora;
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
-    ESP_LOGI(TAG, "Received recent time from LoRa");
-  } else
-    ESP_LOGI(TAG, "Invalid time received from LoRa");
+  adjustTime(*pUserUTCTime + requestDelaySec, 0);
+
+  // end of time critical section: release I2C bus
+  I2C_MUTEX_UNLOCK();
+
 } // user_request_network_time_callback
 
 #endif // HAS_LORA
