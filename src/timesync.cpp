@@ -135,6 +135,7 @@ void process_timesync_req(void *taskparameter) {
   // end of time critical section: release I2C bus
   I2C_MUTEX_UNLOCK();
 
+finish:
   lora_time_sync_pending = false;
   timeSyncReqTask = NULL;
   vTaskDelete(NULL); // end task
@@ -142,7 +143,7 @@ void process_timesync_req(void *taskparameter) {
 error:
   ESP_LOGW(TAG, "[%0.3f] Timeserver error: handshake timed out",
            millis() / 1000.0);
-  goto finish;
+  goto finish; // end task
 }
 
 // called from lorawan.cpp after time_sync_req was sent
