@@ -233,8 +233,8 @@ int IRAM_ATTR adjustTime(uint32_t t_sec, uint16_t t_msec) {
 
 #if (!defined GPS_INT && !defined RTC_INT)
     // sync pps timer to top of second
-    timerRestart(ppsIRQ); // reset pps timer
-    CLOCKIRQ();           // fire clock pps, advances time 1 sec
+    timerWrite(ppsIRQ, 0); // reset pps timer
+    CLOCKIRQ();           // fire clock pps, this advances time 1 sec
 #endif
 
     setTime(time_to_set); // set the time on top of second
