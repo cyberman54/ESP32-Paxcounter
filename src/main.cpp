@@ -411,7 +411,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 #if (TIME_SYNC_INTERVAL)
-#if (!defined(TIME_SYNC_LORAWAN) && !defined(TIME_SYNC_TIMESERVER) &&          \
+#if (!defined(TIME_SYNC_LORAWAN) && !defined(TIME_SYNC_LORASERVER) &&          \
      !defined HAS_GPS && !defined HAS_RTC)
 #warning you did not specify a time source, time will not be synched
 #endif

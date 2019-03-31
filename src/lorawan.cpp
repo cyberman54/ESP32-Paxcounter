@@ -239,7 +239,7 @@ void onEvent(ev_t ev) {
 
   case EV_TXCOMPLETE:
 
-#if (TIME_SYNC_TIMESERVER)
+#if (TIME_SYNC_LORASERVER)
     // if last packet sent was a timesync request, store TX timestamp
     if (LMIC.pendTxPort == TIMEPORT) {
       store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
@@ -257,7 +257,7 @@ void onEvent(ev_t ev) {
 
       if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
         switch (LMIC.frame[LMIC.dataBeg - 1]) {
-#if (TIME_SYNC_TIMESERVER)
+#if (TIME_SYNC_LORASERVER)
         case TIMEPORT: // timesync answer -> call timesync processor
           recv_timesync_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
           break;
