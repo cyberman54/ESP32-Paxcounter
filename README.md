@@ -389,7 +389,9 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x86 get time/date
 
-	Device answers with it's local time/date (UTC Unix epoch) on Port 2.
+	Device answers with it's local time/date (UTC Unix epoch) on Port 2:
+	bytes 1..4 = local time/date in UTC epoch seconds
+	byte 5 = bits 0..3 timeSource, bits 4..7 timeStatus
 
 0x87 set time/date
 

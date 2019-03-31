@@ -1,9 +1,9 @@
-#ifndef _TIME_SYNC_LORASERVER_H
-#define _TIME_SYNC_LORASERVER_H
+#ifndef _TIMESYNC_H
+#define _TIMESYNC_H
 
 #include <chrono>
 #include "globals.h"
-#include "timesync.h"
+#include "irqhandler.h"
 #include "timekeeper.h"
 
 //#define TIME_SYNC_TRIGGER 100 // threshold for time sync [milliseconds]

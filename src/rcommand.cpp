@@ -277,6 +277,7 @@ void get_time(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get time");
   payload.reset();
   payload.addTime(now());
+  payload.addByte(timeStatus() << 4 | timeSource);
   SendPayload(STATUSPORT, prio_high);
 };
 

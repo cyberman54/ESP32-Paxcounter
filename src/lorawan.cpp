@@ -495,8 +495,7 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
   }
 
   // begin of time critical section: lock I2C bus to ensure accurate timing
-  // don't move the mutex, will impact accuracy of time up to 1 sec!
-  if (!I2C_MUTEX_LOCK())
+  if (!mask_user_IRQ())
     return; // failure
 
   // Update userUTCTime, considering the difference between the GPS and UTC
@@ -514,7 +513,7 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
   setMyTime(*pUserUTCTime + requestDelaySec, 0);
 
   // end of time critical section: release I2C bus
-  I2C_MUTEX_UNLOCK();
+  unmask_user_IRQ();
 
 } // user_request_network_time_callback
 #endif // TIME_SYNC_LORAWAN
