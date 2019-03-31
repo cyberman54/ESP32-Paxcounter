@@ -62,8 +62,8 @@
 //#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters
 
 // Settings for DCF77 interface
-#define HAS_DCF77 GPIO_NUM_1
-#define DCF77_ACTIVE_LOW 1
+//#define HAS_DCF77 GPIO_NUM_1
+//#define DCF77_ACTIVE_LOW 1
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
