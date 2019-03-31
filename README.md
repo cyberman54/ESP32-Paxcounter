@@ -389,9 +389,21 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x86 get time/date
 
-	Device answers with it's local time/date (UTC Unix epoch) on Port 2:
-	bytes 1..4 = local time/date in UTC epoch seconds
-	byte 5 = bits 0..3 timeSource, bits 4..7 timeStatus
+	Device answers with it's current time on Port 2:
+	
+	bytes 1..4 = time/date in UTC epoch seconds (LSB)
+	byte 5 = time source & status, see below
+	
+		bits 0..3 time source
+			0x00 = GPS
+			0x01 = RTC
+			0x02 = LORA
+			0x03 = unsynched
+	
+		bits 4..7 time status
+			0x00 = timeNotSet (never synched)
+			0x10 = timeNeedsSync (last sync failed)
+			0x20 = timeSet (synched)
 
 0x87 set time/date
 
