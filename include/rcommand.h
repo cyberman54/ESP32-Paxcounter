@@ -11,7 +11,7 @@
 #include <rom/rtc.h>
 #include "cyclic.h"
 #include "timekeeper.h"
-#if(TIME_SYNC_TIMESERVER)
+#if(TIME_SYNC_LORASERVER)
 #include "timesync.h"
 #endif
 

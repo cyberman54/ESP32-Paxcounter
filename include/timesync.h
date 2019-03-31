@@ -1,5 +1,5 @@
-#ifndef _TIME_SYNC_TIMESERVER_H
-#define _TIME_SYNC_TIMESERVER_H
+#ifndef _TIME_SYNC_LORASERVER_H
+#define _TIME_SYNC_LORASERVER_H
 
 #include <chrono>
 #include "globals.h"
