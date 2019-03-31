@@ -462,6 +462,7 @@ void lora_housekeeping(void) {
   // uxTaskGetStackHighWaterMark(LoraTask));
 }
 
+#if (TIME_SYNC_LORAWAN)
 void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
                                                   int flagSuccess) {
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
@@ -504,11 +505,12 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
   time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
 
   // Update system time with time read from the network
-  adjustTime(*pUserUTCTime + requestDelaySec, 0);
+  setMyTime(*pUserUTCTime + requestDelaySec, 0);
 
   // end of time critical section: release I2C bus
   I2C_MUTEX_UNLOCK();
 
 } // user_request_network_time_callback
+#endif // TIME_SYNC_LORAWAN
 
 #endif // HAS_LORA

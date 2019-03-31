@@ -130,7 +130,7 @@ void process_timesync_req(void *taskparameter) {
   // calculate fraction milliseconds
   time_to_set_fraction_msec = (uint16_t)(time_offset_ms.count() % 1000);
 
-  adjustTime(time_to_set, time_to_set_fraction_msec);
+  setMyTime(time_to_set, time_to_set_fraction_msec);
 
   // end of time critical section: release I2C bus
   I2C_MUTEX_UNLOCK();
@@ -213,7 +213,7 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 }
 
 // adjust system time, calibrate RTC and RTC_INT pps
-int IRAM_ATTR adjustTime(uint32_t t_sec, uint16_t t_msec) {
+void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
 
   time_t time_to_set = (time_t)t_sec;
 

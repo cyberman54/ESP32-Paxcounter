@@ -411,6 +411,11 @@ void setup() {
 #endif // HAS_BUTTON
 
 #if (TIME_SYNC_INTERVAL)
+#if (!defined(TIME_SYNC_LORAWAN) && !defined(TIME_SYNC_TIMESERVER) &&          \
+     !defined HAS_GPS && !defined HAS_RTC)
+#warning you did not specify a time source, time will not be synched
+#endif
+#else
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse

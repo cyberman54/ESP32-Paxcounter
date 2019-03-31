@@ -22,7 +22,7 @@
 //#define LMIC_USE_INTERRUPTS 1
 
 //time sync via LoRaWAN network, is not yet supported by TTN (LoRaWAN spec v1.0.3)
-#define LMIC_ENABLE_DeviceTimeReq 1
+//#define LMIC_ENABLE_DeviceTimeReq 1
 
 // 16 μs per tick
 // LMIC requires ticks to be 15.5μs - 100 μs long
