@@ -12,6 +12,12 @@ static const char TAG[] = "lora";
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
 #endif
 
+#if (TIME_SYNC_LORAWAN)
+#ifndef LMIC_ENABLE_DeviceTimeReq
+#define LMIC_ENABLE_DeviceTimeReq 1
+#endif
+#endif
+
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
 
