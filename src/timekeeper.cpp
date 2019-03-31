@@ -175,9 +175,9 @@ TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
   return round(txTime);
 }
 
-#if defined HAS_IF482 || defined HAS_DCF77
+#if (defined HAS_IF482 || defined HAS_DCF77)
 
-#if defined HAS_DCF77 && defined HAS_IF482
+#if (defined HAS_DCF77 && defined HAS_IF482)
 #error You must define at most one of IF482 or DCF77!
 #endif
 

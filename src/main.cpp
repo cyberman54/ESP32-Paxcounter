@@ -415,7 +415,6 @@ void setup() {
      !defined HAS_GPS && !defined HAS_RTC)
 #warning you did not specify a time source, time will not be synched
 #endif
-#else
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse

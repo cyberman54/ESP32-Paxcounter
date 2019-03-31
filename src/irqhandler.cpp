@@ -18,15 +18,14 @@ void irqHandler(void *pvParameters) {
                     &InterruptStatus, // Receives the notification value
                     portMAX_DELAY);   // wait forever
 
-    // interrupt handler to be enabled?
-    if (InterruptStatus & UNMASK_IRQ)
+    if (InterruptStatus & UNMASK_IRQ) // interrupt handler to be enabled?
       mask_irq = false;
-    else if (mask_irq)
-      continue; // suppress processing if interrupt handler is disabled
-
-    // interrupt handler to be disabled?
-    if (InterruptStatus & MASK_IRQ)
+    else if (mask_irq) // suppress processing if interrupt handler is disabled
+      continue;
+    else if (InterruptStatus & MASK_IRQ) { // interrupt handler to be disabled?
       mask_irq = true;
+      continue;
+    }
 
 // button pressed?
 #ifdef HAS_BUTTON
@@ -36,7 +35,7 @@ void irqHandler(void *pvParameters) {
 
 // display needs refresh?
 #ifdef HAS_DISPLAY
-    if (InterruptStatus & DISPLAY_IRQ) 
+    if (InterruptStatus & DISPLAY_IRQ)
       refreshtheDisplay();
 #endif
 
@@ -85,3 +84,16 @@ void IRAM_ATTR ButtonIRQ() {
     portYIELD_FROM_ISR();
 }
 #endif
+
+int mask_user_IRQ() {
+  // begin of time critical section: lock I2C bus to ensure accurate timing
+  if (!I2C_MUTEX_LOCK())
+    return 1; // failure
+  xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits);
+}
+
+int unmask_user_IRQ() {
+  // end of time critical section: release I2C bus
+  I2C_MUTEX_UNLOCK();
+  xTaskNotify(irqHandlerTask, UNMASK_IRQ, eSetBits);
+}

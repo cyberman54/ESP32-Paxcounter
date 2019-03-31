@@ -9,7 +9,7 @@ algorithm in applications without granted license by the patent holder.
 
 */
 
-#if(TIME_SYNC_LORASERVER)
+#if (TIME_SYNC_LORASERVER)
 
 #include "timesync.h"
 
@@ -111,8 +111,7 @@ void process_timesync_req(void *taskparameter) {
   } // for
 
   // begin of time critical section: lock I2C bus to ensure accurate timing
-  // don't move the mutex, will impact accuracy of time up to 1 sec!
-  if (!I2C_MUTEX_LOCK())
+  if (!mask_user_IRQ())
     goto error; // failure
 
   // average time offset from collected diffs
@@ -133,9 +132,10 @@ void process_timesync_req(void *taskparameter) {
   setMyTime(time_to_set, time_to_set_fraction_msec);
 
   // end of time critical section: release I2C bus
-  I2C_MUTEX_UNLOCK();
+  unmask_user_IRQ();
 
 finish:
+
   lora_time_sync_pending = false;
   timeSyncReqTask = NULL;
   vTaskDelete(NULL); // end task
@@ -215,7 +215,8 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 // adjust system time, calibrate RTC and RTC_INT pps
 void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
 
-  time_t time_to_set = (time_t)t_sec;
+  // advance time 1 sec wait time
+  time_t time_to_set = (time_t)(t_sec + 1);
 
   ESP_LOGD(TAG, "[%0.3f] Calculated UTC epoch time: %d.%03d sec",
            millis() / 1000.0, time_to_set, t_msec);
@@ -225,16 +226,15 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
     // wait until top of second with millisecond precision
     vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
 
+// set RTC time and calibrate RTC_INT pulse on top of second
 #ifdef HAS_RTC
-    time_to_set++; // advance time 1 sec wait time
-    // set RTC time and calibrate RTC_INT pulse on top of second
     set_rtctime(time_to_set, no_mutex);
 #endif
 
+// sync pps timer to top of second
 #if (!defined GPS_INT && !defined RTC_INT)
-    // sync pps timer to top of second
     timerWrite(ppsIRQ, 0); // reset pps timer
-    CLOCKIRQ();           // fire clock pps, this advances time 1 sec
+    CLOCKIRQ();            // fire clock pps, this advances time 1 sec
 #endif
 
     setTime(time_to_set); // set the time on top of second
