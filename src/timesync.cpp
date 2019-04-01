@@ -9,7 +9,7 @@ algorithm in applications without granted license by the patent holder.
 
 */
 
-#if (TIME_SYNC_LORASERVER)
+#if (TIME_SYNC_LORASERVER) && (HAS_LORA)
 
 #include "timesync.h"
 
