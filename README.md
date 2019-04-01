@@ -46,7 +46,7 @@ Depending on board hardware following features are supported:
 - LED (shows power & status)
 - OLED Display (shows detailed status)
 - RGB LED (shows colorized status)
-- Button
+- Button (used to flip display pages if device has display, else sends alarm message)
 - Silicon unique ID
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
@@ -139,6 +139,10 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Blue blink: LoRaWAN data transmit in progress or pending
 - Red long blink: LoRaWAN stack error
 - White long blink: Known Beacon detected
+
+# Display
+
+If you're using a device with OLED display, or if you add such one to the I2C bus, the device shows live data on the display. You can flip between pages showing pax, time and gps data by pressing the button of the device.
 
 # Sensors and Peripherals
 

@@ -166,6 +166,7 @@ void draw_page(time_t t, uint8_t page) {
 
   char timeState, buff[16];
   uint8_t msgWaiting;
+  static bool wasnofix = true;
 
   switch (page % DISPLAY_PAGES) {
 
@@ -306,16 +307,28 @@ void draw_page(time_t t, uint8_t page) {
 
 #if (HAS_GPS)
     if (gps.location.age() < 1500) {
+      // line 5: clear "No fix"
+      if (wasnofix) {
+        snprintf(buff, sizeof(buff), "      ");
+        u8x8.draw2x2String(2, 5, buff);
+        wasnofix = false;
+      }
       // line 3-4: GPS latitude
-      snprintf(buff, sizeof(buff), "%-02.4f", gps.location.lat());
+      snprintf(buff, sizeof(buff), "%c%-07.4f",
+               gps.location.rawLat().negative ? 'S' : 'N', gps.location.lat());
       u8x8.draw2x2String(0, 3, buff);
 
       // line 6-7: GPS longitude
-      snprintf(buff, sizeof(buff), "%-03.4f", gps.location.lng());
+      snprintf(buff, sizeof(buff), "%c%-07.4f",
+               gps.location.rawLat().negative ? 'W' : 'E', gps.location.lng());
       u8x8.draw2x2String(0, 6, buff);
+
     } else {
       snprintf(buff, sizeof(buff), "No fix");
+      u8x8.setInverseFont(1);
       u8x8.draw2x2String(2, 5, buff);
+      u8x8.setInverseFont(0);
+      wasnofix = true;
     }
 
 #else
