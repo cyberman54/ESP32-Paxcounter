@@ -314,7 +314,7 @@ void setup() {
 // initialize display
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
-  DisplayState = cfg.screenon;
+  DisplayIsOn = cfg.screenon;
   init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
 #endif
 

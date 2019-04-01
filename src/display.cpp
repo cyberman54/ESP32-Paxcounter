@@ -26,6 +26,8 @@ line 7: y = Text for LMIC status; ab = payload queue
 #include "globals.h"
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
+#define DISPLAY_PAGES (3) // number of display pages
+
 HAS_DISPLAY u8x8(MY_OLED_RST, MY_OLED_SCL, MY_OLED_SDA);
 
 // helper string for converting LoRa spread factor values
@@ -45,7 +47,7 @@ const char lora_datarate[] = {"121110090807FSNA"};
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-uint8_t DisplayState = 0;
+uint8_t DisplayIsOn = 0;
 
 // helper function, prints a hex key on display
 void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
@@ -127,28 +129,52 @@ void init_display(const char *Productname, const char *Version) {
   }                     // mutex
 } // init_display
 
-void refreshtheDisplay() {
+void refreshtheDisplay(bool nextPage) {
 
-  uint8_t msgWaiting;
-  char timeState, buff[16];
+  static uint8_t DisplayPage = 0;
   const time_t t =
       myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
+
+  // if display is switched off we don't refresh it to relax cpu
+  if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
+    return;
 
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
 
     // set display on/off according to current device configuration
-    if (DisplayState != cfg.screenon) {
-      DisplayState = cfg.screenon;
+    if (DisplayIsOn != cfg.screenon) {
+      DisplayIsOn = cfg.screenon;
       u8x8.setPowerSave(!cfg.screenon);
     }
 
-    // if display is switched off we don't refresh it to relax cpu
-    if (!DisplayState) {
-      I2C_MUTEX_UNLOCK(); // release i2c bus access
-      return;
+    if (nextPage) {
+      DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
+      u8x8.clear();
     }
 
+    draw_page(t, DisplayPage);
+
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+
+  } // mutex
+} // refreshDisplay()
+
+void refreshtheDisplay() { refreshtheDisplay(false); }
+
+void draw_page(time_t t, uint8_t page) {
+
+  char timeState, buff[16];
+  uint8_t msgWaiting;
+
+  switch (page % DISPLAY_PAGES) {
+
+    // page 0: parameters overview
+    // page 1: time
+    // page 2: GPS
+    // page 3: BME280/680
+
+  case 0:
     // update counter (lines 0-1)
     snprintf(
         buff, sizeof(buff), "PAX:%-4d",
@@ -218,7 +244,7 @@ void refreshtheDisplay() {
     TimePulseTick = false;
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
-    u8x8.printf("%02d:%02d:%02d", hour(t), minute(t), second(t), timeState);
+    u8x8.printf("%02d:%02d:%02d", hour(t), minute(t), second(t));
     u8x8.setInverseFont(1);
     u8x8.printf("%c", timeState);
     u8x8.setInverseFont(0);
@@ -251,8 +277,59 @@ void refreshtheDisplay() {
 
 #endif // HAS_LORA
 
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }                     // mutex
-} // refreshDisplay()
+    break; // page0
+
+  case 1:
+    // update counter (lines 0-1)
+    snprintf(
+        buff, sizeof(buff), "PAX:%-4d",
+        (int)
+            macs.size()); // convert 16-bit MAC counter to decimal counter value
+    u8x8.draw2x2String(0, 0,
+                       buff); // display number on unique macs total Wifi + BLE
+
+    // line 4-5: update time-of-day
+    snprintf(buff, sizeof(buff), "%02d:%02d:%02d", hour(t), minute(t),
+             second(t));
+    u8x8.draw2x2String(0, 4, buff);
+
+    break; // page1
+
+  case 2:
+    // update counter (lines 0-1)
+    snprintf(
+        buff, sizeof(buff), "PAX:%-4d",
+        (int)
+            macs.size()); // convert 16-bit MAC counter to decimal counter value
+    u8x8.draw2x2String(0, 0,
+                       buff); // display number on unique macs total Wifi + BLE
+
+#if (HAS_GPS)
+    if (gps.location.age() < 1500) {
+      // line 3-4: GPS latitude
+      snprintf(buff, sizeof(buff), "%-02.4f", gps.location.lat());
+      u8x8.draw2x2String(0, 3, buff);
+
+      // line 6-7: GPS longitude
+      snprintf(buff, sizeof(buff), "%-03.4f", gps.location.lng());
+      u8x8.draw2x2String(0, 6, buff);
+    } else {
+      snprintf(buff, sizeof(buff), "No fix");
+      u8x8.draw2x2String(2, 5, buff);
+    }
+
+#else
+    snprintf(buff, sizeof(buff), "No GPS");
+    u8x8.draw2x2String(2, 5, buff);
+#endif
+
+    break; // page2
+
+  default:
+    break; // default
+
+  } // switch
+
+} // draw_page
 
 #endif // HAS_DISPLAY
