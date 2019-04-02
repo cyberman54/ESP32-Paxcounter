@@ -26,7 +26,7 @@ line 7: y = Text for LMIC status; ab = payload queue
 #include "globals.h"
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
-#define DISPLAY_PAGES (3) // number of display pages
+#define DISPLAY_PAGES (4) // number of display pages
 
 HAS_DISPLAY u8x8(MY_OLED_RST, MY_OLED_SCL, MY_OLED_SDA);
 
@@ -168,6 +168,13 @@ void draw_page(time_t t, uint8_t page) {
   uint8_t msgWaiting;
   static bool wasnofix = true;
 
+  // update counter (lines 0-1)
+  snprintf(
+      buff, sizeof(buff), "PAX:%-4d",
+      (int)macs.size()); // convert 16-bit MAC counter to decimal counter value
+  u8x8.draw2x2String(0, 0,
+                     buff); // display number on unique macs total Wifi + BLE
+
   switch (page % DISPLAY_PAGES) {
 
     // page 0: parameters overview
@@ -176,13 +183,6 @@ void draw_page(time_t t, uint8_t page) {
     // page 3: BME280/680
 
   case 0:
-    // update counter (lines 0-1)
-    snprintf(
-        buff, sizeof(buff), "PAX:%-4d",
-        (int)
-            macs.size()); // convert 16-bit MAC counter to decimal counter value
-    u8x8.draw2x2String(0, 0,
-                       buff); // display number on unique macs total Wifi + BLE
 
 // update Battery status (line 2)
 #ifdef HAS_BATTERY_PROBE
@@ -281,13 +281,6 @@ void draw_page(time_t t, uint8_t page) {
     break; // page0
 
   case 1:
-    // update counter (lines 0-1)
-    snprintf(
-        buff, sizeof(buff), "PAX:%-4d",
-        (int)
-            macs.size()); // convert 16-bit MAC counter to decimal counter value
-    u8x8.draw2x2String(0, 0,
-                       buff); // display number on unique macs total Wifi + BLE
 
     // line 4-5: update time-of-day
     snprintf(buff, sizeof(buff), "%02d:%02d:%02d", hour(t), minute(t),
@@ -337,6 +330,30 @@ void draw_page(time_t t, uint8_t page) {
 #endif
 
     break; // page2
+
+  case 3:
+
+#if (HAS_BME)
+    // line 2-3: Temp
+    snprintf(buff, sizeof(buff), "TMP:%--4.1f", bme_status.temperature);
+    u8x8.draw2x2String(0, 2, buff);
+
+    // line 4-5: Hum
+    snprintf(buff, sizeof(buff), "HUM:%-4.1f", bme_status.humidity);
+    u8x8.draw2x2String(0, 4, buff);
+
+#ifdef HAS_BME680
+    // line 6-7: IAQ
+    snprintf(buff, sizeof(buff), "IAQ:%-4.1f", bme_status.iaq);
+    u8x8.draw2x2String(0, 6, buff);
+#endif
+
+#else
+    snprintf(buff, sizeof(buff), "No BME");
+    u8x8.draw2x2String(2, 5, buff);
+#endif
+
+    break; // page3
 
   default:
     break; // default
