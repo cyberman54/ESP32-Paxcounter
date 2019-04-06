@@ -256,16 +256,24 @@ void onEvent(ev_t ev) {
       sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi, LMIC.snr / 4);
 
       if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
+
         switch (LMIC.frame[LMIC.dataBeg - 1]) {
-#if (TIME_SYNC_LORASERVER)
-        case TIMEPORT: // timesync answer -> call timesync processor
-          recv_timesync_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-          break;
-#endif
+
         case RCMDPORT: // opcode -> call rcommand interpreter
           rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
           break;
+
         default: // unknown port -> display info
+
+#if (TIME_SYNC_LORASERVER)
+                 // timesync answer -> call timesync processor
+          if ((LMIC.frame[LMIC.dataBeg - 1] >= TIMEANSWERPORT_MIN) &&
+              (LMIC.frame[LMIC.dataBeg - 1] <= TIMEANSWERPORT_MAX)) {
+            recv_timesync_ans(LMIC.frame[LMIC.dataBeg - 1],
+                              LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
+            break;
+          }
+#endif
           ESP_LOGI(TAG, "Received data on unsupported port #%d",
                    LMIC.frame[LMIC.dataBeg - 1]);
           break;

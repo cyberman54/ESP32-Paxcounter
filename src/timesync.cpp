@@ -20,7 +20,7 @@ static const char TAG[] = __FILE__;
 
 TaskHandle_t timeSyncReqTask;
 
-static uint8_t time_sync_seqNo = 0;
+static uint8_t time_sync_seqNo = TIMEANSWERPORT_MIN;
 static bool lora_time_sync_pending = false;
 
 typedef std::chrono::system_clock myClock;
@@ -75,9 +75,6 @@ void process_timesync_req(void *taskparameter) {
   // enqueue timestamp samples in lora sendqueue
   for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
 
-    // wrap around seqNo 0 .. 254
-    time_sync_seqNo = (time_sync_seqNo < 255) ? time_sync_seqNo + 1 : 0;
-
     // send sync request to server
     payload.reset();
     payload.addByte(time_sync_seqNo);
@@ -95,6 +92,11 @@ void process_timesync_req(void *taskparameter) {
       // cumulate timepoint diffs
       time_offset_ms += time_point_cast<milliseconds>(time_sync_rx[k]) -
                         time_point_cast<milliseconds>(time_sync_tx[k]);
+
+      // wrap around seqNo keeping it in time port range
+      time_sync_seqNo = (time_sync_seqNo < TIMEANSWERPORT_MAX)
+                            ? time_sync_seqNo + 1
+                            : TIMEANSWERPORT_MIN;
 
       if (i < TIME_SYNC_SAMPLES - 1) {
         // wait until next cycle
@@ -149,19 +151,21 @@ error:
 // called from lorawan.cpp after time_sync_req was sent
 void store_time_sync_req(uint32_t timestamp) {
 
-  uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
+  if (lora_time_sync_pending) {
 
-  time_sync_tx[k] += milliseconds(timestamp);
+    uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
+    time_sync_tx[k] += milliseconds(timestamp);
 
-  ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
-           millis() / 1000.0, time_sync_seqNo, timestamp / 1000,
-           timestamp % 1000);
+    ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
+             millis() / 1000.0, time_sync_seqNo, timestamp / 1000,
+             timestamp % 1000);
+  }
 }
 
 // process timeserver timestamp answer, called from lorawan.cpp
-int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
+int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 
-  // if no timesync handshake is pending or spurious buffer then exit
+  // if no timesync handshake is pending then exit
   if (!lora_time_sync_pending)
     return 0; // failure
 
@@ -178,18 +182,18 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
 
   else { // we received a probably valid time frame
 
-    uint8_t seq_no = buf[0], k = seq_no % TIME_SYNC_SAMPLES;
+    uint8_t k = seq_no % TIME_SYNC_SAMPLES;
     uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
     uint32_t timestamp_sec;
 
     // fetch timeserver time from 4 bytes containing the UTC seconds since
     // unix epoch. Octet order is big endian. Casts are necessary, because buf
     // is an array of single byte values, and they might overflow when shifted
-    timestamp_sec = ((uint32_t)buf[4]) | (((uint32_t)buf[3]) << 8) |
-                    (((uint32_t)buf[2]) << 16) | (((uint32_t)buf[1]) << 24);
+    timestamp_sec = ((uint32_t)buf[3]) | (((uint32_t)buf[2]) << 8) |
+                    (((uint32_t)buf[1]) << 16) | (((uint32_t)buf[0]) << 24);
 
     // the 5th byte contains the fractional seconds in 2^-8 second steps
-    timestamp_msec = 4 * buf[5];
+    timestamp_msec = 4 * buf[4];
 
     // construct the timepoint when message was seen on gateway
     time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
