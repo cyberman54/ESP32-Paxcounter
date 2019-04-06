@@ -165,6 +165,7 @@ void bme_loop(void *pvParameters) {
           (bme.readPressure() / 100.0); // conversion Pa -> hPa
       // bme.readAltitude(SEALEVELPRESSURE_HPA);
       bme_status.humidity = bme.readHumidity();
+      bme_status.iaq = 0; // IAQ feature not present with BME280
       I2C_MUTEX_UNLOCK();
     }
   }
