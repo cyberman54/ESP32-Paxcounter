@@ -17,13 +17,22 @@
 #define SPI_CS   GPIO_NUM_5
 
 // enable only if device has these sensors, otherwise comment these lines
+// tutorial to connect BME sensor see here:
+// https://sbamueller.wordpress.com/2019/02/26/paxcounter-mit-umweltsensor/
+//
+// in platformio.ini append
+// lib_deps = <...> ${common.lib_deps_sensors}
+// for loading necessary libraries
+
 // BME680 sensor on I2C bus
 #define HAS_BME 1 // Enable BME sensors in general
 #define HAS_BME680 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
 #define BME680_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
+
 // BME280 sensor on I2C bus
 //#define HAS_BME 1 // Enable BME sensors in general
 //#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
+//#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring
 
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
