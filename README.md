@@ -290,7 +290,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 0x03 set GPS data on/off
 
 	0 = GPS data off
-	1 = GPS data on, appends GPS data to payload, if GPS is present and has a fix [default]
+	1 = GPS data on, sends GPS data on port 4, if GPS is present and has a fix [default]
 
 0x04 set display on/off
 
