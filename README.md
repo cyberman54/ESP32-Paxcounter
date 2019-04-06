@@ -387,9 +387,9 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	Device answers with it's current status on Port 4. 
 
-0x85 get BME680 sensor data
+0x85 get BME280 / BME680 sensor data
 
-	Device answers with BME680 sensor data set on Port 7.
+	Device answers with BME sensor data set on Port 7.
 
 0x86 get time/date
 

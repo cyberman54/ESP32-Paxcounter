@@ -8,10 +8,12 @@ function Decoder(bytes, port) {
     var i = 0;
 
     if (bytes.length >= 2) {
-    decoded.wifi = (bytes[i++] << 8) | bytes[i++];}
-    
+      decoded.wifi = (bytes[i++] << 8) | bytes[i++];
+    }
+
     if (bytes.length === 4 || bytes.length > 15) {
-    decoded.ble = (bytes[i++] << 8) | bytes[i++];}
+      decoded.ble = (bytes[i++] << 8) | bytes[i++];
+    }
 
     if (bytes.length > 4) {
       decoded.latitude = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
@@ -52,7 +54,7 @@ function Decoder(bytes, port) {
     decoded.rssi = bytes[i++];
     decoded.beacon = bytes[i++];
   }
-  
+
   if (port === 7) {
     var i = 0;
     decoded.temperature = ((bytes[i++] << 8) | bytes[i++]);
@@ -60,19 +62,26 @@ function Decoder(bytes, port) {
     decoded.humidity = ((bytes[i++] << 8) | bytes[i++]);
     decoded.air = ((bytes[i++] << 8) | bytes[i++]);
   }
-  
+
   if (port === 8) {
     var i = 0;
     if (bytes.length >= 2) {
-    decoded.battery = (bytes[i++] << 8) | bytes[i++];}
-  }
-
-  if (port === 9) {
-    if (bytes.length === 1) {
-    decoded.timesync_seqno = bytes[0];
+      decoded.battery = (bytes[i++] << 8) | bytes[i++];
     }
   }
 
-  return decoded;
+  if (port === 9) {
+    // timesync request
+    if (bytes.length === 1) {
+      decoded.timesync_seqno = bytes[0];
+    }
+    // epoch time answer
+    if (bytes.length === 5) {
+      var i = 0;
+      decoded.time = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
+      decoded.timestatus = bytes[i++];
+    }
+    return decoded;
+  }
 
 }

@@ -278,7 +278,7 @@ void get_time(uint8_t val[]) {
   payload.reset();
   payload.addTime(now());
   payload.addByte(timeStatus() << 4 | timeSource);
-  SendPayload(STATUSPORT, prio_high);
+  SendPayload(TIMEPORT, prio_high);
 };
 
 void set_time(uint8_t val[]) {

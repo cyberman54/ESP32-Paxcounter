@@ -20,12 +20,10 @@ int mask_user_IRQ();
 int unmask_user_IRQ();
 
 #ifdef HAS_DISPLAY
-#include "display.h"
 void IRAM_ATTR DisplayIRQ();
 #endif
 
 #ifdef HAS_BUTTON
-#include "button.h"
 void IRAM_ATTR ButtonIRQ();
 #endif
 

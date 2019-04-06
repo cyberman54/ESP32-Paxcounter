@@ -5,7 +5,7 @@ function Decoder(bytes, port) {
 
     var decoded = {};
 
-    if (bytes.length === 0)  {
+    if (bytes.length === 0) {
         return {};
     }
 
@@ -32,10 +32,6 @@ function Decoder(bytes, port) {
         // device status data
         if (bytes.length === 17) {
             return decode(bytes, [uint16, uptime, uint8, uint32, uint8, uint8], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'reset1']);
-        }
-        // epoch time answer
-        if (bytes.length === 5) {
-            return decode(bytes, [uint32, uint8], ['time', 'timestatus']);
         }
     }
 
@@ -72,9 +68,13 @@ function Decoder(bytes, port) {
     if (port === 9) {
         // timesync request
         if (bytes.length === 1) {
-        decoded.timesync_seqno = bytes[0];
+            decoded.timesync_seqno = bytes[0];
+            return decoded;
         }
-        return decoded;
+        // epoch time answer
+        if (bytes.length === 5) {
+            return decode(bytes, [uint32, uint8], ['time', 'timestatus']);
+        }
     }
 
 }
