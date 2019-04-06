@@ -9,7 +9,7 @@ static const char TAG[] = __FILE__;
 
 Ticker housekeeper;
 
-void housekeeping() { xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits); }
+void housekeeping() { xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL); }
 
 // do all housekeeping
 void doHousekeeping() {

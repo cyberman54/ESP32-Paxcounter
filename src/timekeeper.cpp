@@ -20,7 +20,7 @@ HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 
 Ticker timesyncer;
 
-void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
+void timeSync() { xTaskNotifyFromISR(irqHandlerTask, TIMESYNC_IRQ, eSetBits, NULL); }
 
 time_t timeProvider(void) {
 
