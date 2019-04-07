@@ -123,8 +123,6 @@ void gps_loop(void *pvParameters) {
 
   } // end of infinite loop
 
-  vTaskDelete(GpsTask); // shoud never be reached
-
 } // gps_loop()
 
 #endif // HAS_GPS

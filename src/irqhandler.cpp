@@ -56,7 +56,6 @@ void irqHandler(void *pvParameters) {
     if (InterruptStatus & SENDCYCLE_IRQ)
       sendCounter();
   }
-  vTaskDelete(NULL); // shoud never be reached
 }
 
 // esp32 hardware timer triggered interrupt service routines
