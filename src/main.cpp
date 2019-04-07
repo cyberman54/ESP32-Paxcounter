@@ -31,12 +31,12 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
+timesync_req  1     4     temporary task for processing time sync requests
 clockloop     1     3     generates realtime telegrams for external clock
-looptask      1     1     arduino core -> runs the LMIC LoRa stack
-irqhandler    1     1     executes tasks triggered by timer irq
+irqhandler    1     2     display, timesync, etc. tasks triggered by timer
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
-timesync_req  1     2     temporary task for processing time sync requests
+looptask      1     1     runs the LMIC LoRa stack (arduino loop)
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -360,7 +360,7 @@ void setup() {
                           "irqhandler",    // name of task
                           4096,            // stack size of task
                           (void *)1,       // parameter of the task
-                          1,               // priority of the task
+                          2,               // priority of the task
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
@@ -434,11 +434,13 @@ void setup() {
 } // setup()
 
 void loop() {
+
   while (1) {
 #if (HAS_LORA)
     os_runloop_once(); // execute lmic scheduled jobs and events
-#endif
+#else
     delay(2); // yield to CPU
+#endif
   }
 
   vTaskDelete(NULL); // shoud never be reached

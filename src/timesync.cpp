@@ -53,7 +53,7 @@ void send_timesync_req() {
                               "timesync_req",       // name of task
                               2048,                 // stack size of task
                               (void *)1,            // task parameter
-                              2,                    // priority of the task
+                              4,                    // priority of the task
                               &timeSyncReqTask,     // task handle
                               1);                   // CPU core
   }
