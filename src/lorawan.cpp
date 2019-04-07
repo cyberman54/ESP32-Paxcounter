@@ -224,9 +224,8 @@ void onEvent(ev_t ev) {
     ESP_LOGI(TAG, "ADR=%d, SF=%d, TXPOWER=%d", cfg.adrmode, cfg.lorasf,
              cfg.txpower);
 #if (TIME_SYNC_LORASERVER)
-    // kick off timesync task if pending
-    if (timeSyncReqTask)
-      xTaskNotifyGive(timeSyncReqTask);
+    // kickoff first time sync
+    send_timesync_req();
 #endif
     break;
 
@@ -316,8 +315,9 @@ void onEvent(ev_t ev) {
     if (!(LMIC.opmode & OP_JOINING))
 #if (TIME_SYNC_LORASERVER)
       // if last packet sent was a timesync request, store TX time
-      if ((LMIC.pendTxPort == TIMEPORT) && timeSyncReqTask)
-        strcpy_P(buff, PSTR("SYNCING TIME"));
+      // if ((LMIC.pendTxPort == TIMEPORT) && timeSyncPending)
+      if (LMIC.pendTxPort == TIMEPORT)
+        strcpy_P(buff, PSTR("TX TIMESYNC"));
       else
 #endif
         strcpy_P(buff, PSTR("TX START"));

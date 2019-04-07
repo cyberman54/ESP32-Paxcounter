@@ -10,8 +10,7 @@
 #define TIME_SYNC_FRAME_LENGTH 0x05 // timeserver answer frame length [bytes]
 #define TIME_SYNC_FIXUP 6 // calibration to fixup processing time [milliseconds]
 
-extern TaskHandle_t timeSyncReqTask;
-
+void timesync_init(void);
 void send_timesync_req(void);
 int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len);
 void process_timesync_req(void *taskparameter);

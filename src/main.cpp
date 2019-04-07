@@ -31,7 +31,7 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
-timesync_req  1     4     temporary task for processing time sync requests
+timesync_req  1     4     processes realtime time sync requests
 clockloop     1     3     generates realtime telegrams for external clock
 irqhandler    1     2     display, timesync, etc. tasks triggered by timer
 gpsloop       1     2     reads data from GPS via serial or i2c
@@ -411,16 +411,23 @@ void setup() {
 #endif // HAS_BUTTON
 
 #if (TIME_SYNC_INTERVAL)
-#if (!defined(TIME_SYNC_LORAWAN) && !defined(TIME_SYNC_LORASERVER) &&          \
-     !defined HAS_GPS && !defined HAS_RTC)
+#if (!(TIME_SYNC_LORAWAN) && !(TIME_SYNC_LORASERVER) && !defined HAS_GPS &&    \
+     !defined HAS_RTC)
 #warning you did not specify a time source, time will not be synched
 #endif
+
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
   timepulse_start();
   timeSync(); // init systime
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
+
+#if (TIME_SYNC_LORASERVER)
+  // create time sync task
+  timesync_init();
+#endif
+
 #endif
 
 #if defined HAS_IF482 || defined HAS_DCF77
@@ -442,6 +449,4 @@ void loop() {
     delay(2); // yield to CPU
 #endif
   }
-
-  vTaskDelete(NULL); // shoud never be reached
 }
