@@ -18,10 +18,9 @@ using namespace std::chrono;
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-TaskHandle_t timeSyncReqTask;
+TaskHandle_t timeSyncReqTask = NULL;
 
 static uint8_t time_sync_seqNo = TIMEANSWERPORT_MIN;
-static bool lora_time_sync_pending = false;
 
 typedef std::chrono::system_clock myClock;
 typedef myClock::time_point myClock_timepoint;
@@ -35,13 +34,11 @@ myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
 void send_timesync_req() {
 
   // if a timesync handshake is pending then exit
-  if (lora_time_sync_pending) {
-    // ESP_LOGI(TAG, "Timeserver sync request already pending");
+  if (timeSyncReqTask) {
+    ESP_LOGD(TAG, "Timeserver sync request already pending");
     return;
   } else {
     ESP_LOGI(TAG, "[%0.3f] Timeserver sync request started", millis() / 1000.0);
-
-    lora_time_sync_pending = true;
 
     // clear timestamp array
     for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++)
@@ -51,7 +48,7 @@ void send_timesync_req() {
     if (!timeSyncReqTask)
       xTaskCreatePinnedToCore(process_timesync_req, // task function
                               "timesync_req",       // name of task
-                              2048,                 // stack size of task
+                              4096,                 // stack size of task
                               (void *)1,            // task parameter
                               4,                    // priority of the task
                               &timeSyncReqTask,     // task handle
@@ -68,13 +65,11 @@ void process_timesync_req(void *taskparameter) {
   auto time_offset_ms = myClock_msecTick::zero();
 
   // wait until we are joined
-  while (!LMIC.devaddr) {
-    vTaskDelay(pdMS_TO_TICKS(2000));
-  }
+  if (!LMIC.devaddr)
+    ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
 
   // enqueue timestamp samples in lora sendqueue
   for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
-
     // send sync request to server
     payload.reset();
     payload.addByte(time_sync_seqNo);
@@ -103,11 +98,11 @@ void process_timesync_req(void *taskparameter) {
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
       } else { // before sending last time sample...
         // ...send flush to open a receive window for last time_sync_answer
-        // payload.reset();
-        // payload.addByte(0x99);
-        // SendPayload(RCMDPORT, prio_high);
+        payload.reset();
+        payload.addByte(0x99);
+        SendPayload(RCMDPORT, prio_high);
         // ...send a alive open a receive window for last time_sync_answer
-        LMIC_sendAlive();
+        //LMIC_sendAlive();
       }
     }
   } // for
@@ -136,28 +131,26 @@ void process_timesync_req(void *taskparameter) {
   // end of time critical section: release I2C bus
   unmask_user_IRQ();
 
-finish:
-
-  lora_time_sync_pending = false;
-  timeSyncReqTask = NULL;
-  vTaskDelete(NULL); // end task
+  goto finish; // end task
 
 error:
   ESP_LOGW(TAG, "[%0.3f] Timeserver error: handshake timed out",
            millis() / 1000.0);
-  goto finish; // end task
+
+finish:
+  vTaskDelete(NULL); // end task
 }
 
 // called from lorawan.cpp after time_sync_req was sent
 void store_time_sync_req(uint32_t timestamp) {
 
-  if (lora_time_sync_pending) {
+  if (timeSyncReqTask) {
 
     uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
     time_sync_tx[k] += milliseconds(timestamp);
 
     ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
-             millis() / 1000.0, time_sync_seqNo, timestamp / 1000,
+             millis() / 1000.0, k, timestamp / 1000,
              timestamp % 1000);
   }
 }
@@ -166,7 +159,7 @@ void store_time_sync_req(uint32_t timestamp) {
 int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 
   // if no timesync handshake is pending then exit
-  if (!lora_time_sync_pending)
+  if (!timeSyncReqTask)
     return 0; // failure
 
   // if no time is available or spurious buffer then exit
@@ -201,7 +194,7 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
     // guess timepoint is recent if newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
       ESP_LOGD(TAG, "[%0.3f] Timesync request #%d rcvd at %d.%03d",
-               millis() / 1000.0, seq_no, timestamp_sec, timestamp_msec);
+               millis() / 1000.0, k, timestamp_sec, timestamp_msec);
 
       // inform processing task
       if (timeSyncReqTask)
