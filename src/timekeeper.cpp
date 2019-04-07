@@ -196,7 +196,7 @@ void clock_init(void) {
                           "clockloop",          // name of task
                           2048,                 // stack size of task
                           (void *)&userUTCTime, // start time as task parameter
-                          3,                    // priority of the task
+                          4,                    // priority of the task
                           &ClockTask,           // task handle
                           1);                   // CPU core
 
@@ -213,7 +213,6 @@ void clock_loop(void *taskparameter) { // ClockTask
   static bool led1_state = false;
   uint32_t printtime;
   time_t t = *((time_t *)taskparameter), last_printtime = 0; // UTC time seconds
-  TickType_t startTime;
 
 #ifdef HAS_DCF77
   uint8_t *DCFpulse;                  // pointer on array with DCF pulse bits
@@ -228,8 +227,6 @@ void clock_loop(void *taskparameter) { // ClockTask
     // ensure the notification state is not already pending
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
                     portMAX_DELAY); // wait for timepulse
-
-    startTime = xTaskGetTickCount();
 
     t = time_t(printtime); // UTC time seconds
 
@@ -251,7 +248,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #if defined HAS_IF482
 
-    vTaskDelayUntil(&startTime, txDelay); // wait until moment to fire
+    vTaskDelay(txDelay); // wait until moment to fire
     IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
 
 #elif defined HAS_DCF77

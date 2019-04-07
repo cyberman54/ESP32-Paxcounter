@@ -54,7 +54,7 @@ void process_timesync_req(void *taskparameter) {
 
   while (1) {
 
-    // clear timestamp array before next sync run
+    // reset all timestamps before next sync run
     time_offset_ms = myClock_msecTick::zero();
     for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++)
       time_sync_tx[i] = time_sync_rx[i] = myClock_timepoint();
@@ -69,21 +69,22 @@ void process_timesync_req(void *taskparameter) {
       payload.addByte(time_sync_seqNo);
       SendPayload(TIMEPORT, prio_high);
 
-      // process answer, wait for notification from recv_timesync_ans()
+      // wait for notification from recv_timesync_ans()
       if ((xTaskNotifyWait(0x00, ULONG_MAX, &seq_no,
                            pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) ==
            pdFALSE) ||
           (seq_no != time_sync_seqNo))
         goto error; // no valid sequence received before timeout
 
-      else { // calculate time diff from collected timestamps
+      // process answer
+      else {
         k = seq_no % TIME_SYNC_SAMPLES;
 
-        // cumulate timepoint diffs
+        // calculate time diff from collected timestamps
         time_offset_ms += time_point_cast<milliseconds>(time_sync_rx[k]) -
                           time_point_cast<milliseconds>(time_sync_tx[k]);
 
-        // wrap around seqNo keeping it in time port range
+        // wrap around seqNo, keeping it in time port range
         time_sync_seqNo = (time_sync_seqNo < TIMEANSWERPORT_MAX)
                               ? time_sync_seqNo + 1
                               : TIMEANSWERPORT_MIN;
@@ -100,18 +101,18 @@ void process_timesync_req(void *taskparameter) {
           // LMIC_sendAlive();
         }
       }
-    } // end for() collect timestamp samples
+    } // end of for loop to collect timestamp samples
 
-    // begin of time critical section: lock I2C bus to ensure accurate timing
+    // begin of time critical section: lock app irq's and I2C bus
     if (!mask_user_IRQ())
       goto error; // failure
 
-    // average time offset from collected diffs
+    // average time offset over all collected diffs
     time_offset_ms /= TIME_SYNC_SAMPLES;
 
     // calculate time offset with millisecond precision using LMIC's time base,
     // since we use LMIC's ostime_t txEnd as tx timestamp.
-    // Finally apply calibration const for processing time.
+    // Also apply calibration const to compensate processing time.
     time_offset_ms +=
         milliseconds(osticks2ms(os_getTime())) + milliseconds(TIME_SYNC_FIXUP);
 
@@ -123,7 +124,7 @@ void process_timesync_req(void *taskparameter) {
 
     setMyTime(time_to_set, time_to_set_fraction_msec);
 
-    // end of time critical section: release I2C bus
+    // end of time critical section: release I2C bus and re-enable app irq's
     unmask_user_IRQ();
 
     goto finish;
@@ -187,7 +188,7 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
     // construct the timepoint when message was seen on gateway
     time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
 
-    // guess timepoint is recent if newer than code compile date
+    // we guess timepoint is recent if it newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
       ESP_LOGD(TAG, "[%0.3f] Timesync request #%d rcvd at %d.%03d",
                millis() / 1000.0, k, timestamp_sec, timestamp_msec);
@@ -246,7 +247,7 @@ void timesync_init() {
                           "timesync_req",       // name of task
                           2048,                 // stack size of task
                           (void *)1,            // task parameter
-                          4,                    // priority of the task
+                          3,                    // priority of the task
                           &timeSyncReqTask,     // task handle
                           1);                   // CPU core
 }

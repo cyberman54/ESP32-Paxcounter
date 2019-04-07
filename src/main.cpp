@@ -17,7 +17,7 @@ Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
    See the License for the specific language governing permissions and
    limitations under the License.
 
-NOTICE:
+NOTE:
 Parts of the source files in this repository are made available under different
 licenses. Refer to LICENSE.txt file in repository for more details.
 
@@ -31,8 +31,8 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
-timesync_req  1     4     processes realtime time sync requests
-clockloop     1     3     generates realtime telegrams for external clock
+clockloop     1     4     generates realtime telegrams for external clock
+timesync_req  1     3     processes realtime time sync requests
 irqhandler    1     2     display, timesync, etc. tasks triggered by timer
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
@@ -43,6 +43,9 @@ Low priority numbers denote low priority tasks.
 
 Tasks using i2c bus all must have same priority, because using mutex semaphore
 (irqhandler, bmeloop)
+
+NOTE: Changing any timings will have impact on time accuracy of whole code.
+So don't do it if you do not own a digital oscilloscope.
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
