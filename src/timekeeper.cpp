@@ -20,7 +20,9 @@ HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 
 Ticker timesyncer;
 
-void timeSync() { xTaskNotifyFromISR(irqHandlerTask, TIMESYNC_IRQ, eSetBits, NULL); }
+void timeSync() {
+  xTaskNotifyFromISR(irqHandlerTask, TIMESYNC_IRQ, eSetBits, NULL);
+}
 
 time_t timeProvider(void) {
 
@@ -123,7 +125,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   SyncToPPS(); // calibrates UTC systime and advances it +1, see microTime.h
 
-  if (ClockTask != NULL)
+  if (ClockTask)
     xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                        &xHigherPriorityTaskWoken);
 
@@ -224,7 +226,6 @@ void clock_loop(void *taskparameter) { // ClockTask
 
   // output the next second's pulse after timepulse arrived
   for (;;) {
-    // ensure the notification state is not already pending
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
                     portMAX_DELAY); // wait for timepulse
 
@@ -248,8 +249,16 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #if defined HAS_IF482
 
-    vTaskDelay(txDelay); // wait until moment to fire
-    IF482.print(IF482_Frame(t + 1)); // note: if482 telegram for *next* second
+    // wait until moment to fire. Normally we won't get notified during this
+    // timespan, except when next pps pulse arrives while waiting, because pps
+    // was adjusted by recent time sync
+    if (xTaskNotifyWait(0x00, ULONG_MAX, &printtime, txDelay) == pdTRUE) {
+      t = time_t(printtime); // new adjusted UTC time seconds
+      last_printtime = t;
+    }
+
+    // send IF482 telegram
+    IF482.print(IF482_Frame(t + 1)); // note: telegram is for *next* second
 
 #elif defined HAS_DCF77
 
