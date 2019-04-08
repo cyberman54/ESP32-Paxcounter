@@ -40,7 +40,7 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "Bmeloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
 #endif
-#ifdef HAS_DCF77
+#if (defined HAS_DCF77 || defined HAS_IF482)
   ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(ClockTask), eTaskGetState(ClockTask));
 #endif
