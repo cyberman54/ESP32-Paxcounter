@@ -86,7 +86,7 @@ uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL;
 
-TaskHandle_t irqHandlerTask, ClockTask;
+TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
 SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
 time_t userUTCTime = 0;
@@ -417,6 +417,11 @@ void setup() {
 #if (!(TIME_SYNC_LORAWAN) && !(TIME_SYNC_LORASERVER) && !defined HAS_GPS &&    \
      !defined HAS_RTC)
 #warning you did not specify a time source, time will not be synched
+#endif
+
+#if (TIME_SYNC_LORASERVER)
+  // create time sync task
+  timesync_init();
 #endif
 
   // start pps timepulse
