@@ -9,6 +9,7 @@
 /*  Hardware related definitions for TTGO V2.1 Board
 // ATTENTION: check your board version!
 // This settings are for boards without label on pcb, or labeled v1.5 on pcb
+// see https://github.com/manuelbl/ttn-esp32/wiki/Boards-and-Pins
 */
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
@@ -32,6 +33,7 @@
 #define LORA_MISO (19)
 #define LORA_MOSI (27)
 #define LORA_RST  LMIC_UNUSED_PIN
+// #define LORA_RST  (12)  // v1.5 labelled with pcb date 20180523
 #define LORA_IRQ  (26)
 #define LORA_IO1  (33)
 #define LORA_IO2  (32)

@@ -170,8 +170,6 @@ void bme_loop(void *pvParameters) {
     }
   }
 #endif
-  ESP_LOGE(TAG, "BME task ended");
-  vTaskDelete(BmeTask); // should never be reached
 
 } // bme_loop()
 

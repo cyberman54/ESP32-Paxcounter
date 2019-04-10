@@ -26,8 +26,8 @@ void DCF77_Pulse(time_t t, uint8_t const *DCFpulse) {
   ESP_LOGD(TAG, "[%02d:%02d:%02d.%03d] DCF second %d", hour(t), minute(t),
            second(t), millisecond(), sec);
 
-  // induce 10 pulses
-  for (uint8_t pulse = 0; pulse <= 9; pulse++) {
+  // induce a DCF Pulse
+  for (uint8_t pulse = 0; pulse <= 2; pulse++) {
 
     switch (pulse) {
 
@@ -43,9 +43,6 @@ void DCF77_Pulse(time_t t, uint8_t const *DCFpulse) {
 
     case 2: // 200ms after start of second -> end of timeframe for logic 1
       digitalWrite(HAS_DCF77, dcf_high);
-      break;
-
-    case 9: // 900ms after start -> last pulse
       break;
 
     } // switch

@@ -223,6 +223,10 @@ void onEvent(ev_t ev) {
     // show effective LoRa parameters after join
     ESP_LOGI(TAG, "ADR=%d, SF=%d, TXPOWER=%d", cfg.adrmode, cfg.lorasf,
              cfg.txpower);
+#if (TIME_SYNC_LORASERVER)
+    // kickoff first time sync
+    send_timesync_req();
+#endif
     break;
 
   case EV_RFU1:
@@ -241,9 +245,8 @@ void onEvent(ev_t ev) {
 
 #if (TIME_SYNC_LORASERVER)
     // if last packet sent was a timesync request, store TX timestamp
-    if (LMIC.pendTxPort == TIMEPORT) {
+    if (LMIC.pendTxPort == TIMEPORT)
       store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
-    }
 #endif
 
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
@@ -263,10 +266,10 @@ void onEvent(ev_t ev) {
           rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
           break;
 
-        default: // unknown port -> display info
+        default:
 
 #if (TIME_SYNC_LORASERVER)
-                 // timesync answer -> call timesync processor
+          // timesync answer -> call timesync processor
           if ((LMIC.frame[LMIC.dataBeg - 1] >= TIMEANSWERPORT_MIN) &&
               (LMIC.frame[LMIC.dataBeg - 1] <= TIMEANSWERPORT_MAX)) {
             recv_timesync_ans(LMIC.frame[LMIC.dataBeg - 1],
@@ -274,6 +277,7 @@ void onEvent(ev_t ev) {
             break;
           }
 #endif
+          // unknown port -> display info
           ESP_LOGI(TAG, "Received data on unsupported port #%d",
                    LMIC.frame[LMIC.dataBeg - 1]);
           break;
@@ -309,7 +313,14 @@ void onEvent(ev_t ev) {
 
   case EV_TXSTART:
     if (!(LMIC.opmode & OP_JOINING))
-      strcpy_P(buff, PSTR("TX START"));
+#if (TIME_SYNC_LORASERVER)
+      // if last packet sent was a timesync request, store TX time
+      // if ((LMIC.pendTxPort == TIMEPORT) && timeSyncPending)
+      if (LMIC.pendTxPort == TIMEPORT)
+        strcpy_P(buff, PSTR("TX TIMESYNC"));
+      else
+#endif
+        strcpy_P(buff, PSTR("TX START"));
     break;
 
   case EV_TXCANCELED:

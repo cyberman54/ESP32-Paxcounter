@@ -212,7 +212,6 @@ void ledLoop(void *parameter) {
     // give yield to CPU
     delay(2);
   }                         // while(1)
-  vTaskDelete(ledLoopTask); // shoud never be reached
 };                          // ledloop()
 
 #endif // #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)

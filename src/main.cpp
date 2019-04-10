@@ -17,7 +17,7 @@ Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
    See the License for the specific language governing permissions and
    limitations under the License.
 
-NOTICE:
+NOTE:
 Parts of the source files in this repository are made available under different
 licenses. Refer to LICENSE.txt file in repository for more details.
 
@@ -31,18 +31,21 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
-clockloop     1     3     generates realtime telegrams for external clock
-looptask      1     1     arduino core -> runs the LMIC LoRa stack
-irqhandler    1     1     executes tasks triggered by timer irq
+clockloop     1     4     generates realtime telegrams for external clock
+timesync_req  1     3     processes realtime time sync requests
+irqhandler    1     2     display, timesync, etc. tasks triggered by timer
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
-timesync_req  1     2     temporary task for processing time sync requests
+looptask      1     1     runs the LMIC LoRa stack (arduino loop)
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
 
 Tasks using i2c bus all must have same priority, because using mutex semaphore
 (irqhandler, bmeloop)
+
+NOTE: Changing any timings will have impact on time accuracy of whole code.
+So don't do it if you do not own a digital oscilloscope.
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
@@ -83,7 +86,7 @@ uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL;
 
-TaskHandle_t irqHandlerTask, ClockTask;
+TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
 SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
 time_t userUTCTime = 0;
@@ -360,7 +363,7 @@ void setup() {
                           "irqhandler",    // name of task
                           4096,            // stack size of task
                           (void *)1,       // parameter of the task
-                          1,               // priority of the task
+                          2,               // priority of the task
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
@@ -411,35 +414,40 @@ void setup() {
 #endif // HAS_BUTTON
 
 #if (TIME_SYNC_INTERVAL)
-#if (!defined(TIME_SYNC_LORAWAN) && !defined(TIME_SYNC_LORASERVER) &&          \
-     !defined HAS_GPS && !defined HAS_RTC)
+
+#if (!(TIME_SYNC_LORAWAN) && !(TIME_SYNC_LORASERVER) && !defined HAS_GPS &&    \
+     !defined HAS_RTC)
 #warning you did not specify a time source, time will not be synched
 #endif
+
+#if (defined HAS_IF482 || defined HAS_DCF77)
+  ESP_LOGI(TAG, "Starting Clock Controller...");
+  clock_init();
+#endif
+
+#if (TIME_SYNC_LORASERVER)
+  // create time sync task
+  timesync_init();
+#endif
+
   // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
   assert(timepulse_init()); // setup timepulse
   timepulse_start();
   timeSync(); // init systime
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
-#endif
 
-#if defined HAS_IF482 || defined HAS_DCF77
-#if (!TIME_SYNC_INTERVAL)
-#error for clock controller function TIME_SNYC_INTERVAL must be defined in paxcounter.conf
-#endif
-  ESP_LOGI(TAG, "Starting Clock Controller...");
-  clock_init();
-#endif
+#endif // TIME_SYNC_INTERVAL
 
 } // setup()
 
 void loop() {
+
   while (1) {
 #if (HAS_LORA)
     os_runloop_once(); // execute lmic scheduled jobs and events
-#endif
+#else
     delay(2); // yield to CPU
+#endif
   }
-
-  vTaskDelete(NULL); // shoud never be reached
 }
