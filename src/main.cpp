@@ -414,9 +414,15 @@ void setup() {
 #endif // HAS_BUTTON
 
 #if (TIME_SYNC_INTERVAL)
+
 #if (!(TIME_SYNC_LORAWAN) && !(TIME_SYNC_LORASERVER) && !defined HAS_GPS &&    \
      !defined HAS_RTC)
 #warning you did not specify a time source, time will not be synched
+#endif
+
+#if (defined HAS_IF482 || defined HAS_DCF77)
+  ESP_LOGI(TAG, "Starting Clock Controller...");
+  clock_init();
 #endif
 
 #if (TIME_SYNC_LORASERVER)
@@ -431,20 +437,7 @@ void setup() {
   timeSync(); // init systime
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
 
-#if (TIME_SYNC_LORASERVER)
-  // create time sync task
-  timesync_init();
-#endif
-
-#endif
-
-#if defined HAS_IF482 || defined HAS_DCF77
-#if (!TIME_SYNC_INTERVAL)
-#error for clock controller function TIME_SNYC_INTERVAL must be defined in paxcounter.conf
-#endif
-  ESP_LOGI(TAG, "Starting Clock Controller...");
-  clock_init();
-#endif
+#endif // TIME_SYNC_INTERVAL
 
 } // setup()
 
