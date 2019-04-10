@@ -125,9 +125,10 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   SyncToPPS(); // calibrates UTC systime and advances it +1, see microTime.h
 
-  if (ClockTask)
-    xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
-                       &xHigherPriorityTaskWoken);
+#if (defined HAS_IF482 || defined HAS_DCF77)
+  xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
+                     &xHigherPriorityTaskWoken);
+#endif
 
 #ifdef HAS_DISPLAY
 #if (defined GPS_INT || defined RTC_INT)
@@ -226,36 +227,23 @@ void clock_loop(void *taskparameter) { // ClockTask
 
   // output the next second's pulse after timepulse arrived
   for (;;) {
-    xTaskNotifyWait(0x00, ULONG_MAX, &printtime,
-                    portMAX_DELAY); // wait for timepulse
 
-    t = time_t(printtime); // UTC time seconds
-
+    // wait for timepulse and store UTC time in seconds got
+    xTaskNotifyWait(0x00, ULONG_MAX, &printtime, portMAX_DELAY);
+    t = time_t(printtime);
+    
     // no confident or no recent time -> suppress clock output
     if ((timeStatus() == timeNotSet) || !(timeIsValid(t)) ||
         (t == last_printtime))
       continue;
-
-    last_printtime = t;
-
-// pps blink on secondary LED if we have one
-#ifdef HAS_TWO_LED
-    if (led1_state)
-      switch_LED1(LED_OFF);
-    else
-      switch_LED1(LED_ON);
-    led1_state = !led1_state;
-#endif
 
 #if defined HAS_IF482
 
     // wait until moment to fire. Normally we won't get notified during this
     // timespan, except when next pps pulse arrives while waiting, because pps
     // was adjusted by recent time sync
-    if (xTaskNotifyWait(0x00, ULONG_MAX, &printtime, txDelay) == pdTRUE) {
+    if (xTaskNotifyWait(0x00, ULONG_MAX, &printtime, txDelay) == pdTRUE)
       t = time_t(printtime); // new adjusted UTC time seconds
-      last_printtime = t;
-    }
 
     // send IF482 telegram
     IF482.print(IF482_Frame(t + 1)); // note: telegram is for *next* second
@@ -268,10 +256,21 @@ void clock_loop(void *taskparameter) { // ClockTask
     if (minute(nextmin(t)) ==       // do we still have a recent frame?
         DCFpulse[DCF77_FRAME_SIZE]) // (timepulses could be missed!)
       DCF77_Pulse(t, DCFpulse);     // then output current second's pulse
-    else
-      continue; // no recent frame -> we suppress clock output
+
+      // else we have no recent frame, thus suppressing clock output
 
 #endif
+
+// pps blink on secondary LED if we have one
+#ifdef HAS_TWO_LED
+    if (led1_state)
+      switch_LED1(LED_OFF);
+    else
+      switch_LED1(LED_ON);
+    led1_state = !led1_state;
+#endif
+
+    last_printtime = t;
 
   } // for
 } // clock_loop()
