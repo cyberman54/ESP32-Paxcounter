@@ -239,7 +239,7 @@ void get_config(uint8_t val[]) {
 
 void get_status(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device status");
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
   uint16_t voltage = read_voltage();
 #else
   uint16_t voltage = 0;

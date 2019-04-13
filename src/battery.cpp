@@ -3,7 +3,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
 esp_adc_cal_characteristics_t *adc_characs =
     (esp_adc_cal_characteristics_t *)calloc(
         1, sizeof(esp_adc_cal_characteristics_t));
@@ -14,7 +14,7 @@ static const adc_unit_t unit = ADC_UNIT_1;
 #endif
 
 void calibrate_voltage(void) {
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
   // configure ADC
   ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
   ESP_ERROR_CHECK(adc1_config_channel_atten(adc_channel, atten));
@@ -35,7 +35,7 @@ void calibrate_voltage(void) {
 }
 
 uint16_t read_voltage() {
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
   // multisample ADC
   uint32_t adc_reading = 0;
   for (int i = 0; i < NO_OF_SAMPLES; i++) {
