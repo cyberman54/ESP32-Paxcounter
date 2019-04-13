@@ -116,6 +116,10 @@ void timepulse_start(void) {
   timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
   timerAlarmEnable(ppsIRQ);
 #endif
+
+  // start cyclic time sync
+  timeSync(); // init systime by RTC or GPS or LORA
+  timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
 }
 
 // interrupt service routine triggered by either pps or esp32 hardware timer
@@ -225,13 +229,13 @@ void clock_loop(void *taskparameter) { // ClockTask
                               tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
 #endif
 
-  // output the next second's pulse after timepulse arrived
+  // output the next second's pulse/telegram after pps arrived
   for (;;) {
 
     // wait for timepulse and store UTC time in seconds got
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime, portMAX_DELAY);
     t = time_t(printtime);
-    
+
     // no confident or no recent time -> suppress clock output
     if ((timeStatus() == timeNotSet) || !(timeIsValid(t)) ||
         (t == last_printtime))

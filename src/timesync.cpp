@@ -33,12 +33,11 @@ static myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
 // send time request message
 void send_timesync_req() {
 
-  // if a timesync handshake is pending or we are not joined then exit
-  if (timeSyncPending || !LMIC.devaddr)
+  // if a timesync handshake is pending then exit
+  if (timeSyncPending)
     return;
   // else unblock timesync task
   else {
-    timeSyncPending = true;
     ESP_LOGI(TAG, "[%0.3f] Timeserver sync request started", millis() / 1000.0);
     xTaskNotifyGive(timeSyncReqTask);
   }
@@ -49,7 +48,7 @@ void process_timesync_req(void *taskparameter) {
 
   uint8_t k;
   uint16_t time_to_set_fraction_msec;
-  uint32_t seq_no, time_to_set;
+  uint32_t seq_no = 0, time_to_set;
   auto time_offset_ms = myClock_msecTick::zero();
 
   while (1) {
@@ -61,6 +60,12 @@ void process_timesync_req(void *taskparameter) {
 
     // wait for kickoff
     ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+    timeSyncPending = true;
+
+    // wait until we are joined if we are not
+    while (!LMIC.devaddr) {
+      vTaskDelay(5000);
+    }
 
     // collect timestamp samples
     for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
@@ -69,43 +74,49 @@ void process_timesync_req(void *taskparameter) {
       payload.addByte(time_sync_seqNo);
       SendPayload(TIMEPORT, prio_high);
 
-      // wait for notification from recv_timesync_ans()
-      if ((xTaskNotifyWait(0x00, ULONG_MAX, &seq_no,
-                           pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) ==
-           pdFALSE) ||
-          (seq_no != time_sync_seqNo))
-        goto error; // no valid sequence received before timeout
+      // wait for a valid timestamp from recv_timesync_ans()
+      while (seq_no != time_sync_seqNo) {
+        if (xTaskNotifyWait(0x00, ULONG_MAX, &seq_no,
+                            pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) ==
+            pdFALSE) {
+          ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: timeout",
+                   millis() / 1000.0);
+          goto finish; // no valid sequence received before timeout
+        }
+      }
 
       // process answer
-      else {
-        k = seq_no % TIME_SYNC_SAMPLES;
+      k = seq_no % TIME_SYNC_SAMPLES;
 
-        // calculate time diff from collected timestamps
-        time_offset_ms += time_point_cast<milliseconds>(time_sync_rx[k]) -
-                          time_point_cast<milliseconds>(time_sync_tx[k]);
+      // calculate time diff from collected timestamps
+      time_offset_ms += time_point_cast<milliseconds>(time_sync_rx[k]) -
+                        time_point_cast<milliseconds>(time_sync_tx[k]);
 
-        // wrap around seqNo, keeping it in time port range
-        time_sync_seqNo = (time_sync_seqNo < TIMEANSWERPORT_MAX)
-                              ? time_sync_seqNo + 1
-                              : TIMEANSWERPORT_MIN;
+      // wrap around seqNo, keeping it in time port range
+      time_sync_seqNo = (time_sync_seqNo < TIMEANSWERPORT_MAX)
+                            ? time_sync_seqNo + 1
+                            : TIMEANSWERPORT_MIN;
 
-        if (i < TIME_SYNC_SAMPLES - 1) {
-          // wait until next cycle
-          vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
-        } else { // before sending last time sample...
-          // ...send flush to open a receive window for last time_sync_answer
-          payload.reset();
-          payload.addByte(0x99);
-          SendPayload(RCMDPORT, prio_high);
-          // ...send a alive open a receive window for last time_sync_answer
-          // LMIC_sendAlive();
-        }
+      if (i < TIME_SYNC_SAMPLES - 1) {
+        // wait until next cycle
+        vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
+      } else { // before sending last time sample...
+        // ...send flush to open a receive window for last time_sync_answer
+        payload.reset();
+        payload.addByte(0x99);
+        SendPayload(RCMDPORT, prio_high);
+        // ...send a alive open a receive window for last time_sync_answer
+        // LMIC_sendAlive();
       }
     } // end of for loop to collect timestamp samples
 
     // begin of time critical section: lock app irq's and I2C bus
-    if (!mask_user_IRQ())
-      goto error; // failure
+    if (!mask_user_IRQ()) {
+      ESP_LOGW(TAG,
+               "[%0.3f] Timesync handshake error: irq / i2c masking failed",
+               millis() / 1000.0);
+      goto finish; // failure
+    }
 
     // average time offset over all collected diffs
     time_offset_ms /= TIME_SYNC_SAMPLES;
@@ -127,12 +138,6 @@ void process_timesync_req(void *taskparameter) {
     // end of time critical section: release I2C bus and re-enable app irq's
     unmask_user_IRQ();
 
-    goto finish;
-
-  error:
-    ESP_LOGW(TAG, "[%0.3f] Timeserver error: handshake timed out",
-             millis() / 1000.0);
-
   finish:
     timeSyncPending = false;
 
@@ -142,14 +147,16 @@ void process_timesync_req(void *taskparameter) {
 // called from lorawan.cpp after time_sync_req was sent
 void store_time_sync_req(uint32_t timestamp) {
 
-  if (timeSyncPending) {
+  // if no timesync handshake is pending then exit
+  if (!timeSyncPending)
+    return;
 
-    uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
-    time_sync_tx[k] += milliseconds(timestamp);
+  uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
+  time_sync_tx[k] += milliseconds(timestamp);
 
-    ESP_LOGD(TAG, "[%0.3f] Timesync request #%d sent at %d.%03d",
-             millis() / 1000.0, k, timestamp / 1000, timestamp % 1000);
-  }
+  ESP_LOGD(TAG, "[%0.3f] Timesync request #%d of %d sent at %d.%03d",
+           millis() / 1000.0, k + 1, TIME_SYNC_SAMPLES, timestamp / 1000,
+           timestamp % 1000);
 }
 
 // process timeserver timestamp answer, called from lorawan.cpp
@@ -190,8 +197,9 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 
     // we guess timepoint is recent if it newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
-      ESP_LOGD(TAG, "[%0.3f] Timesync request #%d rcvd at %d.%03d",
-               millis() / 1000.0, k, timestamp_sec, timestamp_msec);
+      ESP_LOGD(TAG, "[%0.3f] Timesync request #%d of %d rcvd at %d.%03d",
+               millis() / 1000.0, k + 1, TIME_SYNC_SAMPLES, timestamp_sec,
+               timestamp_msec);
 
       // inform processing task
       xTaskNotify(timeSyncReqTask, seq_no, eSetBits);

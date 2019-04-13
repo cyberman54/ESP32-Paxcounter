@@ -47,6 +47,7 @@ void irqHandler(void *pvParameters) {
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ) {
       time_t t = timeProvider();
+      ESP_LOGD(TAG, "Sync time = %d", t);
       if (timeIsValid(t))
         setTime(t);
     }
