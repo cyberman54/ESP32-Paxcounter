@@ -114,7 +114,7 @@ void sendCounter() {
       break;
 #endif
 
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
     case BATT_DATA:
       payload.reset();
       payload.addVoltage(read_voltage());

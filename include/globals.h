@@ -139,7 +139,7 @@ extern time_t userUTCTime;
 #include "button.h"
 #endif
 
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
 #include "battery.h"
 #endif
 

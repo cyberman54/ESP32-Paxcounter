@@ -54,7 +54,7 @@ void doHousekeeping() {
 #endif
 
 // read battery voltage into global variable
-#ifdef HAS_BATTERY_PROBE
+#ifdef BAT_MEASURE_ADC
   batt_voltage = read_voltage();
   ESP_LOGI(TAG, "Voltage: %dmV", batt_voltage);
 #endif
