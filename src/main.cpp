@@ -409,9 +409,7 @@ void setup() {
 #endif
 
 // cyclic function interrupts
-#if (WIFICOUNTER) || (BLECOUNTER)
   sendcycler.attach(SENDCYCLE * 2, sendcycle);
-#endif
   housekeeper.attach(HOMECYCLE, housekeeping);
 
 // button interrupt

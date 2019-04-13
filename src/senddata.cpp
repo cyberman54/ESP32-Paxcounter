@@ -3,7 +3,9 @@
 
 Ticker sendcycler;
 
-void sendcycle() { xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL); }
+void sendcycle() {
+  xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL);
+}
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port, sendprio_t prio) {
@@ -57,6 +59,7 @@ void sendCounter() {
   while (bitmask) {
     switch (bitmask & mask) {
 
+#if ((WIFICOUNTER) || (BLECOUNTER))
     case COUNT_DATA:
       payload.reset();
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
@@ -70,6 +73,7 @@ void sendCounter() {
         ESP_LOGI(TAG, "Counter cleared");
       }
       break;
+#endif
 
 #if (HAS_BME)
     case MEMS_DATA:

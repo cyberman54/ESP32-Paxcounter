@@ -9,7 +9,9 @@ static const char TAG[] = __FILE__;
 
 Ticker housekeeper;
 
-void housekeeping() { xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL); }
+void housekeeping() {
+  xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
+}
 
 // do all housekeeping
 void doHousekeeping() {
@@ -24,7 +26,7 @@ void doHousekeeping() {
 #ifdef HAS_SPI
   spi_housekeeping();
 #endif
-#if(HAS_LORA)
+#if (HAS_LORA)
   lora_housekeeping();
 #endif
 
@@ -32,7 +34,7 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
-#if(HAS_GPS)
+#if (HAS_GPS)
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
@@ -115,8 +117,10 @@ uint32_t getFreeRAM() {
 }
 
 void reset_counters() {
+#if ((WIFICOUNTER) || (BLECOUNTER))
   macs.clear();   // clear all macs container
   macs_total = 0; // reset all counters
   macs_wifi = 0;
   macs_ble = 0;
+#endif
 }
