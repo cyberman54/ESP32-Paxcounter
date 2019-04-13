@@ -221,12 +221,7 @@ void onEvent(ev_t ev) {
     // kickoff first send job
     os_setCallback(&sendjob, lora_send);
     // show effective LoRa parameters after join
-    ESP_LOGI(TAG, "ADR=%d, SF=%d, TXPOWER=%d", cfg.adrmode, cfg.lorasf,
-             cfg.txpower);
-#if (TIME_SYNC_LORASERVER)
-    // kickoff first time sync
-    send_timesync_req();
-#endif
+    ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
     break;
 
   case EV_RFU1:
@@ -315,7 +310,6 @@ void onEvent(ev_t ev) {
     if (!(LMIC.opmode & OP_JOINING))
 #if (TIME_SYNC_LORASERVER)
       // if last packet sent was a timesync request, store TX time
-      // if ((LMIC.pendTxPort == TIMEPORT) && timeSyncPending)
       if (LMIC.pendTxPort == TIMEPORT)
         strcpy_P(buff, PSTR("TX TIMESYNC"));
       else

@@ -426,16 +426,12 @@ void setup() {
 #endif
 
 #if (TIME_SYNC_LORASERVER)
-  // create time sync task
-  timesync_init();
+  timesync_init(); // create loraserver time sync task
 #endif
 
-  // start pps timepulse
   ESP_LOGI(TAG, "Starting Timekeeper...");
-  assert(timepulse_init()); // setup timepulse
-  timepulse_start();
-  timeSync(); // init systime
-  timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
+  assert(timepulse_init()); // setup pps timepulse
+  timepulse_start();        // starts pps and cyclic time sync
 
 #endif // TIME_SYNC_INTERVAL
 
