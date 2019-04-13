@@ -346,9 +346,8 @@ void setup() {
   strcat_P(features, " IF482");
 #endif
 
-  // show compiled features
-  ESP_LOGI(TAG, "Features:%s", features);
-
+#if (WIFICOUNTER)
+  strcat_P(features, " WIFI");
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
   wifi_sniffer_init();
@@ -356,6 +355,15 @@ void setup() {
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
   get_salt(); // get new 16bit for salting hashes
+#else
+  // switch off wifi
+  WiFi.mode(WIFI_OFF);
+  esp_wifi_stop();
+  esp_wifi_deinit();
+#endif
+
+  // show compiled features
+  ESP_LOGI(TAG, "Features:%s", features);
 
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
@@ -400,8 +408,10 @@ void setup() {
   timerAlarmEnable(displayIRQ);
 #endif
 
-  // cyclic function interrupts
+// cyclic function interrupts
+#if (WIFICOUNTER) || (BLECOUNTER)
   sendcycler.attach(SENDCYCLE * 2, sendcycle);
+#endif
   housekeeper.attach(HOMECYCLE, housekeeping);
 
 // button interrupt
