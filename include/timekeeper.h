@@ -6,7 +6,7 @@
 #include "TimeLib.h"
 #include "irqhandler.h"
 
-#ifdef HAS_GPS
+#if (HAS_GPS)
 #include "gpsread.h"
 #endif
 
