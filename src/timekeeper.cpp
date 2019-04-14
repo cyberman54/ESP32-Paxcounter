@@ -20,9 +20,7 @@ HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 
 Ticker timesyncer;
 
-void timeSync() {
-  xTaskNotifyFromISR(irqHandlerTask, TIMESYNC_IRQ, eSetBits, NULL);
-}
+void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 time_t timeProvider(void) {
 
@@ -116,6 +114,7 @@ void timepulse_start(void) {
   timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
   timerAlarmEnable(ppsIRQ);
 #endif
+  now(); // refresh sysTime to pps
 
   // start cyclic time sync
   timeSync(); // init systime by RTC or GPS or LORA
@@ -213,7 +212,7 @@ void clock_init(void) {
 void clock_loop(void *taskparameter) { // ClockTask
 
   // caveat: don't use now() in this task, it will cause a race condition
-  // due to concurrent access to i2c bus for setting rtc via SyncProvider!
+  // due to concurrent access to i2c bus for setting rtc!
 
 #define nextmin(t) (t + DCF77_FRAME_SIZE + 1) // next minute
 

@@ -9,7 +9,7 @@
 #include <Wire.h>
 #endif
 
-#define NMEA_FRAME_SIZE 80 // NEMA has a maxium of 80 bytes per record
+#define NMEA_FRAME_SIZE 82 // NEMA has a maxium of 82 bytes per record
 #define NMEA_BUFFERTIME 50 // 50ms safety time regardless
 
 extern TinyGPSPlus gps; // Make TinyGPS++ instance globally availabe

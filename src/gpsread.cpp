@@ -1,4 +1,4 @@
-#if(HAS_GPS)
+#if (HAS_GPS)
 
 #include "globals.h"
 
@@ -11,6 +11,9 @@ TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
 HardwareSerial GPS_Serial(1); // use UART #1
+static TickType_t gps_txDelay = tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL);
+#else
+static TickType_t gps_txDelay = 0;
 #endif
 
 // initialize and configure GPS
@@ -77,22 +80,26 @@ void gps_read() {
 time_t get_gpstime(void) {
 
   // set time to wait for arrive next recent NMEA time record
-  static const uint32_t gpsDelay_ms = 500;
+  static const uint32_t gpsDelay_ms = 1000 - gps_txDelay / portTICK_PERIOD_MS;
 
   time_t t = 0;
+  uint32_t time_age = gps.time.age();
 
-  if ((gps.time.age() < gpsDelay_ms) && gps.time.isValid() &&
-      gps.date.isValid() && gps.time.isUpdated()) {
-
-    gps.time.value(); // trigger isUpdated()
-
-    ESP_LOGD(TAG, "GPS time age: %dms, is valid: %s, second: %d",
-             gps.time.age(),
-             (gps.time.isValid() && gps.date.isValid()) ? "yes" : "no",
-             gps.time.second());
+  if ((time_age < gpsDelay_ms) && gps.time.isValid() && gps.date.isValid() &&
+      gps.time.isUpdated()) {
 
     t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
                   gps.time.hour(), gps.time.minute(), gps.time.second());
+
+    if (time_age < (gpsDelay_ms / 2))
+      t--;
+
+    ESP_LOGD(TAG, "GPS time age: %dms", time_age);
+
+#ifndef GPS_INT
+    // wait until top of second with millisecond precision
+    vTaskDelay(pdMS_TO_TICKS(1000 - time_age) - gps_txDelay);
+#endif
   }
   return timeIsValid(t);
 } // get_gpstime()
