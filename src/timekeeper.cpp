@@ -27,7 +27,7 @@ time_t timeProvider(void) {
   time_t t = 0;
 
 #if (HAS_GPS)
-  t = get_gpstime(); // fetch recent time from last NEMA record
+  t = gps_pps_time; // fetch recent time from last NEMA record
   if (t) {
 #ifdef HAS_RTC
     set_rtctime(t, do_mutex); // calibrate RTC
@@ -106,6 +106,7 @@ uint8_t timepulse_init() {
 } // timepulse_init
 
 void timepulse_start(void) {
+
 #ifdef GPS_INT // start external clock gps pps line
   attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
 #elif defined RTC_INT // start external clock rtc
@@ -114,9 +115,14 @@ void timepulse_start(void) {
   timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
   timerAlarmEnable(ppsIRQ);
 #endif
-  now(); // refresh sysTime to pps
+
+#if (HAS_GPS)
+  gps_read();
+  gps_pps_time = gps_status.utctime;
+#endif
 
   // start cyclic time sync
+  now();      // ensure sysTime is ßrecent
   timeSync(); // init systime by RTC or GPS or LORA
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
 }
@@ -126,13 +132,20 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-  SyncToPPS(); // calibrates UTC systime and advances it +1, see microTime.h
+  SyncToPPS(); // advance systime, see microTime.h
 
+  // store recent gps time, if we have
+#if (HAS_GPS)
+  gps_pps_time = gps_status.utctime + 1;
+#endif
+
+// advance wall clock, if we have
 #if (defined HAS_IF482 || defined HAS_DCF77)
   xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                      &xHigherPriorityTaskWoken);
 #endif
 
+// flip time pulse ticker, if needed
 #ifdef HAS_DISPLAY
 #if (defined GPS_INT || defined RTC_INT)
   TimePulseTick = !TimePulseTick; // flip pulse ticker

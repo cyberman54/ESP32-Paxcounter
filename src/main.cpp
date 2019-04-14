@@ -51,7 +51,7 @@ So don't do it if you do not own a digital oscilloscope.
 -------------------------------------------------------------------------------
 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
 1 ppsIRQ -> pps clock irq -> 1sec
-2	unused
+2	gpsIRQ -> gps store data -> 500ms
 3	unused
 
 
@@ -61,6 +61,7 @@ So don't do it if you do not own a digital oscilloscope.
 fired by hardware
 DisplayIRQ      -> esp32 timer 0  -> irqHandlerTask (Core 1)
 CLOCKIRQ        -> esp32 timer 1  -> ClockTask (Core 1)
+GpsIRQ          -> esp32 timer 2  -> irqHandlerTask (Core 1)
 ButtonIRQ       -> external gpio  -> irqHandlerTask (Core 1)
 
 fired by software (Ticker.h)
@@ -84,11 +85,12 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL;
+hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *gpsIRQ = NULL;
 
 TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
 SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
+time_t volatile gps_pps_time = 0;
 time_t userUTCTime = 0;
 timesource_t timeSource = _unsynced;
 
@@ -408,7 +410,15 @@ void setup() {
   timerAlarmEnable(displayIRQ);
 #endif
 
-// cyclic function interrupts
+ // gps buffer read interrupt
+#if (HAS_GPS)
+  gpsIRQ = timerBegin(2, 80, true);
+  timerAttachInterrupt(gpsIRQ, &GpsIRQ, true);
+  timerAlarmWrite(gpsIRQ, 500 * 1000, true);
+  timerAlarmEnable(gpsIRQ);
+#endif
+
+  // cyclic function interrupts
   sendcycler.attach(SENDCYCLE * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
 

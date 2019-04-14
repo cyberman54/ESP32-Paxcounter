@@ -8,7 +8,7 @@
 #define TIMESYNC_IRQ 0x10
 #define MASK_IRQ 0x20
 #define UNMASK_IRQ 0x40
-#define RESERVED_IRQ 0x80
+#define GPS_IRQ 0x80
 
 #include "globals.h"
 #include "cyclic.h"
@@ -25,6 +25,10 @@ void IRAM_ATTR DisplayIRQ();
 
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ();
+#endif
+
+#if (HAS_GPS)
+void IRAM_ATTR GpsIRQ();
 #endif
 
 #endif

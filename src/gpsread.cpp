@@ -11,9 +11,10 @@ TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
 HardwareSerial GPS_Serial(1); // use UART #1
-static TickType_t gps_txDelay = tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL);
+static uint16_t nmea_txDelay_ms =
+    tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL) / portTICK_PERIOD_MS;
 #else
-static TickType_t gps_txDelay = 0;
+static uint16_t nmea_txDelay_ms = 0;
 #endif
 
 // initialize and configure GPS
@@ -71,37 +72,24 @@ void gps_read() {
   gps_status.satellites = (uint8_t)gps.satellites.value();
   gps_status.hdop = (uint16_t)gps.hdop.value();
   gps_status.altitude = (int16_t)gps.altitude.meters();
+  gps_status.utctime = get_gpstime();
+
   // show NMEA data in debug mode, useful for debugging GPS
-  ESP_LOGD(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+  ESP_LOGV(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
            gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
 }
 
 // function to fetch current time from gps
 time_t get_gpstime(void) {
 
-  // set time to wait for arrive next recent NMEA time record
-  static const uint32_t gpsDelay_ms = 1000 - gps_txDelay / portTICK_PERIOD_MS;
-
   time_t t = 0;
   uint32_t time_age = gps.time.age();
 
-  if ((time_age < gpsDelay_ms) && gps.time.isValid() && gps.date.isValid() &&
-      gps.time.isUpdated()) {
-
+  if (gps.time.isValid() && gps.date.isValid() && (time_age < 1000))
     t = tmConvert(gps.date.year(), gps.date.month(), gps.date.day(),
                   gps.time.hour(), gps.time.minute(), gps.time.second());
 
-    if (time_age < (gpsDelay_ms / 2))
-      t--;
-
-    ESP_LOGD(TAG, "GPS time age: %dms", time_age);
-
-#ifndef GPS_INT
-    // wait until top of second with millisecond precision
-    vTaskDelay(pdMS_TO_TICKS(1000 - time_age) - gps_txDelay);
-#endif
-  }
-  return timeIsValid(t);
+  return timeIsValid(time_age > nmea_txDelay_ms ? t : t - 1);
 } // get_gpstime()
 
 // GPS serial feed FreeRTos Task
