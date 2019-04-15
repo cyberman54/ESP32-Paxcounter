@@ -39,6 +39,7 @@ time_t timeProvider(void) {
 #endif
     timeSource = _gps;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
+    ESP_LOGD(TAG, "GPS time = %d", t);
     return t;
   }
 #endif
@@ -49,6 +50,7 @@ time_t timeProvider(void) {
   if (t) {
     timeSource = _rtc;
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync); // short retry
+    ESP_LOGD(TAG, "RTC time = %d", t);
   }
 #endif
 
@@ -127,7 +129,6 @@ void timepulse_start(void) {
 #endif
 
   // start cyclic time sync
-  now();      // ensure sysTime is ßrecent
   timeSync(); // init systime by RTC or GPS or LORA
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
 }

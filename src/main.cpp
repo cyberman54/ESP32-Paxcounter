@@ -51,7 +51,7 @@ So don't do it if you do not own a digital oscilloscope.
 -------------------------------------------------------------------------------
 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
 1 ppsIRQ -> pps clock irq -> 1sec
-2	gpsIRQ -> gps store data -> 500ms
+2	gpsIRQ -> gps store data -> 300ms
 3	unused
 
 
@@ -414,7 +414,7 @@ void setup() {
 #if (HAS_GPS)
   gpsIRQ = timerBegin(2, 80, true);
   timerAttachInterrupt(gpsIRQ, &GpsIRQ, true);
-  timerAlarmWrite(gpsIRQ, 500 * 1000, true);
+  timerAlarmWrite(gpsIRQ, 300 * 1000, true);
   timerAlarmEnable(gpsIRQ);
 #endif
 
