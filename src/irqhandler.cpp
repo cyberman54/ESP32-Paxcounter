@@ -42,7 +42,7 @@ void irqHandler(void *pvParameters) {
 // gps refresh buffer?
 #if (HAS_GPS)
     if (InterruptStatus & GPS_IRQ)
-      gps_read();
+      gps_storelocation(gps_status);
 #endif
 
     // are cyclic tasks due?

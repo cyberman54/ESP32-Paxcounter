@@ -18,6 +18,10 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 #endif
 
+#if (HAS_GPS)
+static gpsStatus_t gps_pps_status;
+#endif
+
 Ticker timesyncer;
 
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
@@ -27,7 +31,8 @@ time_t timeProvider(void) {
   time_t t = 0;
 
 #if (HAS_GPS)
-  t = gps_pps_time; // fetch recent time from last NEMA record
+  // fetch recent time from last NEMA record
+  t = get_gpstime(gps_pps_status);
   if (t) {
 #ifdef HAS_RTC
     set_rtctime(t, do_mutex); // calibrate RTC
@@ -116,9 +121,9 @@ void timepulse_start(void) {
   timerAlarmEnable(ppsIRQ);
 #endif
 
+// initialize gps time
 #if (HAS_GPS)
-  gps_read();
-  gps_pps_time = gps_status.utctime;
+  gps_storetime(gps_pps_status);
 #endif
 
   // start cyclic time sync
@@ -134,9 +139,9 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   SyncToPPS(); // advance systime, see microTime.h
 
-  // store recent gps time, if we have
+  // store recent gps time, if we have gps
 #if (HAS_GPS)
-  gps_pps_time = gps_status.utctime + 1;
+  gps_storetime(gps_pps_status);
 #endif
 
 // advance wall clock, if we have
@@ -167,19 +172,6 @@ time_t timeIsValid(time_t const t) {
 time_t compiledUTC(void) {
   static time_t t = myTZ.toUTC(RtcDateTime(__DATE__, __TIME__).Epoch32Time());
   return t;
-}
-
-// helper function to convert gps date/time into time_t
-time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh, uint8_t mm,
-                 uint8_t ss) {
-  tmElements_t tm;
-  tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in microTime.h
-  tm.Month = MM;
-  tm.Day = DD;
-  tm.Hour = hh;
-  tm.Minute = mm;
-  tm.Second = ss;
-  return makeTime(tm);
 }
 
 // helper function to calculate serial transmit time

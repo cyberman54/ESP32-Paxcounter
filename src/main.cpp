@@ -33,7 +33,7 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_req  1     3     processes realtime time sync requests
-irqhandler    1     2     display, timesync, etc. tasks triggered by timer
+irqhandler    1     2     display, timesync, gps, etc. triggered by timers
 gpsloop       1     2     reads data from GPS via serial or i2c
 bmeloop       1     1     reads data from BME sensor via i2c
 looptask      1     1     runs the LMIC LoRa stack (arduino loop)
