@@ -83,6 +83,8 @@ typedef struct {
   uint8_t satellites;
   uint16_t hdop;
   int16_t altitude;
+  uint32_t time_age;
+  tmElements_t timedate;
 } gpsStatus_t;
 
 typedef struct {
@@ -111,12 +113,13 @@ extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                   // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
-extern hw_timer_t *displayIRQ, *ppsIRQ;
+extern hw_timer_t *displayIRQ, *ppsIRQ, *gpsIRQ;
 extern SemaphoreHandle_t I2Caccess;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern time_t userUTCTime;
+extern time_t volatile gps_pps_time;
 
 // application includes
 #include "led.h"

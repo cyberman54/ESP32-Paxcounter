@@ -253,7 +253,6 @@ void get_status(uint8_t val[]) {
 void get_gps(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get gps status");
 #if(HAS_GPS)
-  gps_read();
   payload.reset();
   payload.addGPS(gps_status);
   SendPayload(GPSPORT, prio_high);

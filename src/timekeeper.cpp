@@ -18,6 +18,10 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 #endif
 
+#if (HAS_GPS)
+static gpsStatus_t gps_pps_status;
+#endif
+
 Ticker timesyncer;
 
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
@@ -27,13 +31,15 @@ time_t timeProvider(void) {
   time_t t = 0;
 
 #if (HAS_GPS)
-  t = get_gpstime(); // fetch recent time from last NEMA record
+  // fetch recent time from last NEMA record
+  t = get_gpstime(gps_pps_status);
   if (t) {
 #ifdef HAS_RTC
     set_rtctime(t, do_mutex); // calibrate RTC
 #endif
     timeSource = _gps;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
+    ESP_LOGD(TAG, "GPS time = %d", t);
     return t;
   }
 #endif
@@ -44,6 +50,7 @@ time_t timeProvider(void) {
   if (t) {
     timeSource = _rtc;
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync); // short retry
+    ESP_LOGD(TAG, "RTC time = %d", t);
   }
 #endif
 
@@ -106,6 +113,7 @@ uint8_t timepulse_init() {
 } // timepulse_init
 
 void timepulse_start(void) {
+
 #ifdef GPS_INT // start external clock gps pps line
   attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
 #elif defined RTC_INT // start external clock rtc
@@ -114,7 +122,11 @@ void timepulse_start(void) {
   timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
   timerAlarmEnable(ppsIRQ);
 #endif
-  now(); // refresh sysTime to pps
+
+// initialize gps time
+#if (HAS_GPS)
+  gps_storetime(gps_pps_status);
+#endif
 
   // start cyclic time sync
   timeSync(); // init systime by RTC or GPS or LORA
@@ -126,13 +138,20 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-  SyncToPPS(); // calibrates UTC systime and advances it +1, see microTime.h
+  SyncToPPS(); // advance systime, see microTime.h
 
+  // store recent gps time, if we have gps
+#if (HAS_GPS)
+  gps_storetime(gps_pps_status);
+#endif
+
+// advance wall clock, if we have
 #if (defined HAS_IF482 || defined HAS_DCF77)
   xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
                      &xHigherPriorityTaskWoken);
 #endif
 
+// flip time pulse ticker, if needed
 #ifdef HAS_DISPLAY
 #if (defined GPS_INT || defined RTC_INT)
   TimePulseTick = !TimePulseTick; // flip pulse ticker
@@ -154,19 +173,6 @@ time_t timeIsValid(time_t const t) {
 time_t compiledUTC(void) {
   static time_t t = myTZ.toUTC(RtcDateTime(__DATE__, __TIME__).Epoch32Time());
   return t;
-}
-
-// helper function to convert gps date/time into time_t
-time_t tmConvert(uint16_t YYYY, uint8_t MM, uint8_t DD, uint8_t hh, uint8_t mm,
-                 uint8_t ss) {
-  tmElements_t tm;
-  tm.Year = CalendarYrToTm(YYYY); // year offset from 1970 in microTime.h
-  tm.Month = MM;
-  tm.Day = DD;
-  tm.Hour = hh;
-  tm.Minute = mm;
-  tm.Second = ss;
-  return makeTime(tm);
 }
 
 // helper function to calculate serial transmit time

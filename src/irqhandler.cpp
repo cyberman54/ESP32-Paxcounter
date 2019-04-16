@@ -39,6 +39,12 @@ void irqHandler(void *pvParameters) {
       refreshtheDisplay();
 #endif
 
+// gps refresh buffer?
+#if (HAS_GPS)
+    if (InterruptStatus & GPS_IRQ)
+      gps_storelocation(gps_status);
+#endif
+
     // are cyclic tasks due?
     if (InterruptStatus & CYCLIC_IRQ)
       doHousekeeping();
@@ -46,8 +52,8 @@ void irqHandler(void *pvParameters) {
 #if (TIME_SYNC_INTERVAL)
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ) {
+      now(); // ensure sysTime is recent
       time_t t = timeProvider();
-      ESP_LOGD(TAG, "Sync time = %d", t);
       if (timeIsValid(t))
         setTime(t);
     }
@@ -80,6 +86,17 @@ void IRAM_ATTR ButtonIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
 
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
+#endif
+
+#if (HAS_GPS)
+void IRAM_ATTR GpsIRQ() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  xTaskNotifyFromISR(irqHandlerTask, GPS_IRQ, eSetBits,
+                     &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }
