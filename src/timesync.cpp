@@ -216,8 +216,7 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 // adjust system time, calibrate RTC and RTC_INT pps
 void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
 
-  // advance time 1 sec wait time
-  time_t time_to_set = (time_t)(t_sec + 1);
+  time_t time_to_set = (time_t)t_sec;
 
   //#if (!defined GPS_INT && !defined RTC_INT)
   //  time_to_set++;
