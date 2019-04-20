@@ -25,8 +25,8 @@
 //#define HAS_BUTTON (0) // on board button -> don't use, is same as RTC_INT!
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (21)
-#define MY_OLED_SCL (22)
+#define MY_OLED_SDA SDA
+#define MY_OLED_SCL SCL
 #define MY_OLED_RST U8X8_PIN_NONE
 
 // Settings for on board DS3231 RTC chip
@@ -36,17 +36,17 @@
 #define RTC_INT GPIO_NUM_0 //
 
 // Settings for IF482 interface
-//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_3, GPIO_NUM_1 // RX, TX
+#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_3, GPIO_NUM_1 // RX, TX
 
 // Settings for DCF77 interface
 //#define HAS_DCF77 GPIO_NUM_14 // JP8 #13
 //#define DCF77_ACTIVE_LOW 1
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  (18) 
-#define LORA_CS   (5)
-#define LORA_MISO (19)
-#define LORA_MOSI (23)
+#define LORA_SCK  SCK 
+#define LORA_CS   SS
+#define LORA_MISO MISO
+#define LORA_MOSI MOSI
 #define LORA_RST  (17)
 #define LORA_IRQ  (16)
 #define LORA_IO1  (14) // JP8 #13 to be external wired

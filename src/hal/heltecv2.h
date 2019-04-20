@@ -20,18 +20,24 @@
 
 //#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
 //#define BAT_VOLTAGE_DIVIDER 4 // voltage divider 220k/100k on board
-//#define EXT_POWER_SW GPIO_NUM_21 // switches battery power, Vext control 0 = on / 1 = off
-//#define EXT_POWER_ON    0
+#define EXT_POWER_SW Vext // switches battery power, Vext control 0 = on / 1 = off
+#define EXT_POWER_ON    0
 //#define EXT_POWER_OFF   1
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (4)
-#define MY_OLED_SCL (15)
-#define MY_OLED_RST (16)
+#define MY_OLED_SDA SDA_OLED
+#define MY_OLED_SCL SCL_OLED
+#define MY_OLED_RST RST_OLED
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC
-#define LORA_IO1  (35)
-#define LORA_IO2  (34)
+#define LORA_IRQ DIO0
+#define LORA_IO1 DIO1
+#define LORA_IO2 DIO2
+#define LORA_SCK SCK
+#define LORA_MISO MISO
+#define LORA_MOSI MOSI
+#define LORA_RST RST_LoRa
+#define LORA_CS SS
 
 #endif

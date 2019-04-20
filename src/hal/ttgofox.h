@@ -35,10 +35,10 @@
 //#define DCF77_ACTIVE_LOW 1
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  (5) 
-#define LORA_CS   (18)
-#define LORA_MISO (19)
-#define LORA_MOSI (27)
+#define LORA_SCK  SCK 
+#define LORA_CS   SS
+#define LORA_MISO MISO
+#define LORA_MOSI MOSI
 #define LORA_RST  (23)
 #define LORA_IRQ  (26)
 #define LORA_IO1  (33)
