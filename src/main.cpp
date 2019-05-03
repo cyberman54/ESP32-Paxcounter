@@ -265,20 +265,6 @@ void setup() {
       esp_coex_prefer_t)ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
 #endif
 
-// initialize button
-#ifdef HAS_BUTTON
-  strcat_P(features, " BTN_");
-#ifdef BUTTON_PULLUP
-  strcat_P(features, "PU");
-  // install button interrupt (pullup mode)
-  pinMode(HAS_BUTTON, INPUT_PULLUP);
-#else
-  strcat_P(features, "PD");
-  // install button interrupt (pulldown mode)
-  pinMode(HAS_BUTTON, INPUT_PULLDOWN);
-#endif // BUTTON_PULLUP
-#endif // HAS_BUTTON
-
 // initialize gps
 #if (HAS_GPS)
   strcat_P(features, " GPS");
@@ -364,9 +350,6 @@ void setup() {
   esp_wifi_deinit();
 #endif
 
-  // show compiled features
-  ESP_LOGI(TAG, "Features:%s", features);
-
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
@@ -410,7 +393,18 @@ void setup() {
   timerAlarmEnable(displayIRQ);
 #endif
 
- // gps buffer read interrupt
+  // initialize button
+#ifdef HAS_BUTTON
+  strcat_P(features, " BTN_");
+#ifdef BUTTON_PULLUP
+  strcat_P(features, "PU");
+#else
+  strcat_P(features, "PD");
+#endif // BUTTON_PULLUP
+  button_init(HAS_BUTTON);
+#endif // HAS_BUTTON
+
+  // gps buffer read interrupt
 #if (HAS_GPS)
   gpsIRQ = timerBegin(2, 80, true);
   timerAttachInterrupt(gpsIRQ, &GpsIRQ, true);
@@ -421,15 +415,6 @@ void setup() {
   // cyclic function interrupts
   sendcycler.attach(SENDCYCLE * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
-
-// button interrupt
-#ifdef HAS_BUTTON
-#ifdef BUTTON_PULLUP
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, RISING);
-#else
-  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), ButtonIRQ, FALLING);
-#endif
-#endif // HAS_BUTTON
 
 #if (TIME_SYNC_INTERVAL)
 
@@ -452,6 +437,9 @@ void setup() {
   timepulse_start();        // starts pps and cyclic time sync
 
 #endif // TIME_SYNC_INTERVAL
+
+  // show compiled features
+  ESP_LOGI(TAG, "Features:%s", features);
 
 } // setup()
 
