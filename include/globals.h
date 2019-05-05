@@ -113,7 +113,7 @@ extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                   // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
-extern hw_timer_t *displayIRQ, *ppsIRQ, *gpsIRQ;
+extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ, *gpsIRQ;
 extern SemaphoreHandle_t I2Caccess;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
@@ -136,6 +136,10 @@ extern time_t volatile gps_pps_time;
 
 #ifdef HAS_DISPLAY
 #include "display.h"
+#endif
+
+#ifdef HAS_MATRIX_DISPLAY
+#include "ledmatrixdisplay.h"
 #endif
 
 #ifdef HAS_BUTTON
