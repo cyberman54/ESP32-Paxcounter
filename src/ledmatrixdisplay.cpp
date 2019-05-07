@@ -8,7 +8,7 @@
 static const char TAG[] = __FILE__;
 
 uint8_t MatrixDisplayIsOn = 0;
-unsigned long ulLastNumMacs = 0;
+static unsigned long ulLastNumMacs = 0;
 
 LEDMatrix matrix(LED_MATRIX_LA_74138, LED_MATRIX_LB_74138, LED_MATRIX_LC_74138,
                  LED_MATRIX_LD_74138, LED_MATRIX_EN_74138, LED_MATRIX_DATA_R1,
@@ -30,6 +30,15 @@ void init_matrix_display(const char *Productname, const char *Version) {
 } // init_display
 
 void refreshTheMatrixDisplay() {
+
+  // if Matrixdisplay is switched off we don't refresh it to relax cpu
+  if (!MatrixDisplayIsOn && (MatrixDisplayIsOn == cfg.screenon))
+    return;
+
+  // set display on/off according to current device configuration
+  if (MatrixDisplayIsOn != cfg.screenon) {
+    MatrixDisplayIsOn = cfg.screenon;
+  }
 
   if (ulLastNumMacs != macs.size()) {
     ulLastNumMacs = macs.size();

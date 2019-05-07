@@ -52,7 +52,7 @@ So don't do it if you do not own a digital oscilloscope.
 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
 1 ppsIRQ -> pps clock irq -> 1sec
 2	gpsIRQ -> gps store data -> 300ms
-3	unused
+3	MatrixDisplayIRQ -> matrix mux cycle -> 0,5ms (MATRIX_DISPLAY_SCAN_US)
 
 
 // Interrupt routines
