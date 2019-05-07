@@ -3,6 +3,7 @@
 
 #define DISPLAY_IRQ 0x01
 #define BUTTON_IRQ 0x02
+#define MATRIX_DISPLAY_IRQ 0x03
 #define SENDCYCLE_IRQ 0x04
 #define CYCLIC_IRQ 0x08
 #define TIMESYNC_IRQ 0x10
@@ -21,6 +22,10 @@ int unmask_user_IRQ();
 
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ();
+#endif
+
+#ifdef HAS_MATRIX_DISPLAY
+void IRAM_ATTR MatrixDisplayIRQ();
 #endif
 
 #ifdef HAS_BUTTON

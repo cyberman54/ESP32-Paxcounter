@@ -85,7 +85,8 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *gpsIRQ = NULL;
+hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL,
+           *gpsIRQ = NULL;
 
 TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
 SemaphoreHandle_t I2Caccess;
@@ -309,6 +310,13 @@ void setup() {
   init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
 #endif
 
+// initialize matrix display
+#ifdef HAS_MATRIX_DISPLAY
+  strcat_P(features, " LED_MATRIX");
+  MatrixDisplayIsOn = cfg.screenon;
+  init_matrix_display(PRODUCTNAME, PROGVERSION); // note: blocking call
+#endif
+
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PLAIN");
@@ -391,6 +399,16 @@ void setup() {
   timerAttachInterrupt(displayIRQ, &DisplayIRQ, true);
   timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
   timerAlarmEnable(displayIRQ);
+#endif
+
+  // LED Matrix display interrupt
+#ifdef HAS_MATRIX_DISPLAY
+  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
+  matrixDisplayIRQ = timerBegin(3, 80, true);
+  timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ, true);
+  timerAlarmWrite(matrixDisplayIRQ, MATRIX_DISPLAY_SCAN_US, true);
+  timerAlarmEnable(matrixDisplayIRQ);
 #endif
 
   // initialize button

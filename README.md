@@ -39,7 +39,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 *SPI only*:
 
 - Pyom: WiPy
-- WeMos: LoLin32, LoLin32 Lite, WeMos D32
+- WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
 - Generic ESP32
 
 Depending on board hardware following features are supported:
@@ -54,6 +54,7 @@ Depending on board hardware following features are supported:
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
+- 64x16 pixel LED Matrix display (similar to [this model](https://www.instructables.com/id/64x16-RED-LED-Marquee/))
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -153,7 +154,7 @@ Output of user sensor data can be switched by user remote control command 0x13 s
 Output of sensor and peripheral data is internally switched by a bitmask register. Default mask (0xFF) can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
 
 | Bit | Sensordata    |
-|-----|---------------|
+| --- | ------------- |
 | 0   | GPS           |
 | 1   | Beacon alarm  |
 | 2   | BME280/680    |
