@@ -16,7 +16,14 @@ uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
 /* ---------------- plain format without special encoding ---------- */
 
-#if (PAYLOAD_ENCODER == 1)
+void PayloadConvert::addTimeDiff(int32_t value) {
+  buffer[cursor++] = (byte)((value & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((value & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((value & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((value & 0x000000FF));
+}
+
+#if PAYLOAD_ENCODER == 1
 
 void PayloadConvert::addByte(uint8_t value) { buffer[cursor++] = (value); }
 
@@ -308,8 +315,8 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 
 #elif ((PAYLOAD_ENCODER == 3) || (PAYLOAD_ENCODER == 4))
 
-void PayloadConvert::addByte(uint8_t value) { 
-  /* 
+void PayloadConvert::addByte(uint8_t value) {
+  /*
   not implemented
   */ }
 

@@ -240,7 +240,42 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     CLOCKIRQ();            // fire clock pps, this advances time 1 sec
 #endif
 
-    setTime(time_to_set); // set the time on top of second
+    struct timeval tv;
+    struct timezone tz;
+    if(gettimeofday(&tv, &tz) != 0) {
+      ESP_LOGI(TAG, "ERROR gettimeofday");
+    }
+    struct timeval before = tv;
+
+    struct timeval now;
+    now.tv_sec = t_sec;
+    now.tv_usec = t_msec;
+    if(settimeofday(&tv, &tz) != 0) {
+      ESP_LOGE(TAG, "ERROR settimeofday");
+    }
+
+    struct timeval diff;
+    diff.tv_sec = now.tv_sec-before.tv_sec;
+    diff.tv_usec = now.tv_usec-before.tv_usec;
+
+    // sum up diff_s and diff_ms to one ms value
+    int32_t diff_s = diff.tv_sec;
+    int32_t diff_ms = diff.tv_usec/1000;
+    int32_t diff_ms_remain = diff_ms / 1000;
+    diff_s += diff_ms_remain;
+    diff_ms += -1000*diff_ms_remain;
+    if(diff_ms < 0) {
+      diff_s --;
+      diff_ms += 1000;
+    }
+    // cap diff at 24h (= 86,400s)
+    diff_s = diff_s % 86400;
+    int32_t timediff_ms = diff_s * 1000 + diff_ms;
+
+    // send diffTime
+    payload.reset();
+    payload.addTimeDiff(timediff_ms);
+    SendPayload(TIMEDIFFPORT, prio_high);
 
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
