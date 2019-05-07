@@ -345,7 +345,7 @@
         "type": "mqtt-broker",
         "z": "",
         "name": "eu.thethings.network:1883",
-        "broker": "eu.thethings.network",
+        "broker": "mqtt://paxcounter-timediff:ttn-account-v2.Fyf_ZgT4lBM2A3Gj-4SpNPp0-_tPkqtPRMJ_a-w1aT4@eu.thethings.network/",
         "port": "1883",
         "tls": "",
         "clientid": "",
