@@ -4,6 +4,8 @@
 #include "LEDMatrix.h"
 #include "ledmatrixfonts.h"
 
+extern uint8_t MatrixDisplayIsOn = 0;
+
 extern LEDMatrix matrix;
 
 void init_matrix_display(const char *Productname, const char *Version);
