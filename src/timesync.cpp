@@ -247,18 +247,18 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
     if(gettimeofday(&tv, &tz) != 0) {
       ESP_LOGI(TAG, "ERROR gettimeofday");
     }
-    struct timeval before = tv;
+    struct timeval beforeTime = tv;
 
-    struct timeval now;
-    now.tv_sec = t_sec;
-    now.tv_usec = t_msec;
-    if(settimeofday(&tv, &tz) != 0) {
+    struct timeval nowTime;
+    nowTime.tv_sec = t_sec;
+    nowTime.tv_usec = t_msec;
+    if(settimeofday(&nowTime, &tz) != 0) {
       ESP_LOGE(TAG, "ERROR settimeofday");
     }
 
     struct timeval diff;
-    diff.tv_sec = now.tv_sec-before.tv_sec;
-    diff.tv_usec = now.tv_usec-before.tv_usec;
+    diff.tv_sec = nowTime.tv_sec-beforeTime.tv_sec;
+    diff.tv_usec = nowTime.tv_usec-beforeTime.tv_usec;
 
     // sum up diff_s and diff_ms to one ms value
     int32_t diff_s = diff.tv_sec;
