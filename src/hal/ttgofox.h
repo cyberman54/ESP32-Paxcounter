@@ -11,9 +11,9 @@
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
 #define HAS_LED NOT_A_PIN // green on board LED is useless, is GPIO25, which switches power for Lora+Display
 
-//#define EXT_POWER_SW GPIO_NUM_25 // switches power for LoRa chip + display (0 = off / 1 = on)
-//#define EXT_POWER_ON    1
-//#define EXT_POWER_OFF   0
+#define EXT_POWER_SW GPIO_NUM_25 // switches power for LoRa chip
+#define EXT_POWER_ON    0
+#define EXT_POWER_OFF   1
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 #define HAS_BUTTON GPIO_NUM_36 // on board button (next to reset)
@@ -35,10 +35,10 @@
 //#define DCF77_ACTIVE_LOW 1
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  SCK 
-#define LORA_CS   SS
-#define LORA_MISO MISO
-#define LORA_MOSI MOSI
+#define LORA_SCK  (5) 
+#define LORA_CS   (18)
+#define LORA_MISO (19)
+#define LORA_MOSI (27)
 #define LORA_RST  (23)
 #define LORA_IRQ  (26)
 #define LORA_IO1  (33)
