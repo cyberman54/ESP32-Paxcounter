@@ -14,9 +14,9 @@
 //#define DISPLAY_FLIP  1 // use if display is rotated
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER ((82.0+220.0)/82.0) // 82k + 220k 1%
-#define BAT_MEASURE_EN   EXT_POWER_SW  // Turn power on for messurement
+//#define BAT_MEASURE_EN   EXT_POWER_SW  // Turn power on for measurement
 
-#define EXT_POWER_SW    15            // Switch VDD on pin JP10
+#define EXT_POWER_SW    15            // Switch VDD on pin JP10, needed for RTC DS3231
 #define EXT_POWER_ON    0
 #define EXT_POWER_OFF   1
 
