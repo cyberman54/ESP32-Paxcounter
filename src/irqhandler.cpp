@@ -39,6 +39,12 @@ void irqHandler(void *pvParameters) {
       refreshtheDisplay();
 #endif
 
+// LED Matrix display needs refresh?
+#ifdef HAS_MATRIX_DISPLAY
+    if (InterruptStatus & MATRIX_DISPLAY_IRQ)
+      refreshTheMatrixDisplay();
+#endif
+
 // gps refresh buffer?
 #if (HAS_GPS)
     if (InterruptStatus & GPS_IRQ)
@@ -73,6 +79,17 @@ void IRAM_ATTR DisplayIRQ() {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
   xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits,
+                     &xHigherPriorityTaskWoken);
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
+#endif
+
+#ifdef HAS_MATRIX_DISPLAY
+void IRAM_ATTR MatrixDisplayIRQ() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  xTaskNotifyFromISR(irqHandlerTask, MATRIX_DISPLAY_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
