@@ -81,7 +81,6 @@ function Decoder(bytes, port) {
       decoded.time = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
       decoded.timestatus = bytes[i++];
     }
-    return decoded;
   }
-
+  return decoded;
 }
