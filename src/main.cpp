@@ -300,7 +300,7 @@ void setup() {
 #endif
 
 #if (VENDORFILTER)
-  strcat_P(features, " OUIFLT");
+  strcat_P(features, " FILTER");
 #endif
 
 // initialize display
