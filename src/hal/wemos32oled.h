@@ -40,6 +40,6 @@
 // user defined sensors (if connected)
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
-//#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
+#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #endif
