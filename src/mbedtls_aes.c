@@ -10,10 +10,10 @@
  * AES encryption using ESP32's hardware AES unit.
  *******************************************************************************/
 
-#include "mbedtls/aes.h"
-#include "lmic/oslmic.h"
+#ifdef USE_MBEDTLS_AES
 
-#if defined USE_MBEDTLS_AES
+#include "mbedtls/aes.h"
+#include "../../lmic/oslmic.h"
 
 void lmic_aes_encrypt(u1_t *data, u1_t *key)
 {

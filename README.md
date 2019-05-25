@@ -93,7 +93,7 @@ If your device has a **real time clock** it can be updated bei either LoRaWAN ne
 
 # Building
 
-Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version.
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version, **at least v4.0.0a15**.
 
 # Uploading
 
