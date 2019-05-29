@@ -10,16 +10,15 @@ from platformio import util
 
 Import("env")
 
-import os.path
-
 # get platformio environment variables
 project_config = util.load_project_config()
 
 # get platformio source path
-srcdir = env.get("PROJECTSRC_DIR").lower()
+srcdir = env.get("PROJECTSRC_DIR").replace("\\", "/")
 
 # check if lmic config file is present in source directory
-lmicconfigfile = os.path.join (srcdir, project_config.get("common", "lmicconfigfile"))
+lmicconfig = project_config.get("common", "lmicconfigfile")
+lmicconfigfile = os.path.join (srcdir, lmicconfig)
 if os.path.isfile(lmicconfigfile) and os.access(lmicconfigfile, os.R_OK):
     print "Parsing LMIC configuration from " + lmicconfigfile
 else:
@@ -61,12 +60,14 @@ env.Replace(BINTRAY_REPO=repository)
 env.Replace(BINTRAY_API_TOKEN=apitoken)
 
 # get runtime credentials and put them to compiler directive
-env.Replace(CPPDEFINES=[
-    ('WIFI_SSID', '\\"' + mykeys["OTA_WIFI_SSID"] + '\\"'), 
-    ('WIFI_PASS', '\\"' + mykeys["OTA_WIFI_PASS"] + '\\"'),
-    ('BINTRAY_USER', '\\"' + mykeys["BINTRAY_USER"] + '\\"'),
-    ('BINTRAY_REPO', '\\"' + mykeys["BINTRAY_REPO"] + '\\"'),
-    ('ARDUINO_LMIC_PROJECT_CONFIG_H', '\"' + lmicconfigfile + '\"')
+env.Append(BUILD_FLAGS=[
+    u'-DWIFI_SSID=\\"' + mykeys["OTA_WIFI_SSID"] + '\\"', 
+    u'-DWIFI_PASS=\\"' + mykeys["OTA_WIFI_PASS"] + '\\"', 
+    u'-DBINTRAY_USER=\\"' + mykeys["BINTRAY_USER"] + '\\"', 
+    u'-DBINTRAY_REPO=\\"' + mykeys["BINTRAY_REPO"] + '\\"', 
+    u'-DBINTRAY_PACKAGE=\\"$PIOENV\\"',
+    u'-DARDUINO_LMIC_PROJECT_CONFIG_H=' + lmicconfig,
+    u'-I \"' + srcdir + '\"'
     ])
 
 # function for pushing new firmware to bintray storage using API
