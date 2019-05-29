@@ -24,7 +24,7 @@ const FONT_CHAR_INFO *ActiveFontCharInfo = ActiveFontInfo->Descriptors;
 void init_matrix_display(const char *Productname, const char *Version) {
   ESP_LOGI(TAG, "Initializing LED Matrix display");
   matrix.begin(displaybuf, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
-  matrix.reverse();
+  //matrix.reverse();
   matrix.clear();
   DrawNumber(String("0"));
 } // init_display
