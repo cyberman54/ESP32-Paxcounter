@@ -10,28 +10,30 @@ from platformio import util
 
 Import("env")
 
+import os.path
+
 # get platformio environment variables
 project_config = util.load_project_config()
 
 # get platformio source path
-srcdir = str(env.get("PROJECTSRC_DIR")).replace("\\", "/") + "/"
+srcdir = env.get("PROJECTSRC_DIR").lower()
 
 # check if lmic config file is present in source directory
-lmicconfigfile = srcdir.lower() + project_config.get("common", "lmicconfigfile")
+lmicconfigfile = os.path.join (srcdir, project_config.get("common", "lmicconfigfile"))
 if os.path.isfile(lmicconfigfile) and os.access(lmicconfigfile, os.R_OK):
     print "Parsing LMIC configuration from " + lmicconfigfile
 else:
     sys.exit("Missing file " + lmicconfigfile + ", please create it! Aborting.")
 
 # check if lora key file is present in source directory
-lorakeyfile = srcdir + project_config.get("common", "lorakeyfile")
+lorakeyfile = os.path.join (srcdir, project_config.get("common", "lorakeyfile"))
 if os.path.isfile(lorakeyfile) and os.access(lorakeyfile, os.R_OK):
     print "Parsing LORAWAN keys from " + lorakeyfile
 else:
     sys.exit("Missing file " + lorakeyfile + ", please create it! Aborting.")
 
 # check if ota key file is present in source directory
-otakeyfile = srcdir + project_config.get("common", "otakeyfile")
+otakeyfile = os.path.join (srcdir, project_config.get("common", "otakeyfile"))
 if os.path.isfile(otakeyfile) and os.access(otakeyfile, os.R_OK):
     print "Parsing OTA keys from " + otakeyfile
 else:
