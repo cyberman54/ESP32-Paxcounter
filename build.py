@@ -14,7 +14,7 @@ Import("env")
 project_config = util.load_project_config()
 
 # get platformio source path
-srcdir = env.get("PROJECTSRC_DIR").replace("\\", "/")
+srcdir = env.get("PROJECTSRC_DIR")
 
 # check if lmic config file is present in source directory
 lmicconfig = project_config.get("common", "lmicconfigfile")
