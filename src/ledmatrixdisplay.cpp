@@ -21,10 +21,11 @@ const FONT_INFO *ActiveFontInfo = &digital7_18ptFontInfo;
 const uint8_t *iaActiveFont = ActiveFontInfo->Bitmap;
 const FONT_CHAR_INFO *ActiveFontCharInfo = ActiveFontInfo->Descriptors;
 
-void init_matrix_display(const char *Productname, const char *Version) {
+void init_matrix_display(bool reverse) {
   ESP_LOGI(TAG, "Initializing LED Matrix display");
   matrix.begin(displaybuf, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
-  //matrix.reverse();
+  if (reverse)
+    matrix.reverse();
   matrix.clear();
   DrawNumber(String("0"));
 } // init_display
@@ -43,8 +44,8 @@ void refreshTheMatrixDisplay() {
   if (ulLastNumMacs != macs.size()) {
     ulLastNumMacs = macs.size();
     matrix.clear();
-    DrawNumber(String(macs.size()));
-    ESP_LOGI(TAG, "Setting display to counter: %lu", macs.size());
+    DrawNumber(String(ulLastNumMacs));
+    ESP_LOGD(TAG, "Setting display to counter: %lu",ulLastNumMacs);
   }
 
   matrix.scan();
@@ -54,12 +55,8 @@ void refreshTheMatrixDisplay() {
 void DrawChar(uint16_t x, uint16_t y, char cChar) {
   // Get address of char in font char descriptor from font descriptor
   auto CharDescAddress = (cChar - ActiveFontInfo->StartChar);
-
   // Get offset of char into font bitmap
   uint16_t FontBitmapOffset = ActiveFontCharInfo[CharDescAddress].offset;
-  // Serial.printf("Address of %c is %i, bitmap offset is %u\r\n", cChar,
-  //              CharDescAddress, FontBitmapOffset);
-
   // Check font height, if it's less than matrix height we need to
   // add some empty lines to font does not stick to the top
   if (ActiveFontInfo->CharHeight < (LED_MATRIX_HEIGHT - y)) {
@@ -73,7 +70,6 @@ void DrawChar(uint16_t x, uint16_t y, char cChar) {
 
   int iDst = (x / 8) + (y * 8);
   int Shift = x % 8;
-  // Serial.printf("Got hex '%x'\r\n", pSrc);
   for (uint8_t i = 0; i < ActiveFontCharInfo[CharDescAddress].height; i++) {
     int iDigitA = iaActiveFont[FontBitmapOffset];
 
@@ -102,16 +98,9 @@ void DrawNumber(String strNum, uint8_t iDotPos) {
   uint8_t iNumLength = strNum.length();
   uint8_t iDigitPos = 0;
 
-  // Serial.printf("Showing number '%s' (length: %i)\r\n", strNum.c_str(),
-  //              iNumLength);
   for (int i = 0; i < iNumLength; i++) {
-    // Serial.printf("Showing char '%c' at x:%i y:%i\r\n",
-    // strNum.charAt(i),
-    //              iDigitPos, 0);
     DrawChar(iDigitPos, 0, strNum.charAt(i));
     if (i + 1 == iDotPos) {
-      // matrix.drawRect((iDigitPos * 8) - 1, 15, iDigitPos * 8,
-      // 16, 1);
       iDigitPos = iDigitPos + GetCharWidth(strNum.charAt(i)) +
                   ActiveFontInfo->SpaceWidth;
       DrawChar(iDigitPos, 0, '.');
@@ -134,10 +123,8 @@ uint8_t GetCharFromFont(char cChar) {
 uint8_t GetCharWidth(char cChar) {
   // Get address of char in font char descriptor from font descriptor
   auto CharDescAddress = (cChar - ActiveFontInfo->StartChar);
-
   // Get offset of char into font bitmap
   auto CharDescriptor = ActiveFontCharInfo[CharDescAddress];
-  // Serial.printf("Char %c is %i wide\r\n", cChar, CharDescriptor.width);
   return CharDescriptor.width;
 }
 

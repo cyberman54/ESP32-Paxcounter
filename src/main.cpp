@@ -314,7 +314,7 @@ void setup() {
 #ifdef HAS_MATRIX_DISPLAY
   strcat_P(features, " LED_MATRIX");
   MatrixDisplayIsOn = cfg.screenon;
-  init_matrix_display(PRODUCTNAME, PROGVERSION); // note: blocking call
+  init_matrix_display(); // note: blocking call
 #endif
 
 // show payload encoder
