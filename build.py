@@ -89,17 +89,20 @@ def publish_bintray(source, target, env):
         "X-Bintray-Override": "1"
     }
 
-    r = requests.put(
-        url,
-        data=open(firmware_path, "rb"),
-        headers=headers,
-        auth=(user, apitoken))
+    r = None
+    
+    try:
+        r = requests.put(url,
+                         data=open(firmware_path, "rb"),
+                         headers=headers,
+                         auth=(user,apitoken))
+        r.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        sys.stderr.write("Failed to submit package: %s\n" %
+                         ("%s\n%s" % (r.status_code, r.text) if r else str(e)))
+        env.Exit(1)
 
-    if r.status_code != 201:
-        print("Failed to submit package: {0}\n{1}".format(
-            r.status_code, r.text))
-    else:
-        print("The firmware has been successfuly published at Bintray.com!")
+    print("The firmware has been successfuly published at Bintray.com!")
 
 # put build file name and upload command to platformio environment
 env.Replace(
