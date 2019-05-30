@@ -9,6 +9,7 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 <img src="img/Paxcounter-Screen.png">
 <img src="img/TTGO-case.jpg">
 <img src="img/TTGO-curves.jpg">
+<img src="img/Paxcounter-LEDmatrix.jpg">
 
 # Use case
 
