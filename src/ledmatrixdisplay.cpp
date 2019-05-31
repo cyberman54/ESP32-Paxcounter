@@ -3,12 +3,14 @@
 #include "globals.h"
 
 #define NUMCHARS 5
+#define MATRIX_DISPLAY_PAGES (2) // number of display pages
 
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
 uint8_t MatrixDisplayIsOn = 0;
 static unsigned long ulLastNumMacs = 0;
+static time_t ulLastTime = myTZ.toLocal(now());
 
 LEDMatrix matrix(LED_MATRIX_LA_74138, LED_MATRIX_LB_74138, LED_MATRIX_LC_74138,
                  LED_MATRIX_LD_74138, LED_MATRIX_EN_74138, LED_MATRIX_DATA_R1,
@@ -17,7 +19,12 @@ LEDMatrix matrix(LED_MATRIX_LA_74138, LED_MATRIX_LB_74138, LED_MATRIX_LC_74138,
 // Display Buffer 128 = 64 * 16 / 8
 uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / NUMCHARS];
 
+// --- SELECT YOUR FONT HERE ---
 const FONT_INFO *ActiveFontInfo = &digital7_18ptFontInfo;
+//const FONT_INFO *ActiveFontInfo = &arialNarrow_17ptFontInfo;
+//const FONT_INFO *ActiveFontInfo = &gillSansMTCondensed_18ptFontInfo;
+//const FONT_INFO *ActiveFontInfo = &gillSansMTCondensed_16ptFontInfo;
+
 const uint8_t *iaActiveFont = ActiveFontInfo->Bitmap;
 const FONT_CHAR_INFO *ActiveFontCharInfo = ActiveFontInfo->Descriptors;
 
@@ -30,7 +37,9 @@ void init_matrix_display(bool reverse) {
   DrawNumber(String("0"));
 } // init_display
 
-void refreshTheMatrixDisplay() {
+void refreshTheMatrixDisplay(bool nextPage) {
+  static uint8_t DisplayPage = 0;
+  char buff[16];
 
   // if Matrixdisplay is switched off we don't refresh it to relax cpu
   if (!MatrixDisplayIsOn && (MatrixDisplayIsOn == cfg.screenon))
@@ -41,12 +50,37 @@ void refreshTheMatrixDisplay() {
     MatrixDisplayIsOn = cfg.screenon;
   }
 
-  if (ulLastNumMacs != macs.size()) {
-    ulLastNumMacs = macs.size();
+  if (nextPage) {
+    DisplayPage =
+        (DisplayPage >= MATRIX_DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
     matrix.clear();
-    DrawNumber(String(ulLastNumMacs));
-    ESP_LOGD(TAG, "Setting display to counter: %lu",ulLastNumMacs);
   }
+
+  switch (DisplayPage % MATRIX_DISPLAY_PAGES) {
+
+    // page 0: pax
+    // page 1: time
+
+  case 0:
+
+    if (ulLastNumMacs != macs.size()) {
+      ulLastNumMacs = macs.size();
+      matrix.clear();
+      DrawNumber(String(ulLastNumMacs));
+    }
+
+  case 1:
+
+    const time_t t = myTZ.toLocal(now());
+    if (ulLastTime != t) {
+      ulLastTime = t;
+      matrix.clear();
+      snprintf(buff, sizeof(buff), "%02d:%02d:%02d", hour(t), minute(t),
+               second(t));
+      DrawNumber(String(buff));
+    }
+
+  } // switch page
 
   matrix.scan();
 }
