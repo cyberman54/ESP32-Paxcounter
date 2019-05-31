@@ -20,9 +20,12 @@ struct FONT_INFO {
   const uint8_t *Bitmap;
 };
 
-// Font data for Microsoft Sans Serif 11pt
+// Font data for Arial Narrow 17pt
 extern const uint8_t arialNarrow_17ptBitmaps[];
+extern const FONT_INFO arialNarrow_17ptFontInfo;
+extern const FONT_CHAR_INFO arialNarrow_17ptDescriptors[];
 
+// Font data for Gill Sans MT Condensed 18pt
 extern const uint8_t gillSansMTCondensed_18ptBitmaps[];
 extern const FONT_INFO gillSansMTCondensed_18ptFontInfo;
 extern const FONT_CHAR_INFO gillSansMTCondensed_18ptDescriptors[];

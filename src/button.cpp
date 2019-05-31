@@ -23,8 +23,13 @@ void button_init(int pin) {
 
   b->setOnClicked([]() {
 #ifdef HAS_DISPLAY
-    refreshtheDisplay(true); // switch to next display page
-#else
+    refreshTheDisplay(true); // switch to next display page
+#endif
+#ifdef HAS_MATRIX_DISPLAY
+    refreshTheMatrixDisplay(true); // switch to next display page
+#endif
+
+#if (!defined HAS_DISPLAY) && (!defined HAS_MATRIX_DISPLAY)
     payload.reset();
     payload.addButton(0x01);
     SendPayload(BUTTONPORT, prio_normal);

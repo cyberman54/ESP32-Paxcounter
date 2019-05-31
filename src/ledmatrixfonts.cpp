@@ -205,6 +205,35 @@ const uint8_t arialNarrow_17ptBitmaps[] = {
     0b00011100, 0b00000000, //    ###
 };
 
+// Character descriptors for Arial Narrow 17pt
+// { [Char width in bits], [Char height in bits], [Offset into
+// arialNarrow_17ptBitmaps in bytes] }
+const FONT_CHAR_INFO arialNarrow_17ptDescriptors[] = {
+    {10, 16, 0},   // -
+    {0, 0, 0},     // .
+    {0, 0, 0},     // /
+    {10, 16, 32},  // 0
+    {10, 16, 64},  // 1
+    {10, 16, 80},  // 2
+    {10, 16, 112}, // 3
+    {10, 16, 144}, // 4
+    {10, 16, 176}, // 5
+    {10, 16, 208}, // 6
+    {10, 16, 240}, // 7
+    {10, 16, 272}, // 8
+    {10, 16, 304}, // 9
+};
+
+// Font information for Arial Narrow 17pt
+
+const FONT_INFO arialNarrow_17ptFontInfo = {
+    16,                           //  Character height
+    '-',                         //  Start character
+    '9',                         //  End character
+    2,                           //  Width, in pixels, of space character
+    arialNarrow_17ptDescriptors, //  Character descriptor array
+    arialNarrow_17ptBitmaps};    //  Character bitmap array
+
 //
 //  Font data for Gill Sans MT Condensed 18pt
 //
@@ -431,7 +460,7 @@ const FONT_CHAR_INFO gillSansMTCondensed_18ptDescriptors[] = {
 
 // Font information for Gill Sans MT Condensed 18pt
 const FONT_INFO gillSansMTCondensed_18ptFontInfo = {
-    2,   //  Character height
+    16,   //  Character height
     '-', //  Start character
     '9', //  End character
     2,   //  Width, in pixels, of space character
@@ -642,7 +671,7 @@ const FONT_CHAR_INFO gillSansMTCondensed_16ptDescriptors[] = {
 
 // Font information for Gill Sans MT Condensed 16pt
 const FONT_INFO gillSansMTCondensed_16ptFontInfo = {
-    2,   //  Character height
+    14,   //  Character height
     '-', //  Start character
     '9', //  End character
     2,   //  Width, in pixels, of space character

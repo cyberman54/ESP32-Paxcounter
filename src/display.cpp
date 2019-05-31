@@ -129,15 +129,16 @@ void init_display(const char *Productname, const char *Version) {
   }                     // mutex
 } // init_display
 
-void refreshtheDisplay(bool nextPage) {
+void refreshTheDisplay(bool nextPage) {
 
   static uint8_t DisplayPage = 0;
-  const time_t t =
-      myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // if display is switched off we don't refresh it to relax cpu
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
     return;
+
+  const time_t t =
+      myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
@@ -159,8 +160,6 @@ void refreshtheDisplay(bool nextPage) {
 
   } // mutex
 } // refreshDisplay()
-
-void refreshtheDisplay() { refreshtheDisplay(false); }
 
 void draw_page(time_t t, uint8_t page) {
 
