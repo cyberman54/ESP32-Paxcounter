@@ -8,16 +8,22 @@ import requests
 from os.path import basename
 from platformio import util
 
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+
 Import("env")
 
 # get platformio environment variables
-project_config = util.load_project_config()
+config = configparser.ConfigParser()
+config.read("platformio.ini")
 
 # get platformio source path
 srcdir = env.get("PROJECTSRC_DIR")
 
 # check if lmic config file is present in source directory
-lmicconfig = project_config.get("common", "lmicconfigfile")
+lmicconfig = config.get("common", "lmicconfigfile")
 lmicconfigfile = os.path.join (srcdir, lmicconfig)
 if os.path.isfile(lmicconfigfile) and os.access(lmicconfigfile, os.R_OK):
     print "Parsing LMIC configuration from " + lmicconfigfile
@@ -25,14 +31,14 @@ else:
     sys.exit("Missing file " + lmicconfigfile + ", please create it! Aborting.")
 
 # check if lora key file is present in source directory
-lorakeyfile = os.path.join (srcdir, project_config.get("common", "lorakeyfile"))
+lorakeyfile = os.path.join (srcdir, config.get("common", "lorakeyfile"))
 if os.path.isfile(lorakeyfile) and os.access(lorakeyfile, os.R_OK):
     print "Parsing LORAWAN keys from " + lorakeyfile
 else:
     sys.exit("Missing file " + lorakeyfile + ", please create it! Aborting.")
 
 # check if ota key file is present in source directory
-otakeyfile = os.path.join (srcdir, project_config.get("common", "otakeyfile"))
+otakeyfile = os.path.join (srcdir, config.get("common", "otakeyfile"))
 if os.path.isfile(otakeyfile) and os.access(otakeyfile, os.R_OK):
     print "Parsing OTA keys from " + otakeyfile
 else:
@@ -51,7 +57,7 @@ repository = mykeys["BINTRAY_REPO"]
 apitoken = mykeys["BINTRAY_API_TOKEN"]
 
 # get bintray upload parameters from platformio environment
-version = project_config.get("common", "release_version")
+version = config.get("common", "release_version")
 package = str(env.get("PIOENV"))
 
 # put bintray user credentials to platformio environment
