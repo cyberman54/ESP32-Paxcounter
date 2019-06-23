@@ -9,6 +9,7 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 <img src="img/Paxcounter-Screen.png">
 <img src="img/TTGO-case.jpg">
 <img src="img/TTGO-curves.jpg">
+<img src="img/Paxcounter-LEDmatrix.jpg">
 
 # Use case
 
@@ -54,7 +55,7 @@ Depending on board hardware following features are supported:
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
-- 64x16 pixel LED Matrix display (similar to [this model](https://www.instructables.com/id/64x16-RED-LED-Marquee/))
+- 64x16 pixel LED Matrix display (similar to [this model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -93,7 +94,7 @@ If your device has a **real time clock** it can be updated bei either LoRaWAN ne
 
 # Building
 
-Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version, **at least v4.0.0a15**.
+Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version.
 
 # Uploading
 
