@@ -3,6 +3,8 @@
 
 Tutorial (in german language): https://www.heise.de/select/make/2019/1/1551099236518668
 
+**IMPORTANT: MUST USE PLATFORMIO V4 (not v3.x)**
+
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
 <img src="img/Paxcounter-lolin.gif">
