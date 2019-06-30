@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board lopy4
 
 #ifndef _LOPY4_H
 #define _LOPY4_H

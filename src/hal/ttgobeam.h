@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board ttgo-t-beam
 
 #ifndef _TTGOBEAM_H
 #define _TTGOBEAM_H

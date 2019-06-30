@@ -1,5 +1,5 @@
 # build.py
-# pre-build script, setting up build environment
+# pre-build script, setting up build environment and fetch hal file for user's board
 
 import sys
 import os
@@ -55,8 +55,20 @@ if os.path.isfile(otakeyfile) and os.access(otakeyfile, os.R_OK):
 else:
     sys.exit("Missing file " + otakeyfile + ", please create it! Aborting.")
 
-# parse ota key file
+# parse hal file
 mykeys = {}
+with open(halconfigfile) as myfile:
+    for line in myfile:
+        line2 = line.strip("// ")
+        key, value = line2.partition(" ")[::2]
+        mykeys[key.strip()] = str(value).strip()
+myboard = mykeys["board"]
+myuploadspeed = mykeys["upload_speed"]
+env.Replace(BOARD=myboard)
+env.Replace(UPLOAD_SPEED=myuploadspeed)
+print '\033[94m' + "TARGET BOARD: " + myboard + " @ " + myuploadspeed + "bps" + '\033[0m'
+
+# parse ota key file
 with open(otakeyfile) as myfile:
     for line in myfile:
         key, value = line.partition("=")[::2]

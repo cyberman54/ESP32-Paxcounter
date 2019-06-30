@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board lolin32
 
 #ifndef _LOLINLITELORA_H
 #define _LOLINLITELORA_H
