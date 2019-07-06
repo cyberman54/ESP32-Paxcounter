@@ -412,8 +412,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	
 		bits 4..7 time status
 			0x00 = timeNotSet (never synched)
-			0x10 = timeNeedsSync (last sync failed)
-			0x20 = timeSet (synched)
+			0x01 = timeNeedsSync (last sync failed)
+			0x02 = timeSet (synched)
 
 0x87 set time/date
 
