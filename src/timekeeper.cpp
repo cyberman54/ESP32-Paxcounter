@@ -31,7 +31,7 @@ time_t timeProvider(void) {
   time_t t = 0;
 
 #if (HAS_GPS)
-  // fetch recent time from last NEMA record
+  // fetch recent time from last NMEA record
   t = get_gpstime(gps_pps_status);
   if (t) {
 #ifdef HAS_RTC
@@ -140,9 +140,11 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   SyncToPPS(); // advance systime, see microTime.h
 
-  // store recent gps time, if we have gps
+  // store recent gps time, and try to get gps time if time is not synced
 #if (HAS_GPS)
   gps_storetime(gps_pps_status);
+  if (timeSource == _unsynced)
+    timeSync();
 #endif
 
 // advance wall clock, if we have
