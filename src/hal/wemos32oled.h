@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board lolin32
 
 #ifndef _WEMOS32OLED_H
 #define _WEMOS32OLED_H

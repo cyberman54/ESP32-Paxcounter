@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board esp32dev
 
 #ifndef _TTGOV21OLD_H
 #define _TTGOV21OLD_H

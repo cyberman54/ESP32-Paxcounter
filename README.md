@@ -3,6 +3,8 @@
 
 Tutorial (in german language): https://www.heise.de/select/make/2019/1/1551099236518668
 
+**IMPORTANT: MUST USE PLATFORMIO V4 (not v3.x)**
+
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
 <img src="img/Paxcounter-lolin.gif">
@@ -410,8 +412,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	
 		bits 4..7 time status
 			0x00 = timeNotSet (never synched)
-			0x10 = timeNeedsSync (last sync failed)
-			0x20 = timeSet (synched)
+			0x01 = timeNeedsSync (last sync failed)
+			0x02 = timeSet (synched)
 
 0x87 set time/date
 

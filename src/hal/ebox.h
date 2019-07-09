@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 115200
+// board esp32dev
 
 #ifndef _EBOX_H
 #define _EBOX_H

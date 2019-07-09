@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board ttgo-lora32-v1
 
 #ifndef _TTGOV2_H
 #define _TTGOV2_H

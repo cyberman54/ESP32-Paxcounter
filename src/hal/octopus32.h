@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board featheresp32
 
 #ifndef _OCTOPUS_H
 #define _OCTOPUS_H

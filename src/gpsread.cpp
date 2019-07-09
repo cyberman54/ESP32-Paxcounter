@@ -77,16 +77,24 @@ void gps_storelocation(gpsStatus_t &gps_store) {
 // store current GPS timedate in struct
 void IRAM_ATTR gps_storetime(gpsStatus_t &gps_store) {
 
-  gps_store.time_age = gps.time.age();
+  if (gps.time.isUpdated() && gps.date.isValid() && (gps.time.age() < 1000)) {
 
-  if (gps.time.isValid() && gps.date.isValid() && (gps_store.time_age < 1000)) {
+    /* nmea telegram serial delay compensation; not sure if we need this?
+
+        if (gps.time.age() > nmea_txDelay_ms)
+          gps_store.timedate.Second = gps.time.second() + 1;
+        else
+          gps_store.timedate.Second = gps.time.second();
+    */
+
+    gps_store.timedate.Second = gps.time.second();
+    gps_store.timedate.Minute = gps.time.minute();
+    gps_store.timedate.Hour = gps.time.hour();
+    gps_store.timedate.Day = gps.date.day();
+    gps_store.timedate.Month = gps.date.month();
     gps_store.timedate.Year =
         CalendarYrToTm(gps.date.year()); // year offset from 1970 in microTime.h
-    gps_store.timedate.Month = gps.date.month();
-    gps_store.timedate.Day = gps.date.day();
-    gps_store.timedate.Hour = gps.time.hour();
-    gps_store.timedate.Minute = gps.time.minute();
-    gps_store.timedate.Second = gps.time.second();
+
   } else
     gps_store.timedate = {0};
 }
@@ -96,11 +104,8 @@ time_t get_gpstime(gpsStatus_t value) {
 
   time_t t = timeIsValid(makeTime(value.timedate));
 
-  //  if (t)
-  //    t = value.time_age > nmea_txDelay_ms ? t : t - 1;
-
   // show NMEA data in verbose mode, useful for debugging GPS
-  ESP_LOGV(
+  ESP_LOGD(
       TAG,
       "GPS time: %d | GPS NMEA data: passed %d / failed: %d / with fix: %d", t,
       gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());

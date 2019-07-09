@@ -1,4 +1,6 @@
 // clang-format off
+// upload_speed 921600
+// board esp32dev
 
 #ifndef _TTGOFOX_H
 #define _TTGOFOX_H
