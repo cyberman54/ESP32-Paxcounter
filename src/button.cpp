@@ -28,19 +28,12 @@ void button_init(int pin) {
 #ifdef HAS_MATRIX_DISPLAY
     refreshTheMatrixDisplay(true); // switch to next display page
 #endif
-
-#if (!defined HAS_DISPLAY) && (!defined HAS_MATRIX_DISPLAY)
-    payload.reset();
-    payload.addButton(0x01);
-    SendPayload(BUTTONPORT, prio_normal);
-#endif
   });
 
   b->setOnHolding([]() {
-#if (HAS_LORA)
-    cfg.adrmode = !cfg.adrmode;
-    LMIC_setAdrMode(cfg.adrmode);
-#endif
+    payload.reset();
+    payload.addButton(0x01);
+    SendPayload(BUTTONPORT, prio_normal);
   });
 
   // attach interrupt to the button
