@@ -421,7 +421,7 @@ esp_err_t lora_stack_init() {
     return ESP_FAIL;
   }
   ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
-           SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
+           SEND_QUEUE_SIZE * sizeof(MessageBuffer_t));
 
   ESP_LOGI(TAG, "Starting LMIC...");
 
