@@ -81,9 +81,9 @@ triggers pps 1 sec impulse
 
 configData_t cfg; // struct holds current device configuration
 char display_line6[16], display_line7[16]; // display buffers
-uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
-                  batt_voltage = 0; // globals for display
+                  batt_voltage = 0;  // globals for display
+uint32_t volatile PacketCounter = 0; // sniffed packet counter
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL,
            *gpsIRQ = NULL;
