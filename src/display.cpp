@@ -11,13 +11,12 @@ Display-Mask (128 x 64 pixel):
 1|PAX:aabbccddee
 2|B:a.bcV  Sats:ab
 3|BLTH:abcde SF:ab
-4|WIFI:abcde  ****
+4|WIFI:abcde ch:ab
 5|RLIM:abcd abcdKB
 6|xxxxxxxxxxxxxxxx
 6|20:27:00* 27.Feb
 7|yyyyyyyyyyyyyyab
   
-line 4: **** = Packet traffic indicator
 line 6: x = Text for LORA status OR time/date
 line 7: y = Text for LMIC status; ab = payload queue
 
@@ -225,22 +224,11 @@ void draw_page(time_t t, uint8_t page) {
       u8x8.setInverseFont(0);
 #endif // HAS_LORA
 
-    // line 4: update wifi counter + packet density display
+    // line 4: update wifi counter + channel display
     u8x8.setCursor(0, 4);
     u8x8.printf("WIFI:%-5d", macs_wifi);
-    // display and reset packetcounter
-    u8x8.setCursor(12, 4);
-    if (PacketCounter > (100000 / DISPLAYREFRESH_MS))
-      u8x8.printf("****");
-    else if (PacketCounter > (10000 / DISPLAYREFRESH_MS))
-      u8x8.printf(" ***");
-    else if (PacketCounter > (1000 / DISPLAYREFRESH_MS))
-      u8x8.printf("  **");
-    else if (PacketCounter > 0)
-      u8x8.printf("   *");
-    else
-      u8x8.printf("    ");
-    PacketCounter = 0;
+    u8x8.setCursor(11, 4);
+    u8x8.printf("ch:%02d", channel);
 
     // line 5: update RSSI limiter status & free memory display
     u8x8.setCursor(0, 5);

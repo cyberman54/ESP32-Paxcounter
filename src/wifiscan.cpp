@@ -37,8 +37,6 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
       (wifi_ieee80211_packet_t *)ppkt->payload;
   const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
 
-  PacketCounter++; // increase packets per second counter
-
   if ((cfg.rssilimit) &&
       (ppkt->rx_ctrl.rssi < cfg.rssilimit)) // rssi is negative value
     ESP_LOGD(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi,
@@ -47,9 +45,8 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
     mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
 }
 
-// Software-timer driven Wifi channel rotation function
+// Software-timer driven Wifi channel rotation callback function
 void switchWifiChannel(TimerHandle_t xTimer) {
-  static uint8_t channel = 0; // channel rotation counter
   channel =
       (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
@@ -60,13 +57,13 @@ void wifi_sniffer_init(void) {
   wificfg.nvs_enable = 0;        // we don't need any wifi settings from NVRAM
   wificfg.wifi_task_core_id = 0; // we want wifi task running on core 0
 
-  wifi_promiscuous_filter_t filter = {
-      .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
+  // wifi_promiscuous_filter_t filter = {
+  // .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
   // .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
 
-  // wifi_promiscuous_filter_t filter = {.filter_mask =
-  //                                        WIFI_PROMIS_FILTER_MASK_MGMT |
-  //                                        WIFI_PROMIS_FILTER_MASK_DATA};
+  wifi_promiscuous_filter_t filter = {.filter_mask =
+                                          WIFI_PROMIS_FILTER_MASK_MGMT |
+                                          WIFI_PROMIS_FILTER_MASK_DATA};
 
   ESP_ERROR_CHECK(esp_wifi_init(&wificfg)); // configure Wifi with cfg
   ESP_ERROR_CHECK(
