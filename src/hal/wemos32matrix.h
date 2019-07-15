@@ -26,10 +26,21 @@
 #define LED_MATRIX_LD_74138             26      // LD (or D)
 #define LED_MATRIX_DATA_R1              33      // R1 (or R0)
 
-// CLK: The clock signal moves data bits from pin R1 ("red") in the shift registers
-// LAT: The latch signal enables LEDs according to shift register contents
-// Line Selects: LA, LB, LC, LD select which two rows of the display are currently lit
+// CLK: The clock signal moves the data bits from pin R1 ("red") in the shift registers
+// LAT: The latch signal enables LEDs according to the shift register's contents
+// Line Selects: LA, LB, LC, LD select which rows of the display are currently lit (0 .. 15)
 // OE: Output enable switches the LEDs on/off while transitioning from one row to the next
+
+/*
+How it works:
+
+1. clock out 8 bytes for columns via R1 and CLK (8 * 8 bit -> 64 columns)
+2. OE disable (LEDs off)
+3. select line to lit with LA/LB/LC/LD hex coded (4 bit -> 16 rows)
+4. latch data from shift registers to columns
+5. OE enable (LEDs on)
+6. repeat with step1 for next line
+*/
 
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
