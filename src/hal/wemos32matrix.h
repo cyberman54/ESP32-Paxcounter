@@ -2,8 +2,8 @@
 // upload_speed 921600
 // board lolin32
 
-#ifndef _WEMOS32LEDMATRIX_H
-#define _WEMOS32LEDMATRIX_H
+#ifndef _WEMOS32MATRIX_H
+#define _WEMOS32MATRIX_H
 
 #include <stdint.h>
 
