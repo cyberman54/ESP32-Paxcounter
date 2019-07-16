@@ -42,8 +42,7 @@
 #define SCREEN_MODE (0x80)
 
 // I2C bus access control
-#define I2C_MUTEX_LOCK()                                                       \
-  xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(3 * DISPLAYREFRESH_MS)) == pdTRUE
+#define I2C_MUTEX_LOCK() xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(10)) == pdTRUE
 #define I2C_MUTEX_UNLOCK() xSemaphoreGive(I2Caccess)
 
 // Struct holding devices's runtime configuration
