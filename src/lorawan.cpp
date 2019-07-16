@@ -183,7 +183,6 @@ void showLoraKeys(void) {
 
 void onEvent(ev_t ev) {
   char buff[24] = "";
-  uint32_t now_micros = 0;
 
   switch (ev) {
 
@@ -460,7 +459,7 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
   switch (prio) {
   case prio_high:
     // clear space in queue if full, then fallthrough to normal
-    if (uxQueueSpacesAvailable == 0)
+    if (uxQueueSpacesAvailable(LoraSendQueue) == 0)
       xQueueReceive(LoraSendQueue, &DummyBuffer, (TickType_t)0);
   case prio_normal:
     ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
