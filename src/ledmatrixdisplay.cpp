@@ -21,9 +21,9 @@ uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / NUMCHARS];
 
 // --- SELECT YOUR FONT HERE ---
 const FONT_INFO *ActiveFontInfo = &digital7_18ptFontInfo;
-//const FONT_INFO *ActiveFontInfo = &arialNarrow_17ptFontInfo;
-//const FONT_INFO *ActiveFontInfo = &gillSansMTCondensed_18ptFontInfo;
-//const FONT_INFO *ActiveFontInfo = &gillSansMTCondensed_16ptFontInfo;
+// const FONT_INFO *ActiveFontInfo = &arialNarrow_17ptFontInfo;
+// const FONT_INFO *ActiveFontInfo = &gillSansMTCondensed_18ptFontInfo;
+// const FONT_INFO *ActiveFontInfo = &gillSansMTCondensed_16ptFontInfo;
 
 const uint8_t *iaActiveFont = ActiveFontInfo->Bitmap;
 const FONT_CHAR_INFO *ActiveFontCharInfo = ActiveFontInfo->Descriptors;
@@ -68,6 +68,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
       matrix.clear();
       DrawNumber(String(ulLastNumMacs));
     }
+    break;
 
   case 1:
 
@@ -79,6 +80,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
                second(t));
       DrawNumber(String(buff));
     }
+    break;
 
   } // switch page
 

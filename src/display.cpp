@@ -306,12 +306,12 @@ void draw_page(time_t t, uint8_t page) {
         wasnofix = false;
       }
       // line 3-4: GPS latitude
-      snprintf(buff, sizeof(buff), "%c%-07.4f",
+      snprintf(buff, sizeof(buff), "%c%07.4f",
                gps.location.rawLat().negative ? 'S' : 'N', gps.location.lat());
       u8x8.draw2x2String(0, 3, buff);
 
       // line 6-7: GPS longitude
-      snprintf(buff, sizeof(buff), "%c%-07.4f",
+      snprintf(buff, sizeof(buff), "%c%07.4f",
                gps.location.rawLat().negative ? 'W' : 'E', gps.location.lng());
       u8x8.draw2x2String(0, 6, buff);
 
@@ -334,7 +334,7 @@ void draw_page(time_t t, uint8_t page) {
 
 #if (HAS_BME)
     // line 2-3: Temp
-    snprintf(buff, sizeof(buff), "TMP:%--4.1f", bme_status.temperature);
+    snprintf(buff, sizeof(buff), "TMP:%-4.1f", bme_status.temperature);
     u8x8.draw2x2String(0, 2, buff);
 
     // line 4-5: Hum

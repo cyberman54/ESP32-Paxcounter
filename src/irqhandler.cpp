@@ -121,13 +121,16 @@ void IRAM_ATTR GpsIRQ() {
 
 int mask_user_IRQ() {
   // begin of time critical section: lock I2C bus to ensure accurate timing
-  if (!I2C_MUTEX_LOCK())
+  if (I2C_MUTEX_LOCK()) {
+    xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits);
+    return 0;
+  } else
     return 1; // failure
-  xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits);
 }
 
 int unmask_user_IRQ() {
   // end of time critical section: release I2C bus
   I2C_MUTEX_UNLOCK();
   xTaskNotify(irqHandlerTask, UNMASK_IRQ, eSetBits);
+  return 0;
 }
