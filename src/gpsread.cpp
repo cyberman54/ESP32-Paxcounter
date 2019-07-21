@@ -80,11 +80,12 @@ void IRAM_ATTR gps_storetime(gpsStatus_t &gps_store) {
   if (gps.time.isUpdated() && gps.date.isValid() && (gps.time.age() < 1000)) {
 
     // nmea telegram serial delay compensation; not sure if we need this?
-
+    /*
     if (gps.time.age() > nmea_txDelay_ms)
       gps_store.timedate.Second = gps.time.second() + 1;
     else
       gps_store.timedate.Second = gps.time.second();
+    */
 
     gps_store.timedate.Second = gps.time.second();
     gps_store.timedate.Minute = gps.time.minute();

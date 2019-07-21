@@ -146,7 +146,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
         break;
       }
 
-#if(VENDORFILTER)
+#if (VENDORFILTER)
 
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
@@ -161,6 +161,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
 
       /* to be improved in vendorfilter if:
       
+
 
       // you can search for elements in the payload using the
       // function esp_ble_resolve_adv_data()
@@ -207,21 +208,21 @@ esp_err_t register_ble_callback(void) {
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(&gap_callback_handler));
 
   static esp_ble_scan_params_t ble_scan_params = {
-      .scan_type = BLE_SCAN_TYPE_PASSIVE,
-      .own_addr_type = BLE_ADDR_TYPE_RANDOM,
+    .scan_type = BLE_SCAN_TYPE_PASSIVE,
+    .own_addr_type = BLE_ADDR_TYPE_RANDOM,
 
-#if(VENDORFILTER)
-      .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
+#if (VENDORFILTER)
+    .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
   // ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for broadcasting
   // data in broadcast applications (e.g., Beacons), so we don't want them in
   // vendorfilter mode
 #else
-      .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
+    .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
 #endif
 
-      .scan_interval =
-          (uint16_t)(cfg.blescantime * 10 / 0.625),    // Time = N * 0.625 msec
-      .scan_window = (uint16_t)(BLESCANWINDOW / 0.625) // Time = N * 0.625 msec
+    .scan_interval =
+        (uint16_t)(cfg.blescantime * 10 / 0.625),    // Time = N * 0.625 msec
+    .scan_window = (uint16_t)(BLESCANWINDOW / 0.625) // Time = N * 0.625 msec
   };
 
   ESP_LOGI(TAG, "Set GAP scan parameters");
@@ -234,12 +235,11 @@ esp_err_t register_ble_callback(void) {
 } // register_ble_callback
 
 void start_BLEscan(void) {
-#if(BLECOUNTER)
+#if (BLECOUNTER)
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
 
   ESP_ERROR_CHECK(esp_coex_preference_set(
-      (esp_coex_prefer_t)
-          ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
+      ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
 
   // Initialize BT controller to allocate task and other resource.
   btStart();
@@ -254,14 +254,14 @@ void start_BLEscan(void) {
 } // start_BLEscan
 
 void stop_BLEscan(void) {
-#if(BLECOUNTER)
+#if (BLECOUNTER)
   ESP_LOGI(TAG, "Shutting down bluetooth scanner ...");
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
   btStop(); // disable bt_controller
-  ESP_ERROR_CHECK(esp_coex_preference_set((
-      esp_coex_prefer_t)ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+  ESP_ERROR_CHECK(esp_coex_preference_set(
+      ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
 #endif // BLECOUNTER
 } // stop_BLEscan
