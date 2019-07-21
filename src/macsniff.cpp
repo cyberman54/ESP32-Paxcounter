@@ -39,7 +39,7 @@ void printKey(const char *name, const uint8_t *key, uint8_t len, bool lsb) {
 uint64_t macConvert(uint8_t *paddr) {
   uint64_t *mac;
   mac = (uint64_t *)paddr;
-  return (__builtin_bswap32(*mac) >> 8);
+  return (__builtin_bswap64(*mac) >> 8);
 }
 
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
