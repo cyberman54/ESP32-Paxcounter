@@ -165,7 +165,9 @@ void draw_page(time_t t, uint8_t page) {
 
   char timeState, buff[16];
   uint8_t msgWaiting;
+#if (HAS_GPS)
   static bool wasnofix = true;
+#endif
 
   // update counter (lines 0-1)
   snprintf(

@@ -306,7 +306,7 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_TXSTART:
-    if (!(LMIC.opmode & OP_JOINING))
+    if (!(LMIC.opmode & OP_JOINING)) {
 #if (TIME_SYNC_LORASERVER)
       // if last packet sent was a timesync request, store TX time
       if (LMIC.pendTxPort == TIMEPORT)
@@ -314,6 +314,7 @@ void onEvent(ev_t ev) {
       else
 #endif
         strcpy_P(buff, PSTR("TX START"));
+    }
     break;
 
   case EV_TXCANCELED:
