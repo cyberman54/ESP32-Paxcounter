@@ -64,7 +64,7 @@ void process_timesync_req(void *taskparameter) {
 
     // wait until we are joined if we are not
     while (!LMIC.devaddr) {
-      vTaskDelay(5000);
+      vTaskDelay(1000);
     }
 
     // collect timestamp samples
@@ -135,10 +135,9 @@ void process_timesync_req(void *taskparameter) {
 
     setMyTime(time_to_set, time_to_set_fraction_msec);
 
+  finish:
     // end of time critical section: release I2C bus and re-enable app irq's
     unmask_user_IRQ();
-
-  finish:
     timeSyncPending = false;
 
   } // infinite while(1)
