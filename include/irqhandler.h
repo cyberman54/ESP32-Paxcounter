@@ -17,8 +17,8 @@
 #include "timekeeper.h"
 
 void irqHandler(void *pvParameters);
-bool mask_user_IRQ();
-bool unmask_user_IRQ();
+int mask_user_IRQ();
+int unmask_user_IRQ();
 
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ();
