@@ -53,8 +53,6 @@
 #define HAS_BUTTON (39) // on board button
 #define HAS_RGB_LED (0) // WS2812B RGB LED on GPIO0
 
-#define BOARD_HAS_PSRAM // use extra 4MB extern RAM
-
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
 #define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M

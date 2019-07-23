@@ -2,7 +2,7 @@
 // Basic Config
 #include "globals.h"
 
-#if(VENDORFILTER)
+#if (VENDORFILTER)
 #include "vendor_array.h"
 #endif
 
@@ -37,33 +37,35 @@ void printKey(const char *name, const uint8_t *key, uint8_t len, bool lsb) {
 }
 
 uint64_t macConvert(uint8_t *paddr) {
-  return ((uint64_t)paddr[0]) | ((uint64_t)paddr[1] << 8) |
-         ((uint64_t)paddr[2] << 16) | ((uint64_t)paddr[3] << 24) |
-         ((uint64_t)paddr[4] << 32) | ((uint64_t)paddr[5] << 40);
+  uint64_t *mac;
+  mac = (uint64_t *)paddr;
+  return (__builtin_bswap64(*mac) >> 8);
 }
 
 bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
-  char buff[16]; // temporary buffer for printf
+  if (!salt) // ensure we have salt (appears after radio is turned on)
+    return false;
+
+  char buff[10]; // temporary buffer for printf
   bool added = false;
   int8_t beaconID;    // beacon number in test monitor mode
   uint16_t hashedmac; // temporary buffer for generated hash value
-  uint32_t addr2int;  // temporary buffer for shortened MAC
-#if(VENDORFILTER)
-  uint32_t vendor2int; // temporary buffer for Vendor OUI
-#endif
+  uint32_t *mac;      // temporary buffer for shortened MAC
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
-  // but since it's uint32 we take 4 bytes to avoid 1st value to be 0
-  addr2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[3] << 8) |
-             ((uint32_t)paddr[4] << 16) | ((uint32_t)paddr[5] << 24);
+  // but since it's uint32 we take 4 bytes to avoid 1st value to be 0.
+  // this gets MAC in msb (= reverse) order, but doesn't matter for hashing it.
+  mac = (uint32_t *)(paddr + 2);
 
-#if(VENDORFILTER)
-  vendor2int = ((uint32_t)paddr[2]) | ((uint32_t)paddr[1] << 8) |
-               ((uint32_t)paddr[0] << 16);
+#if (VENDORFILTER)
+  uint32_t *oui; // temporary buffer for vendor OUI
+  oui = (uint32_t *)paddr;
+
   // use OUI vendor filter list only on Wifi, not on BLE
   if ((sniff_type == MAC_SNIFF_BLE) ||
-      std::find(vendors.begin(), vendors.end(), vendor2int) != vendors.end()) {
+      std::find(vendors.begin(), vendors.end(), __builtin_bswap32(*oui) >> 8) !=
+          vendors.end()) {
 #endif
 
     // salt and hash MAC, and if new unique one, store identifier in container
@@ -71,10 +73,9 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 
     snprintf(buff, sizeof(buff), "%08X",
-             addr2int + (uint32_t)salt); // convert usigned 32-bit salted MAC
-                                         // to 8 digit hex string
-    hashedmac = rokkit(&buff[3], 5); // hash MAC last string value, use 5 chars
-                                     // to fit hash in uint16_t container
+             *mac + (uint32_t)salt);      // convert unsigned 32-bit salted MAC
+                                          // to 8 digit hex string
+    hashedmac = rokkit(&buff[3], 5);      // hash MAC 8 digit -> 5 digit
     auto newmac = macs.insert(hashedmac); // add hashed MAC, if new unique
     added = newmac.second ? true
                           : false; // true if hashed MAC is unique in container
@@ -88,7 +89,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
         blink_LED(COLOR_GREEN, 50);
 #endif
       }
-#if(BLECOUNTER)
+#if (BLECOUNTER)
       else if (sniff_type == MAC_SNIFF_BLE) {
         macs_ble++; // increment BLE Macs counter
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
@@ -115,13 +116,14 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     // Log scan result
     ESP_LOGV(TAG,
-             "%s %s RSSI %ddBi -> MAC %s -> Hash %04X -> WiFi:%d  BLTH:%d -> "
+             "%s %s RSSI %ddBi -> salted MAC %s -> Hash %04X -> WiFi:%d  "
+             "BLTH:%d -> "
              "%d Bytes left",
              added ? "new  " : "known",
              sniff_type == MAC_SNIFF_WIFI ? "WiFi" : "BLTH", rssi, buff,
              hashedmac, macs_wifi, macs_ble, getFreeRAM());
 
-#if(VENDORFILTER)
+#if (VENDORFILTER)
   } else {
     // Very noisy
     // ESP_LOGD(TAG, "Filtered MAC %02X:%02X:%02X:%02X:%02X:%02X",

@@ -64,7 +64,7 @@ void process_timesync_req(void *taskparameter) {
 
     // wait until we are joined if we are not
     while (!LMIC.devaddr) {
-      vTaskDelay(5000);
+      vTaskDelay(3000);
     }
 
     // collect timestamp samples
@@ -110,10 +110,10 @@ void process_timesync_req(void *taskparameter) {
       }
     } // end of for loop to collect timestamp samples
 
-    // begin of time critical section: lock app irq's and I2C bus
-    if (!mask_user_IRQ()) {
-      ESP_LOGW(TAG,
-               "[%0.3f] Timesync handshake error: irq / i2c masking failed",
+    // lock I2C bus and application irq to ensure accurate timing
+    mask_user_IRQ();
+    if (!I2C_MUTEX_LOCK()) {
+      ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking failed",
                millis() / 1000.0);
       goto finish; // failure
     }
@@ -135,10 +135,11 @@ void process_timesync_req(void *taskparameter) {
 
     setMyTime(time_to_set, time_to_set_fraction_msec);
 
-    // end of time critical section: release I2C bus and re-enable app irq's
+  finish:
+    // end of time critical section: release I2C bus and app irq
+    I2C_MUTEX_UNLOCK();
     unmask_user_IRQ();
 
-  finish:
     timeSyncPending = false;
 
   } // infinite while(1)

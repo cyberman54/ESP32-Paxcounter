@@ -306,7 +306,7 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_TXSTART:
-    if (!(LMIC.opmode & OP_JOINING))
+    if (!(LMIC.opmode & OP_JOINING)) {
 #if (TIME_SYNC_LORASERVER)
       // if last packet sent was a timesync request, store TX time
       if (LMIC.pendTxPort == TIMEPORT)
@@ -314,6 +314,7 @@ void onEvent(ev_t ev) {
       else
 #endif
         strcpy_P(buff, PSTR("TX START"));
+    }
     break;
 
   case EV_TXCANCELED:
@@ -506,9 +507,15 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
     return;
   }
 
-  // begin of time critical section: lock I2C bus to ensure accurate timing
-  if (!mask_user_IRQ())
-    return; // failure
+  // begin of time critical section
+
+  // lock I2C bus and application irq to ensure accurate timing
+  mask_user_IRQ();
+  if (!I2C_MUTEX_LOCK()) {
+    ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking failed",
+             millis() / 1000.0);
+    goto finish; // failure
+  }
 
   // Update userUTCTime, considering the difference between the GPS and UTC
   // time, and the leap seconds until year 2019
@@ -524,7 +531,9 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
   // Update system time with time read from the network
   setMyTime(*pUserUTCTime + requestDelaySec, 0);
 
-  // end of time critical section: release I2C bus
+finish:
+  // end of time critical section: release I2C bus and app irq
+  I2C_MUTEX_UNLOCK();
   unmask_user_IRQ();
 
 } // user_request_network_time_callback

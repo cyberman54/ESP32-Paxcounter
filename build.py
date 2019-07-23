@@ -29,7 +29,7 @@ haldir = os.path.join (srcdir, "hal")
 halconfig = config.get("board", "halfile")
 halconfigfile = os.path.join (haldir, halconfig)
 if os.path.isfile(halconfigfile) and os.access(halconfigfile, os.R_OK):
-    print "Parsing hardware configuration from " + halconfigfile
+    print("Parsing hardware configuration from " + halconfigfile)
 else:
     sys.exit("Missing file " + halconfigfile + ", please create it! Aborting.")
 
@@ -37,21 +37,21 @@ else:
 lmicconfig = config.get("common", "lmicconfigfile")
 lmicconfigfile = os.path.join (srcdir, lmicconfig)
 if os.path.isfile(lmicconfigfile) and os.access(lmicconfigfile, os.R_OK):
-    print "Parsing LMIC configuration from " + lmicconfigfile
+    print("Parsing LMIC configuration from " + lmicconfigfile)
 else:
     sys.exit("Missing file " + lmicconfigfile + ", please create it! Aborting.")
 
 # check if lora key file is present in source directory
 lorakeyfile = os.path.join (srcdir, config.get("common", "lorakeyfile"))
 if os.path.isfile(lorakeyfile) and os.access(lorakeyfile, os.R_OK):
-    print "Parsing LORAWAN keys from " + lorakeyfile
+    print("Parsing LORAWAN keys from " + lorakeyfile)
 else:
     sys.exit("Missing file " + lorakeyfile + ", please create it! Aborting.")
 
 # check if ota key file is present in source directory
 otakeyfile = os.path.join (srcdir, config.get("common", "otakeyfile"))
 if os.path.isfile(otakeyfile) and os.access(otakeyfile, os.R_OK):
-    print "Parsing OTA keys from " + otakeyfile
+    print("Parsing OTA keys from " + otakeyfile)
 else:
     sys.exit("Missing file " + otakeyfile + ", please create it! Aborting.")
 
@@ -66,7 +66,7 @@ myboard = mykeys["board"]
 myuploadspeed = mykeys["upload_speed"]
 env.Replace(BOARD=myboard)
 env.Replace(UPLOAD_SPEED=myuploadspeed)
-print '\033[94m' + "TARGET BOARD: " + myboard + " @ " + myuploadspeed + "bps" + '\033[0m'
+print('\033[94m' + "TARGET BOARD: " + myboard + " @ " + myuploadspeed + "bps" + '\033[0m')
 
 # parse ota key file
 with open(otakeyfile) as myfile:
