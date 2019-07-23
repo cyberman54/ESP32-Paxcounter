@@ -64,7 +64,7 @@ void process_timesync_req(void *taskparameter) {
 
     // wait until we are joined if we are not
     while (!LMIC.devaddr) {
-      vTaskDelay(1000);
+      vTaskDelay(3000);
     }
 
     // collect timestamp samples
@@ -111,12 +111,12 @@ void process_timesync_req(void *taskparameter) {
     } // end of for loop to collect timestamp samples
 
     // lock I2C bus and application irq to ensure accurate timing
+    mask_user_IRQ();
     if (!I2C_MUTEX_LOCK()) {
       ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking failed",
                millis() / 1000.0);
       goto finish; // failure
     }
-    mask_user_IRQ();
 
     // average time offset over all collected diffs
     time_offset_ms /= TIME_SYNC_SAMPLES;
