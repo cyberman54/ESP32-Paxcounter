@@ -533,7 +533,7 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
 
 finish:
   // end of time critical section: release I2C bus and app irq
-  I2C_MUTEX_UNLOCK();r
+  I2C_MUTEX_UNLOCK();
   unmask_user_IRQ();
 
 } // user_request_network_time_callback
