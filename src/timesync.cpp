@@ -113,7 +113,7 @@ void process_timesync_req(void *taskparameter) {
     // begin of time critical section: lock app irq's and I2C bus
     if (!mask_user_IRQ()) {
       ESP_LOGW(TAG,
-               "[%0.3f] Timesync handshake error: irq / i2c masking failed",
+               "[%0.3f] Timesync handshake error: irq masking failed",
                millis() / 1000.0);
       goto finish; // failure
     }

@@ -62,8 +62,9 @@ void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
 void init_display(const char *Productname, const char *Version) {
 
   // block i2c bus access
-  if (I2C_MUTEX_LOCK()) {
-
+  if (!I2C_MUTEX_LOCK())
+    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+  else {
     // show startup screen
     uint8_t buf[32];
     u8x8.begin();
@@ -141,8 +142,9 @@ void refreshTheDisplay(bool nextPage) {
       myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // block i2c bus access
-  if (I2C_MUTEX_LOCK()) {
-
+  if (!I2C_MUTEX_LOCK())
+    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+  else {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
       DisplayIsOn = cfg.screenon;
