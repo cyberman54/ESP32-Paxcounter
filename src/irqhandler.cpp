@@ -119,19 +119,6 @@ void IRAM_ATTR GpsIRQ() {
 }
 #endif
 
-int mask_user_IRQ() {
-  if (!I2C_MUTEX_LOCK()) {
-    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
-    return 0; // failure
-  } else {
-    xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits);
-    return 1; // success
-  }
-}
+void mask_user_IRQ() { xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits); }
 
-int unmask_user_IRQ() {
-  // end of time critical section: release I2C bus
-  I2C_MUTEX_UNLOCK();
-  xTaskNotify(irqHandlerTask, UNMASK_IRQ, eSetBits);
-  return 0;
-}
+void unmask_user_IRQ() { xTaskNotify(irqHandlerTask, UNMASK_IRQ, eSetBits); }

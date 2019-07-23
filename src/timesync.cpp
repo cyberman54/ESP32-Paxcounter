@@ -110,13 +110,13 @@ void process_timesync_req(void *taskparameter) {
       }
     } // end of for loop to collect timestamp samples
 
-    // begin of time critical section: lock app irq's and I2C bus
-    if (!mask_user_IRQ()) {
-      ESP_LOGW(TAG,
-               "[%0.3f] Timesync handshake error: irq masking failed",
+    // lock I2C bus and application irq to ensure accurate timing
+    if (!I2C_MUTEX_LOCK()) {
+      ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking failed",
                millis() / 1000.0);
       goto finish; // failure
     }
+    mask_user_IRQ();
 
     // average time offset over all collected diffs
     time_offset_ms /= TIME_SYNC_SAMPLES;
@@ -136,8 +136,10 @@ void process_timesync_req(void *taskparameter) {
     setMyTime(time_to_set, time_to_set_fraction_msec);
 
   finish:
-    // end of time critical section: release I2C bus and re-enable app irq's
+    // end of time critical section: release I2C bus and app irq
+    I2C_MUTEX_UNLOCK();
     unmask_user_IRQ();
+
     timeSyncPending = false;
 
   } // infinite while(1)
