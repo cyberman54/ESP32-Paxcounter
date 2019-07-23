@@ -116,10 +116,9 @@ void setup() {
 
   // create some semaphores for syncing / mutexing tasks
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
-  if (I2Caccess)
-    xSemaphoreGive(I2Caccess); // Flag the i2c bus available for use
+  assert(I2Caccess != NULL);
 
-    // disable brownout detection
+  // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
