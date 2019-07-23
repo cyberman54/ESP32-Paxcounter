@@ -64,8 +64,7 @@ void process_timesync_req(void *taskparameter) {
 
     // wait until we are joined if we are not
     while (!LMIC.devaddr) {
-      vTaskDelay(3000);
-    }
+      vTaskDelay(pdMS_TO_TICKS(3000));
 
     // collect timestamp samples
     for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
