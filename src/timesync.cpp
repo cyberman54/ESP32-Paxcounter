@@ -112,8 +112,9 @@ void process_timesync_req(void *taskparameter) {
 
     // lock I2C bus and application irq to ensure accurate timing
     mask_user_IRQ();
-    //if (!I2C_MUTEX_LOCK()) {
-    //  ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking failed",
+    // if (!I2C_MUTEX_LOCK()) {
+    //  ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking
+    //  failed",
     //           millis() / 1000.0);
     //  goto finish; // failure
     //}
@@ -137,7 +138,7 @@ void process_timesync_req(void *taskparameter) {
 
   finish:
     // end of time critical section: release I2C bus and app irq
-    //I2C_MUTEX_UNLOCK();
+    // I2C_MUTEX_UNLOCK();
     unmask_user_IRQ();
 
     timeSyncPending = false;
@@ -182,13 +183,13 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 
     uint8_t k = seq_no % TIME_SYNC_SAMPLES;
     uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
-    uint32_t timestamp_sec;
+    uint32_t timestamp_sec, *timestamp_ptr;
 
     // fetch timeserver time from 4 bytes containing the UTC seconds since
-    // unix epoch. Octet order is big endian. Casts are necessary, because buf
-    // is an array of single byte values, and they might overflow when shifted
-    timestamp_sec = ((uint32_t)buf[3]) | (((uint32_t)buf[2]) << 8) |
-                    (((uint32_t)buf[1]) << 16) | (((uint32_t)buf[0]) << 24);
+    // unix epoch. Octet order is big endian. 
+
+    timestamp_ptr = (uint32_t *)buf;
+    timestamp_sec = __builtin_bswap32(*timestamp_ptr); // note: this is platform dependent (msb/lsb)
 
     // the 5th byte contains the fractional seconds in 2^-8 second steps
     timestamp_msec = 4 * buf[4];
