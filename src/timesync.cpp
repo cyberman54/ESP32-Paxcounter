@@ -110,14 +110,8 @@ void process_timesync_req(void *taskparameter) {
       }
     } // end of for loop to collect timestamp samples
 
-    // lock I2C bus and application irq to ensure accurate timing
+    // mask application irq to ensure accurate timing
     mask_user_IRQ();
-    // if (!I2C_MUTEX_LOCK()) {
-    //  ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking
-    //  failed",
-    //           millis() / 1000.0);
-    //  goto finish; // failure
-    //}
 
     // average time offset over all collected diffs
     time_offset_ms /= TIME_SYNC_SAMPLES;
@@ -137,8 +131,7 @@ void process_timesync_req(void *taskparameter) {
     setMyTime(time_to_set, time_to_set_fraction_msec);
 
   finish:
-    // end of time critical section: release I2C bus and app irq
-    // I2C_MUTEX_UNLOCK();
+    // end of time critical section: release app irq lock
     unmask_user_IRQ();
 
     timeSyncPending = false;
@@ -182,17 +175,17 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
   else { // we received a probably valid time frame
 
     uint8_t k = seq_no % TIME_SYNC_SAMPLES;
-    uint16_t timestamp_msec; // convert 1/250th sec fractions to ms
-    uint32_t timestamp_sec, *timestamp_ptr;
-
-    // fetch timeserver time from 4 bytes containing the UTC seconds since
-    // unix epoch. Octet order is big endian. 
-
-    timestamp_ptr = (uint32_t *)buf;
-    timestamp_sec = __builtin_bswap32(*timestamp_ptr); // note: this is platform dependent (msb/lsb)
 
     // the 5th byte contains the fractional seconds in 2^-8 second steps
-    timestamp_msec = 4 * buf[4];
+    // (= 1/250th sec), we convert this to ms
+    uint16_t timestamp_msec = 4 * buf[4];
+    // pointers to 4 bytes 4 bytes containing UTC seconds since unix epoch, msb
+    uint32_t timestamp_sec, *timestamp_ptr;
+
+    // convert buffer to uint32_t, octet order is big endian
+    timestamp_ptr = (uint32_t *)buf;
+    // swap byte order from msb to lsb, note: this is platform dependent
+    timestamp_sec = __builtin_bswap32(*timestamp_ptr);
 
     // construct the timepoint when message was seen on gateway
     time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
