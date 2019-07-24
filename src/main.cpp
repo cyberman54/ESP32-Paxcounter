@@ -41,9 +41,6 @@ IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
 
-Tasks using i2c bus all must have same priority, because using mutex semaphore
-(irqhandler, bmeloop)
-
 NOTE: Changing any timings will have impact on time accuracy of whole code.
 So don't do it if you do not own a digital oscilloscope.
 
