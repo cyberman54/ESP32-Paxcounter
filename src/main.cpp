@@ -114,6 +114,7 @@ void setup() {
   // create some semaphores for syncing / mutexing tasks
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
   assert(I2Caccess != NULL);
+  I2C_MUTEX_UNLOCK();
 
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
@@ -377,7 +378,7 @@ void setup() {
                             "bmeloop", // name of task
                             2048,      // stack size of task
                             (void *)1, // parameter of the task
-                            1,         // priority of the task
+                            2,         // priority of the task
                             &BmeTask,  // task handle
                             1);        // CPU core
   }
