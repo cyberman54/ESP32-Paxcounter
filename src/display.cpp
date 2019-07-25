@@ -63,7 +63,7 @@ void init_display(const char *Productname, const char *Version) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGD(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
     // show startup screen
     uint8_t buf[32];
@@ -143,7 +143,7 @@ void refreshTheDisplay(bool nextPage) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGD(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
