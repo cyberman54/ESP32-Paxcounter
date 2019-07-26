@@ -90,12 +90,8 @@ extern "C"
 #define BSEC_MAX_STATE_BLOB_SIZE     (139)        /*!< Maximum size (in bytes) of the data blobs returned by bsec_get_state()*/
 #define BSEC_SAMPLE_RATE_DISABLED    (65535.0f)      /*!< Sample rate of a disabled sensor */
 #define BSEC_SAMPLE_RATE_ULP         (0.0033333f)           /*!< Sample rate in case of Ultra Low Power Mode */
-#define BSEC_SAMPLE_RATE_CONTINUOUS  (1.0f)    /*!< Sample rate in case of Continuous Mode */ 
 #define BSEC_SAMPLE_RATE_LP          (0.33333f)            /*!< Sample rate in case of Low Power Mode */
 #define BSEC_SAMPLE_RATE_ULP_MEASUREMENT_ON_DEMAND         (0.0f)            /*!< Input value used to trigger an extra measurment (ULP plus) */        
-#define BSEC_SAMPLE_RATE_HIGH_PERFORMANCE         (0.055556f)            /*!< Sample rate in case of high performance */      
-#define SAMPLE_INTVL_CUSTOM_TPH      (0.066667f)            /*!< Sample rate in case of custom TPH mode */ 
-#define SAMPLE_INTVL_CUSTOM_G        (0.016667f)            /*!< Sample rate in case of custom G mode */  
 
 #define BSEC_PROCESS_PRESSURE       (1 << (BSEC_INPUT_PRESSURE-1))      /*!< process_data bitfield constant for pressure @sa bsec_bme_settings_t */
 #define BSEC_PROCESS_TEMPERATURE    (1 << (BSEC_INPUT_TEMPERATURE-1))   /*!< process_data bitfield constant for temperature @sa bsec_bme_settings_t */
@@ -165,12 +161,6 @@ typedef enum
      * Generic heat source 8
      */
 
-    /**                                                                               
-     * @brief Internal input for measure on demand                                    
-     *                                                                                
-     * Value indicates, if a measurement is a mod (measurement on demand)             
-     */                                                                               
-    BSEC_INPUT_IS_MEASUREMENT_ON_DEMAND = 22,     /*!< reserved internal debug input */ 
     
     /**
      * @brief Additional input that disables baseline tracker
@@ -181,11 +171,6 @@ typedef enum
      */
     BSEC_INPUT_DISABLE_BASELINE_TRACKER = 23, 
 
-    /**																								
-     * @brief Additional input that provides information about the state of the profile (1-9)		
-     *																								
-     */																								
-    BSEC_INPUT_PROFILE_PART = 24																	
 } bsec_physical_sensor_t;
 
 /*!
