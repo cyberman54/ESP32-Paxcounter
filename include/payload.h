@@ -1,6 +1,8 @@
 #ifndef _PAYLOAD_H_
 #define _PAYLOAD_H_
 
+#include "paxcounter.conf"
+
 // MyDevices CayenneLPP 1.0 channels for Synamic sensor payload format
 // all payload goes out on LoRa FPort 1
 #if (PAYLOAD_ENCODER == 3)
