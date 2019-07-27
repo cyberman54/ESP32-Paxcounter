@@ -20,11 +20,11 @@ function Decoder(bytes, port) {
         }
         // combined wifi counter and gps data
         if (bytes.length === 15) {
-            return decode(bytes, [uint16, latLng, latLng, uint8, hdop, uint16], ['wifi', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+            return decode(bytes, [uint16, latLng, latLng, uint8, hdop, altitude], ['wifi', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
         }
         // combined wifi + ble counter and gps data
         if (bytes.length === 17) {
-            return decode(bytes, [uint16, uint16, latLng, latLng, uint8, hdop, uint16], ['wifi', 'ble', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+            return decode(bytes, [uint16, uint16, latLng, latLng, uint8, hdop, altitude], ['wifi', 'ble', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
         }
     }
 
@@ -42,7 +42,7 @@ function Decoder(bytes, port) {
 
     if (port === 4) {
         // gps data      
-        return decode(bytes, [latLng, latLng, uint8, hdop, uint16], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+        return decode(bytes, [latLng, latLng, uint8, hdop, altitude], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
     }
 
     if (port === 5) {
@@ -146,6 +146,18 @@ var hdop = function (bytes) {
     return bytesToInt(bytes) / 100;
 };
 hdop.BYTES = 2;
+
+var altitude = function (bytes) {
+    if (bytes.length !== altitude.BYTES) {
+        throw new Error('Altitude must have exactly 2 bytes');
+    }
+    var alt = bytesToInt(bytes);
+    if (alt > 32767) {
+        alt -= 65536;
+    }
+    return alt;
+};
+altitude.BYTES = 2;
 
 var float = function (bytes) {
     if (bytes.length !== float.BYTES) {
@@ -253,6 +265,7 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         pressure: pressure,
         latLng: latLng,
         hdop: hdop,
+        altitude: altitude,
         bitmap1: bitmap1,
         bitmap2: bitmap2,
         version: version,
