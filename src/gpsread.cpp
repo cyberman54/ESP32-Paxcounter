@@ -71,7 +71,7 @@ void gps_storelocation(gpsStatus_t &gps_store) {
   gps_store.longitude = (int32_t)(gps.location.lng() * 1e6);
   gps_store.satellites = (uint8_t)gps.satellites.value();
   gps_store.hdop = (uint16_t)gps.hdop.value();
-  gps_store.altitude = (int16_t)((gps.altitude.meters() + 1000) * 4);
+  gps_store.altitude = (int16_t)gps.altitude.meters();
 }
 
 // store current GPS timedate in struct

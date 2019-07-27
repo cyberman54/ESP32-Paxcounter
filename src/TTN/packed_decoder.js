@@ -143,7 +143,7 @@ var hdop = function (bytes) {
     if (bytes.length !== hdop.BYTES) {
         throw new Error('hdop must have exactly 2 bytes');
     }
-    return bytesToInt(bytes) / 100;
+    return +(bytesToInt(bytes) / 100).toFixed(1);
 };
 hdop.BYTES = 2;
 
@@ -151,8 +151,7 @@ var altitude = function (bytes) {
     if (bytes.length !== altitude.BYTES) {
         throw new Error('Altitude must have exactly 2 bytes');
     }
-    var alt = bytesToInt(bytes) / 4 - 1000;
-    return +alt.toFixed(1);
+    return +(bytesToInt(bytes) / 4 - 1000).toFixed(1);
 };
 altitude.BYTES = 2;
 

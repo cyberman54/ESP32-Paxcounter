@@ -16,7 +16,7 @@ uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
 /* ---------------- plain format without special encoding ---------- */
 
-#if PAYLOAD_ENCODER == 1
+#if (PAYLOAD_ENCODER == 1)
 
 void PayloadConvert::addByte(uint8_t value) { buffer[cursor++] = (value); }
 
@@ -92,8 +92,8 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = value.satellites;
   buffer[cursor++] = highByte(value.hdop);
   buffer[cursor++] = lowByte(value.hdop);
-  buffer[cursor++] = highByte(value.altitude);
-  buffer[cursor++] = lowByte(value.altitude);
+  buffer[cursor++] = highByte((value.altitude + 1000) * 4);
+  buffer[cursor++] = lowByte((value.altitude + 1000) * 4);
 #endif
 }
 
@@ -141,7 +141,7 @@ void PayloadConvert::addTime(time_t value) {
 // derived from
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
-#elif PAYLOAD_ENCODER == 2
+#elif (PAYLOAD_ENCODER == 2)
 
 void PayloadConvert::addByte(uint8_t value) { writeUint8(value); }
 
@@ -195,7 +195,7 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   writeLatLng(value.latitude, value.longitude);
   writeUint8(value.satellites);
   writeUint16(value.hdop);
-  writeUint16(value.altitude);
+  writeUint16((value.altitude + 1000) * 4);
 #endif
 }
 
@@ -301,7 +301,7 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 // FPort 1 PAYLOAD_ENCODER == 4 -> Packed Sensor Payload, not using channels ->
 // FPort 2
 
-#elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
+#elif ((PAYLOAD_ENCODER == 3) || (PAYLOAD_ENCODER == 4))
 
 void PayloadConvert::addByte(uint8_t value) { 
   /* 
@@ -412,7 +412,7 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
   memcpy(buffer, buf+1, length);
   cursor += length; // length of buffer
 */
-#endif
+#endif // HAS_SENSORS
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
@@ -481,6 +481,4 @@ void PayloadConvert::addTime(time_t value) {
 #endif
 }
 
-#else
-#error No valid payload converter defined!
 #endif
