@@ -151,7 +151,13 @@ var altitude = function (bytes) {
     if (bytes.length !== altitude.BYTES) {
         throw new Error('Altitude must have exactly 2 bytes');
     }
-    return +(bytesToInt(bytes) / 4 - 1000).toFixed(1);
+
+    var alt = bytesToInt(bytes);
+    if (alt > 32767) {
+        alt -= 65536;
+    }
+
+    return +(alt / 4 - 1000).toFixed(1);
 };
 altitude.BYTES = 2;
 
