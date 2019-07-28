@@ -57,7 +57,7 @@ function Decoder(bytes, port) {
 
     if (port === 7) {
         // BME680 sensor data     
-        return decode(bytes, [float, uint16, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
+        return decode(bytes, [float, pressure, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
     }
 
     if (port === 8) {
