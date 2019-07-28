@@ -104,7 +104,7 @@ time_t get_gpstime(gpsStatus_t value) {
 
   time_t t = timeIsValid(makeTime(value.timedate));
 
-  // show NMEA data in verbose mode, useful for debugging GPS
+  // show NMEA data in debug mode, useful for debugging GPS
   ESP_LOGD(
       TAG,
       "GPS time: %d | GPS NMEA data: passed %d / failed: %d / with fix: %d", t,
