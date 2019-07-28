@@ -18,10 +18,6 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 #endif
 
-#if (HAS_GPS)
-static gpsStatus_t gps_pps_status;
-#endif
-
 Ticker timesyncer;
 
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
@@ -32,7 +28,7 @@ time_t timeProvider(void) {
 
 #if (HAS_GPS)
   // fetch recent time from last NMEA record
-  t = get_gpstime(gps_pps_status);
+  t = fetch_gpsTime(gps_status);
   if (t) {
 #ifdef HAS_RTC
     set_rtctime(t, do_mutex); // calibrate RTC
@@ -44,7 +40,7 @@ time_t timeProvider(void) {
   }
 #endif
 
-// no GPS -> fallback to RTC time while trying lora sync
+// no time from GPS -> fallback to RTC time while trying lora sync
 #ifdef HAS_RTC
   t = get_rtctime();
   if (t) {
@@ -123,11 +119,6 @@ void timepulse_start(void) {
   timerAlarmEnable(ppsIRQ);
 #endif
 
-// initialize gps time
-#if (HAS_GPS)
-  gps_storetime(gps_pps_status);
-#endif
-
   // start cyclic time sync
   timeSync(); // init systime by RTC or GPS or LORA
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
@@ -142,9 +133,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   // store recent gps time, and try to get gps time if time is not synced
 #if (HAS_GPS)
-  gps_storetime(gps_pps_status);
-  if (timeSource == _unsynced)
-    timeSync();
+  gps_storetime(&gps_status);
 #endif
 
 // advance wall clock, if we have

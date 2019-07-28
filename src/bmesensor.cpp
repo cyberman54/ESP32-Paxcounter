@@ -146,15 +146,17 @@ void bme_loop(void *pvParameters) {
     // block i2c bus access
     if (I2C_MUTEX_LOCK()) {
       if (iaqSensor.run()) { // If new data is available
-        bme_status.raw_temperature = iaqSensor.rawTemperature;
+        bme_status.raw_temperature =
+            iaqSensor.rawTemperature; // Temperature in degree celsius
         bme_status.raw_humidity = iaqSensor.rawHumidity;
         bme_status.temperature = iaqSensor.temperature;
-        bme_status.humidity = iaqSensor.humidity;
-        bme_status.pressure =
+        bme_status.humidity =
+            iaqSensor.humidity; // Humidity in % relative humidity x1000
+        bme_status.pressure =   // Pressure in Pascal
             (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
         bme_status.iaq = iaqSensor.iaqEstimate;
         bme_status.iaq_accuracy = iaqSensor.iaqAccuracy;
-        bme_status.gas = iaqSensor.gasResistance;
+        bme_status.gas = iaqSensor.gasResistance; // Gas resistance in Ohms
         updateState();
       }
       I2C_MUTEX_UNLOCK();

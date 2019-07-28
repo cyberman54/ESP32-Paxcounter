@@ -1,6 +1,8 @@
 #ifndef _PAYLOAD_H_
 #define _PAYLOAD_H_
 
+#include "paxcounter.conf"
+
 // MyDevices CayenneLPP 1.0 channels for Synamic sensor payload format
 // all payload goes out on LoRa FPort 1
 #if (PAYLOAD_ENCODER == 3)
@@ -18,8 +20,6 @@
 #define LPP_BAROMETER_CHANNEL 30
 #define LPP_AIR_CHANNEL 31
 
-#endif
-
 // MyDevices CayenneLPP 2.0 types for Packed Sensor Payload, not using channels,
 // but different FPorts
 #define LPP_GPS 136          // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01m
@@ -31,6 +31,8 @@
 #define LPP_PRESENCE 102     //	1 byte
 #define LPP_HUMIDITY 104     // 1 byte, 0.5 % unsigned
 #define LPP_BAROMETER 115    // 2 bytes, hPa unsigned MSB
+
+#endif
 
 class PayloadConvert {
 
@@ -54,20 +56,21 @@ public:
   void addSensor(uint8_t[]);
   void addTime(time_t value);
 
-#if PAYLOAD_ENCODER == 1 // format plain
+#if (PAYLOAD_ENCODER == 1) // format plain
 
 private:
   uint8_t *buffer;
   uint8_t cursor;
 
-#elif PAYLOAD_ENCODER == 2 // format packed
+#elif (PAYLOAD_ENCODER == 2) // format packed
 
 private:
   uint8_t *buffer;
   uint8_t cursor;
-  void intToBytes(uint8_t pos, int32_t i, uint8_t byteSize);
+  void uintToBytes(uint64_t i, uint8_t byteSize);
   void writeUptime(uint64_t unixtime);
   void writeLatLng(double latitude, double longitude);
+  void writeUint64(uint64_t i);
   void writeUint32(uint32_t i);
   void writeUint16(uint16_t i);
   void writeUint8(uint8_t i);
@@ -78,7 +81,7 @@ private:
   void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
                    bool h);
 
-#elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4) // format cayenne lpp
+#elif ((PAYLOAD_ENCODER == 3) || (PAYLOAD_ENCODER == 4)) // format cayenne lpp
 
 private:
   uint8_t *buffer;

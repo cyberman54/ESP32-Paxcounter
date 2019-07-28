@@ -438,6 +438,11 @@ void setup() {
 #warning you did not specify a time source, time will not be synched
 #endif
 
+  // initialize gps time
+#if (HAS_GPS)
+  gps_storetime(&gps_status);
+#endif
+
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting Clock Controller...");
   clock_init();

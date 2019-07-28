@@ -16,7 +16,7 @@ uint8_t *PayloadConvert::getBuffer(void) { return buffer; }
 
 /* ---------------- plain format without special encoding ---------- */
 
-#if PAYLOAD_ENCODER == 1
+#if (PAYLOAD_ENCODER == 1)
 
 void PayloadConvert::addByte(uint8_t value) { buffer[cursor++] = (value); }
 
@@ -141,7 +141,7 @@ void PayloadConvert::addTime(time_t value) {
 // derived from
 // https://github.com/thesolarnomad/lora-serialization/blob/master/src/LoraEncoder.cpp
 
-#elif PAYLOAD_ENCODER == 2
+#elif (PAYLOAD_ENCODER == 2)
 
 void PayloadConvert::addByte(uint8_t value) { writeUint8(value); }
 
@@ -227,15 +227,19 @@ void PayloadConvert::addTime(time_t value) {
   writeUint32(time);
 }
 
-void PayloadConvert::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
+void PayloadConvert::uintToBytes(uint64_t value, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
-    buffer[x + pos] = (byte)(i >> (x * 8));
+    byte next = 0;
+    if (sizeof(value) > x) {
+      next = static_cast<byte>((value >> (x * 8)) & 0xFF);
+    }
+    buffer[cursor] = next;
+    ++cursor;
   }
-  cursor += byteSize;
 }
 
 void PayloadConvert::writeUptime(uint64_t uptime) {
-  intToBytes(cursor, uptime, 8);
+  writeUint64(uptime);
 }
 
 void PayloadConvert::writeVersion(char *version) {
@@ -244,24 +248,25 @@ void PayloadConvert::writeVersion(char *version) {
 }
 
 void PayloadConvert::writeLatLng(double latitude, double longitude) {
-  intToBytes(cursor, latitude, 4);
-  intToBytes(cursor, longitude, 4);
+  // Tested to at least work with int32_t, which are processed correctly.
+  writeUint32(latitude);
+  writeUint32(longitude);
 }
 
-void PayloadConvert::writeUint32(uint32_t i) { intToBytes(cursor, i, 4); }
+void PayloadConvert::writeUint64(uint64_t i) { uintToBytes(i, 8); }
 
-void PayloadConvert::writeUint16(uint16_t i) { intToBytes(cursor, i, 2); }
+void PayloadConvert::writeUint32(uint32_t i) { uintToBytes(i, 4); }
 
-void PayloadConvert::writeUint8(uint8_t i) { intToBytes(cursor, i, 1); }
+void PayloadConvert::writeUint16(uint16_t i) { uintToBytes(i, 2); }
+
+void PayloadConvert::writeUint8(uint8_t i) { uintToBytes(i, 1); }
 
 void PayloadConvert::writeUFloat(float value) {
-  int16_t h = (int16_t)(value * 100);
-  intToBytes(cursor, h, 2);
+  writeUint16(value * 100);
 }
 
 void PayloadConvert::writePressure(float value) {
-  int16_t h = (int16_t)(value);
-  intToBytes(cursor, h, 2);
+  writeUint16(value * 10);
 }
 
 /**
@@ -301,7 +306,7 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 // FPort 1 PAYLOAD_ENCODER == 4 -> Packed Sensor Payload, not using channels ->
 // FPort 2
 
-#elif (PAYLOAD_ENCODER == 3 || PAYLOAD_ENCODER == 4)
+#elif ((PAYLOAD_ENCODER == 3) || (PAYLOAD_ENCODER == 4))
 
 void PayloadConvert::addByte(uint8_t value) { 
   /* 
@@ -412,7 +417,7 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
   memcpy(buffer, buf+1, length);
   cursor += length; // length of buffer
 */
-#endif
+#endif // HAS_SENSORS
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
@@ -481,6 +486,4 @@ void PayloadConvert::addTime(time_t value) {
 #endif
 }
 
-#else
-#error No valid payload converter defined!
 #endif
