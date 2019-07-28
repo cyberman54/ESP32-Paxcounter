@@ -41,11 +41,7 @@ function Decoder(bytes, port) {
     decoded.longitude = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
     decoded.sats = bytes[i++];
     decoded.hdop = (bytes[i++] << 8) | (bytes[i++]);
-    var alt = ((bytes[i++] << 8) | (bytes[i++]));
-    if (alt > 32767) {
-      alt -= 65536;
-    }
-    decoded.altitude = alt / 4 - 1000;
+    decoded.altitude = ((bytes[i++] << 8) | (bytes[i++])) / 4 - 1000;
   }
 
   if (port === 5) {
