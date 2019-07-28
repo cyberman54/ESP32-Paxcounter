@@ -37,7 +37,7 @@ function Decoder(bytes, port) {
 
     if (port === 3) {
         // device config data      
-        return decode(bytes, [uint8, uint8, uint16, uint8, uint8, uint8, uint8, bitmap1, bitmap2, version], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'payloadmask', 'version']);
+        return decode(bytes, [uint8, uint8, int16, uint8, uint8, uint8, uint8, bitmap1, bitmap2, version], ['lorasf', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'payloadmask', 'version']);
     }
 
     if (port === 4) {
@@ -52,7 +52,7 @@ function Decoder(bytes, port) {
 
     if (port === 6) {
         // beacon proximity alarm      
-        return decode(bytes, [uint8, uint8], ['rssi', 'beacon']);
+        return decode(bytes, [int8, uint8], ['rssi', 'beacon']);
     }
 
     if (port === 7) {
@@ -123,37 +123,72 @@ var uint32 = function (bytes) {
 };
 uint32.BYTES = 4;
 
-var latLng = function (bytes) {
-    if (bytes.length !== latLng.BYTES) {
-        throw new Error('Lat/Long must have exactly 4 bytes');
-    }
-    return bytesToInt(bytes) / 1e6;
-};
-latLng.BYTES = 4;
-
-var uptime = function (bytes) {
-    if (bytes.length !== uptime.BYTES) {
-        throw new Error('Uptime must have exactly 8 bytes');
+var uint64 = function (bytes) {
+    if (bytes.length !== uint64.BYTES) {
+        throw new Error('uint64 must have exactly 8 bytes');
     }
     return bytesToInt(bytes);
 };
-uptime.BYTES = 8;
+uint64.BYTES = 8;
+
+var int8 = function (bytes) {
+    if (bytes.length !== int8.BYTES) {
+        throw new Error('int8 must have exactly 1 byte');
+    }
+	var value = +(bytesToInt(bytes));
+    if (value > 127) {
+        value -= 256;
+    }
+    return value;
+};
+int8.BYTES = 1;
+
+var int16 = function (bytes) {
+    if (bytes.length !== int16.BYTES) {
+        throw new Error('int16 must have exactly 2 bytes');
+    }
+	var value = +(bytesToInt(bytes));
+    if (value > 32767) {
+        value -= 65536;
+    }
+    return value;
+};
+int16.BYTES = 2;
+
+var int32 = function (bytes) {
+    if (bytes.length !== int32.BYTES) {
+        throw new Error('int32 must have exactly 4 bytes');
+    }
+	var value = +(bytesToInt(bytes));
+    if (value > 2147483647) {
+        value -= 4294967296;
+    }
+    return value;
+};
+int32.BYTES = 4;
+
+var latLng = function (bytes) {
+    return +(int32(bytes) / 1e6).toFixed(6);
+};
+latLng.BYTES = int32.BYTES;
+
+var uptime = function (bytes) {
+    return uint64(bytes);
+};
+uptime.BYTES = uint64.BYTES;
 
 var hdop = function (bytes) {
-    if (bytes.length !== hdop.BYTES) {
-        throw new Error('hdop must have exactly 2 bytes');
-    }
-    return +(bytesToInt(bytes) / 100).toFixed(1);
+    return +(uint16(bytes) / 100).toFixed(2);
 };
-hdop.BYTES = 2;
+hdop.BYTES = uint16.BYTES;
 
 var altitude = function (bytes) {
-    if (bytes.length !== altitude.BYTES) {
-        throw new Error('Altitude must have exactly 2 bytes');
-    }
-    return +(alt / 4 - 1000).toFixed(1);
+    // Option to increase altitude resolution (also on encoder side)
+    // return +(int16(bytes) / 4 - 1000).toFixed(1);
+    return +(int16(bytes));
 };
-altitude.BYTES = 2;
+altitude.BYTES = int16.BYTES;
+
 
 var float = function (bytes) {
     if (bytes.length !== float.BYTES) {
@@ -176,29 +211,19 @@ var float = function (bytes) {
     if (isNegative) {
         t = -t;
     }
-    return +(t / 100).toFixed(1);
+    return +(t / 100).toFixed(2);
 };
 float.BYTES = 2;
 
 var ufloat = function (bytes) {
-    if (bytes.length !== ufloat.BYTES) {
-        throw new Error('Ufloat must have exactly 2 bytes');
-    }
-
-    var h = bytesToInt(bytes);
-    return +(h / 100).toFixed(1);
+    return +(uint16(bytes) / 100).toFixed(2);
 };
-ufloat.BYTES = 2;
+ufloat.BYTES = uint16.BYTES;
 
 var pressure = function (bytes) {
-    if (bytes.length !== pressure.BYTES) {
-        throw new Error('Pressure must have exactly 2 bytes');
-    }
-
-    var h = bytesToInt(bytes);
-    return +(h / 10).toFixed(1);
+    return +(uint16(bytes) / 10).toFixed(1);
 };
-pressure.BYTES = 2;
+pressure.BYTES = uint16.BYTES;
 
 var bitmap1 = function (byte) {
     if (byte.length !== bitmap1.BYTES) {
@@ -255,6 +280,9 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         uint8: uint8,
         uint16: uint16,
         uint32: uint32,
+        int8: int8,
+        int16: int16,
+        int32: int32,
         uptime: uptime,
         float: float,
         ufloat: ufloat,
