@@ -92,8 +92,8 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = value.satellites;
   buffer[cursor++] = highByte(value.hdop);
   buffer[cursor++] = lowByte(value.hdop);
-  buffer[cursor++] = highByte((value.altitude + 1000) * 4);
-  buffer[cursor++] = lowByte((value.altitude + 1000) * 4);
+  buffer[cursor++] = highByte(value.altitude);
+  buffer[cursor++] = lowByte(value.altitude);
 #endif
 }
 
@@ -195,7 +195,7 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   writeLatLng(value.latitude, value.longitude);
   writeUint8(value.satellites);
   writeUint16(value.hdop);
-  writeUint16((value.altitude + 1000) * 4);
+  writeUint16(value.altitude);
 #endif
 }
 
@@ -227,15 +227,19 @@ void PayloadConvert::addTime(time_t value) {
   writeUint32(time);
 }
 
-void PayloadConvert::intToBytes(uint8_t pos, int32_t i, uint8_t byteSize) {
+void PayloadConvert::uintToBytes(uint64_t value, uint8_t byteSize) {
   for (uint8_t x = 0; x < byteSize; x++) {
-    buffer[x + pos] = (byte)(i >> (x * 8));
+    byte next = 0;
+    if (sizeof(value) > x) {
+      next = static_cast<byte>((value >> (x * 8)) & 0xFF);
+    }
+    buffer[cursor] = next;
+    ++cursor;
   }
-  cursor += byteSize;
 }
 
 void PayloadConvert::writeUptime(uint64_t uptime) {
-  intToBytes(cursor, uptime, 8);
+  writeUint64(uptime);
 }
 
 void PayloadConvert::writeVersion(char *version) {
@@ -244,24 +248,25 @@ void PayloadConvert::writeVersion(char *version) {
 }
 
 void PayloadConvert::writeLatLng(double latitude, double longitude) {
-  intToBytes(cursor, latitude, 4);
-  intToBytes(cursor, longitude, 4);
+  // Tested to at least work with int32_t, which are processed correctly.
+  writeUint32(latitude);
+  writeUint32(longitude);
 }
 
-void PayloadConvert::writeUint32(uint32_t i) { intToBytes(cursor, i, 4); }
+void PayloadConvert::writeUint64(uint64_t i) { uintToBytes(i, 8); }
 
-void PayloadConvert::writeUint16(uint16_t i) { intToBytes(cursor, i, 2); }
+void PayloadConvert::writeUint32(uint32_t i) { uintToBytes(i, 4); }
 
-void PayloadConvert::writeUint8(uint8_t i) { intToBytes(cursor, i, 1); }
+void PayloadConvert::writeUint16(uint16_t i) { uintToBytes(i, 2); }
+
+void PayloadConvert::writeUint8(uint8_t i) { uintToBytes(i, 1); }
 
 void PayloadConvert::writeUFloat(float value) {
-  int16_t h = (int16_t)(value * 100);
-  intToBytes(cursor, h, 2);
+  writeUint16(value * 100);
 }
 
 void PayloadConvert::writePressure(float value) {
-  int16_t h = (int16_t)(value);
-  intToBytes(cursor, h, 2);
+  writeUint16(value * 10);
 }
 
 /**

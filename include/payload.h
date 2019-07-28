@@ -67,9 +67,10 @@ private:
 private:
   uint8_t *buffer;
   uint8_t cursor;
-  void intToBytes(uint8_t pos, int32_t i, uint8_t byteSize);
+  void uintToBytes(uint64_t i, uint8_t byteSize);
   void writeUptime(uint64_t unixtime);
   void writeLatLng(double latitude, double longitude);
+  void writeUint64(uint64_t i);
   void writeUint32(uint32_t i);
   void writeUint16(uint16_t i);
   void writeUint8(uint8_t i);
