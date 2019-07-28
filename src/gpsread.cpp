@@ -66,53 +66,50 @@ int gps_config() {
 }
 
 // store current GPS location data in struct
-void gps_storelocation(gpsStatus_t &gps_store) {
-  gps_store.latitude = (int32_t)(gps.location.lat() * 1e6);
-  gps_store.longitude = (int32_t)(gps.location.lng() * 1e6);
-  gps_store.satellites = (uint8_t)gps.satellites.value();
-  gps_store.hdop = (uint16_t)gps.hdop.value();
-  gps_store.altitude = (int16_t)gps.altitude.meters();
+void gps_storelocation(gpsStatus_t *gps_store) {
+  if (gps.location.isUpdated() && gps.location.isValid() &&
+      (gps.time.age() < 1500)) {
+    gps_store->latitude = (int32_t)(gps.location.lat() * 1e6);
+    gps_store->longitude = (int32_t)(gps.location.lng() * 1e6);
+    gps_store->satellites = (uint8_t)gps.satellites.value();
+    gps_store->hdop = (uint16_t)gps.hdop.value();
+    gps_store->altitude = (int16_t)gps.altitude.meters();
+  }
 }
 
 // store current GPS timedate in struct
-void IRAM_ATTR gps_storetime(gpsStatus_t &gps_store) {
+void IRAM_ATTR gps_storetime(gpsStatus_t *gps_store) {
 
   if (gps.time.isUpdated() && gps.date.isValid() && (gps.time.age() < 1000)) {
 
     // nmea telegram serial delay compensation; not sure if we need this?
     /*
     if (gps.time.age() > nmea_txDelay_ms)
-      gps_store.timedate.Second = gps.time.second() + 1;
+      gps_store->timedate.Second = gps.time.second() + 1;
     else
-      gps_store.timedate.Second = gps.time.second();
+      gps_store->timedate.Second = gps.time.second();
     */
 
-    gps_store.timedate.Second = gps.time.second();
-    gps_store.timedate.Minute = gps.time.minute();
-    gps_store.timedate.Hour = gps.time.hour();
-    gps_store.timedate.Day = gps.date.day();
-    gps_store.timedate.Month = gps.date.month();
-    gps_store.timedate.Year =
+    gps_store->timedate.Second = gps.time.second();
+    gps_store->timedate.Minute = gps.time.minute();
+    gps_store->timedate.Hour = gps.time.hour();
+    gps_store->timedate.Day = gps.date.day();
+    gps_store->timedate.Month = gps.date.month();
+    gps_store->timedate.Year =
         CalendarYrToTm(gps.date.year()); // year offset from 1970 in microTime.h
 
   } else
-    gps_store.timedate = {0};
+    gps_store->timedate = {0};
 }
 
 // function to fetch current time from struct; note: this is costly
-time_t get_gpstime(gpsStatus_t value) {
+time_t fetch_gpsTime(gpsStatus_t value) {
 
   time_t t = timeIsValid(makeTime(value.timedate));
-
-  // show NMEA data in debug mode, useful for debugging GPS
-  ESP_LOGD(
-      TAG,
-      "GPS time: %d | GPS NMEA data: passed %d / failed: %d / with fix: %d", t,
-      gps.passedChecksum(), gps.failedChecksum(), gps.sentencesWithFix());
-
+  ESP_LOGD(TAG, "GPS time: %d", t);
   return t;
 
-} // get_gpstime()
+} // fetch_gpsTime()
 
 // GPS serial feed FreeRTos Task
 void gps_loop(void *pvParameters) {
@@ -135,6 +132,11 @@ void gps_loop(void *pvParameters) {
       }
 #endif
     } // if
+
+    // show NMEA data in verbose mode, useful for debugging GPS
+    ESP_LOGV(TAG, "GPS NMEA data: passed %d / failed: %d / with fix: %d",
+             gps.passedChecksum(), gps.failedChecksum(),
+             gps.sentencesWithFix());
 
     delay(2); // yield to CPU
 

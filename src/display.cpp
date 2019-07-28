@@ -195,16 +195,13 @@ void draw_page(time_t t, uint8_t page) {
 
 // update GPS status (line 2)
 #if (HAS_GPS)
-    // have we ever got valid gps data?
-    if (gps.passedChecksum() > 0) {
-      u8x8.setCursor(9, 2);
-      if (!gps.location.isValid()) // if no fix then display Sats value inverse
-      {
-        u8x8.setInverseFont(1);
-        u8x8.printf("Sats:%.2d", gps.satellites.value());
-        u8x8.setInverseFont(0);
-      } else
-        u8x8.printf("Sats:%.2d", gps.satellites.value());
+    u8x8.setCursor(9, 2);
+    if (gps.location.age() < 1500) // if no fix then display Sats value inverse
+      u8x8.printf("Sats:%.2d", gps.satellites.value());
+    else {
+      u8x8.setInverseFont(1);
+      u8x8.printf("Sats:%.2d", gps.satellites.value());
+      u8x8.setInverseFont(0);
     }
 #endif
 
@@ -252,12 +249,11 @@ void draw_page(time_t t, uint8_t page) {
     u8x8.setInverseFont(1);
     u8x8.printf("%c", timeState);
     u8x8.setInverseFont(0);
-    u8x8.printf(" %2d.%3s", day(t), printmonth[month(t)]);
 #else
-    u8x8.printf("%02d:%02d:%02d%c %2d.%3s", hour(t), minute(t), second(t),
-                timeState, day(t), printmonth[month(t)]);
+    u8x8.printf("%02d:%02d:%02d%c", hour(t), minute(t), second(t), timeState);
 #endif // HAS_DCF77 || HAS_IF482
-
+    if (timeSource != _unsynced)
+      u8x8.printf(" %2d.%3s", day(t), printmonth[month(t)]);
 #else // update LoRa status display
 #if (HAS_LORA)
     u8x8.printf("%-16s", display_line6);
