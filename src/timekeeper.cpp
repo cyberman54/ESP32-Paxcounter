@@ -31,7 +31,7 @@ time_t timeProvider(void) {
   t = fetch_gpsTime(gps_status);
   if (t) {
 #ifdef HAS_RTC
-    set_rtctime(t, do_mutex); // calibrate RTC
+    set_rtctime(t); // calibrate RTC
 #endif
     timeSource = _gps;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat

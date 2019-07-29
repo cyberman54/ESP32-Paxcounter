@@ -507,15 +507,8 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
     return;
   }
 
-  // begin of time critical section
-
-  // lock I2C bus and application irq to ensure accurate timing
+  // mask application irq to ensure accurate timing
   mask_user_IRQ();
-  if (!I2C_MUTEX_LOCK()) {
-    ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking failed",
-             millis() / 1000.0);
-    goto finish; // failure
-  }
 
   // Update userUTCTime, considering the difference between the GPS and UTC
   // time, and the leap seconds until year 2019
@@ -532,8 +525,7 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
   setMyTime(*pUserUTCTime + requestDelaySec, 0);
 
 finish:
-  // end of time critical section: release I2C bus and app irq
-  I2C_MUTEX_UNLOCK();
+  // end of time critical section: release app irq lock
   unmask_user_IRQ();
 
 } // user_request_network_time_callback

@@ -132,9 +132,8 @@ void process_timesync_req(void *taskparameter) {
 
   finish:
     // end of time critical section: release app irq lock
-    unmask_user_IRQ();
-
     timeSyncPending = false;
+    unmask_user_IRQ();
 
   } // infinite while(1)
 }
@@ -223,7 +222,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
 
 // set RTC time and calibrate RTC_INT pulse on top of second
 #ifdef HAS_RTC
-    set_rtctime(time_to_set, no_mutex);
+    set_rtctime(time_to_set);
 #endif
 
 // sync pps timer to top of second
