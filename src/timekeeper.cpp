@@ -131,7 +131,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   SyncToPPS(); // advance systime, see microTime.h
 
-  // store recent gps time, and try to get gps time if time is not synced
+  // store recent gps time
 #if (HAS_GPS)
   gps_storetime(&gps_status);
 #endif

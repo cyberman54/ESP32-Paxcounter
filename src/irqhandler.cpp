@@ -45,12 +45,6 @@ void irqHandler(void *pvParameters) {
       refreshTheMatrixDisplay();
 #endif
 
-// gps refresh buffer?
-#if (HAS_GPS)
-    if (InterruptStatus & GPS_IRQ)
-      gps_storelocation(&gps_status);
-#endif
-
     // are cyclic tasks due?
     if (InterruptStatus & CYCLIC_IRQ)
       doHousekeeping();
@@ -103,17 +97,6 @@ void IRAM_ATTR ButtonIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
 
-  if (xHigherPriorityTaskWoken)
-    portYIELD_FROM_ISR();
-}
-#endif
-
-#if (HAS_GPS)
-void IRAM_ATTR GpsIRQ() {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  xTaskNotifyFromISR(irqHandlerTask, GPS_IRQ, eSetBits,
-                     &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }

@@ -87,6 +87,7 @@ void sendCounter() {
     case GPS_DATA:
       // send GPS position only if we have a fix
       if (gps.location.isValid()) {
+        gps_storelocation(&gps_status);
         payload.reset();
         payload.addGPS(gps_status);
         SendPayload(GPSPORT, prio_high);
