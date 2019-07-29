@@ -11,14 +11,16 @@
 #include <Adafruit_BME280.h>
 #endif
 
+extern Ticker bmecycler;
+
 extern bmeStatus_t
     bme_status; // Make struct for storing gps data globally available
-extern TaskHandle_t BmeTask;
 
 // --- Bosch BSEC v1.4.7.4 library configuration ---
 // 3,3V supply voltage; 3s max time between sensor_control calls; 4 days
 // calibration. Change this const if not applicable for your application (see
 // BME680 datasheet)
+// Note: 3s max time not exceed BMECYCLE frequency set in paxcounter.conf!
 const uint8_t bsec_config_iaq[454] = {
     4,   7,   4,   1,   61,  0,   0,   0,   0,   0,   0,   0,   174, 1,   0,
     0,   48,  0,   1,   0,   0,   192, 168, 71,  64,  49,  119, 76,  0,   0,
@@ -54,7 +56,8 @@ const uint8_t bsec_config_iaq[454] = {
 
 // Helper functions declarations
 int bme_init();
-void bme_loop(void *pvParameters);
+void bmecycle(void);
+void bme_storedata(bmeStatus_t *bme_store);
 int checkIaqSensorStatus(void);
 void loadState(void);
 void updateState(void);

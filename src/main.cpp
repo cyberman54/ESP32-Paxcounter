@@ -35,7 +35,6 @@ clockloop     1     4     generates realtime telegrams for external clock
 timesync_req  1     3     processes realtime time sync requests
 irqhandler    1     2     display, timesync, gps, etc. triggered by timers
 gpsloop       1     2     reads data from GPS via serial or i2c
-bmeloop       1     2     reads data from BME sensor via i2c
 looptask      1     1     runs the LMIC LoRa stack (arduino loop)
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
@@ -63,6 +62,7 @@ fired by software (Ticker.h)
 TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
 CYLCIC_IRQ      -> housekeeping() -> irqHandlerTask (Core 1)
 SENDCYCLE_IRQ   -> sendcycle()    -> irqHandlerTask (Core 1)
+BME_IRQ         -> bmecycle()     -> irqHandlerTask (Core 1)
 
 
 // External RTC timer (if present)
@@ -368,16 +368,8 @@ void setup() {
 #elif defined HAS_BME280
   strcat_P(features, " BME280");
 #endif
-  if (bme_init()) {
+  if (bme_init())
     ESP_LOGI(TAG, "Starting BME sensor...");
-    xTaskCreatePinnedToCore(bme_loop,  // task function
-                            "bmeloop", // name of task
-                            2048,      // stack size of task
-                            (void *)1, // parameter of the task
-                            2,         // priority of the task
-                            &BmeTask,  // task handle
-                            1);        // CPU core
-  }
 #endif
 
   // starting timers and interrupts
@@ -418,6 +410,7 @@ void setup() {
   // cyclic function interrupts
   sendcycler.attach(SENDCYCLE * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
+  bmecycler.attach(BMECYCLE, bmecycle);
 
 #if (TIME_SYNC_INTERVAL)
 

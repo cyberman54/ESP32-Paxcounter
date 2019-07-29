@@ -45,6 +45,12 @@ void irqHandler(void *pvParameters) {
       refreshTheMatrixDisplay();
 #endif
 
+// BME sensor data to be read?
+#if (HAS_BME)
+    if (InterruptStatus & BME_IRQ)
+      bme_storedata(&bme_status);
+#endif
+
     // are cyclic tasks due?
     if (InterruptStatus & CYCLIC_IRQ)
       doHousekeeping();
