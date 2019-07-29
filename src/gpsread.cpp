@@ -6,7 +6,7 @@
 static const char TAG[] = __FILE__;
 
 TinyGPSPlus gps;
-gpsStatus_t gps_status;
+gpsStatus_t gps_status = {0};
 TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
