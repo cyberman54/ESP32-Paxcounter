@@ -85,7 +85,6 @@ hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
 SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
-time_t volatile gps_pps_time = 0;
 time_t userUTCTime = 0;
 timesource_t timeSource = _unsynced;
 

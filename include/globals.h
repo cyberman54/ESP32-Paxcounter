@@ -118,7 +118,6 @@ extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern time_t userUTCTime;
-extern time_t volatile gps_pps_time;
 
 // application includes
 #include "led.h"
