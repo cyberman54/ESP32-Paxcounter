@@ -109,6 +109,8 @@ int bme_init(void) {
 
 finish:
   I2C_MUTEX_UNLOCK(); // release i2c bus access
+  if (rc)
+    bmecycler.attach(BMECYCLE, bmecycle);
   return rc;
 
 } // bme_init()

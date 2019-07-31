@@ -410,7 +410,6 @@ void setup() {
   // cyclic function interrupts
   sendcycler.attach(SENDCYCLE * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
-  bmecycler.attach(BMECYCLE, bmecycle);
 
 #if (TIME_SYNC_INTERVAL)
 
