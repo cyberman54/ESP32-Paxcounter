@@ -34,6 +34,10 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
+#if (HAS_LORA)
+  ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));
+#endif
 #if (HAS_GPS)
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));

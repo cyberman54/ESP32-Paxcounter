@@ -33,9 +33,10 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_req  1     3     processes realtime time sync requests
-irqhandler    1     2     display, timesync, gps, etc. triggered by timers
-gpsloop       1     2     reads data from GPS via serial or i2c
-looptask      1     1     runs the LMIC LoRa stack (arduino loop)
+lmictask      1     2     MCCI LMiC LORAWAN stack
+irqhandler    1     1     display, timesync, gps, etc. triggered by timers
+gpsloop       1     1     reads data from GPS via serial or i2c
+looptask      1     1     arduino loop (unused)
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -268,7 +269,7 @@ void setup() {
                             "gpsloop", // name of task
                             2048,      // stack size of task
                             (void *)1, // parameter of the task
-                            2,         // priority of the task
+                            1,         // priority of the task
                             &GpsTask,  // task handle
                             1);        // CPU core
   }

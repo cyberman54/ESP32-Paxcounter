@@ -21,8 +21,10 @@
 #endif
 
 extern QueueHandle_t LoraSendQueue;
+extern TaskHandle_t lmicTask;
 
 esp_err_t lora_stack_init();
+void lmictask(void *pvParameters);
 void onEvent(ev_t ev);
 void gen_lora_deveui(uint8_t *pdeveui);
 void RevBytes(unsigned char *b, size_t c);
