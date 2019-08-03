@@ -23,13 +23,6 @@ void doHousekeeping() {
   if (cfg.runmode == 1)
     do_reset();
 
-#ifdef HAS_SPI
-  spi_housekeeping();
-#endif
-#if (HAS_LORA)
-  lora_housekeeping();
-#endif
-
   // task storage debugging //
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
@@ -42,6 +35,11 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
+#ifdef HAS_SPI
+  ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(spiTask), eTaskGetState(spiTask));
+#endif
+
 #if (defined HAS_DCF77 || defined HAS_IF482)
   ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(ClockTask), eTaskGetState(ClockTask));

@@ -37,7 +37,6 @@ void switch_lora(uint8_t sf, uint8_t tx);
 void lora_send(osjob_t *job);
 void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio);
 void lora_queuereset(void);
-void lora_housekeeping(void);
 #if (TIME_SYNC_LORAWAN)
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess);
