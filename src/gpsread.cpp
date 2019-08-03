@@ -12,7 +12,7 @@ TaskHandle_t GpsTask;
 #ifdef GPS_SERIAL
 HardwareSerial GPS_Serial(1); // use UART #1
 static uint16_t nmea_txDelay_ms =
-    tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL) / portTICK_PERIOD_MS;
+    (tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL) / portTICK_PERIOD_MS);
 #else
 static uint16_t nmea_txDelay_ms = 0;
 #endif
@@ -82,10 +82,7 @@ void IRAM_ATTR gps_storetime(gpsStatus_t *gps_store) {
 
   if (gps.time.isUpdated() && gps.date.isValid() && (gps.time.age() < 1000)) {
 
-    // nmea telegram serial delay compensation; not sure if we need this?
-    // if (gps.time.age() > nmea_txDelay_ms)
-    //  gps_store->timedate.Second = gps.time.second() + 1;
-    // else
+    gps_store->time_age = gps.time.age() + nmea_txDelay_ms;
     gps_store->timedate.Second = gps.time.second();
     gps_store->timedate.Minute = gps.time.minute();
     gps_store->timedate.Hour = gps.time.hour();
@@ -99,10 +96,11 @@ void IRAM_ATTR gps_storetime(gpsStatus_t *gps_store) {
 }
 
 // function to fetch current time from struct; note: this is costly
-time_t fetch_gpsTime(gpsStatus_t value) {
+time_t fetch_gpsTime(gpsStatus_t value, uint16_t *msec) {
 
+  *msec = 1000 - value.time_age;
   time_t t = timeIsValid(makeTime(value.timedate));
-  ESP_LOGD(TAG, "GPS time: %d", t);
+  ESP_LOGD(TAG, "GPS time: %d | time age: %d", t, value.time_age);
   return t;
 
 } // fetch_gpsTime()

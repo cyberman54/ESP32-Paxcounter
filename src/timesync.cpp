@@ -209,22 +209,25 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 
 // adjust system time, calibrate RTC and RTC_INT pps
 void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
-                         timesource_t timesource) {
+                         timesource_t mytimesource) {
 
-  time_t time_to_set = (time_t)(t_sec + 1);
-
-  ESP_LOGD(TAG, "[%0.3f] Calculated UTC epoch time: %d.%03d sec",
-           millis() / 1000.0, time_to_set, t_msec);
+  time_t time_to_set = (time_t)(t_sec);
 
   if (timeIsValid(time_to_set)) {
 
+    ESP_LOGD(TAG, "[%0.3f] UTC epoch time: %d.%03d sec", millis() / 1000.0,
+             time_to_set, t_msec);
     // wait until top of second with millisecond precision
-    if (t_msec)
+    if (t_msec) {
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
+      time_to_set++;
+    }
 
-// set RTC time and calibrate RTC_INT pulse on top of second
+// if we got a timesource, set RTC time and calibrate RTC_INT pulse on top of
+// second
 #ifdef HAS_RTC
-    set_rtctime(time_to_set);
+    if (mytimesource != _rtc)
+      set_rtctime(time_to_set);
 #endif
 
 // sync pps timer to top of second
@@ -235,13 +238,15 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 
     setTime(time_to_set); // set the time on top of second
 
-    timeSource = timesource;
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
-    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
-             millis() / 1000.0);
-  } else
-    ESP_LOGW(TAG, "[%0.3f] Timesync failed, outdated time calculated",
-             millis() / 1000.0);
+    timeSource = mytimesource; // set global variable
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
+    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
+             millis() / 1000.0, timeSetSymbols[timeSource]);
+  } else {
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
+    ESP_LOGI(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
+             millis() / 1000.0, timeSetSymbols[timeSource]);
+  }
 }
 
 void timesync_init() {

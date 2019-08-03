@@ -21,7 +21,7 @@ int gps_init(void);
 void IRAM_ATTR gps_storetime(gpsStatus_t *gps_store);
 void gps_storelocation(gpsStatus_t *gps_store);
 void gps_loop(void *pvParameters);
-time_t fetch_gpsTime(gpsStatus_t value);
+time_t fetch_gpsTime(gpsStatus_t value, uint16_t *msec);
 int gps_config();
 
 #endif

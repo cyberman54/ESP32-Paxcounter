@@ -1,4 +1,5 @@
 #include "timekeeper.h"
+#include "paxcounter.conf"
 
 #if !(HAS_LORA)
 #if (TIME_SYNC_LORASERVER)
@@ -25,26 +26,14 @@ void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 void calibrateTime(void) {
 
   time_t t = 0;
-  timesource_t timeSource;
+  uint16_t t_msec = 0;
 
 #if (HAS_GPS)
   // fetch recent time from last NMEA record
-  t = fetch_gpsTime(gps_status);
+  t = fetch_gpsTime(gps_status, &t_msec);
   if (t) {
-#ifdef HAS_RTC
-    set_rtctime(t); // calibrate RTC
-#endif
     timeSource = _gps;
     goto finish;
-  }
-#endif
-
-// no time from GPS -> fallback to RTC time while trying lora sync
-#ifdef HAS_RTC
-  t = get_rtctime();
-  if (t) {
-    timeSource = _rtc;
-    goto finish
   }
 #endif
 
@@ -56,15 +45,18 @@ void calibrateTime(void) {
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
+// no time from GPS -> fallback to RTC time while trying lora sync
+#ifdef HAS_RTC
+  t = get_rtctime();
+  if (t) {
+    timeSource = _rtc;
+    goto finish;
+  }
+#endif
+
 finish:
 
-  if (t) {                       // sync successful
-    setMyTime(t, 0, timeSource); // set time
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
-    ESP_LOGD(TAG, "time = %d | source: %c", t, timeSetSymbols[timeSource]);
-  } else { // sync failed, we want to retry shortly
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
-  }
+  setMyTime(t, t_msec, timeSource); // set time
 
 } // calibrateTime()
 
