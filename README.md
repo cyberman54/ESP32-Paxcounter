@@ -405,11 +405,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	bytes 1..4 = time/date in UTC epoch seconds (LSB)
 	byte 5 = time source & status, see below
 	
-		bits 0..3 time source
+		bits 0..3 last seen time source
 			0x00 = GPS
 			0x01 = RTC
 			0x02 = LORA
-			0x03 = unsynched
+			0x03 = unsynched (never synched)
 	
 		bits 4..7 time status
 			0x00 = timeNotSet (never synched)

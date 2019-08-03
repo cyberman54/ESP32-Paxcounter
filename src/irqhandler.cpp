@@ -59,9 +59,7 @@ void irqHandler(void *pvParameters) {
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ) {
       now(); // ensure sysTime is recent
-      time_t t = timeProvider();
-      if (timeIsValid(t))
-        setTime(t);
+      calibrateTime();
     }
 #endif
 

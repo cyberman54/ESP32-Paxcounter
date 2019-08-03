@@ -26,7 +26,7 @@ void timepulse_start(void);
 void timeSync(void);
 uint8_t timepulse_init(void);
 time_t timeIsValid(time_t const t);
-time_t timeProvider(void);
+void calibrateTime(void);
 time_t compiledUTC(void);
 TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
                     int8_t rxPin, int8_t txPins);

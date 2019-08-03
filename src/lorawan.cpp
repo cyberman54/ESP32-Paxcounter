@@ -464,11 +464,6 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
 
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
-void lora_housekeeping(void) {
-  // ESP_LOGD(TAG, "loraloop %d bytes left",
-  // uxTaskGetStackHighWaterMark(LoraTask));
-}
-
 #if (TIME_SYNC_LORAWAN)
 void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
                                                   int flagSuccess) {
@@ -510,7 +505,7 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
   time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
 
   // Update system time with time read from the network
-  setMyTime(*pUserUTCTime + requestDelaySec, 0);
+  setMyTime(*pUserUTCTime + requestDelaySec, 0, _lora);
 
 finish:
   // end of time critical section: release app irq lock
@@ -523,7 +518,7 @@ finish:
 void lmictask(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-  os_init();    // initialize lmic run-time environment on core 1
+  os_init();    // initialize lmic run-time environment
   LMIC_reset(); // initialize lmic MAC
   LMIC_setLinkCheckMode(0);
   // This tells LMIC to make the receive windows bigger, in case your clock is

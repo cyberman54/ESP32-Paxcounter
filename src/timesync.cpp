@@ -128,7 +128,7 @@ void process_timesync_req(void *taskparameter) {
     // calculate fraction milliseconds
     time_to_set_fraction_msec = (uint16_t)(time_offset_ms.count() % 1000);
 
-    setMyTime(time_to_set, time_to_set_fraction_msec);
+    setMyTime(time_to_set, time_to_set_fraction_msec, _lora);
 
   finish:
     // end of time critical section: release app irq lock
@@ -208,7 +208,8 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 }
 
 // adjust system time, calibrate RTC and RTC_INT pps
-void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
+void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
+                         timesource_t timesource) {
 
   time_t time_to_set = (time_t)(t_sec + 1);
 
@@ -218,7 +219,8 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
   if (timeIsValid(time_to_set)) {
 
     // wait until top of second with millisecond precision
-    vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
+    if (t_msec)
+      vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
 
 // set RTC time and calibrate RTC_INT pulse on top of second
 #ifdef HAS_RTC
@@ -233,7 +235,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
 
     setTime(time_to_set); // set the time on top of second
 
-    timeSource = _lora;
+    timeSource = timesource;
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
     ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was adjusted",
              millis() / 1000.0);

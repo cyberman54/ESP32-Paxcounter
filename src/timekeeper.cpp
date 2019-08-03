@@ -22,9 +22,10 @@ Ticker timesyncer;
 
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
-time_t timeProvider(void) {
+void calibrateTime(void) {
 
   time_t t = 0;
+  timesource_t timeSource;
 
 #if (HAS_GPS)
   // fetch recent time from last NMEA record
@@ -34,9 +35,7 @@ time_t timeProvider(void) {
     set_rtctime(t); // calibrate RTC
 #endif
     timeSource = _gps;
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync); // regular repeat
-    ESP_LOGD(TAG, "GPS time = %d", t);
-    return t;
+    goto finish;
   }
 #endif
 
@@ -45,8 +44,7 @@ time_t timeProvider(void) {
   t = get_rtctime();
   if (t) {
     timeSource = _rtc;
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync); // short retry
-    ESP_LOGD(TAG, "RTC time = %d", t);
+    goto finish
   }
 #endif
 
@@ -58,14 +56,17 @@ time_t timeProvider(void) {
   LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
-  if (!t) {
-    timeSource = _unsynced;
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync); // short retry
+finish:
+
+  if (t) {                       // sync successful
+    setMyTime(t, 0, timeSource); // set time
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
+    ESP_LOGD(TAG, "time = %d | source: %c", t, timeSetSymbols[timeSource]);
+  } else { // sync failed, we want to retry shortly
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
   }
 
-  return t;
-
-} // timeProvider()
+} // calibrateTime()
 
 // helper function to setup a pulse per second for time synchronisation
 uint8_t timepulse_init() {
