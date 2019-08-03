@@ -202,11 +202,13 @@ void clock_init(void) {
 void clock_loop(void *taskparameter) { // ClockTask
 
   // caveat: don't use now() in this task, it will cause a race condition
-  // due to concurrent access to i2c bus for setting rtc!
+  // due to concurrent access to i2c bus when reading/writing from/to rtc chip!
 
 #define nextmin(t) (t + DCF77_FRAME_SIZE + 1) // next minute
 
+#ifdef HAS_TWO_LED
   static bool led1_state = false;
+#endif
   uint32_t printtime;
   time_t t = *((time_t *)taskparameter), last_printtime = 0; // UTC time seconds
 
