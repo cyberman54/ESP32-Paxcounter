@@ -95,7 +95,7 @@ time_t fetch_gpsTime(uint16_t *msec) {
 #endif
 
   // wait for gps NMEA answer
-  vTaskDelay(tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL));
+  //vTaskDelay(tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL));
 
   // did we get a current time?
   if (gpstime.isUpdated() && gpstime.isValid()) {
@@ -104,7 +104,7 @@ time_t fetch_gpsTime(uint16_t *msec) {
 
     String rawtime = gpstime.value();
     uint32_t time_bcd = rawtime.toFloat() * 100;
-    uint32_t delay_ms = gpstime.age() + nmea_txDelay_ms;
+    uint32_t delay_ms = gpstime.age() + nmea_txDelay_ms + NMEA_COMPENSATION_FACTOR;
     uint8_t year =
         CalendarYrToTm(gps.date.year()); // year offset from 1970 in microTime.h
 

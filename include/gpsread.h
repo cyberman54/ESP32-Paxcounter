@@ -10,6 +10,7 @@
 #endif
 
 #define NMEA_FRAME_SIZE 82 // NEMA has a maxium of 82 bytes per record
+#define NMEA_COMPENSATION_FACTOR 480 // empiric for Ublox Neo 6M
 
 extern TinyGPSPlus gps; // Make TinyGPS++ instance globally availabe
 extern TaskHandle_t GpsTask;
