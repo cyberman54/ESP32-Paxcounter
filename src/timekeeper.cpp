@@ -30,7 +30,7 @@ void calibrateTime(void) {
 
 #if (HAS_GPS)
   // fetch recent time from last NMEA record
-  t = fetch_gpsTime(gps_status, &t_msec);
+  t = fetch_gpsTime(&t_msec);
   if (t) {
     timeSource = _gps;
     goto finish;
@@ -123,11 +123,6 @@ void IRAM_ATTR CLOCKIRQ(void) {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
   SyncToPPS(); // advance systime, see microTime.h
-
-  // store recent gps time
-#if (HAS_GPS)
-  gps_storetime(&gps_status);
-#endif
 
 // advance wall clock, if we have
 #if (defined HAS_IF482 || defined HAS_DCF77)

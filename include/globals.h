@@ -82,8 +82,6 @@ typedef struct {
   uint8_t satellites;
   uint16_t hdop;
   int16_t altitude;
-  uint32_t time_age;
-  tmElements_t timedate;
 } gpsStatus_t;
 
 typedef struct {

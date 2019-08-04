@@ -211,22 +211,22 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
                          timesource_t mytimesource) {
 
-  time_t time_to_set = (time_t)(t_sec);
+  time_t time_to_set = (time_t)(t_sec + t_msec / 1000);
 
   if (timeIsValid(time_to_set)) {
 
-    ESP_LOGD(TAG, "[%0.3f] UTC epoch time: %d.%03d sec", millis() / 1000.0,
-             time_to_set, t_msec);
     // wait until top of second with millisecond precision
-    if (t_msec) {
-      vTaskDelay(pdMS_TO_TICKS(1000 - t_msec));
+    if (t_msec % 1000) {
       time_to_set++;
+      vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-// if we got a timesource, set RTC time and calibrate RTC_INT pulse on top of
-// second
+    ESP_LOGD(TAG, "[%0.3f] UTC epoch time: %d.%03d sec", millis() / 1000.0,
+             time_to_set, t_msec % 1000);
+
+// if we got a timesource, set RTC time and RTC_INT pulse on top of second
 #ifdef HAS_RTC
-    if (mytimesource != _rtc)
+    if ((mytimesource == _gps) || (mytimesource == _lora))
       set_rtctime(time_to_set);
 #endif
 
@@ -234,6 +234,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 #if (!defined GPS_INT && !defined RTC_INT)
     timerWrite(ppsIRQ, 0); // reset pps timer
     CLOCKIRQ();            // fire clock pps, this advances time 1 sec
+    time_to_set--;
 #endif
 
     setTime(time_to_set); // set the time on top of second
@@ -249,8 +250,8 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
   }
 }
 
+// create task for timeserver handshake processing, called from main.cpp
 void timesync_init() {
-  // create task for timeserver handshake processing, called from main.cpp
   xTaskCreatePinnedToCore(process_timesync_req, // task function
                           "timesync_req",       // name of task
                           2048,                 // stack size of task

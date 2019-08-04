@@ -419,9 +419,9 @@ void setup() {
 #warning you did not specify a time source, time will not be synched
 #endif
 
-  // initialize gps time
+// initialize gps time
 #if (HAS_GPS)
-  gps_storetime(&gps_status);
+  fetch_gpsTime();
 #endif
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
