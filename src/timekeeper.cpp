@@ -54,6 +54,8 @@ void calibrateTime(void) {
   }
 #endif
 
+goto finish;
+
 finish:
 
   setMyTime(t, t_msec, timeSource); // set time
