@@ -208,13 +208,14 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
 }
 
 // adjust system time, calibrate RTC and RTC_INT pps
-void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec) {
+void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
+   timesource_t mytimesource) {
 
   t_sec ++;
   time_t time_to_set = (time_t)(t_sec);
 
   // increment t_sec only if t_msec > 1000
-  time_t time_to_set = (time_t)(t_sec + t_msec / 1000);
+  time_to_set = (time_t)(t_sec + t_msec / 1000);
 
   // do we have a valid time?
   if (timeIsValid(time_to_set)) {
