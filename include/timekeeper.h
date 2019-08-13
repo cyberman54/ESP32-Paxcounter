@@ -27,6 +27,7 @@ void timeSync(void);
 uint8_t timepulse_init(void);
 time_t timeIsValid(time_t const t);
 void calibrateTime(void);
+void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource);
 time_t compiledUTC(void);
 TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
                     int8_t rxPin, int8_t txPins);

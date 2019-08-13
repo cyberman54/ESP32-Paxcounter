@@ -207,52 +207,6 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
   }
 }
 
-// adjust system time, calibrate RTC and RTC_INT pps
-void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
-                         timesource_t mytimesource) {
-
-  // increment t_sec only if t_msec > 1000
-  time_t time_to_set = (time_t)(t_sec + t_msec / 1000);
-
-  // do we have a valid time?
-  if (timeIsValid(time_to_set)) {
-
-    // if we have msec fraction, then wait until top of second with
-    // millisecond precision
-    if (t_msec % 1000) {
-      time_to_set++;
-      vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
-    }
-
-    ESP_LOGD(TAG, "[%0.3f] UTC epoch time: %d.%03d sec", millis() / 1000.0,
-             time_to_set, t_msec % 1000);
-
-// if we have got an external timesource, set RTC time and shift RTC_INT pulse
-// to top of second
-#ifdef HAS_RTC
-    if ((mytimesource == _gps) || (mytimesource == _lora))
-      set_rtctime(time_to_set);
-#endif
-
-// if we have a software pps timer, shift it to top of second
-#if (!defined GPS_INT && !defined RTC_INT)
-    timerWrite(ppsIRQ, 0); // reset pps timer
-    CLOCKIRQ();            // fire clock pps, this advances time 1 sec
-#endif
-
-    setTime(time_to_set); // set the time on top of second
-
-    timeSource = mytimesource; // set global variable
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
-    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
-  } else {
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
-    ESP_LOGI(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
-  }
-}
-
 // create task for timeserver handshake processing, called from main.cpp
 void timesync_init() {
   xTaskCreatePinnedToCore(process_timesync_req, // task function
