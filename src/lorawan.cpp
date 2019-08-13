@@ -265,9 +265,9 @@ void onEvent(ev_t ev) {
 
 #if (TIME_SYNC_LORASERVER)
           // timesync answer -> call timesync processor
-          if ((LMIC.frame[LMIC.dataBeg - 1] >= TIMEANSWERPORT_MIN) &&
-              (LMIC.frame[LMIC.dataBeg - 1] <= TIMEANSWERPORT_MAX)) {
-            recv_timesync_ans(LMIC.frame[LMIC.dataBeg - 1],
+          if ((LMIC.frame[LMIC.dataBeg] >= TIMEANSWERPORT_MIN) &&
+              (LMIC.frame[LMIC.dataBeg] <= TIMEANSWERPORT_MAX)) {
+            recv_timesync_ans(LMIC.frame[LMIC.dataBeg],
                               LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
             break;
           }

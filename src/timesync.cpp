@@ -174,15 +174,15 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
   else { // we received a probably valid time frame
 
     uint8_t k = seq_no % TIME_SYNC_SAMPLES;
-
+    uint8_t *timestamp_buf = buf+1;
     // the 5th byte contains the fractional seconds in 2^-8 second steps
     // (= 1/250th sec), we convert this to ms
-    uint16_t timestamp_msec = 4 * buf[4];
+    uint16_t timestamp_msec = 4 * timestamp_buf[4];
     // pointers to 4 bytes 4 bytes containing UTC seconds since unix epoch, msb
     uint32_t timestamp_sec, *timestamp_ptr;
 
     // convert buffer to uint32_t, octet order is big endian
-    timestamp_ptr = (uint32_t *)buf;
+    timestamp_ptr = (uint32_t *)timestamp_buf;
     // swap byte order from msb to lsb, note: this is platform dependent
     timestamp_sec = __builtin_bswap32(*timestamp_ptr);
 
