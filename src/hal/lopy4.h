@@ -20,8 +20,8 @@
 //#define SPI_CS    GPIO_NUM_36
 
 #define CFG_sx1276_radio 1
-//#define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
-#define HAS_RGB_LED (0)  // WS2812B RGB LED on GPIO0 (P2)
+#define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
+#define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, 1, GPIO_NUM_0) // WS2812B RGB LED on GPIO0 (P2)
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM
 
 // Note: Pins for LORA chip SPI interface come from board file pins_arduino.h

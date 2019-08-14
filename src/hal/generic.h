@@ -51,7 +51,7 @@
 
 #define HAS_LED (21) // on board  LED
 #define HAS_BUTTON (39) // on board button
-#define HAS_RGB_LED (0) // WS2812B RGB LED on GPIO0
+#define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, 1, GPIO_NUM_0) // WS2812B RGB LED on GPIO0
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
