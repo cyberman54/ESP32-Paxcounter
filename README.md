@@ -44,6 +44,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
+- Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
 - Generic ESP32
 
 Depending on board hardware following features are supported:
