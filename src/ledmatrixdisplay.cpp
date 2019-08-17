@@ -5,6 +5,7 @@
 #define NUMROWS 16
 #define NUMCOLS 96
 #define MATRIX_DISPLAY_PAGES (2) // number of display pages
+#define LINE_DIAGRAM_DIVIDER (2) // scales pax numbers to led rows
 
 // local Tag for logging
 static const char TAG[] = __FILE__;
@@ -94,7 +95,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
         // set current dot
         ulLastNumMacs = macs.size();
-        row = NUMROWS - 1 - (ulLastNumMacs / 2) % NUMROWS;
+        row = NUMROWS - 1 - ((ulLastNumMacs / LINE_DIAGRAM_DIVIDER) % NUMROWS);
         matrix.drawPoint(col, row, 1);
       }
     }
