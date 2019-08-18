@@ -44,6 +44,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
+- Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
 - Generic ESP32
 
 Depending on board hardware following features are supported:
@@ -58,7 +59,7 @@ Depending on board hardware following features are supported:
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
-- 64x16 pixel LED Matrix display (similar to [this model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
+- LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -405,11 +406,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	bytes 1..4 = time/date in UTC epoch seconds (LSB)
 	byte 5 = time source & status, see below
 	
-		bits 0..3 time source
+		bits 0..3 last seen time source
 			0x00 = GPS
 			0x01 = RTC
 			0x02 = LORA
-			0x03 = unsynched
+			0x03 = unsynched (never synched)
 	
 		bits 4..7 time status
 			0x00 = timeNotSet (never synched)

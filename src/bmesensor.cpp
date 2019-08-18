@@ -5,8 +5,9 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-bmeStatus_t bme_status;
-TaskHandle_t BmeTask;
+bmeStatus_t bme_status = {0};
+
+Ticker bmecycler;
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -36,6 +37,8 @@ Adafruit_BME280 bme; // I2C
 // Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
 
 #endif
+
+void bmecycle() { xTaskNotify(irqHandlerTask, BME_IRQ, eSetBits); }
 
 // initialize BME680 sensor
 int bme_init(void) {
@@ -106,6 +109,8 @@ int bme_init(void) {
 
 finish:
   I2C_MUTEX_UNLOCK(); // release i2c bus access
+  if (rc)
+    bmecycler.attach(BMECYCLE, bmecycle);
   return rc;
 
 } // bme_init()
@@ -136,47 +141,37 @@ int checkIaqSensorStatus(void) {
 } // checkIaqSensorStatus()
 #endif
 
-// loop function which reads and processes data based on sensor settings
-void bme_loop(void *pvParameters) {
-
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+// store current BME sensor data in struct
+void bme_storedata(bmeStatus_t *bme_store) {
+  if (I2C_MUTEX_LOCK()) { // block i2c bus access
 
 #ifdef HAS_BME680
-  while (1) {
-    // block i2c bus access
-    if (I2C_MUTEX_LOCK()) {
-      if (iaqSensor.run()) { // If new data is available
-        bme_status.raw_temperature =
-            iaqSensor.rawTemperature; // Temperature in degree celsius
-        bme_status.raw_humidity = iaqSensor.rawHumidity;
-        bme_status.temperature = iaqSensor.temperature;
-        bme_status.humidity =
-            iaqSensor.humidity; // Humidity in % relative humidity x1000
-        bme_status.pressure =   // Pressure in Pascal
-            (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
-        bme_status.iaq = iaqSensor.iaqEstimate;
-        bme_status.iaq_accuracy = iaqSensor.iaqAccuracy;
-        bme_status.gas = iaqSensor.gasResistance; // Gas resistance in Ohms
-        updateState();
-      }
-      I2C_MUTEX_UNLOCK();
+    if (iaqSensor.run()) { // if new data is available
+      bme_store->raw_temperature =
+          iaqSensor.rawTemperature; // temperature in degree celsius
+      bme_store->raw_humidity = iaqSensor.rawHumidity;
+      bme_store->temperature = iaqSensor.temperature;
+      bme_store->humidity =
+          iaqSensor.humidity;           // humidity in % relative humidity x1000
+      bme_store->pressure =             // pressure in Pascal
+          (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
+      bme_store->iaq = iaqSensor.iaqEstimate;
+      bme_store->iaq_accuracy = iaqSensor.iaqAccuracy;
+      bme_store->gas = iaqSensor.gasResistance; // gas resistance in ohms
+      updateState();
     }
-  }
 #elif defined HAS_BME280
-  while (1) {
-    if (I2C_MUTEX_LOCK()) {
-      bme_status.temperature = bme.readTemperature();
-      bme_status.pressure =
-          (bme.readPressure() / 100.0); // conversion Pa -> hPa
-      // bme.readAltitude(SEALEVELPRESSURE_HPA);
-      bme_status.humidity = bme.readHumidity();
-      bme_status.iaq = 0; // IAQ feature not present with BME280
-      I2C_MUTEX_UNLOCK();
-    }
-  }
+    bme_store->temperature = bme.readTemperature();
+    bme_store->pressure = (bme.readPressure() / 100.0); // conversion Pa -> hPa
+    // bme.readAltitude(SEALEVELPRESSURE_HPA);
+    bme_store->humidity = bme.readHumidity();
+    bme_store->iaq = 0; // IAQ feature not present with BME280
 #endif
 
-} // bme_loop()
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+  }
+
+} // bme_storedata()
 
 #ifdef HAS_BME680
 void loadState(void) {

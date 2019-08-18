@@ -13,5 +13,6 @@ void refreshTheMatrixDisplay(bool nextPage = false);
 void DrawNumber(String strNum, uint8_t iDotPos = 0);
 uint8_t GetCharFromFont(char cChar);
 uint8_t GetCharWidth(char cChar);
+void ShiftLeft(uint8_t *arr, uint32_t len);
 
 #endif

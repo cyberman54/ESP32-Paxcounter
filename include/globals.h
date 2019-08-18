@@ -82,8 +82,6 @@ typedef struct {
   uint8_t satellites;
   uint16_t hdop;
   int16_t altitude;
-  uint32_t time_age;
-  tmElements_t timedate;
 } gpsStatus_t;
 
 typedef struct {
@@ -99,7 +97,6 @@ typedef struct {
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
-enum mutexselect_t { no_mutex, do_mutex };
 
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
@@ -112,13 +109,12 @@ extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                   // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
-extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ, *gpsIRQ;
+extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
 extern SemaphoreHandle_t I2Caccess;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern time_t userUTCTime;
-extern time_t volatile gps_pps_time;
 
 // application includes
 #include "led.h"

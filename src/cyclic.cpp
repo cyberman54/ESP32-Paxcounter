@@ -23,25 +23,23 @@ void doHousekeeping() {
   if (cfg.runmode == 1)
     do_reset();
 
-#ifdef HAS_SPI
-  spi_housekeeping();
-#endif
-#if (HAS_LORA)
-  lora_housekeeping();
-#endif
-
   // task storage debugging //
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
+#if (HAS_LORA)
+  ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));
+#endif
 #if (HAS_GPS)
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
-#if (HAS_BME)
-  ESP_LOGD(TAG, "Bmeloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(BmeTask), eTaskGetState(BmeTask));
+#ifdef HAS_SPI
+  ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(spiTask), eTaskGetState(spiTask));
 #endif
+
 #if (defined HAS_DCF77 || defined HAS_IF482)
   ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(ClockTask), eTaskGetState(ClockTask));
@@ -59,16 +57,15 @@ void doHousekeeping() {
   ESP_LOGI(TAG, "Voltage: %dmV", batt_voltage);
 #endif
 
-// display BME sensor data
+// display BME680/280 sensor data
+#if (HAS_BME)
 #ifdef HAS_BME680
   ESP_LOGI(TAG, "BME680 Temp: %.2f°C | IAQ: %.2f | IAQacc: %d",
            bme_status.temperature, bme_status.iaq, bme_status.iaq_accuracy);
-#endif
-
-// display BME280 sensor data
-#ifdef HAS_BME280
+#elif defined HAS_BME280
   ESP_LOGI(TAG, "BME280 Temp: %.2f°C | Humidity: %.2f | Pressure: %.0f",
            bme_status.temperature, bme_status.humidity, bme_status.pressure);
+#endif
 #endif
 
   // check free heap memory

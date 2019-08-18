@@ -20,6 +20,7 @@ static const char TAG[] = "lora";
 
 osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
+TaskHandle_t lmicTask = NULL;
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
@@ -423,28 +424,15 @@ esp_err_t lora_stack_init() {
   ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
            SEND_QUEUE_SIZE * sizeof(MessageBuffer_t));
 
+  // starting lorawan stack
   ESP_LOGI(TAG, "Starting LMIC...");
-
-  os_init();    // initialize lmic run-time environment on core 1
-  LMIC_reset(); // initialize lmic MAC
-  LMIC_setLinkCheckMode(0);
-  // This tells LMIC to make the receive windows bigger, in case your clock is
-  // faster or slower. This causes the transceiver to be earlier switched on,
-  // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
-  // in src/lmic_config.h if you are limited on battery.
-  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
-
-#if defined(CFG_US915) || defined(CFG_au921)
-  // in the US, with TTN, it saves join time if we start on subband 1
-  // (channels 8-15). This will get overridden after the join by parameters
-  // from the network. If working with other networks or in other regions,
-  // this will need to be changed.
-  LMIC_selectSubBand(1);
-#endif
+  xTaskCreatePinnedToCore(lmictask,   // task function
+                          "lmictask", // name of task
+                          4096,       // stack size of task
+                          (void *)1,  // parameter of the task
+                          2,          // priority of the task
+                          &lmicTask,  // task handle
+                          1);         // CPU core
 
   if (!LMIC_startJoining()) { // start joining
     ESP_LOGI(TAG, "Already joined");
@@ -476,11 +464,6 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
 
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
-void lora_housekeeping(void) {
-  // ESP_LOGD(TAG, "loraloop %d bytes left",
-  // uxTaskGetStackHighWaterMark(LoraTask));
-}
-
 #if (TIME_SYNC_LORAWAN)
 void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
                                                   int flagSuccess) {
@@ -507,15 +490,8 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
     return;
   }
 
-  // begin of time critical section
-
-  // lock I2C bus and application irq to ensure accurate timing
+  // mask application irq to ensure accurate timing
   mask_user_IRQ();
-  if (!I2C_MUTEX_LOCK()) {
-    ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: i2c bus locking failed",
-             millis() / 1000.0);
-    goto finish; // failure
-  }
 
   // Update userUTCTime, considering the difference between the GPS and UTC
   // time, and the leap seconds until year 2019
@@ -529,14 +505,44 @@ void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
   time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
 
   // Update system time with time read from the network
-  setMyTime(*pUserUTCTime + requestDelaySec, 0);
+  setMyTime(*pUserUTCTime + requestDelaySec, 0, _lora);
 
 finish:
-  // end of time critical section: release I2C bus and app irq
-  I2C_MUTEX_UNLOCK();
+  // end of time critical section: release app irq lock
   unmask_user_IRQ();
 
 } // user_request_network_time_callback
 #endif // TIME_SYNC_LORAWAN
+
+// LMIC lorawan stack task
+void lmictask(void *pvParameters) {
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+
+  os_init();    // initialize lmic run-time environment
+  LMIC_reset(); // initialize lmic MAC
+  LMIC_setLinkCheckMode(0);
+  // This tells LMIC to make the receive windows bigger, in case your clock is
+  // faster or slower. This causes the transceiver to be earlier switched on,
+  // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
+  // in src/lmic_config.h if you are limited on battery.
+  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
+
+#if defined(CFG_US915) || defined(CFG_au921)
+  // in the US, with TTN, it saves join time if we start on subband 1
+  // (channels 8-15). This will get overridden after the join by parameters
+  // from the network. If working with other networks or in other regions,
+  // this will need to be changed.
+  LMIC_selectSubBand(1);
+#endif
+
+  while (1) {
+    os_runloop_once(); // execute lmic scheduled jobs and events
+    delay(2);          // yield to CPU
+  }
+} // lmictask
 
 #endif // HAS_LORA

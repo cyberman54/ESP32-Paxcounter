@@ -46,21 +46,20 @@ uint8_t rtc_init(void) {
 
 } // rtc_init()
 
-uint8_t set_rtctime(time_t t, mutexselect_t mutex) { // t is sec epoch time
-  if (!mutex || I2C_MUTEX_LOCK()) {
+uint8_t set_rtctime(time_t t) { // t is sec epoch time
+  if (I2C_MUTEX_LOCK()) {
 #ifdef RTC_INT // sync rtc 1Hz pulse on top of second
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);  // off
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock); // start
 #endif
     Rtc.SetDateTime(RtcDateTime(t - SECS_YR_2000)); // epoch -> sec2000
-    if (mutex)
-      I2C_MUTEX_UNLOCK();
+    I2C_MUTEX_UNLOCK();
     ESP_LOGI(TAG, "RTC time synced");
     return 1; // success
   } else {
     ESP_LOGE(TAG, "RTC set time failure");
-    return 0;
-  } // failure
+    return 0; // failure
+  }
 } // set_rtctime()
 
 time_t get_rtctime(void) {
@@ -71,8 +70,11 @@ time_t get_rtctime(void) {
       t = tt.Epoch32Time(); // sec2000 -> epoch
     }
     I2C_MUTEX_UNLOCK();
+    return timeIsValid(t);
+  } else {
+    ESP_LOGE(TAG, "RTC get time failure");
+    return 0; // failure
   }
-  return timeIsValid(t);
 } // get_rtctime()
 
 float get_rtctemp(void) {

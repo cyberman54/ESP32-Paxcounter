@@ -45,10 +45,10 @@ void irqHandler(void *pvParameters) {
       refreshTheMatrixDisplay();
 #endif
 
-// gps refresh buffer?
-#if (HAS_GPS)
-    if (InterruptStatus & GPS_IRQ)
-      gps_storelocation(&gps_status);
+// BME sensor data to be read?
+#if (HAS_BME)
+    if (InterruptStatus & BME_IRQ)
+      bme_storedata(&bme_status);
 #endif
 
     // are cyclic tasks due?
@@ -59,9 +59,7 @@ void irqHandler(void *pvParameters) {
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ) {
       now(); // ensure sysTime is recent
-      time_t t = timeProvider();
-      if (timeIsValid(t))
-        setTime(t);
+      calibrateTime();
     }
 #endif
 
@@ -103,17 +101,6 @@ void IRAM_ATTR ButtonIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
 
-  if (xHigherPriorityTaskWoken)
-    portYIELD_FROM_ISR();
-}
-#endif
-
-#if (HAS_GPS)
-void IRAM_ATTR GpsIRQ() {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  xTaskNotifyFromISR(irqHandlerTask, GPS_IRQ, eSetBits,
-                     &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }

@@ -14,7 +14,7 @@ unsigned long LEDBlinkStarted = 0; // When (in millis() led blink started)
 #ifdef HAS_RGB_LED
 
 // RGB Led instance
-SmartLed rgb_led(LED_WS2812, 1, HAS_RGB_LED);
+HAS_RGB_LED;
 
 float rgb_CalcColor(float p, float q, float t) {
   if (t < 0.0f)

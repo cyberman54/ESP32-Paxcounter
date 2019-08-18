@@ -33,10 +33,10 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_req  1     3     processes realtime time sync requests
-irqhandler    1     2     display, timesync, gps, etc. triggered by timers
-gpsloop       1     2     reads data from GPS via serial or i2c
-bmeloop       1     2     reads data from BME sensor via i2c
-looptask      1     1     runs the LMIC LoRa stack (arduino loop)
+lmictask      1     2     MCCI LMiC LORAWAN stack
+irqhandler    1     1     display, timesync, gps, etc. triggered by timers
+gpsloop       1     1     reads data from GPS via serial or i2c
+looptask      1     1     arduino loop (unused)
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -48,7 +48,6 @@ So don't do it if you do not own a digital oscilloscope.
 -------------------------------------------------------------------------------
 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
 1 ppsIRQ -> pps clock irq -> 1sec
-2	gpsIRQ -> gps store data -> 300ms
 3	MatrixDisplayIRQ -> matrix mux cycle -> 0,5ms (MATRIX_DISPLAY_SCAN_US)
 
 
@@ -58,13 +57,13 @@ So don't do it if you do not own a digital oscilloscope.
 fired by hardware
 DisplayIRQ      -> esp32 timer 0  -> irqHandlerTask (Core 1)
 CLOCKIRQ        -> esp32 timer 1  -> ClockTask (Core 1)
-GpsIRQ          -> esp32 timer 2  -> irqHandlerTask (Core 1)
 ButtonIRQ       -> external gpio  -> irqHandlerTask (Core 1)
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
 CYLCIC_IRQ      -> housekeeping() -> irqHandlerTask (Core 1)
 SENDCYCLE_IRQ   -> sendcycle()    -> irqHandlerTask (Core 1)
+BME_IRQ         -> bmecycle()     -> irqHandlerTask (Core 1)
 
 
 // External RTC timer (if present)
@@ -82,13 +81,11 @@ uint8_t volatile channel = 0;              // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
-hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL,
-           *gpsIRQ = NULL;
+hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 
 TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
 SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
-time_t volatile gps_pps_time = 0;
 time_t userUTCTime = 0;
 timesource_t timeSource = _unsynced;
 
@@ -198,17 +195,25 @@ void setup() {
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
+
+#ifdef LED_POWER_SW
+  pinMode(LED_POWER_SW, OUTPUT);
+  digitalWrite(LED_POWER_SW, LED_POWER_ON);
+#endif
+
 #ifdef HAS_TWO_LED
   pinMode(HAS_TWO_LED, OUTPUT);
   strcat_P(features, " LED1");
 #endif
+
 // use LED for power display if we have additional RGB LED, else for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
   strcat_P(features, " RGB");
   rgb_set_color(COLOR_PINK);
 #endif
-#endif
+
+#endif // HAS_LED
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   // start led loop
@@ -272,7 +277,7 @@ void setup() {
                             "gpsloop", // name of task
                             2048,      // stack size of task
                             (void *)1, // parameter of the task
-                            2,         // priority of the task
+                            1,         // priority of the task
                             &GpsTask,  // task handle
                             1);        // CPU core
   }
@@ -372,16 +377,8 @@ void setup() {
 #elif defined HAS_BME280
   strcat_P(features, " BME280");
 #endif
-  if (bme_init()) {
+  if (bme_init())
     ESP_LOGI(TAG, "Starting BME sensor...");
-    xTaskCreatePinnedToCore(bme_loop,  // task function
-                            "bmeloop", // name of task
-                            2048,      // stack size of task
-                            (void *)1, // parameter of the task
-                            2,         // priority of the task
-                            &BmeTask,  // task handle
-                            1);        // CPU core
-  }
 #endif
 
   // starting timers and interrupts
@@ -419,14 +416,6 @@ void setup() {
   button_init(HAS_BUTTON);
 #endif // HAS_BUTTON
 
-  // gps buffer read interrupt
-#if (HAS_GPS)
-  gpsIRQ = timerBegin(2, 80, true);
-  timerAttachInterrupt(gpsIRQ, &GpsIRQ, true);
-  timerAlarmWrite(gpsIRQ, 300 * 1000, true);
-  timerAlarmEnable(gpsIRQ);
-#endif
-
   // cyclic function interrupts
   sendcycler.attach(SENDCYCLE * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
@@ -438,9 +427,9 @@ void setup() {
 #warning you did not specify a time source, time will not be synched
 #endif
 
-  // initialize gps time
+// initialize gps time
 #if (HAS_GPS)
-  gps_storetime(&gps_status);
+  fetch_gpsTime();
 #endif
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
@@ -461,15 +450,8 @@ void setup() {
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
 
+  vTaskDelete(NULL);
+
 } // setup()
 
-void loop() {
-
-  while (1) {
-#if (HAS_LORA)
-    os_runloop_once(); // execute lmic scheduled jobs and events
-#else
-    delay(2); // yield to CPU
-#endif
-  }
-}
+void loop() { vTaskDelete(NULL); }

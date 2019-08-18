@@ -170,8 +170,4 @@ void spi_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
 
 void spi_queuereset(void) { xQueueReset(SPISendQueue); }
 
-void spi_housekeeping(void) {
-  ESP_LOGD(TAG, "spiloop %d bytes left", uxTaskGetStackHighWaterMark(spiTask));
-}
-
 #endif // HAS_SPI
