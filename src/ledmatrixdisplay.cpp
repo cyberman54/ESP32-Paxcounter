@@ -10,13 +10,10 @@
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-uint8_t MatrixDisplayIsOn = 0;
+static const uint32_t DisplaySize = LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8;
+uint8_t MatrixDisplayIsOn = 0, displaybuf[DisplaySize] = {0};
 static unsigned long ulLastNumMacs = 0;
 static time_t ulLastTime = myTZ.toLocal(now());
-
-// Display Buffer 128 = 64 * 16 / 8
-static const uint32_t DisplaySize = LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8;
-uint8_t displaybuf[DisplaySize] = {0};
 
 LEDMatrix matrix(LED_MATRIX_LA_74138, LED_MATRIX_LB_74138, LED_MATRIX_LC_74138,
                  LED_MATRIX_LD_74138, LED_MATRIX_EN_74138, LED_MATRIX_DATA_R1,
@@ -214,4 +211,5 @@ void ShiftLeft(uint8_t *arr, uint32_t len) {
   }
   arr[len - 1] = arr[len - 1] << 1;
 }
+
 #endif // HAS_MATRIX_DISPLAY
