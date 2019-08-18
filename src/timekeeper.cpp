@@ -54,7 +54,7 @@ void calibrateTime(void) {
   }
 #endif
 
-goto finish;
+  goto finish;
 
 finish:
 
@@ -65,6 +65,10 @@ finish:
 // adjust system time, calibrate RTC and RTC_INT pps
 void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
                          timesource_t mytimesource) {
+
+  // called with invalid timesource?
+  if (mytimesource == _unsynced)
+    return;
 
   // increment t_sec only if t_msec > 1000
   time_t time_to_set = (time_t)(t_sec + t_msec / 1000);

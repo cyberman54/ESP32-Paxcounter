@@ -11,8 +11,8 @@
 
 // LED Matrix display settings
 #define HAS_MATRIX_DISPLAY              1       // Uncomment to enable LED matrix display output
-#define LED_MATRIX_WIDTH                64      // Width in pixels (LEDs) of your display
-#define LED_MATRIX_HEIGHT               16      // Height in pixels (LEDs ) of your display
+#define LED_MATRIX_WIDTH                (32*2)  // Width (cols) in pixels (LEDs) of your display, must be 32X
+#define LED_MATRIX_HEIGHT               (16*1)  // Height (rows) in pixels (LEDs) of your display, must be 16X
 
 // Pin numbers work fine for Wemos Lolin32 board (all used pins are on 1 side of the board)
 // Explanation of pin signals see https://learn.adafruit.com/32x16-32x32-rgb-led-matrix/new-wiring

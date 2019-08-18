@@ -178,7 +178,7 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
     // the 5th byte contains the fractional seconds in 2^-8 second steps
     // (= 1/250th sec), we convert this to ms
     uint16_t timestamp_msec = 4 * buf[4];
-    // pointers to 4 bytes 4 bytes containing UTC seconds since unix epoch, msb
+    // pointers to 4 bytes containing UTC seconds since unix epoch, msb
     uint32_t timestamp_sec, *timestamp_ptr;
 
     // convert buffer to uint32_t, octet order is big endian

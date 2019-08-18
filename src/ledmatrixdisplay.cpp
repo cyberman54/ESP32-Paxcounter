@@ -2,16 +2,14 @@
 
 #include "globals.h"
 
-#define NUMROWS 16
-#define NUMCOLS 64
 #define MATRIX_DISPLAY_PAGES (2) // number of display pages
 #define LINE_DIAGRAM_DIVIDER (2) // scales pax numbers to led rows
 
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-static const uint32_t DisplaySize = LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8;
-uint8_t MatrixDisplayIsOn = 0, displaybuf[DisplaySize] = {0};
+uint8_t MatrixDisplayIsOn = 0;
+static uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8] = {0};
 static unsigned long ulLastNumMacs = 0;
 static time_t ulLastTime = myTZ.toLocal(now());
 
@@ -40,7 +38,7 @@ void init_matrix_display(bool reverse) {
   if (reverse)
     matrix.reverse();
   matrix.clear();
-  matrix.drawPoint(0, NUMROWS - 1, 1);
+  matrix.drawPoint(0, LED_MATRIX_HEIGHT - 1, 1);
 } // init_display
 
 void refreshTheMatrixDisplay(bool nextPage) {
@@ -93,10 +91,10 @@ void refreshTheMatrixDisplay(bool nextPage) {
         if (macs.size() == 0) {
 
           // matrix full? then scroll left 1 dot, else increment column
-          if (col < NUMCOLS - 1)
+          if (col < (LED_MATRIX_WIDTH - 1))
             col++;
           else
-            ShiftLeft(displaybuf, DisplaySize);
+            ScrollLeft(displaybuf, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
 
         } else
           matrix.drawPoint(col, row, 0); // clear current dot
@@ -104,7 +102,9 @@ void refreshTheMatrixDisplay(bool nextPage) {
         // scale and set new dot
         ulLastNumMacs = macs.size();
         level = ulLastNumMacs / LINE_DIAGRAM_DIVIDER;
-        row = level <= NUMROWS ? NUMROWS - 1 - level % NUMROWS : 0;
+        row = level <= LED_MATRIX_HEIGHT
+                  ? LED_MATRIX_HEIGHT - 1 - level % LED_MATRIX_HEIGHT
+                  : 0;
         matrix.drawPoint(col, row, 1);
       }
     }
@@ -204,12 +204,17 @@ uint8_t GetCharWidth(char cChar) {
   return CharDescriptor.width;
 }
 
-void ShiftLeft(uint8_t *arr, uint32_t len) {
-  uint32_t i;
-  for (i = 0; i < len - 1; ++i) {
-    arr[i] = (arr[i] << 1) | ((arr[i + 1] >> 31) & 1);
+void ScrollLeft(uint8_t *buf, uint16_t cols, uint16_t rows) {
+  uint32_t i, k, idx;
+
+  for (k = 0; k < rows; k++) {
+    // scroll a line with x bytes one dot to the left
+    for (i = 0; i < cols / 8 - 1; ++i) {
+      idx = i + k * cols / 8;
+      buf[idx] = (buf[idx] << 1) | ((buf[idx + 1] >> 7) & 1);
+    }
+    buf[idx + 1] <<= 1;
   }
-  arr[len - 1] = arr[len - 1] << 1;
 }
 
 #endif // HAS_MATRIX_DISPLAY
