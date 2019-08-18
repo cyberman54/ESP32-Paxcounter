@@ -3,7 +3,7 @@
 #include "globals.h"
 
 #define NUMROWS 16
-#define NUMCOLS 96
+#define NUMCOLS 64
 #define MATRIX_DISPLAY_PAGES (2) // number of display pages
 #define LINE_DIAGRAM_DIVIDER (2) // scales pax numbers to led rows
 
