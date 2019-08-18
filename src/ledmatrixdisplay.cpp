@@ -14,12 +14,13 @@ uint8_t MatrixDisplayIsOn = 0;
 static unsigned long ulLastNumMacs = 0;
 static time_t ulLastTime = myTZ.toLocal(now());
 
+// Display Buffer 128 = 64 * 16 / 8
+static const uint32_t DisplaySize = LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8;
+uint8_t displaybuf[DisplaySize] = {0};
+
 LEDMatrix matrix(LED_MATRIX_LA_74138, LED_MATRIX_LB_74138, LED_MATRIX_LC_74138,
                  LED_MATRIX_LD_74138, LED_MATRIX_EN_74138, LED_MATRIX_DATA_R1,
                  LED_MATRIX_LATCHPIN, LED_MATRIX_CLOCKPIN);
-
-// Display Buffer 128 = 64 * 16 / 8
-uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
 
 // --- SELECT YOUR FONT HERE ---
 const FONT_INFO *ActiveFontInfo = &digital7_18ptFontInfo;
@@ -41,6 +42,7 @@ void init_matrix_display(bool reverse) {
 
 void refreshTheMatrixDisplay(bool nextPage) {
   static uint8_t DisplayPage = 0, col = 0, row = 0;
+  uint8_t level;
   char buff[16];
 
   // if Matrixdisplay is switched off we don't refresh it to relax cpu
@@ -82,20 +84,20 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
         // next count cycle?
         if (macs.size() == 0) {
-          col++;
-          // display full?
-          if (col >= NUMCOLS) {
-            col = 0;
-            matrix.clear();
-          }
-        } else {
-          // clear previous dot
-          matrix.drawPoint(col, row, 0);
-        }
 
-        // set current dot
+          // matrix full? then scroll left 1 dot, else increment column
+          if (col < NUMCOLS - 1)
+            col++;
+          else
+            ShiftLeft(displaybuf, DisplaySize);
+
+        } else
+          matrix.drawPoint(col, row, 0); // clear current dot
+
+        // scale and set new dot
         ulLastNumMacs = macs.size();
-        row = NUMROWS - 1 - ((ulLastNumMacs / LINE_DIAGRAM_DIVIDER) % NUMROWS);
+        level = ulLastNumMacs / LINE_DIAGRAM_DIVIDER;
+        row = level <= NUMROWS ? NUMROWS - 1 - level % NUMROWS : 0;
         matrix.drawPoint(col, row, 1);
       }
     }
@@ -195,4 +197,11 @@ uint8_t GetCharWidth(char cChar) {
   return CharDescriptor.width;
 }
 
+void ShiftLeft(uint8_t *arr, uint32_t len) {
+  uint32_t i;
+  for (i = 0; i < len - 1; ++i) {
+    arr[i] = (arr[i] << 1) | ((arr[i + 1] >> 31) & 1);
+  }
+  arr[len - 1] = arr[len - 1] << 1;
+}
 #endif // HAS_MATRIX_DISPLAY
