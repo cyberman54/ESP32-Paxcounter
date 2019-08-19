@@ -204,13 +204,14 @@ uint8_t GetCharWidth(char cChar) {
   return CharDescriptor.width;
 }
 
-void ScrollLeft(uint8_t *buf, uint16_t cols, uint16_t rows) {
+void ScrollLeft(uint8_t *buf, const uint16_t cols, const uint16_t rows) {
   uint32_t i, k, idx;
+  const uint32_t x = cols / 8;
 
   for (k = 0; k < rows; k++) {
     // scroll a line with x bytes one dot to the left
-    for (i = 0; i < cols / 8 - 1; ++i) {
-      idx = i + k * cols / 8;
+    for (i = 0; i < x - 1; ++i) {
+      idx = i + k * x;
       buf[idx] = (buf[idx] << 1) | ((buf[idx + 1] >> 7) & 1);
     }
     buf[idx + 1] <<= 1;
