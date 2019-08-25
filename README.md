@@ -156,7 +156,7 @@ If you're using a device with OLED display, or if you add such one to the I2C bu
 
 You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
-Output of user sensor data can be switched by user remote control command 0x13 sent to Port 2. 
+Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 
 Output of sensor and peripheral data is internally switched by a bitmask register. Default mask (0xFF) can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
 
@@ -382,6 +382,15 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	byte 1 = user sensor number (1..3)
 	byte 2 = sensor mode (0 = disabled / 1 = enabled [default])
+
+0x14 set payload mask
+
+	byte 1 = sensor data payload mask (0..255, meaning of bits see above)
+
+0x15 set BME data on/off
+
+	0 = BME data off
+	1 = BME data on, sends BME data on port 7 [default]
 
 0x80 get device configuration
 
