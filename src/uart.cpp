@@ -1,12 +1,29 @@
+#include "rtctime.h"
+
 #include <Arduino.h>
 #include <sys/time.h>
 
 #include <lmic/oslmic.h>
 #include "globals.h"
+#include "uart.h"
 #include "driver/uart.h"
 
 static const char TAG[] = __FILE__;
 TaskHandle_t UartTask = NULL;
+
+void uart_setup() {
+  // setup UART connection
+  uart_config_t uart_config = {
+      .baud_rate = 9600,
+      .data_bits = UART_DATA_7_BITS,
+      .parity    = UART_PARITY_EVEN,
+      .stop_bits = UART_STOP_BITS_1,
+      .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+  };
+  uart_param_config(UART_NUM_1, &uart_config);
+  uart_set_pin(UART_NUM_1, CLOCK_DCF_TXD, CLOCK_DCF_RXD, CLOCK_DCF_RTS, CLOCK_DCF_CTS);
+  uart_driver_install(UART_NUM_1, CLOCK_BUF_SIZE * 2, 0, 0, NULL, 0);
+}
 
 void time_uart_send(void * pvParameters) {
   struct timeval curTime;
@@ -16,7 +33,12 @@ void time_uart_send(void * pvParameters) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
 
   for(;;) {
-    time_t nowTime = now();
+    struct timeval tv;
+    struct timezone tz;
+    if(gettimeofday(&tv, &tz) != 0) {
+      ESP_LOGI(TAG, "ERROR gettimeofday");
+    }
+    time_t nowTime = tv.tv_sec;
     strftime(timestamp, sizeof(timestamp), format, localtime(&nowTime));
     ESP_LOGI(TAG, "Current Time:  %s", timestamp);
 
