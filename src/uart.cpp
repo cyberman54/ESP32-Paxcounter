@@ -5,6 +5,9 @@
 #include "globals.h"
 #include "driver/uart.h"
 
+static const char TAG[] = __FILE__;
+TaskHandle_t UartTask = NULL;
+
 void time_uart_send(void * pvParameters) {
   struct timeval curTime;
 
@@ -25,7 +28,7 @@ void time_uart_send(void * pvParameters) {
     // gettimeofday(&curTime, &tz);
     int sleep = 1000 - (curTime.tv_usec/1000);
     ostime_t now = os_getTime();
-    printf("Sleep Time:  %d, now: %d\n", sleep, now);
+    ESP_LOGD(TAG, "Sleep Time:  %d, now: %d\n", sleep, now);
     vTaskDelayUntil( &xLastWakeTime, (TickType_t)(sleep/portTICK_PERIOD_MS) );
 
     // Read UART for testing purposes
@@ -42,4 +45,17 @@ void time_uart_send(void * pvParameters) {
   }
 
   vTaskDelete(NULL);
+}
+
+void time_uart_send_start() {
+  if (UartTask) {
+    return;
+  }
+  xTaskCreatePinnedToCore(time_uart_send,       // task function
+                          "time_uart_send",     // name of task
+                          2048,                 // stack size of task
+                          (void *)1,            // parameter of the task
+                          2,                    // priority of the task
+                          &UartTask,           // task handle
+                          1);                   // CPU core
 }

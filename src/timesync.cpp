@@ -12,6 +12,7 @@ algorithm in applications without granted license by the patent holder.
 #if (TIME_SYNC_LORASERVER) && (HAS_LORA)
 
 #include "timesync.h"
+#include "uart.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;
@@ -282,6 +283,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
+    time_uart_send_start();
     ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
              millis() / 1000.0, timeSetSymbols[timeSource]);
   } else {
