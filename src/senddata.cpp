@@ -40,7 +40,7 @@ void SendPayload(uint8_t port, sendprio_t prio) {
   default:
     SendBuffer.MessagePort = port;
   }
-  memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
+  memcpy(SendBuffer.Message, payload.getBuffer(), SendBuffer.MessageSize);
 
 // enqueue message in device's send queues
 #if (HAS_LORA)
