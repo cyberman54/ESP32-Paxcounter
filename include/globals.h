@@ -45,6 +45,9 @@
 #define I2C_MUTEX_LOCK() (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(10)) == pdTRUE)
 #define I2C_MUTEX_UNLOCK() (xSemaphoreGive(I2Caccess))
 
+enum sendprio_t { prio_low, prio_normal, prio_high };
+enum timesource_t { _gps, _rtc, _lora, _unsynced };
+
 // Struct holding devices's runtime configuration
 typedef struct {
   uint8_t lorasf;      // 7-12, lora spreadfactor
@@ -73,6 +76,7 @@ typedef struct {
 typedef struct {
   uint8_t MessageSize;
   uint8_t MessagePort;
+  sendprio_t MessagePrio;
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 
@@ -94,9 +98,6 @@ typedef struct {
   float raw_humidity;    // raw humidity signal
   float gas;             // raw gas sensor signal
 } bmeStatus_t;
-
-enum sendprio_t { prio_low, prio_normal, prio_high };
-enum timesource_t { _gps, _rtc, _lora, _unsynced };
 
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;

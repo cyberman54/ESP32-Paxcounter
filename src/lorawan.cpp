@@ -248,6 +248,11 @@ void onEvent(ev_t ev) {
                                                : PSTR("TX COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
 
+    // schedule next transmission with some random delay to prevent systematic
+    // collisions
+    os_setTimedCallback(&sendjob, os_getTime() + ms2osticks(random(500)),
+                        lora_send);
+
     if (LMIC.dataLen) { // did we receive payload data -> display info
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
                LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
@@ -391,27 +396,22 @@ void switch_lora(uint8_t sf, uint8_t tx) {
 
 void lora_send(osjob_t *job) {
   MessageBuffer_t SendBuffer;
-  // Check if there is a pending TX/RX job running, if yes don't eat data
-  // since it cannot be sent right now
-  if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
-    // waiting for LoRa getting ready
-  } else {
-    if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-      // SendBuffer now filled with next payload from queue
-      if (!LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                           SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
-        ESP_LOGI(TAG, "%d byte(s) sent to LoRa", SendBuffer.MessageSize);
-      } else {
-        ESP_LOGE(TAG, "could not send %d byte(s) to LoRa",
-                 SendBuffer.MessageSize);
-      }
-      // sprintf(display_line7, "PACKET QUEUED");
-    }
+
+  // Check if there is not a current TX/RX job running
+  if (LMIC.opmode & OP_TXRXPEND) {
+    ESP_LOGE(TAG, "LMIC busy, data not sent and lost");
+    return;
   }
-  // reschedule job every 0,5 - 1 sec. including a bit of random to prevent
-  // systematic collisions
-  os_setTimedCallback(job, os_getTime() + 500 + ms2osticks(random(500)),
-                      lora_send);
+
+  // fetch next payload to send from queue or wait until new payload shows up in
+  // queue
+  if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) == pdTRUE) {
+    if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                        SendBuffer.MessageSize, (cfg.countermode & 0x02)) == 0)
+      ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
+    else
+      lora_enqueuedata(&SendBuffer); // re-enqueue unsent message
+  }
 }
 
 esp_err_t lora_stack_init() {
@@ -441,15 +441,19 @@ esp_err_t lora_stack_init() {
   return ESP_OK; // continue main program
 }
 
-void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
+void lora_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in LORA send queue
-  BaseType_t ret;
+  BaseType_t ret = pdFALSE;
   MessageBuffer_t DummyBuffer;
+  sendprio_t prio = message->MessagePrio;
+
   switch (prio) {
   case prio_high:
-    // clear space in queue if full, then fallthrough to normal
-    if (uxQueueSpacesAvailable(LoraSendQueue) == 0)
+    // clear some space in queue if full, then fallthrough to prio_normal
+    if (uxQueueSpacesAvailable(LoraSendQueue) == 0) {
       xQueueReceive(LoraSendQueue, &DummyBuffer, (TickType_t)0);
+      ESP_LOGW(TAG, "LORA sendqueue purged, data is lost");
+    }
   case prio_normal:
     ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
@@ -458,7 +462,9 @@ void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
     ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   }
-  if (ret != pdTRUE)
+  if (ret == pdTRUE)
+    ESP_LOGD(TAG, "LORA sendqueue data enqueued");
+  else
     ESP_LOGW(TAG, "LORA sendqueue is full");
 }
 

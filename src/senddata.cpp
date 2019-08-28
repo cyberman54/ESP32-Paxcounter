@@ -10,9 +10,11 @@ void sendcycle() {
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port, sendprio_t prio) {
 
-  MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
+  MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
+  SendBuffer.MessagePrio = prio;
+
   switch (PAYLOAD_ENCODER) {
   case 1: // plain -> no mapping
   case 2: // packed -> no mapping
@@ -38,14 +40,14 @@ void SendPayload(uint8_t port, sendprio_t prio) {
   default:
     SendBuffer.MessagePort = port;
   }
-  memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
+  memcpy(SendBuffer.Message, payload.getBuffer(), SendBuffer.MessageSize);
 
 // enqueue message in device's send queues
 #if (HAS_LORA)
-  lora_enqueuedata(&SendBuffer, prio);
+  lora_enqueuedata(&SendBuffer);
 #endif
 #ifdef HAS_SPI
-  spi_enqueuedata(&SendBuffer, prio);
+  spi_enqueuedata(&SendBuffer);
 #endif
 
 } // SendPayload

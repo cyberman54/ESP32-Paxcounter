@@ -57,7 +57,7 @@ void wifi_sniffer_init(void) {
   wificfg.nvs_enable = 0;        // we don't need any wifi settings from NVRAM
   wificfg.wifi_task_core_id = 0; // we want wifi task running on core 0
 
-  //wifi_promiscuous_filter_t filter = {
+  // wifi_promiscuous_filter_t filter = {
   //    .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
   // .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
 
@@ -71,9 +71,8 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(
       esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
-  ESP_ERROR_CHECK(esp_wifi_stop());
-  ESP_ERROR_CHECK(
-      esp_wifi_set_promiscuous_filter(&filter)); // set frame filter
+  ESP_ERROR_CHECK(esp_wifi_start()); // channel switch throws error without
+  ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 

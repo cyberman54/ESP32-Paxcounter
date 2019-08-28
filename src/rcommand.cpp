@@ -131,6 +131,20 @@ void set_gps(uint8_t val[]) {
   }
 }
 
+void set_bme(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: set BME mode to %s", val[0] ? "on" : "off");
+  if (val[0]) {
+    cfg.payloadmask |= (uint8_t)MEMS_DATA; // set bit in mask
+  } else {
+    cfg.payloadmask &= ~(uint8_t)MEMS_DATA; // clear bit in mask
+  }
+}
+
+void set_payloadmask(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: set payload mask to %X", val[0]);
+  cfg.payloadmask = val[0];
+}
+
 void set_sensor(uint8_t val[]) {
 #if (HAS_SENSORS)
   switch (val[0]) { // check if valid sensor number 1...4
@@ -307,7 +321,8 @@ cmd_t table[] = {
     {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
-    {0x13, set_sensor, 2, true},        {0x80, get_config, 0, false},
+    {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},
+    {0x15, set_bme, 1, true},           {0x80, get_config, 0, false},
     {0x81, get_status, 0, false},       {0x84, get_gps, 0, false},
     {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
     {0x87, set_time, 0, false},         {0x99, set_flush, 0, false}};
