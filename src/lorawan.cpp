@@ -391,21 +391,16 @@ void switch_lora(uint8_t sf, uint8_t tx) {
 
 void lora_send(osjob_t *job) {
   MessageBuffer_t SendBuffer;
-  // Check if there is a pending TX/RX job running, if yes don't eat data
-  // since it cannot be sent right now
-  if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
-    // waiting for LoRa getting ready
-  } else {
-    if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-      // SendBuffer now filled with next payload from queue
-      if (!LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                           SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
-        ESP_LOGI(TAG, "%d byte(s) sent to LoRa", SendBuffer.MessageSize);
-      } else {
-        ESP_LOGE(TAG, "could not send %d byte(s) to LoRa",
-                 SendBuffer.MessageSize);
-      }
-      // sprintf(display_line7, "PACKET QUEUED");
+  if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
+    // SendBuffer now filled with next payload from queue
+    if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                        SendBuffer.MessageSize,
+                        (cfg.countermode & 0x02)) == 0) {
+      ESP_LOGI(TAG, "%d byte(s) sent to LoRa", SendBuffer.MessageSize);
+    } else {
+      lora_enqueuedata(&SendBuffer);
+      // ESP_LOGE(TAG, "could not send %d byte(s) to LoRa, rescheduled",
+      //         SendBuffer.MessageSize);
     }
   }
   // reschedule job every 0,5 - 1 sec. including a bit of random to prevent
@@ -441,10 +436,12 @@ esp_err_t lora_stack_init() {
   return ESP_OK; // continue main program
 }
 
-void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
+void lora_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in LORA send queue
   BaseType_t ret;
   MessageBuffer_t DummyBuffer;
+  sendprio_t prio = message->MessagePrio;
+
   switch (prio) {
   case prio_high:
     // clear space in queue if full, then fallthrough to normal

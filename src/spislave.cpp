@@ -147,10 +147,12 @@ esp_err_t spi_init() {
   return ret;
 }
 
-void spi_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
+void spi_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in SPI send queue
   BaseType_t ret;
   MessageBuffer_t DummyBuffer;
+  sendprio_t prio = message->MessagePrio;
+
   switch (prio) {
   case prio_high:
     // clear space in queue if full, then fallthrough to normal
