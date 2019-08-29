@@ -387,18 +387,17 @@ void lora_send(void *pvParameters) {
   MessageBuffer_t SendBuffer;
 
   while (1) {
-    // fetch next / wait for payload to send from queue
+    // fetch next or wait for payload to send from queue
     if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) == pdTRUE) {
 
-      // Check if there is not a current TX/RX job running
-      if (LMIC.opmode & OP_TXRXPEND)
-        lora_enqueuedata(&SendBuffer); // LMIC stack busy
+      if (LMIC.opmode & OP_TXRXPEND)   // LMIC is busy, we can't send...
+        lora_enqueuedata(&SendBuffer); // ...so we re-enqueue the message
       else if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
                                SendBuffer.MessageSize,
                                (cfg.countermode & 0x02)) == 0)
         ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
-      else
-        lora_enqueuedata(&SendBuffer); // LMIC stack denied tx
+      else                             // LMIC stack denied tx ...
+        lora_enqueuedata(&SendBuffer); // ...so we re-enqueue the message
     }
     delay(2); // yield to CPU
   }
@@ -414,7 +413,7 @@ esp_err_t lora_stack_init() {
   ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
            SEND_QUEUE_SIZE * sizeof(MessageBuffer_t));
 
-  // starting lorawan stack
+  // start lorawan stack
   ESP_LOGI(TAG, "Starting LMIC...");
   xTaskCreatePinnedToCore(lmictask,   // task function
                           "lmictask", // name of task
@@ -424,12 +423,12 @@ esp_err_t lora_stack_init() {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
-  // starting lmic send task
+  // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
                           "lorasendtask", // name of task
                           2048,           // stack size of task
                           (void *)1,      // parameter of the task
-                          2,              // priority of the task
+                          1,              // priority of the task
                           &lorasendTask,  // task handle
                           1);             // CPU core
 
@@ -437,7 +436,7 @@ esp_err_t lora_stack_init() {
     ESP_LOGI(TAG, "Already joined");
   }
 
-  return ESP_OK; // continue main program
+  return ESP_OK;
 }
 
 void lora_enqueuedata(MessageBuffer_t *message) {
