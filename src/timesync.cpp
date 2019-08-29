@@ -26,7 +26,7 @@ typedef std::chrono::duration<long long int, std::ratio<1, 1000>>
 
 TaskHandle_t timeSyncReqTask = NULL;
 
-static uint8_t time_sync_seqNo = random(TIMEANSWERPORT_MIN, TIMEANSWERPORT_MAX);
+static uint8_t time_sync_seqNo = 0;
 static bool timeSyncPending = false;
 static myClock_timepoint time_sync_tx[TIME_SYNC_SAMPLES];
 static myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
@@ -94,9 +94,10 @@ void process_timesync_req(void *taskparameter) {
                         time_point_cast<milliseconds>(time_sync_tx[k]);
 
       // wrap around seqNo, keeping it in time port range
-      time_sync_seqNo = (time_sync_seqNo < TIMEANSWERPORT_MAX)
-                            ? time_sync_seqNo + 1
-                            : TIMEANSWERPORT_MIN;
+      time_sync_seqNo++;
+      if(time_sync_seqNo > TIMEREQUEST_MAX_SEQNO) {
+        time_sync_seqNo = 0;
+      }
 
       if (i < TIME_SYNC_SAMPLES - 1) {
         // wait until next cycle
@@ -155,7 +156,9 @@ void store_time_sync_req(uint32_t timestamp) {
 }
 
 // process timeserver timestamp answer, called from lorawan.cpp
-int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
+int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
+  uint8_t seq_no = buf[0];
+  buf++;
 
   // if no timesync handshake is pending then exit
   if (!timeSyncPending)
@@ -175,15 +178,14 @@ int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
   else { // we received a probably valid time frame
 
     uint8_t k = seq_no % TIME_SYNC_SAMPLES;
-    uint8_t *timestamp_buf = buf+1;
     // the 5th byte contains the fractional seconds in 2^-8 second steps
     // (= 1/250th sec), we convert this to ms
-    uint16_t timestamp_msec = 4 * timestamp_buf[4];
+    uint16_t timestamp_msec = 4 * buf[4];
     // pointers to 4 bytes 4 bytes containing UTC seconds since unix epoch, msb
     uint32_t timestamp_sec, *timestamp_ptr;
 
     // convert buffer to uint32_t, octet order is big endian
-    timestamp_ptr = (uint32_t *)timestamp_buf;
+    timestamp_ptr = (uint32_t *)buf;
     // swap byte order from msb to lsb, note: this is platform dependent
     timestamp_sec = __builtin_bswap32(*timestamp_ptr);
 
