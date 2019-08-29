@@ -34,7 +34,7 @@ void os_getArtEui(u1_t *buf);
 void os_getDevEui(u1_t *buf);
 void showLoraKeys(void);
 void switch_lora(uint8_t sf, uint8_t tx);
-void lora_send(osjob_t *job);
+void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
 #if (TIME_SYNC_LORAWAN)

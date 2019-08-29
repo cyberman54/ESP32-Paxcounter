@@ -36,6 +36,7 @@ timesync_req  1     3     processes realtime time sync requests
 lmictask      1     2     MCCI LMiC LORAWAN stack
 irqhandler    1     1     display, timesync, gps, etc. triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
+lorasendtask  1     1     feed data from lora sendqueue to lmcic
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.

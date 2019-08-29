@@ -18,9 +18,8 @@ static const char TAG[] = "lora";
 #endif
 #endif
 
-osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
-TaskHandle_t lmicTask = NULL;
+TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
@@ -218,8 +217,6 @@ void onEvent(ev_t ev) {
     // Set data rate and transmit power (note: txpower seems to be ignored by
     // the library)
     switch_lora(cfg.lorasf, cfg.txpower);
-    // kickoff first send job
-    os_setCallback(&sendjob, lora_send);
     // show effective LoRa parameters after join
     ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
     break;
@@ -247,11 +244,6 @@ void onEvent(ev_t ev) {
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
                                                : PSTR("TX COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
-
-    // schedule next transmission with some random delay to prevent systematic
-    // collisions
-    os_setTimedCallback(&sendjob, os_getTime() + ms2osticks(random(500)),
-                        lora_send);
 
     if (LMIC.dataLen) { // did we receive payload data -> display info
       ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
@@ -313,13 +305,7 @@ void onEvent(ev_t ev) {
 
   case EV_TXSTART:
     if (!(LMIC.opmode & OP_JOINING)) {
-#if (TIME_SYNC_LORASERVER)
-      // if last packet sent was a timesync request, store TX time
-      if (LMIC.pendTxPort == TIMEPORT)
-        strcpy_P(buff, PSTR("TX TIMESYNC"));
-      else
-#endif
-        strcpy_P(buff, PSTR("TX START"));
+      strcpy_P(buff, PSTR("TX START"));
     }
     break;
 
@@ -394,23 +380,26 @@ void switch_lora(uint8_t sf, uint8_t tx) {
   }
 }
 
-void lora_send(osjob_t *job) {
+// LMIC send task
+void lora_send(void *pvParameters) {
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+
   MessageBuffer_t SendBuffer;
 
-  // Check if there is not a current TX/RX job running
-  if (LMIC.opmode & OP_TXRXPEND) {
-    ESP_LOGE(TAG, "LMIC busy, data not sent and lost");
-    return;
-  }
+  while (1) {
+    // fetch next or wait for payload to send from queue
+    if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) == pdTRUE) {
 
-  // fetch next payload to send from queue or wait until new payload shows up in
-  // queue
-  if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) == pdTRUE) {
-    if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                        SendBuffer.MessageSize, (cfg.countermode & 0x02)) == 0)
-      ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
-    else
-      lora_enqueuedata(&SendBuffer); // re-enqueue unsent message
+      if (LMIC.opmode & OP_TXRXPEND)   // LMIC is busy, we can't send...
+        lora_enqueuedata(&SendBuffer); // ...so we re-enqueue the message
+      else if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                               SendBuffer.MessageSize,
+                               (cfg.countermode & 0x02)) == 0)
+        ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
+      else                             // LMIC stack denied tx ...
+        lora_enqueuedata(&SendBuffer); // ...so we re-enqueue the message
+    }
+    delay(2); // yield to CPU
   }
 }
 
@@ -424,7 +413,7 @@ esp_err_t lora_stack_init() {
   ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
            SEND_QUEUE_SIZE * sizeof(MessageBuffer_t));
 
-  // starting lorawan stack
+  // start lorawan stack
   ESP_LOGI(TAG, "Starting LMIC...");
   xTaskCreatePinnedToCore(lmictask,   // task function
                           "lmictask", // name of task
@@ -434,11 +423,20 @@ esp_err_t lora_stack_init() {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
+  // start lmic send task
+  xTaskCreatePinnedToCore(lora_send,      // task function
+                          "lorasendtask", // name of task
+                          2048,           // stack size of task
+                          (void *)1,      // parameter of the task
+                          1,              // priority of the task
+                          &lorasendTask,  // task handle
+                          1);             // CPU core
+
   if (!LMIC_startJoining()) { // start joining
     ESP_LOGI(TAG, "Already joined");
   }
 
-  return ESP_OK; // continue main program
+  return ESP_OK;
 }
 
 void lora_enqueuedata(MessageBuffer_t *message) {
