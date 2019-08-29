@@ -265,7 +265,7 @@ void onEvent(ev_t ev) {
 
 #if (TIME_SYNC_LORASERVER)
           // timesync answer -> call timesync processor
-          if ((LMIC.frame[LMIC.dataBeg] == TIMEPORT) {
+          if (LMIC.frame[LMIC.dataBeg - 1] == TIMEPORT) {
             recv_timesync_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
             break;
           }
