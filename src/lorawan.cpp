@@ -387,17 +387,39 @@ void lora_send(void *pvParameters) {
   MessageBuffer_t SendBuffer;
 
   while (1) {
-    // fetch next or wait for payload to send from queue
-    if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) == pdTRUE) {
 
-      if (LMIC.opmode & OP_TXRXPEND)   // LMIC is busy, we can't send...
-        lora_enqueuedata(&SendBuffer); // ...so we re-enqueue the message
-      else if (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                               SendBuffer.MessageSize,
-                               (cfg.countermode & 0x02)) == 0)
+    // wait until we are joined if we are not
+    while (!LMIC.devaddr) {
+      vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+    // fetch next or wait for payload to send from queue
+    if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) != pdTRUE) {
+      ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
+      continue;
+    }
+
+    // attempt to transmit payload
+    else {
+
+      switch (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
+                              SendBuffer.MessageSize,
+                              (cfg.countermode & 0x02))) {
+      case 0:
         ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
-      else                             // LMIC stack denied tx ...
-        lora_enqueuedata(&SendBuffer); // ...so we re-enqueue the message
+        break;
+      case -1: // LMIC already has a tx message pending
+        ESP_LOGD(TAG, "LMIC busy, message re-enqueued");
+        vTaskDelay(pdMS_TO_TICKS(1000 + random(500))); // wait a while
+        lora_enqueuedata(&SendBuffer); // re-enqueue the undeliverd message
+        break;
+      case -2: // message size exceeds LMIC buffer size
+        ESP_LOGW(TAG, "Message size exceeds LMIC buffer, message deleted");
+        break;
+      default: // unknown LMIC return code
+        ESP_LOGE(TAG, "Unknown LMIC error, message deleted");
+
+      } // switch
     }
     delay(2); // yield to CPU
   }
@@ -423,6 +445,10 @@ esp_err_t lora_stack_init() {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
+  if (!LMIC_startJoining()) { // start joining
+    ESP_LOGI(TAG, "Already joined");
+  }
+
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
                           "lorasendtask", // name of task
@@ -431,10 +457,6 @@ esp_err_t lora_stack_init() {
                           1,              // priority of the task
                           &lorasendTask,  // task handle
                           1);             // CPU core
-
-  if (!LMIC_startJoining()) { // start joining
-    ESP_LOGI(TAG, "Already joined");
-  }
 
   return ESP_OK;
 }
@@ -460,9 +482,7 @@ void lora_enqueuedata(MessageBuffer_t *message) {
     ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   }
-  if (ret == pdTRUE)
-    ESP_LOGD(TAG, "LORA sendqueue data enqueued");
-  else
+  if (ret != pdTRUE)
     ESP_LOGW(TAG, "LORA sendqueue is full");
 }
 
