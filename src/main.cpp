@@ -174,6 +174,13 @@ void setup() {
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
+// initialize display
+#ifdef HAS_DISPLAY
+  strcat_P(features, " OLED");
+  DisplayIsOn = cfg.screenon;
+  init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
+#endif
+
 #ifdef BOARD_HAS_PSRAM
   assert(psramFound());
   ESP_LOGI(TAG, "PSRAM found and initialized");
@@ -303,13 +310,6 @@ void setup() {
 
 #if (VENDORFILTER)
   strcat_P(features, " FILTER");
-#endif
-
-// initialize display
-#ifdef HAS_DISPLAY
-  strcat_P(features, " OLED");
-  DisplayIsOn = cfg.screenon;
-  init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
 #endif
 
 // initialize matrix display
