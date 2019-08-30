@@ -65,7 +65,7 @@ void irqHandler(void *pvParameters) {
 
     // is time to send the payload?
     if (InterruptStatus & SENDCYCLE_IRQ)
-      sendCounter();
+      sendData();
   }
 }
 

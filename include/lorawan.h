@@ -21,7 +21,7 @@
 #endif
 
 extern QueueHandle_t LoraSendQueue;
-extern TaskHandle_t lmicTask;
+extern TaskHandle_t lmicTask, lorasendTask;
 
 esp_err_t lora_stack_init();
 void lmictask(void *pvParameters);
