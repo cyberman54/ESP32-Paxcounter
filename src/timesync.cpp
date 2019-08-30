@@ -106,7 +106,7 @@ void process_timesync_req(void *taskparameter) {
         payload.addByte(0x99);
         SendPayload(RCMDPORT, prio_high);
         // ...send a alive open a receive window for last time_sync_answer
-        // LMIC_sendAlive();
+        LMIC_sendAlive();
       }
     } // end of for loop to collect timestamp samples
 
