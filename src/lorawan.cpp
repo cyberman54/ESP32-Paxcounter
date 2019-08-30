@@ -452,7 +452,7 @@ esp_err_t lora_stack_init() {
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
                           "lorasendtask", // name of task
-                          2048,           // stack size of task
+                          3072,           // stack size of task
                           (void *)1,      // parameter of the task
                           1,              // priority of the task
                           &lorasendTask,  // task handle

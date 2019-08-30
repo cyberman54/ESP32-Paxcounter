@@ -30,10 +30,12 @@ void doHousekeeping() {
 #if (HAS_LORA)
   ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));
+  ESP_LOGD(TAG, "Lorasendtask %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(lorasendTask), eTaskGetState(lorasendTask));
 #endif
 #if (HAS_GPS)
-  ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
+      ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
+               uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
 #ifdef HAS_SPI
   ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",

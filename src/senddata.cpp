@@ -53,7 +53,7 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 } // SendPayload
 
 // interrupt triggered function to prepare payload to send
-void sendCounter() {
+void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
@@ -130,7 +130,7 @@ void sendCounter() {
     mask <<= 1;
   } // while (bitmask)
 
-} // sendCounter()
+} // sendData()
 
 void flushQueues() {
 #if (HAS_LORA)
