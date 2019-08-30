@@ -140,6 +140,16 @@ void set_bme(uint8_t val[]) {
   }
 }
 
+void set_batt(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: set battery mode to %s",
+           val[0] ? "on" : "off");
+  if (val[0]) {
+    cfg.payloadmask |= (uint8_t)BATT_DATA; // set bit in mask
+  } else {
+    cfg.payloadmask &= ~(uint8_t)BATT_DATA; // clear bit in mask
+  }
+}
+
 void set_payloadmask(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set payload mask to %X", val[0]);
   cfg.payloadmask = val[0];
@@ -288,6 +298,17 @@ void get_bme(uint8_t val[]) {
 #endif
 };
 
+void get_batt(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: get battery voltage");
+#ifdef BAT_MEASURE_ADC
+  payload.reset();
+  payload.addVoltage(read_voltage());
+  SendPayload(BATTPORT, prio_normal);
+#else
+  ESP_LOGW(TAG, "Battery voltage not supported");
+#endif
+};
+
 void get_time(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get time");
   payload.reset();
@@ -322,8 +343,9 @@ cmd_t table[] = {
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
     {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},
-    {0x15, set_bme, 1, true},           {0x80, get_config, 0, false},
-    {0x81, get_status, 0, false},       {0x84, get_gps, 0, false},
+    {0x15, set_bme, 1, true},           {0x16, set_batt, 1, true},
+    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
+    {0x83, get_batt, 0, false},         {0x84, get_gps, 0, false},
     {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
     {0x87, set_time, 0, false},         {0x99, set_flush, 0, false}};
 

@@ -169,7 +169,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 | 4   | User sensor 1 |
 | 5   | User sensor 2 |
 | 6   | User sensor 3 |
-| 7   | reserved      |
+| 7   | Batterylevel  |
 
 
 # Time sync
@@ -392,17 +392,26 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	0 = BME data off
 	1 = BME data on, sends BME data on port 7 [default]
 
+0x15 set battery data on/off
+
+	0 = battery data off [default]
+	1 = battery data on, sends voltage on port 8
+
 0x80 get device configuration
 
 	Device answers with it's current configuration on Port 3. 
 
 0x81 get device status
 
-	Device answers with it's current status on Port 2. 
+	Device answers with it's current status on Port 2.
+
+0x83 get battery status
+
+	Device answers with battery voltage on Port 8.
 	
 0x84 get device GPS status
 
-	Device answers with it's current status on Port 4. 
+	Device answers with it's current status on Port 4.
 
 0x85 get BME280 / BME680 sensor data
 
