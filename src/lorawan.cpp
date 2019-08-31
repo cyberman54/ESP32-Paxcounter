@@ -375,10 +375,10 @@ void lora_send(void *pvParameters) {
           (cfg.countermode & 0x02), myTxCallback, NULL)) {
 
       case 0:
-        ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
+        ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
         break;
       case -1: // LMIC already has a tx message pending
-        ESP_LOGD(TAG, "LMIC busy, message re-enqueued");
+        // ESP_LOGD(TAG, "LMIC busy, message re-enqueued");
         vTaskDelay(pdMS_TO_TICKS(1000 + random(500))); // wait a while
         lora_enqueuedata(&SendBuffer); // re-enqueue the undeliverd message
         break;
@@ -545,9 +545,27 @@ void lmictask(void *pvParameters) {
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                   size_t nMsg) {
 
-  // did we receive payload data -> display info
+  // tell the compiler that pUserData is required by the API, but we don't
+  // happen to use it.
+  LMIC_API_PARAMETER(pUserData);
+
+  // display type of received data
   if (nMsg)
-    ESP_LOGI(TAG, "Received %d bytes of payload on port %d", nMsg, port);
+    ESP_LOGI(TAG, "Received %u bytes of payload on port %u", nMsg, port);
+  else if (port)
+    ESP_LOGI(TAG, "Received empty message on port %u", port);
+
+  // list MAC messages, if any
+  uint8_t nMac = pMsg - &LMIC.frame[0];
+  if (port != MACPORT)
+    --nMac;
+  if (nMac) {
+    ESP_LOGI(TAG, "Received %u MAC messages:", nMac);
+    // NOT WORKING YET
+    // whe need to strip some protocol overhead from LMIC.frame to unwrap the
+    // MAC command
+    mac_decode(LMIC.frame, nMac);
+  }
 
   switch (port) {
 
@@ -570,12 +588,71 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 #endif
 
     // unknown port -> display info
-    ESP_LOGI(TAG, "Received data on unsupported port %d", port);
+    ESP_LOGI(TAG, "Received data on unsupported port %u", port);
     break;
   } // switch
 }
 
 // transmit complete message handler
-void myTxCallback(void *pUserData, int fSuccess) { /* currently unused */ }
+void myTxCallback(void *pUserData, int fSuccess) {
+
+  /* currently no code here */
+
+  // tell the compiler that pUserData is required by the API, but we don't
+  // happen to use it.
+  LMIC_API_PARAMETER(pUserData);
+}
+
+// LORAWAN MAC interpreter
+
+// table of LORAWAN MAC messages sent by the network to the device
+// format: opcode, cmdname (max 19 chars), #bytes params
+// source: LoRaWAN 1.1 Specification (October 11, 2017)
+
+static mac_t table[] = {
+    {0x01, "ResetConf", 1},          {0x02, "LinkCheckAns", 2},
+    {0x03, "LinkADRReq", 4},         {0x04, "DutyCycleReq", 1},
+    {0x05, "RXParamSetupReq", 4},    {0x06, "DevStatusReq", 0},
+    {0x07, "NewChannelReq", 5},      {0x08, "RxTimingSetupReq", 1},
+    {0x09, "TxParamSetupReq", 1},    {0x0A, "DlChannelReq", 4},
+    {0x0B, "RekeyConf", 1},          {0x0C, "ADRParamSetupReq", 1},
+    {0x0D, "DeviceTimeAns", 5},      {0x0E, "ForceRejoinReq", 2},
+    {0x0F, "RejoinParamSetupReq", 1}};
+
+static const uint8_t cmdtablesize =
+    sizeof(table) / sizeof(table[0]); // number of commands in command table
+
+// decode mac message
+void mac_decode(const uint8_t cmd[], const uint8_t cmdlength) {
+
+  if (!cmdlength)
+    return;
+
+  uint8_t foundcmd[cmdlength], cursor = 0;
+
+  while (cursor < cmdlength) {
+
+    int i = cmdtablesize;
+    while (i--) {
+      if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
+        cursor++;                           // strip 1 byte opcode
+        if ((cursor + table[i].params) <= cmdlength) {
+          memmove(foundcmd, cmd + cursor,
+                  table[i].params); // strip opcode from cmd array
+          cursor += table[i].params;
+          ESP_LOGI(TAG, "Network command %s", table[i].cmdname);
+        } else
+          ESP_LOGI(TAG, "MAC message 0x%02X with missing parameter(s)",
+                   table[i].opcode);
+        break;   // command found -> exit table lookup loop
+      }          // end of command validation
+    }            // end of command table lookup loop
+    if (i < 0) { // command not found -> skip it
+      ESP_LOGI(TAG, "Unknown MAC message 0x%02X", cmd[cursor]);
+      cursor++;
+    }
+  } // command parsing loop
+
+} // mac_decode()
 
 #endif // HAS_LORA

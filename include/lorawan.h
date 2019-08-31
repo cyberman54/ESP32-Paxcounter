@@ -23,6 +23,13 @@
 extern QueueHandle_t LoraSendQueue;
 extern TaskHandle_t lmicTask, lorasendTask;
 
+// table of LORAWAN MAC commands
+typedef struct {
+  const uint8_t opcode;
+  const char cmdname[20];
+  const uint8_t params;
+} mac_t;
+
 esp_err_t lora_stack_init();
 void lmictask(void *pvParameters);
 void onEvent(ev_t ev);
@@ -40,6 +47,8 @@ void lora_queuereset(void);
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                   size_t nMsg);
 void myTxCallback(void *pUserData, int fSuccess);
+void mac_decode(const uint8_t cmd[], const uint8_t cmdlength);
+
 #if (TIME_SYNC_LORAWAN)
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess);
