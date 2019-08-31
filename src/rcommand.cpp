@@ -127,7 +127,7 @@ void set_gps(uint8_t val[]) {
   if (val[0]) {
     cfg.payloadmask |= (uint8_t)GPS_DATA; // set bit in mask
   } else {
-    cfg.payloadmask &= ~(uint8_t)GPS_DATA; // clear bit in mask
+    cfg.payloadmask &= (uint8_t)~GPS_DATA; // clear bit in mask
   }
 }
 
@@ -136,7 +136,7 @@ void set_bme(uint8_t val[]) {
   if (val[0]) {
     cfg.payloadmask |= (uint8_t)MEMS_DATA; // set bit in mask
   } else {
-    cfg.payloadmask &= ~(uint8_t)MEMS_DATA; // clear bit in mask
+    cfg.payloadmask &= (uint8_t)~MEMS_DATA; // clear bit in mask
   }
 }
 
@@ -146,7 +146,7 @@ void set_batt(uint8_t val[]) {
   if (val[0]) {
     cfg.payloadmask |= (uint8_t)BATT_DATA; // set bit in mask
   } else {
-    cfg.payloadmask &= ~(uint8_t)BATT_DATA; // clear bit in mask
+    cfg.payloadmask &= (uint8_t)~BATT_DATA; // clear bit in mask
   }
 }
 
