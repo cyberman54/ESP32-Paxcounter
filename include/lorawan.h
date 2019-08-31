@@ -4,7 +4,7 @@
 #include "globals.h"
 #include "rcommand.h"
 #include "timekeeper.h"
-#if(TIME_SYNC_LORASERVER)
+#if (TIME_SYNC_LORASERVER)
 #include "timesync.h"
 #endif
 
@@ -37,6 +37,9 @@ void switch_lora(uint8_t sf, uint8_t tx);
 void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
+void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+                  size_t nMsg);
+void myTxCallback(void *pUserData, int fSuccess);
 #if (TIME_SYNC_LORAWAN)
 void user_request_network_time_callback(void *pVoidUserUTCTime,
                                         int flagSuccess);

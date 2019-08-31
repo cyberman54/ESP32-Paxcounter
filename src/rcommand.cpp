@@ -353,7 +353,7 @@ const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
 
 // check and execute remote command
-void rcommand(uint8_t cmd[], uint8_t cmdlength) {
+void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
 
   if (cmdlength == 0)
     return;

@@ -244,38 +244,6 @@ void onEvent(ev_t ev) {
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
                                                : PSTR("TX COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
-
-    if (LMIC.dataLen) { // did we receive payload data -> display info
-      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
-               LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
-      sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi, LMIC.snr / 4);
-
-      if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
-
-        switch (LMIC.frame[LMIC.dataBeg - 1]) {
-
-        case RCMDPORT: // opcode -> call rcommand interpreter
-          rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-          break;
-
-        default:
-
-#if (TIME_SYNC_LORASERVER)
-          // timesync answer -> call timesync processor
-          if ((LMIC.frame[LMIC.dataBeg - 1] >= TIMEANSWERPORT_MIN) &&
-              (LMIC.frame[LMIC.dataBeg - 1] <= TIMEANSWERPORT_MAX)) {
-            recv_timesync_ans(LMIC.frame[LMIC.dataBeg - 1],
-                              LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-            break;
-          }
-#endif
-          // unknown port -> display info
-          ESP_LOGI(TAG, "Received data on unsupported port #%d",
-                   LMIC.frame[LMIC.dataBeg - 1]);
-          break;
-        }
-      }
-    }
     break;
 
   case EV_LOST_TSYNC:
@@ -402,9 +370,10 @@ void lora_send(void *pvParameters) {
     // attempt to transmit payload
     else {
 
-      switch (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                              SendBuffer.MessageSize,
-                              (cfg.countermode & 0x02))) {
+      switch (LMIC_sendWithCallback(
+          SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
+          (cfg.countermode & 0x02), myTxCallback, NULL)) {
+
       case 0:
         ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
         break;
@@ -554,6 +523,9 @@ void lmictask(void *pvParameters) {
   // rate for 125 kHz channels, and it minimizes air time and battery power.
   // Set the transmission power to 14 dBi (25 mW).
   LMIC_setDrTxpow(DR_SF7, 14);
+  // register a callback for downlink messages. We aren't trying to write
+  // reentrant code, so pUserData is NULL.
+  LMIC_registerRxMessageCb(myRxCallback, NULL);
 
 #if defined(CFG_US915) || defined(CFG_au921)
   // in the US, with TTN, it saves join time if we start on subband 1
@@ -568,5 +540,42 @@ void lmictask(void *pvParameters) {
     delay(2);          // yield to CPU
   }
 } // lmictask
+
+// receive message handler
+void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+                  size_t nMsg) {
+
+  // did we receive payload data -> display info
+  if (nMsg)
+    ESP_LOGI(TAG, "Received %d bytes of payload on port %d", nMsg, port);
+
+  switch (port) {
+
+    // ignore mac messages
+  case MACPORT:
+    break;
+
+  // rcommand received -> call interpreter
+  case RCMDPORT:
+    rcommand(pMsg, nMsg);
+    break;
+
+  default:
+
+#if (TIME_SYNC_LORASERVER)
+    // valid timesync answer -> call timesync processor
+    if ((port >= TIMEANSWERPORT_MIN) && (port <= TIMEANSWERPORT_MAX))
+      recv_timesync_ans(port, pMsg, nMsg);
+    break;
+#endif
+
+    // unknown port -> display info
+    ESP_LOGI(TAG, "Received data on unsupported port %d", port);
+    break;
+  } // switch
+}
+
+// transmit complete message handler
+void myTxCallback(void *pUserData, int fSuccess) { /* currently unused */ }
 
 #endif // HAS_LORA
