@@ -138,7 +138,7 @@ void gps_loop(void *pvParameters) {
 
   while (1) {
 
-    if (cfg.payloadmask && GPS_DATA) {
+    if (cfg.payloadmask & GPS_DATA) {
 #ifdef GPS_SERIAL
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available()) {
