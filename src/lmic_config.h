@@ -19,10 +19,15 @@
 // LMIC LORAWAN STACK SETTINGS
 // --> adapt to your device only if necessary
 
+// use interrupts only if LORA_IRQ and LORA_DIO are connected to interrupt
+// capable GPIO pins on your board, if not disable interrupts
 //#define LMIC_USE_INTERRUPTS 1
 
-//time sync via LoRaWAN network, is not yet supported by TTN (LoRaWAN spec v1.0.3)
-//#define LMIC_ENABLE_DeviceTimeReq 1
+// needed for paxcounter code
+#define LMIC_ENABLE_user_events 1
+
+// time sync via LoRaWAN network, note: not supported by TTNv2
+// #define LMIC_ENABLE_DeviceTimeReq 1
 
 // 16 μs per tick
 // LMIC requires ticks to be 15.5μs - 100 μs long
@@ -33,7 +38,7 @@
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) this value if you are
-// limited on battery. 
+// limited on battery.
 // ATTN: VALUES > 7 WILL CAUSE RECEPTION AND JOIN PROBLEMS WITH HIGH SF RATES
 #define CLOCK_ERROR_PROCENTAGE 7
 

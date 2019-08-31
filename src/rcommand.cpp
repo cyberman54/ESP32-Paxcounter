@@ -127,7 +127,7 @@ void set_gps(uint8_t val[]) {
   if (val[0]) {
     cfg.payloadmask |= (uint8_t)GPS_DATA; // set bit in mask
   } else {
-    cfg.payloadmask &= ~(uint8_t)GPS_DATA; // clear bit in mask
+    cfg.payloadmask &= (uint8_t)~GPS_DATA; // clear bit in mask
   }
 }
 
@@ -136,7 +136,7 @@ void set_bme(uint8_t val[]) {
   if (val[0]) {
     cfg.payloadmask |= (uint8_t)MEMS_DATA; // set bit in mask
   } else {
-    cfg.payloadmask &= ~(uint8_t)MEMS_DATA; // clear bit in mask
+    cfg.payloadmask &= (uint8_t)~MEMS_DATA; // clear bit in mask
   }
 }
 
@@ -146,7 +146,7 @@ void set_batt(uint8_t val[]) {
   if (val[0]) {
     cfg.payloadmask |= (uint8_t)BATT_DATA; // set bit in mask
   } else {
-    cfg.payloadmask &= ~(uint8_t)BATT_DATA; // clear bit in mask
+    cfg.payloadmask &= (uint8_t)~BATT_DATA; // clear bit in mask
   }
 }
 
@@ -332,7 +332,7 @@ void set_flush(uint8_t val[]) {
 // format: opcode, function, #bytes params,
 // flag (true = do make settings persistent / false = don't)
 //
-cmd_t table[] = {
+static cmd_t table[] = {
     {0x01, set_rssi, 1, true},          {0x02, set_countmode, 1, true},
     {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
     {0x05, set_lorasf, 1, true},        {0x06, set_lorapower, 1, true},
@@ -349,11 +349,11 @@ cmd_t table[] = {
     {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
     {0x87, set_time, 0, false},         {0x99, set_flush, 0, false}};
 
-const uint8_t cmdtablesize =
+static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
 
 // check and execute remote command
-void rcommand(uint8_t cmd[], uint8_t cmdlength) {
+void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
 
   if (cmdlength == 0)
     return;

@@ -244,38 +244,6 @@ void onEvent(ev_t ev) {
     strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
                                                : PSTR("TX COMPLETE"));
     sprintf(display_line6, " "); // clear previous lmic status
-
-    if (LMIC.dataLen) { // did we receive payload data -> display info
-      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
-               LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
-      sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi, LMIC.snr / 4);
-
-      if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
-
-        switch (LMIC.frame[LMIC.dataBeg - 1]) {
-
-        case RCMDPORT: // opcode -> call rcommand interpreter
-          rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-          break;
-
-        default:
-
-#if (TIME_SYNC_LORASERVER)
-          // timesync answer -> call timesync processor
-          if ((LMIC.frame[LMIC.dataBeg - 1] >= TIMEANSWERPORT_MIN) &&
-              (LMIC.frame[LMIC.dataBeg - 1] <= TIMEANSWERPORT_MAX)) {
-            recv_timesync_ans(LMIC.frame[LMIC.dataBeg - 1],
-                              LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-            break;
-          }
-#endif
-          // unknown port -> display info
-          ESP_LOGI(TAG, "Received data on unsupported port #%d",
-                   LMIC.frame[LMIC.dataBeg - 1]);
-          break;
-        }
-      }
-    }
     break;
 
   case EV_LOST_TSYNC:
@@ -402,14 +370,15 @@ void lora_send(void *pvParameters) {
     // attempt to transmit payload
     else {
 
-      switch (LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                              SendBuffer.MessageSize,
-                              (cfg.countermode & 0x02))) {
+      switch (LMIC_sendWithCallback(
+          SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
+          (cfg.countermode & 0x02), myTxCallback, NULL)) {
+
       case 0:
-        ESP_LOGI(TAG, "%d byte(s) delivered to LMIC", SendBuffer.MessageSize);
+        ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
         break;
       case -1: // LMIC already has a tx message pending
-        ESP_LOGD(TAG, "LMIC busy, message re-enqueued");
+        // ESP_LOGD(TAG, "LMIC busy, message re-enqueued");
         vTaskDelay(pdMS_TO_TICKS(1000 + random(500))); // wait a while
         lora_enqueuedata(&SendBuffer); // re-enqueue the undeliverd message
         break;
@@ -554,6 +523,9 @@ void lmictask(void *pvParameters) {
   // rate for 125 kHz channels, and it minimizes air time and battery power.
   // Set the transmission power to 14 dBi (25 mW).
   LMIC_setDrTxpow(DR_SF7, 14);
+  // register a callback for downlink messages. We aren't trying to write
+  // reentrant code, so pUserData is NULL.
+  LMIC_registerRxMessageCb(myRxCallback, NULL);
 
 #if defined(CFG_US915) || defined(CFG_au921)
   // in the US, with TTN, it saves join time if we start on subband 1
@@ -568,5 +540,119 @@ void lmictask(void *pvParameters) {
     delay(2);          // yield to CPU
   }
 } // lmictask
+
+// receive message handler
+void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+                  size_t nMsg) {
+
+  // tell the compiler that pUserData is required by the API, but we don't
+  // happen to use it.
+  LMIC_API_PARAMETER(pUserData);
+
+  // display type of received data
+  if (nMsg)
+    ESP_LOGI(TAG, "Received %u bytes of payload on port %u", nMsg, port);
+  else if (port)
+    ESP_LOGI(TAG, "Received empty message on port %u", port);
+
+  // list MAC messages, if any
+  uint8_t nMac = pMsg - &LMIC.frame[0];
+  if (port != MACPORT)
+    --nMac;
+  if (nMac) {
+    ESP_LOGI(TAG, "Received %u MAC messages:", nMac);
+    // NOT WORKING YET
+    // whe need to strip some protocol overhead from LMIC.frame to unwrap the
+    // MAC command
+    mac_decode(LMIC.frame, nMac);
+  }
+
+  switch (port) {
+
+    // ignore mac messages
+  case MACPORT:
+    break;
+
+  // rcommand received -> call interpreter
+  case RCMDPORT:
+    rcommand(pMsg, nMsg);
+    break;
+
+  default:
+
+#if (TIME_SYNC_LORASERVER)
+    // valid timesync answer -> call timesync processor
+    if ((port >= TIMEANSWERPORT_MIN) && (port <= TIMEANSWERPORT_MAX))
+      recv_timesync_ans(port, pMsg, nMsg);
+    break;
+#endif
+
+    // unknown port -> display info
+    ESP_LOGI(TAG, "Received data on unsupported port %u", port);
+    break;
+  } // switch
+}
+
+// transmit complete message handler
+void myTxCallback(void *pUserData, int fSuccess) {
+
+  /* currently no code here */
+
+  // tell the compiler that pUserData is required by the API, but we don't
+  // happen to use it.
+  LMIC_API_PARAMETER(pUserData);
+}
+
+// LORAWAN MAC interpreter
+
+// table of LORAWAN MAC messages sent by the network to the device
+// format: opcode, cmdname (max 19 chars), #bytes params
+// source: LoRaWAN 1.1 Specification (October 11, 2017)
+
+static mac_t table[] = {
+    {0x01, "ResetConf", 1},          {0x02, "LinkCheckAns", 2},
+    {0x03, "LinkADRReq", 4},         {0x04, "DutyCycleReq", 1},
+    {0x05, "RXParamSetupReq", 4},    {0x06, "DevStatusReq", 0},
+    {0x07, "NewChannelReq", 5},      {0x08, "RxTimingSetupReq", 1},
+    {0x09, "TxParamSetupReq", 1},    {0x0A, "DlChannelReq", 4},
+    {0x0B, "RekeyConf", 1},          {0x0C, "ADRParamSetupReq", 1},
+    {0x0D, "DeviceTimeAns", 5},      {0x0E, "ForceRejoinReq", 2},
+    {0x0F, "RejoinParamSetupReq", 1}};
+
+static const uint8_t cmdtablesize =
+    sizeof(table) / sizeof(table[0]); // number of commands in command table
+
+// decode mac message
+void mac_decode(const uint8_t cmd[], const uint8_t cmdlength) {
+
+  if (!cmdlength)
+    return;
+
+  uint8_t foundcmd[cmdlength], cursor = 0;
+
+  while (cursor < cmdlength) {
+
+    int i = cmdtablesize;
+    while (i--) {
+      if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
+        cursor++;                           // strip 1 byte opcode
+        if ((cursor + table[i].params) <= cmdlength) {
+          memmove(foundcmd, cmd + cursor,
+                  table[i].params); // strip opcode from cmd array
+          cursor += table[i].params;
+          ESP_LOGI(TAG, "Network command %s", table[i].cmdname);
+        } else
+          ESP_LOGI(TAG, "MAC message 0x%02X with missing parameter(s)",
+                   table[i].opcode);
+        break;   // command found -> exit table lookup loop
+      }          // end of command validation
+    }            // end of command table lookup loop
+    if (i < 0) { // command not found -> skip it
+      ESP_LOGI(TAG, "Unknown MAC message 0x%02X", cmd[cursor]);
+      cursor++;
+    }
+  } // command parsing loop
+
+} // mac_decode()
 
 #endif // HAS_LORA

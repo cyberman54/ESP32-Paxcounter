@@ -158,7 +158,7 @@ You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*se
 
 Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 
-Output of sensor and peripheral data is internally switched by a bitmask register. Default mask (0xFF) can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
+Output of sensor and peripheral data is internally switched by a bitmask register. Default mask can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
 
 | Bit | Sensordata    |
 | --- | ------------- |

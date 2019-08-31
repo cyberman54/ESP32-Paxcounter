@@ -154,7 +154,7 @@ void store_time_sync_req(uint32_t timestamp) {
 }
 
 // process timeserver timestamp answer, called from lorawan.cpp
-int recv_timesync_ans(uint8_t seq_no, uint8_t buf[], uint8_t buf_len) {
+int recv_timesync_ans(const uint8_t seq_no, const uint8_t buf[], const uint8_t buf_len) {
 
   // if no timesync handshake is pending then exit
   if (!timeSyncPending)
