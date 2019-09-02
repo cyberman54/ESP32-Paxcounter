@@ -21,10 +21,7 @@
 
 // use interrupts only if LORA_IRQ and LORA_DIO are connected to interrupt
 // capable GPIO pins on your board, if not disable interrupts
-//#define LMIC_USE_INTERRUPTS 1
-
-// needed for paxcounter code
-#define LMIC_ENABLE_user_events 1
+#define LMIC_USE_INTERRUPTS 1
 
 // time sync via LoRaWAN network, note: not supported by TTNv2
 // #define LMIC_ENABLE_DeviceTimeReq 1
