@@ -249,7 +249,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     struct timeval tv;
     struct timezone tz;
     if(gettimeofday(&tv, &tz) != 0) {
-      ESP_LOGI(TAG, "ERROR gettimeofday");
+      ESP_LOGE(TAG, "ERROR gettimeofday");
     }
     struct timeval beforeTime = tv;
 
