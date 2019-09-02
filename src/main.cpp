@@ -169,6 +169,8 @@ void setup() {
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
+  i2c_scan();
+
 #endif // verbose
 
   // read (and initialize on first run) runtime settings from NVRAM

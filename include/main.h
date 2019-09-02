@@ -7,6 +7,7 @@
 #include <esp_coexist.h> // needed for showing coex sw version
 
 #include "globals.h"
+#include "i2cscan.h"
 #include "blescan.h"
 #include "wifiscan.h"
 #include "configmanager.h"
