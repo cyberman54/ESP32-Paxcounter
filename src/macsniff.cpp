@@ -6,10 +6,22 @@
 #include "vendor_array.h"
 #endif
 
+#include <sstream>
+#include <iostream>
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
 uint16_t salt;
+uint64_t fota_trigger_mac;
+
+void macsniff_setup() {
+  std::stringstream ss;
+  ss << std::hex << OTA_TRIGGER_MAC;
+  ESP_LOGI(TAG, "OTA_TRIGGER_MAC %X", OTA_TRIGGER_MAC);
+  ss >> fota_trigger_mac;
+  std::cout << static_cast<int>(fota_trigger_mac) << std::endl;
+}
 
 uint16_t get_salt(void) {
   salt = (uint16_t)random(65536); // get new 16bit random for salting hashes

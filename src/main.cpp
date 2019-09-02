@@ -444,6 +444,8 @@ void setup() {
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
 
+  macsniff_setup();
+  
   uart_setup();
 
 } // setup()
