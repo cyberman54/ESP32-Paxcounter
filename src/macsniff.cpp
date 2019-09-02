@@ -18,7 +18,6 @@ uint64_t fota_trigger_mac;
 void macsniff_setup() {
   std::stringstream ss;
   ss << std::hex << OTA_TRIGGER_MAC;
-  ESP_LOGI(TAG, "OTA_TRIGGER_MAC %X", OTA_TRIGGER_MAC);
   ss >> fota_trigger_mac;
   std::cout << static_cast<int>(fota_trigger_mac) << std::endl;
 }
