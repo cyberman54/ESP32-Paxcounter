@@ -90,10 +90,11 @@ env.Replace(BINTRAY_API_TOKEN=apitoken)
 
 # get runtime credentials and put them to compiler directive
 env.Append(BUILD_FLAGS=[
-    u'-DWIFI_SSID=\\"' + mykeys["OTA_WIFI_SSID"] + '\\"', 
-    u'-DWIFI_PASS=\\"' + mykeys["OTA_WIFI_PASS"] + '\\"', 
-    u'-DBINTRAY_USER=\\"' + mykeys["BINTRAY_USER"] + '\\"', 
-    u'-DBINTRAY_REPO=\\"' + mykeys["BINTRAY_REPO"] + '\\"', 
+    u'-DWIFI_SSID=\\"' + mykeys["OTA_WIFI_SSID"] + '\\"',
+    u'-DWIFI_PASS=\\"' + mykeys["OTA_WIFI_PASS"] + '\\"',
+    u'-DOTA_TRIGGER_MAC=\\"' + mykeys["OTA_TRIGGER_MAC"] + '\\"',
+    u'-DBINTRAY_USER=\\"' + mykeys["BINTRAY_USER"] + '\\"',
+    u'-DBINTRAY_REPO=\\"' + mykeys["BINTRAY_REPO"] + '\\"',
     u'-DBINTRAY_PACKAGE=\\"' + package + '\\"',
     u'-DARDUINO_LMIC_PROJECT_CONFIG_H=' + lmicconfig,
     u'-I \"' + srcdir + '\"'
