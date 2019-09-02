@@ -282,6 +282,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     payload.reset();
     payload.addTimeDiff(timediff_ms);
     SendPayload(TIMEDIFFPORT, prio_high);
+    ESP_LOGI(TAG, "timediff_ms: %d", timediff_ms);
 
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
