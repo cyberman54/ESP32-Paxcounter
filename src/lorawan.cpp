@@ -151,7 +151,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
   uint8_t i2c_ret;
 
   // Init this just in case, no more to 100KHz
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+  Wire.begin(SDA, SCL, 100000);
   Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
   Wire.write(MCP_24AA02E64_MAC_ADDRESS);
   i2c_ret = Wire.endTransmission();
