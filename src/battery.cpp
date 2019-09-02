@@ -52,6 +52,10 @@ uint16_t read_voltage() {
   digitalWrite(EXT_POWER_SW, EXT_POWER_OFF);
 #endif
 
+#ifdef HAS_PMU
+  voltage = axp.getBattVoltage();
+#endif
+
   return (uint16_t)voltage;
 #else
   return 0;

@@ -80,9 +80,10 @@ void AXP192_init(void) {
     axp.setPowerOutPut(AXP192_DCDC2, AXP202_ON);
     axp.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
     axp.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
-
+    axp.setChgLEDMode(AXP20X_LED_OFF);
+    //axp.setChgLEDMode(LED_BLINK_4HZ);
+    
     /*
-    axp.setChgLEDMode(LED_BLINK_4HZ);
     axp.setDCDC1Voltage(3300);
 
     pinMode(PMU_IRQ, INPUT_PULLUP);
