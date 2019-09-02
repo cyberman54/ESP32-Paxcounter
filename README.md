@@ -392,7 +392,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	0 = BME data off
 	1 = BME data on, sends BME data on port 7 [default]
 
-0x15 set battery data on/off
+0x16 set battery data on/off
 
 	0 = battery data off [default]
 	1 = battery data on, sends voltage on port 8
