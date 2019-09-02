@@ -11,6 +11,7 @@ static const char TAG[] = __FILE__;
 #define BME_SECONDARY_ADDRESS (0x76)
 #define AXP192_PRIMARY_ADDRESS (0x34)
 #define MCP_24AA02E64_PRIMARY_ADDRESS (0x50)
+#define QUECTEL_GPS_PRIMARY_ADDRESS (0x10)
 
 int i2c_scan(void) {
 
@@ -49,6 +50,10 @@ int i2c_scan(void) {
 #endif
         break;
 
+      case QUECTEL_GPS_PRIMARY_ADDRESS:
+        ESP_LOGI(TAG, "0x%X: Quectel GPS", addr);
+        break;
+
       case MCP_24AA02E64_PRIMARY_ADDRESS:
         ESP_LOGI(TAG, "0x%X: 24AA02E64 serial EEPROM", addr);
         break;
@@ -80,23 +85,26 @@ void AXP192_init(void) {
     axp.setPowerOutPut(AXP192_DCDC2, AXP202_ON);
     axp.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
     axp.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
-    axp.setChgLEDMode(AXP20X_LED_OFF);
-    //axp.setChgLEDMode(LED_BLINK_4HZ);
-    
-    /*
     axp.setDCDC1Voltage(3300);
-
-    pinMode(PMU_IRQ, INPUT_PULLUP);
-    attachInterrupt(PMU_IRQ, [] { pmu_irq = true; }, FALLING);
-
+    axp.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
+    //axp.setChgLEDMode(AXP20X_LED_OFF);
     axp.adc1Enable(AXP202_BATT_CUR_ADC1, 1);
+
+#ifdef PMU_INT
+    pinMode(PMU_INT, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(PMU_INT),
+                    [] {
+                      ESP_LOGI(TAG, "Power source changed");
+                      /* put your code here */
+                    },
+                    FALLING);
     axp.enableIRQ(AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ |
                       AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ,
                   1);
     axp.clearIRQ();
-    */
+#endif // PMU_INT
 
     ESP_LOGI(TAG, "AXP192 PMU initialized.");
   }
-#endif // HAS_PMU
 }
+#endif // HAS_PMU
