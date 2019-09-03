@@ -177,9 +177,14 @@ int recv_timesync_ans(const uint8_t seq_no, const uint8_t buf[], const uint8_t b
 
     // the 5th byte contains the fractional seconds in 2^-8 second steps
     // (= 1/250th sec), we convert this to ms
-    uint16_t timestamp_msec = 4 * buf[4];
-    // pointers to 4 bytes containing UTC seconds since unix epoch, msb
+    uint16_t timestamp_msec = 4 * buf[6];
+    // pointers to 4 bytes 4 bytes containing UTC seconds since unix epoch, msb
     uint32_t timestamp_sec, *timestamp_ptr;
+    uint32_t timezone_sec;
+
+    // extract timezone from buffer (in 15min steps, one step being 15min * 60s = 900s)
+    timezone_sec = buf[0]*900;
+    buf++;
 
     // convert buffer to uint32_t, octet order is big endian
     timestamp_ptr = (uint32_t *)buf;
@@ -187,7 +192,7 @@ int recv_timesync_ans(const uint8_t seq_no, const uint8_t buf[], const uint8_t b
     timestamp_sec = __builtin_bswap32(*timestamp_ptr);
 
     // construct the timepoint when message was seen on gateway
-    time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
+    time_sync_rx[k] += seconds(timestamp_sec+timezone_sec) + milliseconds(timestamp_msec);
 
     // we guess timepoint is recent if it newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
