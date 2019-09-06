@@ -373,7 +373,7 @@ void lora_send(void *pvParameters) {
 
   while (1) {
 
-    // wait until we are joined if we are not
+    // postpone until we are joined if we are not
     while (!LMIC.devaddr) {
       vTaskDelay(pdMS_TO_TICKS(500));
     }
@@ -387,23 +387,27 @@ void lora_send(void *pvParameters) {
     // attempt to transmit payload
     else {
 
-      switch (LMIC_sendWithCallback(
+      switch (LMIC_sendWithCallback_strict(
           SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
           (cfg.countermode & 0x02), myTxCallback, NULL)) {
 
-      case 0:
+      case LMIC_ERROR_SUCCESS:
         ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
         break;
-      case -1: // LMIC already has a tx message pending
-        // ESP_LOGD(TAG, "LMIC busy, message re-enqueued");
+      case LMIC_ERROR_TX_BUSY:   // LMIC already has a tx message pending
+      case LMIC_ERROR_TX_FAILED: // message was not sent
+        // ESP_LOGD(TAG, "LMIC busy, message re-enqueued"); // very noisy
         vTaskDelay(pdMS_TO_TICKS(1000 + random(500))); // wait a while
-        lora_enqueuedata(&SendBuffer); // re-enqueue the undeliverd message
+        lora_enqueuedata(&SendBuffer); // re-enqueue the undelivered message
         break;
-      case -2: // message size exceeds LMIC buffer size
-        ESP_LOGW(TAG, "Message size exceeds LMIC buffer, message deleted");
+      case LMIC_ERROR_TX_TOO_LARGE:    // message size exceeds LMIC buffer size
+      case LMIC_ERROR_TX_NOT_FEASIBLE: // message too large for current datarate
+        ESP_LOGI(TAG,
+                 "Message too large to send, message not sent and deleted");
+        // we need some kind of error handling here -> to be done
         break;
-      default: // unknown LMIC return code
-        ESP_LOGE(TAG, "Unknown LMIC error, message deleted");
+      default: // other LMIC return code
+        ESP_LOGE(TAG, "LMIC error, message not sent and deleted");
 
       } // switch
     }
@@ -569,6 +573,7 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
     ESP_LOGI(TAG, "Received empty message on port %u", port);
 
   // list MAC messages, if any
+  /*
   uint8_t nMac = pMsg - &LMIC.frame[0];
   if (port != MACPORT)
     --nMac;
@@ -578,6 +583,11 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
     // whe need to strip some protocol overhead from LMIC.frame to unwrap the
     // MAC command
     mac_decode(LMIC.frame, nMac);
+    */
+
+  if (LMIC.pendMacLen) {
+    ESP_LOGI(TAG, "Received %u byte MAC message", LMIC.pendMacLen);
+    mac_decode(LMIC.pendMacData, LMIC.pendMacLen);
   }
 
   switch (port) {
