@@ -2,11 +2,15 @@
 #define _I2CSCAN_H
 
 #include <Arduino.h>
-#ifdef HAS_PMU
-#include "axp20x.h"
-#endif
+
+#define SSD1306_PRIMARY_ADDRESS (0x3D)
+#define SSD1306_SECONDARY_ADDRESS (0x3C)
+#define BME_PRIMARY_ADDRESS (0x77)
+#define BME_SECONDARY_ADDRESS (0x76)
+#define AXP192_PRIMARY_ADDRESS (0x34)
+#define MCP_24AA02E64_PRIMARY_ADDRESS (0x50)
+#define QUECTEL_GPS_PRIMARY_ADDRESS (0x10)
 
 int i2c_scan(void);
-void AXP192_init(void);
 
 #endif
