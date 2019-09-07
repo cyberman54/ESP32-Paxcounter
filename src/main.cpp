@@ -169,6 +169,17 @@ void setup() {
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
+// setup power on boards with power management logic
+#ifdef EXT_POWER_SW
+  pinMode(EXT_POWER_SW, OUTPUT);
+  digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
+  strcat_P(features, " VEXT");
+#endif
+#ifdef HAS_PMU
+  AXP192_init();
+  strcat_P(features, " PMU");
+#endif
+
   i2c_scan();
 
 #endif // verbose
@@ -187,13 +198,6 @@ void setup() {
   assert(psramFound());
   ESP_LOGI(TAG, "PSRAM found and initialized");
   strcat_P(features, " PSRAM");
-#endif
-
-// set external power mode
-#ifdef EXT_POWER_SW
-  pinMode(EXT_POWER_SW, OUTPUT);
-  digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
-  strcat_P(features, " VEXT");
 #endif
 
 #ifdef BAT_MEASURE_EN
