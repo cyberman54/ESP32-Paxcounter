@@ -22,8 +22,12 @@ int i2c_scan(void) {
 
   for (addr = 8; addr <= 119; addr++) {
 
-    // scan i2c bus with no more to 100KHz
+// scan i2c bus with no more to 100KHz
+#ifdef HAS_DISPLAY
+    Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+#else
     Wire.begin(SDA, SCL, 100000);
+#endif
     Wire.beginTransmission(addr);
     Wire.write(addr);
     i2c_ret = Wire.endTransmission();
@@ -87,7 +91,7 @@ void AXP192_init(void) {
     axp.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
     axp.setDCDC1Voltage(3300);
     axp.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
-    //axp.setChgLEDMode(AXP20X_LED_OFF);
+    // axp.setChgLEDMode(AXP20X_LED_OFF);
     axp.adc1Enable(AXP202_BATT_CUR_ADC1, 1);
 
 #ifdef PMU_INT
