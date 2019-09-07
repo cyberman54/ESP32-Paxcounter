@@ -24,8 +24,7 @@ TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 // table of LORAWAN MAC messages sent by the network to the device
 // format: opcode, cmdname (max 19 chars), #bytes params
 // source: LoRaWAN 1.1 Specification (October 11, 2017)
-
-static mac_t table[] = {
+static const mac_t MACdn_table[] = {
     {0x01, "ResetConf", 1},          {0x02, "LinkCheckAns", 2},
     {0x03, "LinkADRReq", 4},         {0x04, "DutyCycleReq", 1},
     {0x05, "RXParamSetupReq", 4},    {0x06, "DevStatusReq", 0},
@@ -35,8 +34,15 @@ static mac_t table[] = {
     {0x0D, "DeviceTimeAns", 5},      {0x0E, "ForceRejoinReq", 2},
     {0x0F, "RejoinParamSetupReq", 1}};
 
-static const uint8_t cmdtablesize =
-    sizeof(table) / sizeof(table[0]); // number of commands in MAC table
+// table of LORAWAN MAC messages sent by the device to the network
+static const mac_t MACup_table[] = {
+    {0x01, "ResetInd", 1},        {0x02, "LinkCheckReq", 0},
+    {0x03, "LinkADRAns", 1},      {0x04, "DutyCycleAns", 0},
+    {0x05, "RXParamSetupAns", 1}, {0x06, "DevStatusAns", 2},
+    {0x07, "NewChannelAns", 1},   {0x08, "RxTimingSetupAns", 0},
+    {0x09, "TxParamSetupAns", 0}, {0x0A, "DlChannelAns", 1},
+    {0x0B, "RekeyInd", 1},        {0x0C, "ADRParamSetupAns", 0},
+    {0x0D, "DeviceTimeReq", 0},   {0x0F, "RejoinParamSetupAns", 1}};
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
@@ -568,26 +574,26 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 
   // display type of received data
   if (nMsg)
-    ESP_LOGI(TAG, "Received %u bytes of payload on port %u", nMsg, port);
+    ESP_LOGI(TAG, "Received %u byte(s) of payload on port %u", nMsg, port);
   else if (port)
     ESP_LOGI(TAG, "Received empty message on port %u", port);
 
   // list MAC messages, if any
-  /*
   uint8_t nMac = pMsg - &LMIC.frame[0];
   if (port != MACPORT)
     --nMac;
   if (nMac) {
-    ESP_LOGI(TAG, "Received %u byte MAC message", nMac);
+    ESP_LOGI(TAG, "%u byte(s) downlink MAC commands", nMac);
     // NOT WORKING YET
-    // whe need to strip some protocol overhead from LMIC.frame to unwrap the
-    // MAC command
-    mac_decode(LMIC.frame, nMac);
-    */
+    // whe need to unwrap the MAC command from LMIC.frame here
+    // mac_decode(LMIC.frame, nMac, MACdn_table, sizeof(MACdn_table) /
+    // sizeof(MACdn_table[0]));
+  }
 
   if (LMIC.pendMacLen) {
-    ESP_LOGI(TAG, "Received %u byte MAC message", LMIC.pendMacLen);
-    mac_decode(LMIC.pendMacData, LMIC.pendMacLen);
+    ESP_LOGI(TAG, "%u byte(s) uplink MAC commands", LMIC.pendMacLen);
+    mac_decode(LMIC.pendMacData, LMIC.pendMacLen, MACup_table,
+               sizeof(MACup_table) / sizeof(MACup_table[0]));
   }
 
   switch (port) {
@@ -623,32 +629,34 @@ void myTxCallback(void *pUserData, int fSuccess) {
 }
 
 // decode LORAWAN MAC message
-void mac_decode(const uint8_t cmd[], const uint8_t cmdlength) {
+void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
+                const uint8_t tablesize) {
 
-  if (!cmdlength)
+  if (!cmdlen)
     return;
 
-  uint8_t foundcmd[cmdlength], cursor = 0;
+  uint8_t foundcmd[cmdlen], cursor = 0;
 
-  while (cursor < cmdlength) {
+  while (cursor < cmdlen) {
 
-    int i = cmdtablesize;
+    int i = tablesize; // number of commands in table
+
     while (i--) {
       if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
         cursor++;                           // strip 1 byte opcode
-        if ((cursor + table[i].params) <= cmdlength) {
+        if ((cursor + table[i].params) <= cmdlen) {
           memmove(foundcmd, cmd + cursor,
                   table[i].params); // strip opcode from cmd array
           cursor += table[i].params;
-          ESP_LOGD(TAG, "Network command %s", table[i].cmdname);
+          ESP_LOGD(TAG, "MAC command %s", table[i].cmdname);
         } else
-          ESP_LOGD(TAG, "MAC message 0x%02X with missing parameter(s)",
+          ESP_LOGD(TAG, "MAC command 0x%02X with missing parameter(s)",
                    table[i].opcode);
         break;   // command found -> exit table lookup loop
       }          // end of command validation
     }            // end of command table lookup loop
     if (i < 0) { // command not found -> skip it
-      ESP_LOGD(TAG, "Unknown MAC message 0x%02X", cmd[cursor]);
+      ESP_LOGD(TAG, "Unknown MAC command 0x%02X", cmd[cursor]);
       cursor++;
     }
   } // command parsing loop
