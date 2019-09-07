@@ -41,7 +41,7 @@ inline String getHeaderValue(String header, String headerName) {
 void start_ota_update() {
 
   // check battery status if we can before doing ota
-  if (!batt_sufficient()) {
+  if (getBattLevel() == MCMD_DEVS_BATT_MIN) {
     ESP_LOGE(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
     return;
   }

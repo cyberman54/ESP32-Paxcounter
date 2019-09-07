@@ -248,7 +248,7 @@ void setup() {
 #endif
 
 // initialize battery status
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   strcat_P(features, " BATT");
   calibrate_voltage();
   batt_voltage = read_voltage();
