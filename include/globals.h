@@ -121,6 +121,7 @@ extern time_t userUTCTime;
 #include "led.h"
 #include "payload.h"
 #include "blescan.h"
+#include "power.h"
 
 #if (HAS_GPS)
 #include "gpsread.h"
@@ -140,10 +141,6 @@ extern time_t userUTCTime;
 
 #ifdef HAS_BUTTON
 #include "button.h"
-#endif
-
-#ifdef BAT_MEASURE_ADC
-#include "battery.h"
 #endif
 
 #ifdef HAS_ANTENNA_SWITCH

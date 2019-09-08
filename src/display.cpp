@@ -188,7 +188,7 @@ void draw_page(time_t t, uint8_t page) {
   case 0:
 
 // update Battery status (line 2)
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     u8x8.setCursor(0, 2);
     u8x8.printf("B:%.2fV", batt_voltage / 1000.0);
 #endif
