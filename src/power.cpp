@@ -10,7 +10,7 @@ static const char TAG[] = __FILE__;
 AXP20X_Class axp;
 
 void AXP192_init(void) {
-  
+
   if (axp.begin(Wire, AXP192_PRIMARY_ADDRESS))
     ESP_LOGI(TAG, "AXP192 PMU initialization failed");
   else {
@@ -49,16 +49,26 @@ esp_adc_cal_characteristics_t *adc_characs =
     (esp_adc_cal_characteristics_t *)calloc(
         1, sizeof(esp_adc_cal_characteristics_t));
 
+#ifndef BAT_MEASURE_ADC_UNIT // ADC1
 static const adc1_channel_t adc_channel = BAT_MEASURE_ADC;
+#else // ADC2
+static const adc2_channel_t adc_channel = BAT_MEASURE_ADC;
+#endif
 static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
-#endif
+
+#endif // BAT_MEASURE_ADC
 
 void calibrate_voltage(void) {
 #ifdef BAT_MEASURE_ADC
-  // configure ADC
+// configure ADC
+#ifndef BAT_MEASURE_ADC_UNIT // ADC1
   ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
   ESP_ERROR_CHECK(adc1_config_channel_atten(adc_channel, atten));
+#else // ADC2
+  // ESP_ERROR_CHECK(adc2_config_width(ADC_WIDTH_BIT_12));
+  ESP_ERROR_CHECK(adc2_config_channel_atten(adc_channel, atten));
+#endif
   // calibrate ADC
   esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
       unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_characs);
@@ -74,7 +84,6 @@ void calibrate_voltage(void) {
   }
 #endif
 }
-
 
 uint8_t getBattLevel() {
   /*
@@ -102,7 +111,6 @@ uint8_t getBattLevel() {
 
 // u1_t os_getBattLevel(void) { return getBattLevel(); };
 
-
 uint16_t read_voltage() {
 
   uint16_t voltage = 0;
@@ -114,17 +122,23 @@ uint16_t read_voltage() {
 #ifdef BAT_MEASURE_ADC
   // multisample ADC
   uint32_t adc_reading = 0;
+  int adc_buf = 0;
   for (int i = 0; i < NO_OF_SAMPLES; i++) {
+#ifndef BAT_MEASURE_ADC_UNIT // ADC1
     adc_reading += adc1_get_raw(adc_channel);
+#else                        // ADC2
+    ESP_ERROR_CHECK(adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf));
+    adc_reading += adc_buf;
+#endif
   }
   adc_reading /= NO_OF_SAMPLES;
   // Convert ADC reading to voltage in mV
   voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_characs);
-#endif
+#endif // BAT_MEASURE_ADC
 
 #ifdef BAT_VOLTAGE_DIVIDER
   voltage *= BAT_VOLTAGE_DIVIDER;
-#endif
+#endif // BAT_VOLTAGE_DIVIDER
 
 #endif // HAS_PMU
 

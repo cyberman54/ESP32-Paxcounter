@@ -20,8 +20,9 @@
 #define HAS_LED LED_BUILTIN                           // white LED on board
 #define HAS_BUTTON KEY_BUILTIN                        // button "PROG" on board
 
-//#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
-//#define BAT_VOLTAGE_DIVIDER 4 // voltage divider 220k/100k on board
+#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
+#define BAT_MEASURE_ADC_UNIT 2 // ADC 2
+#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 220k/100k on board
 #define EXT_POWER_SW Vext // switches battery power, Vext control 0 = on / 1 = off
 #define EXT_POWER_ON    0
 //#define EXT_POWER_OFF   1
