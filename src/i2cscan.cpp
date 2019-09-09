@@ -14,12 +14,7 @@ int i2c_scan(void) {
 
   for (addr = 8; addr <= 119; addr++) {
 
-// scan i2c bus with no more to 100KHz
-#ifdef HAS_DISPLAY
-    Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
-#else
-    Wire.begin(SDA, SCL, 100000);
-#endif
+    // scan i2c bus with no more to 100KHz
     Wire.beginTransmission(addr);
     Wire.write(addr);
     i2c_ret = Wire.endTransmission();

@@ -169,6 +169,13 @@ void setup() {
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
+// open i2c bus
+#ifdef HAS_DISPLAY
+  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+#else
+  Wire.begin(SDA, SCL, 100000);
+#endif
+
 // setup power on boards with power management logic
 #ifdef EXT_POWER_SW
   pinMode(EXT_POWER_SW, OUTPUT);
@@ -180,6 +187,7 @@ void setup() {
   strcat_P(features, " PMU");
 #endif
 
+  // scan i2c bus for devices
   i2c_scan();
 
 #endif // verbose
