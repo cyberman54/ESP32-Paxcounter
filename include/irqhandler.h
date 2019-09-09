@@ -10,12 +10,14 @@
 #define UNMASK_IRQ 0x040
 #define BME_IRQ 0x080
 #define MATRIX_DISPLAY_IRQ 0x100
+#define PMU_IRQ 0x200
 
 #include "globals.h"
 #include "cyclic.h"
 #include "senddata.h"
 #include "timekeeper.h"
 #include "bmesensor.h"
+#include "power.h"
 
 void irqHandler(void *pvParameters);
 void mask_user_IRQ();
@@ -31,6 +33,10 @@ void IRAM_ATTR MatrixDisplayIRQ();
 
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ();
+#endif
+
+#ifdef HAS_PMU
+void IRAM_ATTR PMUIRQ();
 #endif
 
 
