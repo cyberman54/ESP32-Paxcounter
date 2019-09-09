@@ -35,15 +35,43 @@ void pover_event_IRQ(void) {
     if (pmu.isBattTempHighIRQ())
       ESP_LOGI(TAG, "Battery low temperature.");
 
-    if (pmu.isPEKShortPressIRQ())
+    // wake up
+    if (pmu.isPEKShortPressIRQ()) {
       ESP_LOGI(TAG, "Power Button short pressed.");
-    if (pmu.isPEKLongtPressIRQ())
+      AXP192_power(true);
+    }
+    // enter sleep mode
+    if (pmu.isPEKLongtPressIRQ()) {
       ESP_LOGI(TAG, "Power Button long pressed.");
+      AXP192_power(false);
+      delay(20);
+      esp_sleep_enable_ext1_wakeup(GPIO_SEL_38, ESP_EXT1_WAKEUP_ALL_LOW);
+      esp_deep_sleep_start();
+    }
 
     pmu.clearIRQ();
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   } else
     ESP_LOGI(TAG, "Unknown PMU event.");
+}
+
+void AXP192_power(bool on) {
+
+  if (on) {
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
+    pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+  } else {
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
+    pmu.setChgLEDMode(AXP20X_LED_OFF);
+  }
 }
 
 void AXP192_init(void) {
@@ -55,14 +83,10 @@ void AXP192_init(void) {
       ESP_LOGI(TAG, "AXP192 PMU initialization failed");
     else {
 
-      pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);
-      pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);
-      pmu.setPowerOutPut(AXP192_DCDC2, AXP202_ON);
-      pmu.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
-      pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
+      // switch power on
       pmu.setDCDC1Voltage(3300);
-      pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
       pmu.adc1Enable(AXP202_BATT_CUR_ADC1, 1);
+      AXP192_power(true);
 
       // I2C access of AXP202X library currently is not mutexable
       // so we need to disable AXP interrupts
