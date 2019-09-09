@@ -371,7 +371,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
                                uint32_t mem, uint8_t reset1, uint8_t reset2) {
   uint16_t temp = celsius * 10;
   uint16_t volt = voltage / 10;
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BATT_CHANNEL;
 #endif

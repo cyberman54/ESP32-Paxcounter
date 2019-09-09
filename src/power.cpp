@@ -28,33 +28,34 @@ void AXP192_init(void) {
       pmu.adc1Enable(AXP202_BATT_CUR_ADC1, 1);
 
       /*
+        // I2C access of AXP202X library currently is not mutexable
+        // so we need to disable AXP interrupts
+        
 
-      // I2C access of AXP202X library currently is not mutexable
-      // so we need to disable AXP interrupts
-      
-      #ifdef PMU_INT
-          pinMode(PMU_INT, INPUT_PULLUP);
-          attachInterrupt(digitalPinToInterrupt(PMU_INT),
-                          [] {
-                            ESP_LOGI(TAG, "Power source changed");
-                            // put your code here
-                          },
-                          FALLING);
-          pmu.enableIRQ(AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ |
-                            AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ,
-                        1);
-          pmu.clearIRQ();
-      #endif // PMU_INT
-      */
+        #ifdef PMU_INT
+            pinMode(PMU_INT, INPUT_PULLUP);
+            attachInterrupt(digitalPinToInterrupt(PMU_INT),
+                            [] {
+                              ESP_LOGI(TAG, "Power source changed");
+                              // put your code here
+                            },
+                            FALLING);
+            pmu.enableIRQ(AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ |
+                              AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ,
+                          1);
+            pmu.clearIRQ();
+        #endif // PMU_INT
+        */
 
       ESP_LOGI(TAG, "AXP192 PMU initialized.");
+
       if (pmu.isBatteryConnect())
         if (pmu.isChargeing())
-          ESP_LOGI(TAG, "Running on battery, charging.");
+          ESP_LOGI(TAG, "Battery deteced, charging.");
         else
-          ESP_LOGI(TAG, "Running on battery, not charging.");
-      else if (pmu.isVBUSPlug())
-        ESP_LOGI(TAG, "Running on USB power.");
+          ESP_LOGI(TAG, "Battery deteced, not charging.");
+      else
+        ESP_LOGI(TAG, "No Battery deteced.");
     }
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   } else

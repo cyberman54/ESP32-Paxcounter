@@ -263,14 +263,10 @@ void get_config(uint8_t val[]) {
 
 void get_status(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device status");
-#ifdef BAT_MEASURE_ADC
-  uint16_t voltage = read_voltage();
-#else
-  uint16_t voltage = 0;
-#endif
   payload.reset();
-  payload.addStatus(voltage, uptime() / 1000, temperatureRead(), getFreeRAM(),
-                    rtc_get_reset_reason(0), rtc_get_reset_reason(1));
+  payload.addStatus(read_voltage(), uptime() / 1000, temperatureRead(),
+                    getFreeRAM(), rtc_get_reset_reason(0),
+                    rtc_get_reset_reason(1));
   SendPayload(STATUSPORT, prio_high);
 };
 
@@ -300,7 +296,7 @@ void get_bme(uint8_t val[]) {
 
 void get_batt(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get battery voltage");
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   payload.reset();
   payload.addVoltage(read_voltage());
   SendPayload(BATTPORT, prio_normal);

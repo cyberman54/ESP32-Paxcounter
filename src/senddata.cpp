@@ -10,7 +10,8 @@ void sendcycle() {
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port, sendprio_t prio) {
 
-  MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
+  MessageBuffer_t
+      SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
   SendBuffer.MessagePrio = prio;
@@ -117,7 +118,7 @@ void sendData() {
       break;
 #endif
 
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     case BATT_DATA:
       payload.reset();
       payload.addVoltage(read_voltage());
