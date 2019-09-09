@@ -11,11 +11,14 @@
 
 #ifdef HAS_PMU
 #include <axp20x.h>
+extern AXP20X_Class pmu; // Make axp instance globally availabe
+void pover_event_IRQ(void);
 #endif
 
 void AXP192_init(void);
 uint16_t read_voltage(void);
 void calibrate_voltage(void);
-uint8_t getBattLevel (void);
+uint8_t getBattLevel(void);
+
 
 #endif

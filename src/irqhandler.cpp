@@ -63,6 +63,12 @@ void irqHandler(void *pvParameters) {
     }
 #endif
 
+// do we have a power event?
+#if (HAS_PMU)
+    if (InterruptStatus & PMU_IRQ)
+      pover_event_IRQ();
+#endif
+
     // is time to send the payload?
     if (InterruptStatus & SENDCYCLE_IRQ)
       sendData();
@@ -99,6 +105,18 @@ void IRAM_ATTR ButtonIRQ() {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
   xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
+                     &xHigherPriorityTaskWoken);
+
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
+#endif
+
+#ifdef HAS_PMU
+void IRAM_ATTR PMUIRQ() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  xTaskNotifyFromISR(irqHandlerTask, PMU_IRQ, eSetBits,
                      &xHigherPriorityTaskWoken);
 
   if (xHigherPriorityTaskWoken)
