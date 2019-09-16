@@ -58,6 +58,7 @@ fired by hardware
 DisplayIRQ      -> esp32 timer 0  -> irqHandlerTask (Core 1)
 CLOCKIRQ        -> esp32 timer 1  -> ClockTask (Core 1)
 ButtonIRQ       -> external gpio  -> irqHandlerTask (Core 1)
+PMUIRQ          -> PMU chip gpio  -> irqHandlerTask (Core 1)
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
