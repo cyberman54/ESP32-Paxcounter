@@ -437,7 +437,7 @@ esp_err_t lora_stack_init() {
                           "lmictask", // name of task
                           4096,       // stack size of task
                           (void *)1,  // parameter of the task
-                          2,          // priority of the task
+                          5,          // priority of the task
                           &lmicTask,  // task handle
                           1);         // CPU core
 
