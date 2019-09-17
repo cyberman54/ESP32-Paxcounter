@@ -72,6 +72,7 @@ void wifi_sniffer_init(void) {
       esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
   ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // no modem power saving
+  ESP_ERROR_CHECK(esp_wifi_start()); // must be started to be able to switch ch
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
