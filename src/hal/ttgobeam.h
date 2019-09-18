@@ -17,7 +17,6 @@
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
-#define BOARD_HAS_PSRAM // use extra 4MB external RAM
 #define HAS_BUTTON GPIO_NUM_39 // on board button (next to reset)
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
@@ -29,9 +28,9 @@
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-//#define HAS_BME 1 // Enable BME sensors in general
-//#define HAS_BME680 SDA, SCL
-//#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
+#define HAS_BME 1 // Enable BME sensors in general
+#define HAS_BME680 SDA, SCL
+#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
 
 // display (if connected)
 #define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
