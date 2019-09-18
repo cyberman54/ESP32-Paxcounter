@@ -7,15 +7,15 @@ import os.path
 import requests
 from os.path import basename
 from platformio import util
+from SCons.Script import DefaultEnvironment
 
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
 
-Import("env")
-
 # get platformio environment variables
+env = DefaultEnvironment()
 config = configparser.ConfigParser()
 config.read("platformio.ini")
 
@@ -66,7 +66,15 @@ myboard = mykeys["board"]
 myuploadspeed = mykeys["upload_speed"]
 env.Replace(BOARD=myboard)
 env.Replace(UPLOAD_SPEED=myuploadspeed)
+
+# re-set partition table
+mypartitiontable = config.get("env", "board_build.partitions")
+board = env.BoardConfig(myboard)
+board.manifest['build']['partitions'] = mypartitiontable
+
+# display target
 print('\033[94m' + "TARGET BOARD: " + myboard + " @ " + myuploadspeed + "bps" + '\033[0m')
+print('\033[94m' + "Partition table: " + mypartitiontable + '\033[0m')
 
 # parse ota key file
 with open(otakeyfile) as myfile:
