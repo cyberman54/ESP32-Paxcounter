@@ -31,11 +31,12 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));
   ESP_LOGD(TAG, "Lorasendtask %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(lorasendTask), eTaskGetState(lorasendTask));
+           uxTaskGetStackHighWaterMark(lorasendTask),
+           eTaskGetState(lorasendTask));
 #endif
 #if (HAS_GPS)
-      ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
-               uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
+  ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
 #ifdef HAS_SPI
   ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",
@@ -57,6 +58,12 @@ void doHousekeeping() {
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   batt_voltage = read_voltage();
   ESP_LOGI(TAG, "Voltage: %dmV", batt_voltage);
+#ifdef HAS_PMU
+  if (I2C_MUTEX_LOCK()) {
+    AXP192_displaypower();
+    I2C_MUTEX_UNLOCK();
+  }
+#endif // HAS_PMU
 #endif
 
 // display BME680/280 sensor data
