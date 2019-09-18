@@ -16,9 +16,10 @@ void pover_event_IRQ(void) {
     // put your power event handler code here
 
     if (pmu.isVbusOverVoltageIRQ())
-      ESP_LOGI(TAG, "USB voltage too high.");
+      ESP_LOGI(TAG, "USB voltage %.1fV too high.", pmu.getVbusVoltage());
     if (pmu.isVbusPlugInIRQ())
-      ESP_LOGI(TAG, "USB plugged.");
+      ESP_LOGI(TAG, "USB plugged, %.0fmAh @ %.1fV", pmu.getVbusCurrent(),
+               pmu.getVbusVoltage());
     if (pmu.isVbusRemoveIRQ())
       ESP_LOGI(TAG, "USB unplugged.");
 
@@ -27,7 +28,7 @@ void pover_event_IRQ(void) {
     if (pmu.isBattRemoveIRQ())
       ESP_LOGI(TAG, "Battery was removed.");
     if (pmu.isChargingIRQ())
-      ESP_LOGI(TAG, "Battery is charging.");
+      ESP_LOGI(TAG, "Battery charging.");
     if (pmu.isChargingDoneIRQ())
       ESP_LOGI(TAG, "Battery charging done.");
     if (pmu.isBattTempLowIRQ())
@@ -74,6 +75,17 @@ void AXP192_power(bool on) {
   }
 }
 
+void AXP192_displaypower(void) {
+  if (pmu.isBatteryConnect())
+    if (pmu.isChargeing())
+      ESP_LOGI(TAG, "Battery charging @ %.0fmAh", pmu.getBattChargeCurrent());
+    else
+      ESP_LOGI(TAG, "Battery discharging @ %0.fmAh",
+               pmu.getBattDischargeCurrent());
+  else
+    ESP_LOGI(TAG, "No Battery");
+}
+
 void AXP192_init(void) {
 
   // block i2c bus access
@@ -89,8 +101,7 @@ void AXP192_init(void) {
       AXP192_power(true);
 
       // I2C access of AXP202X library currently is not mutexable
-      // so we need to disable AXP interrupts
-
+      // so we better should disable AXP interrupts... ?
 #ifdef PMU_INT
       pinMode(PMU_INT, INPUT_PULLUP);
       attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
@@ -101,14 +112,7 @@ void AXP192_init(void) {
 #endif // PMU_INT
 
       ESP_LOGI(TAG, "AXP192 PMU initialized.");
-
-      if (pmu.isBatteryConnect())
-        if (pmu.isChargeing())
-          ESP_LOGI(TAG, "Battery deteced, charging.");
-        else
-          ESP_LOGI(TAG, "Battery deteced, not charging.");
-      else
-        ESP_LOGI(TAG, "No Battery deteced.");
+      AXP192_displaypower();
     }
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   } else
