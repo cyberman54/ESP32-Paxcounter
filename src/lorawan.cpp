@@ -540,7 +540,8 @@ void lmictask(void *pvParameters) {
 
   os_init();    // initialize lmic run-time environment
   LMIC_reset(); // initialize lmic MAC
-  LMIC_setLinkCheckMode(0);
+  // LMIC_setLinkCheckMode(0);
+
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
@@ -548,13 +549,6 @@ void lmictask(void *pvParameters) {
 #ifdef CLOCK_ERROR_PROCENTAGE
   LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
 #endif
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
-  // register a callback for downlink messages. We aren't trying to write
-  // reentrant code, so pUserData is NULL.
-  LMIC_registerRxMessageCb(myRxCallback, NULL);
 
 #if defined(CFG_US915) || defined(CFG_au921)
   // in the US, with TTN, it saves join time if we start on subband 1
@@ -563,6 +557,15 @@ void lmictask(void *pvParameters) {
   // this will need to be changed.
   LMIC_selectSubBand(1);
 #endif
+
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
+  // LMIC_setDrTxpow(DR_SF7, 14);
+
+  // register a callback for downlink messages. We aren't trying to write
+  // reentrant code, so pUserData is NULL.
+  LMIC_registerRxMessageCb(myRxCallback, NULL);
 
   while (1) {
     os_runloop_once(); // execute lmic scheduled jobs and events
