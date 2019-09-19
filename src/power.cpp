@@ -78,12 +78,18 @@ void AXP192_power(bool on) {
 void AXP192_displaypower(void) {
   if (pmu.isBatteryConnect())
     if (pmu.isChargeing())
-      ESP_LOGI(TAG, "Battery charging @ %.0fmAh", pmu.getBattChargeCurrent());
+      ESP_LOGI(TAG, "Battery charging %.0fmAh @ Temp %.1f°C",
+               pmu.getBattChargeCurrent(), pmu.getTSTemp());
     else
-      ESP_LOGI(TAG, "Battery discharging @ %0.fmAh",
-               pmu.getBattDischargeCurrent());
+      ESP_LOGI(TAG, "Battery not charging, Temp %.1f°C", pmu.getTSTemp());
   else
     ESP_LOGI(TAG, "No Battery");
+
+  if (pmu.isVBUSPlug())
+    ESP_LOGI(TAG, "USB present, %.0fmAh @ %.1fV", pmu.getVbusCurrent(),
+             pmu.getVbusVoltage());
+  else
+    ESP_LOGI(TAG, "USB not present");
 }
 
 void AXP192_init(void) {
@@ -111,7 +117,7 @@ void AXP192_init(void) {
       pmu.clearIRQ();
 #endif // PMU_INT
 
-      ESP_LOGI(TAG, "AXP192 PMU initialized.");
+      ESP_LOGI(TAG, "AXP192 PMU initialized, chip Temp %.1f°C", pmu.getTemp());
       AXP192_displaypower();
     }
     I2C_MUTEX_UNLOCK(); // release i2c bus access
