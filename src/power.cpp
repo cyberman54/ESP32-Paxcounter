@@ -60,14 +60,15 @@ void AXP192_power(bool on) {
   if (on) {
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON); // Lora on T-Beam V1.0
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON); // Gps on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
-    pmu.setPowerOutPut(AXP192_DCDC3, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_ON);
     pmu.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
+    // pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
     pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
   } else {
-    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_DCDC3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
     pmu.setChgLEDMode(AXP20X_LED_OFF);
