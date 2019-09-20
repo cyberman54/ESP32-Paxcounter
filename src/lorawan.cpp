@@ -231,7 +231,6 @@ void onEvent(ev_t ev) {
 
   case EV_JOINED:
     strcpy_P(buff, PSTR("JOINED"));
-    sprintf(display_line6, " "); // clear previous lmic status
     // set data rate adaptation according to saved setting
     LMIC_setAdrMode(cfg.adrmode);
     // set data rate and transmit power to defaults only if we have no ADR
@@ -258,16 +257,7 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_TXCOMPLETE:
-
-#if (TIME_SYNC_LORASERVER)
-    // if last packet sent was a timesync request, store TX timestamp
-    if (LMIC.pendTxPort == TIMEPORT)
-      store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
-#endif
-
-    strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
-                                               : PSTR("TX COMPLETE"));
-    sprintf(display_line6, " "); // clear previous lmic status
+    strcpy_P(buff, PSTR("TX COMPLETE"));
     break;
 
   case EV_LOST_TSYNC:
@@ -321,7 +311,7 @@ void onEvent(ev_t ev) {
   // Log & Display if asked
   if (*buff) {
     ESP_LOGI(TAG, "%s", buff);
-    sprintf(display_line7, buff);
+    sprintf(lmic_event_msg, buff);
   }
 }
 
@@ -585,7 +575,12 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 
 // transmit complete message handler
 void myTxCallback(void *pUserData, int fSuccess) {
-  /* currently no code here */
+
+#if (TIME_SYNC_LORASERVER)
+  // if last packet sent was a timesync request, store TX timestamp
+  if (LMIC.pendTxPort == TIMEPORT)
+    store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
+#endif
 }
 
 // decode LORAWAN MAC message
@@ -651,12 +646,12 @@ uint8_t getBattLevel() {
 
 const char *getSfName(rps_t rps) {
   const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
-                           "SF10", "SF11", "SF12", "SFrfu"};
+                           "SF10", "SF11", "SF12", "SF?"};
   return t[getSf(rps)];
 }
 
 const char *getBwName(rps_t rps) {
-  const char *const t[] = {"BW125", "BW250", "BW500", "BWrfu"};
+  const char *const t[] = {"BW125", "BW250", "BW500", "BW?"};
   return t[getBw(rps)];
 }
 

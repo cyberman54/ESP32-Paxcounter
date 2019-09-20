@@ -311,7 +311,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	Example for EU868:
 
-	DataRate 	Radio		 			Bit/s
+	DataRate 	Configuration 			Bit/s
 	0 			LoRa: SF12 / 125 kHz 	250
 	1 			LoRa: SF11 / 125 kHz	440
 	2			LoRa: SF10 / 125 kHz	980
@@ -320,20 +320,33 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	5			LoRa: SF7 / 125 kHz		5470
 	6*			LoRa: SF7 / 250 kHz		11000
 	7*			FSK: 50 kbps			50000
+	8 .. 14		reserved for future use (RFU)
+	15			ignored (device keeps current setting)
 
 	*) not supported by TheThingsNetwork
 
 0x06 set LoRa TXpower
 
-	0 ... 15 [default: 14]
+	0 ... 15 [default: 7]
+
+	TXPower 	Configuration
+	0 			Max EIRP (usually +16dB)
+	1 			-2dB
+	2			-4dB
+	3			-6dB
+	4			-8dB
+	5			-10dB
+	6			-12dB
+	7			-14dB
+	8 .. 14		reserved for future use (RFU)
+	15			ignored (device keeps current setting)
 	
 0x07 set LoRa Adaptive Data Rate mode
 
 	0 = ADR off
 	1 = ADR on [default]
 
-	Note: set ADR to off, if device is moving, set to on, if not.
-	If ADR is set to on, SF value is shown inverted on display.
+	If ADR is set to off, SF value is shown inverted on display.
 
 0x08 do nothing
 

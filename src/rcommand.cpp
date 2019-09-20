@@ -19,32 +19,25 @@ void do_reset() {
 void set_reset(uint8_t val[]) {
   switch (val[0]) {
   case 0: // restart device
-    sprintf(display_line6, "Reset pending");
     do_reset();
     break;
   case 1: // reset MAC counter
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
     reset_counters(); // clear macs
     get_salt();       // get new salt
-    sprintf(display_line6, "Reset counter");
     break;
   case 2: // reset device to factory settings
     ESP_LOGI(TAG, "Remote command: reset device to factory settings");
-    sprintf(display_line6, "Factory reset");
     eraseConfig();
     break;
   case 3: // reset send queues
     ESP_LOGI(TAG, "Remote command: flush send queue");
-    sprintf(display_line6, "Queue reset");
     flushQueues();
     break;
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
 #if (USE_OTA)
-    sprintf(display_line6, "Software update");
     cfg.runmode = 1;
-#else
-    sprintf(display_line6, "Software update not implemented");
 #endif // USE_OTA
     break;
 
