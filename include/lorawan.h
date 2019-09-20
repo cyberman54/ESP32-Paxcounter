@@ -49,6 +49,7 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 void myTxCallback(void *pUserData, int fSuccess);
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
                 const uint8_t tablesize);
+uint8_t getBattLevel(void);
 
 #if (TIME_SYNC_LORAWAN)
 void user_request_network_time_callback(void *pVoidUserUTCTime,

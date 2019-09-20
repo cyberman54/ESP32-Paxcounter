@@ -234,13 +234,10 @@ void onEvent(ev_t ev) {
     sprintf(display_line6, " "); // clear previous lmic status
     // set data rate adaptation according to saved setting
     LMIC_setAdrMode(cfg.adrmode);
-    // set cyclic lmic link check to off if no ADR because is not supported by
-    // ttn (but enabled by lmic after join)
-    LMIC_setLinkCheckMode(cfg.adrmode);
-    // Set data rate and transmit power (note: txpower seems to be ignored by
-    // the library)
-    switch_lora(cfg.lorasf, cfg.txpower);
-    // show effective LoRa parameters after join
+    // set data rate and transmit power if we have no ADR
+    if (!cfg.adrmode)
+      switch_lora(cfg.lorasf, cfg.txpower);
+    // show current devaddr
     ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
     break;
 
@@ -541,6 +538,7 @@ void lmictask(void *pvParameters) {
   os_init();    // initialize lmic run-time environment
   LMIC_reset(); // initialize lmic MAC
   LMIC_setLinkCheckMode(0);
+
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
@@ -548,21 +546,24 @@ void lmictask(void *pvParameters) {
 #ifdef CLOCK_ERROR_PROCENTAGE
   LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
 #endif
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
-  // register a callback for downlink messages. We aren't trying to write
-  // reentrant code, so pUserData is NULL.
-  LMIC_registerRxMessageCb(myRxCallback, NULL);
 
-#if defined(CFG_US915) || defined(CFG_au921)
+//#if defined(CFG_US915) || defined(CFG_au921)
+#if CFG_LMIC_US_like
   // in the US, with TTN, it saves join time if we start on subband 1
   // (channels 8-15). This will get overridden after the join by parameters
   // from the network. If working with other networks or in other regions,
   // this will need to be changed.
   LMIC_selectSubBand(1);
 #endif
+
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
+
+  // register a callback for downlink messages. We aren't trying to write
+  // reentrant code, so pUserData is NULL.
+  LMIC_registerRxMessageCb(myRxCallback, NULL);
 
   while (1) {
     os_runloop_once(); // execute lmic scheduled jobs and events
@@ -664,5 +665,31 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
   } // command parsing loop
 
 } // mac_decode()
+
+uint8_t getBattLevel() {
+  /*
+  return values:
+  MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+  */
+#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
+  uint16_t voltage = read_voltage();
+
+  switch (voltage) {
+  case 0:
+    return MCMD_DEVS_BATT_NOINFO;
+  case 0xffff:
+    return MCMD_DEVS_EXT_POWER;
+  default:
+    return (voltage > OTA_MIN_BATT ? MCMD_DEVS_BATT_MAX : MCMD_DEVS_BATT_MIN);
+  }
+#else // we don't have any info on battery level
+  return MCMD_DEVS_BATT_NOINFO;
+#endif
+} // getBattLevel()
+
+//u1_t os_getBattLevel(void) { return getBattLevel(); };
 
 #endif // HAS_LORA
