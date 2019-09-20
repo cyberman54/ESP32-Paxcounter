@@ -13,12 +13,13 @@ Display-Mask (128 x 64 pixel):
 3|BLTH:abcde SF:ab
 4|WIFI:abcde ch:ab
 5|RLIM:abcd abcdKB
-6|xxxxxxxxxxxxxxxx
 6|20:27:00* 27.Feb
 7|yyyyyyyyyyyyyyab
-  
-line 6: x = Text for LORA status OR time/date
-line 7: y = Text for LMIC status; ab = payload queue
+
+line 6: * = time source indicator: L|G|R|?,
+            inverse = clock controller is active,
+            pulsed = pps input signal is active
+line 7: y = LMIC event message; ab = payload queue length
 
 */
 
@@ -239,17 +240,13 @@ void draw_page(time_t t, uint8_t page) {
 #endif // HAS_DCF77 || HAS_IF482
     if (timeSource != _unsynced)
       u8x8.printf(" %2d.%3s", day(t), printmonth[month(t)]);
-#else // update LoRa status display
-#if (HAS_LORA)
-    u8x8.printf("%-16s", display_line6);
-#endif
 
 #endif // TIME_SYNC_INTERVAL
 
 #if (HAS_LORA)
     // line 7: update LMiC event display
     u8x8.setCursor(0, 7);
-    u8x8.printf("%-14s", display_line7);
+    u8x8.printf("%-14s", lmic_event_msg);
 
     // update LoRa send queue display
     msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
@@ -259,7 +256,6 @@ void draw_page(time_t t, uint8_t page) {
       u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
     } else
       u8x8.printf("  ");
-
 #endif // HAS_LORA
 
     break; // page0
