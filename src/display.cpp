@@ -205,7 +205,7 @@ void draw_page(time_t t, uint8_t page) {
     u8x8.setCursor(11, 3);
     if (cfg.adrmode) // if ADR=on then display SF value inverse
       u8x8.setInverseFont(1);
-    u8x8.printf("%5s", getSfName(LMIC.rps));
+    u8x8.printf("%5s", getSfName(updr2rps(LMIC.datarate)));
     if (cfg.adrmode) // switch off inverse if it was turned on
       u8x8.setInverseFont(0);
 #endif // HAS_LORA

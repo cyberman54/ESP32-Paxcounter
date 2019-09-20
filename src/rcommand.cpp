@@ -193,10 +193,22 @@ void set_monitor(uint8_t val[]) {
   cfg.monitormode = val[0] ? 1 : 0;
 }
 
-void set_lorasf(uint8_t val[]) {
+void set_loradr(uint8_t val[]) {
 #if (HAS_LORA)
-  ESP_LOGI(TAG, "Remote command: set LoRa SF to %d", val[0]);
-  switch_lora(val[0], cfg.txpower);
+  if (validDR(val[0])) {
+    cfg.loradr = val[0];
+    ESP_LOGI(TAG, "Remote command: set LoRa Datarate to %d", cfg.loradr);
+    LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
+    ESP_LOGI(TAG, "Radio parameters now %s / %s / %s",
+             getSfName(updr2rps(LMIC.datarate)),
+             getBwName(updr2rps(LMIC.datarate)),
+             getCrName(updr2rps(LMIC.datarate)));
+
+  } else
+    ESP_LOGI(
+        TAG,
+        "Remote command: set LoRa Datarate called with illegal datarate %d",
+        val[0]);
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
@@ -247,8 +259,16 @@ void set_rgblum(uint8_t val[]) {
 
 void set_lorapower(uint8_t val[]) {
 #if (HAS_LORA)
-  ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", val[0]);
-  switch_lora(cfg.lorasf, val[0]);
+  // set data rate and transmit power only if we have no ADR
+  if (!cfg.adrmode) {
+    cfg.txpower = val[0] & 0x0f;
+    ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", cfg.txpower);
+    LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
+  } else
+    ESP_LOGI(
+        TAG,
+        "Remote command: set LoRa TXPOWER, not executed because ADR is on");
+
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
@@ -331,7 +351,7 @@ void set_flush(uint8_t val[]) {
 static cmd_t table[] = {
     {0x01, set_rssi, 1, true},          {0x02, set_countmode, 1, true},
     {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
-    {0x05, set_lorasf, 1, true},        {0x06, set_lorapower, 1, true},
+    {0x05, set_loradr, 1, true},        {0x06, set_lorapower, 1, true},
     {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
     {0x09, set_reset, 1, true},         {0x0a, set_sendcycle, 1, true},
     {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},

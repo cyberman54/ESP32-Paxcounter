@@ -305,13 +305,27 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	0 = display off
 	1 = display on [default]
 
-0x05 set LoRa spread factor
+0x05 set LoRa datarate
 
-	7 ... 12 [default: 9]
+	0 ... 15 see LoRaWAN regional parameters for details [default: 5]
+
+	Example for EU868:
+
+	DataRate 	Radio		 			Bit/s
+	0 			LoRa: SF12 / 125 kHz 	250
+	1 			LoRa: SF11 / 125 kHz	440
+	2			LoRa: SF10 / 125 kHz	980
+	3			LoRa: SF9 / 125 kHz		1760
+	4			LoRa: SF8 / 125 kHz		3125
+	5			LoRa: SF7 / 125 kHz		5470
+	6*			LoRa: SF7 / 250 kHz		11000
+	7*			FSK: 50 kbps			50000
+
+	*) not supported by TheThingsNetwork
 
 0x06 set LoRa TXpower
 
-	2 ... 15 [default: 15]
+	0 ... 15 [default: 14]
 	
 0x07 set LoRa Adaptive Data Rate mode
 
