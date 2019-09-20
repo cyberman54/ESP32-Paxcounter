@@ -666,4 +666,30 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
 
 } // mac_decode()
 
+uint8_t getBattLevel() {
+  /*
+  return values:
+  MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+  */
+#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
+  uint16_t voltage = read_voltage();
+
+  switch (voltage) {
+  case 0:
+    return MCMD_DEVS_BATT_NOINFO;
+  case 0xffff:
+    return MCMD_DEVS_EXT_POWER;
+  default:
+    return (voltage > OTA_MIN_BATT ? MCMD_DEVS_BATT_MAX : MCMD_DEVS_BATT_MIN);
+  }
+#else // we don't have any info on battery level
+  return MCMD_DEVS_BATT_NOINFO;
+#endif
+} // getBattLevel()
+
+//u1_t os_getBattLevel(void) { return getBattLevel(); };
+
 #endif // HAS_LORA

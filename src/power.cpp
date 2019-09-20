@@ -167,31 +167,15 @@ void calibrate_voltage(void) {
 #endif
 }
 
-uint8_t getBattLevel() {
-  /*
-  return values:
-  MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
-  MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
-  MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
-  MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
-  */
+bool batt_sufficient() {
 #if (defined HAS_PMU || defined BAT_MEASURE_ADC)
-  uint16_t voltage = read_voltage();
-
-  switch (voltage) {
-  case 0:
-    return MCMD_DEVS_BATT_NOINFO;
-  case 0xffff:
-    return MCMD_DEVS_EXT_POWER;
-  default:
-    return (voltage > OTA_MIN_BATT ? MCMD_DEVS_BATT_MAX : MCMD_DEVS_BATT_MIN);
-  }
-#else // we don't have any info on battery level
-  return MCMD_DEVS_BATT_NOINFO;
+  uint16_t volts = read_voltage();
+  return ((volts < 1000) ||
+          (volts > OTA_MIN_BATT)); // no battery or battery sufficient
+#else
+  return true;
 #endif
-} // getBattLevel()
-
-// u1_t os_getBattLevel(void) { return getBattLevel(); };
+}
 
 uint16_t read_voltage() {
 
