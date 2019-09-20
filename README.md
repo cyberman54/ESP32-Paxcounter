@@ -327,19 +327,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x06 set LoRa TXpower
 
-	0 ... 15 [default: 7]
-
-	TXPower 	Configuration
-	0 			Max EIRP (usually +16dB)
-	1 			-2dB
-	2			-4dB
-	3			-6dB
-	4			-8dB
-	5			-10dB
-	6			-12dB
-	7			-14dB
-	8 .. 14		reserved for future use (RFU)
-	15			ignored (device keeps current setting)
+	0 ... 255 desired TX power in dBm [default: 14]
 	
 0x07 set LoRa Adaptive Data Rate mode
 

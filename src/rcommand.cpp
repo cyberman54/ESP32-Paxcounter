@@ -254,7 +254,7 @@ void set_lorapower(uint8_t val[]) {
 #if (HAS_LORA)
   // set data rate and transmit power only if we have no ADR
   if (!cfg.adrmode) {
-    cfg.txpower = val[0] & 0x0f;
+    cfg.txpower = val[0];
     ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", cfg.txpower);
     LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
   } else
