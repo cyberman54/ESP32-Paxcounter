@@ -36,7 +36,7 @@ void PayloadConvert::addVoltage(uint16_t value) {
 }
 
 void PayloadConvert::addConfig(configData_t value) {
-  buffer[cursor++] = value.lorasf;
+  buffer[cursor++] = value.loradr;
   buffer[cursor++] = value.txpower;
   buffer[cursor++] = value.adrmode;
   buffer[cursor++] = value.screensaver;
@@ -157,7 +157,7 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
 void PayloadConvert::addVoltage(uint16_t value) { writeUint16(value); }
 
 void PayloadConvert::addConfig(configData_t value) {
-  writeUint8(value.lorasf);
+  writeUint8(value.loradr);
   writeUint8(value.txpower);
   writeUint16(value.rssilimit);
   writeUint8(value.sendcycle);

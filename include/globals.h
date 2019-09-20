@@ -50,7 +50,7 @@ enum timesource_t { _gps, _rtc, _lora, _unsynced };
 
 // Struct holding devices's runtime configuration
 typedef struct {
-  uint8_t lorasf;      // 7-12, lora spreadfactor
+  uint8_t loradr;      // 0-15, lora datarate
   uint8_t txpower;     // 2-15, lora tx power
   uint8_t adrmode;     // 0=disabled, 1=enabled
   uint8_t screensaver; // 0=disabled, 1=enabled

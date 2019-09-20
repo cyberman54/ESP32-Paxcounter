@@ -40,7 +40,6 @@ void os_getDevKey(u1_t *buf);
 void os_getArtEui(u1_t *buf);
 void os_getDevEui(u1_t *buf);
 void showLoraKeys(void);
-void switch_lora(uint8_t sf, uint8_t tx);
 void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
@@ -50,6 +49,9 @@ void myTxCallback(void *pUserData, int fSuccess);
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
                 const uint8_t tablesize);
 uint8_t getBattLevel(void);
+const char *getSfName(rps_t rps);
+const char *getBwName(rps_t rps);
+const char *getCrName(rps_t rps);
 
 #if (TIME_SYNC_LORAWAN)
 void user_request_network_time_callback(void *pVoidUserUTCTime,

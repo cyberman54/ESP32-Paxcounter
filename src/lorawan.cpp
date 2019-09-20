@@ -234,11 +234,15 @@ void onEvent(ev_t ev) {
     sprintf(display_line6, " "); // clear previous lmic status
     // set data rate adaptation according to saved setting
     LMIC_setAdrMode(cfg.adrmode);
-    // set data rate and transmit power if we have no ADR
+    // set data rate and transmit power to defaults only if we have no ADR
     if (!cfg.adrmode)
-      switch_lora(cfg.lorasf, cfg.txpower);
+      LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
     // show current devaddr
     ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
+    ESP_LOGI(TAG, "Radio parameters %s / %s / %s",
+             getSfName(updr2rps(LMIC.datarate)),
+             getBwName(updr2rps(LMIC.datarate)),
+             getCrName(updr2rps(LMIC.datarate)));
     break;
 
   case EV_RFU1:
@@ -318,53 +322,6 @@ void onEvent(ev_t ev) {
   if (*buff) {
     ESP_LOGI(TAG, "%s", buff);
     sprintf(display_line7, buff);
-  }
-}
-
-// helper function to assign LoRa datarates to numeric spreadfactor values
-void switch_lora(uint8_t sf, uint8_t tx) {
-  if (tx > 20)
-    return;
-  cfg.txpower = tx;
-  switch (sf) {
-  case 7:
-    LMIC_setDrTxpow(DR_SF7, tx);
-    cfg.lorasf = sf;
-    break;
-  case 8:
-    LMIC_setDrTxpow(DR_SF8, tx);
-    cfg.lorasf = sf;
-    break;
-  case 9:
-    LMIC_setDrTxpow(DR_SF9, tx);
-    cfg.lorasf = sf;
-    break;
-  case 10:
-    LMIC_setDrTxpow(DR_SF10, tx);
-    cfg.lorasf = sf;
-    break;
-  case 11:
-#if defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF11CR, tx);
-    cfg.lorasf = sf;
-    break;
-#else
-    LMIC_setDrTxpow(DR_SF11, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  case 12:
-#if defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF12CR, tx);
-    cfg.lorasf = sf;
-    break;
-#else
-    LMIC_setDrTxpow(DR_SF12, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  default:
-    break;
   }
 }
 
@@ -690,6 +647,22 @@ uint8_t getBattLevel() {
 #endif
 } // getBattLevel()
 
-//u1_t os_getBattLevel(void) { return getBattLevel(); };
+// u1_t os_getBattLevel(void) { return getBattLevel(); };
+
+const char *getSfName(rps_t rps) {
+  const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
+                           "SF10", "SF11", "SF12", "SFrfu"};
+  return t[getSf(rps)];
+}
+
+const char *getBwName(rps_t rps) {
+  const char *const t[] = {"BW125", "BW250", "BW500", "BWrfu"};
+  return t[getBw(rps)];
+}
+
+const char *getCrName(rps_t rps) {
+  const char *const t[] = {"CR 4/5", "CR 4/6", "CR 4/7", "CR 4/8"};
+  return t[getCr(rps)];
+}
 
 #endif // HAS_LORA
