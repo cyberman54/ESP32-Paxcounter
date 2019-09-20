@@ -646,12 +646,12 @@ uint8_t getBattLevel() {
 
 const char *getSfName(rps_t rps) {
   const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
-                           "SF10", "SF11", "SF12", "SFrfu"};
+                           "SF10", "SF11", "SF12", "SF?"};
   return t[getSf(rps)];
 }
 
 const char *getBwName(rps_t rps) {
-  const char *const t[] = {"BW125", "BW250", "BW500", "BWrfu"};
+  const char *const t[] = {"BW125", "BW250", "BW500", "BW?"};
   return t[getBw(rps)];
 }
 
