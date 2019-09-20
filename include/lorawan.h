@@ -50,6 +50,7 @@ void myTxCallback(void *pUserData, int fSuccess);
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
                 const uint8_t tablesize);
 uint8_t getBattLevel(void);
+const char *getSfName(rps_t rps);
 
 #if (TIME_SYNC_LORAWAN)
 void user_request_network_time_callback(void *pVoidUserUTCTime,

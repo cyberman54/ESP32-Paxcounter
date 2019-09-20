@@ -690,6 +690,12 @@ uint8_t getBattLevel() {
 #endif
 } // getBattLevel()
 
-//u1_t os_getBattLevel(void) { return getBattLevel(); };
+// u1_t os_getBattLevel(void) { return getBattLevel(); };
+
+const char *getSfName(rps_t rps) {
+  const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
+                           "SF10", "SF11", "SF12", "SFrfu"};
+  return t[getSf(rps)];
+}
 
 #endif // HAS_LORA

@@ -30,19 +30,6 @@ line 7: y = Text for LMIC status; ab = payload queue
 
 HAS_DISPLAY u8x8(MY_OLED_RST, MY_OLED_SCL, MY_OLED_SDA);
 
-// helper string for converting LoRa spread factor values
-#if defined(CFG_eu868)
-const char lora_datarate[] = {"1211100908077BFSNA"};
-#elif defined(CFG_us915)
-const char lora_datarate[] = {"100908078CNA121110090807"};
-#elif defined(CFG_as923)
-const char lora_datarate[] = {"1211100908077BFSNA"};
-#elif defined(CFG_au921)
-const char lora_datarate[] = {"1211100908078CNA1211109C8C7C"};
-#elif defined(CFG_in866)
-const char lora_datarate[] = {"121110090807FSNA"};
-#endif
-
 // helper arry for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -216,11 +203,9 @@ void draw_page(time_t t, uint8_t page) {
 
 #if (HAS_LORA)
     u8x8.setCursor(11, 3);
-    u8x8.printf("SF:");
     if (cfg.adrmode) // if ADR=on then display SF value inverse
       u8x8.setInverseFont(1);
-    u8x8.printf("%c%c", lora_datarate[LMIC.datarate * 2],
-                lora_datarate[LMIC.datarate * 2 + 1]);
+    u8x8.printf("%5s", getSfName(LMIC.rps));
     if (cfg.adrmode) // switch off inverse if it was turned on
       u8x8.setInverseFont(0);
 #endif // HAS_LORA
