@@ -18,8 +18,7 @@ void pover_event_IRQ(void) {
     if (pmu.isVbusOverVoltageIRQ())
       ESP_LOGI(TAG, "USB voltage %.1fV too high.", pmu.getVbusVoltage());
     if (pmu.isVbusPlugInIRQ())
-      ESP_LOGI(TAG, "USB plugged, %.0fmAh @ %.1fV", pmu.getVbusCurrent(),
-               pmu.getVbusVoltage());
+      ESP_LOGI(TAG, "USB plugged.");
     if (pmu.isVbusRemoveIRQ())
       ESP_LOGI(TAG, "USB unplugged.");
 
@@ -59,16 +58,16 @@ void pover_event_IRQ(void) {
 void AXP192_power(bool on) {
 
   if (on) {
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);
-    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_ON);
-    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON); // Lora on T-Beam V1.0
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON); // Gps on T-Beam V1.0
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
-    pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+    pmu.setPowerOutPut(AXP192_DCDC3, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
+    pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
   } else {
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_DCDC3, AXP202_OFF);
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
     pmu.setChgLEDMode(AXP20X_LED_OFF);
@@ -78,16 +77,14 @@ void AXP192_power(bool on) {
 void AXP192_displaypower(void) {
   if (pmu.isBatteryConnect())
     if (pmu.isChargeing())
-      ESP_LOGI(TAG, "Battery charging %.0fmAh @ Temp %.1f°C",
-               pmu.getBattChargeCurrent(), pmu.getTSTemp());
+      ESP_LOGI(TAG, "Battery charging @ %.0fmAh", pmu.getBattChargeCurrent());
     else
-      ESP_LOGI(TAG, "Battery not charging, Temp %.1f°C", pmu.getTSTemp());
+      ESP_LOGI(TAG, "Battery not charging");
   else
     ESP_LOGI(TAG, "No Battery");
 
   if (pmu.isVBUSPlug())
-    ESP_LOGI(TAG, "USB present, %.0fmAh @ %.1fV", pmu.getVbusCurrent(),
-             pmu.getVbusVoltage());
+    ESP_LOGI(TAG, "USB present");
   else
     ESP_LOGI(TAG, "USB not present");
 }
@@ -102,9 +99,12 @@ void AXP192_init(void) {
     else {
 
       // switch power on
-      pmu.setDCDC1Voltage(3300);
+      pmu.setDCDC1Voltage(3300); // for external OLED display
       pmu.adc1Enable(AXP202_BATT_CUR_ADC1, 1);
       AXP192_power(true);
+
+      // set TS pin mode off to save power
+      pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE);
 
       // I2C access of AXP202X library currently is not mutexable
       // so we better should disable AXP interrupts... ?
@@ -117,7 +117,7 @@ void AXP192_init(void) {
       pmu.clearIRQ();
 #endif // PMU_INT
 
-      ESP_LOGI(TAG, "AXP192 PMU initialized, chip Temp %.1f°C", pmu.getTemp());
+      ESP_LOGI(TAG, "AXP192 PMU initialized, chip temp %.1f°C", pmu.getTemp());
       AXP192_displaypower();
     }
     I2C_MUTEX_UNLOCK(); // release i2c bus access
