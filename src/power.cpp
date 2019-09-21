@@ -16,9 +16,10 @@ void pover_event_IRQ(void) {
     // put your power event handler code here
 
     if (pmu.isVbusOverVoltageIRQ())
-      ESP_LOGI(TAG, "USB voltage %.1fV too high.", pmu.getVbusVoltage());
+      ESP_LOGI(TAG, "USB voltage %.2fV too high.", pmu.getVbusVoltage() / 1000);
     if (pmu.isVbusPlugInIRQ())
-      ESP_LOGI(TAG, "USB plugged.");
+      ESP_LOGI(TAG, "USB plugged, %.2fV @ %.0mA", pmu.getVbusVoltage() / 1000,
+               pmu.getVbusCurrent());
     if (pmu.isVbusRemoveIRQ())
       ESP_LOGI(TAG, "USB unplugged.");
 
@@ -78,14 +79,16 @@ void AXP192_power(bool on) {
 void AXP192_displaypower(void) {
   if (pmu.isBatteryConnect())
     if (pmu.isChargeing())
-      ESP_LOGI(TAG, "Battery charging @ %.0fmAh", pmu.getBattChargeCurrent());
+      ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
+               pmu.getBattVoltage() / 1000, pmu.getBattChargeCurrent());
     else
       ESP_LOGI(TAG, "Battery not charging");
   else
     ESP_LOGI(TAG, "No Battery");
 
   if (pmu.isVBUSPlug())
-    ESP_LOGI(TAG, "USB present");
+    ESP_LOGI(TAG, "USB present, %.2fV @ %.0fmA", pmu.getVbusVoltage() / 1000,
+             pmu.getVbusCurrent());
   else
     ESP_LOGI(TAG, "USB not present");
 }
@@ -101,8 +104,13 @@ void AXP192_init(void) {
 
       // switch power on
       pmu.setDCDC1Voltage(3300); // for external OLED display
-      pmu.adc1Enable(AXP202_BATT_CUR_ADC1, 1);
       AXP192_power(true);
+
+      // switch ADCs on
+      pmu.adc1Enable(AXP202_BATT_VOL_ADC1, true);
+      pmu.adc1Enable(AXP202_BATT_CUR_ADC1, true);
+      pmu.adc1Enable(AXP202_VBUS_VOL_ADC1, true);
+      pmu.adc1Enable(AXP202_VBUS_CUR_ADC1, true);
 
       // set TS pin mode off to save power
       pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE);
