@@ -66,7 +66,7 @@ void irqHandler(void *pvParameters) {
 // do we have a power event?
 #if (HAS_PMU)
     if (InterruptStatus & PMU_IRQ)
-      pover_event_IRQ();
+      power_event_IRQ();
 #endif
 
     // is time to send the payload?

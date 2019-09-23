@@ -153,10 +153,10 @@ void gps_loop(void *pvParameters) {
 #endif
     } // if
 
-    // show NMEA data in verbose mode, useful for debugging GPS
-    ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix: %u",
-             gps.passedChecksum(), gps.failedChecksum(),
-             gps.sentencesWithFix());
+    // show NMEA data in verbose mode, useful for debugging GPS, bu tvery noisy
+    //ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix: %u",
+    //         gps.passedChecksum(), gps.failedChecksum(),
+    //         gps.sentencesWithFix());
 
     delay(2); // yield to CPU
 

@@ -9,9 +9,12 @@ static const char TAG[] = __FILE__;
 
 AXP20X_Class pmu;
 
-void pover_event_IRQ(void) {
-  // block i2c bus access
-  if (I2C_MUTEX_LOCK()) {
+void power_event_IRQ(void) {
+
+  if (!I2C_MUTEX_LOCK())
+    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+  else {
+
     pmu.readIRQ();
     // put your power event handler code here
 
@@ -36,61 +39,63 @@ void pover_event_IRQ(void) {
     if (pmu.isBattTempHighIRQ())
       ESP_LOGI(TAG, "Battery low temperature.");
 
-    // wake up
+    // display on/off
     if (pmu.isPEKShortPressIRQ()) {
-      ESP_LOGI(TAG, "Power Button short pressed.");
-      AXP192_power(true);
+      cfg.screenon = !cfg.screenon;
     }
-    // enter sleep mode
+
+    // shutdown power
     if (pmu.isPEKLongtPressIRQ()) {
-      ESP_LOGI(TAG, "Power Button long pressed.");
-      AXP192_power(false);
-      delay(20);
-      esp_sleep_enable_ext1_wakeup(GPIO_SEL_38, ESP_EXT1_WAKEUP_ALL_LOW);
-      esp_deep_sleep_start();
+      AXP192_power(false); // switch off Lora, GPS, display
+      pmu.shutdown();
     }
 
     pmu.clearIRQ();
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-  } else
-    ESP_LOGI(TAG, "Unknown PMU event.");
+    I2C_MUTEX_UNLOCK();
+  } // mutex
+
+  // refresh stored voltage value
+  read_voltage();
 }
 
 void AXP192_power(bool on) {
-
   if (on) {
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON); // Lora on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON); // Gps on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_ON);
-    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_ON);
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);  // Lora on T-Beam V1.0
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);  // Gps on T-Beam V1.0
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON); // OLED on T-Beam v1.0
     // pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
     pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
   } else {
+    pmu.setChgLEDMode(AXP20X_LED_OFF);
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
-    pmu.setChgLEDMode(AXP20X_LED_OFF);
   }
 }
 
-void AXP192_displaypower(void) {
-  if (pmu.isBatteryConnect())
-    if (pmu.isChargeing())
-      ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
-               pmu.getBattVoltage() / 1000, pmu.getBattChargeCurrent());
-    else
-      ESP_LOGI(TAG, "Battery not charging");
-  else
-    ESP_LOGI(TAG, "No Battery");
+void AXP192_showstatus(void) {
 
-  if (pmu.isVBUSPlug())
-    ESP_LOGI(TAG, "USB present, %.2fV @ %.0fmA", pmu.getVbusVoltage() / 1000,
-             pmu.getVbusCurrent());
-  else
-    ESP_LOGI(TAG, "USB not present");
+  if (!I2C_MUTEX_LOCK())
+    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+  else {
+
+    if (pmu.isBatteryConnect())
+      if (pmu.isChargeing())
+        ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
+                 pmu.getBattVoltage() / 1000, pmu.getBattChargeCurrent());
+      else
+        ESP_LOGI(TAG, "Battery not charging");
+    else
+      ESP_LOGI(TAG, "No Battery");
+
+    if (pmu.isVBUSPlug())
+      ESP_LOGI(TAG, "USB powered, %.0fmW",
+               pmu.getVbusVoltage() / 1000 * pmu.getVbusCurrent());
+    else
+      ESP_LOGI(TAG, "USB not present");
+
+    I2C_MUTEX_UNLOCK();
+  } // mutex
 }
 
 void AXP192_init(void) {
@@ -102,9 +107,10 @@ void AXP192_init(void) {
       ESP_LOGI(TAG, "AXP192 PMU initialization failed");
     else {
 
-      // switch power on
-      pmu.setDCDC1Voltage(3300); // for external OLED display
-      AXP192_power(true);
+      // configure AXP192
+      pmu.setDCDC1Voltage(3300);              // for external OLED display
+      pmu.setTimeOutShutdown(false);          // no automatic shutdown
+      pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE); // TS pin mode off to save power
 
       // switch ADCs on
       pmu.adc1Enable(AXP202_BATT_VOL_ADC1, true);
@@ -112,8 +118,8 @@ void AXP192_init(void) {
       pmu.adc1Enable(AXP202_VBUS_VOL_ADC1, true);
       pmu.adc1Enable(AXP202_VBUS_CUR_ADC1, true);
 
-      // set TS pin mode off to save power
-      pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE);
+      // switch power rails on
+      AXP192_power(true);
 
       // I2C access of AXP202X library currently is not mutexable
       // so we better should disable AXP interrupts... ?
@@ -121,13 +127,13 @@ void AXP192_init(void) {
       pinMode(PMU_INT, INPUT_PULLUP);
       attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
       pmu.enableIRQ(AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ |
-                        AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ,
+                        AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ |
+                        AXP202_CHARGING_FINISHED_IRQ,
                     1);
       pmu.clearIRQ();
 #endif // PMU_INT
 
-      ESP_LOGI(TAG, "AXP192 PMU initialized, chip temp %.1f°C", pmu.getTemp());
-      AXP192_displaypower();
+      ESP_LOGI(TAG, "AXP192 PMU initialized");
     }
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   } else
@@ -157,7 +163,7 @@ void calibrate_voltage(void) {
   ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
   ESP_ERROR_CHECK(adc1_config_channel_atten(adc_channel, atten));
 #else // ADC2
-  // ESP_ERROR_CHECK(adc2_config_width(ADC_WIDTH_BIT_12));
+      // ESP_ERROR_CHECK(adc2_config_width(ADC_WIDTH_BIT_12));
   ESP_ERROR_CHECK(adc2_config_channel_atten(adc_channel, atten));
 #endif
   // calibrate ADC
@@ -187,11 +193,15 @@ bool batt_sufficient() {
 }
 
 uint16_t read_voltage() {
-
   uint16_t voltage = 0;
 
 #ifdef HAS_PMU
-  voltage = pmu.isVBUSPlug() ? 0xffff : pmu.getBattVoltage();
+  if (!I2C_MUTEX_LOCK())
+    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+  else {
+    voltage = pmu.isVBUSPlug() ? 0xffff : pmu.getBattVoltage();
+    I2C_MUTEX_UNLOCK();
+  }
 #else
 
 #ifdef BAT_MEASURE_ADC

@@ -62,10 +62,7 @@ void doHousekeeping() {
   else
     ESP_LOGI(TAG, "Battery: %dmV", batt_voltage);
 #ifdef HAS_PMU
-  if (I2C_MUTEX_LOCK()) {
-    AXP192_displaypower();
-    I2C_MUTEX_UNLOCK();
-  }
+  AXP192_showstatus();
 #endif
 #endif
 
