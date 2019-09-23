@@ -179,7 +179,10 @@ void draw_page(time_t t, uint8_t page) {
 // update Battery status (line 2)
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     u8x8.setCursor(0, 2);
-    u8x8.printf("B:%.2fV", batt_voltage / 1000.0);
+    if (batt_voltage == 0xffff)
+      u8x8.printf("B:USB  ");
+    else
+      u8x8.printf("B:%.2fV", batt_voltage / 1000.0);
 #endif
 
 // update GPS status (line 2)
@@ -204,10 +207,10 @@ void draw_page(time_t t, uint8_t page) {
 #endif
 
 #if (HAS_LORA)
-    u8x8.setCursor(11, 3);
+    u8x8.setCursor(12, 3);
     if (!cfg.adrmode) // if ADR=off then display SF value inverse
       u8x8.setInverseFont(1);
-    u8x8.printf("%4s", getSfName(updr2rps(LMIC.datarate)));
+    u8x8.printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
     if (!cfg.adrmode) // switch off inverse if it was turned on
       u8x8.setInverseFont(0);
 #endif // HAS_LORA
