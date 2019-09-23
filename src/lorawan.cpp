@@ -645,7 +645,7 @@ uint8_t getBattLevel() {
 // u1_t os_getBattLevel(void) { return getBattLevel(); };
 
 const char *getSfName(rps_t rps) {
-  const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
+  const char *const t[] = {"FSK", "SF7", "SF8", "SF9",
                            "SF10", "SF11", "SF12", "SF?"};
   return t[getSf(rps)];
 }
