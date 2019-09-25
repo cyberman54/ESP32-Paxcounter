@@ -207,15 +207,17 @@ uint16_t read_voltage() {
 #ifdef BAT_MEASURE_ADC
   // multisample ADC
   uint32_t adc_reading = 0;
+#ifndef BAT_MEASURE_ADC_UNIT // ADC1
+  for (int i = 0; i < NO_OF_SAMPLES; i++) {
+    adc_reading += adc1_get_raw(adc_channel);
+  }
+#else                        // ADC2
   int adc_buf = 0;
   for (int i = 0; i < NO_OF_SAMPLES; i++) {
-#ifndef BAT_MEASURE_ADC_UNIT // ADC1
-    adc_reading += adc1_get_raw(adc_channel);
-#else                        // ADC2
     ESP_ERROR_CHECK(adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf));
     adc_reading += adc_buf;
-#endif
   }
+#endif
   adc_reading /= NO_OF_SAMPLES;
   // Convert ADC reading to voltage in mV
   voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_characs);
