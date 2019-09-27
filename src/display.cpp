@@ -4,23 +4,31 @@
 
 Display-Mask (128 x 64 pixel):
 
- |          111111
- |0123456789012345
-------------------
-0|PAX:aabbccddee
-1|PAX:aabbccddee
-2|B:a.bcV  Sats:ab
-3|BLTH:abcde  SFab
-4|WIFI:abcde ch:ab
-5|RLIM:abcd abcdKB
-6|20:27:00* 27.Feb
-7|yyyyyyyyyyyyyyab
+ |        |       |
+ |          11111111112
+ |012345678901234567890   Font
+-----------------------   ---------
+0|PAX:aabbccdd      	    STRETCHED
+1|PAX:aabbccdd            STRETCHED
+2|
+3|B:a.bcV Sats:ab ch:ab   SMALL
+4|WIFI:abcde BLTH:abcde   SMALL
+5|RLIM:abcd  Mem:abcdKB   SMALL
+6|27.Feb 2019 20:27:00*   SMALL
+7|yyyyyyyyyyyyyyyy SFab   SMALL
 
-line 6: * = char {L|G|R|?} indicates time source,
-            inverse = clock controller is active,
-            pulsed = pps input signal is active
+* = char {L|G|R|?} indicates time source,
+    inverse = clock controller is active,
+    pulsed = pps input signal is active
 
-line 7: y = LMIC event message; ab = payload queue length
+y = LMIC event message; ab = payload queue length
+
+FONTS in ss_oled.cpp:
+
+FONT_SMALL:     6px = 21 chars / line
+FONT_NORMAL:    8px = 16 chars / line
+FONT_STRETCHED: 8 chars / line
+FONT_LARGE:     8 chars / line
 
 */
 
@@ -134,7 +142,7 @@ void draw_page(time_t t, uint8_t page) {
   static bool wasnofix = true;
 #endif
 
-  // update counter (lines 0-1)
+  // line 1/2: pax counter
   dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
             (int)macs.size()); // display number of unique macs total Wifi + BLE
 
@@ -147,82 +155,75 @@ void draw_page(time_t t, uint8_t page) {
 
   case 0:
 
-// update Battery status (line 2)
-#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
-    if (batt_voltage == 0xffff)
-      dp_printf(0, 2, 0, 0, "%s", "B:USB  ");
-    else
-      dp_printf(0, 2, 0, 0, "B:%.2fV", batt_voltage / 1000.0);
-#endif
-
-// update GPS status (line 2)
-#if (HAS_GPS)
-    if (gps.location.age() < 1500) // if no fix then display Sats value inverse
-      dp_printf(72, 2, 0, 0, "Sats:%.2d", gps.satellites.value());
-    else
-      dp_printf(72, 2, 0, 1, "Sats:%.2d", gps.satellites.value());
-#endif
-
-      // update bluetooth counter + LoRa SF (line 3)
+    // line 3: wifi + bluetooth counters
+    dp_printf(0, 3, FONT_SMALL, 0, "WIFI:%-5d", macs_wifi);
 #if (BLECOUNTER)
     if (cfg.blescan)
-      dp_printf(0, 3, 0, 0, "BLTH:%-5d", macs_ble);
+      dp_printf(66, 3, FONT_SMALL, 0, "BLTH:%-5d", macs_ble);
     else
-      dp_printf(0, 3, 0, 0, "%s", "BLTH:off");
+      dp_printf(66, 3, FONT_SMALL, 0, "%s", "BLTH:off");
 #endif
 
-#if (HAS_LORA)
-    if (cfg.adrmode)
-      dp_printf(96, 3, 0, 0, "%-4s", getSfName(updr2rps(LMIC.datarate)));
-    else // if ADR=off then display SF value inverse
-      dp_printf(96, 3, 0, 1, "%-4s", getSfName(updr2rps(LMIC.datarate)));
-#endif // HAS_LORA
+// line 4: Battery + GPS status + Wifi channel
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+    if (batt_voltage == 0xffff)
+      dp_printf(0, 4, FONT_SMALL, 0, "%s", "B:USB  ");
+    else
+      dp_printf(0, 4, FONT_SMALL, 0, "B:%.2fV", batt_voltage / 1000.0);
+#endif
+#if (HAS_GPS)
+    if (gps.location.age() < 1500) // if no fix then display Sats value inverse
+      dp_printf(48, 4, FONT_SMALL, 0, "Sats:%.2d", gps.satellites.value());
+    else
+      dp_printf(48, 4, FONT_SMALL, 1, "Sats:%.2d", gps.satellites.value());
+#endif
+    dp_printf(96, 4, FONT_SMALL, 0, "ch:%02d", channel);
 
-    // line 4: update wifi counter + channel display
-    dp_printf(0, 4, 0, 0, "WIFI:%-5d", macs_wifi);
-    dp_printf(88, 4, 0, 0, "ch:%02d", channel);
-
-    // line 5: update RSSI limiter status & free memory display
-    dp_printf(0, 5, 0, 0, !cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d",
+    // line 5: RSSI limiter + free memory
+    dp_printf(0, 5, FONT_SMALL, 0, !cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d",
               cfg.rssilimit);
-    dp_printf(80, 5, 0, 0, "%4dKB", getFreeRAM() / 1024);
+    dp_printf(66, 5, FONT_SMALL, 0, "Mem:%4dKB", getFreeRAM() / 1024);
 
-    // line 6: update time-of-day or LoRa status display
+    // line 6: time + date
 #if (TIME_SYNC_INTERVAL)
-    // we want a systime display instead LoRa status
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
+
+    dp_printf(0, 6, FONT_SMALL, 0, "%02d.%3s %4d", day(t), printmonth[month(t)],
+              year(t));
+    dp_printf(72, 6, FONT_SMALL, 0, "%02d:%02d:%02d", hour(t), minute(t),
+              second(t));
+
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
-    dp_printf(0, 6, 0, 0, "%02d:%02d:%02d", hour(t), minute(t), second(t));
-    dp_printf(56, 6, 0, 1, "%c", timeState);
+    dp_printf(120, 6, FONT_SMALL, 1, "%c", timeState);
 #else
-    dp_printf(0, 6, 0, 0, "%02d:%02d:%02d%c", hour(t), minute(t), second(t),
-              timeState);
-#endif // HAS_DCF77 || HAS_IF482
-    if (timeSource != _unsynced)
-      dp_printf(72, 6, 0, 0, " %2d.%3s", day(t), printmonth[month(t)]);
+    dp_printf(120, 6, FONT_SMALL, 0, "%c", timeState);
+#endif
 
 #endif // TIME_SYNC_INTERVAL
 
+    // line 7: LORA network status
 #if (HAS_LORA)
-    // line 7: update LMiC event display
-    dp_printf(0, 7, FONT_SMALL, 0, "%-14s", lmic_event_msg);
-
-    // update LoRa send queue display
+    // LMiC event display, display inverse if sendqueue not empty
     msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
-    if (msgWaiting) {
-      sprintf(buff, "%2d", msgWaiting);
-      dp_printf(112, 7, FONT_SMALL, 0, "%-2s",
-                msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
-    } else
-      dp_printf(112, 7, FONT_SMALL, 0, "  ");
+    if (msgWaiting)
+      dp_printf(0, 7, FONT_SMALL, 1, "%-17s", lmic_event_msg);
+    else
+      dp_printf(0, 7, FONT_SMALL, 0, "%-17s", lmic_event_msg);
+    // LORA datarate, display inverse if ADR disabled
+    if (cfg.adrmode)
+      dp_printf(108, 7, FONT_SMALL, 0, "%-4s",
+                getSfName(updr2rps(LMIC.datarate)));
+    else
+      dp_printf(108, 7, FONT_SMALL, 1, "%-4s",
+                getSfName(updr2rps(LMIC.datarate)));
 #endif // HAS_LORA
 
     break; // page0
 
   case 1:
-    dp_printf(0, 4, FONT_STRETCHED, 0, "%02d:%02d:%02d", hour(t), minute(t),
+    dp_printf(0, 4, FONT_LARGE, 0, "%02d:%02d:%02d", hour(t), minute(t),
               second(t));
     break; // page1
 
