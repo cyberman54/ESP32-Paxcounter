@@ -49,24 +49,24 @@ void start_ota_update() {
   switch_LED(LED_ON);
 
 #ifdef HAS_DISPLAY
-  u8x8.begin();
-  u8x8.setFont(u8x8_font_chroma48medium8_r);
-  u8x8.clear();
-#ifdef DISPLAY_FLIP
-  u8x8.setFlipMode(1);
-#endif
-  u8x8.setInverseFont(1);
-  u8x8.print("SOFTWARE UPDATE \n");
-  u8x8.setInverseFont(0);
-  u8x8.print("WiFi connect  ..\n");
-  u8x8.print("Has Update?   ..\n");
-  u8x8.print("Fetching      ..\n");
-  u8x8.print("Downloading   ..\n");
-  u8x8.print("Rebooting     ..");
+
+// init display
+#ifndef DISPLAY_FLIP
+  int rc = oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 100000L);
+#else
+  int rc = oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 100000L);
 #endif
 
+  oledFill(0, 1);
+  dp_printf(0, 0, 0, 1, "SOFTWARE UPDATE");
+  dp_printf(0, 1, 0, 0, "WiFi connect  ..");
+  dp_printf(0, 2, 0, 0, "Has Update?   ..");
+  dp_printf(0, 3, 0, 0, "Fetching      ..");
+  dp_printf(0, 4, 0, 0, "Downloading   ..");
+  dp_printf(0, 5, 0, 0, "Rebooting     ..");
+
   ESP_LOGI(TAG, "Starting Wifi OTA update");
-  display(1, "**", WIFI_SSID);
+  ota_display(1, "**", WIFI_SSID);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -81,7 +81,7 @@ void start_ota_update() {
     if (WiFi.status() == WL_CONNECTED) {
       // we now have wifi connection and try to do an OTA over wifi update
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
-      display(1, "OK", "WiFi connected");
+      ota_display(1, "OK", "WiFi connected");
       // do a number of tries to update firmware limited by OTA_MAX_TRY
       uint8_t j = OTA_MAX_TRY;
       while ((j--) && (ret > 0)) {
@@ -97,13 +97,13 @@ void start_ota_update() {
 
   // wifi did not connect
   ESP_LOGI(TAG, "Could not connect to %s", WIFI_SSID);
-  display(1, " E", "no WiFi connect");
+  ota_display(1, " E", "no WiFi connect");
   delay(5000);
 
 end:
   switch_LED(LED_OFF);
   ESP_LOGI(TAG, "Rebooting to %s firmware", (ret == 0) ? "new" : "current");
-  display(5, "**", ""); // mark line rebooting
+  ota_display(5, "**", ""); // mark line rebooting
   delay(5000);
   ESP.restart();
 
@@ -119,7 +119,7 @@ int do_ota_update() {
 
   // Fetch the latest firmware version
   ESP_LOGI(TAG, "Checking latest firmware version on server");
-  display(2, "**", "checking version");
+  ota_display(2, "**", "checking version");
 
   if (WiFi.status() != WL_CONNECTED)
     return 1;
@@ -128,23 +128,23 @@ int do_ota_update() {
 
   if (latest.length() == 0) {
     ESP_LOGI(TAG, "Could not fetch info on latest firmware");
-    display(2, " E", "file not found");
+    ota_display(2, " E", "file not found");
     return -1;
   } else if (version_compare(latest, cfg.version) <= 0) {
     ESP_LOGI(TAG, "Current firmware is up to date");
-    display(2, "NO", "no update found");
+    ota_display(2, "NO", "no update found");
     return -1;
   }
   ESP_LOGI(TAG, "New firmware version v%s available", latest.c_str());
-  display(2, "OK", latest.c_str());
+  ota_display(2, "OK", latest.c_str());
 
-  display(3, "**", "");
+  ota_display(3, "**", "");
   if (WiFi.status() != WL_CONNECTED)
     return 1;
   String firmwarePath = bintray.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format");
-    display(3, " E", "file type error");
+    ota_display(3, " E", "file type error");
     return -1;
   }
 
@@ -158,7 +158,7 @@ int do_ota_update() {
 
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
-    display(3, " E", "connection lost");
+    ota_display(3, " E", "connection lost");
     goto abort;
   }
 
@@ -169,7 +169,7 @@ int do_ota_update() {
       if (!client.connect(currentHost.c_str(), port)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
-        display(3, " E", "server error");
+        ota_display(3, " E", "server error");
         goto abort;
       }
     }
@@ -185,7 +185,7 @@ int do_ota_update() {
     while (client.available() == 0) {
       if ((millis() - timeout) > (RESPONSE_TIMEOUT_MS)) {
         ESP_LOGI(TAG, "Client timeout");
-        display(3, " E", "client timeout");
+        ota_display(3, " E", "client timeout");
         goto abort;
       }
     }
@@ -243,12 +243,12 @@ int do_ota_update() {
     } // while (client.available())
   }   // while (redirect)
 
-  display(3, "OK", ""); // line download
+  ota_display(3, "OK", ""); // line download
 
   // check whether we have everything for OTA update
   if (!(contentLength && isValidContentType)) {
     ESP_LOGI(TAG, "Invalid OTA server response");
-    display(4, " E", "response error");
+    ota_display(4, " E", "response error");
     goto retry;
   }
 
@@ -262,7 +262,7 @@ int do_ota_update() {
   if (!Update.begin(contentLength)) {
 #endif
     ESP_LOGI(TAG, "Not enough space to start OTA update");
-    display(4, " E", "disk full");
+    ota_display(4, " E", "disk full");
     goto abort;
   }
 
@@ -271,13 +271,13 @@ int do_ota_update() {
   Update.onProgress(&show_progress);
 #endif
 
-  display(4, "**", "writing...");
+  ota_display(4, "**", "writing...");
   written = Update.writeStream(client); // this is a blocking call
 
   if (written == contentLength) {
     ESP_LOGI(TAG, "Written %u bytes successfully", written);
     snprintf(buf, 17, "%ukB Done!", (uint16_t)(written / 1024));
-    display(4, "OK", buf);
+    ota_display(4, "OK", buf);
   } else {
     ESP_LOGI(TAG, "Written only %u of %u bytes, OTA update attempt cancelled",
              written, contentLength);
@@ -288,7 +288,7 @@ int do_ota_update() {
   } else {
     ESP_LOGI(TAG, "An error occurred. Error#: %d", Update.getError());
     snprintf(buf, 17, "Error#: %d", Update.getError());
-    display(4, " E", buf);
+    ota_display(4, " E", buf);
     goto retry;
   }
 
@@ -307,27 +307,25 @@ retry:
 
 } // do_ota_update
 
-void display(const uint8_t row, const std::string status,
-             const std::string msg) {
+void ota_display(const uint8_t row, const std::string status,
+                 const std::string msg) {
 #ifdef HAS_DISPLAY
-  u8x8.setCursor(14, row);
-  u8x8.print((status.substr(0, 2)).c_str());
+  dp_printf(112, row, 0, 0, status.substr(0, 2).c_str());
   if (!msg.empty()) {
-    u8x8.clearLine(7);
-    u8x8.setCursor(0, 7);
-    u8x8.print(msg.substr(0, 16).c_str());
+    dp_printf(0, 7, 0, 0, "                ");
+    dp_printf(0, 7, 0, 0, msg.substr(0, 16).c_str());
   }
 #endif
 }
 
-#ifdef HAS_DISPLAY
 // callback function to show download progress while streaming data
 void show_progress(unsigned long current, unsigned long size) {
+#ifdef HAS_DISPLAY
   char buf[17];
   snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
-  display(4, "**", buf);
-}
+  ota_display(4, "**", buf);
 #endif
+}
 
 // helper function to convert strings into lower case
 bool comp(char s1, char s2) { return tolower(s1) < tolower(s2); }

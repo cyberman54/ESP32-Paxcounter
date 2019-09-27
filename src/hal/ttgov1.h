@@ -12,7 +12,7 @@
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
+#define HAS_DISPLAY 1 // OLED-Display on board
 //#define DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED LED_BUILTIN
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW

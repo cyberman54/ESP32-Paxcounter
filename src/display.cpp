@@ -26,11 +26,11 @@ line 7: y = LMIC event message; ab = payload queue length
 
 // Basic Config
 #include "globals.h"
+#include <ss_oled.h>
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
 #define DISPLAY_PAGES (4) // number of display pages
-
-HAS_DISPLAY u8x8(MY_OLED_RST, MY_OLED_SCL, MY_OLED_SDA);
+#define USE_BACKBUFFER    // for display library
 
 // helper arry for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -38,82 +38,63 @@ const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 
 uint8_t DisplayIsOn = 0;
 
-// helper function, prints a hex key on display
-void DisplayKey(const uint8_t *key, uint8_t len, bool lsb) {
-  const uint8_t *p;
-  for (uint8_t i = 0; i < len; i++) {
-    p = lsb ? key + len - i - 1 : key + i;
-    u8x8.printf("%02X", *p);
-  }
-  u8x8.printf("\n");
-}
-
 void init_display(const char *Productname, const char *Version) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
-    // show startup screen
-    uint8_t buf[32];
-    u8x8.begin();
-    u8x8.setFont(u8x8_font_chroma48medium8_r);
-    u8x8.clear();
-    u8x8.setFlipMode(0);
-    u8x8.setInverseFont(1);
-    u8x8.draw2x2String(0, 0, Productname);
-    u8x8.setInverseFont(0);
-    u8x8.draw2x2String(2, 2, Productname);
-    delay(500);
-    u8x8.clear();
-    u8x8.setFlipMode(1);
-    u8x8.setInverseFont(1);
-    u8x8.draw2x2String(0, 0, Productname);
-    u8x8.setInverseFont(0);
-    u8x8.draw2x2String(2, 2, Productname);
-    delay(500);
 
-    u8x8.setFlipMode(0);
-    u8x8.clear();
-
-#ifdef DISPLAY_FLIP
-    u8x8.setFlipMode(1);
+    // init display
+#ifndef DISPLAY_FLIP
+    oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 400000L);
+#else
+    oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 400000L);
 #endif
 
-// Display chip information
+    // clear display
+    oledFill(0, 1);
+
+    // show startup screen
+    // to come -> display .bmp file with logo
+
+// show chip information
 #if (VERBOSE)
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
-    u8x8.printf("ESP32 %d cores\nWiFi%s%s\n", chip_info.cores,
-                (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-                (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-    u8x8.printf("ESP Rev.%d\n", chip_info.revision);
-    u8x8.printf("%dMB %s Flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int."
-                                                              : "ext.");
+    dp_printf(0, 0, 0, 0, "ESP32 %d cores", chip_info.cores);
+    dp_printf(0, 2, 0, 0, "Chip Rev.%d", chip_info.revision);
+    dp_printf(0, 1, 0, 0, "WiFi%s%s",
+              (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+              (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+    dp_printf(0, 3, 0, 0, "%dMB %s Flash",
+              spi_flash_get_chip_size() / (1024 * 1024),
+              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
 #endif // VERBOSE
 
-    u8x8.print(Productname);
-    u8x8.print(" v");
-    u8x8.println(PROGVERSION);
-
 #if (HAS_LORA)
-    u8x8.println("DEVEUI:");
+    uint8_t buf[34];
+    const uint8_t *p;
     os_getDevEui((u1_t *)buf);
-    DisplayKey(buf, 8, true);
-    delay(3000);
+    dp_printf(0, 5, 0, 0, "DEVEUI:");
+    for (uint8_t i = 0; i < 8; i++) {
+      p = buf + 7 - i;
+      dp_printf(i * 16, 6, 0, 0, "%02X", *p);
+    }
 #endif // HAS_LORA
-    u8x8.clear();
-    u8x8.setPowerSave(!cfg.screenon); // set display off if disabled
-    u8x8.draw2x2String(0, 0, "PAX:0");
+
+    dp_printf(0, 4, 0, 0, "Software v%s", PROGVERSION);
+    delay(3000);
+
+    oledFill(0, 1);
+    oledPower(cfg.screenon); // set display off if disabled
+    dp_printf(0, 0, 1, 0, "PAX:0");
 #if (BLECOUNTER)
-    u8x8.setCursor(0, 3);
-    u8x8.printf("BLTH:0");
+    dp_printf(0, 3, 0, 0, "BLTH:0");
 #endif
-    u8x8.setCursor(0, 4);
-    u8x8.printf("WIFI:0");
-    u8x8.setCursor(0, 5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%d", cfg.rssilimit);
+    dp_printf(0, 4, 0, 0, "WIFI:0");
+    dp_printf(0, 5, 0, 0, !cfg.rssilimit ? "RLIM:off " : "RLIM:%d",
+              cfg.rssilimit);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   }                     // mutex
@@ -137,12 +118,12 @@ void refreshTheDisplay(bool nextPage) {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
       DisplayIsOn = cfg.screenon;
-      u8x8.setPowerSave(!cfg.screenon);
+      oledPower(cfg.screenon);
     }
 
     if (nextPage) {
       DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
-      u8x8.clear();
+      oledFill(0, 1);
     }
 
     draw_page(t, DisplayPage);
@@ -161,11 +142,8 @@ void draw_page(time_t t, uint8_t page) {
 #endif
 
   // update counter (lines 0-1)
-  snprintf(
-      buff, sizeof(buff), "PAX:%-4d",
-      (int)macs.size()); // convert 16-bit MAC counter to decimal counter value
-  u8x8.draw2x2String(0, 0,
-                     buff); // display number on unique macs total Wifi + BLE
+  dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
+            (int)macs.size()); // display number of unique macs total Wifi + BLE
 
   switch (page % DISPLAY_PAGES) {
 
@@ -178,139 +156,108 @@ void draw_page(time_t t, uint8_t page) {
 
 // update Battery status (line 2)
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
-    u8x8.setCursor(0, 2);
     if (batt_voltage == 0xffff)
-      u8x8.printf("B:USB  ");
+      dp_printf(0, 2, 0, 0, "%s", "B:USB  ");
     else
-      u8x8.printf("B:%.2fV", batt_voltage / 1000.0);
+      dp_printf(0, 2, 0, 0, "B:%.2fV", batt_voltage / 1000.0);
 #endif
 
 // update GPS status (line 2)
 #if (HAS_GPS)
-    u8x8.setCursor(9, 2);
     if (gps.location.age() < 1500) // if no fix then display Sats value inverse
-      u8x8.printf("Sats:%.2d", gps.satellites.value());
-    else {
-      u8x8.setInverseFont(1);
-      u8x8.printf("Sats:%.2d", gps.satellites.value());
-      u8x8.setInverseFont(0);
-    }
+      dp_printf(72, 2, 0, 0, "Sats:%.2d", gps.satellites.value());
+    else
+      dp_printf(72, 2, 0, 1, "Sats:%.2d", gps.satellites.value());
 #endif
 
-    // update bluetooth counter + LoRa SF (line 3)
+      // update bluetooth counter + LoRa SF (line 3)
 #if (BLECOUNTER)
-    u8x8.setCursor(0, 3);
     if (cfg.blescan)
-      u8x8.printf("BLTH:%-5d", macs_ble);
+      dp_printf(0, 3, 0, 0, "BLTH:%-5d", macs_ble);
     else
-      u8x8.printf("%s", "BLTH:off");
+      dp_printf(0, 3, 0, 0, "%s", "BLTH:off");
 #endif
 
 #if (HAS_LORA)
-    u8x8.setCursor(12, 3);
-    if (!cfg.adrmode) // if ADR=off then display SF value inverse
-      u8x8.setInverseFont(1);
-    u8x8.printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
-    if (!cfg.adrmode) // switch off inverse if it was turned on
-      u8x8.setInverseFont(0);
+    if (cfg.adrmode)
+      dp_printf(96, 3, 0, 0, "%-4s", getSfName(updr2rps(LMIC.datarate)));
+    else // if ADR=off then display SF value inverse
+      dp_printf(96, 3, 0, 1, "%-4s", getSfName(updr2rps(LMIC.datarate)));
 #endif // HAS_LORA
 
     // line 4: update wifi counter + channel display
-    u8x8.setCursor(0, 4);
-    u8x8.printf("WIFI:%-5d", macs_wifi);
-    u8x8.setCursor(11, 4);
-    u8x8.printf("ch:%02d", channel);
+    dp_printf(0, 4, 0, 0, "WIFI:%-5d", macs_wifi);
+    dp_printf(88, 4, 0, 0, "ch:%02d", channel);
 
     // line 5: update RSSI limiter status & free memory display
-    u8x8.setCursor(0, 5);
-    u8x8.printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-    u8x8.setCursor(10, 5);
-    u8x8.printf("%4dKB", getFreeRAM() / 1024);
+    dp_printf(0, 5, 0, 0, !cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d",
+              cfg.rssilimit);
+    dp_printf(80, 5, 0, 0, "%4dKB", getFreeRAM() / 1024);
 
     // line 6: update time-of-day or LoRa status display
-    u8x8.setCursor(0, 6);
 #if (TIME_SYNC_INTERVAL)
     // we want a systime display instead LoRa status
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
-    u8x8.printf("%02d:%02d:%02d", hour(t), minute(t), second(t));
-    u8x8.setInverseFont(1);
-    u8x8.printf("%c", timeState);
-    u8x8.setInverseFont(0);
+    dp_printf(0, 6, FONT_SMALL, 0, "%02d:%02d:%02d", hour(t), minute(t),
+              second(t));
+    dp_printf(56, 6, FONT_SMALL, 1, "%c", timeState);
 #else
-    u8x8.printf("%02d:%02d:%02d%c", hour(t), minute(t), second(t), timeState);
+    dp_printf(0, 6, FONT_SMALL, 0, "%02d:%02d:%02d%c", hour(t), minute(t),
+              second(t), timeState);
 #endif // HAS_DCF77 || HAS_IF482
     if (timeSource != _unsynced)
-      u8x8.printf(" %2d.%3s", day(t), printmonth[month(t)]);
+      dp_printf(72, 6, FONT_SMALL, 0, " %2d.%3s%4s", day(t),
+                printmonth[month(t)], year(t));
 
 #endif // TIME_SYNC_INTERVAL
 
 #if (HAS_LORA)
     // line 7: update LMiC event display
-    u8x8.setCursor(0, 7);
-    u8x8.printf("%-14s", lmic_event_msg);
+    dp_printf(0, 7, FONT_SMALL, 0, "%-14s", lmic_event_msg);
 
     // update LoRa send queue display
     msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
     if (msgWaiting) {
       sprintf(buff, "%2d", msgWaiting);
-      u8x8.setCursor(14, 7);
-      u8x8.printf("%-2s", msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
+      dp_printf(112, 7, FONT_SMALL, 0, "%-2s",
+                msgWaiting == SEND_QUEUE_SIZE ? "<>" : buff);
     } else
-      u8x8.printf("  ");
+      dp_printf(112, 7, FONT_SMALL, 0, "  ");
 #endif // HAS_LORA
 
     break; // page0
 
   case 1:
-
-    // line 4-5: update time-of-day
-    snprintf(buff, sizeof(buff), "%02d:%02d:%02d", hour(t), minute(t),
-             second(t));
-    u8x8.draw2x2String(0, 4, buff);
-
+    dp_printf(0, 4, FONT_STRETCHED, 0, "%02d:%02d:%02d", hour(t), minute(t),
+              second(t));
     break; // page1
 
   case 2:
-    // update counter (lines 0-1)
-    snprintf(
-        buff, sizeof(buff), "PAX:%-4d",
-        (int)
-            macs.size()); // convert 16-bit MAC counter to decimal counter value
-    u8x8.draw2x2String(0, 0,
-                       buff); // display number on unique macs total Wifi + BLE
-
 #if (HAS_GPS)
     if (gps.location.age() < 1500) {
       // line 5: clear "No fix"
       if (wasnofix) {
-        snprintf(buff, sizeof(buff), "      ");
-        u8x8.draw2x2String(2, 5, buff);
+        dp_printf(16, 5, FONT_STRETCHED, 0, "      ");
         wasnofix = false;
       }
       // line 3-4: GPS latitude
-      snprintf(buff, sizeof(buff), "%c%07.4f",
-               gps.location.rawLat().negative ? 'S' : 'N', gps.location.lat());
-      u8x8.draw2x2String(0, 3, buff);
+      dp_printf(0, 3, FONT_STRETCHED, 0, "%c%07.4f",
+                gps.location.rawLat().negative ? 'S' : 'N', gps.location.lat());
 
       // line 6-7: GPS longitude
-      snprintf(buff, sizeof(buff), "%c%07.4f",
-               gps.location.rawLat().negative ? 'W' : 'E', gps.location.lng());
-      u8x8.draw2x2String(0, 6, buff);
+      dp_printf(0, 6, FONT_STRETCHED, 0, "%c%07.4f",
+                gps.location.rawLat().negative ? 'W' : 'E', gps.location.lng());
 
     } else {
-      snprintf(buff, sizeof(buff), "No fix");
-      u8x8.setInverseFont(1);
-      u8x8.draw2x2String(2, 5, buff);
-      u8x8.setInverseFont(0);
+      dp_printf(16, 5, FONT_STRETCHED, 1, "No fix");
       wasnofix = true;
     }
 
 #else
-    snprintf(buff, sizeof(buff), "No GPS");
-    u8x8.draw2x2String(2, 5, buff);
+    dp_printf(16, 5, FONT_STRETCHED, 1, "No GPS");
 #endif
 
     break; // page2
@@ -319,22 +266,18 @@ void draw_page(time_t t, uint8_t page) {
 
 #if (HAS_BME)
     // line 2-3: Temp
-    snprintf(buff, sizeof(buff), "TMP:%-2.1f", bme_status.temperature);
-    u8x8.draw2x2String(0, 2, buff);
+    dp_printf(0, 2, FONT_STRETCHED, 0, "TMP:%-2.1f", bme_status.temperature);
 
     // line 4-5: Hum
-    snprintf(buff, sizeof(buff), "HUM:%-2.1f", bme_status.humidity);
-    u8x8.draw2x2String(0, 4, buff);
+    dp_printf(0, 4, FONT_STRETCHED, 0, "HUM:%-2.1f", bme_status.humidity);
 
 #ifdef HAS_BME680
     // line 6-7: IAQ
-    snprintf(buff, sizeof(buff), "IAQ:%-3.0f", bme_status.iaq);
-    u8x8.draw2x2String(0, 6, buff);
+    dp_printf(0, 6, FONT_STRETCHED, 0, "IAQ:%-3.0f", bme_status.iaq);
 #endif
 
 #else
-    snprintf(buff, sizeof(buff), "No BME");
-    u8x8.draw2x2String(2, 5, buff);
+    dp_printf(16, 5, FONT_STRETCHED, 1, "No BME");
 #endif
 
     break; // page3
@@ -345,5 +288,35 @@ void draw_page(time_t t, uint8_t page) {
   } // switch
 
 } // draw_page
+
+// display print helper function
+
+void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
+  char loc_buf[64];
+  char *temp = loc_buf;
+  va_list arg;
+  va_list copy;
+  va_start(arg, format);
+  va_copy(copy, arg);
+  int len = vsnprintf(temp, sizeof(loc_buf), format, copy);
+  va_end(copy);
+  if (len < 0) {
+    va_end(arg);
+    return;
+  };
+  if (len >= sizeof(loc_buf)) {
+    temp = (char *)malloc(len + 1);
+    if (temp == NULL) {
+      va_end(arg);
+      return;
+    }
+    len = vsnprintf(temp, len + 1, format, arg);
+  }
+  va_end(arg);
+  oledWriteString(0, x, y, temp, font, inv, 1);
+  if (temp != loc_buf) {
+    free(temp);
+  }
+}
 
 #endif // HAS_DISPLAY
