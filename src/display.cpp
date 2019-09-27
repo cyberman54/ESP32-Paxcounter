@@ -46,7 +46,7 @@ const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 
 uint8_t DisplayIsOn = 0;
 
-void init_display(const char *Productname, const char *Version) {
+void init_display(void) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
