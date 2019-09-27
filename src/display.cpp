@@ -88,13 +88,6 @@ void init_display(const char *Productname, const char *Version) {
 
     oledFill(0, 1);
     oledPower(cfg.screenon); // set display off if disabled
-    dp_printf(0, 0, 1, 0, "PAX:0");
-#if (BLECOUNTER)
-    dp_printf(0, 3, 0, 0, "BLTH:0");
-#endif
-    dp_printf(0, 4, 0, 0, "WIFI:0");
-    dp_printf(0, 5, 0, 0, !cfg.rssilimit ? "RLIM:off " : "RLIM:%d",
-              cfg.rssilimit);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   }                     // mutex
@@ -201,16 +194,14 @@ void draw_page(time_t t, uint8_t page) {
     TimePulseTick = false;
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
-    dp_printf(0, 6, FONT_SMALL, 0, "%02d:%02d:%02d", hour(t), minute(t),
-              second(t));
-    dp_printf(56, 6, FONT_SMALL, 1, "%c", timeState);
+    dp_printf(0, 6, 0, 0, "%02d:%02d:%02d", hour(t), minute(t), second(t));
+    dp_printf(56, 6, 0, 1, "%c", timeState);
 #else
-    dp_printf(0, 6, FONT_SMALL, 0, "%02d:%02d:%02d%c", hour(t), minute(t),
-              second(t), timeState);
+    dp_printf(0, 6, 0, 0, "%02d:%02d:%02d%c", hour(t), minute(t), second(t),
+              timeState);
 #endif // HAS_DCF77 || HAS_IF482
     if (timeSource != _unsynced)
-      dp_printf(72, 6, FONT_SMALL, 0, " %2d.%3s%4s", day(t),
-                printmonth[month(t)], year(t));
+      dp_printf(72, 6, 0, 0, " %2d.%3s", day(t), printmonth[month(t)]);
 
 #endif // TIME_SYNC_INTERVAL
 

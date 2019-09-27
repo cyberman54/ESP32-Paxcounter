@@ -64,6 +64,7 @@ void start_ota_update() {
   dp_printf(0, 3, 0, 0, "Fetching      ..");
   dp_printf(0, 4, 0, 0, "Downloading   ..");
   dp_printf(0, 5, 0, 0, "Rebooting     ..");
+#endif
 
   ESP_LOGI(TAG, "Starting Wifi OTA update");
   ota_display(1, "**", WIFI_SSID);
