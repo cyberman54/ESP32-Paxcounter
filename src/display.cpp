@@ -86,42 +86,37 @@ void init_display(void) {
     dp_printf(0, 3, 0, 0, "%dMB %s Flash",
               spi_flash_get_chip_size() / (1024 * 1024),
               (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
-    dp_printf(0, 4, 0, 0, "Software v%s", PROGVERSION);
+    dp_printf(0, 5, 0, 0, "Software v%s", PROGVERSION);
+
+    // give user some time to read or take picture
+    delay(2000);
+    oledFill(0x00, 1);
 #endif // VERBOSE
 
 #if (HAS_LORA)
-    // generate and show DEVEUI
+    // generate DEVEUI as QR code and text
     uint8_t buf[8];
     const uint8_t *p;
     os_getDevEui((u1_t *)buf);
-    dp_printf(0, 6, 0, 1, "LORAWAN DEVEUI: ");
-    for (uint8_t i = 0; i < 8; i++) {
-      p = buf + 7 - i;
-      dp_printf(i * 16, 7, 0, 1, "%02X", *p);
-    }
+
+    // display DEVEUI as QR code on the left
+    char converted[17];
+    sprintf(converted, "%016llX", *((uint64_t *)&buf));
+    oledSetContrast(20);
+    dp_printqr(3, 3, converted);
+
+    // display DEVEUI as plain text on the right
+    dp_printf(72, 0, FONT_NORMAL, 0, "LORAWAN");
+    dp_printf(72, 1, FONT_NORMAL, 0, "DEVEUI:");
+    dp_printf(80, 3, FONT_NORMAL, 0, "%4.4s", converted);
+    dp_printf(80, 4, FONT_NORMAL, 0, "%4.4s", converted + 4);
+    dp_printf(80, 5, FONT_NORMAL, 0, "%4.4s", converted + 8);
+    dp_printf(80, 6, FONT_NORMAL, 0, "%4.4s", converted + 12);
+
+    // give user some time to read or take picture
     delay(3000);
+    oledSetContrast(255);
     oledFill(0x00, 1);
-
-// we need to invert display to show QR code
-#ifndef DISPLAY_FLIP
-    oledInit(OLED_128x64, ANGLE_0, true, -1, -1, 400000L);
-#else
-    oledInit(OLED_128x64, ANGLE_FLIPY, true, -1, -1, 400000L);
-#endif
-
-    // print DEVEUI as QR code
-    const char *eui = reinterpret_cast<const char *>(buf);
-    dp_printqr(3, 3, eui);
-    delay(300000);
-    oledFill(0x00, 1);
-
-    // display back to normal
-#ifndef DISPLAY_FLIP
-    oledInit(OLED_128x64, ANGLE_0, true, -1, -1, 400000L);
-#else
-    oledInit(OLED_128x64, ANGLE_FLIPY, true, -1, -1, 400000L);
-#endif
-
 #endif // HAS_LORA
 
     oledPower(cfg.screenon); // set display off if disabled
@@ -342,13 +337,24 @@ void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
 void dp_printqr(int offset_x, int offset_y, const char *Message) {
   uint8_t qrcodeData[qrcode_getBufferSize(QR_VERSION)];
   qrcode_initText(&qrcode, qrcodeData, QR_VERSION, ECC_HIGH, Message);
+
+  // draw QR code
   for (int y = 0; y < qrcode.size; y++)
     for (int x = 0; x < qrcode.size; x++)
-      if (qrcode_getModule(&qrcode, x, y)) // "black"
+      if (!qrcode_getModule(&qrcode, x, y)) // "black"
         oledfillRect(x * QR_SCALEFACTOR + offset_x,
                      y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
                      QR_SCALEFACTOR, true);
-  oledfillRect(64, 0, 64, 64, true); // clear white space beneath qr code
+  // draw horizontal frame lines
+  oledfillRect(0, 0, qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y,
+               true);
+  oledfillRect(0, qrcode.size * QR_SCALEFACTOR + offset_y,
+               qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y, true);
+  // draw vertical frame lines
+  oledfillRect(0, 0, offset_x, qrcode.size * QR_SCALEFACTOR + 2 * offset_y,
+               true);
+  oledfillRect(qrcode.size * QR_SCALEFACTOR + offset_x, 0, offset_x,
+               qrcode.size * QR_SCALEFACTOR + 2 * offset_y, true);
 }
 
 void oledfillRect(int x, int y, int width, int height, int bRender) {
