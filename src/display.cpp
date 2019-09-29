@@ -42,8 +42,8 @@ static const char TAG[] = __FILE__;
 #define USE_BACKBUFFER    // for display library
 
 // settings for qr code generator
-#define ELEMENT_SIZE 3
-#define QR_VERSION 1
+#define QR_VERSION 3     // 29 x 29px
+#define QR_SCALEFACTOR 2 // 29 -> 58x < 64px
 #define LOCK_VERSION 1
 
 // helper arry for converting month values to text
@@ -94,21 +94,36 @@ void init_display(void) {
     uint8_t buf[8];
     const uint8_t *p;
     os_getDevEui((u1_t *)buf);
-    dp_printf(0, 6, 0, 0, "DEVEUI:");
+    dp_printf(0, 6, 0, 1, "LORAWAN DEVEUI: ");
     for (uint8_t i = 0; i < 8; i++) {
       p = buf + 7 - i;
-      dp_printf(i * 16, 7, 0, 0, "%02X", *p);
+      dp_printf(i * 16, 7, 0, 1, "%02X", *p);
     }
     delay(3000);
     oledFill(0x00, 1);
 
+// we need to invert display to show QR code
+#ifndef DISPLAY_FLIP
+    oledInit(OLED_128x64, ANGLE_0, true, -1, -1, 400000L);
+#else
+    oledInit(OLED_128x64, ANGLE_FLIPY, true, -1, -1, 400000L);
+#endif
+
     // print DEVEUI as QR code
     const char *eui = reinterpret_cast<const char *>(buf);
-    dp_printqr(0, 0, eui); // to come: we need inverted display for QR code
-
-#endif // HAS_LOR
-    delay(3000);
+    dp_printqr(3, 3, eui);
+    delay(300000);
     oledFill(0x00, 1);
+
+    // display back to normal
+#ifndef DISPLAY_FLIP
+    oledInit(OLED_128x64, ANGLE_0, true, -1, -1, 400000L);
+#else
+    oledInit(OLED_128x64, ANGLE_FLIPY, true, -1, -1, 400000L);
+#endif
+
+#endif // HAS_LORA
+
     oledPower(cfg.screenon); // set display off if disabled
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -325,13 +340,15 @@ void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
 }
 
 void dp_printqr(int offset_x, int offset_y, const char *Message) {
-  uint8_t qrcodeData[qrcode_getBufferSize(1)];
+  uint8_t qrcodeData[qrcode_getBufferSize(QR_VERSION)];
   qrcode_initText(&qrcode, qrcodeData, QR_VERSION, ECC_HIGH, Message);
   for (int y = 0; y < qrcode.size; y++)
     for (int x = 0; x < qrcode.size; x++)
-      if (qrcode_getModule(&qrcode, x, y)) // BLACK
-        oledfillRect(x * ELEMENT_SIZE + offset_x, y * ELEMENT_SIZE + offset_y,
-                     ELEMENT_SIZE, ELEMENT_SIZE, true);
+      if (qrcode_getModule(&qrcode, x, y)) // "black"
+        oledfillRect(x * QR_SCALEFACTOR + offset_x,
+                     y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
+                     QR_SCALEFACTOR, true);
+  oledfillRect(64, 0, 64, 64, true); // clear white space beneath qr code
 }
 
 void oledfillRect(int x, int y, int width, int height, int bRender) {
