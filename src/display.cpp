@@ -78,15 +78,17 @@ void init_display(void) {
 #if (VERBOSE)
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
-    dp_printf(0, 0, 0, 0, "ESP32 %d cores", chip_info.cores);
-    dp_printf(0, 2, 0, 0, "Chip Rev.%d", chip_info.revision);
-    dp_printf(0, 1, 0, 0, "WiFi%s%s",
+    dp_printf(0, 0, 0, 0, "** PAXCOUNTER **");
+    dp_printf(0, 1, 0, 0, "Software v%s", PROGVERSION);
+    dp_printf(0, 3, 0, 0, "ESP32 %d cores", chip_info.cores);
+    dp_printf(0, 4, 0, 0, "Chip Rev.%d", chip_info.revision);
+    dp_printf(0, 5, 0, 0, "WiFi%s%s",
               (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
               (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-    dp_printf(0, 3, 0, 0, "%dMB %s Flash",
+    dp_printf(0, 6, 0, 0, "%dMB %s Flash",
               spi_flash_get_chip_size() / (1024 * 1024),
               (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
-    dp_printf(0, 5, 0, 0, "Software v%s", PROGVERSION);
+    
 
     // give user some time to read or take picture
     delay(2000);
