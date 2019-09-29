@@ -23,12 +23,9 @@ Display-Mask (128 x 64 pixel):
 
 y = LMIC event message; ab = payload queue length
 
-FONTS in ss_oled.cpp:
-
-FONT_SMALL:     6px = 21 chars / line
-FONT_NORMAL:    8px = 16 chars / line
-FONT_STRETCHED: 8 chars / line
-FONT_LARGE:     8 chars / line
+FONT_SMALL:     6x8px = 21 chars / line
+FONT_NORMAL:    8x8px = 16 chars / line
+FONT_STRETCHED: 16x32px = 8 chars / line
 
 */
 
@@ -37,14 +34,25 @@ FONT_LARGE:     8 chars / line
 #include <ss_oled.h>
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
+// local Tag for logging
+static const char TAG[] = __FILE__;
+
+// settings for oled display library
 #define DISPLAY_PAGES (4) // number of display pages
 #define USE_BACKBUFFER    // for display library
+
+// settings for qr code generator
+#define ELEMENT_SIZE 3
+#define QR_VERSION 1
+#define LOCK_VERSION 1
 
 // helper arry for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 uint8_t DisplayIsOn = 0;
+
+QRCode qrcode;
 
 void init_display(void) {
 
@@ -78,23 +86,29 @@ void init_display(void) {
     dp_printf(0, 3, 0, 0, "%dMB %s Flash",
               spi_flash_get_chip_size() / (1024 * 1024),
               (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
+    dp_printf(0, 4, 0, 0, "Software v%s", PROGVERSION);
 #endif // VERBOSE
 
 #if (HAS_LORA)
-    uint8_t buf[34];
+    // generate and show DEVEUI
+    uint8_t buf[8];
     const uint8_t *p;
     os_getDevEui((u1_t *)buf);
-    dp_printf(0, 5, 0, 0, "DEVEUI:");
+    dp_printf(0, 6, 0, 0, "DEVEUI:");
     for (uint8_t i = 0; i < 8; i++) {
       p = buf + 7 - i;
-      dp_printf(i * 16, 6, 0, 0, "%02X", *p);
+      dp_printf(i * 16, 7, 0, 0, "%02X", *p);
     }
-#endif // HAS_LORA
-
-    dp_printf(0, 4, 0, 0, "Software v%s", PROGVERSION);
     delay(3000);
+    oledFill(0x00, 1);
 
-    oledFill(0, 1);
+    // print DEVEUI as QR code
+    const char *eui = reinterpret_cast<const char *>(buf);
+    dp_printqr(0, 0, eui); // to come: we need inverted display for QR code
+
+#endif // HAS_LOR
+    delay(3000);
+    oledFill(0x00, 1);
     oledPower(cfg.screenon); // set display off if disabled
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -281,8 +295,7 @@ void draw_page(time_t t, uint8_t page) {
 
 } // draw_page
 
-// display print helper function
-
+// display print helper functions
 void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
   char loc_buf[64];
   char *temp = loc_buf;
@@ -309,6 +322,21 @@ void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
   if (temp != loc_buf) {
     free(temp);
   }
+}
+
+void dp_printqr(int offset_x, int offset_y, const char *Message) {
+  uint8_t qrcodeData[qrcode_getBufferSize(1)];
+  qrcode_initText(&qrcode, qrcodeData, QR_VERSION, ECC_HIGH, Message);
+  for (int y = 0; y < qrcode.size; y++)
+    for (int x = 0; x < qrcode.size; x++)
+      if (qrcode_getModule(&qrcode, x, y)) // BLACK
+        oledfillRect(x * ELEMENT_SIZE + offset_x, y * ELEMENT_SIZE + offset_y,
+                     ELEMENT_SIZE, ELEMENT_SIZE, true);
+}
+
+void oledfillRect(int x, int y, int width, int height, int bRender) {
+  for (int xi = x; xi < x + width; xi++)
+    oledDrawLine(xi, y, xi, y + height - 1, bRender);
 }
 
 #endif // HAS_DISPLAY
