@@ -52,9 +52,9 @@ void start_ota_update() {
 
 // init display
 #ifndef DISPLAY_FLIP
-  int rc = oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 100000L);
+  oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 100000L);
 #else
-  int rc = oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 100000L);
+  oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 100000L);
 #endif
 
   oledFill(0, 1);
@@ -157,7 +157,7 @@ int do_ota_update() {
   client.setCACert(bintray.getCertificate(currentHost));
   client.setTimeout(RESPONSE_TIMEOUT_MS);
 
-  if (!client.connect(currentHost.c_str(), port)) {
+  if (!client.connect(currentHost.c_str(), port, RESPONSE_TIMEOUT_MS)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     ota_display(3, " E", "connection lost");
     goto abort;
@@ -167,7 +167,7 @@ int do_ota_update() {
     if (currentHost != prevHost) {
       client.stop();
       client.setCACert(bintray.getCertificate(currentHost));
-      if (!client.connect(currentHost.c_str(), port)) {
+      if (!client.connect(currentHost.c_str(), port, RESPONSE_TIMEOUT_MS)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
         ota_display(3, " E", "server error");
