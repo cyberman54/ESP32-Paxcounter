@@ -172,9 +172,9 @@ void setup() {
 
 // open i2c bus
 #ifdef HAS_DISPLAY
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 400000);
 #else
-  Wire.begin(SDA, SCL, 100000);
+  Wire.begin(SDA, SCL, 400000);
 #endif
 
 // setup power on boards with power management logic

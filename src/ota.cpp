@@ -52,9 +52,9 @@ void start_ota_update() {
 
 // init display
 #ifndef DISPLAY_FLIP
-  oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 100000L);
+  oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 400000L);
 #else
-  oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 100000L);
+  oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 400000L);
 #endif
 
   oledFill(0, 1);

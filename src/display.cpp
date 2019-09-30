@@ -44,7 +44,6 @@ static const char TAG[] = __FILE__;
 // settings for qr code generator
 #define QR_VERSION 3     // 29 x 29px
 #define QR_SCALEFACTOR 2 // 29 -> 58x < 64px
-#define LOCK_VERSION 1
 
 // helper arry for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -69,6 +68,7 @@ void init_display(void) {
 #endif
 
     // clear display
+    oledSetContrast(DISPLAYCONTRAST);
     oledFill(0, 1);
 
     // show startup screen
@@ -88,9 +88,9 @@ void init_display(void) {
     dp_printf(0, 6, 0, 0, "%dMB %s Flash",
               spi_flash_get_chip_size() / (1024 * 1024),
               (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
-    
 
     // give user some time to read or take picture
+    oledDumpBuffer(NULL);
     delay(2000);
     oledFill(0x00, 1);
 #endif // VERBOSE
@@ -98,26 +98,26 @@ void init_display(void) {
 #if (HAS_LORA)
     // generate DEVEUI as QR code and text
     uint8_t buf[8];
-    const uint8_t *p;
+    char deveui[17];
     os_getDevEui((u1_t *)buf);
+    sprintf(deveui, "%016llX", *((uint64_t *)&buf));
 
     // display DEVEUI as QR code on the left
-    char converted[17];
-    sprintf(converted, "%016llX", *((uint64_t *)&buf));
-    oledSetContrast(20);
-    dp_printqr(3, 3, converted);
+    oledSetContrast(30);
+    dp_printqr(3, 3, deveui);
 
     // display DEVEUI as plain text on the right
     dp_printf(72, 0, FONT_NORMAL, 0, "LORAWAN");
     dp_printf(72, 1, FONT_NORMAL, 0, "DEVEUI:");
-    dp_printf(80, 3, FONT_NORMAL, 0, "%4.4s", converted);
-    dp_printf(80, 4, FONT_NORMAL, 0, "%4.4s", converted + 4);
-    dp_printf(80, 5, FONT_NORMAL, 0, "%4.4s", converted + 8);
-    dp_printf(80, 6, FONT_NORMAL, 0, "%4.4s", converted + 12);
+    dp_printf(80, 3, FONT_NORMAL, 0, "%4.4s", deveui);
+    dp_printf(80, 4, FONT_NORMAL, 0, "%4.4s", deveui + 4);
+    dp_printf(80, 5, FONT_NORMAL, 0, "%4.4s", deveui + 8);
+    dp_printf(80, 6, FONT_NORMAL, 0, "%4.4s", deveui + 12);
 
     // give user some time to read or take picture
-    delay(3000);
-    oledSetContrast(255);
+    oledDumpBuffer(NULL);
+    delay(8000);
+    oledSetContrast(DISPLAYCONTRAST);
     oledFill(0x00, 1);
 #endif // HAS_LORA
 
@@ -154,6 +154,7 @@ void refreshTheDisplay(bool nextPage) {
     }
 
     draw_page(t, DisplayPage);
+    oledDumpBuffer(NULL);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
 
@@ -162,7 +163,7 @@ void refreshTheDisplay(bool nextPage) {
 
 void draw_page(time_t t, uint8_t page) {
 
-  char timeState, buff[16];
+  char timeState;
   uint8_t msgWaiting;
 #if (HAS_GPS)
   static bool wasnofix = true;
@@ -330,7 +331,7 @@ void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
     len = vsnprintf(temp, len + 1, format, arg);
   }
   va_end(arg);
-  oledWriteString(0, x, y, temp, font, inv, 1);
+  oledWriteString(0, x, y, temp, font, inv, false);
   if (temp != loc_buf) {
     free(temp);
   }
@@ -346,17 +347,17 @@ void dp_printqr(int offset_x, int offset_y, const char *Message) {
       if (!qrcode_getModule(&qrcode, x, y)) // "black"
         oledfillRect(x * QR_SCALEFACTOR + offset_x,
                      y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
-                     QR_SCALEFACTOR, true);
+                     QR_SCALEFACTOR, false);
   // draw horizontal frame lines
   oledfillRect(0, 0, qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y,
-               true);
+               false);
   oledfillRect(0, qrcode.size * QR_SCALEFACTOR + offset_y,
-               qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y, true);
+               qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y, false);
   // draw vertical frame lines
   oledfillRect(0, 0, offset_x, qrcode.size * QR_SCALEFACTOR + 2 * offset_y,
-               true);
+               false);
   oledfillRect(qrcode.size * QR_SCALEFACTOR + offset_x, 0, offset_x,
-               qrcode.size * QR_SCALEFACTOR + 2 * offset_y, true);
+               qrcode.size * QR_SCALEFACTOR + 2 * offset_y, false);
 }
 
 void oledfillRect(int x, int y, int width, int height, int bRender) {
