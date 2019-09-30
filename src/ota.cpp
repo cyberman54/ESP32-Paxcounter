@@ -48,15 +48,13 @@ void start_ota_update() {
 
   switch_LED(LED_ON);
 
-#ifdef HAS_DISPLAY
-
 // init display
+#ifdef HAS_DISPLAY
 #ifndef DISPLAY_FLIP
   oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 400000L);
 #else
   oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 400000L);
 #endif
-
   oledFill(0, 1);
   dp_printf(0, 0, 0, 1, "SOFTWARE UPDATE");
   dp_printf(0, 1, 0, 0, "WiFi connect  ..");
@@ -64,6 +62,7 @@ void start_ota_update() {
   dp_printf(0, 3, 0, 0, "Fetching      ..");
   dp_printf(0, 4, 0, 0, "Downloading   ..");
   dp_printf(0, 5, 0, 0, "Rebooting     ..");
+  oledDumpBuffer(NULL);
 #endif
 
   ESP_LOGI(TAG, "Starting Wifi OTA update");
@@ -157,7 +156,7 @@ int do_ota_update() {
   client.setCACert(bintray.getCertificate(currentHost));
   client.setTimeout(RESPONSE_TIMEOUT_MS);
 
-  if (!client.connect(currentHost.c_str(), port, RESPONSE_TIMEOUT_MS)) {
+  if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     ota_display(3, " E", "connection lost");
     goto abort;
@@ -167,7 +166,7 @@ int do_ota_update() {
     if (currentHost != prevHost) {
       client.stop();
       client.setCACert(bintray.getCertificate(currentHost));
-      if (!client.connect(currentHost.c_str(), port, RESPONSE_TIMEOUT_MS)) {
+      if (!client.connect(currentHost.c_str(), port)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
         ota_display(3, " E", "server error");
@@ -316,6 +315,7 @@ void ota_display(const uint8_t row, const std::string status,
     dp_printf(0, 7, 0, 0, "                ");
     dp_printf(0, 7, 0, 0, msg.substr(0, 16).c_str());
   }
+  oledDumpBuffer(NULL);
 #endif
 }
 

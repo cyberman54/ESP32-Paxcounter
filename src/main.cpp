@@ -200,7 +200,7 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
-  init_display(); // note: blocking call
+  init_display(!cfg.runmode); // note: blocking call
 #endif
 
 #ifdef BOARD_HAS_PSRAM
