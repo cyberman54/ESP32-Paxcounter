@@ -94,7 +94,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
           if (col < (LED_MATRIX_WIDTH - 1))
             col++;
           else
-            ScrollLeft(displaybuf, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
+            ScrollMatrixLeft(displaybuf, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
 
         } else
           matrix.drawPoint(col, row, 0); // clear current dot
@@ -204,7 +204,7 @@ uint8_t GetCharWidth(char cChar) {
   return CharDescriptor.width;
 }
 
-void ScrollLeft(uint8_t *buf, const uint16_t cols, const uint16_t rows) {
+void ScrollMatrixLeft(uint8_t *buf, const uint16_t cols, const uint16_t rows) {
   uint32_t i, k, idx;
   const uint32_t x = cols / 8;
 
