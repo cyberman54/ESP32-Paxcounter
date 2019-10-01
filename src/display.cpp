@@ -37,23 +37,29 @@ FONT_STRETCHED: 16x32px = 8 chars / line
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
+#define DISPLAY_PAGES (5) // number of paxcounter display pages
+
 // settings for oled display library
-#define DISPLAY_PAGES (4) // number of display pages
-#define USE_BACKBUFFER    // for display library
+#define USE_BACKBUFFER
 
 // settings for qr code generator
 #define QR_VERSION 3     // 29 x 29px
 #define QR_SCALEFACTOR 2 // 29 -> 58x < 64px
 
-// helper arry for converting month values to text
+// settings for curve plotter
+#define PLOT_SCALEFACTOR 1 // downscales pax numbers to display rows
+#define DISPLAY_WIDTH 128  // Width in pixels of OLED-display, must be 32X
+#define DISPLAY_HEIGHT 64  // Height in pixels of OLED-display, must be 16X
+
+// helper array for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
 uint8_t DisplayIsOn = 0;
+uint8_t displaybuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
 
 QRCode qrcode;
 
-void init_display(void) {
+void init_display(uint8_t verbose) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
@@ -71,55 +77,60 @@ void init_display(void) {
     oledSetContrast(DISPLAYCONTRAST);
     oledFill(0, 1);
 
-    // show startup screen
-    // to come -> display .bmp file with logo
+    if (verbose) {
+
+      // show startup screen
+      // to come -> display .bmp file with logo
 
 // show chip information
 #if (VERBOSE)
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    dp_printf(0, 0, 0, 0, "** PAXCOUNTER **");
-    dp_printf(0, 1, 0, 0, "Software v%s", PROGVERSION);
-    dp_printf(0, 3, 0, 0, "ESP32 %d cores", chip_info.cores);
-    dp_printf(0, 4, 0, 0, "Chip Rev.%d", chip_info.revision);
-    dp_printf(0, 5, 0, 0, "WiFi%s%s",
-              (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-              (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-    dp_printf(0, 6, 0, 0, "%dMB %s Flash",
-              spi_flash_get_chip_size() / (1024 * 1024),
-              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
+      esp_chip_info_t chip_info;
+      esp_chip_info(&chip_info);
+      dp_printf(0, 0, 0, 0, "** PAXCOUNTER **");
+      dp_printf(0, 1, 0, 0, "Software v%s", PROGVERSION);
+      dp_printf(0, 3, 0, 0, "ESP32 %d cores", chip_info.cores);
+      dp_printf(0, 4, 0, 0, "Chip Rev.%d", chip_info.revision);
+      dp_printf(0, 5, 0, 0, "WiFi%s%s",
+                (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+                (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+      dp_printf(0, 6, 0, 0, "%dMB %s Flash",
+                spi_flash_get_chip_size() / (1024 * 1024),
+                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int."
+                                                              : "ext.");
 
-    // give user some time to read or take picture
-    oledDumpBuffer(NULL);
-    delay(2000);
-    oledFill(0x00, 1);
+      // give user some time to read or take picture
+      oledDumpBuffer(NULL);
+      delay(2000);
+      oledFill(0x00, 1);
 #endif // VERBOSE
 
 #if (HAS_LORA)
-    // generate DEVEUI as QR code and text
-    uint8_t buf[8];
-    char deveui[17];
-    os_getDevEui((u1_t *)buf);
-    sprintf(deveui, "%016llX", *((uint64_t *)&buf));
+      // generate DEVEUI as QR code and text
+      uint8_t buf[8];
+      char deveui[17];
+      os_getDevEui((u1_t *)buf);
+      sprintf(deveui, "%016llX", *((uint64_t *)&buf));
 
-    // display DEVEUI as QR code on the left
-    oledSetContrast(30);
-    dp_printqr(3, 3, deveui);
+      // display DEVEUI as QR code on the left
+      oledSetContrast(30);
+      dp_printqr(3, 3, deveui);
 
-    // display DEVEUI as plain text on the right
-    dp_printf(72, 0, FONT_NORMAL, 0, "LORAWAN");
-    dp_printf(72, 1, FONT_NORMAL, 0, "DEVEUI:");
-    dp_printf(80, 3, FONT_NORMAL, 0, "%4.4s", deveui);
-    dp_printf(80, 4, FONT_NORMAL, 0, "%4.4s", deveui + 4);
-    dp_printf(80, 5, FONT_NORMAL, 0, "%4.4s", deveui + 8);
-    dp_printf(80, 6, FONT_NORMAL, 0, "%4.4s", deveui + 12);
+      // display DEVEUI as plain text on the right
+      dp_printf(72, 0, FONT_NORMAL, 0, "LORAWAN");
+      dp_printf(72, 1, FONT_NORMAL, 0, "DEVEUI:");
+      dp_printf(80, 3, FONT_NORMAL, 0, "%4.4s", deveui);
+      dp_printf(80, 4, FONT_NORMAL, 0, "%4.4s", deveui + 4);
+      dp_printf(80, 5, FONT_NORMAL, 0, "%4.4s", deveui + 8);
+      dp_printf(80, 6, FONT_NORMAL, 0, "%4.4s", deveui + 12);
 
-    // give user some time to read or take picture
-    oledDumpBuffer(NULL);
-    delay(8000);
-    oledSetContrast(DISPLAYCONTRAST);
-    oledFill(0x00, 1);
+      // give user some time to read or take picture
+      oledDumpBuffer(NULL);
+      delay(8000);
+      oledSetContrast(DISPLAYCONTRAST);
+      oledFill(0x00, 1);
 #endif // HAS_LORA
+
+    } // verbose
 
     oledPower(cfg.screenon); // set display off if disabled
 
@@ -171,15 +182,20 @@ void draw_page(time_t t, uint8_t page) {
 
   // line 1/2: pax counter
   dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
-            (int)macs.size()); // display number of unique macs total Wifi + BLE
+            macs.size()); // display number of unique macs total Wifi + BLE
+
+  // update histogram if we have a display
+  oledPlotCurve(macs.size());
 
   switch (page % DISPLAY_PAGES) {
 
     // page 0: parameters overview
-    // page 1: time
+    // page 1: pax graph
     // page 2: GPS
     // page 3: BME280/680
+    // page 4: time
 
+    // page 0: parameters overview
   case 0:
 
     // line 3: wifi + bluetooth counters
@@ -194,7 +210,9 @@ void draw_page(time_t t, uint8_t page) {
 // line 4: Battery + GPS status + Wifi channel
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     if (batt_voltage == 0xffff)
-      dp_printf(0, 4, FONT_SMALL, 0, "%s", "B:USB  ");
+      dp_printf(0, 4, FONT_SMALL, 0, "%s", "USB    ");
+    else if (batt_voltage == 0)
+      dp_printf(0, 4, FONT_SMALL, 0, "%s", "No batt");
     else
       dp_printf(0, 4, FONT_SMALL, 0, "B:%.2fV", batt_voltage / 1000.0);
 #endif
@@ -249,11 +267,12 @@ void draw_page(time_t t, uint8_t page) {
 
     break; // page0
 
+    // page 1: pax graph
   case 1:
-    dp_printf(0, 4, FONT_LARGE, 0, "%02d:%02d:%02d", hour(t), minute(t),
-              second(t));
+    oledDumpBuffer(displaybuf);
     break; // page1
 
+    // page 2: GPS
   case 2:
 #if (HAS_GPS)
     if (gps.location.age() < 1500) {
@@ -281,6 +300,7 @@ void draw_page(time_t t, uint8_t page) {
 
     break; // page2
 
+    // page 3: BME280/680
   case 3:
 
 #if (HAS_BME)
@@ -301,6 +321,13 @@ void draw_page(time_t t, uint8_t page) {
 
     break; // page3
 
+  // page 4: time
+  case 4:
+
+    dp_printf(0, 4, FONT_LARGE, 0, "%02d:%02d:%02d", hour(t), minute(t),
+              second(t));
+    break;
+
   default:
     break; // default
 
@@ -308,8 +335,9 @@ void draw_page(time_t t, uint8_t page) {
 
 } // draw_page
 
-// display print helper functions
-void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
+// display helper functions
+void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
+               const char *format, ...) {
   char loc_buf[64];
   char *temp = loc_buf;
   va_list arg;
@@ -337,13 +365,13 @@ void dp_printf(int x, int y, int font, int inv, const char *format, ...) {
   }
 }
 
-void dp_printqr(int offset_x, int offset_y, const char *Message) {
+void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
   uint8_t qrcodeData[qrcode_getBufferSize(QR_VERSION)];
   qrcode_initText(&qrcode, qrcodeData, QR_VERSION, ECC_HIGH, Message);
 
   // draw QR code
-  for (int y = 0; y < qrcode.size; y++)
-    for (int x = 0; x < qrcode.size; x++)
+  for (uint16_t y = 0; y < qrcode.size; y++)
+    for (uint16_t x = 0; x < qrcode.size; x++)
       if (!qrcode_getModule(&qrcode, x, y)) // "black"
         oledfillRect(x * QR_SCALEFACTOR + offset_x,
                      y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
@@ -360,9 +388,71 @@ void dp_printqr(int offset_x, int offset_y, const char *Message) {
                qrcode.size * QR_SCALEFACTOR + 2 * offset_y, false);
 }
 
-void oledfillRect(int x, int y, int width, int height, int bRender) {
-  for (int xi = x; xi < x + width; xi++)
+void oledfillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
+                  uint8_t bRender) {
+  for (uint16_t xi = x; xi < x + width; xi++)
     oledDrawLine(xi, y, xi, y + height - 1, bRender);
+}
+
+int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
+                  const uint8_t dot) {
+
+  uint8_t page, bit;
+
+  if (x > DISPLAY_WIDTH || y > DISPLAY_HEIGHT)
+    return -1;
+
+  page = y / 8;
+  bit = y % 8;
+
+  if (dot)
+    buf[page * DISPLAY_WIDTH + x] |= (1 << bit); // mark
+  else
+    buf[page * DISPLAY_WIDTH + x] &= ~(0 << bit); // clear
+
+  return 0;
+}
+
+void oledScrollBufferLeft(uint8_t *buf, const uint16_t width,
+                          const uint16_t height) {
+
+  uint16_t col, page, idx;
+
+  for (page = 0; page < height / 8; page++) {
+    for (col = 0; col < width - 1; col++) {
+      idx = page * width + col;
+      buf[idx] = buf[idx + 1];
+    }
+    buf[idx + 1] = 0;
+  }
+}
+
+void oledPlotCurve(uint16_t count) {
+
+  uint8_t level;
+  static uint16_t last_count = 0, col = 0, row = 0;
+
+  if (last_count == count)
+    return;
+
+  // next count cycle?
+  if (count == 0) {
+
+    // matrix full? then scroll left 1 dot, else increment column
+    if (col < DISPLAY_WIDTH - 1)
+      col++;
+    else
+      oledScrollBufferLeft(displaybuf, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+  } else
+    oledDrawPixel(displaybuf, col, row, 0); // clear current dot
+
+  // scale and set new dot
+  last_count = count;
+  level = count / PLOT_SCALEFACTOR;
+  row =
+      level <= DISPLAY_HEIGHT ? DISPLAY_HEIGHT - 1 - level % DISPLAY_HEIGHT : 0;
+  oledDrawPixel(displaybuf, col, row, 1);
 }
 
 #endif // HAS_DISPLAY
