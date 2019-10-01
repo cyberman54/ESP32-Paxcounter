@@ -108,7 +108,7 @@ void process_timesync_req(void *taskparameter) {
         payload.addByte(0x99);
         SendPayload(RCMDPORT, prio_high);
         // ...send a alive open a receive window for last time_sync_answer
-        // LMIC_sendAlive();
+        LMIC_sendAlive();
       }
     } // end of for loop to collect timestamp samples
 
@@ -181,7 +181,7 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
     // the 5th byte contains the fractional seconds in 2^-8 second steps
     // (= 1/250th sec), we convert this to ms
     uint16_t timestamp_msec = 4 * buf[4];
-    // pointers to 4 bytes 4 bytes containing UTC seconds since unix epoch, msb
+    // pointers to 4 bytes containing UTC seconds since unix epoch, msb
     uint32_t timestamp_sec, *timestamp_ptr;
 
     // convert buffer to uint32_t, octet order is big endian
@@ -207,92 +207,6 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
                millis() / 1000.0);
       return 0; // failure
     }
-  }
-}
-
-// adjust system time, calibrate RTC and RTC_INT pps
-void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
-   timesource_t mytimesource) {
-
-  t_sec ++;
-  time_t time_to_set = (time_t)(t_sec);
-
-  // increment t_sec only if t_msec > 1000
-  time_to_set = (time_t)(t_sec + t_msec / 1000);
-
-  // do we have a valid time?
-  if (timeIsValid(time_to_set)) {
-
-    // if we have msec fraction, then wait until top of second with
-    // millisecond precision
-    if (t_msec % 1000) {
-      time_to_set++;
-      vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
-    }
-
-    ESP_LOGD(TAG, "[%0.3f] UTC epoch time: %d.%03d sec", millis() / 1000.0,
-             time_to_set, t_msec % 1000);
-
-// if we have got an external timesource, set RTC time and shift RTC_INT pulse
-// to top of second
-#ifdef HAS_RTC
-    if ((mytimesource == _gps) || (mytimesource == _lora))
-      set_rtctime(time_to_set);
-#endif
-
-// if we have a software pps timer, shift it to top of second
-#if (!defined GPS_INT && !defined RTC_INT)
-    timerWrite(ppsIRQ, 0); // reset pps timer
-    CLOCKIRQ();            // fire clock pps, this advances time 1 sec
-#endif
-
-    struct timeval tv;
-    struct timezone tz;
-    if(gettimeofday(&tv, &tz) != 0) {
-      ESP_LOGE(TAG, "ERROR gettimeofday");
-    }
-    struct timeval beforeTime = tv;
-
-    struct timeval nowTime;
-    nowTime.tv_sec = t_sec;
-    nowTime.tv_usec = t_msec;
-    if(settimeofday(&nowTime, &tz) != 0) {
-      ESP_LOGE(TAG, "ERROR settimeofday");
-    }
-
-    struct timeval diff;
-    diff.tv_sec = nowTime.tv_sec-beforeTime.tv_sec;
-    diff.tv_usec = nowTime.tv_usec-beforeTime.tv_usec;
-
-    // sum up diff_s and diff_ms to one ms value
-    int32_t diff_s = diff.tv_sec;
-    int32_t diff_ms = diff.tv_usec/1000;
-    int32_t diff_ms_remain = diff_ms / 1000;
-    diff_s += diff_ms_remain;
-    diff_ms += -1000*diff_ms_remain;
-    if(diff_ms < 0) {
-      diff_s --;
-      diff_ms += 1000;
-    }
-    // cap diff at 24h (= 86,400s)
-    diff_s = diff_s % 86400;
-    int32_t timediff_ms = diff_s * 1000 + diff_ms;
-
-    // send diffTime
-    payload.reset();
-    payload.addTimeDiff(timediff_ms);
-    SendPayload(TIMEDIFFPORT, prio_high);
-    ESP_LOGI(TAG, "timediff_ms: %d", timediff_ms);
-
-    timeSource = mytimesource; // set global variable
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
-    time_uart_send_start();
-    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
-  } else {
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
-    ESP_LOGI(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
   }
 }
 

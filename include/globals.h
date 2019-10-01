@@ -42,12 +42,16 @@
 #define SCREEN_MODE (0x80)
 
 // I2C bus access control
-#define I2C_MUTEX_LOCK() (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(10)) == pdTRUE)
+#define I2C_MUTEX_LOCK()                                                       \
+  (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(10)) == pdTRUE)
 #define I2C_MUTEX_UNLOCK() (xSemaphoreGive(I2Caccess))
+
+enum sendprio_t { prio_low, prio_normal, prio_high };
+enum timesource_t { _gps, _rtc, _lora, _unsynced };
 
 // Struct holding devices's runtime configuration
 typedef struct {
-  uint8_t lorasf;      // 7-12, lora spreadfactor
+  uint8_t loradr;      // 0-15, lora datarate
   uint8_t txpower;     // 2-15, lora tx power
   uint8_t adrmode;     // 0=disabled, 1=enabled
   uint8_t screensaver; // 0=disabled, 1=enabled
@@ -73,6 +77,7 @@ typedef struct {
 typedef struct {
   uint8_t MessageSize;
   uint8_t MessagePort;
+  sendprio_t MessagePrio;
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 
@@ -95,16 +100,13 @@ typedef struct {
   float gas;             // raw gas sensor signal
 } bmeStatus_t;
 
-enum sendprio_t { prio_low, prio_normal, prio_high };
-enum timesource_t { _gps, _rtc, _lora, _unsynced };
-
 extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
-extern configData_t cfg;                      // current device configuration
-extern char display_line6[], display_line7[]; // screen buffers
-extern uint8_t volatile channel;              // wifi channel rotation counter
+extern configData_t cfg;         // current device configuration
+extern char lmic_event_msg[];    // display buffer
+extern uint8_t volatile channel; // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                   // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
@@ -120,6 +122,7 @@ extern time_t userUTCTime;
 #include "led.h"
 #include "payload.h"
 #include "blescan.h"
+#include "power.h"
 
 #if (HAS_GPS)
 #include "gpsread.h"
@@ -139,10 +142,6 @@ extern time_t userUTCTime;
 
 #ifdef HAS_BUTTON
 #include "button.h"
-#endif
-
-#ifdef BAT_MEASURE_ADC
-#include "battery.h"
 #endif
 
 #ifdef HAS_ANTENNA_SWITCH

@@ -56,7 +56,7 @@ void spi_slave_task(void *param) {
     memset(txbuf, 0, sizeof(txbuf));
     memset(rxbuf, 0, sizeof(rxbuf));
 
-    // wait until data to send arrivey
+    // fetch next or wait for payload to send from queue
     if (xQueueReceive(SPISendQueue, &msg, portMAX_DELAY) != pdTRUE) {
       ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
       continue;
@@ -147,10 +147,12 @@ esp_err_t spi_init() {
   return ret;
 }
 
-void spi_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
+void spi_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in SPI send queue
   BaseType_t ret;
   MessageBuffer_t DummyBuffer;
+  sendprio_t prio = message->MessagePrio;
+
   switch (prio) {
   case prio_high:
     // clear space in queue if full, then fallthrough to normal

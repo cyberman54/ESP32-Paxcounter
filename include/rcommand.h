@@ -19,11 +19,11 @@
 typedef struct {
   const uint8_t opcode;
   void (*func)(uint8_t []);
-  uint8_t params;
+  const uint8_t params;
   const bool store;
 } cmd_t;
 
-void rcommand(uint8_t cmd[], uint8_t cmdlength);
+void rcommand(const uint8_t cmd[], const uint8_t cmdlength);
 void do_reset();
 
 #endif

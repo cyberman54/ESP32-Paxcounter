@@ -90,12 +90,11 @@ time_t fetch_gpsTime(uint16_t *msec) {
   // poll NMEA $GPZDA sentence
 #ifdef GPS_SERIAL
   GPS_Serial.print(ZDA_Request);
+  // wait for gps NMEA answer
+  vTaskDelay(tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL));
 #elif defined GPS_I2C
   Wire.print(ZDA_Request);
 #endif
-
-  // wait for gps NMEA answer
-  //vTaskDelay(tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL));
 
   // did we get a current time?
   if (gpstime.isUpdated() && gpstime.isValid()) {
@@ -104,7 +103,8 @@ time_t fetch_gpsTime(uint16_t *msec) {
 
     String rawtime = gpstime.value();
     uint32_t time_bcd = rawtime.toFloat() * 100;
-    uint32_t delay_ms = gpstime.age() + nmea_txDelay_ms + NMEA_COMPENSATION_FACTOR;
+    uint32_t delay_ms =
+        gpstime.age() + nmea_txDelay_ms + NMEA_COMPENSATION_FACTOR;
     uint8_t year =
         CalendarYrToTm(gps.date.year()); // year offset from 1970 in microTime.h
 
@@ -138,7 +138,7 @@ void gps_loop(void *pvParameters) {
 
   while (1) {
 
-    if (cfg.payloadmask && GPS_DATA) {
+    if (cfg.payloadmask & GPS_DATA) {
 #ifdef GPS_SERIAL
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available()) {
@@ -153,10 +153,10 @@ void gps_loop(void *pvParameters) {
 #endif
     } // if
 
-    // show NMEA data in verbose mode, useful for debugging GPS
-    ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix: %u",
-             gps.passedChecksum(), gps.failedChecksum(),
-             gps.sentencesWithFix());
+    // show NMEA data in verbose mode, useful for debugging GPS, bu tvery noisy
+    //ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix: %u",
+    //         gps.passedChecksum(), gps.failedChecksum(),
+    //         gps.sentencesWithFix());
 
     delay(2); // yield to CPU
 

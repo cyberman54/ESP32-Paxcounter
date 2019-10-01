@@ -23,7 +23,7 @@
 
 #define HAS_LED        13  // ESP32 GPIO12 (pin22) On Board LED
 //#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
-//#define HAS_RGB_LED   13  // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
+//#define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, 1, GPIO_NUM_13) // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
 //#define HAS_BUTTON    15  // ESP32 GPIO15 (pin15) Button is on the LoraNode32 shield
 //#define BUTTON_PULLUP  1  // Button need pullup instead of default pulldown
 

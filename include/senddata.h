@@ -10,7 +10,7 @@
 extern Ticker sendcycler;
 
 void SendPayload(uint8_t port, sendprio_t prio);
-void sendCounter(void);
+void sendData(void);
 void checkSendQueues(void);
 void flushQueues();
 void sendcycle(void);

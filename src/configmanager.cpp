@@ -8,16 +8,21 @@ static const char TAG[] = "flash";
 nvs_handle my_handle;
 esp_err_t err;
 
+#define PAYLOADMASK                                                            \
+  ((GPS_DATA | ALARM_DATA | MEMS_DATA | COUNT_DATA | SENSOR1_DATA |            \
+    SENSOR2_DATA | SENSOR3_DATA) &                                             \
+   ~BATT_DATA)
+
 // populate cfg vars with factory settings
 void defaultConfig() {
-  cfg.lorasf = LORASFDEFAULT; // 7-12, initial lora sf, see pacounter.conf
-  cfg.txpower = 15;           // 2-15, lora tx power
-  cfg.adrmode = 1;            // 0=disabled, 1=enabled
-  cfg.screensaver = 0;        // 0=disabled, 1=enabled
-  cfg.screenon = 1;           // 0=disabled, 1=enabled
-  cfg.countermode = 0;        // 0=cyclic, 1=cumulative, 2=cyclic confirmed
-  cfg.rssilimit = 0;          // threshold for rssilimiter, negative value!
-  cfg.sendcycle = SENDCYCLE;  // payload send cycle [seconds/2]
+  cfg.loradr = LORADRDEFAULT;     // 0-15, lora datarate, see pacounter.conf
+  cfg.txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
+  cfg.adrmode = 1;                // 0=disabled, 1=enabled
+  cfg.screensaver = 0;            // 0=disabled, 1=enabled
+  cfg.screenon = 1;               // 0=disabled, 1=enabled
+  cfg.countermode = 0;            // 0=cyclic, 1=cumulative, 2=cyclic confirmed
+  cfg.rssilimit = 0;              // threshold for rssilimiter, negative value!
+  cfg.sendcycle = SENDCYCLE;      // payload send cycle [seconds/2]
   cfg.wifichancycle =
       WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
   cfg.blescantime =
@@ -29,7 +34,7 @@ void defaultConfig() {
   cfg.rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
   cfg.monitormode = 0;             // 0=disabled, 1=enabled
   cfg.runmode = 0;                 // 0=normal, 1=update
-  cfg.payloadmask = 0xFF;          // all payload switched on
+  cfg.payloadmask = PAYLOADMASK;   // all payload switched on
   cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = {
       0}; // init BSEC state for BME680 sensor
 
@@ -92,9 +97,9 @@ void saveConfig() {
         strcmp(storedversion, cfg.version) != 0)
       nvs_set_str(my_handle, "version", cfg.version);
 
-    if (nvs_get_i8(my_handle, "lorasf", &flash8) != ESP_OK ||
-        flash8 != cfg.lorasf)
-      nvs_set_i8(my_handle, "lorasf", cfg.lorasf);
+    if (nvs_get_i8(my_handle, "loradr", &flash8) != ESP_OK ||
+        flash8 != cfg.loradr)
+      nvs_set_i8(my_handle, "loradr", cfg.loradr);
 
     if (nvs_get_i8(my_handle, "txpower", &flash8) != ESP_OK ||
         flash8 != cfg.txpower)
@@ -217,11 +222,11 @@ void loadConfig() {
       ESP_LOGI(TAG, "bsecstate = %d", cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE]);
     };
 
-    if (nvs_get_i8(my_handle, "lorasf", &flash8) == ESP_OK) {
-      cfg.lorasf = flash8;
-      ESP_LOGI(TAG, "lorasf = %d", flash8);
+    if (nvs_get_i8(my_handle, "loradr", &flash8) == ESP_OK) {
+      cfg.loradr = flash8;
+      ESP_LOGI(TAG, "loradr = %d", flash8);
     } else {
-      ESP_LOGI(TAG, "lorasf set to default %d", cfg.lorasf);
+      ESP_LOGI(TAG, "loradr set to default %d", cfg.loradr);
       saveConfig();
     }
 

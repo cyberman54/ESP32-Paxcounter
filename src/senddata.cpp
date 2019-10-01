@@ -10,9 +10,12 @@ void sendcycle() {
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port, sendprio_t prio) {
 
-  MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
+  MessageBuffer_t
+      SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
+  SendBuffer.MessagePrio = prio;
+
   switch (PAYLOAD_ENCODER) {
   case 1: // plain -> no mapping
   case 2: // packed -> no mapping
@@ -38,20 +41,20 @@ void SendPayload(uint8_t port, sendprio_t prio) {
   default:
     SendBuffer.MessagePort = port;
   }
-  memcpy(SendBuffer.Message, payload.getBuffer(), payload.getSize());
+  memcpy(SendBuffer.Message, payload.getBuffer(), SendBuffer.MessageSize);
 
 // enqueue message in device's send queues
 #if (HAS_LORA)
-  lora_enqueuedata(&SendBuffer, prio);
+  lora_enqueuedata(&SendBuffer);
 #endif
 #ifdef HAS_SPI
-  spi_enqueuedata(&SendBuffer, prio);
+  spi_enqueuedata(&SendBuffer);
 #endif
 
 } // SendPayload
 
 // interrupt triggered function to prepare payload to send
-void sendCounter() {
+void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
@@ -115,7 +118,7 @@ void sendCounter() {
       break;
 #endif
 
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     case BATT_DATA:
       payload.reset();
       payload.addVoltage(read_voltage());
@@ -128,7 +131,7 @@ void sendCounter() {
     mask <<= 1;
   } // while (bitmask)
 
-} // sendCounter()
+} // sendData()
 
 void flushQueues() {
 #if (HAS_LORA)

@@ -44,6 +44,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
+- Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
 - Generic ESP32
 
 Depending on board hardware following features are supported:
@@ -58,7 +59,7 @@ Depending on board hardware following features are supported:
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
-- 64x16 pixel LED Matrix display (similar to [this model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
+- LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -155,9 +156,9 @@ If you're using a device with OLED display, or if you add such one to the I2C bu
 
 You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
-Output of user sensor data can be switched by user remote control command 0x13 sent to Port 2. 
+Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 
-Output of sensor and peripheral data is internally switched by a bitmask register. Default mask (0xFF) can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
+Output of sensor and peripheral data is internally switched by a bitmask register. Default mask can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
 
 | Bit | Sensordata    |
 | --- | ------------- |
@@ -168,7 +169,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 | 4   | User sensor 1 |
 | 5   | User sensor 2 |
 | 6   | User sensor 3 |
-| 7   | reserved      |
+| 7   | Batterylevel  |
 
 
 # Time sync
@@ -304,21 +305,36 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	0 = display off
 	1 = display on [default]
 
-0x05 set LoRa spread factor
+0x05 set LoRa datarate
 
-	7 ... 12 [default: 9]
+	0 ... 15 see LoRaWAN regional parameters for details [default: 5]
+
+	Example for EU868:
+
+	DataRate 	Configuration 			Bit/s
+	0 			LoRa: SF12 / 125 kHz 	250
+	1 			LoRa: SF11 / 125 kHz	440
+	2			LoRa: SF10 / 125 kHz	980
+	3			LoRa: SF9 / 125 kHz		1760
+	4			LoRa: SF8 / 125 kHz		3125
+	5			LoRa: SF7 / 125 kHz		5470
+	6*			LoRa: SF7 / 250 kHz		11000
+	7*			FSK: 50 kbps			50000
+	8 .. 14		reserved for future use (RFU)
+	15			ignored (device keeps current setting)
+
+	*) not supported by TheThingsNetwork
 
 0x06 set LoRa TXpower
 
-	2 ... 15 [default: 15]
+	0 ... 255 desired TX power in dBm [default: 14]
 	
 0x07 set LoRa Adaptive Data Rate mode
 
 	0 = ADR off
 	1 = ADR on [default]
 
-	Note: set ADR to off, if device is moving, set to on, if not.
-	If ADR is set to on, SF value is shown inverted on display.
+	If ADR is set to off, SF value is shown inverted on display.
 
 0x08 do nothing
 
@@ -382,17 +398,35 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	byte 1 = user sensor number (1..3)
 	byte 2 = sensor mode (0 = disabled / 1 = enabled [default])
 
+0x14 set payload mask
+
+	byte 1 = sensor data payload mask (0..255, meaning of bits see above)
+
+0x15 set BME data on/off
+
+	0 = BME data off
+	1 = BME data on, sends BME data on port 7 [default]
+
+0x16 set battery data on/off
+
+	0 = battery data off [default]
+	1 = battery data on, sends voltage on port 8
+
 0x80 get device configuration
 
 	Device answers with it's current configuration on Port 3. 
 
 0x81 get device status
 
-	Device answers with it's current status on Port 2. 
+	Device answers with it's current status on Port 2.
+
+0x83 get battery status
+
+	Device answers with battery voltage on Port 8.
 	
 0x84 get device GPS status
 
-	Device answers with it's current status on Port 4. 
+	Device answers with it's current status on Port 4.
 
 0x85 get BME280 / BME680 sensor data
 

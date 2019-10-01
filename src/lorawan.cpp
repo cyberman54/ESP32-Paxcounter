@@ -18,9 +18,31 @@ static const char TAG[] = "lora";
 #endif
 #endif
 
-osjob_t sendjob;
 QueueHandle_t LoraSendQueue;
-TaskHandle_t lmicTask = NULL;
+TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
+
+// table of LORAWAN MAC messages sent by the network to the device
+// format: opcode, cmdname (max 19 chars), #bytes params
+// source: LoRaWAN 1.1 Specification (October 11, 2017)
+static const mac_t MACdn_table[] = {
+    {0x01, "ResetConf", 1},          {0x02, "LinkCheckAns", 2},
+    {0x03, "LinkADRReq", 4},         {0x04, "DutyCycleReq", 1},
+    {0x05, "RXParamSetupReq", 4},    {0x06, "DevStatusReq", 0},
+    {0x07, "NewChannelReq", 5},      {0x08, "RxTimingSetupReq", 1},
+    {0x09, "TxParamSetupReq", 1},    {0x0A, "DlChannelReq", 4},
+    {0x0B, "RekeyConf", 1},          {0x0C, "ADRParamSetupReq", 1},
+    {0x0D, "DeviceTimeAns", 5},      {0x0E, "ForceRejoinReq", 2},
+    {0x0F, "RejoinParamSetupReq", 1}};
+
+// table of LORAWAN MAC messages sent by the device to the network
+static const mac_t MACup_table[] = {
+    {0x01, "ResetInd", 1},        {0x02, "LinkCheckReq", 0},
+    {0x03, "LinkADRAns", 1},      {0x04, "DutyCycleAns", 0},
+    {0x05, "RXParamSetupAns", 1}, {0x06, "DevStatusAns", 2},
+    {0x07, "NewChannelAns", 1},   {0x08, "RxTimingSetupAns", 0},
+    {0x09, "TxParamSetupAns", 0}, {0x0A, "DlChannelAns", 1},
+    {0x0B, "RekeyInd", 1},        {0x0C, "ADRParamSetupAns", 0},
+    {0x0D, "DeviceTimeReq", 0},   {0x0F, "RejoinParamSetupAns", 1}};
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
@@ -135,7 +157,7 @@ void get_hard_deveui(uint8_t *pdeveui) {
   uint8_t i2c_ret;
 
   // Init this just in case, no more to 100KHz
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+  Wire.begin(SDA, SCL, 100000);
   Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
   Wire.write(MCP_24AA02E64_MAC_ADDRESS);
   i2c_ret = Wire.endTransmission();
@@ -209,19 +231,17 @@ void onEvent(ev_t ev) {
 
   case EV_JOINED:
     strcpy_P(buff, PSTR("JOINED"));
-    sprintf(display_line6, " "); // clear previous lmic status
     // set data rate adaptation according to saved setting
     LMIC_setAdrMode(cfg.adrmode);
-    // set cyclic lmic link check to off if no ADR because is not supported by
-    // ttn (but enabled by lmic after join)
-    LMIC_setLinkCheckMode(cfg.adrmode);
-    // Set data rate and transmit power (note: txpower seems to be ignored by
-    // the library)
-    switch_lora(cfg.lorasf, cfg.txpower);
-    // kickoff first send job
-    os_setCallback(&sendjob, lora_send);
-    // show effective LoRa parameters after join
+    // set data rate and transmit power to defaults only if we have no ADR
+    if (!cfg.adrmode)
+      LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
+    // show current devaddr
     ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
+    ESP_LOGI(TAG, "Radio parameters %s / %s / %s",
+             getSfName(updr2rps(LMIC.datarate)),
+             getBwName(updr2rps(LMIC.datarate)),
+             getCrName(updr2rps(LMIC.datarate)));
     break;
 
   case EV_RFU1:
@@ -237,46 +257,7 @@ void onEvent(ev_t ev) {
     break;
 
   case EV_TXCOMPLETE:
-
-#if (TIME_SYNC_LORASERVER)
-    // if last packet sent was a timesync request, store TX timestamp
-    if (LMIC.pendTxPort == TIMEPORT)
-      store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
-#endif
-
-    strcpy_P(buff, (LMIC.txrxFlags & TXRX_ACK) ? PSTR("RECEIVED ACK")
-                                               : PSTR("TX COMPLETE"));
-    sprintf(display_line6, " "); // clear previous lmic status
-
-    if (LMIC.dataLen) { // did we receive payload data -> display info
-      ESP_LOGI(TAG, "Received %d bytes of payload, RSSI %d SNR %d",
-               LMIC.dataLen, LMIC.rssi, LMIC.snr / 4);
-      sprintf(display_line6, "RSSI %d SNR %d", LMIC.rssi, LMIC.snr / 4);
-
-      if (LMIC.txrxFlags & TXRX_PORT) { // FPort -> use to switch
-
-        switch (LMIC.frame[LMIC.dataBeg - 1]) {
-
-        case RCMDPORT: // opcode -> call rcommand interpreter
-          rcommand(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-          break;
-
-        default:
-
-#if (TIME_SYNC_LORASERVER)
-          // timesync answer -> call timesync processor
-          if (LMIC.frame[LMIC.dataBeg - 1] == TIMEPORT) {
-            recv_timesync_ans(LMIC.frame + LMIC.dataBeg, LMIC.dataLen);
-            break;
-          }
-#endif
-          // unknown port -> display info
-          ESP_LOGI(TAG, "Received data on unsupported port #%d",
-                   LMIC.frame[LMIC.dataBeg - 1]);
-          break;
-        }
-      }
-    }
+    strcpy_P(buff, PSTR("TX COMPLETE"));
     break;
 
   case EV_LOST_TSYNC:
@@ -306,13 +287,7 @@ void onEvent(ev_t ev) {
 
   case EV_TXSTART:
     if (!(LMIC.opmode & OP_JOINING)) {
-#if (TIME_SYNC_LORASERVER)
-      // if last packet sent was a timesync request, store TX time
-      if (LMIC.pendTxPort == TIMEPORT)
-        strcpy_P(buff, PSTR("TX TIMESYNC"));
-      else
-#endif
-        strcpy_P(buff, PSTR("TX START"));
+      strcpy_P(buff, PSTR("TX START"));
     }
     break;
 
@@ -336,80 +311,58 @@ void onEvent(ev_t ev) {
   // Log & Display if asked
   if (*buff) {
     ESP_LOGI(TAG, "%s", buff);
-    sprintf(display_line7, buff);
+    sprintf(lmic_event_msg, buff);
   }
 }
 
-// helper function to assign LoRa datarates to numeric spreadfactor values
-void switch_lora(uint8_t sf, uint8_t tx) {
-  if (tx > 20)
-    return;
-  cfg.txpower = tx;
-  switch (sf) {
-  case 7:
-    LMIC_setDrTxpow(DR_SF7, tx);
-    cfg.lorasf = sf;
-    break;
-  case 8:
-    LMIC_setDrTxpow(DR_SF8, tx);
-    cfg.lorasf = sf;
-    break;
-  case 9:
-    LMIC_setDrTxpow(DR_SF9, tx);
-    cfg.lorasf = sf;
-    break;
-  case 10:
-    LMIC_setDrTxpow(DR_SF10, tx);
-    cfg.lorasf = sf;
-    break;
-  case 11:
-#if defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF11CR, tx);
-    cfg.lorasf = sf;
-    break;
-#else
-    LMIC_setDrTxpow(DR_SF11, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  case 12:
-#if defined(CFG_us915)
-    LMIC_setDrTxpow(DR_SF12CR, tx);
-    cfg.lorasf = sf;
-    break;
-#else
-    LMIC_setDrTxpow(DR_SF12, tx);
-    cfg.lorasf = sf;
-    break;
-#endif
-  default:
-    break;
-  }
-}
+// LMIC send task
+void lora_send(void *pvParameters) {
+  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-void lora_send(osjob_t *job) {
   MessageBuffer_t SendBuffer;
-  // Check if there is a pending TX/RX job running, if yes don't eat data
-  // since it cannot be sent right now
-  if ((LMIC.opmode & (OP_JOINING | OP_REJOIN | OP_TXDATA | OP_POLL)) != 0) {
-    // waiting for LoRa getting ready
-  } else {
-    if (xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0) == pdTRUE) {
-      // SendBuffer now filled with next payload from queue
-      if (!LMIC_setTxData2(SendBuffer.MessagePort, SendBuffer.Message,
-                           SendBuffer.MessageSize, (cfg.countermode & 0x02))) {
-        ESP_LOGI(TAG, "%d byte(s) sent to LoRa", SendBuffer.MessageSize);
-      } else {
-        ESP_LOGE(TAG, "could not send %d byte(s) to LoRa",
-                 SendBuffer.MessageSize);
-      }
-      // sprintf(display_line7, "PACKET QUEUED");
+
+  while (1) {
+
+    // postpone until we are joined if we are not
+    while (!LMIC.devaddr) {
+      vTaskDelay(pdMS_TO_TICKS(500));
     }
+
+    // fetch next or wait for payload to send from queue
+    if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) != pdTRUE) {
+      ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
+      continue;
+    }
+
+    // attempt to transmit payload
+    else {
+
+      switch (LMIC_sendWithCallback_strict(
+          SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
+          (cfg.countermode & 0x02), myTxCallback, NULL)) {
+
+      case LMIC_ERROR_SUCCESS:
+        ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
+        break;
+      case LMIC_ERROR_TX_BUSY:   // LMIC already has a tx message pending
+      case LMIC_ERROR_TX_FAILED: // message was not sent
+        // ESP_LOGD(TAG, "LMIC busy, message re-enqueued"); // very noisy
+        vTaskDelay(pdMS_TO_TICKS(1000 + random(500))); // wait a while
+        lora_enqueuedata(&SendBuffer); // re-enqueue the undelivered message
+        break;
+      case LMIC_ERROR_TX_TOO_LARGE:    // message size exceeds LMIC buffer size
+      case LMIC_ERROR_TX_NOT_FEASIBLE: // message too large for current datarate
+        ESP_LOGI(TAG,
+                 "Message too large to send, message not sent and deleted");
+        // we need some kind of error handling here -> to be done
+        break;
+      default: // other LMIC return code
+        ESP_LOGE(TAG, "LMIC error, message not sent and deleted");
+
+      } // switch
+    }
+    delay(2); // yield to CPU
   }
-  // reschedule job every 0,5 - 1 sec. including a bit of random to prevent
-  // systematic collisions
-  os_setTimedCallback(job, os_getTime() + 500 + ms2osticks(random(500)),
-                      lora_send);
 }
 
 esp_err_t lora_stack_init() {
@@ -422,13 +375,13 @@ esp_err_t lora_stack_init() {
   ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
            SEND_QUEUE_SIZE * sizeof(MessageBuffer_t));
 
-  // starting lorawan stack
+  // start lorawan stack
   ESP_LOGI(TAG, "Starting LMIC...");
   xTaskCreatePinnedToCore(lmictask,   // task function
                           "lmictask", // name of task
                           4096,       // stack size of task
                           (void *)1,  // parameter of the task
-                          2,          // priority of the task
+                          5,          // priority of the task
                           &lmicTask,  // task handle
                           1);         // CPU core
 
@@ -436,18 +389,31 @@ esp_err_t lora_stack_init() {
     ESP_LOGI(TAG, "Already joined");
   }
 
-  return ESP_OK; // continue main program
+  // start lmic send task
+  xTaskCreatePinnedToCore(lora_send,      // task function
+                          "lorasendtask", // name of task
+                          3072,           // stack size of task
+                          (void *)1,      // parameter of the task
+                          1,              // priority of the task
+                          &lorasendTask,  // task handle
+                          1);             // CPU core
+
+  return ESP_OK;
 }
 
-void lora_enqueuedata(MessageBuffer_t *message, sendprio_t prio) {
+void lora_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in LORA send queue
-  BaseType_t ret;
+  BaseType_t ret = pdFALSE;
   MessageBuffer_t DummyBuffer;
+  sendprio_t prio = message->MessagePrio;
+
   switch (prio) {
   case prio_high:
-    // clear space in queue if full, then fallthrough to normal
-    if (uxQueueSpacesAvailable(LoraSendQueue) == 0)
+    // clear some space in queue if full, then fallthrough to prio_normal
+    if (uxQueueSpacesAvailable(LoraSendQueue) == 0) {
       xQueueReceive(LoraSendQueue, &DummyBuffer, (TickType_t)0);
+      ESP_LOGW(TAG, "LORA sendqueue purged, data is lost");
+    }
   case prio_normal:
     ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
@@ -519,17 +485,17 @@ void lmictask(void *pvParameters) {
   os_init();    // initialize lmic run-time environment
   LMIC_reset(); // initialize lmic MAC
   LMIC_setLinkCheckMode(0);
-  // This tells LMIC to make the receive windows bigger, in case your clock is
-  // faster or slower. This causes the transceiver to be earlier switched on,
-  // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
-  // in src/lmic_config.h if you are limited on battery.
-  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
 
-#if defined(CFG_US915) || defined(CFG_au921)
+// This tells LMIC to make the receive windows bigger, in case your clock is
+// faster or slower. This causes the transceiver to be earlier switched on,
+// so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
+// in src/lmic_config.h if you are limited on battery.
+#ifdef CLOCK_ERROR_PROCENTAGE
+  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
+#endif
+
+//#if defined(CFG_US915) || defined(CFG_au921)
+#if CFG_LMIC_US_like
   // in the US, with TTN, it saves join time if we start on subband 1
   // (channels 8-15). This will get overridden after the join by parameters
   // from the network. If working with other networks or in other regions,
@@ -537,10 +503,161 @@ void lmictask(void *pvParameters) {
   LMIC_selectSubBand(1);
 #endif
 
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
+
+  // register a callback for downlink messages. We aren't trying to write
+  // reentrant code, so pUserData is NULL.
+  LMIC_registerRxMessageCb(myRxCallback, NULL);
+
   while (1) {
     os_runloop_once(); // execute lmic scheduled jobs and events
     delay(2);          // yield to CPU
   }
 } // lmictask
+
+// receive message handler
+void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+                  size_t nMsg) {
+
+  // display type of received data
+  if (nMsg)
+    ESP_LOGI(TAG, "Received %u byte(s) of payload on port %u", nMsg, port);
+  else if (port)
+    ESP_LOGI(TAG, "Received empty message on port %u", port);
+
+  // list MAC messages, if any
+  uint8_t nMac = pMsg - &LMIC.frame[0];
+  if (port != MACPORT)
+    --nMac;
+  if (nMac) {
+    ESP_LOGI(TAG, "%u byte(s) downlink MAC commands", nMac);
+    // NOT WORKING YET
+    // whe need to unwrap the MAC command from LMIC.frame here
+    // mac_decode(LMIC.frame, nMac, MACdn_table, sizeof(MACdn_table) /
+    // sizeof(MACdn_table[0]));
+  }
+
+  if (LMIC.pendMacLen) {
+    ESP_LOGI(TAG, "%u byte(s) uplink MAC commands", LMIC.pendMacLen);
+    mac_decode(LMIC.pendMacData, LMIC.pendMacLen, MACup_table,
+               sizeof(MACup_table) / sizeof(MACup_table[0]));
+  }
+
+  switch (port) {
+
+    // ignore mac messages
+  case MACPORT:
+    break;
+
+  // rcommand received -> call interpreter
+  case RCMDPORT:
+    rcommand(pMsg, nMsg);
+    break;
+
+  default:
+
+#if (TIME_SYNC_LORASERVER)
+    // valid timesync answer -> call timesync processor
+    if ((port >= TIMEANSWERPORT_MIN) && (port <= TIMEANSWERPORT_MAX)) {
+      recv_timesync_ans(port, pMsg, nMsg);
+      break;
+    }
+#endif
+
+    // unknown port -> display info
+    ESP_LOGI(TAG, "Received data on unsupported port %u", port);
+    break;
+  } // switch
+}
+
+// transmit complete message handler
+void myTxCallback(void *pUserData, int fSuccess) {
+
+#if (TIME_SYNC_LORASERVER)
+  // if last packet sent was a timesync request, store TX timestamp
+  if (LMIC.pendTxPort == TIMEPORT)
+    store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
+#endif
+}
+
+// decode LORAWAN MAC message
+void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
+                const uint8_t tablesize) {
+
+  if (!cmdlen)
+    return;
+
+  uint8_t foundcmd[cmdlen], cursor = 0;
+
+  while (cursor < cmdlen) {
+
+    int i = tablesize; // number of commands in table
+
+    while (i--) {
+      if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
+        cursor++;                           // strip 1 byte opcode
+        if ((cursor + table[i].params) <= cmdlen) {
+          memmove(foundcmd, cmd + cursor,
+                  table[i].params); // strip opcode from cmd array
+          cursor += table[i].params;
+          ESP_LOGD(TAG, "MAC command %s", table[i].cmdname);
+        } else
+          ESP_LOGD(TAG, "MAC command 0x%02X with missing parameter(s)",
+                   table[i].opcode);
+        break;   // command found -> exit table lookup loop
+      }          // end of command validation
+    }            // end of command table lookup loop
+    if (i < 0) { // command not found -> skip it
+      ESP_LOGD(TAG, "Unknown MAC command 0x%02X", cmd[cursor]);
+      cursor++;
+    }
+  } // command parsing loop
+
+} // mac_decode()
+
+uint8_t getBattLevel() {
+  /*
+  return values:
+  MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+  */
+#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
+  uint16_t voltage = read_voltage();
+
+  switch (voltage) {
+  case 0:
+    return MCMD_DEVS_BATT_NOINFO;
+  case 0xffff:
+    return MCMD_DEVS_EXT_POWER;
+  default:
+    return (voltage > OTA_MIN_BATT ? MCMD_DEVS_BATT_MAX : MCMD_DEVS_BATT_MIN);
+  }
+#else // we don't have any info on battery level
+  return MCMD_DEVS_BATT_NOINFO;
+#endif
+} // getBattLevel()
+
+// u1_t os_getBattLevel(void) { return getBattLevel(); };
+
+const char *getSfName(rps_t rps) {
+  const char *const t[] = {"FSK", "SF7", "SF8", "SF9",
+                           "SF10", "SF11", "SF12", "SF?"};
+  return t[getSf(rps)];
+}
+
+const char *getBwName(rps_t rps) {
+  const char *const t[] = {"BW125", "BW250", "BW500", "BW?"};
+  return t[getBw(rps)];
+}
+
+const char *getCrName(rps_t rps) {
+  const char *const t[] = {"CR 4/5", "CR 4/6", "CR 4/7", "CR 4/8"};
+  return t[getCr(rps)];
+}
 
 #endif // HAS_LORA

@@ -143,7 +143,9 @@ int checkIaqSensorStatus(void) {
 
 // store current BME sensor data in struct
 void bme_storedata(bmeStatus_t *bme_store) {
-  if (I2C_MUTEX_LOCK()) { // block i2c bus access
+
+  if ((cfg.payloadmask & MEMS_DATA) &&
+      (I2C_MUTEX_LOCK())) { // block i2c bus access
 
 #ifdef HAS_BME680
     if (iaqSensor.run()) { // if new data is available

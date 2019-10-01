@@ -31,12 +31,12 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
+lmictask      1     5     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_req  1     3     processes realtime time sync requests
-lmictask      1     2     MCCI LMiC LORAWAN stack
 irqhandler    1     1     display, timesync, gps, etc. triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
-looptask      1     1     arduino loop (unused)
+lorasendtask  1     1     feed data from lora sendqueue to lmcic
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -58,6 +58,7 @@ fired by hardware
 DisplayIRQ      -> esp32 timer 0  -> irqHandlerTask (Core 1)
 CLOCKIRQ        -> esp32 timer 1  -> ClockTask (Core 1)
 ButtonIRQ       -> external gpio  -> irqHandlerTask (Core 1)
+PMUIRQ          -> PMU chip gpio  -> irqHandlerTask (Core 1)
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
@@ -75,9 +76,9 @@ triggers pps 1 sec impulse
 // Basic Config
 #include "main.h"
 
-configData_t cfg; // struct holds current device configuration
-char display_line6[16], display_line7[16]; // display buffers
-uint8_t volatile channel = 0;              // channel rotation counter
+configData_t cfg;             // struct holds current device configuration
+char lmic_event_msg[16];      // display buffer for LMIC event message
+uint8_t volatile channel = 0; // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
@@ -169,22 +170,43 @@ void setup() {
   ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
 
+// open i2c bus
+#ifdef HAS_DISPLAY
+  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+#else
+  Wire.begin(SDA, SCL, 100000);
+#endif
+
+// setup power on boards with power management logic
+#ifdef EXT_POWER_SW
+  pinMode(EXT_POWER_SW, OUTPUT);
+  digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
+  strcat_P(features, " VEXT");
+#endif
+#ifdef HAS_PMU
+  AXP192_init();
+  strcat_P(features, " PMU");
+#endif
+
+  // scan i2c bus for devices
+  i2c_scan();
+
 #endif // verbose
 
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
+// initialize display
+#ifdef HAS_DISPLAY
+  strcat_P(features, " OLED");
+  DisplayIsOn = cfg.screenon;
+  init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
+#endif
+
 #ifdef BOARD_HAS_PSRAM
   assert(psramFound());
   ESP_LOGI(TAG, "PSRAM found and initialized");
   strcat_P(features, " PSRAM");
-#endif
-
-// set external power mode
-#ifdef EXT_POWER_SW
-  pinMode(EXT_POWER_SW, OUTPUT);
-  digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
-  strcat_P(features, " VEXT");
 #endif
 
 #ifdef BAT_MEASURE_EN
@@ -195,17 +217,25 @@ void setup() {
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
+
+#ifdef LED_POWER_SW
+  pinMode(LED_POWER_SW, OUTPUT);
+  digitalWrite(LED_POWER_SW, LED_POWER_ON);
+#endif
+
 #ifdef HAS_TWO_LED
   pinMode(HAS_TWO_LED, OUTPUT);
   strcat_P(features, " LED1");
 #endif
+
 // use LED for power display if we have additional RGB LED, else for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
   strcat_P(features, " RGB");
   rgb_set_color(COLOR_PINK);
 #endif
-#endif
+
+#endif // HAS_LED
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   // start led loop
@@ -227,7 +257,7 @@ void setup() {
 #endif
 
 // initialize battery status
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   strcat_P(features, " BATT");
   calibrate_voltage();
   batt_voltage = read_voltage();
@@ -295,13 +325,6 @@ void setup() {
 
 #if (VENDORFILTER)
   strcat_P(features, " FILTER");
-#endif
-
-// initialize display
-#ifdef HAS_DISPLAY
-  strcat_P(features, " OLED");
-  DisplayIsOn = cfg.screenon;
-  init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
 #endif
 
 // initialize matrix display
@@ -419,12 +442,10 @@ void setup() {
 #warning you did not specify a time source, time will not be synched
 #endif
 
-/*
 // initialize gps time
 #if (HAS_GPS)
   fetch_gpsTime();
 #endif
-*/
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting Clock Controller...");
@@ -445,18 +466,11 @@ void setup() {
   ESP_LOGI(TAG, "Features:%s", features);
 
   macsniff_setup();
-  
+
   uart_setup();
 
 } // setup()
 
-void loop() {
+} // setup()
 
-  while (1) {
-#if (HAS_LORA)
-    os_runloop_once(); // execute lmic scheduled jobs and events
-#else
-    delay(2); // yield to CPU
-#endif
-  }
-}
+void loop() { vTaskDelete(NULL); }

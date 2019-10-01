@@ -2,40 +2,33 @@
 
 // COUNTRY SETTINGS
 // --> please check with you local regulations for ISM band frequency use!
-//
-// CFG_eu868	EU 863-870 MHz
-// CFG_us915    US 902-928 MHz
-// CFG_au921	Australia 915-928 MHz
-// CFG_as923	Asia 923 MHz
-// CFG_in866	India 865-867 MHz
 
-#define CFG_eu868 1
-//#define CFG_us915 1
-//#define CFG_in866 1
-//#define CFG_au921 1
-//#define CFG_as923 1
-//#define LMIC_COUNTRY_CODE LMIC_COUNTRY_CODE_JP	/* for as923-JP */
+#define CFG_eu868 1 // Europe (high band)
+//#define CFG_eu433 1 // Europe (low band)
+//#define CFG_us915 1 // USA, Canada and South America
+//#define CFG_in866 1 // India
+//#define CFG_au921 1 // Australia
+//#define CFG_as923 1 // Asia
+//#define CFG_cn783 1 // China (high band)
+//#define CFG_cn490 1 // China (low band)
+//#define CFG_kr920 1 // Korea
 
 // LMIC LORAWAN STACK SETTINGS
 // --> adapt to your device only if necessary
 
-//#define LMIC_USE_INTERRUPTS 1
+// use interrupts only if LORA_IRQ and LORA_DIO are connected to interrupt
+// capable GPIO pins on your board, if not disable interrupts
+#define LMIC_USE_INTERRUPTS 1
 
-//time sync via LoRaWAN network, is not yet supported by TTN (LoRaWAN spec v1.0.3)
-//#define LMIC_ENABLE_DeviceTimeReq 1
-
-// 16 μs per tick
-// LMIC requires ticks to be 15.5μs - 100 μs long
-#define US_PER_OSTICK_EXPONENT 4
-#define US_PER_OSTICK (1 << US_PER_OSTICK_EXPONENT)
-#define OSTICKS_PER_SEC (1000000 / US_PER_OSTICK)
+// time sync via LoRaWAN network, note: not supported by TTNv2
+// #define LMIC_ENABLE_DeviceTimeReq 1
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) this value if you are
-// limited on battery. 
+// limited on battery.
 // ATTN: VALUES > 7 WILL CAUSE RECEPTION AND JOIN PROBLEMS WITH HIGH SF RATES
-#define CLOCK_ERROR_PROCENTAGE 5
+//#define CLOCK_ERROR_PROCENTAGE 7
 
 // Set this to 1 to enable some basic debug output (using printf) about
 // RF settings used during transmission and reception. Set to 2 to
@@ -48,6 +41,11 @@
 // (or any other Print object). This can be easy for debugging. The
 // current implementation only works on AVR, though.
 //#define LMIC_PRINTF_TO Serial
+
+// Change the SPI clock speed if you encounter errors
+// communicating with the radio.
+// The standard range is 125kHz-8MHz, but some boards can go faster.
+//#define LMIC_SPI_FREQ 1E6
 
 // Any runtime assertion failures are printed to this serial port (or
 // any other Print object). If this is unset, any failures just silently
@@ -90,7 +88,7 @@
 // implementation is optimized for speed on 32-bit processors using
 // fairly big lookup tables, but it takes up big amounts of flash on the
 // AVR architecture.
-//#define USE_ORIGINAL_AES
+#define USE_ORIGINAL_AES
 //
 // This selects the AES implementation written by Ideetroon for their
 // own LoRaWAN library. It also uses lookup tables, but smaller
@@ -98,4 +96,4 @@
 // also about twice as slow as the original).
 // #define USE_IDEETRON_AES
 //
-#define USE_MBEDTLS_AES
+//#define USE_MBEDTLS_AES

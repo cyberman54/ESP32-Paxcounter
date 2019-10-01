@@ -43,7 +43,7 @@ void PayloadConvert::addVoltage(uint16_t value) {
 }
 
 void PayloadConvert::addConfig(configData_t value) {
-  buffer[cursor++] = value.lorasf;
+  buffer[cursor++] = value.loradr;
   buffer[cursor++] = value.txpower;
   buffer[cursor++] = value.adrmode;
   buffer[cursor++] = value.screensaver;
@@ -164,7 +164,7 @@ void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
 void PayloadConvert::addVoltage(uint16_t value) { writeUint16(value); }
 
 void PayloadConvert::addConfig(configData_t value) {
-  writeUint8(value.lorasf);
+  writeUint8(value.loradr);
   writeUint8(value.txpower);
   writeUint16(value.rssilimit);
   writeUint8(value.sendcycle);
@@ -378,7 +378,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
                                uint32_t mem, uint8_t reset1, uint8_t reset2) {
   uint16_t temp = celsius * 10;
   uint16_t volt = voltage / 10;
-#ifdef BAT_MEASURE_ADC
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
 #if (PAYLOAD_ENCODER == 3)
   buffer[cursor++] = LPP_BATT_CHANNEL;
 #endif
