@@ -47,9 +47,8 @@ static const char TAG[] = __FILE__;
 #define QR_SCALEFACTOR 2 // 29 -> 58x < 64px
 
 // settings for curve plotter
-#define PLOT_SCALEFACTOR 1 // downscales pax numbers to display rows
-#define DISPLAY_WIDTH 128  // Width in pixels of OLED-display, must be 32X
-#define DISPLAY_HEIGHT 64  // Height in pixels of OLED-display, must be 16X
+#define DISPLAY_WIDTH 128 // Width in pixels of OLED-display, must be 32X
+#define DISPLAY_HEIGHT 64 // Height in pixels of OLED-display, must be 16X
 
 // helper array for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -185,7 +184,7 @@ void draw_page(time_t t, uint8_t page) {
             macs.size()); // display number of unique macs total Wifi + BLE
 
   // update histogram if we have a display
-  oledPlotCurve(macs.size());
+  oledPlotCurve(macs.size(), false);
 
   switch (page % DISPLAY_PAGES) {
 
@@ -424,31 +423,33 @@ void oledScrollBufferLeft(uint8_t *buf, const uint16_t width,
   }
 }
 
-void oledPlotCurve(uint16_t count) {
+void oledPlotCurve(uint16_t count, bool reset) {
 
-  uint8_t level;
-  static uint16_t last_count = 0, col = 0, row = 0;
+  static uint16_t last_count = 0, col = 0, row = 0, scalefactor = 1;
 
-  if (last_count == count)
+  if ((last_count == count) && !reset)
     return;
 
-  // next count cycle?
-  if (count == 0) {
-
-    // matrix full? then scroll left 1 dot, else increment column
-    if (col < DISPLAY_WIDTH - 1)
+  if (reset) {                   // next count cycle?
+    if (col < DISPLAY_WIDTH - 1) // matrix not full -> increment column
       col++;
-    else
+    else // matrix full -> scroll left 1 dot
       oledScrollBufferLeft(displaybuf, DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
-  } else
-    oledDrawPixel(displaybuf, col, row, 0); // clear current dot
+  } else // clear current dot
+    oledDrawPixel(displaybuf, col, row, 0);
 
-  // scale and set new dot
+  // re-scale, if necessary
+  while (((count / scalefactor) <= DISPLAY_HEIGHT) && (scalefactor > 1)) {
+    scalefactor--;
+  }
+  while ((count / scalefactor) > DISPLAY_HEIGHT) {
+    scalefactor++;
+  }
+
+  // set new dot
+  row = DISPLAY_HEIGHT - 1 - (count / scalefactor) % DISPLAY_HEIGHT;
   last_count = count;
-  level = count / PLOT_SCALEFACTOR;
-  row =
-      level <= DISPLAY_HEIGHT ? DISPLAY_HEIGHT - 1 - level % DISPLAY_HEIGHT : 0;
   oledDrawPixel(displaybuf, col, row, 1);
 }
 

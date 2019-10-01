@@ -18,6 +18,6 @@ void oledScrollBufferLeft(uint8_t *buf, const uint16_t width,
                           const uint16_t height);
 int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
                   const uint8_t dot);
-void oledPlotCurve(uint16_t count);
+void oledPlotCurve(uint16_t count, bool reset);
 
 #endif
