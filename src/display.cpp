@@ -397,18 +397,15 @@ void oledfillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
 int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
                   const uint8_t dot) {
 
-  uint8_t page, bit;
-
   if (x > DISPLAY_WIDTH || y > DISPLAY_HEIGHT)
     return -1;
 
-  page = y / 8;
-  bit = y % 8;
+  uint8_t bit = y & 7;
+  uint16_t idx = y / 8 * DISPLAY_WIDTH + x;
 
+  buf[idx] &= ~(1 << bit); // clear pixel
   if (dot)
-    buf[page * DISPLAY_WIDTH + x] |= (1 << bit); // mark
-  else
-    buf[page * DISPLAY_WIDTH + x] &= ~(0 << bit); // clear
+    buf[idx] |= (1 << bit); // set pixel
 
   return 0;
 }
