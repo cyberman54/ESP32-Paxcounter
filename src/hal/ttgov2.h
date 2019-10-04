@@ -12,7 +12,7 @@
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+#define HAS_DISPLAY 1
 //#define DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED NOT_A_PIN // on-board LED is wired to SCL (used by display) therefore totally useless
 
@@ -22,7 +22,7 @@
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (21)
 #define MY_OLED_SCL (22)
-#define MY_OLED_RST U8X8_PIN_NONE
+#define MY_OLED_RST NOT_A_PIN
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC

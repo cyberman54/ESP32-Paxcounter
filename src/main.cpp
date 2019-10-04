@@ -129,7 +129,7 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
-  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
+  ESP_LOGI(TAG, "Starting Software v%s", PROGVERSION);
 
   // print chip information on startup if in verbose mode
 #if (VERBOSE)
@@ -172,9 +172,9 @@ void setup() {
 
 // open i2c bus
 #ifdef HAS_DISPLAY
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 400000);
 #else
-  Wire.begin(SDA, SCL, 100000);
+  Wire.begin(SDA, SCL, 400000);
 #endif
 
 // setup power on boards with power management logic
@@ -200,7 +200,7 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
-  init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
+  init_display(!cfg.runmode); // note: blocking call
 #endif
 
 #ifdef BOARD_HAS_PSRAM

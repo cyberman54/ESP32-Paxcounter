@@ -150,7 +150,13 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 # Display
 
-If you're using a device with OLED display, or if you add such one to the I2C bus, the device shows live data on the display. You can flip between pages showing pax, time, GPS and BME sensor data by pressing the button of the device.
+If you're using a device with OLED display, or if you add such one to the I2C bus, the device shows live data on the display. You can flip display pages showing 
+- recent count of pax
+- histogram
+- GPS data
+- BME sensor data
+- Time of day 
+by pressing the button of the device.
 
 # Sensors and Peripherals
 
@@ -312,8 +318,8 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	Example for EU868:
 
 	DataRate 	Configuration 			Bit/s
-	0 			LoRa: SF12 / 125 kHz 	250
-	1 			LoRa: SF11 / 125 kHz	440
+	0			LoRa: SF12 / 125 kHz	250
+	1			LoRa: SF11 / 125 kHz	440
 	2			LoRa: SF10 / 125 kHz	980
 	3			LoRa: SF9 / 125 kHz		1760
 	4			LoRa: SF8 / 125 kHz		3125

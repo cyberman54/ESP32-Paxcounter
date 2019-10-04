@@ -13,7 +13,7 @@
 // disable brownout detection (avoid unexpected reset on some boards)
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // OLED-Display on board
+#define HAS_DISPLAY 1 // OLED-Display on board
 //#define DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED       22  // ESP32 GPIO12 (pin22) On Board LED
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
@@ -37,7 +37,7 @@
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (14)
 #define MY_OLED_SCL (12)
-#define MY_OLED_RST U8X8_PIN_NONE
+#define MY_OLED_RST NOT_A_PIN
 
 // I2C config for Microchip 24AA02E64 DEVEUI unique address
 #define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 
