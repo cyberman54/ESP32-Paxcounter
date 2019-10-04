@@ -48,7 +48,7 @@ static const char TAG[] = __FILE__;
 
 // settings for curve plotter
 #define DISPLAY_WIDTH 128 // Width in pixels of OLED-display, must be 32X
-#define DISPLAY_HEIGHT 64 // Height in pixels of OLED-display, must be 16X
+#define DISPLAY_HEIGHT 64 // Height in pixels of OLED-display, must be 64X
 
 // helper array for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -252,15 +252,15 @@ void draw_page(time_t t, uint8_t page) {
     // LMiC event display, display inverse if sendqueue not empty
     msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
     if (msgWaiting)
-      dp_printf(0, 7, FONT_SMALL, 1, "%-17s", lmic_event_msg);
+      dp_printf(0, 7, FONT_SMALL, 1, "%-16s", lmic_event_msg);
     else
-      dp_printf(0, 7, FONT_SMALL, 0, "%-17s", lmic_event_msg);
+      dp_printf(0, 7, FONT_SMALL, 0, "%-16s", lmic_event_msg);
     // LORA datarate, display inverse if ADR disabled
     if (cfg.adrmode)
-      dp_printf(108, 7, FONT_SMALL, 0, "%-4s",
+      dp_printf(100, 7, FONT_SMALL, 0, "%-4s",
                 getSfName(updr2rps(LMIC.datarate)));
     else
-      dp_printf(108, 7, FONT_SMALL, 1, "%-4s",
+      dp_printf(100, 7, FONT_SMALL, 1, "%-4s",
                 getSfName(updr2rps(LMIC.datarate)));
 #endif // HAS_LORA
 
@@ -425,7 +425,8 @@ void oledScrollBufferLeft(uint8_t *buf, const uint16_t width,
 
 void oledPlotCurve(uint16_t count, bool reset) {
 
-  static uint16_t last_count = 0, col = 0, row = 0, scalefactor = 1;
+  static uint16_t last_count = 0, col = 0, row = 0;
+  static int scalefactor = 1, oldsf = 1;
 
   if ((last_count == count) && !reset)
     return;
@@ -440,17 +441,41 @@ void oledPlotCurve(uint16_t count, bool reset) {
     oledDrawPixel(displaybuf, col, row, 0);
 
   // re-scale, if necessary
-  while (((count / scalefactor) <= DISPLAY_HEIGHT) && (scalefactor > 1)) {
+  oldsf = scalefactor;
+  while (((count / scalefactor) <= DISPLAY_HEIGHT) && (scalefactor > 1))
     scalefactor--;
-  }
-  while ((count / scalefactor) > DISPLAY_HEIGHT) {
+  while ((count / scalefactor) > DISPLAY_HEIGHT)
     scalefactor++;
-  }
+  if (scalefactor != oldsf)
+    oledRescaleBuffer(displaybuf, scalefactor);
 
   // set new dot
   row = DISPLAY_HEIGHT - 1 - (count / scalefactor) % DISPLAY_HEIGHT;
   last_count = count;
   oledDrawPixel(displaybuf, col, row, 1);
+}
+
+void oledRescaleBuffer(uint8_t *buf, const int factor) {
+
+  if (!factor)
+    return;
+
+  uint64_t buf_col;
+
+  for (uint16_t col = 0; col < DISPLAY_WIDTH; col++) {
+    // convert column bytes from display buffer to uint64_t
+    buf_col = *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8];
+
+    if (factor < 0)
+      // shift left: scroll up = scale down
+      buf_col <= abs(factor);
+    else
+      // shift right: scroll down = scale up
+      buf_col >= abs(factor);
+
+    // write back uint64_t to uint8_t display buffer
+    *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8] = buf_col;
+  }
 }
 
 #endif // HAS_DISPLAY
