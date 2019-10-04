@@ -561,8 +561,8 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 
 #if (TIME_SYNC_LORASERVER)
     // valid timesync answer -> call timesync processor
-    if ((port >= TIMEANSWERPORT_MIN) && (port <= TIMEANSWERPORT_MAX)) {
-      recv_timesync_ans(port, pMsg, nMsg);
+    if (port == TIMEPORT) {
+      recv_timesync_ans(pMsg, nMsg);
       break;
     }
 #endif
