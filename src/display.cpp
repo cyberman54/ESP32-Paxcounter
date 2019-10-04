@@ -141,6 +141,9 @@ void refreshTheDisplay(bool nextPage) {
 
   static uint8_t DisplayPage = 0;
 
+  // update histogram if we have a display
+  oledPlotCurve(macs.size(), false);
+
   // if display is switched off we don't refresh it to relax cpu
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
     return;
@@ -182,9 +185,6 @@ void draw_page(time_t t, uint8_t page) {
   // line 1/2: pax counter
   dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
             macs.size()); // display number of unique macs total Wifi + BLE
-
-  // update histogram if we have a display
-  oledPlotCurve(macs.size(), false);
 
   switch (page % DISPLAY_PAGES) {
 
