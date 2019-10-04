@@ -334,7 +334,7 @@
         "height": 0,
         "name": "Sequence No",
         "label": "Sequence",
-        "format": "{{msg.payload}}",
+        "format": "{{}}",
         "layout": "col-center",
         "x": 700,
         "y": 460,
