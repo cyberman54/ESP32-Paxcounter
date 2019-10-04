@@ -176,7 +176,7 @@
         "id": "6190967b.01f758",
         "type": "comment",
         "z": "449c1517.e25f4c",
-        "name": "LoRaWAN Timeserver v1.1",
+        "name": "LoRaWAN Timeserver v1.2",
         "info": "PLEASE NOTE: There is a patent filed for the time sync algorithm used in the\ncode of this file. The shown implementation example is covered by the\nrepository's licencse, but you may not be eligible to deploy the applied\nalgorithm in applications without granted license by the patent holder.",
         "x": 170,
         "y": 40,
