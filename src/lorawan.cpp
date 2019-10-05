@@ -484,6 +484,14 @@ void lmictask(void *pvParameters) {
 
   os_init();    // initialize lmic run-time environment
   LMIC_reset(); // initialize lmic MAC
+
+// Note that The Things Network uses the non-standard SF9BW125 data rate for RX2
+// in Europe and switches between RX1 and RX2 based on network congestion. Thus,
+// to avoid occasionally join failures, we set datarate to SF9 and bypass the
+// LORAWAN spec-compliant RX2 == SF12 setting
+#if defined(CFG_eu868)
+  LMIC_setDrTxpow(EU868_DR_SF9, KEEP_TXPOW);
+#endif
   LMIC_setLinkCheckMode(0);
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
@@ -645,7 +653,7 @@ uint8_t getBattLevel() {
 // u1_t os_getBattLevel(void) { return getBattLevel(); };
 
 const char *getSfName(rps_t rps) {
-  const char *const t[] = {"FSK", "SF7", "SF8", "SF9",
+  const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
                            "SF10", "SF11", "SF12", "SF?"};
   return t[getSf(rps)];
 }
