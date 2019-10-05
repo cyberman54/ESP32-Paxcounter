@@ -14,8 +14,10 @@ void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
 void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message);
 void oledfillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                   uint8_t bRender);
-void oledScrollBufferLeft(uint8_t *buf, const uint16_t width,
-                          const uint16_t height);
+void oledScrollBufferHorizontal(uint8_t *buf, const uint16_t width,
+                                const uint16_t height, bool left = true);
+void oledScrollBufferVertical(uint8_t *buf, const uint16_t width,
+                              const uint16_t height, int offset = 0);
 int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
                   const uint8_t dot);
 void oledPlotCurve(uint16_t count, bool reset);

@@ -409,24 +409,55 @@ int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
   return 0;
 }
 
-void oledScrollBufferLeft(uint8_t *buf, const uint16_t width,
-                          const uint16_t height) {
+void oledScrollBufferHorizontal(uint8_t *buf, const uint16_t width,
+                                const uint16_t height, bool left) {
 
   uint16_t col, page, idx;
 
   for (page = 0; page < height / 8; page++) {
-    for (col = 0; col < width - 1; col++) {
-      idx = page * width + col;
-      buf[idx] = buf[idx + 1];
+    if (left) { // scroll left
+      for (col = 0; col < width - 1; col++) {
+        idx = page * width + col;
+        buf[idx] = buf[idx + 1];
+      }
+      buf[idx + 1] = 0;
+    } else // scroll right
+    {
+      for (col = width - 1; col > 0; col--) {
+        idx = page * width + col;
+        buf[idx] = buf[idx - 1];
+      }
+      buf[idx - 1] = 0;
     }
-    buf[idx + 1] = 0;
+  }
+}
+
+void oledScrollBufferVertical(uint8_t *buf, const uint16_t width,
+                              const uint16_t height, int offset) {
+
+  uint64_t buf_col;
+
+  if (!offset)
+    return; // nothing to do
+
+  for (uint16_t col = 0; col < DISPLAY_WIDTH; col++) {
+    // convert column bytes from display buffer to uint64_t
+    buf_col = *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8];
+
+    if (offset > 0) // scroll up
+      buf_col >= abs(offset);
+    else // scroll down
+      buf_col <= offset;
+
+    // write back uint64_t to uint8_t display buffer
+    *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8] = buf_col;
   }
 }
 
 void oledPlotCurve(uint16_t count, bool reset) {
 
   static uint16_t last_count = 0, col = 0, row = 0;
-  static int scalefactor = 1, oldsf = 1;
+  uint16_t v_scroll = 0;
 
   if ((last_count == count) && !reset)
     return;
@@ -435,47 +466,23 @@ void oledPlotCurve(uint16_t count, bool reset) {
     if (col < DISPLAY_WIDTH - 1) // matrix not full -> increment column
       col++;
     else // matrix full -> scroll left 1 dot
-      oledScrollBufferLeft(displaybuf, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+      oledScrollBufferHorizontal(displaybuf, DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                                 true);
 
   } else // clear current dot
     oledDrawPixel(displaybuf, col, row, 0);
 
-  // re-scale, if necessary
-  oldsf = scalefactor;
-  while (((count / scalefactor) <= DISPLAY_HEIGHT) && (scalefactor > 1))
-    scalefactor--;
-  while ((count / scalefactor) > DISPLAY_HEIGHT)
-    scalefactor++;
-  if (scalefactor != oldsf)
-    oledRescaleBuffer(displaybuf, scalefactor);
+  // scroll up vertical, if necessary
+  while ((count - v_scroll) > DISPLAY_HEIGHT - 1)
+    v_scroll++;
+  if (v_scroll)
+    oledScrollBufferVertical(displaybuf, DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                             v_scroll);
 
   // set new dot
-  row = DISPLAY_HEIGHT - 1 - (count / scalefactor) % DISPLAY_HEIGHT;
+  row = DISPLAY_HEIGHT - 1 - (count - v_scroll) % DISPLAY_HEIGHT;
   last_count = count;
   oledDrawPixel(displaybuf, col, row, 1);
-}
-
-void oledRescaleBuffer(uint8_t *buf, const int factor) {
-
-  if (!factor)
-    return;
-
-  uint64_t buf_col;
-
-  for (uint16_t col = 0; col < DISPLAY_WIDTH; col++) {
-    // convert column bytes from display buffer to uint64_t
-    buf_col = *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8];
-
-    if (factor < 0)
-      // shift left: scroll up = scale down
-      buf_col <= abs(factor);
-    else
-      // shift right: scroll down = scale up
-      buf_col >= abs(factor);
-
-    // write back uint64_t to uint8_t display buffer
-    *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8] = buf_col;
-  }
 }
 
 #endif // HAS_DISPLAY
