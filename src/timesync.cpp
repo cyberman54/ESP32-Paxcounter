@@ -25,7 +25,7 @@ typedef std::chrono::duration<long long int, std::ratio<1, 1000>>
 
 TaskHandle_t timeSyncReqTask = NULL;
 
-static uint8_t time_sync_seqNo = 0;
+static uint8_t time_sync_seqNo = (uint8_t)random(TIMEREQUEST_MAX_SEQNO);
 static bool timeSyncPending = false;
 static myClock_timepoint time_sync_tx[TIME_SYNC_SAMPLES];
 static myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
