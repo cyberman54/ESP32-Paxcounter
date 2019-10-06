@@ -117,10 +117,8 @@ void init_display(uint8_t verbose) {
       // display DEVEUI as plain text on the right
       dp_printf(72, 0, FONT_NORMAL, 0, "LORAWAN");
       dp_printf(72, 1, FONT_NORMAL, 0, "DEVEUI:");
-      dp_printf(80, 3, FONT_NORMAL, 0, "%4.4s", deveui);
-      dp_printf(80, 4, FONT_NORMAL, 0, "%4.4s", deveui + 4);
-      dp_printf(80, 5, FONT_NORMAL, 0, "%4.4s", deveui + 8);
-      dp_printf(80, 6, FONT_NORMAL, 0, "%4.4s", deveui + 12);
+      for (uint8_t i = 0; i <= 3; i++)
+        dp_printf(80, i + 3, FONT_NORMAL, 0, "%4.4s", deveui + i * 4);
 
       // give user some time to read or take picture
       oledDumpBuffer(NULL);
@@ -444,10 +442,10 @@ void oledScrollBufferVertical(uint8_t *buf, const uint16_t width,
     // convert column bytes from display buffer to uint64_t
     buf_col = *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8];
 
-    if (offset > 0) // scroll up
-      buf_col >= abs(offset);
-    else // scroll down
-      buf_col <= offset;
+    if (offset > 0) // scroll down
+      buf_col <= abs(offset);
+    else // scroll up
+      buf_col >= offset;
 
     // write back uint64_t to uint8_t display buffer
     *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8] = buf_col;
@@ -472,7 +470,7 @@ void oledPlotCurve(uint16_t count, bool reset) {
   } else // clear current dot
     oledDrawPixel(displaybuf, col, row, 0);
 
-  // scroll up vertical, if necessary
+  // scroll down, if necessary
   while ((count - v_scroll) > DISPLAY_HEIGHT - 1)
     v_scroll++;
   if (v_scroll)
@@ -480,7 +478,8 @@ void oledPlotCurve(uint16_t count, bool reset) {
                              v_scroll);
 
   // set new dot
-  row = DISPLAY_HEIGHT - 1 - (count - v_scroll) % DISPLAY_HEIGHT;
+  //row = DISPLAY_HEIGHT - 1 - (count - v_scroll) % DISPLAY_HEIGHT;
+  row = DISPLAY_HEIGHT - 1 - count - v_scroll;
   last_count = count;
   oledDrawPixel(displaybuf, col, row, 1);
 }
