@@ -37,7 +37,7 @@ FONT_STRETCHED: 16x32px = 8 chars / line
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-#define DISPLAY_PAGES (5) // number of paxcounter display pages
+#define DISPLAY_PAGES (6) // number of paxcounter display pages
 
 // settings for oled display library
 #define USE_BACKBUFFER
@@ -191,6 +191,7 @@ void draw_page(time_t t, uint8_t page) {
     // page 2: GPS
     // page 3: BME280/680
     // page 4: time
+    // page 5: blank screen
 
     // page 0: parameters overview
   case 0:
@@ -323,6 +324,12 @@ void draw_page(time_t t, uint8_t page) {
 
     dp_printf(0, 4, FONT_LARGE, 0, "%02d:%02d:%02d", hour(t), minute(t),
               second(t));
+    break;
+
+    // page 5: blank screen
+  case 5:
+
+    oledFill(0, 1);
     break;
 
   default:
@@ -478,7 +485,7 @@ void oledPlotCurve(uint16_t count, bool reset) {
                              v_scroll);
 
   // set new dot
-  //row = DISPLAY_HEIGHT - 1 - (count - v_scroll) % DISPLAY_HEIGHT;
+  // row = DISPLAY_HEIGHT - 1 - (count - v_scroll) % DISPLAY_HEIGHT;
   row = DISPLAY_HEIGHT - 1 - count - v_scroll;
   last_count = count;
   oledDrawPixel(displaybuf, col, row, 1);
