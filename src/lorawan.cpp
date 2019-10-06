@@ -486,6 +486,19 @@ void lmictask(void *pvParameters) {
   LMIC_reset(); // initialize lmic MAC
   LMIC_setLinkCheckMode(0);
 
+#if defined(CFG_eu868)
+  // Note that The Things Network uses the non-standard SF9BW125 data rate for
+  // RX2 in Europe and switches between RX1 and RX2 based on network congestion.
+  // Thus, to avoid occasionally join failures, we set datarate to SF9 and
+  // bypass the LORAWAN spec-compliant RX2 == SF12 setting
+  LMIC_setDrTxpow(EU868_DR_SF9, KEEP_TXPOW);
+#else
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
+#endif
+
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
@@ -502,11 +515,6 @@ void lmictask(void *pvParameters) {
   // this will need to be changed.
   LMIC_selectSubBand(1);
 #endif
-
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
 
   // register a callback for downlink messages. We aren't trying to write
   // reentrant code, so pUserData is NULL.
@@ -645,7 +653,7 @@ uint8_t getBattLevel() {
 // u1_t os_getBattLevel(void) { return getBattLevel(); };
 
 const char *getSfName(rps_t rps) {
-  const char *const t[] = {"FSK", "SF7", "SF8", "SF9",
+  const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
                            "SF10", "SF11", "SF12", "SF?"};
   return t[getSf(rps)];
 }
