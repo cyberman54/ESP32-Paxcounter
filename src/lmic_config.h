@@ -18,7 +18,7 @@
 
 // use interrupts only if LORA_IRQ and LORA_DIO are connected to interrupt
 // capable GPIO pins on your board, if not disable interrupts
-#define LMIC_USE_INTERRUPTS 1
+//#define LMIC_USE_INTERRUPTS 1
 
 // time sync via LoRaWAN network, note: not supported by TTNv2
 // #define LMIC_ENABLE_DeviceTimeReq 1
@@ -28,7 +28,7 @@
 // so consuming more power. You may sharpen (reduce) this value if you are
 // limited on battery.
 // ATTN: VALUES > 7 WILL CAUSE RECEPTION AND JOIN PROBLEMS WITH HIGH SF RATES
-//#define CLOCK_ERROR_PROCENTAGE 7
+#define CLOCK_ERROR_PROCENTAGE 7
 
 // Set this to 1 to enable some basic debug output (using printf) about
 // RF settings used during transmission and reception. Set to 2 to
