@@ -485,13 +485,19 @@ void lmictask(void *pvParameters) {
   os_init();    // initialize lmic run-time environment
   LMIC_reset(); // initialize lmic MAC
 
-// Note that The Things Network uses the non-standard SF9BW125 data rate for RX2
-// in Europe and switches between RX1 and RX2 based on network congestion. Thus,
-// to avoid occasionally join failures, we set datarate to SF9 and bypass the
-// LORAWAN spec-compliant RX2 == SF12 setting
 #if defined(CFG_eu868)
+  // Note that The Things Network uses the non-standard SF9BW125 data rate for
+  // RX2 in Europe and switches between RX1 and RX2 based on network congestion.
+  // Thus, to avoid occasionally join failures, we set datarate to SF9 and
+  // bypass the LORAWAN spec-compliant RX2 == SF12 setting
   LMIC_setDrTxpow(EU868_DR_SF9, KEEP_TXPOW);
+#else
+  // Set the data rate to Spreading Factor 7.  This is the fastest supported
+  // rate for 125 kHz channels, and it minimizes air time and battery power.
+  // Set the transmission power to 14 dBi (25 mW).
+  LMIC_setDrTxpow(DR_SF7, 14);
 #endif
+
   LMIC_setLinkCheckMode(0);
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
@@ -510,11 +516,6 @@ void lmictask(void *pvParameters) {
   // this will need to be changed.
   LMIC_selectSubBand(1);
 #endif
-
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
 
   // register a callback for downlink messages. We aren't trying to write
   // reentrant code, so pUserData is NULL.
