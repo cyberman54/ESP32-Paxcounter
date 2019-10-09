@@ -10,7 +10,7 @@
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+#define HAS_DISPLAY 1
 #define HAS_LED NOT_A_PIN // green on board LED is useless, is GPIO25, which switches power for Lora+Display
 
 #define EXT_POWER_SW GPIO_NUM_25 // switches power for LoRa chip
@@ -23,7 +23,7 @@
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (21)
 #define MY_OLED_SCL (22)
-#define MY_OLED_RST U8X8_PIN_NONE
+#define MY_OLED_RST NOT_A_PIN
 
 // Settings for on board DS3231 RTC chip
 #define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL

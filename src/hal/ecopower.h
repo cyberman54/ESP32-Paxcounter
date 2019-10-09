@@ -12,7 +12,7 @@
 
 //#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+#define HAS_DISPLAY 1
 //#define DISPLAY_FLIP  1 // use if display is rotated
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER ((82.0+220.0)/82.0) // 82k + 220k 1%
@@ -29,7 +29,7 @@
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA SDA
 #define MY_OLED_SCL SCL
-#define MY_OLED_RST U8X8_PIN_NONE
+#define MY_OLED_RST NOT_A_PIN
 
 // Settings for on board DS3231 RTC chip
 // note: to use RTC_INT, capacitor 100nF next to red LED must be removed to sharpen interrupt signal slope

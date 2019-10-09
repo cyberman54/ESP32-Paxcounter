@@ -484,6 +484,9 @@ void lmictask(void *pvParameters) {
 
   os_init();    // initialize lmic run-time environment
   LMIC_reset(); // initialize lmic MAC
+
+  // pre-join settings
+  LMIC_setDrTxpow(assertDR(LORADRDEFAULT), LORATXPOWDEFAULT);
   LMIC_setLinkCheckMode(0);
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
@@ -494,7 +497,6 @@ void lmictask(void *pvParameters) {
   LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
 #endif
 
-//#if defined(CFG_US915) || defined(CFG_au921)
 #if CFG_LMIC_US_like
   // in the US, with TTN, it saves join time if we start on subband 1
   // (channels 8-15). This will get overridden after the join by parameters
@@ -502,11 +504,6 @@ void lmictask(void *pvParameters) {
   // this will need to be changed.
   LMIC_selectSubBand(1);
 #endif
-
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
 
   // register a callback for downlink messages. We aren't trying to write
   // reentrant code, so pUserData is NULL.
@@ -561,8 +558,8 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 
 #if (TIME_SYNC_LORASERVER)
     // valid timesync answer -> call timesync processor
-    if ((port >= TIMEANSWERPORT_MIN) && (port <= TIMEANSWERPORT_MAX)) {
-      recv_timesync_ans(port, pMsg, nMsg);
+    if (port == TIMEPORT) {
+      recv_timesync_ans(pMsg, nMsg);
       break;
     }
 #endif
@@ -645,7 +642,7 @@ uint8_t getBattLevel() {
 // u1_t os_getBattLevel(void) { return getBattLevel(); };
 
 const char *getSfName(rps_t rps) {
-  const char *const t[] = {"FSK", "SF7", "SF8", "SF9",
+  const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
                            "SF10", "SF11", "SF12", "SF?"};
   return t[getSf(rps)];
 }

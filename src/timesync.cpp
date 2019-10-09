@@ -26,7 +26,7 @@ typedef std::chrono::duration<long long int, std::ratio<1, 1000>>
 
 TaskHandle_t timeSyncReqTask = NULL;
 
-static uint8_t time_sync_seqNo = -1;
+static uint8_t time_sync_seqNo = (uint8_t)random(TIMEREQUEST_MAX_SEQNO);
 static bool timeSyncPending = false;
 static myClock_timepoint time_sync_tx[TIME_SYNC_SAMPLES];
 static myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
@@ -95,7 +95,7 @@ void process_timesync_req(void *taskparameter) {
 
       // wrap around seqNo, keeping it in time port range
       time_sync_seqNo++;
-      if(time_sync_seqNo > TIMEREQUEST_MAX_SEQNO) {
+      if (time_sync_seqNo > TIMEREQUEST_MAX_SEQNO) {
         time_sync_seqNo = 0;
       }
 
@@ -155,18 +155,30 @@ void store_time_sync_req(uint32_t timestamp) {
            timestamp % 1000);
 }
 
-// process timeserver timestamp answer, called from lorawan.cpp
-int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
-  uint8_t seq_no = buf[0];
-  buf++;
+// process timeserver timestamp answer, called by myRxCallback() in lorawan.cpp
+int recv_timesync_ans(const uint8_t buf[], const uint8_t buf_len) {
+
+  /*
+  parse 7 byte timesync_answer:
+
+  byte    meaning
+  1       sequence number (taken from node's time_sync_req)
+  2       timezone in 15 minutes steps
+  3..6    current second (from epoch time 1970)
+  7       1/250ths fractions of current second
+  */
 
   // if no timesync handshake is pending then exit
   if (!timeSyncPending)
     return 0; // failure
 
+  // extract 1 byte timerequest sequence number from buffer
+  uint8_t seq_no = buf[0];
+  buf++;
+
   // if no time is available or spurious buffer then exit
   if (buf_len != TIME_SYNC_FRAME_LENGTH) {
-    if (buf[0] == 0xff)
+    if (seq_no == 0xff)
       ESP_LOGI(TAG, "[%0.3f] Timeserver error: no confident time available",
                millis() / 1000.0);
     else
@@ -178,19 +190,27 @@ int recv_timesync_ans(uint8_t buf[], uint8_t buf_len) {
   else { // we received a probably valid time frame
 
     uint8_t k = seq_no % TIME_SYNC_SAMPLES;
-    // the 5th byte contains the fractional seconds in 2^-8 second steps
-    // (= 1/250th sec), we convert this to ms
-    uint16_t timestamp_msec = 4 * buf[4];
+
     // pointers to 4 bytes containing UTC seconds since unix epoch, msb
     uint32_t timestamp_sec, *timestamp_ptr;
 
-    // convert buffer to uint32_t, octet order is big endian
+    // extract 1 byte timezone from buffer (one step being 15min * 60s = 900s)
+    uint32_t timezone_sec = buf[0] * 900;
+    buf++;
+
+    // extract 4 bytes timestamp from buffer
+    // and convert it to uint32_t, octet order is big endian
     timestamp_ptr = (uint32_t *)buf;
     // swap byte order from msb to lsb, note: this is platform dependent
     timestamp_sec = __builtin_bswap32(*timestamp_ptr);
+    buf += 4;
+    // extract 1 byte fractional seconds in 2^-8 second steps
+    // (= 1/250th sec), we convert this to ms
+    uint16_t timestamp_msec = 4 * buf[0];
 
     // construct the timepoint when message was seen on gateway
-    time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
+    time_sync_rx[k] +=
+        seconds(timestamp_sec + timezone_sec) + milliseconds(timestamp_msec);
 
     // we guess timepoint is recent if it newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
