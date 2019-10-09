@@ -15,7 +15,7 @@ esp_err_t err;
 
 // populate cfg vars with factory settings
 void defaultConfig() {
-  cfg.loradr = LORADRDEFAULT;     // 0-15, lora datarate, see pacounter.conf
+  cfg.loradr = LORADRDEFAULT;     // 0-15, lora datarate, see paxcounter.conf
   cfg.txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
   cfg.adrmode = 1;                // 0=disabled, 1=enabled
   cfg.screensaver = 0;            // 0=disabled, 1=enabled

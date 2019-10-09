@@ -75,6 +75,39 @@ const lmic_pinmap lmic_pins = {
     .spi_freq = 0,
     .pConfig = &myHalConfig};
 
+void lora_setupForNetwork(bool preJoin) {
+
+  if (preJoin) {
+
+#if CFG_LMIC_US_like
+    // in the US, with TTN, it saves join time if we start on subband 1
+    // (channels 8-15). This will get overridden after the join by
+    // parameters from the network. If working with other networks or in
+    // other regions, this will need to be changed.
+    LMIC_selectSubBand(1);
+#elif CFG_LMIC_EU_like
+    // setting for TheThingsNetwork
+    // TTN uses SF9, not SF12, for RX2 window
+    LMIC.dn2Dr = EU868_DR_SF9;
+    // Disable link check validation
+    LMIC_setLinkCheckMode(0);
+#endif
+
+  } else {
+    // set data rate adaptation according to saved setting
+    LMIC_setAdrMode(cfg.adrmode);
+    // set data rate and transmit power to stored device values if no ADR
+    if (!cfg.adrmode)
+      LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
+    // show current devaddr
+    ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
+    ESP_LOGI(TAG, "Radio parameters %s / %s / %s",
+             getSfName(updr2rps(LMIC.datarate)),
+             getBwName(updr2rps(LMIC.datarate)),
+             getCrName(updr2rps(LMIC.datarate)));
+  }
+}
+
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
@@ -204,117 +237,6 @@ void showLoraKeys(void) {
 
 #endif // VERBOSE
 
-void onEvent(ev_t ev) {
-  char buff[24] = "";
-
-  switch (ev) {
-
-  case EV_SCAN_TIMEOUT:
-    strcpy_P(buff, PSTR("SCAN TIMEOUT"));
-    break;
-
-  case EV_BEACON_FOUND:
-    strcpy_P(buff, PSTR("BEACON FOUND"));
-    break;
-
-  case EV_BEACON_MISSED:
-    strcpy_P(buff, PSTR("BEACON MISSED"));
-    break;
-
-  case EV_BEACON_TRACKED:
-    strcpy_P(buff, PSTR("BEACON TRACKED"));
-    break;
-
-  case EV_JOINING:
-    strcpy_P(buff, PSTR("JOINING"));
-    break;
-
-  case EV_JOINED:
-    strcpy_P(buff, PSTR("JOINED"));
-    // set data rate adaptation according to saved setting
-    LMIC_setAdrMode(cfg.adrmode);
-    // set data rate and transmit power to defaults only if we have no ADR
-    if (!cfg.adrmode)
-      LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
-    // show current devaddr
-    ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
-    ESP_LOGI(TAG, "Radio parameters %s / %s / %s",
-             getSfName(updr2rps(LMIC.datarate)),
-             getBwName(updr2rps(LMIC.datarate)),
-             getCrName(updr2rps(LMIC.datarate)));
-    break;
-
-  case EV_RFU1:
-    strcpy_P(buff, PSTR("RFU1"));
-    break;
-
-  case EV_JOIN_FAILED:
-    strcpy_P(buff, PSTR("JOIN FAILED"));
-    break;
-
-  case EV_REJOIN_FAILED:
-    strcpy_P(buff, PSTR("REJOIN FAILED"));
-    break;
-
-  case EV_TXCOMPLETE:
-    strcpy_P(buff, PSTR("TX COMPLETE"));
-    break;
-
-  case EV_LOST_TSYNC:
-    strcpy_P(buff, PSTR("LOST TSYNC"));
-    break;
-
-  case EV_RESET:
-    strcpy_P(buff, PSTR("RESET"));
-    break;
-
-  case EV_RXCOMPLETE:
-    // data received in ping slot
-    strcpy_P(buff, PSTR("RX COMPLETE"));
-    break;
-
-  case EV_LINK_DEAD:
-    strcpy_P(buff, PSTR("LINK DEAD"));
-    break;
-
-  case EV_LINK_ALIVE:
-    strcpy_P(buff, PSTR("LINK_ALIVE"));
-    break;
-
-  case EV_SCAN_FOUND:
-    strcpy_P(buff, PSTR("SCAN FOUND"));
-    break;
-
-  case EV_TXSTART:
-    if (!(LMIC.opmode & OP_JOINING)) {
-      strcpy_P(buff, PSTR("TX START"));
-    }
-    break;
-
-  case EV_TXCANCELED:
-    strcpy_P(buff, PSTR("TX CANCELLED"));
-    break;
-
-  case EV_RXSTART:
-    strcpy_P(buff, PSTR("RX START"));
-    break;
-
-  case EV_JOIN_TXCOMPLETE:
-    strcpy_P(buff, PSTR("JOIN WAIT"));
-    break;
-
-  default:
-    sprintf_P(buff, PSTR("LMIC EV %d"), ev);
-    break;
-  }
-
-  // Log & Display if asked
-  if (*buff) {
-    ESP_LOGI(TAG, "%s", buff);
-    sprintf(lmic_event_msg, buff);
-  }
-}
-
 // LMIC send task
 void lora_send(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
@@ -351,7 +273,8 @@ void lora_send(void *pvParameters) {
         lora_enqueuedata(&SendBuffer); // re-enqueue the undelivered message
         break;
       case LMIC_ERROR_TX_TOO_LARGE:    // message size exceeds LMIC buffer size
-      case LMIC_ERROR_TX_NOT_FEASIBLE: // message too large for current datarate
+      case LMIC_ERROR_TX_NOT_FEASIBLE: // message too large for current
+                                       // datarate
         ESP_LOGI(TAG,
                  "Message too large to send, message not sent and deleted");
         // we need some kind of error handling here -> to be done
@@ -385,9 +308,9 @@ esp_err_t lora_stack_init() {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
-  if (!LMIC_startJoining()) { // start joining
+  // start joining
+  if (!LMIC_startJoining())
     ESP_LOGI(TAG, "Already joined");
-  }
 
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
@@ -480,40 +403,139 @@ finish:
 
 // LMIC lorawan stack task
 void lmictask(void *pvParameters) {
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+  configASSERT(((uint32_t)pvParameters) == 1);
 
-  os_init();    // initialize lmic run-time environment
-  LMIC_reset(); // initialize lmic MAC
+  // setup LMIC stack
+  os_init(); // initialize lmic run-time environment
+  // os_init_ex(pPinMap);
 
-  // pre-join settings
-  LMIC_setDrTxpow(assertDR(LORADRDEFAULT), LORATXPOWDEFAULT);
-  LMIC_setLinkCheckMode(0);
+  // register a callback for downlink messages. We aren't trying to write
+  // reentrant code, so pUserData is NULL. LMIC_reset() doesn't affect
+  // callbacks, so we can do this first.
+  LMIC_registerRxMessageCb(myRxCallback, NULL);
+  LMIC_registerEventCb(myEventCallback, NULL);
+
+  // Reset the MAC state. Session and pending data transfers will be
+  // discarded.
+  LMIC_reset();
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
 // in src/lmic_config.h if you are limited on battery.
 #ifdef CLOCK_ERROR_PROCENTAGE
-  LMIC_setClockError(MAX_CLOCK_ERROR * CLOCK_ERROR_PROCENTAGE / 100);
+  LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 100);
 #endif
 
-#if CFG_LMIC_US_like
-  // in the US, with TTN, it saves join time if we start on subband 1
-  // (channels 8-15). This will get overridden after the join by parameters
-  // from the network. If working with other networks or in other regions,
-  // this will need to be changed.
-  LMIC_selectSubBand(1);
-#endif
-
-  // register a callback for downlink messages. We aren't trying to write
-  // reentrant code, so pUserData is NULL.
-  LMIC_registerRxMessageCb(myRxCallback, NULL);
+  // do the network-specific setup prior to join.
+  lora_setupForNetwork(true);
 
   while (1) {
     os_runloop_once(); // execute lmic scheduled jobs and events
     delay(2);          // yield to CPU
   }
 } // lmictask
+
+// lmic event handler
+void myEventCallback(void *pUserData, ev_t ev) {
+  char buff[24] = "";
+
+  switch (ev) {
+
+  case EV_SCAN_TIMEOUT:
+    strcpy_P(buff, PSTR("SCAN TIMEOUT"));
+    break;
+
+  case EV_BEACON_FOUND:
+    strcpy_P(buff, PSTR("BEACON FOUND"));
+    break;
+
+  case EV_BEACON_MISSED:
+    strcpy_P(buff, PSTR("BEACON MISSED"));
+    break;
+
+  case EV_BEACON_TRACKED:
+    strcpy_P(buff, PSTR("BEACON TRACKED"));
+    break;
+
+  case EV_JOINING:
+    strcpy_P(buff, PSTR("JOINING"));
+    break;
+
+  case EV_JOINED:
+    strcpy_P(buff, PSTR("JOINED"));
+    lora_setupForNetwork(false);
+    break;
+
+  case EV_RFU1:
+    strcpy_P(buff, PSTR("RFU1"));
+    break;
+
+  case EV_JOIN_FAILED:
+    strcpy_P(buff, PSTR("JOIN FAILED"));
+    break;
+
+  case EV_REJOIN_FAILED:
+    strcpy_P(buff, PSTR("REJOIN FAILED"));
+    break;
+
+  case EV_TXCOMPLETE:
+    strcpy_P(buff, PSTR("TX COMPLETE"));
+    break;
+
+  case EV_LOST_TSYNC:
+    strcpy_P(buff, PSTR("LOST TSYNC"));
+    break;
+
+  case EV_RESET:
+    strcpy_P(buff, PSTR("RESET"));
+    break;
+
+  case EV_RXCOMPLETE:
+    strcpy_P(buff, PSTR("RX COMPLETE"));
+    break;
+
+  case EV_LINK_DEAD:
+    strcpy_P(buff, PSTR("LINK DEAD"));
+    break;
+
+  case EV_LINK_ALIVE:
+    strcpy_P(buff, PSTR("LINK_ALIVE"));
+    break;
+
+  case EV_SCAN_FOUND:
+    strcpy_P(buff, PSTR("SCAN FOUND"));
+    break;
+
+  case EV_TXSTART:
+    if (!(LMIC.opmode & OP_JOINING)) {
+      strcpy_P(buff, PSTR("TX START"));
+    }
+    break;
+
+  case EV_TXCANCELED:
+    strcpy_P(buff, PSTR("TX CANCELLED"));
+    break;
+
+  case EV_RXSTART:
+    strcpy_P(buff, PSTR("RX START"));
+    break;
+
+  case EV_JOIN_TXCOMPLETE:
+    strcpy_P(buff, PSTR("JOIN WAIT"));
+    break;
+
+  default:
+    sprintf_P(buff, PSTR("LMIC EV %d"), ev);
+    break;
+  }
+
+  // Log & Display if asked
+  if (*buff) {
+    ESP_LOGI(TAG, "%s", buff);
+    sprintf(lmic_event_msg, buff);
+  }
+}
 
 // receive message handler
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
