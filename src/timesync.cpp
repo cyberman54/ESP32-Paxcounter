@@ -209,7 +209,7 @@ int recv_timesync_ans(const uint8_t buf[], const uint8_t buf_len) {
 
     // construct the timepoint when message was seen on gateway
     time_sync_rx[k] +=
-        seconds(timestamp_sec + timezone_sec) + milliseconds(timestamp_msec);
+        seconds(timestamp_sec) + milliseconds(timestamp_msec);
 
     // we guess timepoint is recent if it newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
