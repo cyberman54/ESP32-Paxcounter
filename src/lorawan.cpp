@@ -100,8 +100,8 @@ void lora_setupForNetwork(bool preJoin) {
     if (!cfg.adrmode)
       LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
     // show current devaddr
-    ESP_LOGI(TAG, "DEVaddr=%08X", LMIC.devaddr);
-    ESP_LOGI(TAG, "Radio parameters %s / %s / %s",
+    ESP_LOGI(TAG, "DEVaddr: %08X", LMIC.devaddr);
+    ESP_LOGI(TAG, "Radio parameters: %s / %s / %s",
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
              getCrName(updr2rps(LMIC.datarate)));
@@ -309,7 +309,7 @@ esp_err_t lora_stack_init() {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
-  // start joining
+  // start join
   if (!LMIC_startJoining())
     ESP_LOGI(TAG, "Already joined");
 
@@ -408,11 +408,10 @@ void lmictask(void *pvParameters) {
 
   // setup LMIC stack
   os_init(); // initialize lmic run-time environment
-  // os_init_ex(pPinMap);
 
-  // register a callback for downlink messages. We aren't trying to write
-  // reentrant code, so pUserData is NULL. LMIC_reset() doesn't affect
-  // callbacks, so we can do this first.
+  // register a callback for downlink messages and lmic events.
+  // We aren't trying to write reentrant code, so pUserData is NULL.
+  // LMIC_reset() doesn't affect callbacks, so we can do this first.
   LMIC_registerRxMessageCb(myRxCallback, NULL);
   LMIC_registerEventCb(myEventCallback, NULL);
 
@@ -509,7 +508,7 @@ void myEventCallback(void *pUserData, ev_t ev) {
     break;
 
   case EV_TXSTART:
-      strcpy_P(buff, PSTR("TX START"));
+    strcpy_P(buff, PSTR("TX START"));
     break;
 
   case EV_TXCANCELED:
@@ -531,7 +530,7 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   // Log & Display if asked
   if (*buff) {
-    ESP_LOGI(TAG, "%s", buff);
+    ESP_LOGD(TAG, "%s", buff);
     sprintf(lmic_event_msg, buff);
   }
 }
