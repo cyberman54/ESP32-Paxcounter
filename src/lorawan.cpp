@@ -435,104 +435,29 @@ void lmictask(void *pvParameters) {
 
 // lmic event handler
 void myEventCallback(void *pUserData, ev_t ev) {
-  char buff[24] = "";
+
+  static const char *const evNames[] = {LMIC_EVENT_NAME_TABLE__INIT};
 
   switch (ev) {
-
-  case EV_SCAN_TIMEOUT:
-    strcpy_P(buff, PSTR("SCAN TIMEOUT"));
-    break;
-
-  case EV_BEACON_FOUND:
-    strcpy_P(buff, PSTR("BEACON FOUND"));
-    break;
-
-  case EV_BEACON_MISSED:
-    strcpy_P(buff, PSTR("BEACON MISSED"));
-    break;
-
-  case EV_BEACON_TRACKED:
-    strcpy_P(buff, PSTR("BEACON TRACKED"));
-    break;
-
   case EV_JOINING:
-    strcpy_P(buff, PSTR("JOINING"));
     // do the network-specific setup prior to join.
     lora_setupForNetwork(true);
     break;
 
   case EV_JOINED:
-    strcpy_P(buff, PSTR("JOINED"));
     // do the after join network-specific setup.
     lora_setupForNetwork(false);
     break;
-
-  case EV_RFU1:
-    strcpy_P(buff, PSTR("RFU1"));
-    break;
-
-  case EV_JOIN_FAILED:
-    strcpy_P(buff, PSTR("JOIN FAILED"));
-    break;
-
-  case EV_REJOIN_FAILED:
-    strcpy_P(buff, PSTR("REJOIN FAILED"));
-    break;
-
-  case EV_TXCOMPLETE:
-    strcpy_P(buff, PSTR("TX COMPLETE"));
-    break;
-
-  case EV_LOST_TSYNC:
-    strcpy_P(buff, PSTR("LOST TSYNC"));
-    break;
-
-  case EV_RESET:
-    strcpy_P(buff, PSTR("RESET"));
-    break;
-
-  case EV_RXCOMPLETE:
-    strcpy_P(buff, PSTR("RX COMPLETE"));
-    break;
-
-  case EV_LINK_DEAD:
-    strcpy_P(buff, PSTR("LINK DEAD"));
-    break;
-
-  case EV_LINK_ALIVE:
-    strcpy_P(buff, PSTR("LINK_ALIVE"));
-    break;
-
-  case EV_SCAN_FOUND:
-    strcpy_P(buff, PSTR("SCAN FOUND"));
-    break;
-
-  case EV_TXSTART:
-    strcpy_P(buff, PSTR("TX START"));
-    break;
-
-  case EV_TXCANCELED:
-    strcpy_P(buff, PSTR("TX CANCELLED"));
-    break;
-
-  case EV_RXSTART:
-    strcpy_P(buff, PSTR("RX START"));
-    break;
-
-  case EV_JOIN_TXCOMPLETE:
-    strcpy_P(buff, PSTR("JOIN WAIT"));
-    break;
-
-  default:
-    sprintf_P(buff, PSTR("LMIC EV %d"), ev);
-    break;
   }
 
-  // Log & Display if asked
-  if (*buff) {
-    ESP_LOGD(TAG, "%s", buff);
-    sprintf(lmic_event_msg, buff);
-  }
+  // get event message
+  if (ev < sizeof(evNames) / sizeof(evNames[0]))
+    sprintf(lmic_event_msg, "%s", evNames[ev] + 3); // +3 to strip "EV_"
+  else
+    sprintf(lmic_event_msg, "LMIC event %d", ev);
+
+  // print event
+  ESP_LOGD(TAG, "%s", lmic_event_msg);
 }
 
 // receive message handler
