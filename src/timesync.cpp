@@ -12,7 +12,6 @@ algorithm in applications without granted license by the patent holder.
 #if (TIME_SYNC_LORASERVER) && (HAS_LORA)
 
 #include "timesync.h"
-#include "uart.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;

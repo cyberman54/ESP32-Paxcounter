@@ -14,17 +14,26 @@
                 "to": "down",
                 "tot": "str"
             },
-            "page-titlebar-backgroundColor":{
-               "value":"#0094CE",
-               "edited":false
+            {
+                "t": "set",
+                "p": "payload.confirmed",
+                "pt": "msg",
+                "to": "false",
+                "tot": "bool"
             },
-            "page-backgroundColor":{
-               "value":"#fafafa",
-               "edited":false
+            {
+                "t": "set",
+                "p": "payload.schedule",
+                "pt": "msg",
+                "to": "replace",
+                "tot": "str"
             },
-            "page-sidebar-backgroundColor":{
-               "value":"#ffffff",
-               "edited":false
+            {
+                "t": "move",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.payload_raw",
+                "tot": "msg"
             },
             {
                 "t": "move",

@@ -6,21 +6,10 @@
 #include "vendor_array.h"
 #endif
 
-#include <sstream>
-#include <iostream>
-
 // Local logging tag
 static const char TAG[] = __FILE__;
 
 uint16_t salt;
-uint64_t fota_trigger_mac;
-
-void macsniff_setup() {
-  std::stringstream ss;
-  ss << std::hex << OTA_TRIGGER_MAC;
-  ss >> fota_trigger_mac;
-  std::cout << static_cast<int>(fota_trigger_mac) << std::endl;
-}
 
 uint16_t get_salt(void) {
   salt = (uint16_t)random(65536); // get new 16bit random for salting hashes
@@ -93,25 +82,6 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
     // Count only if MAC was not yet seen
     if (added) {
-      ESP_LOGD(TAG, "new Mac: %x:%x:%x:%x:%x:%x",
-        paddr[0],
-        paddr[1],
-        paddr[2],
-        paddr[3],
-        paddr[4],
-        paddr[5]
-      );
-      // is newly found MAC the OTA trigger?
-      uint64_t addr48 =  (((uint64_t)paddr[3]) | ((uint64_t)paddr[2] << 8) |
-                         ((uint64_t)paddr[1] << 16) | ((uint64_t)paddr[0] << 24));
-      if((int)(addr48-fota_trigger_mac) == 0)
-      {
-        ESP_LOGI(TAG, "OTA-MAC found, Update triggered");
-        // initiate OTA update
-        uint8_t cmd[2] = {9, 9};
-        rcommand(cmd, 2);
-      }
-
       // increment counter and one blink led
       if (sniff_type == MAC_SNIFF_WIFI) {
         macs_wifi++; // increment Wifi MACs counter
