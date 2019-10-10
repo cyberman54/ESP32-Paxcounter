@@ -419,19 +419,6 @@ void lmictask(void *pvParameters) {
   // discarded.
   LMIC_reset();
 
-#if defined(CFG_eu868)
-  // Note that The Things Network uses the non-standard SF9BW125 data rate for
-  // RX2 in Europe and switches between RX1 and RX2 based on network congestion.
-  // Thus, to avoid occasionally join failures, we set datarate to SF9 and
-  // bypass the LORAWAN spec-compliant RX2 == SF12 setting
-  LMIC_setDrTxpow(EU868_DR_SF9, KEEP_TXPOW);
-#else
-  // Set the data rate to Spreading Factor 7.  This is the fastest supported
-  // rate for 125 kHz channels, and it minimizes air time and battery power.
-  // Set the transmission power to 14 dBi (25 mW).
-  LMIC_setDrTxpow(DR_SF7, 14);
-#endif
-
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
