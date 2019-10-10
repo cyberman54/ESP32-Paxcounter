@@ -246,9 +246,9 @@ void lora_send(void *pvParameters) {
   while (1) {
 
     // postpone until we are joined if we are not
-    while (!LMIC.devaddr) {
-      vTaskDelay(pdMS_TO_TICKS(500));
-    }
+    // while (!LMIC.devaddr) {
+    //  vTaskDelay(pdMS_TO_TICKS(500));
+    //}
 
     // fetch next or wait for payload to send from queue
     if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) != pdTRUE) {
@@ -259,7 +259,8 @@ void lora_send(void *pvParameters) {
     // attempt to transmit payload
     else {
 
-      switch (LMIC_sendWithCallback_strict(
+      // switch (LMIC_sendWithCallback_strict(
+      switch (LMIC_sendWithCallback(
           SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
           (cfg.countermode & 0x02), myTxCallback, NULL)) {
 
@@ -427,9 +428,6 @@ void lmictask(void *pvParameters) {
   LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 100);
 #endif
 
-  // do the network-specific setup prior to join.
-  lora_setupForNetwork(true);
-
   while (1) {
     os_runloop_once(); // execute lmic scheduled jobs and events
     delay(2);          // yield to CPU
@@ -460,10 +458,13 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   case EV_JOINING:
     strcpy_P(buff, PSTR("JOINING"));
+    // do the network-specific setup prior to join.
+    lora_setupForNetwork(true);
     break;
 
   case EV_JOINED:
     strcpy_P(buff, PSTR("JOINED"));
+    // do the after join network-specific setup.
     lora_setupForNetwork(false);
     break;
 
@@ -508,9 +509,7 @@ void myEventCallback(void *pUserData, ev_t ev) {
     break;
 
   case EV_TXSTART:
-    if (!(LMIC.opmode & OP_JOINING)) {
       strcpy_P(buff, PSTR("TX START"));
-    }
     break;
 
   case EV_TXCANCELED:
