@@ -35,14 +35,14 @@ void power_event_IRQ(void) {
     ESP_LOGI(TAG, "Battery low temperature.");
 
   // display on/off
-  if (pmu.isPEKShortPressIRQ()) {
-    cfg.screenon = !cfg.screenon;
-  }
+  // if (pmu.isPEKShortPressIRQ()) {
+  //  cfg.screenon = !cfg.screenon;
+  //}
 
   // shutdown power
   if (pmu.isPEKLongtPressIRQ()) {
     AXP192_power(false); // switch off Lora, GPS, display
-    pmu.shutdown();
+    pmu.shutdown(); // switch off device
   }
 
   pmu.clearIRQ();
