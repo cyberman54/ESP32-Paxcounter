@@ -436,8 +436,16 @@ void lmictask(void *pvParameters) {
 // lmic event handler
 void myEventCallback(void *pUserData, ev_t ev) {
 
+  // using message descriptors from LMIC library
   static const char *const evNames[] = {LMIC_EVENT_NAME_TABLE__INIT};
 
+  // get current event message
+  if (ev < sizeof(evNames) / sizeof(evNames[0]))
+    sprintf(lmic_event_msg, "%s", evNames[ev] + 3); // +3 to strip "EV_"
+  else
+    sprintf(lmic_event_msg, "LMIC event %d", ev);
+
+  // process current event message
   switch (ev) {
   case EV_JOINING:
     // do the network-specific setup prior to join.
@@ -448,13 +456,12 @@ void myEventCallback(void *pUserData, ev_t ev) {
     // do the after join network-specific setup.
     lora_setupForNetwork(false);
     break;
-  }
 
-  // get event message
-  if (ev < sizeof(evNames) / sizeof(evNames[0]))
-    sprintf(lmic_event_msg, "%s", evNames[ev] + 3); // +3 to strip "EV_"
-  else
-    sprintf(lmic_event_msg, "LMIC event %d", ev);
+  case EV_JOIN_TXCOMPLETE:
+    // replace descriptor from library with more descriptive term
+    lmic_event_msg = "JOIN_WAIT";
+    break;
+  }
 
   // print event
   ESP_LOGD(TAG, "%s", lmic_event_msg);
