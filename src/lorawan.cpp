@@ -472,12 +472,12 @@ void myEventCallback(void *pUserData, ev_t ev) {
     break;
   }
 
-  // print event
-  ESP_LOGD(TAG, "%s", lmic_event_msg);
-
   // add Lora send queue length to display
   if (msgWaiting)
     snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "%2u", msgWaiting);
+
+  // print event
+  ESP_LOGD(TAG, "%s", lmic_event_msg);
 }
 
 // receive message handler
