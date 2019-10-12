@@ -252,7 +252,7 @@ void draw_page(time_t t, uint8_t page) {
     // LMiC event display
     dp_printf(0, 7, FONT_SMALL, 0, "%-16s", lmic_event_msg);
     // LORA datarate, display inverse if ADR disabled
-    dp_printf(104, 7, FONT_SMALL, !cfg.adrmode, "%-4s",
+    dp_printf(102, 7, FONT_SMALL, !cfg.adrmode, "%-4s",
               getSfName(updr2rps(LMIC.datarate)));
 #endif // HAS_LORA
 
