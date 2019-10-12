@@ -346,8 +346,14 @@ void lora_enqueuedata(MessageBuffer_t *message) {
     ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
     break;
   }
-  if (ret != pdTRUE)
+  if (ret != pdTRUE) {
+    snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "<>");
     ESP_LOGW(TAG, "LORA sendqueue is full");
+  } else {
+    // add Lora send queue length to display
+    snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "%2u",
+             uxQueueMessagesWaiting(LoraSendQueue));
+  }
 }
 
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
@@ -438,12 +444,15 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   // using message descriptors from LMIC library
   static const char *const evNames[] = {LMIC_EVENT_NAME_TABLE__INIT};
+  // get current length of lora send queue
+  uint8_t const msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
 
   // get current event message
   if (ev < sizeof(evNames) / sizeof(evNames[0]))
-    sprintf(lmic_event_msg, "%s", evNames[ev] + 3); // +3 to strip "EV_"
+    snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "%-16s",
+             evNames[ev] + 3); // +3 to strip "EV_"
   else
-    sprintf(lmic_event_msg, "LMIC event %d", ev);
+    snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "LMIC event %-04u ", ev);
 
   // process current event message
   switch (ev) {
@@ -459,12 +468,16 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   case EV_JOIN_TXCOMPLETE:
     // replace descriptor from library with more descriptive term
-    lmic_event_msg = "JOIN_WAIT";
+    snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "%-16s", "JOIN_WAIT");
     break;
   }
 
   // print event
   ESP_LOGD(TAG, "%s", lmic_event_msg);
+
+  // add Lora send queue length to display
+  if (msgWaiting)
+    snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "%2u", msgWaiting);
 }
 
 // receive message handler

@@ -15,13 +15,15 @@ Display-Mask (128 x 64 pixel):
 4|WIFI:abcde BLTH:abcde   SMALL
 5|RLIM:abcd  Mem:abcdKB   SMALL
 6|27.Feb 2019 20:27:00*   SMALL
-7|yyyyyyyyyyyyyyyy SFab   SMALL
+7|yyyyyyyyyyyyy xx SFab   SMALL
 
 * = char {L|G|R|?} indicates time source,
     inverse = clock controller is active,
     pulsed = pps input signal is active
 
-y = LMIC event message; ab = payload queue length
+y = LMIC event message
+xx = payload sendqueue length
+ab = LMIC spread factor
 
 FONT_SMALL:     6x8px = 21 chars / line
 FONT_NORMAL:    8x8px = 16 chars / line
@@ -108,7 +110,7 @@ void init_display(uint8_t verbose) {
       uint8_t buf[8];
       char deveui[17];
       os_getDevEui((u1_t *)buf);
-      sprintf(deveui, "%016llX", *((uint64_t *)&buf));
+      snprintf(deveui, 17, "%016llX", *((uint64_t *)&buf));
 
       // display DEVEUI as QR code on the left
       oledSetContrast(30);
@@ -175,7 +177,6 @@ void refreshTheDisplay(bool nextPage) {
 void draw_page(time_t t, uint8_t page) {
 
   char timeState;
-  uint8_t msgWaiting;
 #if (HAS_GPS)
   static bool wasnofix = true;
 #endif
@@ -248,19 +249,11 @@ void draw_page(time_t t, uint8_t page) {
 
     // line 7: LORA network status
 #if (HAS_LORA)
-    // LMiC event display, display inverse if sendqueue not empty
-    msgWaiting = uxQueueMessagesWaiting(LoraSendQueue);
-    if (msgWaiting)
-      dp_printf(0, 7, FONT_SMALL, 1, "%-16s", lmic_event_msg);
-    else
-      dp_printf(0, 7, FONT_SMALL, 0, "%-16s", lmic_event_msg);
+    // LMiC event display
+    dp_printf(0, 7, FONT_SMALL, 0, "%-16s", lmic_event_msg);
     // LORA datarate, display inverse if ADR disabled
-    if (cfg.adrmode)
-      dp_printf(100, 7, FONT_SMALL, 0, "%-4s",
-                getSfName(updr2rps(LMIC.datarate)));
-    else
-      dp_printf(100, 7, FONT_SMALL, 1, "%-4s",
-                getSfName(updr2rps(LMIC.datarate)));
+    dp_printf(104, 7, FONT_SMALL, !cfg.adrmode, "%-4s",
+              getSfName(updr2rps(LMIC.datarate)));
 #endif // HAS_LORA
 
     break; // page0

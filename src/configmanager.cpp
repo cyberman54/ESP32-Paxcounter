@@ -179,7 +179,7 @@ void saveConfig() {
 
 // set and save cfg.version
 void migrateVersion() {
-  sprintf(cfg.version, "%s", PROGVERSION);
+  snprintf(cfg.version, 10, "%s", PROGVERSION);
   ESP_LOGI(TAG, "version set to %s", cfg.version);
   saveConfig();
 }

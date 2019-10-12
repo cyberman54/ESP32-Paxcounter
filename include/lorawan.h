@@ -20,7 +20,6 @@
 #include <Wire.h>
 #endif
 
-extern QueueHandle_t LoraSendQueue;
 extern TaskHandle_t lmicTask, lorasendTask;
 
 // table of LORAWAN MAC commands
