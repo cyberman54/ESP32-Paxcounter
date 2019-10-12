@@ -41,12 +41,12 @@
 #define BLE_MODE (0x40)
 #define SCREEN_MODE (0x80)
 
-// length of display buffer for lmic event messages 
+// length of display buffer for lmic event messages
 #define LMIC_EVENTMSG_LEN 17
 
 // I2C bus access control
 #define I2C_MUTEX_LOCK()                                                       \
-  (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(10)) == pdTRUE)
+  (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(DISPLAYREFRESH_MS)) == pdTRUE)
 #define I2C_MUTEX_UNLOCK() (xSemaphoreGive(I2Caccess))
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
