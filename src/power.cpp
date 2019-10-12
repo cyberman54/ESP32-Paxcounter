@@ -42,7 +42,7 @@ void power_event_IRQ(void) {
   // shutdown power
   if (pmu.isPEKLongtPressIRQ()) {
     AXP192_power(false); // switch off Lora, GPS, display
-    pmu.shutdown(); // switch off device
+    pmu.shutdown();      // switch off device
   }
 
   pmu.clearIRQ();
@@ -86,7 +86,8 @@ void AXP192_showstatus(void) {
 
 void AXP192_init(void) {
 
-  if (pmu.begin(i2c_readBytes, i2c_writeBytes, AXP192_PRIMARY_ADDRESS) == AXP_FAIL)
+  if (pmu.begin(i2c_readBytes, i2c_writeBytes, AXP192_PRIMARY_ADDRESS) ==
+      AXP_FAIL)
     ESP_LOGI(TAG, "AXP192 PMU initialization failed");
   else {
 
@@ -127,16 +128,18 @@ uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
     Wire.write(reg);
     Wire.endTransmission(false);
     uint8_t cnt = Wire.requestFrom(addr, (uint8_t)len, (uint8_t)1);
-    if (!cnt) {
+    if (!cnt)
       ret = 0xFF;
-    }
     uint16_t index = 0;
     while (Wire.available()) {
-      if (index > len)
-        return 0xFF;
+      if (index > len) {
+        ret = 0xFF;
+        goto finish;
+      }
       data[index++] = Wire.read();
     }
 
+  finish:
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     return ret;
   } else {
@@ -147,7 +150,7 @@ uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
 
 uint8_t i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
   if (I2C_MUTEX_LOCK()) {
-    
+
     uint8_t ret = 0;
     Wire.beginTransmission(addr);
     Wire.write(reg);
@@ -157,8 +160,8 @@ uint8_t i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
     ret = Wire.endTransmission();
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
-    return ret ? 0xFF : ret;
-    //return ret ? ret : 0xFF;
+    // return ret ? 0xFF : ret;
+    return ret ? ret : 0xFF;
   } else {
     ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
     return 0xFF;
@@ -222,12 +225,7 @@ uint16_t read_voltage() {
   uint16_t voltage = 0;
 
 #ifdef HAS_PMU
-  //   if (!I2C_MUTEX_LOCK())
-  //     ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
-  //   else {
   voltage = pmu.isVBUSPlug() ? 0xffff : pmu.getBattVoltage();
-  //     I2C_MUTEX_UNLOCK();
-  //   }
 #else
 
 #ifdef BAT_MEASURE_ADC
@@ -243,11 +241,11 @@ uint16_t read_voltage() {
     ESP_ERROR_CHECK(adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf));
     adc_reading += adc_buf;
   }
-#endif
+#endif                       // BAT_MEASURE_ADC_UNIT
   adc_reading /= NO_OF_SAMPLES;
   // Convert ADC reading to voltage in mV
   voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_characs);
-#endif // BAT_MEASURE_ADC
+#endif                       // BAT_MEASURE_ADC
 
 #ifdef BAT_VOLTAGE_DIVIDER
   voltage *= BAT_VOLTAGE_DIVIDER;
