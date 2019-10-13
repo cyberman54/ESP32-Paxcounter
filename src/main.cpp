@@ -188,9 +188,6 @@ void setup() {
   strcat_P(features, " PMU");
 #endif
 
-  // scan i2c bus for devices
-  i2c_scan();
-
 #endif // verbose
 
   // read (and initialize on first run) runtime settings from NVRAM
@@ -202,6 +199,9 @@ void setup() {
   DisplayIsOn = cfg.screenon;
   init_display(!cfg.runmode); // note: blocking call
 #endif
+
+  // scan i2c bus for devices
+  i2c_scan();
 
 #ifdef BOARD_HAS_PSRAM
   assert(psramFound());
