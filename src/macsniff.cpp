@@ -30,7 +30,7 @@ void printKey(const char *name, const uint8_t *key, uint8_t len, bool lsb) {
   char keystring[len + 1] = "", keybyte[3];
   for (uint8_t i = 0; i < len; i++) {
     p = lsb ? key + len - i - 1 : key + i;
-    sprintf(keybyte, "%02X", *p);
+    snprintf(keybyte, 3, "%02X", *p);
     strncat(keystring, keybyte, 2);
   }
   ESP_LOGI(TAG, "%s: %s", name, keystring);

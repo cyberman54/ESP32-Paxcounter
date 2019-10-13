@@ -20,7 +20,7 @@
 //#define HAS_BME 1 // Enable BME sensors in general
 //#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
 
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+#define HAS_DISPLAY 1
 #define HAS_LED (25) // green on board LED
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
@@ -28,7 +28,7 @@
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (21)
 #define MY_OLED_SCL (22)
-#define MY_OLED_RST U8X8_PIN_NONE
+#define MY_OLED_RST NOT_A_PIN
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 

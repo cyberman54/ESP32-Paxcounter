@@ -28,15 +28,15 @@
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-#define HAS_BME 1 // Enable BME sensors in general
-#define HAS_BME680 SDA, SCL
-#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
+//#define HAS_BME 1 // Enable BME sensors in general
+//#define HAS_BME680 SDA, SCL
+//#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
 
 // display (if connected)
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C
+#define HAS_DISPLAY 1
 #define MY_OLED_SDA SDA
 #define MY_OLED_SCL SCL
-#define MY_OLED_RST U8X8_PIN_NONE
+#define MY_OLED_RST NOT_A_PIN
 //#define DISPLAY_FLIP  1 // use if display is rotated
 
 // user defined sensors (if connected)

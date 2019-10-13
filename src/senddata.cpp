@@ -75,6 +75,10 @@ void sendData() {
         get_salt();       // get new salt for salting hashes
         ESP_LOGI(TAG, "Counter cleared");
       }
+#ifdef HAS_DISPLAY
+      else
+        oledPlotCurve(macs.size(), true);
+#endif
       break;
 #endif
 

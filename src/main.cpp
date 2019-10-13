@@ -76,9 +76,9 @@ triggers pps 1 sec impulse
 // Basic Config
 #include "main.h"
 
-configData_t cfg;             // struct holds current device configuration
-char lmic_event_msg[16];      // display buffer for LMIC event message
-uint8_t volatile channel = 0; // channel rotation counter
+configData_t cfg; // struct holds current device configuration
+char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
+uint8_t volatile channel = 0;           // channel rotation counter
 uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
                   batt_voltage = 0; // globals for display
 
@@ -129,7 +129,7 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
-  ESP_LOGI(TAG, "Starting %s v%s", PRODUCTNAME, PROGVERSION);
+  ESP_LOGI(TAG, "Starting Software v%s", PROGVERSION);
 
   // print chip information on startup if in verbose mode
 #if (VERBOSE)
@@ -172,9 +172,9 @@ void setup() {
 
 // open i2c bus
 #ifdef HAS_DISPLAY
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 100000);
+  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 400000);
 #else
-  Wire.begin(SDA, SCL, 100000);
+  Wire.begin(SDA, SCL, 400000);
 #endif
 
 // setup power on boards with power management logic
@@ -188,9 +188,6 @@ void setup() {
   strcat_P(features, " PMU");
 #endif
 
-  // scan i2c bus for devices
-  i2c_scan();
-
 #endif // verbose
 
   // read (and initialize on first run) runtime settings from NVRAM
@@ -200,8 +197,11 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
-  init_display(PRODUCTNAME, PROGVERSION); // note: blocking call
+  init_display(!cfg.runmode); // note: blocking call
 #endif
+
+  // scan i2c bus for devices
+  i2c_scan();
 
 #ifdef BOARD_HAS_PSRAM
   assert(psramFound());

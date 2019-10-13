@@ -15,9 +15,11 @@ int i2c_scan(void) {
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
 
+    // Scan at 100KHz low speed
+    Wire.setClock(100000);
+
     for (addr = 8; addr <= 119; addr++) {
 
-      // scan i2c bus with no more to 100KHz
       Wire.beginTransmission(addr);
       Wire.write(addr);
       i2c_ret = Wire.endTransmission();
@@ -57,6 +59,9 @@ int i2c_scan(void) {
     }   // for loop
 
     ESP_LOGI(TAG, "I2C scan done, %u devices found.", devices);
+
+    // Set back to 400KHz
+    Wire.setClock(400000);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   } else

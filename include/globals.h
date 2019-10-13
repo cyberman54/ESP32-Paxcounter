@@ -41,9 +41,12 @@
 #define BLE_MODE (0x40)
 #define SCREEN_MODE (0x80)
 
+// length of display buffer for lmic event messages
+#define LMIC_EVENTMSG_LEN 17
+
 // I2C bus access control
 #define I2C_MUTEX_LOCK()                                                       \
-  (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(10)) == pdTRUE)
+  (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(DISPLAYREFRESH_MS)) == pdTRUE)
 #define I2C_MUTEX_UNLOCK() (xSemaphoreGive(I2Caccess))
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
@@ -104,9 +107,9 @@ extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
-extern configData_t cfg;         // current device configuration
-extern char lmic_event_msg[];    // display buffer
-extern uint8_t volatile channel; // wifi channel rotation counter
+extern configData_t cfg;                       // current device configuration
+extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
+extern uint8_t volatile channel;               // wifi channel rotation counter
 extern uint16_t volatile macs_total, macs_wifi, macs_ble,
     batt_voltage;                   // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC

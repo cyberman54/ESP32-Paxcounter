@@ -15,12 +15,12 @@ esp_err_t err;
 
 // populate cfg vars with factory settings
 void defaultConfig() {
-  cfg.loradr = LORADRDEFAULT;     // 0-15, lora datarate, see pacounter.conf
+  cfg.loradr = LORADRDEFAULT;     // 0-15, lora datarate, see paxcounter.conf
   cfg.txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
   cfg.adrmode = 1;                // 0=disabled, 1=enabled
   cfg.screensaver = 0;            // 0=disabled, 1=enabled
   cfg.screenon = 1;               // 0=disabled, 1=enabled
-  cfg.countermode = 0;            // 0=cyclic, 1=cumulative, 2=cyclic confirmed
+  cfg.countermode = COUNTERMODE;  // 0=cyclic, 1=cumulative, 2=cyclic confirmed
   cfg.rssilimit = 0;              // threshold for rssilimiter, negative value!
   cfg.sendcycle = SENDCYCLE;      // payload send cycle [seconds/2]
   cfg.wifichancycle =
@@ -179,7 +179,7 @@ void saveConfig() {
 
 // set and save cfg.version
 void migrateVersion() {
-  sprintf(cfg.version, "%s", PROGVERSION);
+  snprintf(cfg.version, 10, "%s", PROGVERSION);
   ESP_LOGI(TAG, "version set to %s", cfg.version);
   saveConfig();
 }

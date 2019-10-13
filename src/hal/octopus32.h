@@ -41,10 +41,10 @@
 #define LORA_IO2  LMIC_UNUSED_PIN
 
 // Pins for I2C interface of OLED Display
-#define HAS_DISPLAY U8X8_SSD1306_128X64_NONAME_HW_I2C // U8X8_SSD1306_128X32_UNIVISION_SW_I2C //
+#define HAS_DISPLAY 1
 //#define DISPLAY_FLIP  1 // uncomment this for rotated display 
 #define MY_OLED_SDA (23)
 #define MY_OLED_SCL (22)
-#define MY_OLED_RST U8X8_PIN_NONE 
+#define MY_OLED_RST NOT_A_PIN 
 
 #endif

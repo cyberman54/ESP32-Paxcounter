@@ -191,7 +191,7 @@ void set_loradr(uint8_t val[]) {
   if (validDR(val[0])) {
     cfg.loradr = val[0];
     ESP_LOGI(TAG, "Remote command: set LoRa Datarate to %d", cfg.loradr);
-    LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
+    LMIC_setDrTxpow(assertDR(cfg.loradr), KEEP_TXPOW);
     ESP_LOGI(TAG, "Radio parameters now %s / %s / %s",
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),

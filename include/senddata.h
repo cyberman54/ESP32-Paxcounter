@@ -2,10 +2,15 @@
 #define _SENDDATA_H
 
 #include "spislave.h"
+#include "cyclic.h"
+
 #if(HAS_LORA)
 #include "lorawan.h"
 #endif
-#include "cyclic.h"
+
+#ifdef HAS_DISPLAY
+#include "display.h"
+#endif
 
 extern Ticker sendcycler;
 
