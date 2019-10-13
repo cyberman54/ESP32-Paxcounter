@@ -418,7 +418,7 @@ int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
 void oledScrollBufferHorizontal(uint8_t *buf, const uint16_t width,
                                 const uint16_t height, bool left) {
 
-  uint16_t col, page, idx;
+  uint16_t col, page, idx = 0;
 
   for (page = 0; page < height / 8; page++) {
     if (left) { // scroll left
@@ -451,9 +451,9 @@ void oledScrollBufferVertical(uint8_t *buf, const uint16_t width,
     buf_col = *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8];
 
     if (offset > 0) // scroll down
-      buf_col <= abs(offset);
+      buf_col <<= offset;
     else // scroll up
-      buf_col >= offset;
+      buf_col >>= abs(offset);
 
     // write back uint64_t to uint8_t display buffer
     *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8] = buf_col;
