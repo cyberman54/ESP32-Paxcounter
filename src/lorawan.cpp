@@ -450,7 +450,7 @@ void myEventCallback(void *pUserData, ev_t ev) {
     snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "%-16s",
              evNames[ev] + 3); // +3 to strip "EV_"
   else
-    snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "LMIC event %-04u ", ev);
+    snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "LMIC event %-4u ", ev);
 
   // process current event message
   switch (ev) {
@@ -467,6 +467,9 @@ void myEventCallback(void *pUserData, ev_t ev) {
   case EV_JOIN_TXCOMPLETE:
     // replace descriptor from library with more descriptive term
     snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "%-16s", "JOIN_WAIT");
+    break;
+
+  default:
     break;
   }
 

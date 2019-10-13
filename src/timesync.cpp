@@ -194,7 +194,7 @@ int recv_timesync_ans(const uint8_t buf[], const uint8_t buf_len) {
     uint32_t timestamp_sec, *timestamp_ptr;
 
     // extract 1 byte timezone from buffer (one step being 15min * 60s = 900s)
-    uint32_t timezone_sec = buf[0] * 900;
+    // uint32_t timezone_sec = buf[0] * 900; // for future use
     buf++;
 
     // extract 4 bytes timestamp from buffer
