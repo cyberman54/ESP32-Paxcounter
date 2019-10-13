@@ -20,7 +20,7 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 1
-//#define DISPLAY_FLIP  1 // rotated display
+#define DISPLAY_FLIP  1 // rotated display
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
