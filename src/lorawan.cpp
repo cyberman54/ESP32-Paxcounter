@@ -48,31 +48,29 @@ class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
 public:
   MyHalConfig_t(){};
+
+  // set SPI pins to board configuration, pins may come from pins_arduino.h
   virtual void begin(void) override {
     SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
   }
+
+  // virtual void end(void) override
+
+  // virtual ostime_t setModuleActive(bool state) override
 };
 
-MyHalConfig_t myHalConfig{};
+static MyHalConfig_t myHalConfig{};
 
-// LMIC pin mapping
-
-const lmic_pinmap lmic_pins = {
+// LMIC pin mapping for Hope RFM95 / HPDtek HPD13A transceivers
+static const lmic_pinmap myPinmap = {
     .nss = LORA_CS,
     .rxtx = LMIC_UNUSED_PIN,
     .rst = LORA_RST == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_RST,
     .dio = {LORA_IRQ, LORA_IO1,
             LORA_IO2 == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IO2},
-    // optional: set polarity of rxtx pin.
-    .rxtx_rx_active = 0,
-    // optional: set RSSI cal for listen-before-talk
-    // this value is in dB, and is added to RSSI
-    // measured prior to decision.
-    // Must include noise guardband! Ignored in US,
-    // EU, IN, other markets where LBT is not required.
-    .rssi_cal = 0,
-    // optional: override LMIC_SPI_FREQ if non-zero
-    .spi_freq = 0,
+    .rxtx_rx_active = LMIC_UNUSED_PIN,
+    .rssi_cal = 10,
+    .spi_freq = 8000000, // 8MHz
     .pConfig = &myHalConfig};
 
 void lora_setupForNetwork(bool preJoin) {
@@ -413,7 +411,7 @@ void lmictask(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1);
 
   // setup LMIC stack
-  os_init(); // initialize lmic run-time environment
+  os_init_ex(&myPinmap); // initialize lmic run-time environment
 
   // register a callback for downlink messages and lmic events.
   // We aren't trying to write reentrant code, so pUserData is NULL.
