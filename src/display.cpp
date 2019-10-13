@@ -67,6 +67,14 @@ void init_display(uint8_t verbose) {
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
 
+    // is we have display RST line we toggle it to re-initialize display
+#ifdef MY_OLED_RST
+    pinMode(MY_OLED_RST, OUTPUT);
+    digitalWrite(MY_OLED_RST, 0); // iniialization of SSD1306 chip is executed
+    delay(1); // keep RES low for at least 3us according to SSD1306 datasheet
+    digitalWrite(MY_OLED_RST, 1); // normal operation
+#endif
+
     // init display
 #ifndef DISPLAY_FLIP
     oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 400000L);
