@@ -5,11 +5,14 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+RTC_DATA_ATTR struct timeval sleep_enter_time;
+RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_NORMAL;
+
 #ifdef HAS_PMU
 
 AXP20X_Class pmu;
 
-void power_event_IRQ(void) {
+void AXP192_powerevent_IRQ(void) {
 
   pmu.readIRQ();
 
@@ -34,10 +37,12 @@ void power_event_IRQ(void) {
   if (pmu.isBattTempHighIRQ())
     ESP_LOGI(TAG, "Battery low temperature.");
 
-  // display on/off
-  // if (pmu.isPEKShortPressIRQ()) {
-  //  cfg.screenon = !cfg.screenon;
-  //}
+// esp32 sleep mode, can be exited by pressing user button
+#ifdef HAS_BUTTON
+  if (pmu.isPEKShortPressIRQ() && (RTC_runmode == RUNMODE_NORMAL)) {
+    enter_deepsleep(0, HAS_BUTTON);
+  }
+#endif
 
   // shutdown power
   if (pmu.isPEKLongtPressIRQ()) {
@@ -60,7 +65,8 @@ void AXP192_power(bool on) {
     pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
   } else {
     pmu.setChgLEDMode(AXP20X_LED_OFF);
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
+    // we don't cut off power of display, because then display blocks i2c bus
+    // pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
   }
@@ -184,6 +190,85 @@ static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
 
 #endif // BAT_MEASURE_ADC
+
+void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
+
+  if ((!wakeup_sec) && (!wakeup_gpio) && (RTC_runmode == RUNMODE_NORMAL))
+    return;
+
+  // set wakeup timer
+  if (wakeup_sec)
+    esp_sleep_enable_timer_wakeup(wakeup_sec * 1000000);
+
+  // set wakeup gpio
+  if (wakeup_gpio != NOT_A_PIN) {
+    rtc_gpio_isolate(wakeup_gpio);
+    esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
+  }
+
+  // store LMIC counters and time
+  RTCseqnoUp = LMIC.seqnoUp;
+  RTCseqnoDn = LMIC.seqnoDn;
+
+  // store sleep enter time
+  gettimeofday(&sleep_enter_time, NULL);
+
+  // halt interrupts accessing i2c bus
+  mask_user_IRQ();
+
+// switch off display
+#ifdef HAS_DISPLAY
+  shutdown_display();
+#endif
+
+// switch off wifi & ble
+#if (BLECOUNTER)
+  stop_BLEscan();
+#endif
+
+// switch off power if has PMU
+#ifdef HAS_PMU
+  AXP192_power(false); // switch off Lora, GPS, display
+#endif
+
+  // shutdown i2c bus
+  i2c_deinit();
+
+  // enter sleep mode
+  esp_deep_sleep_start();
+}
+
+int exit_deepsleep(void) {
+
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  int sleep_time_ms = (now.tv_sec - sleep_enter_time.tv_sec) * 1000 +
+                      (now.tv_usec - sleep_enter_time.tv_usec) / 1000;
+
+  // switch on power if has PMU
+#ifdef HAS_PMU
+  AXP192_power(true); // power on Lora, GPS, display
+#endif
+
+  // re-init i2c bus
+  void i2c_init();
+
+  switch (esp_sleep_get_wakeup_cause()) {
+  case ESP_SLEEP_WAKEUP_EXT1:
+  case ESP_SLEEP_WAKEUP_TIMER:
+    RTC_runmode = RUNMODE_WAKEUP;
+    ESP_LOGI(TAG, "[%0.3f] wake up from deep sleep after %dms", sleep_time_ms);
+    break;
+  case ESP_SLEEP_WAKEUP_UNDEFINED:
+  default:
+    RTC_runmode = RUNMODE_NORMAL;
+  }
+
+  if (RTC_runmode == RUNMODE_WAKEUP)
+    return sleep_time_ms;
+  else
+    return -1;
+}
 
 void calibrate_voltage(void) {
 #ifdef BAT_MEASURE_ADC

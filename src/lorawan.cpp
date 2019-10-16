@@ -73,6 +73,10 @@ static const lmic_pinmap myPinmap = {
     .spi_freq = 8000000, // 8MHz
     .pConfig = &myHalConfig};
 
+RTC_DATA_ATTR u4_t RTCnetid, RTCdevaddr;
+RTC_DATA_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
+RTC_DATA_ATTR int RTCseqnoUp, RTCseqnoDn;
+
 void lora_setupForNetwork(bool preJoin) {
 
   if (preJoin) {
@@ -86,9 +90,9 @@ void lora_setupForNetwork(bool preJoin) {
 #elif CFG_LMIC_EU_like
     // setting for TheThingsNetwork
     // TTN uses SF9, not SF12, for RX2 window
-    LMIC.dn2Dr = EU868_DR_SF9;
-    // Disable link check validation
-    LMIC_setLinkCheckMode(0);
+    // LMIC.dn2Dr = EU868_DR_SF9;
+    // Enable link check validation
+    LMIC_setLinkCheckMode(true);
 #endif
 
   } else {
@@ -103,6 +107,10 @@ void lora_setupForNetwork(bool preJoin) {
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
              getCrName(updr2rps(LMIC.datarate)));
+    // store keys and counters in RTC memory
+    LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
+    RTCseqnoUp = LMIC.seqnoUp;
+    RTCseqnoDn = LMIC.seqnoDn;
   }
 }
 
@@ -244,9 +252,9 @@ void lora_send(void *pvParameters) {
   while (1) {
 
     // postpone until we are joined if we are not
-    // while (!LMIC.devaddr) {
-    //  vTaskDelay(pdMS_TO_TICKS(500));
-    //}
+    while (!LMIC.devaddr) {
+      vTaskDelay(pdMS_TO_TICKS(500));
+    }
 
     // fetch next or wait for payload to send from queue
     if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) != pdTRUE) {
@@ -287,7 +295,7 @@ void lora_send(void *pvParameters) {
   }
 }
 
-esp_err_t lora_stack_init() {
+esp_err_t lora_stack_init(bool joined) {
   assert(SEND_QUEUE_SIZE);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
@@ -307,9 +315,17 @@ esp_err_t lora_stack_init() {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
-  // start join
-  if (!LMIC_startJoining())
-    ESP_LOGI(TAG, "Already joined");
+  // start join if we did not wakeup from sleep, else continue session
+  if (!joined) {
+    if (!LMIC_startJoining())
+      ESP_LOGI(TAG, "Already joined");
+  } else {
+    LMIC_reset();
+    LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
+    LMIC.seqnoUp = RTCseqnoUp;
+    LMIC.seqnoDn = RTCseqnoDn;
+    lora_setupForNetwork(true);
+    }
 
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function

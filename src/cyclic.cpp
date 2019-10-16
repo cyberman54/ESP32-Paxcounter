@@ -20,7 +20,7 @@ void doHousekeeping() {
   uptime();
 
   // check if update mode trigger switch was set
-  if (cfg.runmode == 1)
+  if (RTC_runmode == RUNMODE_UPDATE)
     do_reset();
 
   // task storage debugging //

@@ -8,7 +8,7 @@
 
 #include "globals.h"
 #include "power.h"
-#include "i2cscan.h"
+#include "i2c.h"
 #include "blescan.h"
 #include "wifiscan.h"
 #include "configmanager.h"
@@ -18,6 +18,7 @@
 #include "irqhandler.h"
 #include "led.h"
 #include "spislave.h"
+
 #if (HAS_LORA)
 #include "lorawan.h"
 #endif

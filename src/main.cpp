@@ -131,51 +131,54 @@ void setup() {
 
   ESP_LOGI(TAG, "Starting Software v%s", PROGVERSION);
 
-  // print chip information on startup if in verbose mode
+  if (RTC_runmode == RUNMODE_WAKEUP)
+    exit_deepsleep();
+  else {
+
+    // print chip information on startup if in verbose mode
 #if (VERBOSE)
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  ESP_LOGI(TAG,
-           "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
-           "%d, %dMB %s Flash",
-           chip_info.cores, (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-           (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
-           chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
-           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
-                                                         : "external");
-  ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
-           ESP.getHeapSize(), ESP.getFreeHeap());
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+    ESP_LOGI(TAG,
+             "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
+             "%d, %dMB %s Flash",
+             chip_info.cores,
+             (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+             (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
+             chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
+             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
+                                                           : "external");
+    ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
+             ESP.getHeapSize(), ESP.getFreeHeap());
 #ifdef BOARD_HAS_PSRAM
-  ESP_LOGI(TAG, "SPIRam Total heap %d, SPIRam Free Heap %d", ESP.getPsramSize(),
-           ESP.getFreePsram());
+    ESP_LOGI(TAG, "SPIRam Total heap %d, SPIRam Free Heap %d",
+             ESP.getPsramSize(), ESP.getFreePsram());
 #endif
-  ESP_LOGI(TAG, "ChipRevision %d, Cpu Freq %d, SDK Version %s",
-           ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
-  ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
-           ESP.getFlashChipSpeed());
-  ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
+    ESP_LOGI(TAG, "ChipRevision %d, Cpu Freq %d, SDK Version %s",
+             ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
+    ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
+             ESP.getFlashChipSpeed());
+    ESP_LOGI(TAG, "Wifi/BT software coexist version %s",
+             esp_coex_version_get());
 
 #if (HAS_LORA)
-  ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
-           LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
-  ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
-           ARDUINO_LMIC_VERSION_GET_MAJOR(ARDUINO_LMIC_VERSION),
-           ARDUINO_LMIC_VERSION_GET_MINOR(ARDUINO_LMIC_VERSION),
-           ARDUINO_LMIC_VERSION_GET_PATCH(ARDUINO_LMIC_VERSION),
-           ARDUINO_LMIC_VERSION_GET_LOCAL(ARDUINO_LMIC_VERSION));
-  showLoraKeys();
+    ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
+             LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
+    ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
+             ARDUINO_LMIC_VERSION_GET_MAJOR(ARDUINO_LMIC_VERSION),
+             ARDUINO_LMIC_VERSION_GET_MINOR(ARDUINO_LMIC_VERSION),
+             ARDUINO_LMIC_VERSION_GET_PATCH(ARDUINO_LMIC_VERSION),
+             ARDUINO_LMIC_VERSION_GET_LOCAL(ARDUINO_LMIC_VERSION));
+    showLoraKeys();
 #endif // HAS_LORA
 
 #if (HAS_GPS)
-  ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
+    ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
+  }
 
-// open i2c bus
-#ifdef HAS_DISPLAY
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 400000);
-#else
-  Wire.begin(SDA, SCL, 400000);
-#endif
+  // open i2c bus
+  i2c_init();
 
 // setup power on boards with power management logic
 #ifdef EXT_POWER_SW
@@ -197,7 +200,7 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
-  init_display(!cfg.runmode); // note: blocking call
+  init_display(RTC_runmode == RUNMODE_NORMAL); // note: blocking call
 #endif
 
   // scan i2c bus for devices
@@ -266,9 +269,8 @@ void setup() {
 #if (USE_OTA)
   strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
-  if (cfg.runmode == 1) {
-    cfg.runmode = 0;
-    saveConfig();
+  if (RTC_runmode == RUNMODE_UPDATE) {
+    RTC_runmode = RUNMODE_NORMAL;
     start_ota_update();
   }
 #endif
@@ -283,11 +285,11 @@ void setup() {
   } else
     btStop();
 #else
-  // remove bluetooth stack to gain more free memory
-  btStop();
-  ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
-  ESP_ERROR_CHECK(esp_coex_preference_set(
-      ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+    // remove bluetooth stack to gain more free memory
+    btStop();
+    ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
+    ESP_ERROR_CHECK(esp_coex_preference_set(
+        ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
 #endif
 
 // initialize gps
@@ -314,7 +316,7 @@ void setup() {
 // initialize LoRa
 #if (HAS_LORA)
   strcat_P(features, " LORA");
-  assert(lora_stack_init() == ESP_OK);
+  assert(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP) == ESP_OK);
 #endif
 
 // initialize SPI
@@ -338,11 +340,11 @@ void setup() {
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PLAIN");
 #elif PAYLOAD_ENCODER == 2
-  strcat_P(features, " PACKED");
+    strcat_P(features, " PACKED");
 #elif PAYLOAD_ENCODER == 3
-  strcat_P(features, " LPPDYN");
+    strcat_P(features, " LPPDYN");
 #elif PAYLOAD_ENCODER == 4
-  strcat_P(features, " LPPPKD");
+    strcat_P(features, " LPPPKD");
 #endif
 
   // initialize RTC
@@ -369,10 +371,10 @@ void setup() {
   // function gets it's seed from RF noise
   get_salt(); // get new 16bit for salting hashes
 #else
-  // switch off wifi
-  WiFi.mode(WIFI_OFF);
-  esp_wifi_stop();
-  esp_wifi_deinit();
+    // switch off wifi
+    WiFi.mode(WIFI_OFF);
+    esp_wifi_stop();
+    esp_wifi_deinit();
 #endif
 
   // start state machine
@@ -464,6 +466,9 @@ void setup() {
 
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
+
+  // set runmode to normal
+  RTC_runmode = RUNMODE_NORMAL;
 
   vTaskDelete(NULL);
 

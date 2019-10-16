@@ -3,19 +3,24 @@
 
 #include <Arduino.h>
 #include <driver/adc.h>
+#include <driver/rtc_io.h>
 #include <esp_adc_cal.h>
-#include "i2cscan.h"
+#include "i2c.h"
 
 #define DEFAULT_VREF 1100 // tbd: use adc2_vref_to_gpio() for better estimate
 #define NO_OF_SAMPLES 64  // we do some multisampling to get better values
 
+extern RTC_DATA_ATTR runmode_t RTC_runmode;
+
 uint16_t read_voltage(void);
 void calibrate_voltage(void);
 bool batt_sufficient(void);
+void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio);
+int exit_deepsleep(void);
 
 #ifdef HAS_PMU
 #include <axp20x.h>
-void power_event_IRQ(void);
+void AXP192_powerevent_IRQ(void);
 void AXP192_power(bool on);
 void AXP192_init(void);
 void AXP192_showstatus(void);

@@ -51,6 +51,11 @@
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
+enum runmode_t {
+  RUNMODE_NORMAL,
+  RUNMODE_UPDATE,
+  RUNMODE_WAKEUP
+};
 
 // Struct holding devices's runtime configuration
 typedef struct {

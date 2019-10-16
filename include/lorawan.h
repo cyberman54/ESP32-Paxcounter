@@ -21,6 +21,7 @@
 #endif
 
 extern TaskHandle_t lmicTask, lorasendTask;
+extern RTC_DATA_ATTR int RTCseqnoUp, RTCseqnoDn;
 
 // table of LORAWAN MAC commands
 typedef struct {
@@ -29,7 +30,7 @@ typedef struct {
   const uint8_t params;
 } mac_t;
 
-esp_err_t lora_stack_init();
+esp_err_t lora_stack_init(bool joined = false);
 void lora_setupForNetwork(bool preJoin);
 void lmictask(void *pvParameters);
 void gen_lora_deveui(uint8_t *pdeveui);

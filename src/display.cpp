@@ -60,7 +60,7 @@ uint8_t displaybuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
 
 QRCode qrcode;
 
-void init_display(uint8_t verbose) {
+void init_display(bool verbose) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
@@ -70,7 +70,7 @@ void init_display(uint8_t verbose) {
     // is we have display RST line we toggle it to re-initialize display
 #ifdef MY_OLED_RST
     pinMode(MY_OLED_RST, OUTPUT);
-    digitalWrite(MY_OLED_RST, 0); // iniialization of SSD1306 chip is executed
+    digitalWrite(MY_OLED_RST, 0); // initialization of SSD1306 chip is executed
     delay(1); // keep RES low for at least 3us according to SSD1306 datasheet
     digitalWrite(MY_OLED_RST, 1); // normal operation
 #endif
@@ -181,6 +181,18 @@ void refreshTheDisplay(bool nextPage) {
 
   } // mutex
 } // refreshDisplay()
+
+void shutdown_display(void) {
+  // block i2c bus access
+  if (!I2C_MUTEX_LOCK())
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+  else {
+    cfg.screenon = 0;
+    oledShutdown();
+    delay(DISPLAYREFRESH_MS / 1000 * 1.1);
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+  }
+}
 
 void draw_page(time_t t, uint8_t page) {
 
