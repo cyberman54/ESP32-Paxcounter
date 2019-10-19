@@ -18,6 +18,10 @@ static const char TAG[] = "lora";
 #endif
 #endif
 
+RTC_DATA_ATTR u4_t RTCnetid, RTCdevaddr;
+RTC_DATA_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
+RTC_DATA_ATTR int RTCseqnoUp, RTCseqnoDn;
+
 QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 
@@ -72,10 +76,6 @@ static const lmic_pinmap myPinmap = {
     .rssi_cal = 10,
     .spi_freq = 8000000, // 8MHz
     .pConfig = &myHalConfig};
-
-RTC_DATA_ATTR u4_t RTCnetid, RTCdevaddr;
-RTC_DATA_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
-RTC_DATA_ATTR int RTCseqnoUp, RTCseqnoDn;
 
 void lora_setupForNetwork(bool preJoin) {
 
@@ -311,7 +311,7 @@ esp_err_t lora_stack_init(bool joined) {
                           "lmictask", // name of task
                           4096,       // stack size of task
                           (void *)1,  // parameter of the task
-                          5,          // priority of the task
+                          2,          // priority of the task
                           &lmicTask,  // task handle
                           1);         // CPU core
 
@@ -325,7 +325,7 @@ esp_err_t lora_stack_init(bool joined) {
     LMIC.seqnoUp = RTCseqnoUp;
     LMIC.seqnoDn = RTCseqnoDn;
     lora_setupForNetwork(true);
-    }
+  }
 
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
@@ -373,8 +373,8 @@ void lora_enqueuedata(MessageBuffer_t *message) {
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
 #if (TIME_SYNC_LORAWAN)
-void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
-                                                  int flagSuccess) {
+static void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
+                                                         int flagSuccess) {
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
   time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
 
@@ -444,7 +444,7 @@ void lmictask(void *pvParameters) {
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
 // in src/lmic_config.h if you are limited on battery.
 #ifdef CLOCK_ERROR_PROCENTAGE
-  LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 100);
+  LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 1000);
 #endif
 
   while (1) {
@@ -454,7 +454,7 @@ void lmictask(void *pvParameters) {
 } // lmictask
 
 // lmic event handler
-void myEventCallback(void *pUserData, ev_t ev) {
+static void myEventCallback(void *pUserData, ev_t ev) {
 
   // using message descriptors from LMIC library
   static const char *const evNames[] = {LMIC_EVENT_NAME_TABLE__INIT};
@@ -498,8 +498,8 @@ void myEventCallback(void *pUserData, ev_t ev) {
 }
 
 // receive message handler
-void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
-                  size_t nMsg) {
+static void myRxCallback(void *pUserData, uint8_t port,
+                                   const uint8_t *pMsg, size_t nMsg) {
 
   // display type of received data
   if (nMsg)
@@ -553,7 +553,7 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 }
 
 // transmit complete message handler
-void myTxCallback(void *pUserData, int fSuccess) {
+static void myTxCallback(void *pUserData, int fSuccess) {
 
 #if (TIME_SYNC_LORASERVER)
   // if last packet sent was a timesync request, store TX timestamp

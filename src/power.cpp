@@ -5,7 +5,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-RTC_DATA_ATTR struct timeval sleep_enter_time;
+RTC_DATA_ATTR int64_t sleep_enter_time;
 RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_NORMAL;
 
 #ifdef HAS_PMU
@@ -61,8 +61,8 @@ void AXP192_power(bool on) {
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);  // Lora on T-Beam V1.0
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);  // Gps on T-Beam V1.0
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON); // OLED on T-Beam v1.0
-    // pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
-    pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
+    pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+    // pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
   } else {
     pmu.setChgLEDMode(AXP20X_LED_OFF);
     // we don't cut off power of display, because then display blocks i2c bus
@@ -196,6 +196,9 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   if ((!wakeup_sec) && (!wakeup_gpio) && (RTC_runmode == RUNMODE_NORMAL))
     return;
 
+  // set up power domains
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
+
   // set wakeup timer
   if (wakeup_sec)
     esp_sleep_enable_timer_wakeup(wakeup_sec * 1000000);
@@ -211,7 +214,7 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   RTCseqnoDn = LMIC.seqnoDn;
 
   // store sleep enter time
-  gettimeofday(&sleep_enter_time, NULL);
+  sleep_enter_time = esp_timer_get_time();
 
   // halt interrupts accessing i2c bus
   mask_user_IRQ();
@@ -238,12 +241,9 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   esp_deep_sleep_start();
 }
 
-int exit_deepsleep(void) {
+int64_t exit_deepsleep(void) {
 
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  int sleep_time_ms = (now.tv_sec - sleep_enter_time.tv_sec) * 1000 +
-                      (now.tv_usec - sleep_enter_time.tv_usec) / 1000;
+  int64_t sleep_time_ms = (esp_timer_get_time() - sleep_enter_time) / 1000;
 
   // switch on power if has PMU
 #ifdef HAS_PMU

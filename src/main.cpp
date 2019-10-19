@@ -175,6 +175,8 @@ void setup() {
 #if (HAS_GPS)
     ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
+
+#endif // VERBOSE
   }
 
   // open i2c bus
@@ -191,8 +193,6 @@ void setup() {
   strcat_P(features, " PMU");
 #endif
 
-#endif // verbose
-
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
@@ -200,7 +200,8 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
-  init_display(RTC_runmode == RUNMODE_NORMAL); // note: blocking call
+  init_display(RTC_runmode == RUNMODE_NORMAL ? true
+                                             : false); // note: blocking call
 #endif
 
   // scan i2c bus for devices
@@ -285,11 +286,11 @@ void setup() {
   } else
     btStop();
 #else
-    // remove bluetooth stack to gain more free memory
-    btStop();
-    ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
-    ESP_ERROR_CHECK(esp_coex_preference_set(
-        ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+  // remove bluetooth stack to gain more free memory
+  btStop();
+  ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
+  ESP_ERROR_CHECK(esp_coex_preference_set(
+      ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
 #endif
 
 // initialize gps
@@ -316,7 +317,8 @@ void setup() {
 // initialize LoRa
 #if (HAS_LORA)
   strcat_P(features, " LORA");
-  assert(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP) == ESP_OK);
+  assert(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? true : false) ==
+         ESP_OK);
 #endif
 
 // initialize SPI
@@ -340,11 +342,11 @@ void setup() {
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PLAIN");
 #elif PAYLOAD_ENCODER == 2
-    strcat_P(features, " PACKED");
+  strcat_P(features, " PACKED");
 #elif PAYLOAD_ENCODER == 3
-    strcat_P(features, " LPPDYN");
+  strcat_P(features, " LPPDYN");
 #elif PAYLOAD_ENCODER == 4
-    strcat_P(features, " LPPPKD");
+  strcat_P(features, " LPPPKD");
 #endif
 
   // initialize RTC
@@ -371,10 +373,10 @@ void setup() {
   // function gets it's seed from RF noise
   get_salt(); // get new 16bit for salting hashes
 #else
-    // switch off wifi
-    WiFi.mode(WIFI_OFF);
-    esp_wifi_stop();
-    esp_wifi_deinit();
+  // switch off wifi
+  WiFi.mode(WIFI_OFF);
+  esp_wifi_stop();
+  esp_wifi_deinit();
 #endif
 
   // start state machine

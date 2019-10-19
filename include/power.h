@@ -16,7 +16,7 @@ uint16_t read_voltage(void);
 void calibrate_voltage(void);
 bool batt_sufficient(void);
 void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio);
-int exit_deepsleep(void);
+int64_t exit_deepsleep(void);
 
 #ifdef HAS_PMU
 #include <axp20x.h>
