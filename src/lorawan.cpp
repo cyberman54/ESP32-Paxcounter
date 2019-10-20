@@ -18,9 +18,10 @@ static const char TAG[] = "lora";
 #endif
 #endif
 
-RTC_DATA_ATTR u4_t RTCnetid, RTCdevaddr;
-RTC_DATA_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
-RTC_DATA_ATTR int RTCseqnoUp, RTCseqnoDn;
+// variable keep its values after restart or wakeup from sleep
+RTC_NOINIT_ATTR u4_t RTCnetid, RTCdevaddr;
+RTC_NOINIT_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
+RTC_NOINIT_ATTR int RTCseqnoUp, RTCseqnoDn;
 
 QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
@@ -107,10 +108,6 @@ void lora_setupForNetwork(bool preJoin) {
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
              getCrName(updr2rps(LMIC.datarate)));
-    // store keys and counters in RTC memory
-    LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
-    RTCseqnoUp = LMIC.seqnoUp;
-    RTCseqnoDn = LMIC.seqnoDn;
   }
 }
 
@@ -295,7 +292,7 @@ void lora_send(void *pvParameters) {
   }
 }
 
-esp_err_t lora_stack_init(bool joined) {
+esp_err_t lora_stack_init(bool do_join) {
   assert(SEND_QUEUE_SIZE);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
@@ -315,8 +312,10 @@ esp_err_t lora_stack_init(bool joined) {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
-  // start join if we did not wakeup from sleep, else continue session
-  if (!joined) {
+  // Start join procedure if not already joined,
+  // lora_setupForNetwork(true) is called by eventhandler when joined
+  // else continue current session
+  if (do_join) {
     if (!LMIC_startJoining())
       ESP_LOGI(TAG, "Already joined");
   } else {
@@ -324,7 +323,6 @@ esp_err_t lora_stack_init(bool joined) {
     LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
     LMIC.seqnoUp = RTCseqnoUp;
     LMIC.seqnoDn = RTCseqnoDn;
-    lora_setupForNetwork(true);
   }
 
   // start lmic send task
@@ -498,8 +496,8 @@ static void myEventCallback(void *pUserData, ev_t ev) {
 }
 
 // receive message handler
-static void myRxCallback(void *pUserData, uint8_t port,
-                                   const uint8_t *pMsg, size_t nMsg) {
+static void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+                         size_t nMsg) {
 
   // display type of received data
   if (nMsg)

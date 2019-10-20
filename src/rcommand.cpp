@@ -5,21 +5,12 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// helper function
-void do_reset() {
-  ESP_LOGI(TAG, "Remote command: restart device");
-#if (HAS_LORA)
-  LMIC_shutdown();
-#endif
-  delay(3000);
-  esp_restart();
-}
-
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
   switch (val[0]) {
-  case 0: // restart device
-    do_reset();
+  case 0: // restart device with cold start (clear RTC saved variables)
+    ESP_LOGI(TAG, "Remote command: restart device cold");
+    do_reset(false);
     break;
   case 1: // reset MAC counter
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
@@ -33,6 +24,10 @@ void set_reset(uint8_t val[]) {
   case 3: // reset send queues
     ESP_LOGI(TAG, "Remote command: flush send queue");
     flushQueues();
+    break;
+  case 4: // restart device with warm start (keep RTC saved variables)
+    ESP_LOGI(TAG, "Remote command: restart device warm");
+    do_reset(true);
     break;
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
@@ -346,7 +341,7 @@ static cmd_t table[] = {
     {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
     {0x05, set_loradr, 1, true},        {0x06, set_lorapower, 1, true},
     {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
-    {0x09, set_reset, 1, true},         {0x0a, set_sendcycle, 1, true},
+    {0x09, set_reset, 1, false},        {0x0a, set_sendcycle, 1, true},
     {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
     {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},

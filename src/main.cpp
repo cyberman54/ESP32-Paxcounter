@@ -129,14 +129,12 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
-  ESP_LOGI(TAG, "Starting Software v%s", PROGVERSION);
+  do_after_reset(rtc_get_reset_reason(0));
 
-  if (RTC_runmode == RUNMODE_WAKEUP)
-    exit_deepsleep();
-  else {
-
-    // print chip information on startup if in verbose mode
+  // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
+
+  if (RTC_runmode == RUNMODE_POWERCYCLE) {
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
     ESP_LOGI(TAG,
@@ -175,9 +173,8 @@ void setup() {
 #if (HAS_GPS)
     ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
-
-#endif // VERBOSE
   }
+#endif // VERBOSE
 
   // open i2c bus
   i2c_init();
@@ -200,8 +197,8 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
-  init_display(RTC_runmode == RUNMODE_NORMAL ? true
-                                             : false); // note: blocking call
+  // display verbose info only after a coldstart (note: blocking call!)
+  init_display(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
 #endif
 
   // scan i2c bus for devices
@@ -217,7 +214,7 @@ void setup() {
   pinMode(BAT_MEASURE_EN, OUTPUT);
 #endif
 
-  // initialize leds
+// initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
@@ -270,10 +267,8 @@ void setup() {
 #if (USE_OTA)
   strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
-  if (RTC_runmode == RUNMODE_UPDATE) {
-    RTC_runmode = RUNMODE_NORMAL;
+  if (RTC_runmode == RUNMODE_UPDATE)
     start_ota_update();
-  }
 #endif
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
@@ -317,7 +312,8 @@ void setup() {
 // initialize LoRa
 #if (HAS_LORA)
   strcat_P(features, " LORA");
-  assert(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? true : false) ==
+  // kick off join, except we come from sleep
+  assert(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
          ESP_OK);
 #endif
 
@@ -349,7 +345,7 @@ void setup() {
   strcat_P(features, " LPPPKD");
 #endif
 
-  // initialize RTC
+// initialize RTC
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
@@ -404,7 +400,7 @@ void setup() {
   assert(irqHandlerTask != NULL); // has interrupt handler task started?
   ESP_LOGI(TAG, "Starting Timers...");
 
-  // display interrupt
+// display interrupt
 #ifdef HAS_DISPLAY
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
@@ -414,7 +410,7 @@ void setup() {
   timerAlarmEnable(displayIRQ);
 #endif
 
-  // LED Matrix display interrupt
+// LED Matrix display interrupt
 #ifdef HAS_MATRIX_DISPLAY
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
@@ -424,7 +420,7 @@ void setup() {
   timerAlarmEnable(matrixDisplayIRQ);
 #endif
 
-  // initialize button
+// initialize button
 #ifdef HAS_BUTTON
   strcat_P(features, " BTN_");
 #ifdef BUTTON_PULLUP

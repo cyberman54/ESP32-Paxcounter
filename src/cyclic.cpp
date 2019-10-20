@@ -20,8 +20,15 @@ void doHousekeeping() {
   uptime();
 
   // check if update mode trigger switch was set
-  if (RTC_runmode == RUNMODE_UPDATE)
-    do_reset();
+  if (RTC_runmode == RUNMODE_UPDATE) {
+    // check battery status if we can before doing ota
+    if (batt_sufficient())
+      do_reset(true); // warmstart to runmode update
+    else {
+      ESP_LOGE(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
+      RTC_runmode == RUNMODE_NORMAL; // keep running in normal mode
+    }
+  }
 
   // task storage debugging //
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
@@ -87,7 +94,7 @@ void doHousekeeping() {
     get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreeHeap() <= MEM_LOW) // check again
-      do_reset();                        // memory leak, reset device
+      do_reset(true);                    // memory leak, reset device
   }
 
 // check free PSRAM memory
@@ -98,7 +105,7 @@ void doHousekeeping() {
     get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreePsram() <= MEM_LOW) // check again
-      do_reset();                         // memory leak, reset device
+      do_reset(true);                     // memory leak, reset device
   }
 #endif
 
