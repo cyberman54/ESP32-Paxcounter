@@ -20,9 +20,13 @@ void irqHandler(void *pvParameters) {
 
     if (InterruptStatus & UNMASK_IRQ) // interrupt handler to be enabled?
       mask_irq = false;
-    // else if (mask_irq) // suppress processing if interrupt handler is
-    // disabled
+      // else if (mask_irq) // suppress processing if interrupt handler is
+      // disabled
+#if (HAS_LORA)
     else if (mask_irq || os_queryTimeCriticalJobs(ms2osticks(100)))
+#else
+    else if (mask_irq)
+#endif
       // suppress processing if interrupt handler is disabled
       // or time critical lmic jobs are pending in next 100ms
       continue;
