@@ -5,11 +5,24 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-#ifdef HAS_PMU
+#ifdef BAT_MEASURE_ADC
+esp_adc_cal_characteristics_t *adc_characs =
+    (esp_adc_cal_characteristics_t *)calloc(
+        1, sizeof(esp_adc_cal_characteristics_t));
 
+#ifndef BAT_MEASURE_ADC_UNIT // ADC1
+static const adc1_channel_t adc_channel = BAT_MEASURE_ADC;
+#else // ADC2
+static const adc2_channel_t adc_channel = BAT_MEASURE_ADC;
+#endif
+static const adc_atten_t atten = ADC_ATTEN_DB_11;
+static const adc_unit_t unit = ADC_UNIT_1;
+#endif // BAT_MEASURE_ADC
+
+#ifdef HAS_PMU
 AXP20X_Class pmu;
 
-void power_event_IRQ(void) {
+void AXP192_powerevent_IRQ(void) {
 
   pmu.readIRQ();
 
@@ -34,15 +47,17 @@ void power_event_IRQ(void) {
   if (pmu.isBattTempHighIRQ())
     ESP_LOGI(TAG, "Battery low temperature.");
 
-  // display on/off
-  // if (pmu.isPEKShortPressIRQ()) {
-  //  cfg.screenon = !cfg.screenon;
-  //}
+// short press -> esp32 deep sleep mode, can be exited by pressing user button
+#ifdef HAS_BUTTON
+  if (pmu.isPEKShortPressIRQ() && (RTC_runmode == RUNMODE_NORMAL)) {
+    enter_deepsleep(0, HAS_BUTTON);
+  }
+#endif
 
-  // shutdown power
+  // long press -> shutdown power, can be exited by another longpress
   if (pmu.isPEKLongtPressIRQ()) {
-    AXP192_power(false); // switch off Lora, GPS, display
-    pmu.shutdown();      // switch off device
+    AXP192_power(pmu_power_off); // switch off Lora, GPS, display
+    pmu.shutdown();              // switch off device
   }
 
   pmu.clearIRQ();
@@ -51,18 +66,31 @@ void power_event_IRQ(void) {
   read_voltage();
 }
 
-void AXP192_power(bool on) {
-  if (on) {
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);  // Lora on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);  // Gps on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON); // OLED on T-Beam v1.0
-    // pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
-    pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
-  } else {
+void AXP192_power(pmu_power_t powerlevel) {
+
+  switch (powerlevel) {
+
+  case pmu_power_off:
     pmu.setChgLEDMode(AXP20X_LED_OFF);
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
+    // pmu.setPowerOutPut(AXP192_DCDC3, AXP202_OFF);
+    break;
+
+  case pmu_power_sleep:
+    pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
+    // we don't cut off DCDC1, because then display blocks i2c bus
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF); // gps off
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF); // lora off
+    break;
+
+  default:                                       // all rails power on
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);  // Lora on T-Beam V1.0
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);  // Gps on T-Beam V1.0
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON); // OLED on T-Beam v1.0
+    pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+    break;
   }
 }
 
@@ -103,7 +131,7 @@ void AXP192_init(void) {
     pmu.adc1Enable(AXP202_VBUS_CUR_ADC1, true);
 
     // switch power rails on
-    AXP192_power(true);
+    AXP192_power(pmu_power_on);
 
 #ifdef PMU_INT
     pinMode(PMU_INT, INPUT_PULLUP);
@@ -119,7 +147,7 @@ void AXP192_init(void) {
   }
 }
 
-// helper functions for mutexing i2c access
+// helper functions for mutexing pmu i2c access
 uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
   if (I2C_MUTEX_LOCK()) {
 
@@ -169,21 +197,6 @@ uint8_t i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
 }
 
 #endif // HAS_PMU
-
-#ifdef BAT_MEASURE_ADC
-esp_adc_cal_characteristics_t *adc_characs =
-    (esp_adc_cal_characteristics_t *)calloc(
-        1, sizeof(esp_adc_cal_characteristics_t));
-
-#ifndef BAT_MEASURE_ADC_UNIT // ADC1
-static const adc1_channel_t adc_channel = BAT_MEASURE_ADC;
-#else // ADC2
-static const adc2_channel_t adc_channel = BAT_MEASURE_ADC;
-#endif
-static const adc_atten_t atten = ADC_ATTEN_DB_11;
-static const adc_unit_t unit = ADC_UNIT_1;
-
-#endif // BAT_MEASURE_ADC
 
 void calibrate_voltage(void) {
 #ifdef BAT_MEASURE_ADC

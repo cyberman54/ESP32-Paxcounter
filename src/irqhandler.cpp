@@ -20,7 +20,15 @@ void irqHandler(void *pvParameters) {
 
     if (InterruptStatus & UNMASK_IRQ) // interrupt handler to be enabled?
       mask_irq = false;
-    else if (mask_irq) // suppress processing if interrupt handler is disabled
+      // else if (mask_irq) // suppress processing if interrupt handler is
+      // disabled
+#if (HAS_LORA)
+    else if (mask_irq || os_queryTimeCriticalJobs(ms2osticks(100)))
+#else
+    else if (mask_irq)
+#endif
+      // suppress processing if interrupt handler is disabled
+      // or time critical lmic jobs are pending in next 100ms
       continue;
     else if (InterruptStatus & MASK_IRQ) { // interrupt handler to be disabled?
       mask_irq = true;
@@ -66,7 +74,7 @@ void irqHandler(void *pvParameters) {
 // do we have a power event?
 #if (HAS_PMU)
     if (InterruptStatus & PMU_IRQ)
-      power_event_IRQ();
+      AXP192_powerevent_IRQ();
 #endif
 
     // is time to send the payload?

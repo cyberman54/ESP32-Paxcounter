@@ -31,7 +31,7 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
-lmictask      1     5     MCCI LMiC LORAWAN stack
+lmictask      1     2     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_req  1     3     processes realtime time sync requests
 irqhandler    1     1     display, timesync, gps, etc. triggered by timers
@@ -129,53 +129,55 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
-  ESP_LOGI(TAG, "Starting Software v%s", PROGVERSION);
+  do_after_reset(rtc_get_reset_reason(0));
 
-  // print chip information on startup if in verbose mode
+  // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
-  esp_chip_info_t chip_info;
-  esp_chip_info(&chip_info);
-  ESP_LOGI(TAG,
-           "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
-           "%d, %dMB %s Flash",
-           chip_info.cores, (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-           (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
-           chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
-           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
-                                                         : "external");
-  ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
-           ESP.getHeapSize(), ESP.getFreeHeap());
+
+  if (RTC_runmode == RUNMODE_POWERCYCLE) {
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+    ESP_LOGI(TAG,
+             "This is ESP32 chip with %d CPU cores, WiFi%s%s, silicon revision "
+             "%d, %dMB %s Flash",
+             chip_info.cores,
+             (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+             (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
+             chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
+             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
+                                                           : "external");
+    ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
+             ESP.getHeapSize(), ESP.getFreeHeap());
 #ifdef BOARD_HAS_PSRAM
-  ESP_LOGI(TAG, "SPIRam Total heap %d, SPIRam Free Heap %d", ESP.getPsramSize(),
-           ESP.getFreePsram());
+    ESP_LOGI(TAG, "SPIRam Total heap %d, SPIRam Free Heap %d",
+             ESP.getPsramSize(), ESP.getFreePsram());
 #endif
-  ESP_LOGI(TAG, "ChipRevision %d, Cpu Freq %d, SDK Version %s",
-           ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
-  ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
-           ESP.getFlashChipSpeed());
-  ESP_LOGI(TAG, "Wifi/BT software coexist version %s", esp_coex_version_get());
+    ESP_LOGI(TAG, "ChipRevision %d, Cpu Freq %d, SDK Version %s",
+             ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
+    ESP_LOGI(TAG, "Flash Size %d, Flash Speed %d", ESP.getFlashChipSize(),
+             ESP.getFlashChipSpeed());
+    ESP_LOGI(TAG, "Wifi/BT software coexist version %s",
+             esp_coex_version_get());
 
 #if (HAS_LORA)
-  ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
-           LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
-  ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
-           ARDUINO_LMIC_VERSION_GET_MAJOR(ARDUINO_LMIC_VERSION),
-           ARDUINO_LMIC_VERSION_GET_MINOR(ARDUINO_LMIC_VERSION),
-           ARDUINO_LMIC_VERSION_GET_PATCH(ARDUINO_LMIC_VERSION),
-           ARDUINO_LMIC_VERSION_GET_LOCAL(ARDUINO_LMIC_VERSION));
-  showLoraKeys();
+    ESP_LOGI(TAG, "IBM LMIC version %d.%d.%d", LMIC_VERSION_MAJOR,
+             LMIC_VERSION_MINOR, LMIC_VERSION_BUILD);
+    ESP_LOGI(TAG, "Arduino LMIC version %d.%d.%d.%d",
+             ARDUINO_LMIC_VERSION_GET_MAJOR(ARDUINO_LMIC_VERSION),
+             ARDUINO_LMIC_VERSION_GET_MINOR(ARDUINO_LMIC_VERSION),
+             ARDUINO_LMIC_VERSION_GET_PATCH(ARDUINO_LMIC_VERSION),
+             ARDUINO_LMIC_VERSION_GET_LOCAL(ARDUINO_LMIC_VERSION));
+    showLoraKeys();
 #endif // HAS_LORA
 
 #if (HAS_GPS)
-  ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
+    ESP_LOGI(TAG, "TinyGPS+ version %s", TinyGPSPlus::libraryVersion());
 #endif
+  }
+#endif // VERBOSE
 
-// open i2c bus
-#ifdef HAS_DISPLAY
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 400000);
-#else
-  Wire.begin(SDA, SCL, 400000);
-#endif
+  // open i2c bus
+  i2c_init();
 
 // setup power on boards with power management logic
 #ifdef EXT_POWER_SW
@@ -188,8 +190,6 @@ void setup() {
   strcat_P(features, " PMU");
 #endif
 
-#endif // verbose
-
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
@@ -197,7 +197,8 @@ void setup() {
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
-  init_display(!cfg.runmode); // note: blocking call
+  // display verbose info only after a coldstart (note: blocking call!)
+  init_display(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
 #endif
 
   // scan i2c bus for devices
@@ -213,7 +214,7 @@ void setup() {
   pinMode(BAT_MEASURE_EN, OUTPUT);
 #endif
 
-  // initialize leds
+// initialize leds
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
@@ -266,11 +267,8 @@ void setup() {
 #if (USE_OTA)
   strcat_P(features, " OTA");
   // reboot to firmware update mode if ota trigger switch is set
-  if (cfg.runmode == 1) {
-    cfg.runmode = 0;
-    saveConfig();
+  if (RTC_runmode == RUNMODE_UPDATE)
     start_ota_update();
-  }
 #endif
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
@@ -314,7 +312,9 @@ void setup() {
 // initialize LoRa
 #if (HAS_LORA)
   strcat_P(features, " LORA");
-  assert(lora_stack_init() == ESP_OK);
+  // kick off join, except we come from sleep
+  assert(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
+         ESP_OK);
 #endif
 
 // initialize SPI
@@ -345,7 +345,7 @@ void setup() {
   strcat_P(features, " LPPPKD");
 #endif
 
-  // initialize RTC
+// initialize RTC
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
   assert(rtc_init());
@@ -400,7 +400,7 @@ void setup() {
   assert(irqHandlerTask != NULL); // has interrupt handler task started?
   ESP_LOGI(TAG, "Starting Timers...");
 
-  // display interrupt
+// display interrupt
 #ifdef HAS_DISPLAY
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
@@ -410,7 +410,7 @@ void setup() {
   timerAlarmEnable(displayIRQ);
 #endif
 
-  // LED Matrix display interrupt
+// LED Matrix display interrupt
 #ifdef HAS_MATRIX_DISPLAY
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
@@ -420,7 +420,7 @@ void setup() {
   timerAlarmEnable(matrixDisplayIRQ);
 #endif
 
-  // initialize button
+// initialize button
 #ifdef HAS_BUTTON
   strcat_P(features, " BTN_");
 #ifdef BUTTON_PULLUP
@@ -464,6 +464,9 @@ void setup() {
 
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
+
+  // set runmode to normal
+  RTC_runmode = RUNMODE_NORMAL;
 
   vTaskDelete(NULL);
 

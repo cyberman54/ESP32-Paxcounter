@@ -24,6 +24,6 @@ typedef struct {
 } cmd_t;
 
 void rcommand(const uint8_t cmd[], const uint8_t cmdlength);
-void do_reset();
+void do_reset(bool warmstart);
 
 #endif

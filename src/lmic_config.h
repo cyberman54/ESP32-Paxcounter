@@ -28,14 +28,14 @@
 // so consuming more power. You may sharpen (reduce) this value if you are
 // limited on battery.
 // ATTN: VALUES > 7 WILL CAUSE RECEPTION AND JOIN PROBLEMS WITH HIGH SF RATES
-//#define CLOCK_ERROR_PROCENTAGE 5
+#define CLOCK_ERROR_PROCENTAGE 5
 
 // Set this to 1 to enable some basic debug output (using printf) about
 // RF settings used during transmission and reception. Set to 2 to
 // enable more verbose output. Make sure that printf is actually
 // configured (e.g. on AVR it is not by default), otherwise using it can
 // cause crashing.
-//#define LMIC_DEBUG_LEVEL 1
+//#define LMIC_DEBUG_LEVEL 2
 
 // Enable this to allow using printf() to print to the given serial port
 // (or any other Print object). This can be easy for debugging. The
@@ -57,8 +57,7 @@
 // Uncomment this to disable all code related to ping
 #define DISABLE_PING
 // Uncomment this to disable all code related to beacon tracking.
-// Requires ping to be disabled too
-#define DISABLE_BEACONS
+// Requires ping to be disabled too#define DISABLE_BEACONS
 
 // Uncomment these to disable the corresponding MAC commands.
 // Class A

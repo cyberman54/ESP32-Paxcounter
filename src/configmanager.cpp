@@ -33,7 +33,6 @@ void defaultConfig() {
   cfg.vendorfilter = VENDORFILTER; // 0=disabled, 1=enabled
   cfg.rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
   cfg.monitormode = 0;             // 0=disabled, 1=enabled
-  cfg.runmode = 0;                 // 0=normal, 1=update
   cfg.payloadmask = PAYLOADMASK;   // all payload switched on
   cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = {
       0}; // init BSEC state for BME680 sensor
@@ -156,10 +155,6 @@ void saveConfig() {
     if (nvs_get_i8(my_handle, "monitormode", &flash8) != ESP_OK ||
         flash8 != cfg.monitormode)
       nvs_set_i8(my_handle, "monitormode", cfg.monitormode);
-
-    if (nvs_get_i8(my_handle, "runmode", &flash8) != ESP_OK ||
-        flash8 != cfg.runmode)
-      nvs_set_i8(my_handle, "runmode", cfg.runmode);
 
     if (nvs_get_i16(my_handle, "rssilimit", &flash16) != ESP_OK ||
         flash16 != cfg.rssilimit)
@@ -347,14 +342,6 @@ void loadConfig() {
       ESP_LOGI(TAG, "Monitor mode = %d", flash8);
     } else {
       ESP_LOGI(TAG, "Monitor mode set to default %d", cfg.monitormode);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "runmode", &flash8) == ESP_OK) {
-      cfg.runmode = flash8;
-      ESP_LOGI(TAG, "Run mode = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "Run mode set to default %d", cfg.runmode);
       saveConfig();
     }
 

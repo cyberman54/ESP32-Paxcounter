@@ -29,7 +29,7 @@ typedef struct {
 } wifi_ieee80211_packet_t;
 
 // using IRAM_:ATTR here to speed up callback function
-IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
+static IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
                                            wifi_promiscuous_pkt_type_t type) {
 
   const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;

@@ -4,6 +4,7 @@
 #include "globals.h"
 #include "rcommand.h"
 #include "timekeeper.h"
+#include <driver/rtc_io.h>
 #if (TIME_SYNC_LORASERVER)
 #include "timesync.h"
 #endif
@@ -21,6 +22,9 @@
 #endif
 
 extern TaskHandle_t lmicTask, lorasendTask;
+extern RTC_NOINIT_ATTR u4_t RTCnetid, RTCdevaddr;
+extern RTC_NOINIT_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
+extern RTC_NOINIT_ATTR int RTCseqnoUp, RTCseqnoDn;
 
 // table of LORAWAN MAC commands
 typedef struct {
@@ -29,7 +33,7 @@ typedef struct {
   const uint8_t params;
 } mac_t;
 
-esp_err_t lora_stack_init();
+esp_err_t lora_stack_init(bool do_join);
 void lora_setupForNetwork(bool preJoin);
 void lmictask(void *pvParameters);
 void gen_lora_deveui(uint8_t *pdeveui);
@@ -42,10 +46,10 @@ void showLoraKeys(void);
 void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
-void myEventCallback(void *pUserData, ev_t ev);
-void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
-                  size_t nMsg);
-void myTxCallback(void *pUserData, int fSuccess);
+static void IRAM_ATTR myEventCallback(void *pUserData, ev_t ev);
+static void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port,
+                                   const uint8_t *pMsg, size_t nMsg);
+static void IRAM_ATTR myTxCallback(void *pUserData, int fSuccess);
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
                 const uint8_t tablesize);
 uint8_t getBattLevel(void);
@@ -54,8 +58,8 @@ const char *getBwName(rps_t rps);
 const char *getCrName(rps_t rps);
 
 #if (TIME_SYNC_LORAWAN)
-void user_request_network_time_callback(void *pVoidUserUTCTime,
-                                        int flagSuccess);
+static void user_request_network_time_callback(void *pVoidUserUTCTime,
+                                               int flagSuccess);
 #endif
 
 #endif

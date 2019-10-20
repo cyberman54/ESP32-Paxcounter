@@ -351,10 +351,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 0x09 reset functions (send this command with confirmed ack only to avoid boot loops!)
 
-	0 = restart device
+	0 = restart device (coldstart)
 	1 = reset MAC counter to zero
 	2 = reset device to factory settings
 	3 = flush send queues
+	4 = restart device (warmstart)
 	9 = reboot device to OTA update via Wifi mode
 
 0x0A set LoRaWAN payload send cycle

@@ -18,6 +18,11 @@ static const char TAG[] = "lora";
 #endif
 #endif
 
+// variable keep its values after restart or wakeup from sleep
+RTC_NOINIT_ATTR u4_t RTCnetid, RTCdevaddr;
+RTC_NOINIT_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
+RTC_NOINIT_ATTR int RTCseqnoUp, RTCseqnoDn;
+
 QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 
@@ -86,9 +91,9 @@ void lora_setupForNetwork(bool preJoin) {
 #elif CFG_LMIC_EU_like
     // setting for TheThingsNetwork
     // TTN uses SF9, not SF12, for RX2 window
-    LMIC.dn2Dr = EU868_DR_SF9;
-    // Disable link check validation
-    LMIC_setLinkCheckMode(0);
+    // LMIC.dn2Dr = EU868_DR_SF9;
+    // Enable link check validation
+    LMIC_setLinkCheckMode(true);
 #endif
 
   } else {
@@ -244,9 +249,9 @@ void lora_send(void *pvParameters) {
   while (1) {
 
     // postpone until we are joined if we are not
-    // while (!LMIC.devaddr) {
-    //  vTaskDelay(pdMS_TO_TICKS(500));
-    //}
+    while (!LMIC.devaddr) {
+      vTaskDelay(pdMS_TO_TICKS(500));
+    }
 
     // fetch next or wait for payload to send from queue
     if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) != pdTRUE) {
@@ -287,7 +292,7 @@ void lora_send(void *pvParameters) {
   }
 }
 
-esp_err_t lora_stack_init() {
+esp_err_t lora_stack_init(bool do_join) {
   assert(SEND_QUEUE_SIZE);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
@@ -303,13 +308,22 @@ esp_err_t lora_stack_init() {
                           "lmictask", // name of task
                           4096,       // stack size of task
                           (void *)1,  // parameter of the task
-                          5,          // priority of the task
+                          2,          // priority of the task
                           &lmicTask,  // task handle
                           1);         // CPU core
 
-  // start join
-  if (!LMIC_startJoining())
-    ESP_LOGI(TAG, "Already joined");
+  // Start join procedure if not already joined,
+  // lora_setupForNetwork(true) is called by eventhandler when joined
+  // else continue current session
+  if (do_join) {
+    if (!LMIC_startJoining())
+      ESP_LOGI(TAG, "Already joined");
+  } else {
+    LMIC_reset();
+    LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
+    LMIC.seqnoUp = RTCseqnoUp;
+    LMIC.seqnoDn = RTCseqnoDn;
+  }
 
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
@@ -357,8 +371,8 @@ void lora_enqueuedata(MessageBuffer_t *message) {
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
 #if (TIME_SYNC_LORAWAN)
-void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
-                                                  int flagSuccess) {
+static void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
+                                                         int flagSuccess) {
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
   time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
 
@@ -428,7 +442,7 @@ void lmictask(void *pvParameters) {
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
 // in src/lmic_config.h if you are limited on battery.
 #ifdef CLOCK_ERROR_PROCENTAGE
-  LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 100);
+  LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 1000);
 #endif
 
   while (1) {
@@ -438,7 +452,7 @@ void lmictask(void *pvParameters) {
 } // lmictask
 
 // lmic event handler
-void myEventCallback(void *pUserData, ev_t ev) {
+static void myEventCallback(void *pUserData, ev_t ev) {
 
   // using message descriptors from LMIC library
   static const char *const evNames[] = {LMIC_EVENT_NAME_TABLE__INIT};
@@ -482,8 +496,8 @@ void myEventCallback(void *pUserData, ev_t ev) {
 }
 
 // receive message handler
-void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
-                  size_t nMsg) {
+static void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+                         size_t nMsg) {
 
   // display type of received data
   if (nMsg)
@@ -537,7 +551,7 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 }
 
 // transmit complete message handler
-void myTxCallback(void *pUserData, int fSuccess) {
+static void myTxCallback(void *pUserData, int fSuccess) {
 
 #if (TIME_SYNC_LORASERVER)
   // if last packet sent was a timesync request, store TX timestamp

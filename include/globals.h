@@ -52,6 +52,13 @@
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
 
+enum runmode_t {
+  RUNMODE_POWERCYCLE = 0,
+  RUNMODE_NORMAL,
+  RUNMODE_WAKEUP,
+  RUNMODE_UPDATE
+};
+
 // Struct holding devices's runtime configuration
 typedef struct {
   uint8_t loradr;      // 0-15, lora datarate
@@ -120,6 +127,7 @@ extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern time_t userUTCTime;
+extern RTC_DATA_ATTR runmode_t RTC_runmode;
 
 // application includes
 #include "led.h"

@@ -40,12 +40,6 @@ inline String getHeaderValue(String header, String headerName) {
 
 void start_ota_update() {
 
-  // check battery status if we can before doing ota
-  if (!batt_sufficient()) {
-    ESP_LOGE(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
-    return;
-  }
-
   switch_LED(LED_ON);
 
 // init display
@@ -105,7 +99,7 @@ end:
   ESP_LOGI(TAG, "Rebooting to %s firmware", (ret == 0) ? "new" : "current");
   ota_display(5, "**", ""); // mark line rebooting
   delay(5000);
-  ESP.restart();
+  do_reset(false);
 
 } // start_ota_update
 
@@ -320,7 +314,7 @@ void ota_display(const uint8_t row, const std::string status,
 }
 
 // callback function to show download progress while streaming data
-void show_progress(unsigned long current, unsigned long size) {
+static void show_progress(unsigned long current, unsigned long size) {
 #ifdef HAS_DISPLAY
   char buf[17];
   snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
