@@ -5,6 +5,7 @@
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
 #include "i2c.h"
+#include "reset.h"
 
 #define DEFAULT_VREF 1100 // tbd: use adc2_vref_to_gpio() for better estimate
 #define NO_OF_SAMPLES 64  // we do some multisampling to get better values
@@ -12,8 +13,6 @@
 uint16_t read_voltage(void);
 void calibrate_voltage(void);
 bool batt_sufficient(void);
-void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio);
-int64_t exit_deepsleep(void);
 
 #ifdef HAS_PMU
 

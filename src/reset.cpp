@@ -5,8 +5,6 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// variable keep its values after wakeup from sleep
-RTC_DATA_ATTR int64_t sleep_enter_time;
 // variable keep its values after restart or wakeup from sleep
 RTC_NOINIT_ATTR runmode_t RTC_runmode;
 
@@ -43,7 +41,6 @@ void do_after_reset(int reason) {
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
     RTC_runmode = RUNMODE_WAKEUP;
-    exit_deepsleep();
     break;
 
   case SW_RESET:         // 0x03 Software reset digital core
@@ -83,9 +80,6 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
     esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
   }
 
-  // store sleep enter time
-  sleep_enter_time = esp_timer_get_time();
-
 // store LMIC keys and counters in RTC memory
 #if (HAS_LORA)
   LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
@@ -115,20 +109,6 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   i2c_deinit();
 
   // enter sleep mode
+  ESP_LOGI(TAG, "Going to sleep...");
   esp_deep_sleep_start();
-}
-
-int64_t exit_deepsleep(void) {
-
-  int64_t sleep_time_ms = (esp_timer_get_time() - sleep_enter_time) / 1000;
-
-  // re-init i2c bus
-  void i2c_init();
-
-  // switch on power if has PMU
-#ifdef HAS_PMU
-  AXP192_power(pmu_power_on); // power on Lora, GPS, display
-#endif
-
-  return sleep_time_ms;
 }

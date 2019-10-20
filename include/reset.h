@@ -8,6 +8,5 @@
 void do_reset(bool warmstart);
 void do_after_reset(int reason);
 void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio);
-int64_t exit_deepsleep(void);
 
 #endif // _RESET_H

@@ -75,7 +75,7 @@ void AXP192_power(pmu_power_t powerlevel) {
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
-    //pmu.setPowerOutPut(AXP192_DCDC3, AXP202_OFF);
+    // pmu.setPowerOutPut(AXP192_DCDC3, AXP202_OFF);
     break;
 
   case pmu_power_sleep:
