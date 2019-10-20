@@ -31,7 +31,7 @@ ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
-lmictask      1     5     MCCI LMiC LORAWAN stack
+lmictask      1     2     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_req  1     3     processes realtime time sync requests
 irqhandler    1     1     display, timesync, gps, etc. triggered by timers
