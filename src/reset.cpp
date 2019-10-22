@@ -13,8 +13,6 @@ void do_reset(bool warmstart) {
     // store LMIC keys and counters in RTC memory
 #if (HAS_LORA)
     LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
-    RTCseqnoUp = LMIC.seqnoUp;
-    RTCseqnoDn = LMIC.seqnoDn;
 #endif
     ESP_LOGI(TAG, "restarting device (warmstart), keeping runmode %d",
              RTC_runmode);
@@ -67,6 +65,12 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   if ((!wakeup_sec) && (!wakeup_gpio) && (RTC_runmode == RUNMODE_NORMAL))
     return;
 
+// assure LMIC is in safe state
+#if (HAS_LORA)
+  if (os_queryTimeCriticalJobs(ms2osticks(10000)))
+    return;
+#endif
+
   // set up power domains
   esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
 
@@ -83,8 +87,6 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
 // store LMIC keys and counters in RTC memory
 #if (HAS_LORA)
   LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
-  RTCseqnoUp = LMIC.seqnoUp;
-  RTCseqnoDn = LMIC.seqnoDn;
 #endif
 
   // halt interrupts accessing i2c bus
