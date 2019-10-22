@@ -11,9 +11,6 @@ RTC_NOINIT_ATTR runmode_t RTC_runmode;
 void do_reset(bool warmstart) {
   if (warmstart) {
     // store LMIC keys and counters in RTC memory
-#if (HAS_LORA)
-    LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
-#endif
     ESP_LOGI(TAG, "restarting device (warmstart), keeping runmode %d",
              RTC_runmode);
   } else {
@@ -83,11 +80,6 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
     rtc_gpio_isolate(wakeup_gpio);
     esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
   }
-
-// store LMIC keys and counters in RTC memory
-#if (HAS_LORA)
-  LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
-#endif
 
   // halt interrupts accessing i2c bus
   mask_user_IRQ();
