@@ -91,7 +91,7 @@ void lora_setupForNetwork(bool preJoin) {
 #elif CFG_LMIC_EU_like
     // setting for TheThingsNetwork
     // TTN uses SF9, not SF12, for RX2 window
-    // LMIC.dn2Dr = EU868_DR_SF9;
+    LMIC.dn2Dr = EU868_DR_SF9;
     // Enable link check validation
     LMIC_setLinkCheckMode(true);
 #endif
@@ -476,6 +476,12 @@ static void myEventCallback(void *pUserData, ev_t ev) {
   case EV_JOINED:
     // do the after join network-specific setup.
     lora_setupForNetwork(false);
+    break;
+
+  case EV_TXCOMPLETE:
+    // save current Fcnt to RTC RAM
+    RTCseqnoUp = LMIC.seqnoUp;
+    RTCseqnoDn = LMIC.seqnoDn;
     break;
 
   case EV_JOIN_TXCOMPLETE:

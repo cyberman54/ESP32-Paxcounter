@@ -24,7 +24,6 @@
 extern TaskHandle_t lmicTask, lorasendTask;
 extern RTC_NOINIT_ATTR u4_t RTCnetid, RTCdevaddr;
 extern RTC_NOINIT_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
-extern RTC_NOINIT_ATTR int RTCseqnoUp, RTCseqnoDn;
 
 // table of LORAWAN MAC commands
 typedef struct {
