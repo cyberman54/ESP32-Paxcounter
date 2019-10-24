@@ -55,7 +55,7 @@ const char *getBwName(rps_t rps);
 const char *getCrName(rps_t rps);
 
 #if (TIME_SYNC_LORAWAN)
-static void user_request_network_time_callback(void *pVoidUserUTCTime,
+void user_request_network_time_callback(void *pVoidUserUTCTime,
                                                int flagSuccess);
 #endif
 
