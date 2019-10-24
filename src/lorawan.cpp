@@ -373,7 +373,7 @@ void lora_enqueuedata(MessageBuffer_t *message) {
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
 #if (TIME_SYNC_LORAWAN)
-static void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
+void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
                                                          int flagSuccess) {
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
   time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
