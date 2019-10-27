@@ -246,7 +246,7 @@ int do_ota_update() {
     goto retry;
   }
 
-#ifdef HAS_LED
+#if (HAS_LED != NOT_A_PIN)
 #ifndef LED_ACTIVE_LOW
   if (!Update.begin(contentLength, U_FLASH, HAS_LED, HIGH)) {
 #else
