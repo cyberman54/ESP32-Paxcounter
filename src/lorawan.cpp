@@ -89,9 +89,7 @@ void lora_setupForNetwork(bool preJoin) {
     // other regions, this will need to be changed.
     LMIC_selectSubBand(1);
 #elif CFG_LMIC_EU_like
-    // setting for TheThingsNetwork
-    // TTN uses SF9, not SF12, for RX2 window
-    LMIC.dn2Dr = EU868_DR_SF9;
+    // settings for TheThingsNetwork
     // Enable link check validation
     LMIC_setLinkCheckMode(true);
 #endif
