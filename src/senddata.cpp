@@ -84,7 +84,9 @@ void sendData() {
 
 #if (HAS_BME)
     case MEMS_DATA:
+#if !(PAYLOAD_COMBINE)
       payload.reset();
+#endif
       payload.addBME(bme_status);
       SendPayload(BMEPORT, prio_normal);
       break;
@@ -96,7 +98,9 @@ void sendData() {
       if (gps.location.isValid()) {
         gpsStatus_t gps_status;
         gps_storelocation(&gps_status);
+#if !(PAYLOAD_COMBINE)
         payload.reset();
+#endif
         payload.addGPS(gps_status);
         SendPayload(GPSPORT, prio_high);
       } else
@@ -106,17 +110,23 @@ void sendData() {
 
 #if (HAS_SENSORS)
     case SENSOR1_DATA:
+#if !(PAYLOAD_COMBINE)
       payload.reset();
+#endif
       payload.addSensor(sensor_read(1));
       SendPayload(SENSOR1PORT, prio_normal);
       break;
     case SENSOR2_DATA:
+#if !(PAYLOAD_COMBINE)
       payload.reset();
+#endif
       payload.addSensor(sensor_read(2));
       SendPayload(SENSOR2PORT, prio_normal);
       break;
     case SENSOR3_DATA:
+#if !(PAYLOAD_COMBINE)
       payload.reset();
+#endif
       payload.addSensor(sensor_read(3));
       SendPayload(SENSOR3PORT, prio_normal);
       break;
@@ -124,7 +134,9 @@ void sendData() {
 
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     case BATT_DATA:
+#if !(PAYLOAD_COMBINE)
       payload.reset();
+#endif
       payload.addVoltage(read_voltage());
       SendPayload(BATTPORT, prio_normal);
       break;
