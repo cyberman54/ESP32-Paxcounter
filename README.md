@@ -422,6 +422,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 	0 = battery data off [default]
 	1 = battery data on, sends voltage on port 8
 
+0x17 set Wifi scanner
+
+	0 = disabled
+	1 = enabled [default]
+
 0x80 get device configuration
 
 	Device answers with it's current configuration on Port 3. 

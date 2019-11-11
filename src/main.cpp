@@ -364,16 +364,15 @@ void setup() {
   // start wifi in monitor mode and start channel rotation timer
   ESP_LOGI(TAG, "Starting Wifi...");
   wifi_sniffer_init();
+#else
+  // switch off wifi
+  esp_wifi_deinit();
+#endif
+
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
   get_salt(); // get new 16bit for salting hashes
-#else
-  // switch off wifi
-  WiFi.mode(WIFI_OFF);
-  esp_wifi_stop();
-  esp_wifi_deinit();
-#endif
 
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
