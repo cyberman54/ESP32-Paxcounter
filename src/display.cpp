@@ -218,12 +218,27 @@ void draw_page(time_t t, uint8_t page) {
   case 0:
 
     // line 3: wifi + bluetooth counters
-    dp_printf(0, 3, FONT_SMALL, 0, "WIFI:%-5d", macs_wifi);
-#if (BLECOUNTER)
+#if ((WIFICOUNTER) && (BLECOUNTER))
+    if (cfg.wifiscan)
+      dp_printf(0, 3, FONT_SMALL, 0, "WIFI:%-5d", macs_wifi);
+    else
+      dp_printf(0, 3, FONT_SMALL, 0, "%s", "WIFI:off");
     if (cfg.blescan)
       dp_printf(66, 3, FONT_SMALL, 0, "BLTH:%-5d", macs_ble);
     else
       dp_printf(66, 3, FONT_SMALL, 0, "%s", "BLTH:off");
+#elif ((WIFICOUNTER) && (!BLECOUNTER))
+    if (cfg.wifiscan)
+      dp_printf(0, 3, FONT_SMALL, 0, "WIFI:%-5d", macs_wifi);
+    else
+      dp_printf(0, 3, FONT_SMALL, 0, "%s", "WIFI:off");
+#elif ((!WIFICOUNTER) && (BLECOUNTER))
+    if (cfg.blescan)
+      dp_printf(0, 3, FONT_SMALL, 0, "BLTH:%-5d", macs_ble);
+    else
+      dp_printf(0, 3, FONT_SMALL, 0, "%s", "BLTH:off");
+#else
+    dp_printf(0, 3, FONT_SMALL, 0, "%s", "Sniffer disabled");
 #endif
 
 // line 4: Battery + GPS status + Wifi channel
