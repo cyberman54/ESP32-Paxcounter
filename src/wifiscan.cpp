@@ -47,6 +47,7 @@ wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type) {
 
 // Software-timer driven Wifi channel rotation callback function
 void switchWifiChannel(TimerHandle_t xTimer) {
+  configASSERT(xTimer);
   channel =
       (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
@@ -85,14 +86,16 @@ void wifi_sniffer_init(void) {
 
 void switch_wifi_sniffer(uint8_t state) {
   assert(WifiChanTimer);
-  if ((state ? 1 : 0) == 1) {
+  if (state) {
     // switch wifi sniffer on
+    ESP_ERROR_CHECK(esp_wifi_start());
     xTimerStart(WifiChanTimer, 0);
     esp_wifi_set_promiscuous(true);
   } else {
     // switch wifi sniffer off
     xTimerStop(WifiChanTimer, 0);
     esp_wifi_set_promiscuous(false);
+    ESP_ERROR_CHECK(esp_wifi_stop());
     macs_wifi = 0; // clear WIFI counter
   }
 }
