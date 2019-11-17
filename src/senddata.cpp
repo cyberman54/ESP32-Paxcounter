@@ -65,9 +65,21 @@ void sendData() {
 #if ((WIFICOUNTER) || (BLECOUNTER))
     case COUNT_DATA:
       payload.reset();
-      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
+      if (cfg.wifiscan)
+        payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
+
+#if (PAYLOAD_GPS)
+      // send GPS position only if we have a fix
+      if (gps.location.isValid()) {
+        gpsStatus_t gps_status;
+        gps_storelocation(&gps_status);
+        payload.addGPS(gps_status);
+      } else
+        ESP_LOGD(TAG, "No valid GPS position");
+#endif
+
       SendPayload(COUNTERPORT, prio_normal);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
