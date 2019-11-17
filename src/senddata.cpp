@@ -68,6 +68,15 @@ void sendData() {
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
+#if (HAS_GPS) && (GPSPORT==1)
+      // send GPS position only if we have a fix
+      if (gps.location.isValid()) {
+        gpsStatus_t gps_status;
+        gps_storelocation(&gps_status);
+        payload.addGPS(gps_status);
+      } else
+        ESP_LOGD(TAG, "No valid GPS position");
+#endif
       SendPayload(COUNTERPORT, prio_normal);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
@@ -84,23 +93,19 @@ void sendData() {
 
 #if (HAS_BME)
     case MEMS_DATA:
-#if !(PAYLOAD_COMBINE)
       payload.reset();
-#endif
       payload.addBME(bme_status);
       SendPayload(BMEPORT, prio_normal);
       break;
 #endif
 
-#if (HAS_GPS)
+#if (HAS_GPS) && (GPSPORT!=1)
     case GPS_DATA:
       // send GPS position only if we have a fix
       if (gps.location.isValid()) {
         gpsStatus_t gps_status;
         gps_storelocation(&gps_status);
-#if !(PAYLOAD_COMBINE)
         payload.reset();
-#endif
         payload.addGPS(gps_status);
         SendPayload(GPSPORT, prio_high);
       } else
@@ -110,23 +115,17 @@ void sendData() {
 
 #if (HAS_SENSORS)
     case SENSOR1_DATA:
-#if !(PAYLOAD_COMBINE)
       payload.reset();
-#endif
       payload.addSensor(sensor_read(1));
       SendPayload(SENSOR1PORT, prio_normal);
       break;
     case SENSOR2_DATA:
-#if !(PAYLOAD_COMBINE)
       payload.reset();
-#endif
       payload.addSensor(sensor_read(2));
       SendPayload(SENSOR2PORT, prio_normal);
       break;
     case SENSOR3_DATA:
-#if !(PAYLOAD_COMBINE)
       payload.reset();
-#endif
       payload.addSensor(sensor_read(3));
       SendPayload(SENSOR3PORT, prio_normal);
       break;
@@ -134,9 +133,7 @@ void sendData() {
 
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     case BATT_DATA:
-#if !(PAYLOAD_COMBINE)
       payload.reset();
-#endif
       payload.addVoltage(read_voltage());
       SendPayload(BATTPORT, prio_normal);
       break;
