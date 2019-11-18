@@ -180,7 +180,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 | 6   | User sensor 3 | on
 | 7   | Batterylevel  | off
 
-*) GPS data can also be combined with payload on port 1, #define PAYLOAD_GPS in paxcounter.conf to enable
+*) GPS data can also be combined with payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
 
 # Time sync
 
