@@ -70,6 +70,7 @@ void sendData() {
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 #endif
+#if (HAS_GPS) && (GPSPORT == 1)
       // send GPS position only if we have a fix
       if (gps.location.isValid()) {
         gpsStatus_t gps_status;
@@ -105,7 +106,7 @@ void sendData() {
       break;
 #endif
 
-#if (HAS_GPS) && (GPSPORT!=1)
+#if (HAS_GPS) && (GPSPORT != 1)
     case GPS_DATA:
       // send GPS position only if we have a fix
       if (gps.location.isValid()) {
