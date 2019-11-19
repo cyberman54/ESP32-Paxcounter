@@ -28,9 +28,9 @@
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-#define HAS_BME 1 // Enable BME sensors in general
-#define HAS_BME680 SDA, SCL
-#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
+//#define HAS_BME 1 // Enable BME sensors in general
+//#define HAS_BME680 SDA, SCL
+//#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
 
 // display (if connected)
 #define HAS_DISPLAY 1
