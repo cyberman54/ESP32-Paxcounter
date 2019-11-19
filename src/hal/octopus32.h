@@ -9,7 +9,7 @@
 // Hardware related definitions for #IoT Octopus32 with the Adafruit LoRaWAN Wing
 // You can use this configuration also with the Adafruit ESP32 Feather + the LoRaWAN Wing
 // In this config we use the Adafruit OLED Wing which is only 128x32 pixel, need to find a smaller font
-// NPTE: if LORA_IRQ and LORA_IO1 are tied to the same GPIO by diodes on the board, 
+// NOTE: if LORA_IRQ and LORA_IO1 are tied to the same GPIO using diodes on the board, 
 // you must disable LMIC_USE_INTERRUPTS in lmic_config.h
 
 // disable brownout detection (avoid unexpected reset on some boards)
