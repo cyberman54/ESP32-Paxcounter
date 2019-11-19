@@ -62,7 +62,7 @@ PMUIRQ          -> PMU chip gpio  -> irqHandlerTask (Core 1)
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
-CYLCIC_IRQ      -> housekeeping() -> irqHandlerTask (Core 1)
+CYCLIC_IRQ      -> housekeeping() -> irqHandlerTask (Core 1)
 SENDCYCLE_IRQ   -> sendcycle()    -> irqHandlerTask (Core 1)
 BME_IRQ         -> bmecycle()     -> irqHandlerTask (Core 1)
 
