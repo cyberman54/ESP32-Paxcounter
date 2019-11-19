@@ -212,6 +212,12 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 [**packed_decoder.js**](src/TTN/packed_decoder.js) |
 [**packed_converter.js**](src/TTN/packed_converter.js)
 
+# mobile PaxCounter via https://opensensemap.org/
+This describes how to set up a mobile PaxCounter:
+Follow all steps so far for preparing the device, use the packed payload format. In paxcounter.conf set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
+There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
+	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
+
 
 **Port #1:** Paxcount data
 
@@ -307,7 +313,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 0x03 set GPS data on/off
 
 	0 = GPS data off
-	1 = GPS data on, sends GPS data on port 4, if GPS is present and has a fix [default]
+	1 = GPS data on, sends GPS data on port 4 (default, use port 1 for mobile pax counter), if GPS is present and has a fix [default]
 
 0x04 set display on/off
 
