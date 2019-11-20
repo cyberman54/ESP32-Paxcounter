@@ -29,8 +29,8 @@ typedef struct {
 } wifi_ieee80211_packet_t;
 
 // using IRAM_:ATTR here to speed up callback function
-static IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
-                                           wifi_promiscuous_pkt_type_t type) {
+static IRAM_ATTR void
+wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type) {
 
   const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
   const wifi_ieee80211_packet_t *ipkt =
@@ -47,6 +47,7 @@ static IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
 
 // Software-timer driven Wifi channel rotation callback function
 void switchWifiChannel(TimerHandle_t xTimer) {
+  configASSERT(xTimer);
   channel =
       (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
@@ -72,15 +73,30 @@ void wifi_sniffer_init(void) {
       esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
   ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // no modem power saving
-  ESP_ERROR_CHECK(esp_wifi_start()); // must be started to be able to switch ch
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
+  ESP_ERROR_CHECK(esp_wifi_start()); //for esp_wifi v3.3
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 
   // setup wifi channel rotation timer
   WifiChanTimer =
       xTimerCreate("WifiChannelTimer", pdMS_TO_TICKS(cfg.wifichancycle * 10),
                    pdTRUE, (void *)0, switchWifiChannel);
+  switch_wifi_sniffer(1);
+}
+
+void switch_wifi_sniffer(uint8_t state) {
   assert(WifiChanTimer);
-  xTimerStart(WifiChanTimer, 0);
+  if (state) {
+    // switch wifi sniffer on
+    ESP_ERROR_CHECK(esp_wifi_start());
+    xTimerStart(WifiChanTimer, 0);
+    esp_wifi_set_promiscuous(true);
+  } else {
+    // switch wifi sniffer off
+    xTimerStop(WifiChanTimer, 0);
+    esp_wifi_set_promiscuous(false);
+    ESP_ERROR_CHECK(esp_wifi_stop());
+    macs_wifi = 0; // clear WIFI counter
+  }
 }

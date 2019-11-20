@@ -34,8 +34,15 @@ void do_after_reset(int reason) {
     RTC_runmode = RUNMODE_POWERCYCLE;
     break;
 
+  case SW_CPU_RESET: // 0x0c Software reset CPU
+                     // keep previous runmode (could be RUNMODE_UPDATE)
+    break;
+
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
     RTC_runmode = RUNMODE_WAKEUP;
+#if (HAS_LORA)
+    // to be done: restore LoRaWAN channel configuration and datarate here
+#endif
     break;
 
   case SW_RESET:         // 0x03 Software reset digital core
@@ -46,11 +53,11 @@ void do_after_reset(int reason) {
   case RTCWDT_SYS_RESET: // 0x09 RTC Watch dog Reset digital core
   case INTRUSION_RESET:  // 0x0a Instrusion tested to reset CPU
   case TGWDT_CPU_RESET:  // 0x0b Time Group reset CPU
-  case SW_CPU_RESET:     // 0x0c Software reset CPU
   case RTCWDT_CPU_RESET: // 0x0d RTC Watch dog Reset CPU
   case EXT_CPU_RESET:    // 0x0e for APP CPU, reseted by PRO CPU
   case RTCWDT_RTC_RESET: // 0x10 RTC Watch dog reset digital core and rtc mode
   default:
+    RTC_runmode = RUNMODE_POWERCYCLE;
     break;
   }
 
@@ -66,6 +73,9 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
 #if (HAS_LORA)
   if (os_queryTimeCriticalJobs(ms2osticks(10000)))
     return;
+
+    // to be done: save LoRaWAN channel configuration here
+
 #endif
 
   // set up power domains

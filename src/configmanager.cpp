@@ -9,9 +9,9 @@ nvs_handle my_handle;
 esp_err_t err;
 
 #define PAYLOADMASK                                                            \
-  ((GPS_DATA | ALARM_DATA | MEMS_DATA | COUNT_DATA | SENSOR1_DATA |            \
-    SENSOR2_DATA | SENSOR3_DATA) &                                             \
-   ~BATT_DATA)
+  ((ALARM_DATA | MEMS_DATA | COUNT_DATA | SENSOR1_DATA | SENSOR2_DATA |        \
+    SENSOR3_DATA) &                                                            \
+   (~BATT_DATA) & (~GPS_DATA))
 
 // populate cfg vars with factory settings
 void defaultConfig() {
@@ -29,6 +29,7 @@ void defaultConfig() {
       BLESCANINTERVAL /
       10; // BT channel scan cycle [seconds/100], default 1 (= 10ms)
   cfg.blescan = BLECOUNTER;        // 0=disabled, 1=enabled
+  cfg.wifiscan = WIFICOUNTER;      // 0=disabled, 1=enabled
   cfg.wifiant = 0;                 // 0=internal, 1=external (for LoPy/LoPy4)
   cfg.vendorfilter = VENDORFILTER; // 0=disabled, 1=enabled
   cfg.rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
@@ -135,6 +136,10 @@ void saveConfig() {
     if (nvs_get_i8(my_handle, "blescanmode", &flash8) != ESP_OK ||
         flash8 != cfg.blescan)
       nvs_set_i8(my_handle, "blescanmode", cfg.blescan);
+
+    if (nvs_get_i8(my_handle, "wifiscanmode", &flash8) != ESP_OK ||
+        flash8 != cfg.wifiscan)
+      nvs_set_i8(my_handle, "wifiscanmode", cfg.wifiscan);
 
     if (nvs_get_i8(my_handle, "wifiant", &flash8) != ESP_OK ||
         flash8 != cfg.wifiant)
@@ -318,6 +323,14 @@ void loadConfig() {
       ESP_LOGI(TAG, "BLEscanmode = %d", flash8);
     } else {
       ESP_LOGI(TAG, "BLEscanmode set to default %d", cfg.blescan);
+      saveConfig();
+    }
+
+    if (nvs_get_i8(my_handle, "wifiscanmode", &flash8) == ESP_OK) {
+      cfg.wifiscan = flash8;
+      ESP_LOGI(TAG, "WIFIscanmode = %d", flash8);
+    } else {
+      ESP_LOGI(TAG, "WIFIscanmode set to default %d", cfg.wifiscan);
       saveConfig();
     }
 

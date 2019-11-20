@@ -8,6 +8,7 @@
 #include "lorawan.h"
 #endif
 #include "macsniff.h"
+#include "wifiscan.h"
 #include <rom/rtc.h>
 #include "cyclic.h"
 #include "timekeeper.h"
