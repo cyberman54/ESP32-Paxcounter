@@ -50,7 +50,11 @@ function Decoder(bytes, port) {
 
     if (port === 4) {
         // gps data      
-        return decode(bytes, [latLng, latLng, uint8, hdop, altitude], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+        if (bytes.length === 8) {
+            return decode(bytes, [latLng, latLng], ['latitude', 'longitude']);
+        } else {
+            return decode(bytes, [latLng, latLng, uint8, hdop, altitude], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+        }
     }
 
     if (port === 5) {
