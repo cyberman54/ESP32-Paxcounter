@@ -169,17 +169,18 @@ Output of user sensor data can be switched by user remote control command 0x14 s
 
 Output of sensor and peripheral data is internally switched by a bitmask register. Default mask can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](src/configmanager.cpp) following this scheme:
 
-| Bit | Sensordata    |
-| --- | ------------- |
-| 0   | GPS           |
-| 1   | Beacon alarm  |
-| 2   | BME280/680    |
-| 3   | Paxcounter    |
-| 4   | User sensor 1 |
-| 5   | User sensor 2 |
-| 6   | User sensor 3 |
-| 7   | Batterylevel  |
+| Bit | Sensordata    | Default
+| --- | ------------- | -------
+| 0   | GPS           | off*
+| 1   | Beacon alarm  | on
+| 2   | BME280/680    | on
+| 3   | Paxcounter    | on
+| 4   | User sensor 1 | on
+| 5   | User sensor 2 | on
+| 6   | User sensor 3 | on
+| 7   | Batterylevel  | off
 
+*) GPS data can also be combined with payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
 
 # Time sync
 
@@ -427,6 +428,11 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	0 = battery data off [default]
 	1 = battery data on, sends voltage on port 8
+
+0x17 set Wifi scanner
+
+	0 = disabled
+	1 = enabled [default]
 
 0x80 get device configuration
 
