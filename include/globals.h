@@ -95,11 +95,9 @@ typedef struct {
 typedef struct {
   int32_t latitude;
   int32_t longitude;
-#if !(PAYLOAD_OPENSENSEBOX)
   uint8_t satellites;
   uint16_t hdop;
   int16_t altitude;
-#endif
 } gpsStatus_t;
 
 typedef struct {
