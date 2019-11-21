@@ -66,6 +66,7 @@ void sendData() {
     case COUNT_DATA:
       payload.reset();
 #if !(PAYLOAD_OPENSENSEBOX)
+      if (cfg.wifiscan)
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
@@ -80,6 +81,7 @@ void sendData() {
         ESP_LOGD(TAG, "No valid GPS position");
 #endif
 #if (PAYLOAD_OPENSENSEBOX)      
+      if (cfg.wifiscan)
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
