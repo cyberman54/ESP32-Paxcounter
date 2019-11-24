@@ -58,6 +58,7 @@ void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
+  gpsStatus_t gps_status;
 
   while (bitmask) {
     switch (bitmask & mask) {
@@ -71,14 +72,15 @@ void sendData() {
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 #endif
-#if (HAS_GPS) && (GPSPORT == 1)
-      // send GPS position only if we have a fix
-      if (gps.location.isValid()) {
-        gpsStatus_t gps_status;
-        gps_storelocation(&gps_status);
-        payload.addGPS(gps_status);
-      } else
-        ESP_LOGD(TAG, "No valid GPS position");
+#if (HAS_GPS) 
+      if (GPSPORT == COUNTERPORT) {
+        // send GPS position only if we have a fix
+        if (gps.location.isValid()) {
+            gps_storelocation(&gps_status);
+            payload.addGPS(gps_status);
+        } else
+          ESP_LOGD(TAG, "No valid GPS position");
+      }
 #endif
 #if (PAYLOAD_OPENSENSEBOX)      
       if (cfg.wifiscan)
@@ -108,17 +110,18 @@ void sendData() {
       break;
 #endif
 
-#if (HAS_GPS) && (GPSPORT != 1)
+#if (HAS_GPS) 
     case GPS_DATA:
-      // send GPS position only if we have a fix
-      if (gps.location.isValid()) {
-        gpsStatus_t gps_status;
-        gps_storelocation(&gps_status);
-        payload.reset();
-        payload.addGPS(gps_status);
-        SendPayload(GPSPORT, prio_high);
-      } else
-        ESP_LOGD(TAG, "No valid GPS position");
+      if (GPSPORT != COUNTERPORT) {
+        // send GPS position only if we have a fix
+        if (gps.location.isValid()) {
+          gps_storelocation(&gps_status);
+          payload.reset();
+          payload.addGPS(gps_status);
+          SendPayload(GPSPORT, prio_high);
+        } else
+          ESP_LOGD(TAG, "No valid GPS position");
+      }
       break;
 #endif
 
