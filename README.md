@@ -171,7 +171,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 | Bit | Sensordata    | Default
 | --- | ------------- | -------
-| 0   | GPS           | off*
+| 0   | GPS           | on*
 | 1   | Beacon alarm  | on
 | 2   | BME280/680    | on
 | 3   | Paxcounter    | on
