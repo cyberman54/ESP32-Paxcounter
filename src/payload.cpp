@@ -195,9 +195,11 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
 void PayloadConvert::addGPS(gpsStatus_t value) {
 #if(HAS_GPS)
   writeLatLng(value.latitude, value.longitude);
+#if (!PAYLOAD_OPENSENSEBOX)
   writeUint8(value.satellites);
   writeUint16(value.hdop);
   writeUint16(value.altitude);
+#endif
 #endif
 }
 

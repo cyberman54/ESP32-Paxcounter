@@ -68,7 +68,7 @@ void sendData() {
       payload.reset();
 #if !(PAYLOAD_OPENSENSEBOX)
       if (cfg.wifiscan)
-      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
+        payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 #endif
@@ -76,15 +76,15 @@ void sendData() {
       if (GPSPORT == COUNTERPORT) {
         // send GPS position only if we have a fix
         if (gps.location.isValid()) {
-            gps_storelocation(&gps_status);
-            payload.addGPS(gps_status);
+          gps_storelocation(&gps_status);
+          payload.addGPS(gps_status);
         } else
           ESP_LOGD(TAG, "No valid GPS position");
       }
 #endif
 #if (PAYLOAD_OPENSENSEBOX)      
       if (cfg.wifiscan)
-      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
+        payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 #endif
