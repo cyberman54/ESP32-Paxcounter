@@ -506,3 +506,4 @@ Thanks to
 - [robbi5](https://github.com/robbi5) for the payload converter
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
+- [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
