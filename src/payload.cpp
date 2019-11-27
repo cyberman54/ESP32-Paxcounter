@@ -89,11 +89,13 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   buffer[cursor++] = (byte)((value.longitude & 0x00FF0000) >> 16);
   buffer[cursor++] = (byte)((value.longitude & 0x0000FF00) >> 8);
   buffer[cursor++] = (byte)((value.longitude & 0x000000FF));
+#if (!PAYLOAD_OPENSENSEBOX)
   buffer[cursor++] = value.satellites;
   buffer[cursor++] = highByte(value.hdop);
   buffer[cursor++] = lowByte(value.hdop);
   buffer[cursor++] = highByte(value.altitude);
   buffer[cursor++] = lowByte(value.altitude);
+#endif
 #endif
 }
 
@@ -193,9 +195,11 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
 void PayloadConvert::addGPS(gpsStatus_t value) {
 #if(HAS_GPS)
   writeLatLng(value.latitude, value.longitude);
+#if (!PAYLOAD_OPENSENSEBOX)
   writeUint8(value.satellites);
   writeUint16(value.hdop);
   writeUint16(value.altitude);
+#endif
 #endif
 }
 

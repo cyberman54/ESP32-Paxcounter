@@ -18,6 +18,14 @@ function Decoder(bytes, port) {
         if (bytes.length === 4) {
             return decode(bytes, [uint16, uint16], ['wifi', 'ble']);
         }
+        // combined wifi counter and gps data, used by https://opensensemap.org
+        if (bytes.length === 10) {
+            return decode(bytes, [latLng, latLng, uint16], ['latitude', 'longitude', 'wifi']);
+        }
+        // combined wifi + ble counter and gps data, used by https://opensensemap.org
+        if (bytes.length === 12) {
+            return decode(bytes, [latLng, latLng, uint16, uint16], ['latitude', 'longitude', 'wifi', 'ble']);
+        }
         // combined wifi counter and gps data
         if (bytes.length === 15) {
             return decode(bytes, [uint16, latLng, latLng, uint8, hdop, altitude], ['wifi', 'latitude', 'longitude', 'sats', 'hdop', 'altitude']);
@@ -42,7 +50,11 @@ function Decoder(bytes, port) {
 
     if (port === 4) {
         // gps data      
-        return decode(bytes, [latLng, latLng, uint8, hdop, altitude], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+        if (bytes.length === 8) {
+            return decode(bytes, [latLng, latLng], ['latitude', 'longitude']);
+        } else {
+            return decode(bytes, [latLng, latLng, uint8, hdop, altitude], ['latitude', 'longitude', 'sats', 'hdop', 'altitude']);
+        }
     }
 
     if (port === 5) {

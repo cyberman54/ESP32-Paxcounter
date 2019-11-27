@@ -8,10 +8,10 @@ static const char TAG[] = "flash";
 nvs_handle my_handle;
 esp_err_t err;
 
-#define PAYLOADMASK                                                            \
-  (ALARM_DATA | MEMS_DATA | COUNT_DATA | GPS_DATA | SENSOR1_DATA |             \
-   SENSOR2_DATA | SENSOR3_DATA) &                                              \
-      (~BATT_DATA)
+#define PAYLOADMASK                                  \
+  ((GPS_DATA | ALARM_DATA | MEMS_DATA | COUNT_DATA | \
+    SENSOR1_DATA | SENSOR2_DATA | SENSOR3_DATA) &    \
+   (~BATT_DATA) )
 
 // populate cfg vars with factory settings
 void defaultConfig() {
