@@ -171,7 +171,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 | Bit | Sensordata    | Default
 | --- | ------------- | -------
-| 0   | GPS           | off*
+| 0   | GPS*          | on
 | 1   | Beacon alarm  | on
 | 2   | BME280/680    | on
 | 3   | Paxcounter    | on
@@ -189,6 +189,12 @@ Paxcounter can keep it's time-of-day synced with an external time source. Set *#
 # Wall clock controller
 
 Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set *#define HAS_IF482* or *#define HAS_DCF77* in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.
+
+# mobile PaxCounter via https://opensensemap.org/
+This describes how to set up a mobile PaxCounter:
+Follow all steps so far for preparing the device, use the packed payload format. In paxcounter.conf set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
+There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
+	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
 
 # Payload format
 
@@ -212,7 +218,6 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 [**plain_converter.js**](src/TTN/plain_converter.js) |
 [**packed_decoder.js**](src/TTN/packed_decoder.js) |
 [**packed_converter.js**](src/TTN/packed_converter.js)
-
 
 **Port #1:** Paxcount data
 
@@ -308,7 +313,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 0x03 set GPS data on/off
 
 	0 = GPS data off
-	1 = GPS data on, sends GPS data on port 4, if GPS is present and has a fix [default]
+	1 = GPS data on, sends GPS data on port 4 (default, use port 1 for mobile pax counter), if GPS is present and has a fix
 
 0x04 set display on/off
 
@@ -501,3 +506,4 @@ Thanks to
 - [robbi5](https://github.com/robbi5) for the payload converter
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
+- [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
