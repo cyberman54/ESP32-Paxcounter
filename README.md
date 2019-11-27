@@ -190,6 +190,12 @@ Paxcounter can keep it's time-of-day synced with an external time source. Set *#
 
 Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set *#define HAS_IF482* or *#define HAS_DCF77* in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.
 
+# mobile PaxCounter via https://opensensemap.org/
+This describes how to set up a mobile PaxCounter:
+Follow all steps so far for preparing the device, use the packed payload format. In paxcounter.conf set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
+There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
+	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
+
 # Payload format
 
 You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L12):
@@ -212,13 +218,6 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 [**plain_converter.js**](src/TTN/plain_converter.js) |
 [**packed_decoder.js**](src/TTN/packed_decoder.js) |
 [**packed_converter.js**](src/TTN/packed_converter.js)
-
-# mobile PaxCounter via https://opensensemap.org/
-This describes how to set up a mobile PaxCounter:
-Follow all steps so far for preparing the device, use the packed payload format. In paxcounter.conf set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
-There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
-	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
-
 
 **Port #1:** Paxcount data
 
