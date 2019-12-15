@@ -56,12 +56,7 @@ static const char TAG[] = __FILE__;
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 uint8_t DisplayIsOn = 0;
-
-#ifdef USE_BACKBUFFER
 static uint8_t displaybuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
-#else
-static uint8_t *displaybuf = NULL;
-#endif
 
 QRCode qrcode;
 
@@ -88,7 +83,7 @@ void init_display(bool verbose) {
 #endif
 
     // set display buffer
-    oledSetBackBuffer(displaybuf);
+    //oledSetBackBuffer(displaybuf);
 
     // clear display
     oledSetContrast(DISPLAYCONTRAST);
