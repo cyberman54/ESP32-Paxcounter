@@ -32,8 +32,10 @@ Bsec iaqSensor;
 
 #elif defined HAS_BME280
 
-Adafruit_BME280 bme; // I2C
-                     // Adafruit_BME280 bme(BME_CS); // hardware SPI
+Adafruit_BME280 bme; // using I2C interface
+
+// use these alternative constructors for other hw interface types
+// Adafruit_BME280 bme(BME_CS); // hardware SPI
 // Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
 
 #elif defined HAS_BMP180
@@ -128,7 +130,6 @@ int bme_init(void) {
   }
 #endif
 
-
 finish:
   I2C_MUTEX_UNLOCK(); // release i2c bus access
   if (rc)
@@ -194,7 +195,6 @@ void bme_storedata(bmeStatus_t *bme_store) {
     bme_store->temperature = bmp.readTemperature();
     bme_store->pressure = (bmp.readPressure() / 100.0); // conversion Pa -> hPa
     // bme.readAltitude(SEALEVELPRESSURE_HPA);
-    // bme_store->humidity = bme.readHumidity();
     bme_store->iaq = 0; // IAQ feature not present with BME280
 #endif
 
