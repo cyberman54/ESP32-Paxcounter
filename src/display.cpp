@@ -56,7 +56,7 @@ static const char TAG[] = __FILE__;
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 uint8_t DisplayIsOn = 0;
-static uint8_t displaybuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
+uint8_t displaybuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
 
 QRCode qrcode;
 
@@ -83,7 +83,7 @@ void init_display(bool verbose) {
 #endif
 
     // set display buffer
-    //oledSetBackBuffer(displaybuf);
+    oledSetBackBuffer(displaybuf);
 
     // clear display
     oledSetContrast(DISPLAYCONTRAST);
@@ -111,7 +111,7 @@ void init_display(bool verbose) {
                                                               : "ext.");
 
       // give user some time to read or take picture
-      oledDumpBuffer(NULL);
+      oledDumpBuffer(displaybuf);
       delay(2000);
       oledFill(0x00, 1);
 #endif // VERBOSE
@@ -134,7 +134,7 @@ void init_display(bool verbose) {
         dp_printf(80, i + 3, FONT_NORMAL, 0, "%4.4s", deveui + i * 4);
 
       // give user some time to read or take picture
-      oledDumpBuffer(NULL);
+      oledDumpBuffer(displaybuf);
       delay(8000);
       oledSetContrast(DISPLAYCONTRAST);
       oledFill(0x00, 1);
@@ -178,7 +178,7 @@ void refreshTheDisplay(bool nextPage) {
     }
 
     draw_page(t, DisplayPage);
-    oledDumpBuffer(NULL);
+    oledDumpBuffer(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
 
