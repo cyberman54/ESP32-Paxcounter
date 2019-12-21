@@ -32,9 +32,15 @@ Bsec iaqSensor;
 
 #elif defined HAS_BME280
 
-Adafruit_BME280 bme; // I2C
-                     // Adafruit_BME280 bme(BME_CS); // hardware SPI
+Adafruit_BME280 bme; // using I2C interface
+
+// use these alternative constructors for other hw interface types
+// Adafruit_BME280 bme(BME_CS); // hardware SPI
 // Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
+
+#elif defined HAS_BMP180
+
+Adafruit_BMP085 bmp; // I2C
 
 #endif
 
@@ -105,6 +111,23 @@ int bme_init(void) {
     goto finish;
   }
 
+#elif defined HAS_BMP180
+  bool status;
+  // block i2c bus access
+  if (I2C_MUTEX_LOCK()) {
+    // Wire.begin(21, 22);
+    status = bmp.begin();
+    if (!status) {
+      ESP_LOGE(TAG, "BMP180 sensor not found");
+      rc = 0;
+      goto finish;
+    }
+    ESP_LOGI(TAG, "BMP180 sensor found and initialized");
+  } else {
+    ESP_LOGE(TAG, "I2c bus busy - BMP180 initialization error");
+    rc = 0;
+    goto finish;
+  }
 #endif
 
 finish:
@@ -167,6 +190,11 @@ void bme_storedata(bmeStatus_t *bme_store) {
     bme_store->pressure = (bme.readPressure() / 100.0); // conversion Pa -> hPa
     // bme.readAltitude(SEALEVELPRESSURE_HPA);
     bme_store->humidity = bme.readHumidity();
+    bme_store->iaq = 0; // IAQ feature not present with BME280
+#elif defined HAS_BMP180
+    bme_store->temperature = bmp.readTemperature();
+    bme_store->pressure = (bmp.readPressure() / 100.0); // conversion Pa -> hPa
+    // bme.readAltitude(SEALEVELPRESSURE_HPA);
     bme_store->iaq = 0; // IAQ feature not present with BME280
 #endif
 

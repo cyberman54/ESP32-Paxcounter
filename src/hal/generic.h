@@ -36,6 +36,10 @@
 //#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
 //#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring
 
+// BMP180 sensor on I2C bus
+//#define HAS_BMP180
+//#define BMP180_ADDR 0x77
+
 // user defined sensors
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
