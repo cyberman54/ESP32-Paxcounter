@@ -147,55 +147,6 @@ void AXP192_init(void) {
   }
 }
 
-// helper functions for mutexing pmu i2c access
-uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
-  if (I2C_MUTEX_LOCK()) {
-
-    uint8_t ret = 0;
-    Wire.beginTransmission(addr);
-    Wire.write(reg);
-    Wire.endTransmission(false);
-    uint8_t cnt = Wire.requestFrom(addr, (uint8_t)len, (uint8_t)1);
-    if (!cnt)
-      ret = 0xFF;
-    uint16_t index = 0;
-    while (Wire.available()) {
-      if (index > len) {
-        ret = 0xFF;
-        goto finish;
-      }
-      data[index++] = Wire.read();
-    }
-
-  finish:
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-    return ret;
-  } else {
-    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
-    return 0xFF;
-  }
-}
-
-uint8_t i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
-  if (I2C_MUTEX_LOCK()) {
-
-    uint8_t ret = 0;
-    Wire.beginTransmission(addr);
-    Wire.write(reg);
-    for (uint16_t i = 0; i < len; i++) {
-      Wire.write(data[i]);
-    }
-    ret = Wire.endTransmission();
-
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-    // return ret ? 0xFF : ret;
-    return ret ? ret : 0xFF;
-  } else {
-    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
-    return 0xFF;
-  }
-}
-
 #endif // HAS_PMU
 
 void calibrate_voltage(void) {
