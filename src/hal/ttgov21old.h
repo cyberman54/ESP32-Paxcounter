@@ -19,6 +19,14 @@
 #define HAS_LED NOT_A_PIN // no usable LED on board
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
+// enable only if you want to store a local paxcount table on the device
+#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+// Pins for SD-card
+#define SDCARD_CS    (13)
+#define SDCARD_MOSI  (15)
+#define SDCARD_MISO  (2)
+#define SDCARD_SCLK  (14)
+
 #define HAS_DISPLAY 1
 #define DISPLAY_FLIP  1 // rotated display
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7

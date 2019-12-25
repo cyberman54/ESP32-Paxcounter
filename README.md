@@ -20,7 +20,7 @@ Paxcounter is a proof-of-concept device for metering passenger flows in realtime
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
-Data is transferred to a server via a LoRaWAN network, and/or a wired SPI slave interface.
+Data is transferred to a server via a LoRaWAN network, and/or a wired SPI slave interface. It can also be stored on a local SD-card.
 
 You can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
 
@@ -33,7 +33,7 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 *LoRa & SPI*:
 
 - Heltec: LoRa-32 v1 and v2
-- TTGO: T1, T2, T3, T-Beam, T-Fox
+- TTGO: T1*, T2*, T3*, T-Beam, T-Fox (* supports microSD-card)
 - Pycom: LoPy, LoPy4, FiPy
 - Radioshuttle.de: [ECO Power Board](https://www.radioshuttle.de/esp32-eco-power/esp32-eco-power-board/)
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
