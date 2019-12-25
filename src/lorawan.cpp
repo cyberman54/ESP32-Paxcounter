@@ -452,7 +452,7 @@ void lmictask(void *pvParameters) {
 } // lmictask
 
 // lmic event handler
-static void myEventCallback(void *pUserData, ev_t ev) {
+void myEventCallback(void *pUserData, ev_t ev) {
 
   // using message descriptors from LMIC library
   static const char *const evNames[] = {LMIC_EVENT_NAME_TABLE__INIT};
@@ -502,7 +502,7 @@ static void myEventCallback(void *pUserData, ev_t ev) {
 }
 
 // receive message handler
-static void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                          size_t nMsg) {
 
   // display type of received data
@@ -557,7 +557,7 @@ static void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 }
 
 // transmit complete message handler
-static void myTxCallback(void *pUserData, int fSuccess) {
+void myTxCallback(void *pUserData, int fSuccess) {
 
 #if (TIME_SYNC_LORASERVER)
   // if last packet sent was a timesync request, store TX timestamp
