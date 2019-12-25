@@ -22,11 +22,11 @@ void doHousekeeping() {
   // check if update mode trigger switch was set
   if (RTC_runmode == RUNMODE_UPDATE) {
     // check battery status if we can before doing ota
-    if (batt_sufficient())
+    if (batt_sufficient()) {
       do_reset(true); // warmstart to runmode update
-    else {
+    } else {
       ESP_LOGE(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
-      RTC_runmode == RUNMODE_NORMAL; // keep running in normal mode
+      RTC_runmode = RUNMODE_NORMAL; // keep running in normal mode
     }
   }
 
@@ -82,8 +82,8 @@ void doHousekeeping() {
   ESP_LOGI(TAG, "BME280 Temp: %.2f°C | Humidity: %.2f | Pressure: %.0f",
            bme_status.temperature, bme_status.humidity, bme_status.pressure);
 #elif defined HAS_BMP180
-  ESP_LOGI(TAG, "BMP180 Temp: %.2f°C | Pressure: %.0f",
-           bme_status.temperature, bme_status.pressure);
+  ESP_LOGI(TAG, "BMP180 Temp: %.2f°C | Pressure: %.0f", bme_status.temperature,
+           bme_status.pressure);
 #endif
 #endif
 
