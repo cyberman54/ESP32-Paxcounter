@@ -58,7 +58,9 @@ void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
+  #if (HAS_GPS) 
   gpsStatus_t gps_status;
+  #endif
 
   while (bitmask) {
     switch (bitmask & mask) {
