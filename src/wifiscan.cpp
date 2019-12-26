@@ -29,8 +29,8 @@ typedef struct {
 } wifi_ieee80211_packet_t;
 
 // using IRAM_:ATTR here to speed up callback function
-static IRAM_ATTR void
-wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type) {
+IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
+                                           wifi_promiscuous_pkt_type_t type) {
 
   const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
   const wifi_ieee80211_packet_t *ipkt =
@@ -75,7 +75,7 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // no modem power saving
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
-  ESP_ERROR_CHECK(esp_wifi_start()); //for esp_wifi v3.3
+  ESP_ERROR_CHECK(esp_wifi_start());               // for esp_wifi v3.3
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 
   // setup wifi channel rotation timer

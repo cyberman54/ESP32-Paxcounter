@@ -8,7 +8,7 @@ void irqHandler(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-  uint32_t InterruptStatus;
+  static uint32_t InterruptStatus = 0x00;
   static bool mask_irq = false;
 
   // task remains in blocked state until it is notified by an irq
@@ -37,49 +37,65 @@ void irqHandler(void *pvParameters) {
 
 // button pressed?
 #ifdef HAS_BUTTON
-    if (InterruptStatus & BUTTON_IRQ)
+    if (InterruptStatus & BUTTON_IRQ) {
       readButton();
+      InterruptStatus &= ~BUTTON_IRQ;
+    }
 #endif
 
 // display needs refresh?
 #ifdef HAS_DISPLAY
-    if (InterruptStatus & DISPLAY_IRQ)
+    if (InterruptStatus & DISPLAY_IRQ) {
       refreshTheDisplay();
+      InterruptStatus &= ~DISPLAY_IRQ;
+    }
 #endif
 
 // LED Matrix display needs refresh?
 #ifdef HAS_MATRIX_DISPLAY
-    if (InterruptStatus & MATRIX_DISPLAY_IRQ)
+    if (InterruptStatus & MATRIX_DISPLAY_IRQ) {
       refreshTheMatrixDisplay();
+      InterruptStatus &= ~MATRIX_DISPLAY_IRQ;
+    }
 #endif
 
 // BME sensor data to be read?
 #if (HAS_BME)
-    if (InterruptStatus & BME_IRQ)
+    if (InterruptStatus & BME_IRQ) {
       bme_storedata(&bme_status);
+      InterruptStatus &= ~BME_IRQ;
+    }
+
 #endif
 
     // are cyclic tasks due?
-    if (InterruptStatus & CYCLIC_IRQ)
+    if (InterruptStatus & CYCLIC_IRQ) {
       doHousekeeping();
+      InterruptStatus &= ~CYCLIC_IRQ;
+    }
 
 #if (TIME_SYNC_INTERVAL)
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ) {
       now(); // ensure sysTime is recent
       calibrateTime();
+      InterruptStatus &= ~TIMESYNC_IRQ;
     }
 #endif
 
 // do we have a power event?
 #if (HAS_PMU)
-    if (InterruptStatus & PMU_IRQ)
+    if (InterruptStatus & PMU_IRQ) {
       AXP192_powerevent_IRQ();
+      InterruptStatus &= ~PMU_IRQ;
+    }
 #endif
 
     // is time to send the payload?
-    if (InterruptStatus & SENDCYCLE_IRQ)
+    if (InterruptStatus & SENDCYCLE_IRQ) {
       sendData();
+      InterruptStatus &= ~SENDCYCLE_IRQ;
+    }
   }
 }
 

@@ -17,7 +17,7 @@ void start_ota_update();
 int version_compare(const String v1, const String v2);
 void ota_display(const uint8_t row, const std::string status,
                  const std::string msg);
-static void show_progress(unsigned long current, unsigned long size);
+void show_progress(unsigned long current, unsigned long size);
 
 #endif // USE_OTA
 

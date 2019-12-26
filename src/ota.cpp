@@ -318,7 +318,7 @@ void ota_display(const uint8_t row, const std::string status,
 }
 
 // callback function to show download progress while streaming data
-static void show_progress(unsigned long current, unsigned long size) {
+void show_progress(unsigned long current, unsigned long size) {
 #ifdef HAS_DISPLAY
   char buf[17];
   snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
