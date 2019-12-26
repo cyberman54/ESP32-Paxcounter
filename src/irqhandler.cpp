@@ -8,8 +8,7 @@ void irqHandler(void *pvParameters) {
 
   configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
 
-  static uint32_t InterruptStatus = 0x00;
-  static bool mask_irq = false;
+  uint32_t InterruptStatus;
 
   // task remains in blocked state until it is notified by an irq
   for (;;) {
@@ -19,21 +18,16 @@ void irqHandler(void *pvParameters) {
                     portMAX_DELAY);   // wait forever
 
     if (InterruptStatus & UNMASK_IRQ) // interrupt handler to be enabled?
-      mask_irq = false;
-
-      // suppress processing if interrupt handler is disabled
+      InterruptStatus &= ~MASK_IRQ;   // then clear irq mask flag
+      // else suppress processing if interrupt handler is disabled
       // or time critical lmic jobs are pending in next 100ms
 #if (HAS_LORA)
-    else if (mask_irq || os_queryTimeCriticalJobs(ms2osticks(100)))
+    else if ((InterruptStatus & MASK_IRQ) ||
+             os_queryTimeCriticalJobs(ms2osticks(100)))
 #else
-    else if (mask_irq)
+    else if ((InterruptStatus & MASK_IRQ)
 #endif
       continue;
-
-    else if (InterruptStatus & MASK_IRQ) { // interrupt handler to be disabled?
-      mask_irq = true;
-      continue;
-    }
 
 // button pressed?
 #ifdef HAS_BUTTON
@@ -59,21 +53,6 @@ void irqHandler(void *pvParameters) {
     }
 #endif
 
-// BME sensor data to be read?
-#if (HAS_BME)
-    if (InterruptStatus & BME_IRQ) {
-      bme_storedata(&bme_status);
-      InterruptStatus &= ~BME_IRQ;
-    }
-
-#endif
-
-    // are cyclic tasks due?
-    if (InterruptStatus & CYCLIC_IRQ) {
-      doHousekeeping();
-      InterruptStatus &= ~CYCLIC_IRQ;
-    }
-
 #if (TIME_SYNC_INTERVAL)
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ) {
@@ -82,6 +61,20 @@ void irqHandler(void *pvParameters) {
       InterruptStatus &= ~TIMESYNC_IRQ;
     }
 #endif
+
+// BME sensor data to be read?
+#if (HAS_BME)
+    if (InterruptStatus & BME_IRQ) {
+      bme_storedata(&bme_status);
+      InterruptStatus &= ~BME_IRQ;
+    }
+#endif
+
+    // are cyclic tasks due?
+    if (InterruptStatus & CYCLIC_IRQ) {
+      doHousekeeping();
+      InterruptStatus &= ~CYCLIC_IRQ;
+    }
 
 // do we have a power event?
 #if (HAS_PMU)
@@ -96,8 +89,8 @@ void irqHandler(void *pvParameters) {
       sendData();
       InterruptStatus &= ~SENDCYCLE_IRQ;
     }
-  }
-}
+  } // for
+} // irqHandler()
 
 // esp32 hardware timer triggered interrupt service routines
 // they notify the irq handler task
