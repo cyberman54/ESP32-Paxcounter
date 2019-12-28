@@ -60,6 +60,7 @@ Depending on board hardware following features are supported:
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
 - LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
+- SD-card (see section SD-card here)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -195,6 +196,43 @@ This describes how to set up a mobile PaxCounter:
 Follow all steps so far for preparing the device, use the packed payload format. In paxcounter.conf set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
 There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
 	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
+
+# SD-card
+Data can be stored on an SD-card if one is availabe. Simply choose the file in src/hal and add the following lines to your hal-file:
+
+    #define HAS_SDCARD 1     // this board has an SD-card-reader/writer
+    // Pins for SD-card
+    #define SDCARD_CS   (13) // fill in the correct numbers for your board
+    #define SDCARD_MOSI (15)
+    #define SDCARD_MISO (2)
+    #define SDCARD_SCLK (14)
+
+Please choose the correct number for the connection of the reader/writer.
+
+This is an example of a board with SD-card: https://www.aliexpress.com/item/32990008126.html
+In this case you take the file src/hal/ttgov21new.h and add the lines given above (numbers given are for this board).
+
+Another approach would be this tiny board: https://www.aliexpress.com/item/32424558182.html (needs 5V).
+In this case you choose the correct file for your ESP32-board in the src/hal-directory and add the lines given above to the correct h-file. Please correct the numbers given in the example to the numbers used corresponding to your wiring.
+
+Some hints:
+These cheap devices often handle SD-cards up to 32GB, not bigger ones. They can handle files in the old DOS-way, to say the filenames are in the 8.3-format. And they often cannot handle subdirectories.
+
+The software included here writes data in a file named PAXCOUNT.xx, where xx can range from 00 to 99. The software starts with 00, checks to see if such a file already exists and if yes it will continue with the next number (up to 99 - in this case it will return no sd-card). So an existing file will not be overwritten.
+
+The data is written to the card and after 3 write-operations the data is flushed to the disk. So maybe the last 3 minutes of data get lost when you disconnect the PAXCOUNTER from power.
+
+And finally: this is the data written to the disk:
+
+    date, time, wifi, bluet
+    00.00.1970,00:01:09,2,0
+    00.00.1970,00:02:09,1,0
+    00.00.1970,00:03:09,2,0
+
+Format of the data is CSV, which can easily imported into LibreOffice, Excel, .....
+
+If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
+
 
 # Payload format
 
