@@ -18,6 +18,14 @@
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_BUTTON KEY_BUILTIN
 
+// enable only if you want to store a local paxcount table on the device
+#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+// Pins for SD-card
+#define SDCARD_CS    (13)
+#define SDCARD_MOSI  (15)
+#define SDCARD_MISO  (2)
+#define SDCARD_SCLK  (14)
+
 // Pins for I2C interface of OLED Display
 #define MY_OLED_SDA (4)
 #define MY_OLED_SCL (15)
