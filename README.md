@@ -545,3 +545,4 @@ Thanks to
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
+- [August Quint](https://github.com/AugustQu) for adding SD card data logger support
