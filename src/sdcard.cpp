@@ -1,5 +1,7 @@
 // routines for writing data to an SD-card, if present
 
+#if HAS_SDCARD)
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -65,3 +67,5 @@ void createFile(void) {
   }
   return;
 }
+
+#endif // (HAS_SDCARD)
