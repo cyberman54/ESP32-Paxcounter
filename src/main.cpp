@@ -323,6 +323,11 @@ void setup() {
   assert(spi_init() == ESP_OK);
 #endif
 
+#ifdef HAS_SDCARD
+  if (sdcardInit())
+    strcat_P(features, " SD");
+#endif
+
 #if (VENDORFILTER)
   strcat_P(features, " FILTER");
 #endif
