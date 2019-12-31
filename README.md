@@ -364,7 +364,7 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	Example for EU868:
 
-	DataRate	Configuration	Bit/s
+	DataRate	Configuration		Bit/s
 	0		LoRa: SF12 / 125 kHz	250
 	1		LoRa: SF11 / 125 kHz	440
 	2		LoRa: SF10 / 125 kHz	980
