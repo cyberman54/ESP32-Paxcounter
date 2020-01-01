@@ -7,7 +7,7 @@
 //#define CFG_eu433 1 // Europe (low band)
 //#define CFG_us915 1 // USA, Canada and South America
 //#define CFG_in866 1 // India
-//#define CFG_au921 1 // Australia
+//#define CFG_au915 1 // Australia
 //#define CFG_as923 1 // Asia
 //#define CFG_cn783 1 // China (high band)
 //#define CFG_cn490 1 // China (low band)
