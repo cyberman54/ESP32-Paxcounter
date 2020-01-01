@@ -26,18 +26,18 @@
 #define CFG_sx1276_radio 1 // RFM95 module
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_SCK  (18) 
-#define LORA_CS   (5)
-#define LORA_MISO (193
-#define LORA_MOSI (27)
+#define LORA_SCK  SCK 
+#define LORA_CS   SS
+#define LORA_MISO MISO
+#define LORA_MOSI MOSI
 #define LORA_RST  (25)
 #define LORA_IRQ  (27)
 #define LORA_IO1  (26)
 #define LORA_IO2  (4)
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (21)
-#define MY_OLED_SCL (22)
+#define MY_OLED_SDA SDA
+#define MY_OLED_SCL SCL
 #define MY_OLED_RST NOT_A_PIN
 
 // I2C config for Microchip 24AA02E64 DEVEUI unique address
