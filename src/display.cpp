@@ -343,7 +343,10 @@ void draw_page(time_t t, uint8_t page) {
 #ifdef HAS_BME680
     // line 6-7: IAQ
     dp_printf(0, 6, FONT_STRETCHED, 0, "IAQ:%-3.0f", bme_status.iaq);
-#endif
+#else // is BME280 or BMP180
+    // line 6-7: Pre
+    dp_printf(0, 6, FONT_STRETCHED, 0, "PRE:%-2.1f", bme_status.pressure);
+#endif // HAS_BME
 
 #else
     dp_printf(16, 5, FONT_STRETCHED, 1, "No BME");
