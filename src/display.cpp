@@ -255,9 +255,9 @@ void draw_page(time_t t, uint8_t page) {
       dp_printf(0, 4, FONT_SMALL, 0, "B:%.2fV", batt_voltage / 1000.0);
 #endif
 #if (HAS_GPS)
-    if (gps.location.age() < 1500) // if no fix then display Sats value inverse
+    if (gps_hasfix())
       dp_printf(48, 4, FONT_SMALL, 0, "Sats:%.2d", gps.satellites.value());
-    else
+    else // if no fix then display Sats value inverse
       dp_printf(48, 4, FONT_SMALL, 1, "Sats:%.2d", gps.satellites.value());
 #endif
     dp_printf(96, 4, FONT_SMALL, 0, "ch:%02d", channel);
@@ -305,7 +305,7 @@ void draw_page(time_t t, uint8_t page) {
     // page 2: GPS
   case 2:
 #if (HAS_GPS)
-    if (gps.location.age() < 1500) {
+    if (gps_hasfix()) {
       // line 5: clear "No fix"
       if (wasnofix) {
         dp_printf(16, 5, FONT_STRETCHED, 0, "      ");
@@ -343,7 +343,7 @@ void draw_page(time_t t, uint8_t page) {
 #ifdef HAS_BME680
     // line 6-7: IAQ
     dp_printf(0, 6, FONT_STRETCHED, 0, "IAQ:%-3.0f", bme_status.iaq);
-#else // is BME280 or BMP180
+#else  // is BME280 or BMP180
     // line 6-7: Pre
     dp_printf(0, 6, FONT_STRETCHED, 0, "PRE:%-2.1f", bme_status.pressure);
 #endif // HAS_BME
