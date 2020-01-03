@@ -17,6 +17,7 @@ extern TaskHandle_t GpsTask;
 
 int gps_init(void);
 int gps_config();
+bool gps_hasfix();
 void gps_storelocation(gpsStatus_t *gps_store);
 void gps_loop(void *pvParameters);
 time_t fetch_gpsTime(uint16_t *msec);

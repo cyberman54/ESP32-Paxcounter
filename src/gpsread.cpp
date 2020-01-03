@@ -74,12 +74,25 @@ int gps_config() {
 void gps_storelocation(gpsStatus_t *gps_store) {
   if (gps.location.isUpdated() && gps.location.isValid() &&
       (gps.location.age() < 1500)) {
-    gps_store->latitude = (int32_t)(gps.location.lat() * 1e6);
-    gps_store->longitude = (int32_t)(gps.location.lng() * 1e6);
+    // gps_store->latitude = (int32_t)(gps.location.lat() * 1e6);
+    // gps_store->longitude = (int32_t)(gps.location.lng() * 1e6);
+    gps_store->latitude =
+        (int32_t)((gps.location.lat() + 90) / 180.0) * 16777215;
+    gps_store->longitude =
+        (int32_t)((gps.location.lng() + 180) / 360.0) * 16777215;
     gps_store->satellites = (uint8_t)gps.satellites.value();
     gps_store->hdop = (uint16_t)gps.hdop.value();
     gps_store->altitude = (int16_t)gps.altitude.meters();
   }
+}
+
+bool gps_hasfix() {
+  // adapted from source:
+  // https://github.com/hottimuc/Lora-TTNMapper-T-Beam/blob/master/fromV08/gps.cpp
+  return (gps.location.isValid() && gps.location.age() < 4000 &&
+          gps.hdop.isValid() && gps.hdop.value() <= 600 &&
+          gps.hdop.age() < 4000 && gps.altitude.isValid() &&
+          gps.altitude.age() < 4000);
 }
 
 // function to fetch current time from struct; note: this is costly
@@ -154,7 +167,7 @@ void gps_loop(void *pvParameters) {
     } // if
 
     // show NMEA data in verbose mode, useful for debugging GPS, bu tvery noisy
-    //ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix: %u",
+    // ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix: %u",
     //         gps.passedChecksum(), gps.failedChecksum(),
     //         gps.sentencesWithFix());
 

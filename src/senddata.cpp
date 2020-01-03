@@ -82,7 +82,7 @@ void sendData() {
 #if (HAS_GPS)
       if (GPSPORT == COUNTERPORT) {
         // send GPS position only if we have a fix
-        if (gps.location.isValid()) {
+        if (gps_hasfix()) {
           gps_storelocation(&gps_status);
           payload.addGPS(gps_status);
         } else
@@ -121,7 +121,7 @@ void sendData() {
     case GPS_DATA:
       if (GPSPORT != COUNTERPORT) {
         // send GPS position only if we have a fix
-        if (gps.location.isValid()) {
+        if (gps_hasfix()) {
           gps_storelocation(&gps_status);
           payload.reset();
           payload.addGPS(gps_status);
