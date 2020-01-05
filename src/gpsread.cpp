@@ -74,12 +74,8 @@ int gps_config() {
 void gps_storelocation(gpsStatus_t *gps_store) {
   if (gps.location.isUpdated() && gps.location.isValid() &&
       (gps.location.age() < 1500)) {
-    // gps_store->latitude = (int32_t)(gps.location.lat() * 1e6);
-    // gps_store->longitude = (int32_t)(gps.location.lng() * 1e6);
-    gps_store->latitude =
-        (int32_t)((gps.location.lat() + 90) / 180.0) * 16777215;
-    gps_store->longitude =
-        (int32_t)((gps.location.lng() + 180) / 360.0) * 16777215;
+    gps_store->latitude = (int32_t)(gps.location.lat() * 1e6);
+    gps_store->longitude = (int32_t)(gps.location.lng() * 1e6);
     gps_store->satellites = (uint8_t)gps.satellites.value();
     gps_store->hdop = (uint16_t)gps.hdop.value();
     gps_store->altitude = (int16_t)gps.altitude.meters();
