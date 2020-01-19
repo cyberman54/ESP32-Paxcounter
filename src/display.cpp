@@ -149,11 +149,14 @@ void init_display(bool verbose) {
   }                     // mutex
 } // init_display
 
-void refreshTheDisplay(bool nextPage) {
+void refreshTheDisplay(bool nextPage, bool toggle_screencycle) {
 
-  static uint8_t DisplayPage = 0;
+  static bool screencycle = false;
 
-  // update histogram if we have a display
+  if (toggle_screencycle)
+    screencycle = !screencycle;
+
+  // update histogram
   oledPlotCurve(macs.size(), false);
 
   // if display is switched off we don't refresh it to relax cpu
@@ -173,12 +176,7 @@ void refreshTheDisplay(bool nextPage) {
       oledPower(cfg.screenon);
     }
 
-    if (nextPage) {
-      DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
-      oledFill(0, 1);
-    }
-
-    draw_page(t, DisplayPage);
+    draw_page(t, nextPage, screencycle);
     oledDumpBuffer(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -198,18 +196,24 @@ void shutdown_display(void) {
   }
 }
 
-void draw_page(time_t t, uint8_t page) {
+void draw_page(time_t t, bool nextpage, bool cyclescreen) {
 
+  static uint8_t DisplayPage = 0;
   char timeState;
 #if (HAS_GPS)
   static bool wasnofix = true;
 #endif
 
+  if (nextpage) {
+    DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
+    oledFill(0, 1);
+  }
+
   // line 1/2: pax counter
   dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
             macs.size()); // display number of unique macs total Wifi + BLE
 
-  switch (page % DISPLAY_PAGES) {
+  switch (DisplayPage) {
 
     // page 0: parameters overview
     // page 1: pax graph
@@ -323,12 +327,10 @@ void draw_page(time_t t, uint8_t page) {
       dp_printf(16, 5, FONT_STRETCHED, 1, "No fix");
       wasnofix = true;
     }
-
-#else
-    dp_printf(16, 5, FONT_STRETCHED, 1, "No GPS");
-#endif
-
     break; // page2
+#else
+    DisplayPage++; // next page
+#endif
 
     // page 3: BME280/680
   case 3:
@@ -343,16 +345,14 @@ void draw_page(time_t t, uint8_t page) {
 #ifdef HAS_BME680
     // line 6-7: IAQ
     dp_printf(0, 6, FONT_STRETCHED, 0, "IAQ:%-3.0f", bme_status.iaq);
-#else  // is BME280 or BMP180
+#else      // is BME280 or BMP180
     // line 6-7: Pre
     dp_printf(0, 6, FONT_STRETCHED, 0, "PRE:%-2.1f", bme_status.pressure);
-#endif // HAS_BME
-
+#endif     // HAS_BME680
+    break; // page 3
 #else
-    dp_printf(16, 5, FONT_STRETCHED, 1, "No BME");
-#endif
-
-    break; // page3
+    DisplayPage++; // next page
+#endif // HAS_BME
 
   // page 4: time
   case 4:
@@ -364,8 +364,13 @@ void draw_page(time_t t, uint8_t page) {
     // page 5: blank screen
   case 5:
 
-    oledFill(0, 1);
-    break;
+    if (cyclescreen)
+      DisplayPage++;
+    else // show blank page only if we are not in screencycle mode
+    {
+      oledFill(0, 1);
+      break;
+    }
 
   default:
     break; // default
