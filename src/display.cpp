@@ -149,12 +149,9 @@ void init_display(bool verbose) {
   }                     // mutex
 } // init_display
 
-void refreshTheDisplay(bool nextPage, bool toggle_screencycle) {
+void refreshTheDisplay(bool nextPage) {
 
-  static bool screencycle = false;
-
-  if (toggle_screencycle)
-    screencycle = !screencycle;
+  static uint32_t framecounter = 0;
 
   // update histogram
   oledPlotCurve(macs.size(), false);
@@ -176,7 +173,15 @@ void refreshTheDisplay(bool nextPage, bool toggle_screencycle) {
       oledPower(cfg.screenon);
     }
 
-    draw_page(t, nextPage, screencycle);
+#ifndef HAS_BUTTON
+    // auto flip page if we are in unattended mode
+    if ((++framecounter) > (DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS)) {
+      framecounter = 0;
+      nextPage = true;
+    }
+#endif
+
+    draw_page(t, nextPage);
     oledDumpBuffer(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -196,11 +201,10 @@ void shutdown_display(void) {
   }
 }
 
-void draw_page(time_t t, bool nextpage, bool cyclescreen) {
+void draw_page(time_t t, bool nextpage) {
 
   // write display content to display buffer
   // nextpage = true -> flip 1 page
-  // cyclescreen = true -> page cycling mode
 
   static uint8_t DisplayPage = 0;
   char timeState;
@@ -366,13 +370,12 @@ start:
 
     // page 5: blank screen
   case 5:
-    if (cyclescreen)
-      DisplayPage++; // next page
-    else             // show blank page only if we are not in screencycle mode
-    {
-      oledFill(0, 1);
-      break;
-    }
+#ifdef HAS_BUTTON
+    oledFill(0, 1);
+    break;
+#else // don't show blank page if we are unattended
+    DisplayPage++; // next page
+#endif
 
   default:
     goto start; // start over
