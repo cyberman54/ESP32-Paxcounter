@@ -151,7 +151,9 @@ void init_display(bool verbose) {
 
 void refreshTheDisplay(bool nextPage) {
 
+#ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
+#endif
 
   // update histogram
   oledPlotCurve(macs.size(), false);
