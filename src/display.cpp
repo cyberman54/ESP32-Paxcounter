@@ -198,20 +198,26 @@ void shutdown_display(void) {
 
 void draw_page(time_t t, bool nextpage, bool cyclescreen) {
 
+  // write display content to display buffer
+  // nextpage = true -> flip 1 page
+  // cyclescreen = true -> page cycling mode
+
   static uint8_t DisplayPage = 0;
   char timeState;
 #if (HAS_GPS)
   static bool wasnofix = true;
 #endif
 
+  // line 1/2: pax counter
+  dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
+            macs.size()); // display number of unique macs total Wifi + BLE
+
+start:
+
   if (nextpage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
     oledFill(0, 1);
   }
-
-  // line 1/2: pax counter
-  dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
-            macs.size()); // display number of unique macs total Wifi + BLE
 
   switch (DisplayPage) {
 
@@ -297,8 +303,7 @@ void draw_page(time_t t, bool nextpage, bool cyclescreen) {
     // LORA datarate, display inverse if ADR disabled
     dp_printf(102, 7, FONT_SMALL, !cfg.adrmode, "%-4s",
               getSfName(updr2rps(LMIC.datarate)));
-#endif // HAS_LORA
-
+#endif     // HAS_LORA
     break; // page0
 
     // page 1: pax graph
@@ -334,7 +339,6 @@ void draw_page(time_t t, bool nextpage, bool cyclescreen) {
 
     // page 3: BME280/680
   case 3:
-
 #if (HAS_BME)
     // line 2-3: Temp
     dp_printf(0, 2, FONT_STRETCHED, 0, "TMP:%-2.1f", bme_status.temperature);
@@ -356,24 +360,22 @@ void draw_page(time_t t, bool nextpage, bool cyclescreen) {
 
   // page 4: time
   case 4:
-
     dp_printf(0, 4, FONT_LARGE, 0, "%02d:%02d:%02d", hour(t), minute(t),
               second(t));
     break;
 
     // page 5: blank screen
   case 5:
-
     if (cyclescreen)
-      DisplayPage++;
-    else // show blank page only if we are not in screencycle mode
+      DisplayPage++; // next page
+    else             // show blank page only if we are not in screencycle mode
     {
       oledFill(0, 1);
       break;
     }
 
   default:
-    break; // default
+    goto start; // start over
 
   } // switch
 
