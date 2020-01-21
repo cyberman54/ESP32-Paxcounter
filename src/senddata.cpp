@@ -13,6 +13,10 @@ void SendPayload(uint8_t port, sendprio_t prio) {
   MessageBuffer_t
       SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
 
+#if (HAS_SDS011)
+     sds011_loop();
+#endif
+
   SendBuffer.MessageSize = payload.getSize();
   SendBuffer.MessagePrio = prio;
 
