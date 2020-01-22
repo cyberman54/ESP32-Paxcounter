@@ -3,6 +3,11 @@
 
 Ticker sendcycler;
 
+#if (HAS_SDS011)
+extern float pm10;
+extern float pm25;
+#endif
+
 void sendcycle() {
   xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL);
 }
@@ -12,6 +17,10 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 
   MessageBuffer_t
       SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
+
+#if (HAS_SDS011)
+     sds011_loop();
+#endif
 
   SendBuffer.MessageSize = payload.getSize();
   SendBuffer.MessagePrio = prio;
@@ -94,6 +103,10 @@ void sendData() {
         payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
+#endif
+#if (HAS_SDS011)
+      payload.addPM10(pm10);
+      payload.addPM25(pm25);
 #endif
       SendPayload(COUNTERPORT, prio_normal);
       // clear counter if not in cumulative counter mode
