@@ -489,5 +489,41 @@ void PayloadConvert::addTime(time_t value) {
   buffer[cursor++] = (byte)((tx_period & 0x000000FF));
 #endif
 }
+#endif // PAYLOAD_ENCODER
 
+void PayloadConvert::addPM10( float value) {
+#if (HAS_SDS011)
+#if (PAYLOAD_ENCODER == 1)   // plain
+    char tempBuffer[10+1];
+    sprintf( tempBuffer, ",%5.1f", value);
+    addChars(tempBuffer, strlen(tempBuffer));
+#elif (PAYLOAD_ENCODER == 2 ) // packed
+    writeUint16( (uint16_t) (value*10) );
+#elif (PAYLOAD_ENCODER == 3 ) // Cayenne LPP dynamic
+    // TODO
+#elif (PAYLOAD_ENCODER == 4 ) // Cayenne LPP packed
+    // TODO
 #endif
+#endif // HAS_SDS011
+}
+
+void PayloadConvert::addPM25( float value) {
+#if (HAS_SDS011)
+#if (PAYLOAD_ENCODER == 1)   // plain
+    char tempBuffer[10+1];
+    sprintf( tempBuffer, ",%5.1f", value);
+    addChars(tempBuffer, strlen(tempBuffer));
+#elif (PAYLOAD_ENCODER == 2 ) // packed
+    writeUint16( (uint16_t) (value*10) );
+#elif (PAYLOAD_ENCODER == 3 ) // Cayenne LPP dynamic
+    // TODO
+#elif (PAYLOAD_ENCODER == 4 ) // Cayenne LPP packed
+    // TODO
+#endif
+#endif // HAS_SDS011
+}
+
+void PayloadConvert::addChars( char * string, int len) {
+  for (int i=0; i < len; i++)
+      addByte(string[i]);
+}
