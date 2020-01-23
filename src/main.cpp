@@ -328,6 +328,12 @@ void setup() {
     strcat_P(features, " SD");
 #endif
 
+#if (HAS_SDS011)
+//    ESP_LOGI(TAG, "init fine-dust-sensor");
+    if ( sds011_init() )
+        strcat_P(features, " SDS");
+#endif
+
 #if (VENDORFILTER)
   strcat_P(features, " FILTER");
 #endif
