@@ -43,7 +43,7 @@
 #define LORA_IRQ DIO0
 #define LORA_IO1 DIO1
 #define LORA_IO2 DIO2
-#define LORA_SCK SCK
+#define LORA_SCK GPIO_NUM_5
 #define LORA_MISO MISO
 #define LORA_MOSI MOSI
 #define LORA_RST RST_LoRa
