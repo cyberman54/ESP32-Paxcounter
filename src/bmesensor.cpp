@@ -180,7 +180,7 @@ void bme_storedata(bmeStatus_t *bme_store) {
           iaqSensor.humidity;           // humidity in % relative humidity x1000
       bme_store->pressure =             // pressure in Pascal
           (iaqSensor.pressure / 100.0); // conversion Pa -> hPa
-      bme_store->iaq = iaqSensor.iaqEstimate;
+      bme_store->iaq = iaqSensor.iaq;
       bme_store->iaq_accuracy = iaqSensor.iaqAccuracy;
       bme_store->gas = iaqSensor.gasResistance; // gas resistance in ohms
       updateState();
