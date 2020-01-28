@@ -33,12 +33,15 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 *LoRa & SPI*:
 
 - Heltec: LoRa-32 v1 and v2
-- TTGO: T1*, T2*, T3*, T-Beam, T-Fox (* supports microSD-card)
+- TTGO: T1*, T2*, T3*, T-Beam, T-Fox
 - Pycom: LoPy, LoPy4, FiPy
 - Radioshuttle.de: [ECO Power Board](https://www.radioshuttle.de/esp32-eco-power/esp32-eco-power-board/)
-- WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
+- WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora),
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 - Adafruit ESP32 Feather + LoRa Wing + OLED Wing, #IoT Octopus32 (Octopus + ESP32 Feather)
+- M5Stack: [Basic Core*](https://m5stack.com/collections/m5-core/products/basic-core-iot-development-kit) + [Lora Module RA-01H](https://m5stack.com/collections/m5-module/products/lora-module-868mhz)
+
+*) supports microSD-card
 
 *SPI only*:
 

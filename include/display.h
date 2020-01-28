@@ -9,7 +9,7 @@ extern uint8_t DisplayIsOn, displaybuf[];
 void refreshTheDisplay(bool nextPage = false);
 void init_display(bool verbose = false);
 void shutdown_display(void);
-void draw_page(time_t t, uint8_t page);
+void draw_page(time_t t, bool nextpage);
 void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
                const char *format, ...);
 void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message);
