@@ -10,7 +10,7 @@
 #define SDCARD_FILE_NAME       "paxcount.%02d"
 #define SDCARD_FILE_HEADER     "date, time, wifi, bluet"
 
-bool sdcardInit( void );
+bool sdcard_init( void );
 void sdcardWriteData( uint16_t, uint16_t);
 
 #endif
