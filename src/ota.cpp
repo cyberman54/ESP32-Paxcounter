@@ -44,10 +44,13 @@ void start_ota_update() {
 
 // init display
 #ifdef HAS_DISPLAY
+
 #ifndef DISPLAY_FLIP
-  oledInit(OLED_128x64, ANGLE_0, false, -1, -1, 400000L);
+    oledInit(OLED_128x64, false, false, -1, -1,
+             MY_OLED_RST == NOT_A_PIN ? -1 : MY_OLED_RST, 400000L);
 #else
-  oledInit(OLED_128x64, ANGLE_FLIPY, false, -1, -1, 400000L);
+    oledInit(OLED_128x64, true, false, -1, -1,
+             MY_OLED_RST == NOT_A_PIN ? -1 : MY_OLED_RST, 400000L);
 #endif
 
   // set display buffer
