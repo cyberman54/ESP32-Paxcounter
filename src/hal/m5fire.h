@@ -44,6 +44,7 @@
 //#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
 #define HAS_LED NOT_A_PIN // no on board LED (?)
+#define HAS_RGB_LED SmartLed rgb_led(LED_SK6812, 10, GPIO_NUM_15) // LED_SK6812 RGB LED on GPIO15
 #define HAS_BUTTON (39) // on board button A
 
 // GPS settings
