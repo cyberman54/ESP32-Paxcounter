@@ -10,6 +10,10 @@
 // Hardware related definitions for generic ESP32 boards
 // generic.h is kitchensink with all available options
 
+// SDS011 dust sensor settings
+#define HAS_SDS011 1 // use SDS011
+#define SDS011_SERIAL 9600, SERIAL_8N1, GPIO_NUM_19, GPIO_NUM_23 // SDS011 RX, TX
+
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no LoRa
 #define HAS_SPI 1  // comment out if device shall not send data via SPI
 // pin definitions for SPI slave interface
