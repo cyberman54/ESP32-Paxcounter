@@ -85,39 +85,3 @@ void createFile(void) {
 
 #endif // (HAS_SDCARD)
 
-  if (++counterWrites > 2) {
-    // force writing to SD-card
-    ESP_LOGD(TAG, "flushing data to card");
-    fileSDCard.flush();
-    counterWrites = 0;
-  }
-}
-
-void createFile(void) {
-  char bufferFilename[8 + 1 + 3 + 1];
-
-  useSDCard = false;
-
-  for (int i = 0; i < 100; i++) {
-    sprintf(bufferFilename, SDCARD_FILE_NAME, i);
-    ESP_LOGD(TAG, "SD: looking for file <%s>", bufferFilename);
-    bool fileExists = SD.exists(bufferFilename);
-    if (!fileExists) {
-      ESP_LOGD(TAG, "SD: file does not exist: opening");
-      fileSDCard = SD.open(bufferFilename, FILE_WRITE);
-      if (fileSDCard) {
-        ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
-        fileSDCard.print( SDCARD_FILE_HEADER );
-#if (HAS_SDS011)
-        fileSDCard.print( SDCARD_FILE_HEADER_SDS011 );
-#endif
-        fileSDCard.println();
-        useSDCard = true;
-        break;
-      }
-    }
-  }
-  return;
-}
-
-#endif // (HAS_SDCARD)
