@@ -1,15 +1,15 @@
 // clang-format off
 // upload_speed 921600
-// board M5Stack-Core-ESP32
+// board m5stack-fire
 
 // EXPERIMENTAL VERSION - NOT TESTED ON M5 HARDWARE YET
 
-#ifndef _M5STACK_H
-#define _M5STACK_H
+#ifndef _M5FIRE_H
+#define _M5FIRE_H
 
 #include <stdint.h>
 
-#define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no M5 RA01 LoRa module
+// #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no M5 RA01 LoRa module
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  SCK
@@ -38,6 +38,7 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 //#define HAS_DISPLAY 1
+#define HAS_TFT 1
 //#define DISPLAY_FLIP  1 // use if display is rotated
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
@@ -46,9 +47,9 @@
 #define HAS_BUTTON (39) // on board button A
 
 // GPS settings
-#define HAS_GPS 1 // use on board GPS
+#define HAS_GPS 0 // use on board GPS
 #define GPS_SERIAL 9600, SERIAL_8N1, RXD2, TXD2 // UBlox NEO 6M RX, TX
-#define GPS_INT GPIO_NUM_35 // 30ns accurary timepulse, to be external wired on pcb: shorten R12!
+// #define GPS_INT GPIO_NUM_35 // 30ns accurary timepulse, to be external wired on pcb: shorten R12!
 
 // Pins for interface of LC Display
 #define MY_OLED_CS GPIO_NUM_14
@@ -57,6 +58,6 @@
 #define MY_OLED_RST GPIO_NUM_33
 #define MY_OLED_BL GPIO_NUM_32
 #define MY_OLED_MOSI GPIO_NUM_23
-#define MY_OLED_MISO GPIO_NUM_23
+#define MY_OLED_MISO GPIO_NUM_19
 
 #endif
