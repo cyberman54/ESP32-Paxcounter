@@ -15,7 +15,7 @@
 #include <array>
 #include <algorithm>
 #include "mallocator.h"
-#include "../lib/Bosch-BSEC/src/inc/bsec_datatypes.h"
+#include <bsec.h>
 
 // sniffing types
 #define MAC_SNIFF_WIFI 0

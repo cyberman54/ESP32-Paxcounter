@@ -16,10 +16,6 @@
 #include "sdcard.h"
 #endif
 
-#if (HAS_SDS011)
-#include "sds011read.h"
-#endif
-
 extern Ticker sendcycler;
 
 void SendPayload(uint8_t port, sendprio_t prio);

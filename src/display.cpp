@@ -78,9 +78,11 @@ void init_display(bool verbose) {
 
     // init display
 #ifndef DISPLAY_FLIP
-    oledInit(OLED_128x64, false, false, -1, -1, 400000L);
+    oledInit(OLED_128x64, false, false, -1, -1,
+             MY_OLED_RST == NOT_A_PIN ? -1 : MY_OLED_RST, 400000L);
 #else
-    oledInit(OLED_128x64, true, false, -1, -1, 400000L);
+    oledInit(OLED_128x64, true, false, -1, -1,
+             MY_OLED_RST == NOT_A_PIN ? -1 : MY_OLED_RST, 400000L);
 #endif
 
     // set display buffer
@@ -151,9 +153,11 @@ void init_display(bool verbose) {
 
 void refreshTheDisplay(bool nextPage) {
 
-  static uint8_t DisplayPage = 0;
+#ifndef HAS_BUTTON
+  static uint32_t framecounter = 0;
+#endif
 
-  // update histogram if we have a display
+  // update histogram
   oledPlotCurve(macs.size(), false);
 
   // if display is switched off we don't refresh it to relax cpu
@@ -173,12 +177,15 @@ void refreshTheDisplay(bool nextPage) {
       oledPower(cfg.screenon);
     }
 
-    if (nextPage) {
-      DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
-      oledFill(0, 1);
+#ifndef HAS_BUTTON
+    // auto flip page if we are in unattended mode
+    if ((++framecounter) > (DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS)) {
+      framecounter = 0;
+      nextPage = true;
     }
+#endif
 
-    draw_page(t, DisplayPage);
+    draw_page(t, nextPage);
     oledDumpBuffer(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -198,8 +205,12 @@ void shutdown_display(void) {
   }
 }
 
-void draw_page(time_t t, uint8_t page) {
+void draw_page(time_t t, bool nextpage) {
 
+  // write display content to display buffer
+  // nextpage = true -> flip 1 page
+
+  static uint8_t DisplayPage = 0;
   char timeState;
 #if (HAS_GPS)
   static bool wasnofix = true;
@@ -209,7 +220,14 @@ void draw_page(time_t t, uint8_t page) {
   dp_printf(0, 0, FONT_STRETCHED, 0, "PAX:%-4d",
             macs.size()); // display number of unique macs total Wifi + BLE
 
-  switch (page % DISPLAY_PAGES) {
+start:
+
+  if (nextpage) {
+    DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
+    oledFill(0, 1);
+  }
+
+  switch (DisplayPage) {
 
     // page 0: parameters overview
     // page 1: pax graph
@@ -293,8 +311,7 @@ void draw_page(time_t t, uint8_t page) {
     // LORA datarate, display inverse if ADR disabled
     dp_printf(102, 7, FONT_SMALL, !cfg.adrmode, "%-4s",
               getSfName(updr2rps(LMIC.datarate)));
-#endif // HAS_LORA
-
+#endif     // HAS_LORA
     break; // page0
 
     // page 1: pax graph
@@ -323,16 +340,13 @@ void draw_page(time_t t, uint8_t page) {
       dp_printf(16, 5, FONT_STRETCHED, 1, "No fix");
       wasnofix = true;
     }
-
-#else
-    dp_printf(16, 5, FONT_STRETCHED, 1, "No GPS");
-#endif
-
     break; // page2
+#else
+    DisplayPage++; // next page
+#endif
 
     // page 3: BME280/680
   case 3:
-
 #if (HAS_BME)
     // line 2-3: Temp
     dp_printf(0, 2, FONT_STRETCHED, 0, "TMP:%-2.1f", bme_status.temperature);
@@ -343,32 +357,32 @@ void draw_page(time_t t, uint8_t page) {
 #ifdef HAS_BME680
     // line 6-7: IAQ
     dp_printf(0, 6, FONT_STRETCHED, 0, "IAQ:%-3.0f", bme_status.iaq);
-#else  // is BME280 or BMP180
+#else      // is BME280 or BMP180
     // line 6-7: Pre
     dp_printf(0, 6, FONT_STRETCHED, 0, "PRE:%-2.1f", bme_status.pressure);
-#endif // HAS_BME
-
+#endif     // HAS_BME680
+    break; // page 3
 #else
-    dp_printf(16, 5, FONT_STRETCHED, 1, "No BME");
-#endif
-
-    break; // page3
+    DisplayPage++; // next page
+#endif // HAS_BME
 
   // page 4: time
   case 4:
-
     dp_printf(0, 4, FONT_LARGE, 0, "%02d:%02d:%02d", hour(t), minute(t),
               second(t));
     break;
 
     // page 5: blank screen
   case 5:
-
+#ifdef HAS_BUTTON
     oledFill(0, 1);
     break;
+#else // don't show blank page if we are unattended
+    DisplayPage++; // next page
+#endif
 
   default:
-    break; // default
+    goto start; // start over
 
   } // switch
 
