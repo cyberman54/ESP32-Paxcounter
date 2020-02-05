@@ -3,7 +3,7 @@
 
 Tutorial (in german language): https://www.heise.de/select/make/2019/1/1551099236518668
 
-**#36C3 attendees: i am on site (27th - 30th)! You might contact me via twitter @RecumbentTravel**
+
 
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
