@@ -9,10 +9,7 @@ extern float pm25;
 #endif
 
 void sendcycle() {
-  static int counter = 0;
   xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL);
-ESP_LOGI( TAG, "in sendcycle(): %d", counter++);
-
 }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
