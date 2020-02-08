@@ -14,9 +14,7 @@ extern boolean isSDS011Active;
 #endif
 
 void housekeeping() {
-  static int counter = 0;
   xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
-ESP_LOGI( TAG, "in Housekeeping(): %d", counter++);
 }
 
 // do all housekeeping
