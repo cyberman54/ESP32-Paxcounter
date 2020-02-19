@@ -12,6 +12,10 @@
 #include "display.h"
 #endif
 
+#ifdef HAS_SDCARD
+#include "sdcard.h"
+#endif
+
 extern Ticker sendcycler;
 
 void SendPayload(uint8_t port, sendprio_t prio);

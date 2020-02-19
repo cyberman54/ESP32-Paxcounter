@@ -10,6 +10,10 @@
 // Hardware related definitions for generic ESP32 boards
 // generic.h is kitchensink with all available options
 
+// SDS011 dust sensor settings
+#define HAS_SDS011 1 // use SDS011
+#define SDS011_SERIAL 9600, SERIAL_8N1, GPIO_NUM_19, GPIO_NUM_23 // SDS011 RX, TX
+
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no LoRa
 #define HAS_SPI 1  // comment out if device shall not send data via SPI
 // pin definitions for SPI slave interface
@@ -17,6 +21,14 @@
 #define SPI_MISO GPIO_NUM_19
 #define SPI_SCLK GPIO_NUM_18
 #define SPI_CS   GPIO_NUM_5
+
+// enable only if you want to store a local paxcount table on the device
+#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+// Pins for SD-card
+#define SDCARD_CS    (13)
+#define SDCARD_MOSI  (15)
+#define SDCARD_MISO  (2)
+#define SDCARD_SCLK  (14)
 
 // enable only if device has these sensors, otherwise comment these lines
 // tutorial to connect BME sensor see here:

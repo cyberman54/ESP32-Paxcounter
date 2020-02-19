@@ -4,6 +4,8 @@
 function Decoder(bytes, port) {
 
     var decoded = {};
+    decoded.wifi = 0;
+    decoded.ble = 0;
 
     if (bytes.length === 0) {
         return {};
@@ -147,7 +149,7 @@ var int8 = function (bytes) {
     if (bytes.length !== int8.BYTES) {
         throw new Error('int8 must have exactly 1 byte');
     }
-	var value = +(bytesToInt(bytes));
+    var value = +(bytesToInt(bytes));
     if (value > 127) {
         value -= 256;
     }
@@ -159,7 +161,7 @@ var int16 = function (bytes) {
     if (bytes.length !== int16.BYTES) {
         throw new Error('int16 must have exactly 2 bytes');
     }
-	var value = +(bytesToInt(bytes));
+    var value = +(bytesToInt(bytes));
     if (value > 32767) {
         value -= 65536;
     }
@@ -171,7 +173,7 @@ var int32 = function (bytes) {
     if (bytes.length !== int32.BYTES) {
         throw new Error('int32 must have exactly 4 bytes');
     }
-	var value = +(bytesToInt(bytes));
+    var value = +(bytesToInt(bytes));
     if (value > 2147483647) {
         value -= 4294967296;
     }

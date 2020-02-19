@@ -5,7 +5,7 @@
 #include <Wire.h>
 
 #ifdef HAS_BME680
-#include "../lib/Bosch-BSEC/src/bsec.h"
+#include <bsec.h>
 #elif defined HAS_BME280
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>

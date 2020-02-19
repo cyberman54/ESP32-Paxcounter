@@ -3,7 +3,7 @@
 
 Tutorial (in german language): https://www.heise.de/select/make/2019/1/1551099236518668
 
-**#36C3 attendees: i am on site (27th - 30th)! You might contact me via twitter @RecumbentTravel**
+
 
 <img src="img/Paxcounter-title.jpg">
 <img src="img/Paxcounter-ttgo.jpg">
@@ -20,7 +20,7 @@ Paxcounter is a proof-of-concept device for metering passenger flows in realtime
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
-Data is transferred to a server via a LoRaWAN network, and/or a wired SPI slave interface.
+Data is transferred to a server via a LoRaWAN network, and/or a wired SPI slave interface. It can also be stored on a local SD-card.
 
 You can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
 
@@ -33,12 +33,15 @@ This can all be done with a single small and cheap ESP32 board for less than $20
 *LoRa & SPI*:
 
 - Heltec: LoRa-32 v1 and v2
-- TTGO: T1, T2, T3, T-Beam, T-Fox
+- TTGO: T1*, T2*, T3*, T-Beam, T-Fox
 - Pycom: LoPy, LoPy4, FiPy
 - Radioshuttle.de: [ECO Power Board](https://www.radioshuttle.de/esp32-eco-power/esp32-eco-power-board/)
-- WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora), 
+- WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora),
 LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-Lora)
 - Adafruit ESP32 Feather + LoRa Wing + OLED Wing, #IoT Octopus32 (Octopus + ESP32 Feather)
+- M5Stack: [Basic Core IoT*](https://m5stack.com/collections/m5-core/products/basic-core-iot-development-kit) + [Lora Module RA-01H](https://m5stack.com/collections/m5-module/products/lora-module-868mhz), [Fire IoT*](https://m5stack.com/collections/m5-core/products/fire-iot-development-kit)
+
+*) supports microSD-card
 
 *SPI only*:
 
@@ -60,6 +63,7 @@ Depending on board hardware following features are supported:
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
 - LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
+- SD-card (see section SD-card here)
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -196,6 +200,43 @@ Follow all steps so far for preparing the device, use the packed payload format.
 There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
 	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
 
+# SD-card
+Data can be stored on an SD-card if one is availabe. Simply choose the file in src/hal and add the following lines to your hal-file:
+
+    #define HAS_SDCARD 1     // this board has an SD-card-reader/writer
+    // Pins for SD-card
+    #define SDCARD_CS   (13) // fill in the correct numbers for your board
+    #define SDCARD_MOSI (15)
+    #define SDCARD_MISO (2)
+    #define SDCARD_SCLK (14)
+
+Please choose the correct number for the connection of the reader/writer.
+
+This is an example of a board with SD-card: https://www.aliexpress.com/item/32990008126.html
+In this case you take the file src/hal/ttgov21new.h and add the lines given above (numbers given are for this board).
+
+Another approach would be this tiny board: https://www.aliexpress.com/item/32424558182.html (needs 5V).
+In this case you choose the correct file for your ESP32-board in the src/hal-directory and add the lines given above to the correct h-file. Please correct the numbers given in the example to the numbers used corresponding to your wiring.
+
+Some hints:
+These cheap devices often handle SD-cards up to 32GB, not bigger ones. They can handle files in the old DOS-way, to say the filenames are in the 8.3-format. And they often cannot handle subdirectories.
+
+The software included here writes data in a file named PAXCOUNT.xx, where xx can range from 00 to 99. The software starts with 00, checks to see if such a file already exists and if yes it will continue with the next number (up to 99 - in this case it will return no sd-card). So an existing file will not be overwritten.
+
+The data is written to the card and after 3 write-operations the data is flushed to the disk. So maybe the last 3 minutes of data get lost when you disconnect the PAXCOUNTER from power.
+
+And finally: this is the data written to the disk:
+
+    date, time, wifi, bluet
+    00.00.1970,00:01:09,2,0
+    00.00.1970,00:02:09,1,0
+    00.00.1970,00:03:09,2,0
+
+Format of the data is CSV, which can easily imported into LibreOffice, Excel, .....
+
+If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
+
+
 # Payload format
 
 You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L12):
@@ -326,17 +367,17 @@ Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 	Example for EU868:
 
-	DataRate 	Configuration 			Bit/s
-	0			LoRa: SF12 / 125 kHz	250
-	1			LoRa: SF11 / 125 kHz	440
-	2			LoRa: SF10 / 125 kHz	980
-	3			LoRa: SF9 / 125 kHz		1760
-	4			LoRa: SF8 / 125 kHz		3125
-	5			LoRa: SF7 / 125 kHz		5470
-	6*			LoRa: SF7 / 250 kHz		11000
-	7*			FSK: 50 kbps			50000
+	DataRate	Configuration		Bit/s
+	0		LoRa: SF12 / 125 kHz	250
+	1		LoRa: SF11 / 125 kHz	440
+	2		LoRa: SF10 / 125 kHz	980
+	3		LoRa: SF9 / 125 kHz	1760
+	4		LoRa: SF8 / 125 kHz	3125
+	5		LoRa: SF7 / 125 kHz	5470
+	6*		LoRa: SF7 / 250 kHz	11000
+	7*		FSK: 50 kbps		50000
 	8 .. 14		reserved for future use (RFU)
-	15			ignored (device keeps current setting)
+	15		ignored (device keeps current setting)
 
 	*) not supported by TheThingsNetwork
 
@@ -507,3 +548,4 @@ Thanks to
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
+- [August Quint](https://github.com/AugustQu) for adding SD card data logger support

@@ -7,7 +7,7 @@
 //#define CFG_eu433 1 // Europe (low band)
 //#define CFG_us915 1 // USA, Canada and South America
 //#define CFG_in866 1 // India
-//#define CFG_au921 1 // Australia
+//#define CFG_au915 1 // Australia
 //#define CFG_as923 1 // Asia
 //#define CFG_cn783 1 // China (high band)
 //#define CFG_cn490 1 // China (low band)
@@ -31,7 +31,7 @@
 // so consuming more power. You may sharpen (reduce) this value if you are
 // limited on battery.
 // ATTN: VALUES > 7 WILL CAUSE RECEPTION AND JOIN PROBLEMS WITH HIGH SF RATES
-#define CLOCK_ERROR_PROCENTAGE 5
+//#define CLOCK_ERROR_PROCENTAGE 5
 
 // Set this to 1 to enable some basic debug output (using printf) about
 // RF settings used during transmission and reception. Set to 2 to
