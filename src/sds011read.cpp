@@ -20,10 +20,9 @@ boolean isSDS011Active;
 // init
 bool sds011_init() {
   pm25 = pm10 = 0.0;
+#if (HAS_SDS011)  
   sdsSensor.begin (&sdsSerial,  ESP_PIN_RX, ESP_PIN_TX);
-  delay(100);
-//  sdsSerial.begin(SDS011_SERIAL);
-  //sdsSensor.contmode(0); // for safety: no wakeup/sleep by the sensor
+#endif  
   sds011_sleep();        // we do sleep/wakup by ourselves
   return true;
 }
@@ -57,3 +56,5 @@ void sds011_wakeup() {
     isSDS011Active = true;
   }
 }
+
+#endif // HAS_SDS
