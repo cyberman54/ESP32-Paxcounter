@@ -24,6 +24,8 @@ bool sdcard_init() {
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
   if (useSDCard)
     createFile();
+  else
+      ESP_LOGD(TAG,"SD-card not found");
   return useSDCard;
 }
 
@@ -84,4 +86,3 @@ void createFile(void) {
 }
 
 #endif // (HAS_SDCARD)
-
