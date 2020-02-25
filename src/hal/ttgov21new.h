@@ -15,8 +15,8 @@
 // SDS011 dust sensor settings
 #define HAS_SDS011 1 // use SDS011
 // used pins on the ESP-side:
-#define ESP_PIN_TX 19     // connect to RX on the SDS011
-#define ESP_PIN_RX 23     // connect to TX on the SDS011
+#define SDS_TX 19     // connect to RX on the SDS011
+#define SDS_RX 23     // connect to TX on the SDS011
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC

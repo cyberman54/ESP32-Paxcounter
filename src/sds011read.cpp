@@ -1,5 +1,7 @@
 // routines for fetching data from the SDS011-sensor
 
+#if (HAS_SDS011)
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -13,17 +15,14 @@ static HardwareSerial sdsSerial(2); // so we use it here
 static SDS011 sdsSensor;            // fine dust sensor
 
 // the results of the sensor:
-float pm25;
-float pm10;
+static float pm10, pm25;
 boolean isSDS011Active;
 
 // init
 bool sds011_init() {
   pm25 = pm10 = 0.0;
-#if (HAS_SDS011)  
-  sdsSensor.begin (&sdsSerial,  ESP_PIN_RX, ESP_PIN_TX);
-#endif  
-  sds011_sleep();        // we do sleep/wakup by ourselves
+  sdsSensor.begin(&sdsSerial, SDS_RX, SDS_TX);
+  sds011_sleep(); // we do sleep/wakup by ourselves
   return true;
 }
 
@@ -42,6 +41,12 @@ void sds011_loop() {
   return;
 }
 
+// retrieving stored data:
+void sds011_store(sdsStatus_t *sds_store) {
+  sds_store->pm10 = pm10;
+  sds_store->pm25 = pm25;
+}
+
 // putting the SDS-sensor to sleep
 void sds011_sleep(void) {
   sdsSensor.sleep();
@@ -56,3 +61,5 @@ void sds011_wakeup() {
     isSDS011Active = true;
   }
 }
+
+#endif // HAS_SDS011
