@@ -9,6 +9,10 @@ static const char TAG[] = __FILE__;
 
 Ticker housekeeper;
 
+#if (HAS_SDS011)
+extern boolean isSDS011Active;
+#endif
+
 void housekeeping() {
   xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
 }
@@ -18,7 +22,6 @@ void doHousekeeping() {
 
   // update uptime counter
   uptime();
-
   // check if update mode trigger switch was set
   if (RTC_runmode == RUNMODE_UPDATE) {
     // check battery status if we can before doing ota
@@ -110,6 +113,17 @@ void doHousekeeping() {
     if (ESP.getMinFreePsram() <= MEM_LOW) // check again
       do_reset(true);                     // memory leak, reset device
   }
+#endif
+
+#if (HAS_SDS011)
+    if ( isSDS011Active ) {
+        ESP_LOGD(TAG, "SDS011: go to sleep");
+        sds011_loop();
+    }
+    else {
+        ESP_LOGD(TAG, "SDS011: wakeup");
+        sds011_wakeup();
+    }
 #endif
 
 } // doHousekeeping()
