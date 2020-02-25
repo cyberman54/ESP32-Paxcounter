@@ -11,8 +11,9 @@
 // ATTENTION: check your board version!
 // This settings are for boards labeled v1.6 on pcb, NOT for v1.5 or older
 */
+
 // SDS011 dust sensor settings
-#define HAS_SDS011 1      // use SDS011
+#define HAS_SDS011 1 // use SDS011
 // used pins on the ESP-side:
 #define ESP_PIN_TX 19     // connect to RX on the SDS011
 #define ESP_PIN_RX 23     // connect to TX on the SDS011
