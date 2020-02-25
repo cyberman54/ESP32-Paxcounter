@@ -3,19 +3,12 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-#if (HAS_SDS)
-
 #include "sds011read.h"
 
-// UART(2) is unused in this project
 #if (HAS_IF482)
 #error cannot use IF482 together with SDS011 (both use UART#2)
 #endif
-
-#ifndef SDS011_SERIAL
-#error serial settings for SDS011 connection missing
-#endif
-
+// UART(2) is unused in this project
 static HardwareSerial sdsSerial(2); // so we use it here
 static SDS011 sdsSensor;            // fine dust sensor
 
@@ -27,12 +20,13 @@ boolean isSDS011Active;
 // init
 bool sds011_init() {
   pm25 = pm10 = 0.0;
-  sdsSerial.begin(SDS011_SERIAL);
-  sdsSensor.begin(&sdsSerial);
-  //sdsSensor.contmode(0); // for safety: no wakeup/sleep by the sensor
-  sds011_sleep();        // we do it by ourselves
+#if (HAS_SDS011)  
+  sdsSensor.begin (&sdsSerial,  ESP_PIN_RX, ESP_PIN_TX);
+#endif  
+  sds011_sleep();        // we do sleep/wakup by ourselves
   return true;
 }
+
 // reading data:
 void sds011_loop() {
   if (isSDS011Active) {
@@ -62,5 +56,3 @@ void sds011_wakeup() {
     isSDS011Active = true;
   }
 }
-
-#endif // HAS_SDS
