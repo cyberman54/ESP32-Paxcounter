@@ -98,7 +98,7 @@ void lora_setupForNetwork(bool preJoin) {
     if (!cfg.adrmode)
       LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
     // show current devaddr
-    ESP_LOGI(TAG, "DEVaddr: 0x%08X | Network ID: 0x%03X | Network Type: %d",
+    ESP_LOGI(TAG, "DEVaddr: 0x%08X | Network ID: 0x%06X | Network Type: %d",
              LMIC.devaddr, LMIC.netid & 0x001FFFFF, LMIC.netid & 0x00E00000);
     ESP_LOGI(TAG, "RSSI: %d | SNR: %d", LMIC.rssi, LMIC.snr / 4);
     ESP_LOGI(TAG, "Radio parameters: %s | %s | %s",
