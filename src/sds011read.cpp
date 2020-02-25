@@ -56,5 +56,3 @@ void sds011_wakeup() {
     isSDS011Active = true;
   }
 }
-
-#endif // HAS_SDS
