@@ -5,10 +5,10 @@ static const char TAG[] = __FILE__;
 
 #include "sds011read.h"
 
-// UART(2) is unused in this project
 #if (HAS_IF482)
 #error cannot use IF482 together with SDS011 (both use UART#2)
 #endif
+// UART(2) is unused in this project
 static HardwareSerial sdsSerial(2); // so we use it here
 static SDS011 sdsSensor;            // fine dust sensor
 
