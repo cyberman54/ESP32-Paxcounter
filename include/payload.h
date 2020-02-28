@@ -60,8 +60,7 @@ public:
   void addButton(uint8_t value);
   void addSensor(uint8_t[]);
   void addTime(time_t value);
-  void addPM10(float value);
-  void addPM25(float value);
+  void addSDS(sdsStatus_t value);
 private:
   void addChars( char* string, int len);
 
