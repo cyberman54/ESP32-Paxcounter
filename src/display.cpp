@@ -39,7 +39,7 @@ FONT_STRETCHED: 16x32px = 8 chars / line
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-#define DISPLAY_PAGES (6) // number of paxcounter display pages
+#define DISPLAY_PAGES (7) // number of paxcounter display pages
 
 // settings for oled display library
 #define USE_BACKBUFFER
@@ -224,7 +224,8 @@ start:
     // page 2: GPS
     // page 3: BME280/680
     // page 4: time
-    // page 5: blank screen
+    // page 5: lorawan parameters
+    // page 6: blank screen
 
     // page 0: parameters overview
   case 0:
@@ -362,8 +363,32 @@ start:
               second(t));
     break;
 
-    // page 5: blank screen
+  // page 5: lorawan parameters
   case 5:
+
+#if (HAS_LORA)
+    // 3|NtwkID:000000 TXpw:aa
+    // 4|DevAdd:00000000  DR:0
+    // 5|CHMsk:0000 Nonce:0000
+    // 6|CUp:000000 CDn:000000
+    // 7|SNR:-0000  RSSI:-0000
+    dp_printf(0, 3, FONT_SMALL, 0, "NetwID:%06X TXpw:%-2d",
+              LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
+    dp_printf(0, 4, FONT_SMALL, 0, "DevAdd:%08X DR:%1d", LMIC.devaddr,
+              LMIC.datarate);
+    dp_printf(0, 5, FONT_SMALL, 0, "ChMsk:%04X Nonce:%04X", LMIC.channelMap,
+              LMIC.devNonce);
+    dp_printf(0, 6, FONT_SMALL, 0, "CUp:%-6d CDn:%-6d", LMIC.seqnoUp,
+              LMIC.seqnoDn);
+    dp_printf(0, 7, FONT_SMALL, 0, "SNR:%-5d  RSSI:%-5d", LMIC.snr / 4,
+              LMIC.rssi);
+    break; // page5
+#else      // don't show blank page if we are unattended
+    DisplayPage++; // next page
+#endif     // HAS_LORA
+
+    // page 6: blank screen
+  case 6:
 #ifdef HAS_BUTTON
     oledFill(0, 1);
     break;
