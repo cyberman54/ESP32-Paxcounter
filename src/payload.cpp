@@ -317,6 +317,19 @@ void PayloadConvert::addByte(uint8_t value) {
   not implemented
   */ }
 
+void PayloadConvert::addSDS(sdsStatus_t sds) {
+#if (HAS_SDS011)
+#if (PAYLOAD_ENCODER == 3) // Cayenne LPP dynamic
+    buffer[cursor++] = LPP_PARTMATTER_CHANNEL;    // for PM10 and PM25
+#endif
+    buffer[cursor++] = LPP_LUMINOSITY; // workaround since cayenne has no data type meter
+    buffer[cursor++] = highByte(sds.pm10);
+    buffer[cursor++] = lowByte(sds.pm10);
+    buffer[cursor++] = highByte(sds.pm25);
+    buffer[cursor++] = lowByte(sds.pm25);
+#endif  // HAS_SDS011
+}
+
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   switch (snifftype) {
   case MAC_SNIFF_WIFI:
