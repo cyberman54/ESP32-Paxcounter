@@ -120,8 +120,8 @@ void process_timesync_req(void *taskparameter) {
     // calculate time offset with millisecond precision using LMIC's time base,
     // since we use LMIC's ostime_t txEnd as tx timestamp.
     // Also apply calibration const to compensate processing time.
-    time_offset_ms +=
-        milliseconds(osticks2ms(os_getTime())) + milliseconds(TIME_SYNC_FIXUP);
+    time_offset_ms += milliseconds(osticks2ms(os_getTime())) -
+                      milliseconds(millis()) + milliseconds(TIME_SYNC_FIXUP);
 
     // calculate absolute time in UTC epoch: convert to whole seconds, round to
     // ceil, and calculate fraction milliseconds
@@ -208,10 +208,9 @@ int recv_timesync_ans(const uint8_t buf[], const uint8_t buf_len) {
     uint16_t timestamp_msec = 4 * buf[0];
 
     // construct the timepoint when message was seen on gateway
-    time_sync_rx[k] +=
-        seconds(timestamp_sec) + milliseconds(timestamp_msec);
+    time_sync_rx[k] += seconds(timestamp_sec) + milliseconds(timestamp_msec);
 
-    // we guess timepoint is recent if it newer than code compile date
+    // we guess timepoint is recent if it is newer than code compile date
     if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
       ESP_LOGD(TAG, "[%0.3f] Timesync request #%d of %d rcvd at %d.%03d",
                millis() / 1000.0, k + 1, TIME_SYNC_SAMPLES, timestamp_sec,
