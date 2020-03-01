@@ -117,14 +117,19 @@ void process_timesync_req(void *taskparameter) {
     // average time offset over all collected diffs
     time_offset_ms /= TIME_SYNC_SAMPLES;
 
+    // --------- do we need this? ---------
     // calculate time offset with millisecond precision using LMIC's time base,
     // since we use LMIC's ostime_t txEnd as tx timestamp.
-    // Also apply calibration const to compensate processing time.
-    time_offset_ms += milliseconds(osticks2ms(os_getTime())) -
-                      milliseconds(millis()) + milliseconds(TIME_SYNC_FIXUP);
+    //
+    // time_offset_ms += milliseconds(osticks2ms(os_getTime())) -
+    //                   milliseconds(millis());
+    // --------- not sure -----------------
 
-    // calculate absolute time in UTC epoch: convert to whole seconds, round to
-    // ceil, and calculate fraction milliseconds
+    // Apply calibration const to compensate processing time.
+    time_offset_ms += milliseconds(TIME_SYNC_FIXUP);
+
+    // calculate absolute time in UTC epoch: convert to whole seconds, round
+    // to ceil, and calculate fraction milliseconds
     time_to_set = (uint32_t)(time_offset_ms.count() / 1000) + 1;
     // calculate fraction milliseconds
     time_to_set_fraction_msec = (uint16_t)(time_offset_ms.count() % 1000);
