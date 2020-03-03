@@ -11,12 +11,18 @@
 #define TIME_SYNC_FIXUP 4 // calibration to fixup processing time [milliseconds]
 #define TIMEREQUEST_MAX_SEQNO 0xf0 // threshold for wrap around seqno
 
+enum timesync_t {
+  timesync_tx,
+  timesync_rx,
+  gwtime_sec,
+  gwtime_msec,
+  no_of_timestamps
+};
+
 void timesync_init(void);
 void send_timesync_req(void);
-
 int recv_timesync_ans(const uint8_t buf[], uint8_t buf_len);
-
 void process_timesync_req(void *taskparameter);
-void store_time_sync_req(uint32_t t_millisec);
+void store_timestamp(uint32_t timestamp, timesync_t timestamp_type);
 
 #endif
