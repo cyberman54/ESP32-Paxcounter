@@ -78,8 +78,6 @@ void process_timesync_req(void *taskparameter) {
         }
       }
 
-      ESP_LOGD(TAG, "sample_idx = %d", sample_idx);
-
       // calculate time diff from collected timestamps
       time_offset_ms += timesync_timestamp[sample_idx][timesync_rx] -
                         timesync_timestamp[sample_idx][timesync_tx];
@@ -137,9 +135,8 @@ void process_timesync_req(void *taskparameter) {
 // called from lorawan.cpp
 void store_timestamp(uint32_t timestamp, timesync_t timestamp_type) {
 
-  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d",
-           millis() / 1000.0, time_sync_seqNo, sample_idx, timestamp_type,
-           timestamp);
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d", millis() / 1000.0,
+           time_sync_seqNo, sample_idx, timestamp_type, timestamp);
 
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
