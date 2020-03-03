@@ -46,7 +46,7 @@ void lora_queuereset(void);
 void IRAM_ATTR myEventCallback(void *pUserData, ev_t ev);
 void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port,
                                    const uint8_t *pMsg, size_t nMsg);
-void IRAM_ATTR myTxCallback(void *pUserData, int fSuccess);
+//void IRAM_ATTR myTxCallback(void *pUserData, int fSuccess);
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
                 const uint8_t tablesize);
 //u1_t os_getBattLevel(void);

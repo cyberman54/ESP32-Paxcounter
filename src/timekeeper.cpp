@@ -104,11 +104,11 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
     ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
+             millis() / 1000.0, timeSetSymbols[mytimesource]);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
     ESP_LOGI(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
+             millis() / 1000.0, timeSetSymbols[mytimesource]);
   }
 }
 
