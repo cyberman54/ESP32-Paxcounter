@@ -261,10 +261,14 @@ void lora_send(void *pvParameters) {
     // attempt to transmit payload
     else {
 
-      // switch (LMIC_sendWithCallback_strict(
-      switch (LMIC_sendWithCallback(
-          SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
-          (cfg.countermode & 0x02), myTxCallback, &SendBuffer.MessagePort)) {
+      switch (LMIC_setTxData2_strict(SendBuffer.MessagePort, SendBuffer.Message,
+                                     SendBuffer.MessageSize,
+                                     (cfg.countermode & 0x02))) {
+
+        // switch (LMIC_sendWithCallback_strict(
+        //      SendBuffer.MessagePort, SendBuffer.Message,
+        //      SendBuffer.MessageSize, (cfg.countermode & 0x02), myTxCallback,
+        //      &SendBuffer.MessagePort)) {
 
       case LMIC_ERROR_SUCCESS:
 
@@ -566,7 +570,8 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
   } // switch
 }
 
-// transmit complete message handler
+/*
+// event TRANSMIT COMPLETE message handler
 void myTxCallback(void *pUserData, int fSuccess) {
 
   uint8_t *const sendport = (uint8_t *)pUserData;
@@ -577,6 +582,7 @@ void myTxCallback(void *pUserData, int fSuccess) {
     // LMIC could not tx on *sendport -> error handling yet to come
   }
 }
+*/
 
 // decode LORAWAN MAC message
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
