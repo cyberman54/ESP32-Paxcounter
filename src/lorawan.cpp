@@ -264,9 +264,17 @@ void lora_send(void *pvParameters) {
       // switch (LMIC_sendWithCallback_strict(
       switch (LMIC_sendWithCallback(
           SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
-          (cfg.countermode & 0x02), myTxCallback, NULL)) {
+          (cfg.countermode & 0x02), myTxCallback, &SendBuffer.MessagePort)) {
 
       case LMIC_ERROR_SUCCESS:
+
+#if (TIME_SYNC_LORASERVER)
+        // if last packet sent was a timesync request, store TX timestamp
+        if (SendBuffer.MessagePort == TIMEPORT)
+          // store LMIC time when we started transmit of timesync request
+          store_timestamp(osticks2ms(os_getTime()), timesync_tx);
+#endif
+
         ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
         break;
       case LMIC_ERROR_TX_BUSY:   // LMIC already has a tx message pending
@@ -544,6 +552,9 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 #if (TIME_SYNC_LORASERVER)
     // valid timesync answer -> call timesync processor
     if (port == TIMEPORT) {
+      // store LMIC time when we received the timesync answer
+      store_timestamp(osticks2ms(os_getTime()), timesync_rx);
+      // get and store gwtime from payload
       recv_timesync_ans(pMsg, nMsg);
       break;
     }
@@ -558,11 +569,13 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 // transmit complete message handler
 void myTxCallback(void *pUserData, int fSuccess) {
 
-#if (TIME_SYNC_LORASERVER)
-  // if last packet sent was a timesync request, store TX timestamp
-  if (LMIC.pendTxPort == TIMEPORT)
-    store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
-#endif
+  uint8_t *const sendport = (uint8_t *)pUserData;
+
+  if (fSuccess) {
+    // LMIC did tx on *sendport -> nothing yet to do here
+  } else {
+    // LMIC could not tx on *sendport -> error handling yet to come
+  }
 }
 
 // decode LORAWAN MAC message
@@ -618,7 +631,7 @@ const char *getCrName(rps_t rps) {
 
 /*
 u1_t os_getBattLevel() {
-  
+
   //return values:
   //MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
   //MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
