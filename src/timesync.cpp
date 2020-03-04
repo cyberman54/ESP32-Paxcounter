@@ -241,11 +241,9 @@ void timesync_init() {
 
 #if (TIME_SYNC_LORAWAN) && (HAS_LORA)
 
-static time_t networkUTCTime;
-
 // send time request message
 void send_timesync_req(void) {
-  LMIC_requestNetworkTime(process_timesync_req, &networkUTCTime);
+  LMIC_requestNetworkTime(process_timesync_req, NULL);
 }
 
 void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess) {
@@ -258,7 +256,7 @@ void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess) {
   //            request was sent to the gateway, and
   //  - tNetwork: the seconds between the GPS epoch and the time
   //              the gateway received the time request
-  lmic_time_reference_t lmicTimeReference;
+  lmic_time_reference_t lmicTime;
 
   if (flagSuccess != 1) {
     ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
@@ -266,7 +264,7 @@ void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess) {
   }
 
   // Populate lmic_time_reference
-  flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
+  flagSuccess = LMIC_getNetworkTimeReference(&lmicTime);
   if (flagSuccess != 1) {
     ESP_LOGW(TAG, "LoRaWAN time request failed");
     return;
@@ -276,13 +274,13 @@ void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess) {
   mask_user_IRQ();
 
   // Update networkUTCTime, considering the difference between GPS and UTC time
-  *pUserUTCTime = lmicTimeReference.tNetwork + GPS_UTC_DIFF;
+  uint32_t networkTimeSec = lmicTime.tNetwork + GPS_UTC_DIFF;
   // Add delay between the instant the time was transmitted and the current time
   uint16_t requestDelaymSec =
-      osticks2ms(os_getTime() - lmicTimeReference.tLocal);
+      osticks2ms(os_getTime() - lmicTime.tLocal);
 
   // Update system time with time read from the network
-  setMyTime(*pUserUTCTime, requestDelaymSec, _lora);
+  setMyTime(networkTimeSec, requestDelaymSec, _lora);
 
   // end of time critical section: release app irq lock
   unmask_user_IRQ();
