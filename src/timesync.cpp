@@ -1,31 +1,37 @@
 /*
 
-///--> IMPORTANT LICENSE NOTE for this file <--///
+///--> IMPORTANT LICENSE NOTE for timesync option 1 in this file <--///
 
 PLEASE NOTE: There is a patent filed for the time sync algorithm used in the
 code of this file. The shown implementation example is covered by the
 repository's licencse, but you may not be eligible to deploy the applied
 algorithm in applications without granted license by the patent holder.
 
+You may use timesync option 2 if you do not want or cannot accept this.
+
 */
 
-#if (TIME_SYNC_LORASERVER) && (HAS_LORA)
-
 #include "timesync.h"
+
+#if (TIME_SYNC_LORASERVER) && (TIME_SYNC_LORAWAN) && (HAS_LORA)
+#error Duplicate timesync method selected. You must select either LORASERVER or LORAWAN timesync.
+#endif
 
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-TaskHandle_t timeSyncReqTask = NULL;
+// timesync option 1: use external timeserver (for LoRAWAN < 1.0.3)
 
+#if (TIME_SYNC_LORASERVER) && (HAS_LORA)
+
+static TaskHandle_t timeSyncReqTask = NULL;
+static bool timeSyncPending = false;
 static uint8_t time_sync_seqNo = (uint8_t)random(TIMEREQUEST_MAX_SEQNO);
 static uint8_t sample_idx = 0;
-static bool timeSyncPending = false;
 static uint32_t timesync_timestamp[TIME_SYNC_SAMPLES][no_of_timestamps] = {0};
 
 // send time request message
-void send_timesync_req() {
-
+void send_timesync_req(void) {
   // if a timesync handshake is pending then exit
   if (timeSyncPending)
     return;
@@ -37,7 +43,7 @@ void send_timesync_req() {
 }
 
 // task for sending time sync requests
-void process_timesync_req(void *taskparameter) {
+void IRAM_ATTR process_timesync_req(void *taskparameter) {
 
   uint32_t rcv_seq_no = TIMEREQUEST_FINISH, time_offset_ms;
 
@@ -77,8 +83,6 @@ void process_timesync_req(void *taskparameter) {
           goto finish; // no valid sequence received before timeout
         }
       }
-
-      ESP_LOGD(TAG, "sample_idx = %d", sample_idx);
 
       // calculate time diff from collected timestamps
       time_offset_ms += timesync_timestamp[sample_idx][timesync_rx] -
@@ -137,9 +141,8 @@ void process_timesync_req(void *taskparameter) {
 // called from lorawan.cpp
 void store_timestamp(uint32_t timestamp, timesync_t timestamp_type) {
 
-  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d",
-           millis() / 1000.0, time_sync_seqNo, sample_idx, timestamp_type,
-           timestamp);
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d", millis() / 1000.0,
+           time_sync_seqNo, sample_idx, timestamp_type, timestamp);
 
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
@@ -178,22 +181,24 @@ int recv_timesync_ans(const uint8_t buf[], const uint8_t buf_len) {
 
   else { // we received a probably valid time frame
 
-    // pointers to 4 bytes containing UTC seconds since unix epoch, msb
+    // pointers to 4 bytes msb order
     uint32_t timestamp_sec, *timestamp_ptr;
 
-    // extract 1 byte timezone from payload (one step being 15min * 60s = 900s)
-    // uint32_t timezone_sec = buf[0] * 900; // for future use
+    // extract 1 byte containing timezone offset
+    // one step being 15min * 60sec = 900sec
+    uint32_t timestamp_tzsec = buf[0] * 900; // timezone offset in secs
     buf++;
 
-    // extract 4 bytes timestamp from payload
-    // and convert it to uint32_t, octet order is big endian
+    // extract 4 bytes containing gateway time in UTC seconds since unix
+    // epoch and convert it to uint32_t, octet order is big endian
     timestamp_ptr = (uint32_t *)buf;
-    // swap byte order from msb to lsb, note: this is platform dependent
+    // swap byte order from msb to lsb, note: this is a platform dependent hack
     timestamp_sec = __builtin_bswap32(*timestamp_ptr);
     buf += 4;
-    // extract 1 byte fractional seconds in 2^-8 second steps
-    // (= 1/250th sec), we convert this to ms
-    uint16_t timestamp_msec = 4 * buf[0];
+
+    // extract 1 byte containing fractional seconds in 2^-8 second steps
+    // one step being 1/250th sec * 1000 = 4msec
+    uint16_t timestamp_msec = buf[0] * 4;
     // calculate absolute time received from gateway
     time_t t = timestamp_sec + timestamp_msec / 1000;
 
@@ -205,6 +210,7 @@ int recv_timesync_ans(const uint8_t buf[], const uint8_t buf_len) {
       // store time received from gateway
       store_timestamp(timestamp_sec, gwtime_sec);
       store_timestamp(timestamp_msec, gwtime_msec);
+      store_timestamp(timestamp_tzsec, gwtime_tzsec);
 
       // inform processing task
       xTaskNotify(timeSyncReqTask, seq_no, eSetBits);
@@ -230,3 +236,56 @@ void timesync_init() {
 }
 
 #endif
+
+// timesync option 2: use LoRAWAN network time (requires LoRAWAN >= 1.0.3)
+
+#if (TIME_SYNC_LORAWAN) && (HAS_LORA)
+
+static time_t networkUTCTime;
+
+// send time request message
+void send_timesync_req(void) {
+  LMIC_requestNetworkTime(process_timesync_req, &networkUTCTime);
+}
+
+void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess) {
+  // Explicit conversion from void* to uint32_t* to avoid compiler errors
+  time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
+
+  // A struct that will be populated by LMIC_getNetworkTimeReference.
+  // It contains the following fields:
+  //  - tLocal: the value returned by os_GetTime() when the time
+  //            request was sent to the gateway, and
+  //  - tNetwork: the seconds between the GPS epoch and the time
+  //              the gateway received the time request
+  lmic_time_reference_t lmicTimeReference;
+
+  if (flagSuccess != 1) {
+    ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
+    return;
+  }
+
+  // Populate lmic_time_reference
+  flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
+  if (flagSuccess != 1) {
+    ESP_LOGW(TAG, "LoRaWAN time request failed");
+    return;
+  }
+
+  // mask application irq to ensure accurate timing
+  mask_user_IRQ();
+
+  // Update networkUTCTime, considering the difference between GPS and UTC time
+  *pUserUTCTime = lmicTimeReference.tNetwork + GPS_UTC_DIFF;
+  // Add delay between the instant the time was transmitted and the current time
+  uint16_t requestDelaymSec =
+      osticks2ms(os_getTime() - lmicTimeReference.tLocal);
+
+  // Update system time with time read from the network
+  setMyTime(*pUserUTCTime, requestDelaymSec, _lora);
+
+  // end of time critical section: release app irq lock
+  unmask_user_IRQ();
+
+} // user_request_network_time_callback
+#endif // TIME_SYNC_LORAWAN

@@ -37,12 +37,9 @@ void calibrateTime(void) {
   }
 #endif
 
-// kick off asychronous Lora timeserver timesync if we have
-#if (HAS_LORA) && (TIME_SYNC_LORASERVER)
+// kick off asychronous lora timesync if we have
+#if (HAS_LORA) && (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
   send_timesync_req();
-// kick off asychronous lora network sync if we have
-#elif (HAS_LORA) && (TIME_SYNC_LORAWAN)
-  LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
 #endif
 
 // no time from GPS -> fallback to RTC time while trying lora sync
@@ -233,7 +230,7 @@ void clock_init(void) {
   pinMode(HAS_DCF77, OUTPUT);
 #endif
 
-  userUTCTime = now();
+  time_t userUTCTime = now();
 
   xTaskCreatePinnedToCore(clock_loop,           // task function
                           "clockloop",          // name of task

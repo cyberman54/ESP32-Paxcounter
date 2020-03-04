@@ -127,7 +127,6 @@ extern SemaphoreHandle_t I2Caccess;
 extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
-extern time_t userUTCTime;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;
 
 // application includes

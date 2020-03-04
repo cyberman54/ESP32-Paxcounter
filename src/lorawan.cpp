@@ -381,56 +381,6 @@ void lora_enqueuedata(MessageBuffer_t *message) {
 
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
-#if (TIME_SYNC_LORAWAN)
-void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
-                                                  int flagSuccess) {
-  // Explicit conversion from void* to uint32_t* to avoid compiler errors
-  time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
-
-  // A struct that will be populated by LMIC_getNetworkTimeReference.
-  // It contains the following fields:
-  //  - tLocal: the value returned by os_GetTime() when the time
-  //            request was sent to the gateway, and
-  //  - tNetwork: the seconds between the GPS epoch and the time
-  //              the gateway received the time request
-  lmic_time_reference_t lmicTimeReference;
-
-  if (flagSuccess != 1) {
-    ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
-    return;
-  }
-
-  // Populate lmic_time_reference
-  flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
-  if (flagSuccess != 1) {
-    ESP_LOGW(TAG, "LoRaWAN time request failed");
-    return;
-  }
-
-  // mask application irq to ensure accurate timing
-  mask_user_IRQ();
-
-  // Update userUTCTime, considering the difference between the GPS and UTC
-  // time, and the leap seconds until year 2019
-  *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
-  // Current time, in ticks
-  ostime_t ticksNow = os_getTime();
-  // Time when the request was sent, in ticks
-  ostime_t ticksRequestSent = lmicTimeReference.tLocal;
-  // Add the delay between the instant the time was transmitted and
-  // the current time
-  time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
-
-  // Update system time with time read from the network
-  setMyTime(*pUserUTCTime + requestDelaySec, 0, _lora);
-
-finish:
-  // end of time critical section: release app irq lock
-  unmask_user_IRQ();
-
-} // user_request_network_time_callback
-#endif // TIME_SYNC_LORAWAN
-
 // LMIC lorawan stack task
 void lmictask(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1);
