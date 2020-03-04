@@ -5,9 +5,6 @@
 #include "rcommand.h"
 #include "timekeeper.h"
 #include <driver/rtc_io.h>
-#if (TIME_SYNC_LORASERVER)
-#include "timesync.h"
-#endif
 
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>
@@ -53,10 +50,5 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
 const char *getSfName(rps_t rps);
 const char *getBwName(rps_t rps);
 const char *getCrName(rps_t rps);
-
-#if (TIME_SYNC_LORAWAN)
-void user_request_network_time_callback(void *pVoidUserUTCTime,
-                                               int flagSuccess);
-#endif
 
 #endif
