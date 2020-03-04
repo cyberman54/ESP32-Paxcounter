@@ -21,7 +21,7 @@
 #define LMIC_USE_INTERRUPTS 1
 
 // time sync via LoRaWAN network, note: not supported by TTNv2
-//#define LMIC_ENABLE_DeviceTimeReq 1
+#define LMIC_ENABLE_DeviceTimeReq 1
 
 // use callback event handlers, not onEvent() reference
 #define LMIC_ENABLE_onEvent 0
