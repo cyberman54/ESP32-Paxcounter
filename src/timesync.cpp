@@ -20,13 +20,15 @@ You may use timesync option 2 if you do not want or cannot accept this.
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+static uint8_t time_sync_seqNo = (uint8_t)random(TIMEREQUEST_MAX_SEQNO);
+#define WRAP(v, top) (v++ > top ? 0 : v)
+
 // timesync option 1: use external timeserver (for LoRAWAN < 1.0.3)
 
 #if (TIME_SYNC_LORASERVER) && (HAS_LORA)
 
 static TaskHandle_t timeSyncReqTask = NULL;
 static bool timeSyncPending = false;
-static uint8_t time_sync_seqNo = (uint8_t)random(TIMEREQUEST_MAX_SEQNO);
 static uint8_t sample_idx = 0;
 static uint32_t timesync_timestamp[TIME_SYNC_SAMPLES][no_of_timestamps] = {0};
 
@@ -89,10 +91,7 @@ void IRAM_ATTR process_timesync_req(void *taskparameter) {
                         timesync_timestamp[sample_idx][timesync_tx];
 
       // increment and maybe wrap around seqNo, keeping it in time port range
-      time_sync_seqNo++;
-      if (time_sync_seqNo > TIMEREQUEST_MAX_SEQNO) {
-        time_sync_seqNo = 0;
-      }
+      WRAP(time_sync_seqNo, TIMEREQUEST_MAX_SEQNO);
 
       // increment index for timestamp array
       sample_idx++;
@@ -243,12 +242,15 @@ void timesync_init() {
 
 // send time request message
 void send_timesync_req(void) {
-  LMIC_requestNetworkTime(process_timesync_req, NULL);
+  LMIC_requestNetworkTime(process_timesync_req, &time_sync_seqNo);
 }
 
-void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess) {
-  // Explicit conversion from void* to uint32_t* to avoid compiler errors
-  time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
+void IRAM_ATTR process_timesync_req(void *pUserData, int flagSuccess) {
+  // Explicit conversion from void* to uint8_t* to avoid compiler errors
+  uint8_t *seqNo = (uint8_t *)pUserData;
+
+  // mask application irq to ensure accurate timing
+  mask_user_IRQ();
 
   // A struct that will be populated by LMIC_getNetworkTimeReference.
   // It contains the following fields:
@@ -258,32 +260,35 @@ void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess) {
   //              the gateway received the time request
   lmic_time_reference_t lmicTime;
 
-  if (flagSuccess != 1) {
+  uint32_t networkTimeSec;
+  uint16_t requestDelaymSec;
+
+  if ((flagSuccess != 1) || (time_sync_seqNo != *seqNo)) {
     ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
-    return;
+    goto Finish;
   }
 
   // Populate lmic_time_reference
   flagSuccess = LMIC_getNetworkTimeReference(&lmicTime);
   if (flagSuccess != 1) {
     ESP_LOGW(TAG, "LoRaWAN time request failed");
-    return;
+    goto Finish;
   }
 
-  // mask application irq to ensure accurate timing
-  mask_user_IRQ();
-
-  // Update networkUTCTime, considering the difference between GPS and UTC time
-  uint32_t networkTimeSec = lmicTime.tNetwork + GPS_UTC_DIFF;
+  // Calculate UTCTime, considering the difference between GPS and UTC time
+  networkTimeSec = lmicTime.tNetwork + GPS_UTC_DIFF;
   // Add delay between the instant the time was transmitted and the current time
-  uint16_t requestDelaymSec =
-      osticks2ms(os_getTime() - lmicTime.tLocal);
-
+  requestDelaymSec = osticks2ms(os_getTime() - lmicTime.tLocal);
   // Update system time with time read from the network
   setMyTime(networkTimeSec, requestDelaymSec, _lora);
 
+Finish:
+
   // end of time critical section: release app irq lock
   unmask_user_IRQ();
+
+  // increment and maybe wrap around seqNo, keeping it in time port range
+  WRAP(time_sync_seqNo, TIMEREQUEST_MAX_SEQNO);
 
 } // user_request_network_time_callback
 #endif // TIME_SYNC_LORAWAN
