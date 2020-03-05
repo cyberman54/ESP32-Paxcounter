@@ -94,7 +94,7 @@ Before compiling the code,
 
 - **create file ota.conf in your local /src directory** using the template [ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates. If you want to push own OTA updates you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
-To join the network only method OTAA is supported, not ABP. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown on the device's display (if it has one). It is also printed on the serial console for copying it, if you set *verbose 1* in paxcounter.conf and *debug_level 3* in platformio.ini.
+To join the network you have to configure either the preferred OTAA method or the ABP method. The DEVEUI for OTAA will be derived from the device's MAC adress during device startup and is shown on the device's display (if it has one). It is also printed on the serial console for copying it, if you set *verbose 1* in paxcounter.conf and *debug_level 3* in platformio.ini.
 
 If your device has a fixed DEVEUI enter this in your local loraconf.h file. During compile time this DEVEUI will be grabbed from loraconf.h and inserted in the code.
 
