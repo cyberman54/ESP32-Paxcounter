@@ -23,9 +23,6 @@
 // time sync via LoRaWAN network, note: not supported by TTNv2
 #define LMIC_ENABLE_DeviceTimeReq 1
 
-// use callback event handlers, not onEvent() reference
-#define LMIC_ENABLE_onEvent 0
-
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) this value if you are

@@ -23,34 +23,6 @@ RTC_NOINIT_ATTR int RTCseqnoUp, RTCseqnoDn;
 QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 
-#if (VERBOSE)
-// table of LORAWAN MAC messages sent by the network to the device
-// format: opcode, cmdname (max 19 chars), #bytes params
-// source: LoRaWAN 1.1 Specification (October 11, 2017)
-static const mac_t MACdn_table[] = {
-    {0x01, "ResetConf", 1},          {0x02, "LinkCheckAns", 2},
-    {0x03, "LinkADRReq", 4},         {0x04, "DutyCycleReq", 1},
-    {0x05, "RXParamSetupReq", 4},    {0x06, "DevStatusReq", 0},
-    {0x07, "NewChannelReq", 5},      {0x08, "RxTimingSetupReq", 1},
-    {0x09, "TxParamSetupReq", 1},    {0x0A, "DlChannelReq", 4},
-    {0x0B, "RekeyConf", 1},          {0x0C, "ADRParamSetupReq", 1},
-    {0x0D, "DeviceTimeAns", 5},      {0x0E, "ForceRejoinReq", 2},
-    {0x0F, "RejoinParamSetupReq", 1}};
-
-// table of LORAWAN MAC messages sent by the device to the network
-static const mac_t MACup_table[] = {
-    {0x01, "ResetInd", 1},        {0x02, "LinkCheckReq", 0},
-    {0x03, "LinkADRAns", 1},      {0x04, "DutyCycleAns", 0},
-    {0x05, "RXParamSetupAns", 1}, {0x06, "DevStatusAns", 2},
-    {0x07, "NewChannelAns", 1},   {0x08, "RxTimingSetupAns", 0},
-    {0x09, "TxParamSetupAns", 0}, {0x0A, "DlChannelAns", 1},
-    {0x0B, "RekeyInd", 1},        {0x0C, "ADRParamSetupAns", 0},
-    {0x0D, "DeviceTimeReq", 0},   {0x0F, "RejoinParamSetupAns", 1}};
-
-static const uint8_t MACdn_tSize = sizeof(MACdn_table) / sizeof(MACdn_table[0]),
-                     MACup_tSize = sizeof(MACup_table) / sizeof(MACup_table[0]);
-#endif // VERBOSE
-
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
 public:
@@ -485,10 +457,10 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
   case MACPORT:
     // decode downlink MAC commands
     if (LMIC.dataBeg)
-      mac_decode(LMIC.frame, LMIC.dataBeg, MACdn_table, MACdn_tSize);
+      mac_decode(LMIC.frame, LMIC.dataBeg, true);
     // decode uplink MAC commands
     if (LMIC.pendMacLen)
-      mac_decode(LMIC.pendMacData, LMIC.pendMacLen, MACup_table, MACup_tSize);
+      mac_decode(LMIC.pendMacData, LMIC.pendMacLen, false);
     break; // do not fallthrough to default, we are done
 #endif
 
@@ -509,7 +481,7 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
   default:
 #if (VERBOSE)
     if (LMIC.dataBeg > 1)
-      mac_decode(LMIC.frame, LMIC.dataBeg - 1, MACdn_table, MACdn_tSize);
+      mac_decode(LMIC.frame, LMIC.dataBeg - 1, true);
 #endif // VERBOSE
 
     break;
@@ -577,34 +549,41 @@ u1_t os_getBattLevel() {
 
 #if (VERBOSE)
 // decode LORAWAN MAC message
-void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
-                const uint8_t tablesize) {
+void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
 
   if (!cmdlen)
     return;
 
   uint8_t foundcmd[cmdlen], cursor = 0;
 
+  // select CID resolve table
+  const mac_t *p;
+  p = is_down ? MACdn_table : MACup_table;
+  const int tablesize = is_down ? MACdn_tSize : MACup_tSize;
+  const String MACdir = is_down ? "DN" : "UP";
+
   while (cursor < cmdlen) {
 
-    int i = tablesize; // number of commands in table
+    // get number of commands in CID table
+    int i = tablesize;
 
+    // lookup cmd in CID table
     while (i--) {
-      if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
-        cursor++;                           // strip 1 byte opcode
-        if ((cursor + table[i].params) <= cmdlen) {
+      if (cmd[cursor] == (p + i)->cid) { // lookup command in CID table
+        cursor++;                        // strip 1 byte CID
+        if ((cursor + (p + i)->params) <= cmdlen) {
           memmove(foundcmd, cmd + cursor,
-                  table[i].params); // strip opcode from cmd array
-          cursor += table[i].params;
-          ESP_LOGD(TAG, "MAC command %s", table[i].cmdname);
+                  (p + i)->params); // strip opcode from cmd array
+          cursor += (p + i)->params;
+          ESP_LOGD(TAG, "%s MAC command %s", MACdir, (p + i)->cmdname);
         } else
-          ESP_LOGD(TAG, "MAC command 0x%02X with missing parameter(s)",
-                   table[i].opcode);
+          ESP_LOGD(TAG, "%s MAC command 0x%02X with missing parameter(s)", MACdir,
+                   (p + i)->cid);
         break;   // command found -> exit table lookup loop
       }          // end of command validation
     }            // end of command table lookup loop
     if (i < 0) { // command not found -> skip it
-      ESP_LOGD(TAG, "Unknown MAC command 0x%02X", cmd[cursor]);
+      ESP_LOGD(TAG, "%s Unknown MAC command 0x%02X", MACdir, cmd[cursor]);
       cursor++;
     }
   } // command parsing loop
