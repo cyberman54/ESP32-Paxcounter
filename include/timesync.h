@@ -17,15 +17,18 @@ enum timesync_t {
   timesync_rx,
   gwtime_sec,
   gwtime_msec,
-  gwtime_tzsec,
   no_of_timestamps
 };
 
 void timesync_init(void);
-void send_timesync_req(void);
-int recv_timesync_ans(const uint8_t buf[], uint8_t buf_len);
-void store_timestamp(uint32_t timestamp, timesync_t timestamp_type);
-void IRAM_ATTR process_timesync_req(void *taskparameter);
-void IRAM_ATTR process_timesync_req(void *pVoidUserUTCTime, int flagSuccess);
+void timesync_sendReq(void);
+void timesync_storeReq(uint32_t timestamp, timesync_t timestamp_type);
+void IRAM_ATTR timesync_processReq(void *taskparameter);
+
+#if (TIME_SYNC_LORASERVER)
+int recv_timeserver_ans(const uint8_t buf[], uint8_t buf_len);
+#elif (TIME_SYNC_LORAWAN)
+void IRAM_ATTR DevTimeAns_Cb(void *pUserData, int flagSuccess);
+#endif
 
 #endif
