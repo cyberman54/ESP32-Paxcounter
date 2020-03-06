@@ -472,11 +472,6 @@ void myEventCallback(void *pUserData, ev_t ev) {
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                   size_t nMsg) {
 
-  // calculate if we have encapsulated MAC commands
-  uint8_t nMac = pMsg - &LMIC.frame[0];
-  if (port != MACPORT)
-    --nMac;
-
   // display amount of received data
   if (nMsg)
     ESP_LOGI(TAG, "Received %u byte(s) of payload on port %u", nMsg, port);
@@ -485,11 +480,12 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 
   switch (port) {
 
-// decode unpiggybacked mac messages if we want to print those
+// decode mac messages if we want to print those
 #if (VERBOSE)
   case MACPORT:
     // decode downlink MAC commands
-    // mac_decode(LMIC.frame, nMac, MACdn_table, MACdn_tSize);
+    if (LMIC.dataBeg)
+      mac_decode(LMIC.frame, LMIC.dataBeg, MACdn_table, MACdn_tSize);
     // decode uplink MAC commands
     if (LMIC.pendMacLen)
       mac_decode(LMIC.pendMacData, LMIC.pendMacLen, MACup_table, MACup_tSize);
@@ -509,15 +505,11 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
     recv_timeserver_ans(pMsg, nMsg);
 #endif
 
+    // decode any piggybacked downlink MAC commands if we want to print those
   default:
-
-// decode any piggybacked downlink MAC commands
 #if (VERBOSE)
-    if (nMac) {
-      // decoding yet to come
-      // -> whe need to unwrap the MAC command from LMIC.frame before calling
-      // mac_decode(LMIC.frame, nMac, MACdn_table, MACdn_tSize);
-    }
+    if (LMIC.dataBeg > 1)
+      mac_decode(LMIC.frame, LMIC.dataBeg - 1, MACdn_table, MACdn_tSize);
 #endif // VERBOSE
 
     break;
