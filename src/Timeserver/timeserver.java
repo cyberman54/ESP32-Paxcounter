@@ -75,11 +75,8 @@ var fractions = (timestamp % 1000) / 4;
 
 let buf = new ArrayBuffer(6);
 new DataView(buf).setUint8(0, seqNo);
-// Timezone (in 15min steps) -> deprecated
-//var timezone = 8; // CET = UTC+2h
-//new DataView(buf).setUint8(1, timezone);
-new DataView(buf).setUint32(2, seconds);
-new DataView(buf).setUint8(6, fractions);
+new DataView(buf).setUint32(1, seconds);
+new DataView(buf).setUint8(5, fractions);
 
 msg.payload = new Buffer(new Uint8Array(buf));
 msg.port = 9; // Paxcounter TIMEPORT
