@@ -471,10 +471,8 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 // timeserver answer -> call timesync processor
 #if (TIME_SYNC_LORASERVER)
   case TIMEPORT:
-    // store LMIC time when we received the timesync answer
-    timesync_storeReq(osticks2ms(os_getTime()), timesync_rx);
     // get and store gwtime from payload
-    recv_timeserver_ans(pMsg, nMsg);
+    timesync_serverAnswer(const_cast<uint8_t *>(pMsg), nMsg);
 #endif
 
     // decode any piggybacked downlink MAC commands if we want to print those

@@ -33,27 +33,33 @@ void calibrateTime(void) {
   timesync_sendReq();
 #endif
 
+  // only if we lost time, we try to fallback to local time source RTS or GPS
+  if (timeSource == _unsynced) {
+
 // has RTC -> fallback to RTC time
 #ifdef HAS_RTC
-  t = get_rtctime();
-  if (t) {
-    timeSource = _rtc;
-    goto finish;
-  }
+    t = get_rtctime();
+    if (t) {
+      timeSource = _rtc;
+      goto finish;
+    }
 #endif
 
 // no RTC -> fallback to GPS time
 #if (HAS_GPS)
-  // fetch recent time from last NMEA record
-  t = fetch_gpsTime(&t_msec);
-  if (t) {
-    timeSource = _gps;
-    goto finish;
-  }
+    // fetch recent time from last NMEA record
+    t = fetch_gpsTime(&t_msec);
+    if (t) {
+      timeSource = _gps;
+      goto finish;
+    }
 #endif
+  } // fallback
 
-  // no local time source -> don't set time
-  return;
+  else
+
+    // no fallback time source available -> we can't set time
+    return;
 
 finish:
 
@@ -82,7 +88,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGD(TAG, "[%0.3f] UTC epoch time: %d.%03d sec", millis() / 1000.0,
+    ESP_LOGD(TAG, "[%0.3f] UTC time: %d.%03d sec", millis() / 1000.0,
              time_to_set, t_msec % 1000);
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
