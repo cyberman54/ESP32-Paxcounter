@@ -77,7 +77,7 @@ void lora_setupForNetwork(bool preJoin) {
     // show current devaddr
     ESP_LOGI(TAG, "DEVaddr: 0x%08X | Network ID: 0x%06X | Network Type: %d",
              LMIC.devaddr, LMIC.netid & 0x001FFFFF, LMIC.netid & 0x00E00000);
-    ESP_LOGI(TAG, "RSSI: %d | SNR: %d", LMIC.rssi, LMIC.snr / 4);
+    ESP_LOGI(TAG, "RSSI: %d | SNR: %d", LMIC.rssi, (LMIC.snr + 2) / 4);
     ESP_LOGI(TAG, "Radio parameters: %s | %s | %s",
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
@@ -560,7 +560,7 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
   const mac_t *p;
   p = is_down ? MACdn_table : MACup_table;
   const int tablesize = is_down ? MACdn_tSize : MACup_tSize;
-  const String MACdir = is_down ? "DN" : "UP";
+  const String MACdir = is_down ? "-->" : "<--";
 
   while (cursor < cmdlen) {
 
@@ -577,8 +577,8 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
           cursor += (p + i)->params;
           ESP_LOGD(TAG, "%s MAC command %s", MACdir, (p + i)->cmdname);
         } else
-          ESP_LOGD(TAG, "%s MAC command 0x%02X with missing parameter(s)", MACdir,
-                   (p + i)->cid);
+          ESP_LOGD(TAG, "%s MAC command 0x%02X with missing parameter(s)",
+                   MACdir, (p + i)->cid);
         break;   // command found -> exit table lookup loop
       }          // end of command validation
     }            // end of command table lookup loop
