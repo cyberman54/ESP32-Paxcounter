@@ -457,7 +457,7 @@ void setup() {
   clock_init();
 #endif
 
-#if (TIME_SYNC_LORASERVER)
+#if (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
   timesync_init(); // create loraserver time sync task
 #endif
 

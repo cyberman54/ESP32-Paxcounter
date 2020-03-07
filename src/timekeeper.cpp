@@ -28,6 +28,21 @@ void calibrateTime(void) {
   time_t t = 0;
   uint16_t t_msec = 0;
 
+  // kick off asychronous lora timesync if we have
+#if (HAS_LORA) && (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
+  timesync_sendReq();
+#endif
+
+// has RTC -> fallback to RTC time
+#ifdef HAS_RTC
+  t = get_rtctime();
+  if (t) {
+    timeSource = _rtc;
+    goto finish;
+  }
+#endif
+
+// no RTC -> fallback to GPS time
 #if (HAS_GPS)
   // fetch recent time from last NMEA record
   t = fetch_gpsTime(&t_msec);
@@ -37,21 +52,8 @@ void calibrateTime(void) {
   }
 #endif
 
-// kick off asychronous lora timesync if we have
-#if (HAS_LORA) && (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
-  send_timesync_req();
-#endif
-
-// no time from GPS -> fallback to RTC time while trying lora sync
-#ifdef HAS_RTC
-  t = get_rtctime();
-  if (t) {
-    timeSource = _rtc;
-    goto finish;
-  }
-#endif
-
-  goto finish;
+  // no local time source -> don't set time
+  return;
 
 finish:
 

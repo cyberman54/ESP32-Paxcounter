@@ -378,9 +378,10 @@ start:
               LMIC.datarate);
     dp_printf(0, 5, FONT_SMALL, 0, "ChMsk:%04X Nonce:%04X", LMIC.channelMap,
               LMIC.devNonce);
-    dp_printf(0, 6, FONT_SMALL, 0, "CUp:%-6d CDn:%-6d", LMIC.seqnoUp,
-              LMIC.seqnoDn);
-    dp_printf(0, 7, FONT_SMALL, 0, "SNR:%-5d  RSSI:%-5d", LMIC.snr / 4,
+    dp_printf(0, 6, FONT_SMALL, 0, "fUp:%-6d fDn:%-6d",
+              LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
+              LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
+    dp_printf(0, 7, FONT_SMALL, 0, "SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4,
               LMIC.rssi);
     break; // page5
 #else      // don't show blank page if we are unattended

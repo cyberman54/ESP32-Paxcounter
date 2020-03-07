@@ -1,12 +1,13 @@
 /* LoRaWAN Timeserver
 
-construct 7 byte timesync_answer from gateway timestamp and node's time_sync_req
+VERSION: 1.3
+
+construct 6 byte timesync_answer from gateway timestamp and node's time_sync_req
 
 byte    meaning
 1       sequence number (taken from node's time_sync_req)
-2       timezone in 15 minutes steps
-3..6    current second (from epoch time 1970)
-7       1/250ths fractions of current second
+2..5    current second (from GPS epoch starting 1980)
+6       1/250ths fractions of current second
 
 */
 
@@ -24,7 +25,7 @@ function timecompare(a, b) {
   return comparison;
 }
 
-let confidence = 2000; // max millisecond diff gateway time to server time
+let confidence = 1000; // max millisecond diff gateway time to server time
 
 // guess if we have received a valid time_sync_req command
 if (msg.payload.payload_raw.length != 1)
@@ -72,11 +73,11 @@ var offset = server_time - timestamp;
 var seconds = Math.floor(timestamp/1000);
 var fractions = (timestamp % 1000) / 4;
 
-let buf = new ArrayBuffer(7);
+let buf = new ArrayBuffer(6);
 new DataView(buf).setUint8(0, seqNo);
-// Timezone (in 15min steps)
-var timezone = 8; // CET = UTC+2h
-new DataView(buf).setUint8(1, timezone);
+// Timezone (in 15min steps) -> deprecated
+//var timezone = 8; // CET = UTC+2h
+//new DataView(buf).setUint8(1, timezone);
 new DataView(buf).setUint32(2, seconds);
 new DataView(buf).setUint8(6, fractions);
 
