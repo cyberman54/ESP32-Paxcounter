@@ -99,15 +99,11 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
       // open a receive window to immediately get DevTimeAns
       LMIC_sendAlive();
 #endif
-
-      // open a receive window to immediately get the answer (Class A device)
-      // LMIC_sendAlive();
-
       // wait until a timestamp was received
       if (xTaskNotifyWait(0x00, ULONG_MAX, &seqNo,
                           pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) {
         ESP_LOGW(TAG, "[%0.3f] Timesync aborted: timed out", millis() / 1000.0);
-        goto Fail; // no valid sequence received before timeout
+        goto Fail; // no timestamp received before timeout
       }
 
       // check if we are in handshake with server
@@ -122,11 +118,11 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
                         timesync_timestamp[sample_idx][timesync_tx];
 
       // increment and wrap around seqNo, keeping it in time port range
-      WRAP(time_sync_seqNo, TIMEREQUEST_MAX_SEQNO);
       // increment index for timestamp array
+      WRAP(time_sync_seqNo, TIMEREQUEST_MAX_SEQNO);
       sample_idx++;
 
-      // if last cycle, finish after, else pause until next cycle
+      // if we are not in last cycle, pause until next cycle
       if (i < TIME_SYNC_SAMPLES - 1)
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
 
@@ -137,14 +133,14 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     // mask application irq to ensure accurate timing
     mask_user_IRQ();
 
-    // average time offset over the summed up difference
+    // calculate average time offset over the summed up difference
     // + add msec from recent gateway time, found with last sample_idx
-    // + apply a compensation constant TIME_SYNC_FIXUP for processing time
+    // + apply a compensation constant for processing times node + gateway
     time_offset_ms /= TIME_SYNC_SAMPLES;
     time_offset_ms +=
         timesync_timestamp[sample_idx - 1][gwtime_msec] + TIME_SYNC_FIXUP;
 
-    // calculate absolute time in UTC epoch: take latest time received from
+    // calculate absolute UTC time: take latest timestamp received from
     // gateway, convert to whole seconds, round to ceil, add fraction seconds
     setMyTime(timesync_timestamp[sample_idx - 1][gwtime_sec] +
                   time_offset_ms / 1000,
@@ -176,7 +172,7 @@ void timesync_storeReq(uint32_t timestamp, timesync_t timestamp_type) {
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
 
-// callback function to receive network time server answer
+// callback function to receive time answer from network or answer
 void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
   // if no timesync handshake is pending then exit
@@ -259,7 +255,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 #endif // (TIME_SYNC_LORAWAN)
 
 Finish:
-  // check if calucalted time is recent
+  // check if calculated time is recent
   if (timeIsValid(timestamp_sec)) {
     // store time received from gateway
     timesync_storeReq(timestamp_sec, gwtime_sec);
