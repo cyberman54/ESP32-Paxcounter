@@ -472,7 +472,7 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 #if (TIME_SYNC_LORASERVER)
   case TIMEPORT:
     // get and store gwtime from payload
-    timesync_serverAnswer(&pMsg, nMsg);
+    timesync_serverAnswer(const_cast<uint8_t *>(pMsg), nMsg);
 #endif
 
     // decode any piggybacked downlink MAC commands if we want to print those

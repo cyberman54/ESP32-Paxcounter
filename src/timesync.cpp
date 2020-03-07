@@ -3,11 +3,13 @@
 ///--> IMPORTANT LICENSE NOTE for timesync option 1 in this file <--///
 
 PLEASE NOTE: There is a patent filed for the time sync algorithm used in the
-code of this file. The shown implementation example is covered by the
-repository's licencse, but you may not be eligible to deploy the applied
-algorithm in applications without granted license by the patent holder.
+code of this file for timesync option TIME_SYNC_LORASERVER. The shown
+implementation example is covered by the repository's licencse, but you may not
+be eligible to deploy the applied algorithm in applications without granted
+license by the patent holder.
 
-You may use timesync option 2 if you do not want or cannot accept this.
+You may use timesync option TIME_SYNC_LORAWAN if you do not want or cannot
+accept this.
 
 */
 
@@ -27,9 +29,7 @@ static const char TAG[] = __FILE__;
 static bool timeSyncPending = false;
 static uint8_t time_sync_seqNo = (uint8_t)random(TIMEREQUEST_MAX_SEQNO),
                sample_idx;
-static uint16_t timestamp_msec;
-static uint32_t timestamp_sec,
-    timesync_timestamp[TIME_SYNC_SAMPLES][no_of_timestamps];
+static uint32_t timesync_timestamp[TIME_SYNC_SAMPLES][no_of_timestamps];
 static TaskHandle_t timeSyncProcTask = NULL;
 
 // create task for timeserver handshake processing, called from main.cpp
@@ -64,7 +64,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
   //  this task is an endless loop, waiting in blocked mode, until it is
   //  unblocked by timesync_sendReq(). It then waits to be notified from
-  //  timesync_serverAnswer(), which is called from LMIC each time a timestamp 
+  //  timesync_serverAnswer(), which is called from LMIC each time a timestamp
   //  from the timesource via LORAWAN arrived.
 
   // --- asnychronous part: generate and collect timestamps from gateway ---
@@ -89,31 +89,31 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
 // send timesync request to timeserver or networkserver
 #if (TIME_SYNC_LORASERVER)
-      // timesync option 1: use external timeserver (for LoRAWAN < 1.0.3)
-      // ask timeserver
+      // ask user's timeserver (for LoRAWAN < 1.0.3)
       payload.reset();
       payload.addByte(time_sync_seqNo);
       SendPayload(TIMEPORT, prio_high);
 #elif (TIME_SYNC_LORAWAN)
-      // timesync option 2: use LoRAWAN network time (requires LoRAWAN >= 1.0.3)
-      // ask networkserver
+      // ask network (requires LoRAWAN >= 1.0.3)
       LMIC_requestNetworkTime(timesync_serverAnswer, &time_sync_seqNo);
+      // open a receive window to immediately get DevTimeAns
+      LMIC_sendAlive();
 #endif
 
       // open a receive window to immediately get the answer (Class A device)
-      LMIC_sendAlive();
+      // LMIC_sendAlive();
 
       // wait until a timestamp was received
       if (xTaskNotifyWait(0x00, ULONG_MAX, &seqNo,
                           pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) {
-        ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: timeout",
-                 millis() / 1000.0);
+        ESP_LOGW(TAG, "[%0.3f] Timesync aborted: timed out", millis() / 1000.0);
         goto Fail; // no valid sequence received before timeout
       }
 
       // check if we are in handshake with server
       if (seqNo != time_sync_seqNo) {
-        ESP_LOGW(TAG, "[%0.3f] Timesync handshake aborted", millis() / 1000.0);
+        ESP_LOGW(TAG, "[%0.3f] Timesync aborted: handshake out of sync",
+                 millis() / 1000.0);
         goto Fail;
       }
 
@@ -178,6 +178,7 @@ void timesync_storeReq(uint32_t timestamp, timesync_t timestamp_type) {
 
 // callback function to receive network time server answer
 void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
+
   // if no timesync handshake is pending then exit
   if (!timeSyncPending)
     return;
@@ -186,34 +187,30 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   mask_user_IRQ();
 
   int rc = 0;
-  uint32_t timestamp_sec;
+  uint8_t seqNo = *(uint8_t *)pUserData;
   uint16_t timestamp_msec;
+  uint32_t timestamp_sec;
 
 #if (TIME_SYNC_LORASERVER)
-
-  // store LMIC time when we received the timesync answer
-  timesync_storeReq(osticks2ms(os_getTime()), timesync_rx);
 
   // pUserData: contains pointer to payload buffer
   // flag: length of buffer
 
-  /*
-    parse 6 byte timesync_answer:
+  // store LMIC time when we received the timesync answer
+  timesync_storeReq(osticks2ms(os_getTime()), timesync_rx);
 
-    byte    meaning
-    1       sequence number (taken from node's time_sync_req)
-    2..5    current second (from epoch time 1970)
-    6       1/250ths fractions of current second
-    */
+  //  parse timesync_answer:
+  //  byte    meaning
+  //  0       sequence number (taken from node's time_sync_req)
+  //  1..4    current second (from UTC epoch)
+  //  5       1/250ths fractions of current second
 
-  // Explicit conversion from void* to uint8_t* to avoid compiler errors
-  uint8_t *p = (uint8_t *)pUserData;
-  // Get payload buffer from pUserData
-  uint8_t *buf = p;
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  timestamp_sec = __builtin_bswap32(*(uint32_t *)(pUserData + 1));
 
-  // extract 1 byte timerequest sequence number from payload
-  uint8_t seqNo = buf[0];
-  buf++;
+  // one step being 1/250th sec * 1000 = 4msec
+  timestamp_msec = *(uint8_t *)(pUserData + 5);
+  timestamp_msec *= 4;
 
   // if no time is available or spurious buffer then exit
   if (flag != TIME_SYNC_FRAME_LENGTH) {
@@ -226,29 +223,12 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
     goto Exit; // failure
   }
 
-  // pointer to 4 bytes msb order
-  uint32_t *timestamp_ptr;
-  // extract 4 bytes containing gateway time in UTC seconds since unix
-  // epoch and convert it to uint32_t, octet order is big endian
-  timestamp_ptr = (uint32_t *)buf;
-  // swap byte order from msb to lsb, note: this is a platform dependent hack
-  timestamp_sec = __builtin_bswap32(*timestamp_ptr);
-  buf += 4;
-  // extract 1 byte containing fractional seconds in 2^-8 second steps
-  // one step being 1/250th sec * 1000 = 4msec
-  timestamp_msec = buf[0] * 4;
-
   goto Finish;
 
 #elif (TIME_SYNC_LORAWAN)
 
   // pUserData: contains pointer to SeqNo
-  // flagSuccess: indicates if we got a recent time from the network
-
-  // Explicit conversion from void* to uint8_t* to avoid compiler errors
-  uint8_t *p = (uint8_t *)pUserData;
-  // Get seqNo from pUserData
-  uint8_t seqNo = *p;
+  // flag: indicates if we got a recent time from the network
 
   if (flag != 1) {
     ESP_LOGW(TAG, "[%0.3f] Network did not answer time request",
