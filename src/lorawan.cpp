@@ -573,7 +573,7 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
           memmove(foundcmd, cmd + cursor,
                   (p + i)->params); // strip opcode from cmd array
           cursor += (p + i)->params;
-          ESP_LOGD(TAG, "%s MAC command %s", MACdir, (p + i)->cmdname);
+          ESP_LOGD(TAG, "%s %s", MACdir, (p + i)->cmdname);
         } else
           ESP_LOGD(TAG, "%s MAC command 0x%02X with missing parameter(s)",
                    MACdir, (p + i)->cid);
