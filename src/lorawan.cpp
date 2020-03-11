@@ -251,7 +251,7 @@ void lora_send(void *pvParameters) {
         // if last packet sent was a timesync request, store TX timestamp
         if (SendBuffer.MessagePort == TIMEPORT)
           // store LMIC time when we started transmit of timesync request
-          timesync_storeReq(osticks2ms(os_getTime()), timesync_tx);
+          timesync_store(osticks2ms(os_getTime()), timesync_tx);
 #endif
 
         ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);

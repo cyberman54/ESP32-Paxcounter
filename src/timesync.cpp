@@ -42,7 +42,7 @@ void timesync_init() {
 }
 
 // kickoff asnychronous timesync handshake
-void timesync_sendReq(void) {
+void timesync_request(void) {
   // exit if a timesync handshake is already running
   if (timeSyncPending)
     return;
@@ -60,7 +60,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
   uint32_t rcv_seqNo = TIME_SYNC_END_FLAG, time_offset_ms;
 
   //  this task is an endless loop, waiting in blocked mode, until it is
-  //  unblocked by timesync_sendReq(). It then waits to be notified from
+  //  unblocked by timesync_request(). It then waits to be notified from
   //  timesync_serverAnswer(), which is called from LMIC each time a timestamp
   //  from the timesource via LORAWAN arrived.
 
@@ -158,7 +158,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 }
 
 // store incoming timestamps
-void timesync_storeReq(uint32_t timestamp, timesync_t timestamp_type) {
+void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
   ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d", millis() / 1000.0,
            time_sync_seqNo, sample_idx, timestamp_type, timestamp);
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
@@ -174,6 +174,9 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // mask application irq to ensure accurate timing
   mask_user_IRQ();
 
+  // store LMIC time when we received the timesync answer
+  ostime_t rxTime = osticks2ms(os_getTime());
+
   int rc = 0;
   uint8_t rcv_seqNo = *(uint8_t *)pUserData;
   uint16_t timestamp_msec = 0;
@@ -184,8 +187,8 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // pUserData: contains pointer to payload buffer
   // flag: length of buffer
 
-  // store LMIC time when we received the timesync answer
-  timesync_storeReq(osticks2ms(os_getTime()), timesync_rx);
+  // Store the instant the time request of the node was received on the gateway
+  timesync_store(rxTime, timesync_rx);
 
   //  parse timesync_answer:
   //  byte    meaning
@@ -240,8 +243,9 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
   // Calculate UTCTime, considering the difference between GPS and UTC time
   timestamp_sec = lmicTime.tNetwork + GPS_UTC_DIFF;
-  // Add delay between the instant the time was transmitted and the current time
-  timestamp_msec = osticks2ms(os_getTime() - lmicTime.tLocal);
+  // Add delay between the instant the time was received on the gateway and the
+  // current time on the node
+  timestamp_msec = rxTime - lmicTime.tLocal;
   goto Finish;
 
 #endif // (TIME_SYNC_LORAWAN)
@@ -250,8 +254,8 @@ Finish:
   // check if calculated time is recent
   if (timeIsValid(timestamp_sec)) {
     // store time received from gateway
-    timesync_storeReq(timestamp_sec, gwtime_sec);
-    timesync_storeReq(timestamp_msec, gwtime_msec);
+    timesync_store(timestamp_sec, gwtime_sec);
+    timesync_store(timestamp_msec, gwtime_msec);
     // success
     rc = 1;
   } else {

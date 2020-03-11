@@ -20,8 +20,8 @@ enum timesync_t {
 };
 
 void timesync_init(void);
-void timesync_sendReq(void);
-void timesync_storeReq(uint32_t timestamp, timesync_t timestamp_type);
+void timesync_request(void);
+void timesync_store(uint32_t timestamp, timesync_t timestamp_type);
 void IRAM_ATTR timesync_processReq(void *taskparameter);
 void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag);
 
