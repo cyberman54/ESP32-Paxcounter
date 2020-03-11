@@ -449,7 +449,7 @@ void setup() {
 
 // initialize gps time
 #if (HAS_GPS)
-  fetch_gpsTime();
+  get_gpstime();
 #endif
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
