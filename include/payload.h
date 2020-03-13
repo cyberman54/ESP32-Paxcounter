@@ -84,8 +84,7 @@ private:
   void writeUint16(uint16_t i);
   void writeUint8(uint8_t i);
   void writeFloat(float value);
-  void wri
-teUFloat(float value);
+  void writeUFloat(float value);
   void writePressure(float value);
   void writeVersion(char *version);
   void writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f, bool g,
