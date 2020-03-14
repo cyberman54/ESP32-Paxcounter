@@ -63,9 +63,12 @@ void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
-  #if (HAS_GPS) 
+#if (HAS_GPS)
   gpsStatus_t gps_status;
-  #endif
+#endif
+#if (HAS_SDS011)
+  sdsStatus_t sds_status;
+#endif
 
   while (bitmask) {
     switch (bitmask & mask) {
@@ -94,6 +97,10 @@ void sendData() {
         payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
+#endif
+#if (HAS_SDS011)
+      sds011_store(&sds_status);
+      payload.addSDS(sds_status);
 #endif
       SendPayload(COUNTERPORT, prio_normal);
       // clear counter if not in cumulative counter mode

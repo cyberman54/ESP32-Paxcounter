@@ -10,8 +10,7 @@ static const char TAG[] = __FILE__;
 TinyGPSPlus gps;
 TinyGPSCustom gpstime(gps, "GPZDA", 1); // field 1 = UTC time
 static const String ZDA_Request = "$EIGPQ,ZDA*39\r\n";
-
-gpsStatus_t gps_status = {0};
+static gpsStatus_t gps_status = {0};
 TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL

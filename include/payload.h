@@ -3,6 +3,10 @@
 
 #include "paxcounter.conf"
 
+#if (HAS_SDS011)
+#include "sds011read.h"
+#endif
+
 // MyDevices CayenneLPP 1.0 channels for Synamic sensor payload format
 // all payload goes out on LoRa FPort 1
 #if (PAYLOAD_ENCODER == 3)
@@ -19,6 +23,8 @@
 #define LPP_HUMIDITY_CHANNEL 29
 #define LPP_BAROMETER_CHANNEL 30
 #define LPP_AIR_CHANNEL 31
+#define LPP_PARTMATTER10_CHANNEL 32    // particular matter for PM 10
+#define LPP_PARTMATTER25_CHANNEL 33    // particular matter for PM 2.5
 
 // MyDevices CayenneLPP 2.0 types for Packed Sensor Payload, not using channels,
 // but different FPorts
@@ -55,6 +61,9 @@ public:
   void addButton(uint8_t value);
   void addSensor(uint8_t[]);
   void addTime(time_t value);
+  void addSDS(sdsStatus_t value);
+private:
+  void addChars( char* string, int len);
 
 #if (PAYLOAD_ENCODER == 1) // format plain
 

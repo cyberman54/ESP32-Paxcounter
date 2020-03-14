@@ -18,6 +18,15 @@
 #include "display.h"
 #endif
 
+#if (HAS_SDS011)
+#include "sds011read.h"
+#endif
+
+#if (HAS_SDCARD)
+#include "sdcard.h"
+#endif
+
+
 extern Ticker housekeeper;
 
 void housekeeping(void);

@@ -16,6 +16,9 @@ static const char TAG[] = __FILE__;
 const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
 
 #ifdef HAS_IF482
+#if (HAS_SDS011)
+#error cannot use IF482 together with SDS011 (both use UART#2)
+#endif
 HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 #endif
 

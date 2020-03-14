@@ -58,7 +58,7 @@ Depending on board hardware following features are supported:
 - Silicon unique ID
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
-- Environmental sensor (Bosch BMP180/BME280/BME680 I2C)
+- Environmental sensors (Bosch BMP180/BME280/BME680 I2C; SDS011 serial)
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
@@ -167,7 +167,7 @@ by pressing the button of the device.
 
 # Sensors and Peripherals
 
-You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
+You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
 Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 
@@ -548,4 +548,4 @@ Thanks to
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
-- [August Quint](https://github.com/AugustQu) for adding SD card data logger support
+- [August Quint](https://github.com/AugustQu) for adding SD card data logger and SDS011 support
