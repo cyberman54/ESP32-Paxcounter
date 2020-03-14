@@ -23,6 +23,8 @@
 #define LPP_HUMIDITY_CHANNEL 29
 #define LPP_BAROMETER_CHANNEL 30
 #define LPP_AIR_CHANNEL 31
+#define LPP_PARTMATTER10_CHANNEL 32    // particular matter for PM 10
+#define LPP_PARTMATTER25_CHANNEL 33    // particular matter for PM 2.5
 
 // MyDevices CayenneLPP 2.0 types for Packed Sensor Payload, not using channels,
 // but different FPorts
