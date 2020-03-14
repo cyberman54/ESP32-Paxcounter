@@ -12,12 +12,6 @@
 // This settings are for boards labeled v1.6 on pcb, NOT for v1.5 or older
 */
 
-// SDS011 dust sensor settings
-#define HAS_SDS011 1 // use SDS011
-// used pins on the ESP-side:
-#define SDS_TX 19     // connect to RX on the SDS011
-#define SDS_RX 23     // connect to TX on the SDS011
-
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
@@ -28,11 +22,6 @@
 #define SDCARD_MOSI  (15)
 #define SDCARD_MISO  (2)
 #define SDCARD_SCLK  (14)
-
-// enable only if device has these sensors, otherwise comment these lines
-// BME280 sensor on I2C bus
-//#define HAS_BME 1 // Enable BME sensors in general
-//#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
 
 #define HAS_DISPLAY 1
 #define HAS_LED (25) // green on board LED
