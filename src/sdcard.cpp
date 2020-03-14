@@ -6,12 +6,6 @@
 static const char TAG[] = __FILE__;
 
 #include "sdcard.h"
-#if (HAS_SDS011)
-#include <sds011read.h>
-// the results of the sensor:
-extern float pm25;              
-extern float pm10;
-#endif
 
 static bool useSDCard;
 
@@ -25,7 +19,7 @@ bool sdcard_init() {
   if (useSDCard)
     createFile();
   else
-      ESP_LOGD(TAG,"SD-card not found");
+    ESP_LOGD(TAG, "SD-card not found");
   return useSDCard;
 }
 
@@ -33,6 +27,9 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle) {
   static int counterWrites = 0;
   char tempBuffer[12 + 1];
   time_t t = now();
+#if (HAS_SDS011)
+  sdsStatus_t sds;
+#endif
 
   if (!useSDCard)
     return;
@@ -43,12 +40,13 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle) {
   sprintf(tempBuffer, "%02d:%02d:%02d,", hour(t), minute(t), second(t));
   fileSDCard.print(tempBuffer);
   sprintf(tempBuffer, "%d,%d", noWifi, noBle);
-  fileSDCard.print( tempBuffer);
+  fileSDCard.print(tempBuffer);
 #if (HAS_SDS011)
-    sprintf(tempBuffer, ",%5.1f,%4.1f", pm10, pm25);
-    fileSDCard.print( tempBuffer);
+  sds011_store(&sds);
+  sprintf(tempBuffer, ",%5.1f,%4.1f", sds.pm10, sds.pm25);
+  fileSDCard.print(tempBuffer);
 #endif
-  fileSDCard.println( );
+  fileSDCard.println();
 
   if (++counterWrites > 2) {
     // force writing to SD-card
@@ -72,9 +70,9 @@ void createFile(void) {
       fileSDCard = SD.open(bufferFilename, FILE_WRITE);
       if (fileSDCard) {
         ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
-        fileSDCard.print( SDCARD_FILE_HEADER );
+        fileSDCard.print(SDCARD_FILE_HEADER);
 #if (HAS_SDS011)
-        fileSDCard.print( SDCARD_FILE_HEADER_SDS011 );
+        fileSDCard.print(SDCARD_FILE_HEADER_SDS011);
 #endif
         fileSDCard.println();
         useSDCard = true;

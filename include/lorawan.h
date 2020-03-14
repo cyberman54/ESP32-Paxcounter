@@ -49,7 +49,7 @@ void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port,
 void IRAM_ATTR myTxCallback(void *pUserData, int fSuccess);
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
                 const uint8_t tablesize);
-uint8_t getBattLevel(void);
+//u1_t os_getBattLevel(void);
 const char *getSfName(rps_t rps);
 const char *getBwName(rps_t rps);
 const char *getCrName(rps_t rps);

@@ -1,12 +1,9 @@
 // Basic Config
 #if (HAS_LORA)
 #include "lorawan.h"
-#endif
 
 // Local logging Tag
 static const char TAG[] = "lora";
-
-#if (HAS_LORA)
 
 #if CLOCK_ERROR_PROCENTAGE > 7
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
@@ -101,8 +98,10 @@ void lora_setupForNetwork(bool preJoin) {
     if (!cfg.adrmode)
       LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
     // show current devaddr
-    ESP_LOGI(TAG, "DEVaddr: %08X", LMIC.devaddr);
-    ESP_LOGI(TAG, "Radio parameters: %s / %s / %s",
+    ESP_LOGI(TAG, "DEVaddr: 0x%08X | Network ID: 0x%03X | Network Type: %d",
+             LMIC.devaddr, LMIC.netid & 0x001FFFFF, LMIC.netid & 0x00E00000);
+    ESP_LOGI(TAG, "RSSI: %d | SNR: %d", LMIC.rssi, LMIC.snr / 4);
+    ESP_LOGI(TAG, "Radio parameters: %s | %s | %s",
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
              getCrName(updr2rps(LMIC.datarate)));
@@ -372,7 +371,7 @@ void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
 #if (TIME_SYNC_LORAWAN)
 void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
-                                                         int flagSuccess) {
+                                                  int flagSuccess) {
   // Explicit conversion from void* to uint32_t* to avoid compiler errors
   time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
 
@@ -503,7 +502,7 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
 // receive message handler
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
-                         size_t nMsg) {
+                  size_t nMsg) {
 
   // display type of received data
   if (nMsg)
@@ -601,32 +600,6 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
 
 } // mac_decode()
 
-uint8_t getBattLevel() {
-  /*
-  return values:
-  MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
-  MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
-  MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
-  MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
-  */
-#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
-  uint16_t voltage = read_voltage();
-
-  switch (voltage) {
-  case 0:
-    return MCMD_DEVS_BATT_NOINFO;
-  case 0xffff:
-    return MCMD_DEVS_EXT_POWER;
-  default:
-    return (voltage > OTA_MIN_BATT ? MCMD_DEVS_BATT_MAX : MCMD_DEVS_BATT_MIN);
-  }
-#else // we don't have any info on battery level
-  return MCMD_DEVS_BATT_NOINFO;
-#endif
-} // getBattLevel()
-
-// u1_t os_getBattLevel(void) { return getBattLevel(); };
-
 const char *getSfName(rps_t rps) {
   const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
                            "SF10", "SF11", "SF12", "SF?"};
@@ -642,5 +615,31 @@ const char *getCrName(rps_t rps) {
   const char *const t[] = {"CR 4/5", "CR 4/6", "CR 4/7", "CR 4/8"};
   return t[getCr(rps)];
 }
+
+/*
+u1_t os_getBattLevel() {
+  
+  //return values:
+  //MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  //MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  //MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  //MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+
+#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
+  uint16_t voltage = read_voltage();
+
+  switch (voltage) {
+  case 0:
+    return MCMD_DEVS_BATT_NOINFO;
+  case 0xffff:
+    return MCMD_DEVS_EXT_POWER;
+  default:
+    return (voltage > OTA_MIN_BATT ? MCMD_DEVS_BATT_MAX : MCMD_DEVS_BATT_MIN);
+  }
+#else // we don't have any info on battery level
+  return MCMD_DEVS_BATT_NOINFO;
+#endif
+} // getBattLevel()
+*/
 
 #endif // HAS_LORA

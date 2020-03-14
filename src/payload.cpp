@@ -346,7 +346,6 @@ void PayloadConvert::addSDS(sdsStatus_t sds) {
     buffer[cursor++] = highByte((uint16_t)(sds.pm25 * 10));
     buffer[cursor++] = lowByte((uint16_t)(sds.pm25 * 10));
 #endif  // HAS_SDS011
-}
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   switch (snifftype) {
