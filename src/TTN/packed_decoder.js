@@ -4,8 +4,6 @@
 function Decoder(bytes, port) {
 
     var decoded = {};
-    decoded.wifi = 0;
-    decoded.ble = 0;
 
     if (bytes.length === 0) {
         return {};

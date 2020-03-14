@@ -3,8 +3,6 @@
 
 function Decoder(bytes, port) {
   var decoded = {};
-  decoded.wifi = 0;
-  decoded.ble = 0;
 
   if (port === 1) {
     var i = 0;

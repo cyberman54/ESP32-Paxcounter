@@ -39,19 +39,6 @@ FONT_STRETCHED: 16x32px = 8 chars / line
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-#define DISPLAY_PAGES (6) // number of paxcounter display pages
-
-// settings for oled display library
-#define USE_BACKBUFFER
-
-// settings for qr code generator
-#define QR_VERSION 3     // 29 x 29px
-#define QR_SCALEFACTOR 2 // 29 -> 58x < 64px
-
-// settings for curve plotter
-#define DISPLAY_WIDTH 128 // Width in pixels of OLED-display, must be 32X
-#define DISPLAY_HEIGHT 64 // Height in pixels of OLED-display, must be 64X
-
 // helper array for converting month values to text
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -60,6 +47,23 @@ uint8_t displaybuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
 static uint8_t plotbuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
 
 QRCode qrcode;
+SSOLED ssoled;
+
+void setup_display(int contrast) {
+  int rc = oledInit(&ssoled, MY_OLED, OLED_ADDR, DISPLAY_FLIP, OLED_INVERT,
+                    USE_HW_I2C, MY_OLED_SDA, MY_OLED_SCL, MY_OLED_RST,
+                    400000L); // use standard I2C bus at 400Khz
+
+  assert(rc != OLED_NOT_FOUND);
+
+  // set display buffer
+  oledSetBackBuffer(&ssoled, displaybuf);
+  if (contrast)
+    oledSetContrast(&ssoled, contrast);
+
+  // clear display
+  oledFill(&ssoled, 0, 1);
+}
 
 void init_display(bool verbose) {
 
@@ -68,19 +72,7 @@ void init_display(bool verbose) {
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
 
-    // init display
-#ifndef DISPLAY_FLIP
-    oledInit(OLED_128x64, false, false, -1, -1, MY_OLED_RST, 400000L);
-#else
-    oledInit(OLED_128x64, true, false, -1, -1, MY_OLED_RST, 400000L);
-#endif
-
-    // set display buffer
-    oledSetBackBuffer(displaybuf);
-
-    // clear display
-    oledSetContrast(DISPLAYCONTRAST);
-    oledFill(0, 1);
+    setup_display(DISPLAYCONTRAST);
 
     if (verbose) {
 
@@ -104,9 +96,9 @@ void init_display(bool verbose) {
                                                               : "ext.");
 
       // give user some time to read or take picture
-      oledDumpBuffer(displaybuf);
+      dp_dump(displaybuf);
       delay(2000);
-      oledFill(0x00, 1);
+      oledFill(&ssoled, 0x00, 1);
 #endif // VERBOSE
 
 #if (HAS_LORA)
@@ -117,7 +109,7 @@ void init_display(bool verbose) {
       snprintf(deveui, 17, "%016llX", *((uint64_t *)&buf));
 
       // display DEVEUI as QR code on the left
-      oledSetContrast(30);
+      oledSetContrast(&ssoled, 30);
       dp_printqr(3, 3, deveui);
 
       // display DEVEUI as plain text on the right
@@ -127,15 +119,15 @@ void init_display(bool verbose) {
         dp_printf(80, i + 3, FONT_NORMAL, 0, "%4.4s", deveui + i * 4);
 
       // give user some time to read or take picture
-      oledDumpBuffer(displaybuf);
+      dp_dump(displaybuf);
       delay(8000);
-      oledSetContrast(DISPLAYCONTRAST);
-      oledFill(0x00, 1);
+      oledSetContrast(&ssoled, DISPLAYCONTRAST);
+      oledFill(&ssoled, 0x00, 1);
 #endif // HAS_LORA
 
     } // verbose
 
-    oledPower(cfg.screenon); // set display off if disabled
+    oledPower(&ssoled, cfg.screenon); // set display off if disabled
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   }                     // mutex
@@ -164,7 +156,7 @@ void refreshTheDisplay(bool nextPage) {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
       DisplayIsOn = cfg.screenon;
-      oledPower(cfg.screenon);
+      oledPower(&ssoled, cfg.screenon);
     }
 
 #ifndef HAS_BUTTON
@@ -176,7 +168,7 @@ void refreshTheDisplay(bool nextPage) {
 #endif
 
     draw_page(t, nextPage);
-    oledDumpBuffer(displaybuf);
+    dp_dump(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
 
@@ -214,7 +206,7 @@ start:
 
   if (nextpage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
-    oledFill(0, 1);
+    oledFill(&ssoled, 0, 1);
   }
 
   switch (DisplayPage) {
@@ -224,7 +216,8 @@ start:
     // page 2: GPS
     // page 3: BME280/680
     // page 4: time
-    // page 5: blank screen
+    // page 5: lorawan parameters
+    // page 6: blank screen
 
     // page 0: parameters overview
   case 0:
@@ -306,7 +299,7 @@ start:
 
     // page 1: pax graph
   case 1:
-    oledDumpBuffer(plotbuf);
+    dp_dump(plotbuf);
     break; // page1
 
     // page 2: GPS
@@ -362,10 +355,35 @@ start:
               second(t));
     break;
 
-    // page 5: blank screen
+  // page 5: lorawan parameters
   case 5:
+
+#if (HAS_LORA)
+    // 3|NtwkID:000000 TXpw:aa
+    // 4|DevAdd:00000000  DR:0
+    // 5|CHMsk:0000 Nonce:0000
+    // 6|CUp:000000 CDn:000000
+    // 7|SNR:-0000  RSSI:-0000
+    dp_printf(0, 3, FONT_SMALL, 0, "NetwID:%06X TXpw:%-2d",
+              LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
+    dp_printf(0, 4, FONT_SMALL, 0, "DevAdd:%08X DR:%1d", LMIC.devaddr,
+              LMIC.datarate);
+    dp_printf(0, 5, FONT_SMALL, 0, "ChMsk:%04X Nonce:%04X", LMIC.channelMap,
+              LMIC.devNonce);
+    dp_printf(0, 6, FONT_SMALL, 0, "fUp:%-6d fDn:%-6d",
+              LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
+              LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
+    dp_printf(0, 7, FONT_SMALL, 0, "SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4,
+              LMIC.rssi);
+    break; // page5
+#else      // don't show blank page if we are unattended
+    DisplayPage++; // next page
+#endif     // HAS_LORA
+
+    // page 6: blank screen
+  case 6:
 #ifdef HAS_BUTTON
-    oledFill(0, 1);
+    oledFill(&ssoled, 0, 1);
     break;
 #else // don't show blank page if we are unattended
     DisplayPage++; // next page
@@ -402,11 +420,13 @@ void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
     len = vsnprintf(temp, len + 1, format, arg);
   }
   va_end(arg);
-  oledWriteString(0, x, y, temp, font, inv, false);
+  oledWriteString(&ssoled, 0, x, y, temp, font, inv, false);
   if (temp != loc_buf) {
     free(temp);
   }
 }
+
+void dp_dump(uint8_t *pBuffer) { oledDumpBuffer(&ssoled, pBuffer); }
 
 void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
   uint8_t qrcodeData[qrcode_getBufferSize(QR_VERSION)];
@@ -434,7 +454,7 @@ void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
 void oledfillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                   uint8_t bRender) {
   for (uint16_t xi = x; xi < x + width; xi++)
-    oledDrawLine(xi, y, xi, y + height - 1, bRender);
+    oledDrawLine(&ssoled, xi, y, xi, y + height - 1, bRender);
 }
 
 int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,

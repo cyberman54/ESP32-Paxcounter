@@ -31,37 +31,35 @@ void calibrateTime(void) {
   time_t t = 0;
   uint16_t t_msec = 0;
 
-#if (HAS_GPS)
-  // fetch recent time from last NMEA record
-  t = fetch_gpsTime(&t_msec);
-  if (t) {
-    timeSource = _gps;
-    goto finish;
-  }
+  // kick off asychronous lora timesync if we have
+#if (HAS_LORA) && (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
+  timesync_request();
 #endif
 
-// kick off asychronous Lora timeserver timesync if we have
-#if (HAS_LORA) && (TIME_SYNC_LORASERVER)
-  send_timesync_req();
-// kick off asychronous lora network sync if we have
-#elif (HAS_LORA) && (TIME_SYNC_LORAWAN)
-  LMIC_requestNetworkTime(user_request_network_time_callback, &userUTCTime);
-#endif
+  // (only!) if we lost time, we try to fallback to local time source RTS or GPS
+  if (timeSource == _unsynced) {
 
-// no time from GPS -> fallback to RTC time while trying lora sync
+// has RTC -> fallback to RTC time
 #ifdef HAS_RTC
-  t = get_rtctime();
-  if (t) {
+    t = get_rtctime();
     timeSource = _rtc;
-    goto finish;
-  }
 #endif
 
-  goto finish;
+// no RTC -> fallback to GPS time
+#if (HAS_GPS)
+    t = get_gpstime(&t_msec);
+    timeSource = _gps;
+#endif
 
-finish:
+    if (t)
+      setMyTime((uint32_t)t, t_msec, timeSource); // set time
 
-  setMyTime((uint32_t)t, t_msec, timeSource); // set time
+  } // fallback
+
+  else
+
+    // no fallback time source available -> we can't set time
+    return;
 
 } // calibrateTime()
 
@@ -86,7 +84,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGD(TAG, "[%0.3f] UTC epoch time: %d.%03d sec", millis() / 1000.0,
+    ESP_LOGD(TAG, "[%0.3f] UTC time: %d.%03d sec", millis() / 1000.0,
              time_to_set, t_msec % 1000);
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
@@ -107,11 +105,11 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
     ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
+             millis() / 1000.0, timeSetSymbols[mytimesource]);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
     ESP_LOGI(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
-             millis() / 1000.0, timeSetSymbols[timeSource]);
+             millis() / 1000.0, timeSetSymbols[mytimesource]);
   }
 }
 
@@ -236,7 +234,7 @@ void clock_init(void) {
   pinMode(HAS_DCF77, OUTPUT);
 #endif
 
-  userUTCTime = now();
+  time_t userUTCTime = now();
 
   xTaskCreatePinnedToCore(clock_loop,           // task function
                           "clockloop",          // name of task

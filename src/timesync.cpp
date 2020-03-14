@@ -1,243 +1,274 @@
 /*
 
-///--> IMPORTANT LICENSE NOTE for this file <--///
+///--> IMPORTANT LICENSE NOTE for timesync option 1 in this file <--///
 
 PLEASE NOTE: There is a patent filed for the time sync algorithm used in the
-code of this file. The shown implementation example is covered by the
-repository's licencse, but you may not be eligible to deploy the applied
-algorithm in applications without granted license by the patent holder.
+code of this file for timesync option TIME_SYNC_LORASERVER. The shown
+implementation example is covered by the repository's licencse, but you may not
+be eligible to deploy the applied algorithm in applications without granted
+license by the patent holder.
+
+You may use timesync option TIME_SYNC_LORAWAN if you do not want or cannot
+accept this.
 
 */
 
-#if (TIME_SYNC_LORASERVER) && (HAS_LORA)
+#if (HAS_LORA)
+
+#if (TIME_SYNC_LORASERVER) && (TIME_SYNC_LORAWAN)
+#error Duplicate timesync method selected. You must select either LORASERVER or LORAWAN timesync.
+#endif
 
 #include "timesync.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-using namespace std::chrono;
-
-typedef std::chrono::system_clock myClock;
-typedef myClock::time_point myClock_timepoint;
-typedef std::chrono::duration<long long int, std::ratio<1, 1000>>
-    myClock_msecTick;
-
-TaskHandle_t timeSyncReqTask = NULL;
-
-static uint8_t time_sync_seqNo = (uint8_t)random(TIMEREQUEST_MAX_SEQNO);
 static bool timeSyncPending = false;
-static myClock_timepoint time_sync_tx[TIME_SYNC_SAMPLES];
-static myClock_timepoint time_sync_rx[TIME_SYNC_SAMPLES];
+static uint8_t time_sync_seqNo = (uint8_t)random(TIME_SYNC_MAX_SEQNO),
+               sample_idx;
+static uint32_t timesync_timestamp[TIME_SYNC_SAMPLES][no_of_timestamps];
+static TaskHandle_t timeSyncProcTask;
 
-// send time request message
-void send_timesync_req() {
+// create task for timeserver handshake processing, called from main.cpp
+void timesync_init() {
+  xTaskCreatePinnedToCore(timesync_processReq, // task function
+                          "timesync_proc",     // name of task
+                          2048,                // stack size of task
+                          (void *)1,           // task parameter
+                          3,                   // priority of the task
+                          &timeSyncProcTask,   // task handle
+                          1);                  // CPU core
+}
 
-  // if a timesync handshake is pending then exit
+// kickoff asnychronous timesync handshake
+void timesync_request(void) {
+  // exit if a timesync handshake is already running
   if (timeSyncPending)
     return;
-  // else unblock timesync task
+  // start timesync handshake
   else {
-    ESP_LOGI(TAG, "[%0.3f] Timeserver sync request started", millis() / 1000.0);
-    xTaskNotifyGive(timeSyncReqTask);
+    ESP_LOGI(TAG, "[%0.3f] Timeserver sync request seqNo#%d started",
+             millis() / 1000.0, time_sync_seqNo);
+    xTaskNotifyGive(timeSyncProcTask); // unblock timesync task
   }
 }
 
-// task for sending time sync requests
-void process_timesync_req(void *taskparameter) {
+// task for processing time sync request
+void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
-  uint8_t k;
-  uint16_t time_to_set_fraction_msec;
-  uint32_t seq_no = 0, time_to_set;
-  auto time_offset_ms = myClock_msecTick::zero();
+  uint32_t rcv_seqNo = TIME_SYNC_END_FLAG, time_offset_ms;
+
+  //  this task is an endless loop, waiting in blocked mode, until it is
+  //  unblocked by timesync_request(). It then waits to be notified from
+  //  timesync_serverAnswer(), which is called from LMIC each time a timestamp
+  //  from the timesource via LORAWAN arrived.
+
+  // --- asnychronous part: generate and collect timestamps from gateway ---
 
   while (1) {
-
-    // reset all timestamps before next sync run
-    time_offset_ms = myClock_msecTick::zero();
-    for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++)
-      time_sync_tx[i] = time_sync_rx[i] = myClock_timepoint();
 
     // wait for kickoff
     ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
     timeSyncPending = true;
+    time_offset_ms = sample_idx = 0;
 
     // wait until we are joined if we are not
     while (!LMIC.devaddr) {
       vTaskDelay(pdMS_TO_TICKS(3000));
     }
 
-    // collect timestamp samples
+    // collect timestamp samples in timestamp array
     for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
-      // send sync request to server
+
+// send timesync request
+#if (TIME_SYNC_LORASERVER) // aks user's timeserver (for LoRAWAN < 1.0.3)
       payload.reset();
       payload.addByte(time_sync_seqNo);
       SendPayload(TIMEPORT, prio_high);
-
-      // wait for a valid timestamp from recv_timesync_ans()
-      while (seq_no != time_sync_seqNo) {
-        if (xTaskNotifyWait(0x00, ULONG_MAX, &seq_no,
-                            pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) ==
-            pdFALSE) {
-          ESP_LOGW(TAG, "[%0.3f] Timesync handshake error: timeout",
-                   millis() / 1000.0);
-          goto finish; // no valid sequence received before timeout
-        }
+#elif (TIME_SYNC_LORAWAN) // ask network (requires LoRAWAN >= 1.0.3)
+      LMIC_requestNetworkTime(timesync_serverAnswer, &time_sync_seqNo);
+      // trigger send to immediately get DevTimeAns on class A device
+      LMIC_sendAlive();
+#endif
+      // wait until a timestamp was received
+      if (xTaskNotifyWait(0x00, ULONG_MAX, &rcv_seqNo,
+                          pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) {
+        ESP_LOGW(TAG, "[%0.3f] Timesync aborted: timed out", millis() / 1000.0);
+        goto Fail; // no timestamp received before timeout
       }
 
-      // process answer
-      k = seq_no % TIME_SYNC_SAMPLES;
+      // check if we are in handshake with server
+      if (rcv_seqNo != time_sync_seqNo) {
+        ESP_LOGW(TAG, "[%0.3f] Timesync aborted: handshake out of sync",
+                 millis() / 1000.0);
+        goto Fail;
+      }
 
-      // calculate time diff from collected timestamps
-      time_offset_ms += time_point_cast<milliseconds>(time_sync_rx[k]) -
-                        time_point_cast<milliseconds>(time_sync_tx[k]);
+#if (TIME_SYNC_LORASERVER)
+      // calculate time diff with received timestamp
+      time_offset_ms += timesync_timestamp[sample_idx][timesync_rx] -
+                        timesync_timestamp[sample_idx][timesync_tx];
+#endif
 
-      // wrap around seqNo, keeping it in time port range
-      time_sync_seqNo++;
-      if (time_sync_seqNo > TIMEREQUEST_MAX_SEQNO) {
+      // increment sample_idx and time_sync_seqNo, keeping it in range
+      if (++time_sync_seqNo > TIME_SYNC_MAX_SEQNO)
         time_sync_seqNo = 0;
-      }
+      sample_idx++;
 
-      if (i < TIME_SYNC_SAMPLES - 1) {
-        // wait until next cycle
+      // if we are not in last cycle, pause until next cycle
+      if (i < TIME_SYNC_SAMPLES - 1)
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
-      } else { // before sending last time sample...
-        // ...send flush to open a receive window for last time_sync_answer
-        payload.reset();
-        payload.addByte(0x99);
-        SendPayload(RCMDPORT, prio_high);
-        // ...send a alive open a receive window for last time_sync_answer
-        LMIC_sendAlive();
-      }
-    } // end of for loop to collect timestamp samples
+
+    } // for i
+
+    // --- time critial part: evaluate timestamps and calculate time ---
 
     // mask application irq to ensure accurate timing
     mask_user_IRQ();
 
-    // average time offset over all collected diffs
+    // calculate average time offset over the summed up difference
+    // add msec from latest gateway time, and apply a compensation constant for
+    // processing times on node and gateway
     time_offset_ms /= TIME_SYNC_SAMPLES;
-
-    // calculate time offset with millisecond precision using LMIC's time base,
-    // since we use LMIC's ostime_t txEnd as tx timestamp.
-    // Also apply calibration const to compensate processing time.
     time_offset_ms +=
-        milliseconds(osticks2ms(os_getTime())) + milliseconds(TIME_SYNC_FIXUP);
+        TIME_SYNC_FIXUP + timesync_timestamp[sample_idx - 1][gwtime_msec];
 
-    // calculate absolute time in UTC epoch: convert to whole seconds, round to
-    // ceil, and calculate fraction milliseconds
-    time_to_set = (uint32_t)(time_offset_ms.count() / 1000) + 1;
-    // calculate fraction milliseconds
-    time_to_set_fraction_msec = (uint16_t)(time_offset_ms.count() % 1000);
+    // calculate absolute UTC time: take latest timestamp received from
+    // gateway, convert to whole seconds, round to ceil, add fraction seconds
+    setMyTime(timesync_timestamp[sample_idx - 1][gwtime_sec] +
+                  time_offset_ms / 1000,
+              time_offset_ms % 1000, _lora);
 
-    setMyTime(time_to_set, time_to_set_fraction_msec, _lora);
+    // send timesync end char to show timesync was successful
+    payload.reset();
+    payload.addByte(TIME_SYNC_END_FLAG);
+    SendPayload(RCMDPORT, prio_high);
+    goto Finish;
 
-  finish:
+  Fail:
+    // set retry timer
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
+
+  Finish:
     // end of time critical section: release app irq lock
-    timeSyncPending = false;
     unmask_user_IRQ();
 
   } // infinite while(1)
 }
 
-// called from lorawan.cpp after time_sync_req was sent
-void store_time_sync_req(uint32_t timestamp) {
+// store incoming timestamps
+void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d", millis() / 1000.0,
+           time_sync_seqNo, sample_idx, timestamp_type, timestamp);
+  timesync_timestamp[sample_idx][timestamp_type] = timestamp;
+}
+
+// callback function to receive time answer from network or answer
+void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
   // if no timesync handshake is pending then exit
   if (!timeSyncPending)
     return;
 
-  uint8_t k = time_sync_seqNo % TIME_SYNC_SAMPLES;
-  time_sync_tx[k] += milliseconds(timestamp);
+  // mask application irq to ensure accurate timing
+  mask_user_IRQ();
 
-  ESP_LOGD(TAG, "[%0.3f] Timesync request #%d of %d sent at %d.%03d",
-           millis() / 1000.0, k + 1, TIME_SYNC_SAMPLES, timestamp / 1000,
-           timestamp % 1000);
-}
+  // store LMIC time when we received the timesync answer
+  ostime_t rxTime = osticks2ms(os_getTime());
 
-// process timeserver timestamp answer, called by myRxCallback() in lorawan.cpp
-int recv_timesync_ans(const uint8_t buf[], const uint8_t buf_len) {
+  int rc = 0;
+  uint8_t rcv_seqNo = *(uint8_t *)pUserData;
+  uint16_t timestamp_msec = 0;
+  uint32_t timestamp_sec = 0;
 
-  /*
-  parse 7 byte timesync_answer:
+#if (TIME_SYNC_LORASERVER)
 
-  byte    meaning
-  1       sequence number (taken from node's time_sync_req)
-  2       timezone in 15 minutes steps
-  3..6    current second (from epoch time 1970)
-  7       1/250ths fractions of current second
-  */
+  // pUserData: contains pointer to payload buffer
+  // flag: length of buffer
 
-  // if no timesync handshake is pending then exit
-  if (!timeSyncPending)
-    return 0; // failure
+  // Store the instant the time request of the node was received on the gateway
+  timesync_store(rxTime, timesync_rx);
 
-  // extract 1 byte timerequest sequence number from buffer
-  uint8_t seq_no = buf[0];
-  buf++;
+  //  parse timesync_answer:
+  //  byte    meaning
+  //  0       sequence number (taken from node's time_sync_req)
+  //  1..4    current second (from UTC epoch)
+  //  5       1/250ths fractions of current second
+
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  timestamp_sec = __builtin_bswap32(*(uint32_t *)(pUserData + 1));
+
+  // one step being 1/250th sec * 1000 = 4msec
+  timestamp_msec = *(uint8_t *)(pUserData + 5);
+  timestamp_msec *= 4;
 
   // if no time is available or spurious buffer then exit
-  if (buf_len != TIME_SYNC_FRAME_LENGTH) {
-    if (seq_no == 0xff)
+  if (flag != TIME_SYNC_FRAME_LENGTH) {
+    if (rcv_seqNo == TIME_SYNC_END_FLAG)
       ESP_LOGI(TAG, "[%0.3f] Timeserver error: no confident time available",
                millis() / 1000.0);
     else
       ESP_LOGW(TAG, "[%0.3f] Timeserver error: spurious data received",
                millis() / 1000.0);
-    return 0; // failure
+    goto Exit; // failure
   }
 
-  else { // we received a probably valid time frame
+  goto Finish;
 
-    uint8_t k = seq_no % TIME_SYNC_SAMPLES;
+#elif (TIME_SYNC_LORAWAN)
 
-    // pointers to 4 bytes containing UTC seconds since unix epoch, msb
-    uint32_t timestamp_sec, *timestamp_ptr;
+  // pUserData: contains pointer to SeqNo
+  // flag: indicates if we got a recent time from the network
 
-    // extract 1 byte timezone from buffer (one step being 15min * 60s = 900s)
-    // uint32_t timezone_sec = buf[0] * 900; // for future use
-    buf++;
-
-    // extract 4 bytes timestamp from buffer
-    // and convert it to uint32_t, octet order is big endian
-    timestamp_ptr = (uint32_t *)buf;
-    // swap byte order from msb to lsb, note: this is platform dependent
-    timestamp_sec = __builtin_bswap32(*timestamp_ptr);
-    buf += 4;
-    // extract 1 byte fractional seconds in 2^-8 second steps
-    // (= 1/250th sec), we convert this to ms
-    uint16_t timestamp_msec = 4 * buf[0];
-
-    // construct the timepoint when message was seen on gateway
-    time_sync_rx[k] +=
-        seconds(timestamp_sec) + milliseconds(timestamp_msec);
-
-    // we guess timepoint is recent if it newer than code compile date
-    if (timeIsValid(myClock::to_time_t(time_sync_rx[k]))) {
-      ESP_LOGD(TAG, "[%0.3f] Timesync request #%d of %d rcvd at %d.%03d",
-               millis() / 1000.0, k + 1, TIME_SYNC_SAMPLES, timestamp_sec,
-               timestamp_msec);
-
-      // inform processing task
-      xTaskNotify(timeSyncReqTask, seq_no, eSetBits);
-
-      return 1; // success
-    } else {
-      ESP_LOGW(TAG, "[%0.3f] Timeserver error: outdated time received",
-               millis() / 1000.0);
-      return 0; // failure
-    }
+  if (flag != 1) {
+    ESP_LOGW(TAG, "[%0.3f] Network did not answer time request",
+             millis() / 1000.0);
+    goto Exit;
   }
+
+  // A struct that will be populated by LMIC_getNetworkTimeReference.
+  // It contains the following fields:
+  //  - tLocal: the value returned by os_GetTime() when the time
+  //            request was sent to the gateway, and
+  //  - tNetwork: the seconds between the GPS epoch and the time
+  //              the gateway received the time request
+  lmic_time_reference_t lmicTime;
+
+  // Populate lmic_time_reference
+  if ((LMIC_getNetworkTimeReference(&lmicTime)) != 1) {
+    ESP_LOGW(TAG, "[%0.3f] Network time request failed", millis() / 1000.0);
+    goto Exit;
+  }
+
+  // Calculate UTCTime, considering the difference between GPS and UTC time
+  timestamp_sec = lmicTime.tNetwork + GPS_UTC_DIFF;
+  // Add delay between the instant the time was received on the gateway and the
+  // current time on the node
+  timestamp_msec = rxTime - lmicTime.tLocal;
+  goto Finish;
+
+#endif // (TIME_SYNC_LORAWAN)
+
+Finish:
+  // check if calculated time is recent
+  if (timeIsValid(timestamp_sec)) {
+    // store time received from gateway
+    timesync_store(timestamp_sec, gwtime_sec);
+    timesync_store(timestamp_msec, gwtime_msec);
+    // success
+    rc = 1;
+  } else {
+    ESP_LOGW(TAG, "[%0.3f] Timeserver error: outdated time received",
+             millis() / 1000.0);
+  }
+
+Exit:
+  // end of time critical section: release app irq lock
+  unmask_user_IRQ();
+  // inform processing task
+  xTaskNotify(timeSyncProcTask, (rc ? rcv_seqNo : TIME_SYNC_END_FLAG),
+              eSetBits);
 }
 
-// create task for timeserver handshake processing, called from main.cpp
-void timesync_init() {
-  xTaskCreatePinnedToCore(process_timesync_req, // task function
-                          "timesync_req",       // name of task
-                          2048,                 // stack size of task
-                          (void *)1,            // task parameter
-                          3,                    // priority of the task
-                          &timeSyncReqTask,     // task handle
-                          1);                   // CPU core
-}
-
-#endif
+#endif // HAS_LORA

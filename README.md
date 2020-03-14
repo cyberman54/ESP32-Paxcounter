@@ -54,7 +54,7 @@ Depending on board hardware following features are supported:
 - LED (shows power & status)
 - OLED Display (shows detailed status)
 - RGB LED (shows colorized status)
-- Button (used to flip display pages if device has display, else sends alarm message)
+- Button (short press: flip display page / long press: send alarm message)
 - Silicon unique ID
 - Battery voltage monitoring
 - GPS (Generic serial NMEA, or Quectel L76 I2C)

@@ -33,7 +33,7 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 lmictask      1     2     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
-timesync_req  1     3     processes realtime time sync requests
+timesync_proc 1     3     processes realtime time sync requests
 irqhandler    1     1     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
@@ -87,7 +87,6 @@ hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
 SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
-time_t userUTCTime = 0;
 timesource_t timeSource = _unsynced;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
@@ -456,7 +455,7 @@ void setup() {
 
 // initialize gps time
 #if (HAS_GPS)
-  fetch_gpsTime();
+  get_gpstime();
 #endif
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
@@ -464,7 +463,7 @@ void setup() {
   clock_init();
 #endif
 
-#if (TIME_SYNC_LORASERVER)
+#if (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
   timesync_init(); // create loraserver time sync task
 #endif
 

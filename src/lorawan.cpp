@@ -23,29 +23,6 @@ RTC_NOINIT_ATTR int RTCseqnoUp, RTCseqnoDn;
 QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 
-// table of LORAWAN MAC messages sent by the network to the device
-// format: opcode, cmdname (max 19 chars), #bytes params
-// source: LoRaWAN 1.1 Specification (October 11, 2017)
-static const mac_t MACdn_table[] = {
-    {0x01, "ResetConf", 1},          {0x02, "LinkCheckAns", 2},
-    {0x03, "LinkADRReq", 4},         {0x04, "DutyCycleReq", 1},
-    {0x05, "RXParamSetupReq", 4},    {0x06, "DevStatusReq", 0},
-    {0x07, "NewChannelReq", 5},      {0x08, "RxTimingSetupReq", 1},
-    {0x09, "TxParamSetupReq", 1},    {0x0A, "DlChannelReq", 4},
-    {0x0B, "RekeyConf", 1},          {0x0C, "ADRParamSetupReq", 1},
-    {0x0D, "DeviceTimeAns", 5},      {0x0E, "ForceRejoinReq", 2},
-    {0x0F, "RejoinParamSetupReq", 1}};
-
-// table of LORAWAN MAC messages sent by the device to the network
-static const mac_t MACup_table[] = {
-    {0x01, "ResetInd", 1},        {0x02, "LinkCheckReq", 0},
-    {0x03, "LinkADRAns", 1},      {0x04, "DutyCycleAns", 0},
-    {0x05, "RXParamSetupAns", 1}, {0x06, "DevStatusAns", 2},
-    {0x07, "NewChannelAns", 1},   {0x08, "RxTimingSetupAns", 0},
-    {0x09, "TxParamSetupAns", 0}, {0x0A, "DlChannelAns", 1},
-    {0x0B, "RekeyInd", 1},        {0x0C, "ADRParamSetupAns", 0},
-    {0x0D, "DeviceTimeReq", 0},   {0x0F, "RejoinParamSetupAns", 1}};
-
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
 public:
@@ -98,9 +75,9 @@ void lora_setupForNetwork(bool preJoin) {
     if (!cfg.adrmode)
       LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
     // show current devaddr
-    ESP_LOGI(TAG, "DEVaddr: 0x%08X | Network ID: 0x%03X | Network Type: %d",
+    ESP_LOGI(TAG, "DEVaddr: 0x%08X | Network ID: 0x%06X | Network Type: %d",
              LMIC.devaddr, LMIC.netid & 0x001FFFFF, LMIC.netid & 0x00E00000);
-    ESP_LOGI(TAG, "RSSI: %d | SNR: %d", LMIC.rssi, LMIC.snr / 4);
+    ESP_LOGI(TAG, "RSSI: %d | SNR: %d", LMIC.rssi, (LMIC.snr + 2) / 4);
     ESP_LOGI(TAG, "Radio parameters: %s | %s | %s",
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
@@ -261,12 +238,22 @@ void lora_send(void *pvParameters) {
     // attempt to transmit payload
     else {
 
-      // switch (LMIC_sendWithCallback_strict(
-      switch (LMIC_sendWithCallback(
-          SendBuffer.MessagePort, SendBuffer.Message, SendBuffer.MessageSize,
-          (cfg.countermode & 0x02), myTxCallback, NULL)) {
+      switch (LMIC_setTxData2_strict(SendBuffer.MessagePort, SendBuffer.Message,
+                                     SendBuffer.MessageSize,
+                                     (cfg.countermode & 0x02))) {
 
       case LMIC_ERROR_SUCCESS:
+        // save current Fcnt to RTC RAM
+        RTCseqnoUp = LMIC.seqnoUp;
+        RTCseqnoDn = LMIC.seqnoDn;
+
+#if (TIME_SYNC_LORASERVER)
+        // if last packet sent was a timesync request, store TX timestamp
+        if (SendBuffer.MessagePort == TIMEPORT)
+          // store LMIC time when we started transmit of timesync request
+          timesync_store(osticks2ms(os_getTime()), timesync_tx);
+#endif
+
         ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
         break;
       case LMIC_ERROR_TX_BUSY:   // LMIC already has a tx message pending
@@ -369,56 +356,6 @@ void lora_enqueuedata(MessageBuffer_t *message) {
 
 void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
-#if (TIME_SYNC_LORAWAN)
-void IRAM_ATTR user_request_network_time_callback(void *pVoidUserUTCTime,
-                                                  int flagSuccess) {
-  // Explicit conversion from void* to uint32_t* to avoid compiler errors
-  time_t *pUserUTCTime = (time_t *)pVoidUserUTCTime;
-
-  // A struct that will be populated by LMIC_getNetworkTimeReference.
-  // It contains the following fields:
-  //  - tLocal: the value returned by os_GetTime() when the time
-  //            request was sent to the gateway, and
-  //  - tNetwork: the seconds between the GPS epoch and the time
-  //              the gateway received the time request
-  lmic_time_reference_t lmicTimeReference;
-
-  if (flagSuccess != 1) {
-    ESP_LOGW(TAG, "LoRaWAN network did not answer time request");
-    return;
-  }
-
-  // Populate lmic_time_reference
-  flagSuccess = LMIC_getNetworkTimeReference(&lmicTimeReference);
-  if (flagSuccess != 1) {
-    ESP_LOGW(TAG, "LoRaWAN time request failed");
-    return;
-  }
-
-  // mask application irq to ensure accurate timing
-  mask_user_IRQ();
-
-  // Update userUTCTime, considering the difference between the GPS and UTC
-  // time, and the leap seconds until year 2019
-  *pUserUTCTime = lmicTimeReference.tNetwork + 315964800;
-  // Current time, in ticks
-  ostime_t ticksNow = os_getTime();
-  // Time when the request was sent, in ticks
-  ostime_t ticksRequestSent = lmicTimeReference.tLocal;
-  // Add the delay between the instant the time was transmitted and
-  // the current time
-  time_t requestDelaySec = osticks2ms(ticksNow - ticksRequestSent) / 1000;
-
-  // Update system time with time read from the network
-  setMyTime(*pUserUTCTime + requestDelaySec, 0, _lora);
-
-finish:
-  // end of time critical section: release app irq lock
-  unmask_user_IRQ();
-
-} // user_request_network_time_callback
-#endif // TIME_SYNC_LORAWAN
-
 // LMIC lorawan stack task
 void lmictask(void *pvParameters) {
   configASSERT(((uint32_t)pvParameters) == 1);
@@ -467,6 +404,15 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   // process current event message
   switch (ev) {
+
+  case EV_TXCOMPLETE:
+    // -> processed in lora_send()
+    break;
+
+  case EV_RXCOMPLETE:
+    // -> processed in myRxCallback()
+    break;
+
   case EV_JOINING:
     // do the network-specific setup prior to join.
     lora_setupForNetwork(true);
@@ -475,12 +421,6 @@ void myEventCallback(void *pUserData, ev_t ev) {
   case EV_JOINED:
     // do the after join network-specific setup.
     lora_setupForNetwork(false);
-    break;
-
-  case EV_TXCOMPLETE:
-    // save current Fcnt to RTC RAM
-    RTCseqnoUp = LMIC.seqnoUp;
-    RTCseqnoDn = LMIC.seqnoDn;
     break;
 
   case EV_JOIN_TXCOMPLETE:
@@ -500,105 +440,68 @@ void myEventCallback(void *pUserData, ev_t ev) {
   ESP_LOGD(TAG, "%s", lmic_event_msg);
 }
 
-// receive message handler
+// event EV_RXCOMPLETE message handler
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                   size_t nMsg) {
 
-  // display type of received data
+  // display amount of received data
   if (nMsg)
     ESP_LOGI(TAG, "Received %u byte(s) of payload on port %u", nMsg, port);
   else if (port)
     ESP_LOGI(TAG, "Received empty message on port %u", port);
 
-  // list MAC messages, if any
-  uint8_t nMac = pMsg - &LMIC.frame[0];
-  if (port != MACPORT)
-    --nMac;
-  if (nMac) {
-    ESP_LOGI(TAG, "%u byte(s) downlink MAC commands", nMac);
-    // NOT WORKING YET
-    // whe need to unwrap the MAC command from LMIC.frame here
-    // mac_decode(LMIC.frame, nMac, MACdn_table, sizeof(MACdn_table) /
-    // sizeof(MACdn_table[0]));
-  }
-
-  if (LMIC.pendMacLen) {
-    ESP_LOGI(TAG, "%u byte(s) uplink MAC commands", LMIC.pendMacLen);
-    mac_decode(LMIC.pendMacData, LMIC.pendMacLen, MACup_table,
-               sizeof(MACup_table) / sizeof(MACup_table[0]));
-  }
-
   switch (port) {
 
-    // ignore mac messages
+// decode mac messages if we want to print those
+#if (VERBOSE)
   case MACPORT:
-    break;
+    // decode downlink MAC commands
+    if (LMIC.dataBeg)
+      mac_decode(LMIC.frame, LMIC.dataBeg, true);
+    // decode uplink MAC commands
+    if (LMIC.pendMacLen)
+      mac_decode(LMIC.pendMacData, LMIC.pendMacLen, false);
+    break; // do not fallthrough to default, we are done
+#endif
 
   // rcommand received -> call interpreter
   case RCMDPORT:
     rcommand(pMsg, nMsg);
-    break;
 
-  default:
-
+// timeserver answer -> call timesync processor
 #if (TIME_SYNC_LORASERVER)
-    // valid timesync answer -> call timesync processor
-    if (port == TIMEPORT) {
-      recv_timesync_ans(pMsg, nMsg);
-      break;
-    }
+  case TIMEPORT:
+    // get and store gwtime from payload
+    timesync_serverAnswer(const_cast<uint8_t *>(pMsg), nMsg);
 #endif
 
-    // unknown port -> display info
-    ESP_LOGI(TAG, "Received data on unsupported port %u", port);
+    // decode any piggybacked downlink MAC commands if we want to print those
+  default:
+#if (VERBOSE)
+    if (LMIC.dataBeg > 1)
+      mac_decode(LMIC.frame, LMIC.dataBeg - 1, true);
+#endif // VERBOSE
+
     break;
   } // switch
 }
 
-// transmit complete message handler
+/*
+// event EV_TXCOMPLETE message handler
 void myTxCallback(void *pUserData, int fSuccess) {
 
-#if (TIME_SYNC_LORASERVER)
-  // if last packet sent was a timesync request, store TX timestamp
-  if (LMIC.pendTxPort == TIMEPORT)
-    store_time_sync_req(osticks2ms(LMIC.txend)); // milliseconds
-#endif
+  uint8_t *const pMsg = (uint8_t *)pUserData;
+
+  // LMIC did successful transmit data
+  if (fSuccess) {
+    RTCseqnoUp = LMIC.seqnoUp;
+    RTCseqnoDn = LMIC.seqnoDn;
+  } else {
+    // LMIC could not transmit data
+    // -> error handling yet to come
+  }
 }
-
-// decode LORAWAN MAC message
-void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, const mac_t table[],
-                const uint8_t tablesize) {
-
-  if (!cmdlen)
-    return;
-
-  uint8_t foundcmd[cmdlen], cursor = 0;
-
-  while (cursor < cmdlen) {
-
-    int i = tablesize; // number of commands in table
-
-    while (i--) {
-      if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
-        cursor++;                           // strip 1 byte opcode
-        if ((cursor + table[i].params) <= cmdlen) {
-          memmove(foundcmd, cmd + cursor,
-                  table[i].params); // strip opcode from cmd array
-          cursor += table[i].params;
-          ESP_LOGD(TAG, "MAC command %s", table[i].cmdname);
-        } else
-          ESP_LOGD(TAG, "MAC command 0x%02X with missing parameter(s)",
-                   table[i].opcode);
-        break;   // command found -> exit table lookup loop
-      }          // end of command validation
-    }            // end of command table lookup loop
-    if (i < 0) { // command not found -> skip it
-      ESP_LOGD(TAG, "Unknown MAC command 0x%02X", cmd[cursor]);
-      cursor++;
-    }
-  } // command parsing loop
-
-} // mac_decode()
+*/
 
 const char *getSfName(rps_t rps) {
   const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
@@ -618,7 +521,7 @@ const char *getCrName(rps_t rps) {
 
 /*
 u1_t os_getBattLevel() {
-  
+
   //return values:
   //MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
   //MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
@@ -641,5 +544,49 @@ u1_t os_getBattLevel() {
 #endif
 } // getBattLevel()
 */
+
+#if (VERBOSE)
+// decode LORAWAN MAC message
+void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
+
+  if (!cmdlen)
+    return;
+
+  uint8_t foundcmd[cmdlen], cursor = 0;
+
+  // select CID resolve table
+  const mac_t *p;
+  p = is_down ? MACdn_table : MACup_table;
+  const int tablesize = is_down ? MACdn_tSize : MACup_tSize;
+  const String MACdir = is_down ? "-->" : "<--";
+
+  while (cursor < cmdlen) {
+
+    // get number of commands in CID table
+    int i = tablesize;
+
+    // lookup cmd in CID table
+    while (i--) {
+      if (cmd[cursor] == (p + i)->cid) { // lookup command in CID table
+        cursor++;                        // strip 1 byte CID
+        if ((cursor + (p + i)->params) <= cmdlen) {
+          memmove(foundcmd, cmd + cursor,
+                  (p + i)->params); // strip opcode from cmd array
+          cursor += (p + i)->params;
+          ESP_LOGD(TAG, "%s %s", MACdir, (p + i)->cmdname);
+        } else
+          ESP_LOGD(TAG, "%s MAC command 0x%02X with missing parameter(s)",
+                   MACdir, (p + i)->cid);
+        break;   // command found -> exit table lookup loop
+      }          // end of command validation
+    }            // end of command table lookup loop
+    if (i < 0) { // command not found -> skip it
+      ESP_LOGD(TAG, "%s Unknown MAC command 0x%02X", MACdir, cmd[cursor]);
+      cursor++;
+    }
+  } // command parsing loop
+
+} // mac_decode()
+#endif // VERBOSE
 
 #endif // HAS_LORA
