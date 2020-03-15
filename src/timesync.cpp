@@ -57,7 +57,8 @@ void timesync_request(void) {
 // task for processing time sync request
 void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
-  uint32_t rcv_seqNo = TIME_SYNC_END_FLAG, time_offset_ms;
+  uint32_t rcv_seqNo = TIME_SYNC_END_FLAG;
+  uint32_t time_offset_sec = 0, time_offset_ms = 0;
 
   //  this task is an endless loop, waiting in blocked mode, until it is
   //  unblocked by timesync_request(). It then waits to be notified from
@@ -88,13 +89,14 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
       SendPayload(TIMEPORT, prio_high);
 #elif (TIME_SYNC_LORAWAN) // ask network (requires LoRAWAN >= 1.0.3)
       LMIC_requestNetworkTime(timesync_serverAnswer, &time_sync_seqNo);
-      // trigger send to immediately get DevTimeAns on class A device
+      // trigger to immediately get DevTimeAns from class A device
       LMIC_sendAlive();
 #endif
       // wait until a timestamp was received
       if (xTaskNotifyWait(0x00, ULONG_MAX, &rcv_seqNo,
                           pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) {
-        ESP_LOGW(TAG, "[%0.3f] Timesync aborted: timed out", millis() / 1000.0);
+        ESP_LOGW(TAG, "[d%0.3f] Timesync aborted: timed out",
+                 millis() / 1000.0);
         goto Fail; // no timestamp received before timeout
       }
 
@@ -128,17 +130,20 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     mask_user_IRQ();
 
     // calculate average time offset over the summed up difference
-    // add msec from latest gateway time, and apply a compensation constant for
-    // processing times on node and gateway
     time_offset_ms /= TIME_SYNC_SAMPLES;
-    time_offset_ms +=
-        TIME_SYNC_FIXUP + timesync_timestamp[sample_idx - 1][gwtime_msec];
 
-    // calculate absolute UTC time: take latest timestamp received from
-    // gateway, convert to whole seconds, round to ceil, add fraction seconds
-    setMyTime(timesync_timestamp[sample_idx - 1][gwtime_sec] +
-                  time_offset_ms / 1000,
-              time_offset_ms % 1000, _lora);
+    // take latest timestamp received from gateway
+    // and add time difference rounded to whole seconds
+    time_offset_sec = timesync_timestamp[sample_idx - 1][gwtime_sec];
+    time_offset_sec += time_offset_ms / 1000;
+
+    // add milliseconds from latest gateway time, and apply a compensation
+    // constant for processing times on node and gateway, strip full seconds
+    time_offset_ms += timesync_timestamp[sample_idx - 1][gwtime_msec];
+    time_offset_ms += TIME_SYNC_FIXUP;
+    time_offset_ms %= 1000;
+
+    setMyTime(time_offset_sec, time_offset_ms, _lora);
 
     // send timesync end char to show timesync was successful
     payload.reset();
@@ -159,7 +164,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
 // store incoming timestamps
 void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
-  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d", millis() / 1000.0,
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", millis() / 1000.0,
            time_sync_seqNo, sample_idx, timestamp_type, timestamp);
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
@@ -171,14 +176,14 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   if (!timeSyncPending)
     return;
 
-  // mask application irq to ensure accurate timing
-  mask_user_IRQ();
-
   // store LMIC time when we received the timesync answer
   ostime_t rxTime = osticks2ms(os_getTime());
 
+  // mask application irq to ensure accurate timing
+  mask_user_IRQ();
+
   int rc = 0;
-  // cast back function void parameter to a pointer
+  // cast back void parameter to a pointer
   uint8_t *p = (uint8_t *)pUserData, rcv_seqNo = *p;
   uint16_t timestamp_msec = 0;
   uint32_t timestamp_sec = 0;
@@ -246,6 +251,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // Add delay between the instant the time was received on the gateway and the
   // current time on the node
   timestamp_msec = rxTime - lmicTime.tLocal;
+
   goto Finish;
 
 #endif // (TIME_SYNC_LORAWAN)
