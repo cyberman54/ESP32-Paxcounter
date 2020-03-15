@@ -103,10 +103,10 @@ void init_display(bool verbose) {
 
 #if (HAS_LORA)
       // generate DEVEUI as QR code and text
-      uint8_t buf[8];
+      uint8_t buf[8], *p = buf;
       char deveui[17];
       os_getDevEui((u1_t *)buf);
-      snprintf(deveui, 17, "%016llX", *((uint64_t *)&buf));
+      snprintf(deveui, 17, "%016llX", (*(uint64_t *)(p)));
 
       // display DEVEUI as QR code on the left
       oledSetContrast(&ssoled, 30);

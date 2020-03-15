@@ -178,30 +178,30 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   ostime_t rxTime = osticks2ms(os_getTime());
 
   int rc = 0;
-  uint8_t rcv_seqNo = *(uint8_t *)pUserData;
+  // cast back function void parameter to a pointer
+  uint8_t *p = (uint8_t *)pUserData, rcv_seqNo = *p;
   uint16_t timestamp_msec = 0;
   uint32_t timestamp_sec = 0;
 
 #if (TIME_SYNC_LORASERVER)
 
-  // pUserData: contains pointer to payload buffer
+  // pUserData: contains pointer (32bit) to payload buffer
   // flag: length of buffer
 
   // Store the instant the time request of the node was received on the gateway
   timesync_store(rxTime, timesync_rx);
 
-  //  parse timesync_answer:
-  //  byte    meaning
-  //  0       sequence number (taken from node's time_sync_req)
-  //  1..4    current second (from UTC epoch)
-  //  5       1/250ths fractions of current second
+  //  parse pUserData:
+  //  p       type      meaning
+  //  +0      uint8_t   sequence number (taken from node's time_sync_req)
+  //  +1      uint32_t  current second (from UTC epoch)
+  //  +4      uint8_t   1/250ths fractions of current second
 
   // swap byte order from msb to lsb, note: this is a platform dependent hack
-  timestamp_sec = __builtin_bswap32(*(uint32_t *)(pUserData + 1));
+  timestamp_sec = __builtin_bswap32(*(uint32_t *)(++p));
 
   // one step being 1/250th sec * 1000 = 4msec
-  timestamp_msec = *(uint8_t *)(pUserData + 5);
-  timestamp_msec *= 4;
+  timestamp_msec = *(p += 4) * 4;
 
   // if no time is available or spurious buffer then exit
   if (flag != TIME_SYNC_FRAME_LENGTH) {
@@ -218,7 +218,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
 #elif (TIME_SYNC_LORAWAN)
 
-  // pUserData: contains pointer to SeqNo
+  // pUserData: contains pointer to SeqNo (not needed here)
   // flag: indicates if we got a recent time from the network
 
   if (flag != 1) {
