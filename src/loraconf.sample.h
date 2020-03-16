@@ -1,7 +1,7 @@
 #ifndef __LORACONF_H__
 #define __LORACONF_H__
 
-#if(HAS_LORA)
+#if (HAS_LORA)
 
 /************************************************************
  * LMIC LoRaWAN configuration
@@ -10,16 +10,16 @@
  * and rename this file to src/loraconf.h
  *
  * You can configure you PaxCounter to activate via OTAA (recommended) or ABP.
- * In order to use ABP, uncomment (enable) the following line, 
+ * In order to use ABP, uncomment (enable) the following line,
  * otherwise, leave the line commented (disabled).
- * 
+ *
  *************************************************************/
 
 //#define LORA_ABP
 
 /************************************************************
  * OTAA configuration
- * 
+ *
  * Note that DEVEUI, APPEUI and APPKEY should all be specified in MSB format.
  * (This is different from standard LMIC-Arduino which expects DEVEUI and APPEUI
  * in LSB format.)
@@ -44,35 +44,38 @@ static const u1_t APPEUI[8] = {0x70, 0xB3, 0xD5, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static const u1_t APPKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-            
-#endif
 
+#endif
 
 /************************************************************
  * ABP configuration (for development)
- * 
+ *
  * Get your
  *   - Network Session Key (NWKSKEY)
  *   - App Session Key and your (APPSKEY)
  *   - Device Address (DEVADDR)
  * from TTN console and replace the example values below.
- * 
+ *
  * NOTE: Use MSB format (as displayed in TTN console, so you can cut & paste
  * from there)
  *
  ************************************************************/
 #ifdef LORA_ABP
 
-// ID of LoRaAlliance assigned Network (for a list, see e.g. here https://www.thethingsnetwork.org/docs/lorawan/prefix-assignments.html)
+// ID of LoRaAlliance assigned Network (for a list, see e.g. here
+// https://www.thethingsnetwork.org/docs/lorawan/prefix-assignments.html)
 static const u1_t NETID = 0x13; // TTN
 
-static const u1_t NWKSKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const u1_t NWKSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00};
 
-static const u1_t APPSKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const u1_t APPSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00};
 
-static const u4_t DEVADDR = 0x00000000; // <-- Change this address for every node!
+static const u4_t DEVADDR =
+    0x00000000; // <-- Change this address for every node!
 
 // set additional ABP parameters in loraconf_abp.cpp
 void setABPParamaters();
