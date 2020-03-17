@@ -226,19 +226,14 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // pUserData: contains pointer to SeqNo (not needed here)
   // flag: indicates if we got a recent time from the network
 
+  uint32_t delay_msec;
+  lmic_time_reference_t lmicTime;
+
   if (flag != 1) {
     ESP_LOGW(TAG, "[%0.3f] Network did not answer time request",
              millis() / 1000.0);
     goto Exit;
   }
-
-  // A struct that will be populated by LMIC_getNetworkTimeReference.
-  // It contains the following fields:
-  //  - tLocal: the value returned by os_GetTime() when the time
-  //            request was sent to the gateway, and
-  //  - tNetwork: the seconds between the GPS epoch and the time
-  //              the gateway received the time request
-  lmic_time_reference_t lmicTime;
 
   // Populate lmic_time_reference
   if ((LMIC_getNetworkTimeReference(&lmicTime)) != 1) {
@@ -247,10 +242,14 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   }
 
   // Calculate UTCTime, considering the difference between GPS and UTC time
+  // epoch, and the leap seconds
   timestamp_sec = lmicTime.tNetwork + GPS_UTC_DIFF;
-  // Add delay between the instant the time was received on the gateway and the
-  // current time on the node
-  timestamp_msec = rxTime - lmicTime.tLocal;
+
+  // Add the delay between the instant the time was transmitted and
+  // the current time
+  delay_msec = osticks2ms(os_getTime() - lmicTime.tLocal);
+  timestamp_sec += delay_msec / 1000;
+  timestamp_msec += delay_msec % 1000;
 
   goto Finish;
 
