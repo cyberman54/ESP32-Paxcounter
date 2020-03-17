@@ -31,6 +31,9 @@
 #define MY_OLED_SCL (15)
 #define MY_OLED_RST (16)
 
+// This board reports back the wrong I2C address, so we overwrite it here
+#define MY_OLED_ADDR 0x3C
+
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC
 #define LORA_IO1  (33)

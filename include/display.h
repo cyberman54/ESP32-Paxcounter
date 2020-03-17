@@ -8,7 +8,11 @@
 // settings for oled display library
 #define USE_BACKBUFFER 1
 #define MY_OLED OLED_128x64
-#define OLED_ADDR -1
+#ifdef MY_OLED_ADDR
+    #define OLED_ADDR MY_OLED_ADDR
+#else
+    #define OLED_ADDR -1
+#endif
 #define OLED_INVERT 0
 #define USE_HW_I2C 1
 
