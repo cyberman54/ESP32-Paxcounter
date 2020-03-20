@@ -2,25 +2,20 @@
 // upload_speed 921600
 // board m5stack-core-esp32
 
-// EXPERIMENTAL VERSION - NOT TESTED ON M5 HARDWARE YET
-
 #ifndef _M5CORE_H
 #define _M5CORE_H
 
 #include <stdint.h>
 
 #define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no M5 RA01 LoRa module
-
-// Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  SCK
 #define LORA_CS   SS
 #define LORA_MISO MISO
 #define LORA_MOSI MOSI
-#define LORA_RST  GPIO_NUM_36
-#define LORA_IRQ  GPIO_NUM_26
-#define LORA_IO1  GPIO_NUM_34 // must be externally wired on PCB!
+#define LORA_RST  GPIO_NUM_26
+#define LORA_IRQ  GPIO_NUM_36
+#define LORA_IO1  GPIO_NUM_34 // must be wired by you on PCB!
 #define LORA_IO2  LMIC_UNUSED_PIN
-
 
 // enable only if you want to store a local paxcount table on the device
 #define HAS_SDCARD  1      // this board has an SD-card-reader/writer

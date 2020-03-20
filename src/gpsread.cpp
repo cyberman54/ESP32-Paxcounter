@@ -10,8 +10,6 @@ static const char TAG[] = __FILE__;
 TinyGPSPlus gps;
 TinyGPSCustom gpstime(gps, "GPZDA", 1); // field 1 = UTC time
 static const String ZDA_Request = "$EIGPQ,ZDA*39\r\n";
-
-gpsStatus_t gps_status = {0};
 TaskHandle_t GpsTask;
 
 #ifdef GPS_SERIAL
@@ -92,7 +90,7 @@ bool gps_hasfix() {
 }
 
 // function to fetch current time from struct; note: this is costly
-time_t fetch_gpsTime(uint16_t *msec) {
+time_t get_gpstime(uint16_t *msec) {
 
   time_t time_sec = 0;
 
@@ -133,11 +131,11 @@ time_t fetch_gpsTime(uint16_t *msec) {
 
   return timeIsValid(time_sec);
 
-} // fetch_gpsTime()
+} // get_gpstime()
 
-time_t fetch_gpsTime(void) {
+time_t get_gpstime(void) {
   uint16_t msec;
-  return fetch_gpsTime(&msec);
+  return get_gpstime(&msec);
 }
 
 // GPS serial feed FreeRTos Task

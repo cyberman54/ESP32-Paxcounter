@@ -323,8 +323,14 @@ void setup() {
 #endif
 
 #ifdef HAS_SDCARD
-  if (sdcardInit())
+  if (sdcard_init())
     strcat_P(features, " SD");
+#endif
+
+#if (HAS_SDS011)
+    ESP_LOGI(TAG, "init fine-dust-sensor");
+    if ( sds011_init() )
+        strcat_P(features, " SDS");
 #endif
 
 #if (VENDORFILTER)
@@ -449,7 +455,7 @@ void setup() {
 
 // initialize gps time
 #if (HAS_GPS)
-  fetch_gpsTime();
+  get_gpstime();
 #endif
 
 #if (defined HAS_IF482 || defined HAS_DCF77)

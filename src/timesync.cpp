@@ -42,7 +42,7 @@ void timesync_init() {
 }
 
 // kickoff asnychronous timesync handshake
-void timesync_sendReq(void) {
+void timesync_request(void) {
   // exit if a timesync handshake is already running
   if (timeSyncPending)
     return;
@@ -57,10 +57,11 @@ void timesync_sendReq(void) {
 // task for processing time sync request
 void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
-  uint32_t rcv_seqNo = TIME_SYNC_END_FLAG, time_offset_ms;
+  uint32_t rcv_seqNo = TIME_SYNC_END_FLAG;
+  uint32_t time_offset_sec = 0, time_offset_ms = 0;
 
   //  this task is an endless loop, waiting in blocked mode, until it is
-  //  unblocked by timesync_sendReq(). It then waits to be notified from
+  //  unblocked by timesync_request(). It then waits to be notified from
   //  timesync_serverAnswer(), which is called from LMIC each time a timestamp
   //  from the timesource via LORAWAN arrived.
 
@@ -88,13 +89,14 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
       SendPayload(TIMEPORT, prio_high);
 #elif (TIME_SYNC_LORAWAN) // ask network (requires LoRAWAN >= 1.0.3)
       LMIC_requestNetworkTime(timesync_serverAnswer, &time_sync_seqNo);
-      // trigger send to immediately get DevTimeAns on class A device
+      // trigger to immediately get DevTimeAns from class A device
       LMIC_sendAlive();
 #endif
       // wait until a timestamp was received
       if (xTaskNotifyWait(0x00, ULONG_MAX, &rcv_seqNo,
                           pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) {
-        ESP_LOGW(TAG, "[%0.3f] Timesync aborted: timed out", millis() / 1000.0);
+        ESP_LOGW(TAG, "[d%0.3f] Timesync aborted: timed out",
+                 millis() / 1000.0);
         goto Fail; // no timestamp received before timeout
       }
 
@@ -128,17 +130,20 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     mask_user_IRQ();
 
     // calculate average time offset over the summed up difference
-    // add msec from latest gateway time, and apply a compensation constant for
-    // processing times on node and gateway
     time_offset_ms /= TIME_SYNC_SAMPLES;
-    time_offset_ms +=
-        TIME_SYNC_FIXUP + timesync_timestamp[sample_idx - 1][gwtime_msec];
 
-    // calculate absolute UTC time: take latest timestamp received from
-    // gateway, convert to whole seconds, round to ceil, add fraction seconds
-    setMyTime(timesync_timestamp[sample_idx - 1][gwtime_sec] +
-                  time_offset_ms / 1000,
-              time_offset_ms % 1000, _lora);
+    // take latest timestamp received from gateway
+    // and add time difference rounded to whole seconds
+    time_offset_sec = timesync_timestamp[sample_idx - 1][gwtime_sec];
+    time_offset_sec += time_offset_ms / 1000;
+
+    // add milliseconds from latest gateway time, and apply a compensation
+    // constant for processing times on node and gateway, strip full seconds
+    time_offset_ms += timesync_timestamp[sample_idx - 1][gwtime_msec];
+    time_offset_ms += TIME_SYNC_FIXUP;
+    time_offset_ms %= 1000;
+
+    setMyTime(time_offset_sec, time_offset_ms, _lora);
 
     // send timesync end char to show timesync was successful
     payload.reset();
@@ -158,8 +163,8 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 }
 
 // store incoming timestamps
-void timesync_storeReq(uint32_t timestamp, timesync_t timestamp_type) {
-  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: timestamp(t%d)=%d", millis() / 1000.0,
+void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", millis() / 1000.0,
            time_sync_seqNo, sample_idx, timestamp_type, timestamp);
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
@@ -171,34 +176,37 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   if (!timeSyncPending)
     return;
 
+  // store LMIC time when we received the timesync answer
+  ostime_t rxTime = osticks2ms(os_getTime());
+
   // mask application irq to ensure accurate timing
   mask_user_IRQ();
 
   int rc = 0;
-  uint8_t rcv_seqNo = *(uint8_t *)pUserData;
+  // cast back void parameter to a pointer
+  uint8_t *p = (uint8_t *)pUserData, rcv_seqNo = *p;
   uint16_t timestamp_msec = 0;
   uint32_t timestamp_sec = 0;
 
 #if (TIME_SYNC_LORASERVER)
 
-  // pUserData: contains pointer to payload buffer
+  // pUserData: contains pointer (32bit) to payload buffer
   // flag: length of buffer
 
-  // store LMIC time when we received the timesync answer
-  timesync_storeReq(osticks2ms(os_getTime()), timesync_rx);
+  // Store the instant the time request of the node was received on the gateway
+  timesync_store(rxTime, timesync_rx);
 
-  //  parse timesync_answer:
-  //  byte    meaning
-  //  0       sequence number (taken from node's time_sync_req)
-  //  1..4    current second (from UTC epoch)
-  //  5       1/250ths fractions of current second
+  //  parse pUserData:
+  //  p       type      meaning
+  //  +0      uint8_t   sequence number (taken from node's time_sync_req)
+  //  +1      uint32_t  current second (from UTC epoch)
+  //  +4      uint8_t   1/250ths fractions of current second
 
   // swap byte order from msb to lsb, note: this is a platform dependent hack
-  timestamp_sec = __builtin_bswap32(*(uint32_t *)(pUserData + 1));
+  timestamp_sec = __builtin_bswap32(*(uint32_t *)(++p));
 
   // one step being 1/250th sec * 1000 = 4msec
-  timestamp_msec = *(uint8_t *)(pUserData + 5);
-  timestamp_msec *= 4;
+  timestamp_msec = *(p += 4) * 4;
 
   // if no time is available or spurious buffer then exit
   if (flag != TIME_SYNC_FRAME_LENGTH) {
@@ -215,22 +223,17 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
 #elif (TIME_SYNC_LORAWAN)
 
-  // pUserData: contains pointer to SeqNo
+  // pUserData: contains pointer to SeqNo (not needed here)
   // flag: indicates if we got a recent time from the network
+
+  uint32_t delay_msec;
+  lmic_time_reference_t lmicTime;
 
   if (flag != 1) {
     ESP_LOGW(TAG, "[%0.3f] Network did not answer time request",
              millis() / 1000.0);
     goto Exit;
   }
-
-  // A struct that will be populated by LMIC_getNetworkTimeReference.
-  // It contains the following fields:
-  //  - tLocal: the value returned by os_GetTime() when the time
-  //            request was sent to the gateway, and
-  //  - tNetwork: the seconds between the GPS epoch and the time
-  //              the gateway received the time request
-  lmic_time_reference_t lmicTime;
 
   // Populate lmic_time_reference
   if ((LMIC_getNetworkTimeReference(&lmicTime)) != 1) {
@@ -239,9 +242,15 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   }
 
   // Calculate UTCTime, considering the difference between GPS and UTC time
+  // epoch, and the leap seconds
   timestamp_sec = lmicTime.tNetwork + GPS_UTC_DIFF;
-  // Add delay between the instant the time was transmitted and the current time
-  timestamp_msec = osticks2ms(os_getTime() - lmicTime.tLocal);
+
+  // Add the delay between the instant the time was transmitted and
+  // the current time
+  delay_msec = osticks2ms(os_getTime() - lmicTime.tLocal);
+  timestamp_sec += delay_msec / 1000;
+  timestamp_msec += delay_msec % 1000;
+
   goto Finish;
 
 #endif // (TIME_SYNC_LORAWAN)
@@ -250,8 +259,8 @@ Finish:
   // check if calculated time is recent
   if (timeIsValid(timestamp_sec)) {
     // store time received from gateway
-    timesync_storeReq(timestamp_sec, gwtime_sec);
-    timesync_storeReq(timestamp_msec, gwtime_msec);
+    timesync_store(timestamp_sec, gwtime_sec);
+    timesync_store(timestamp_msec, gwtime_msec);
     // success
     rc = 1;
   } else {

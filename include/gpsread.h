@@ -20,7 +20,7 @@ int gps_config();
 bool gps_hasfix();
 void gps_storelocation(gpsStatus_t *gps_store);
 void gps_loop(void *pvParameters);
-time_t fetch_gpsTime(uint16_t *msec);
-time_t fetch_gpsTime(void);
+time_t get_gpstime(uint16_t *msec);
+time_t get_gpstime(void);
 
 #endif
