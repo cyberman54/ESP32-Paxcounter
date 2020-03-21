@@ -63,9 +63,11 @@ RGBColor rgb_hsl2rgb(float h, float s, float l) {
 }
 
 void rgb_set_color(uint16_t hue) {
+  int i = RGB_LED_COUNT;
   if (hue == COLOR_NONE) {
     // Off
-    rgb_led[0] = Rgb(0, 0, 0);
+    while (i--)
+      rgb_led[i] = Rgb(0, 0, 0);
   } else {
     // see http://www.workwithcolor.com/blue-color-hue-range-01.htm
     // H (is color from 0..360) should be between 0.0 and 1.0
@@ -74,7 +76,8 @@ void rgb_set_color(uint16_t hue) {
     // cfg.rgblum is between 0 and 100 (percent)
     RGBColor target = rgb_hsl2rgb(hue / 360.0f, 1.0f, 0.005f * cfg.rgblum);
     // uint32_t color = target.R<<16 | target.G<<8 | target.B;
-    rgb_led[0] = Rgb(target.R, target.G, target.B);
+    while (i--)
+      rgb_led[i] = Rgb(target.R, target.G, target.B);
   }
   // Show
   rgb_led.show();
@@ -211,7 +214,7 @@ void ledLoop(void *parameter) {
     }
     // give yield to CPU
     delay(2);
-  }                         // while(1)
-};                          // ledloop()
+  } // while(1)
+};  // ledloop()
 
 #endif // #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)

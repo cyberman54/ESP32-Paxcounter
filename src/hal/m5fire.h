@@ -38,8 +38,9 @@
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
-#define HAS_LED NOT_A_PIN // no on board LED (?)
-#define HAS_RGB_LED SmartLed rgb_led(LED_SK6812, 10, GPIO_NUM_15) // LED_SK6812 RGB LED on GPIO15
+#define HAS_LED NOT_A_PIN // no on board LED
+#define RGB_LED_COUNT 5 // we use 5 of 10 LEDs (1 side)
+#define HAS_RGB_LED SmartLed rgb_led(LED_SK6812, RGB_LED_COUNT, GPIO_NUM_15) // LED_SK6812 RGB LED on GPIO15
 #define HAS_BUTTON (39) // on board button A
 
 // GPS settings
