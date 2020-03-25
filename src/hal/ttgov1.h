@@ -37,6 +37,6 @@
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC
 #define LORA_IO1  (33)
-#define LORA_IO2  LMIC_UNUSED_PIN
+#define LORA_IO2  (32)  // ref.:  https://www.thethingsnetwork.org/forum/t/big-esp32-sx127x-topic-part-3/18436
 
 #endif
