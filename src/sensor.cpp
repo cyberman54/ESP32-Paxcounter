@@ -1,5 +1,6 @@
 // Basic Config
 #include "globals.h"
+#include "sensor.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;

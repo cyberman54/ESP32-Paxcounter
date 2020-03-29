@@ -6,16 +6,9 @@
 #include "TimeLib.h"
 #include "irqhandler.h"
 #include "timesync.h"
-
-#if (HAS_GPS)
 #include "gpsread.h"
-#endif
-
-#ifdef HAS_IF482
 #include "if482.h"
-#elif defined HAS_DCF77
 #include "dcf77.h"
-#endif
 
 extern const char timeSetSymbols[];
 extern Ticker timesyncer;

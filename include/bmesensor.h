@@ -1,8 +1,11 @@
 #ifndef _BMESENSOR_H
 #define _BMESENSOR_H
 
-#include "globals.h"
 #include <Wire.h>
+
+#include "globals.h"
+#include "irqhandler.h"
+#include "configmanager.h"
 
 #ifdef HAS_BME680
 #include <bsec.h>

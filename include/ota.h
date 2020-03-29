@@ -4,7 +4,9 @@
 #ifdef USE_OTA
 
 #include "globals.h"
-#include <ss_oled.h>
+#include "led.h"
+#include "display.h"
+
 #include <Update.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>

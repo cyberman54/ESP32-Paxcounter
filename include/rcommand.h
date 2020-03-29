@@ -1,20 +1,19 @@
 #ifndef _RCOMMAND_H
 #define _RCOMMAND_H
 
+#include <rom/rtc.h>
+
 #include "senddata.h"
 #include "cyclic.h"
 #include "configmanager.h"
-#if(HAS_LORA)
 #include "lorawan.h"
-#endif
+#include "sensor.h"
 #include "macsniff.h"
 #include "wifiscan.h"
-#include <rom/rtc.h>
 #include "cyclic.h"
 #include "timekeeper.h"
-#if(TIME_SYNC_LORASERVER)
 #include "timesync.h"
-#endif
+#include "blescan.h"
 
 // table of remote commands and assigned functions
 typedef struct {

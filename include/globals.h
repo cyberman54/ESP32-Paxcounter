@@ -134,42 +134,4 @@ extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;
 
-// application includes
-#include "led.h"
-#include "payload.h"
-#include "blescan.h"
-#include "power.h"
-
-#if (HAS_GPS)
-#include "gpsread.h"
-#endif
-
-#if (HAS_LORA)
-#include "lorawan.h"
-#endif
-
-#ifdef HAS_DISPLAY
-#include "display.h"
-#endif
-
-#ifdef HAS_MATRIX_DISPLAY
-#include "ledmatrixdisplay.h"
-#endif
-
-#ifdef HAS_BUTTON
-#include "button.h"
-#endif
-
-#ifdef HAS_ANTENNA_SWITCH
-#include "antenna.h"
-#endif
-
-#if (HAS_SENSORS)
-#include "sensor.h"
-#endif
-
-#if (HAS_BME)
-#include "bmesensor.h"
-#endif
-
 #endif

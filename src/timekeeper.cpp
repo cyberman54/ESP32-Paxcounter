@@ -1,5 +1,4 @@
 #include "timekeeper.h"
-#include "paxcounter.conf"
 
 #if !(HAS_LORA)
 #if (TIME_SYNC_LORASERVER)

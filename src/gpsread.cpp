@@ -1,6 +1,7 @@
 #if (HAS_GPS)
 
 #include "globals.h"
+#include "gpsread.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;

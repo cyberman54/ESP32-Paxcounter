@@ -13,8 +13,6 @@ accept this.
 
 */
 
-#if (HAS_LORA)
-
 #if (TIME_SYNC_LORASERVER) && (TIME_SYNC_LORAWAN)
 #error Duplicate timesync method selected. You must select either LORASERVER or LORAWAN timesync.
 #endif
@@ -275,5 +273,3 @@ Exit:
   xTaskNotify(timeSyncProcTask, (rc ? rcv_seqNo : TIME_SYNC_END_FLAG),
               eSetBits);
 }
-
-#endif // HAS_LORA

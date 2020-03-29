@@ -1,6 +1,7 @@
 #ifdef HAS_MATRIX_DISPLAY
 
 #include "globals.h"
+#include "ledmatrixdisplay.h"
 
 #define MATRIX_DISPLAY_PAGES (2) // number of display pages
 #define LINE_DIAGRAM_DIVIDER (2) // scales pax numbers to led rows
