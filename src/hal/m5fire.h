@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-//#define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no M5 RA01 LoRa module
+#define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no M5 RA01 LoRa module
 #define LORA_SCK  SCK
 #define LORA_CS   SS
 #define LORA_MISO MISO
@@ -19,7 +19,7 @@
 
 
 // enable only if you want to store a local paxcount table on the device
-//#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
 #define SDCARD_CS    GPIO_NUM_4
 #define SDCARD_MOSI  MOSI
 #define SDCARD_MISO  MISO
@@ -52,7 +52,7 @@
 #define MY_DISPLAY_INVERT 1
 
 // setting for M5 display
-#define ILI9341_DRIVER
+#define ILI9341_DRIVER 1
 #define M5STACK // needed for TFT driver
 
 #define TFT_MISO MISO  // SPI

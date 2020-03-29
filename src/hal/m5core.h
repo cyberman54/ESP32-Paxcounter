@@ -51,7 +51,7 @@
 #define MY_DISPLAY_INVERT 1
 
 // setting for M5 display
-#define ILI9341_DRIVER
+#define ILI9341_DRIVER 1
 #define M5STACK // needed for TFT driver
 
 #define TFT_MISO MISO  // SPI
