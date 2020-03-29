@@ -49,7 +49,6 @@
 // Display Settings
 #define MY_DISPLAY_WIDTH 320
 #define MY_DISPLAY_HEIGHT 240
-#define MY_DISPLAY_INVERT 1
 
 // setting for M5 display
 #define ILI9341_DRIVER 1
@@ -63,9 +62,7 @@
 #define TFT_RST  GPIO_NUM_33  // Reset
 #define TFT_BL   GPIO_NUM_32  // LED back-light
 
-//#define USE_HSPI_PORT
-#define TFT_SDA_READ
-#define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
+//#define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
 //#define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
 
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
@@ -78,9 +75,6 @@
 #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 #define SMOOTH_FONT
 
-#define SPI_FREQUENCY  27000000
-
-// Optional reduced SPI frequency for reading TFT
-#define SPI_READ_FREQUENCY  5000000
+#define SPI_FREQUENCY  40000000
 
 #endif

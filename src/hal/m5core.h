@@ -48,7 +48,6 @@
 // Display Settings
 #define MY_DISPLAY_WIDTH 320
 #define MY_DISPLAY_HEIGHT 240
-#define MY_DISPLAY_INVERT 1
 
 // setting for M5 display
 #define ILI9341_DRIVER 1
