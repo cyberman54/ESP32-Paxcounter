@@ -48,7 +48,7 @@ void timesync_request(void) {
     return;
   // start timesync handshake
   else {
-    ESP_LOGI(TAG, "[%0.3f] Timeserver sync request seqNo#%d started",
+    ESP_LOGI(TAG, "[%0.3f] Timeserver sync request started, seqNo#%d",
              millis() / 1000.0, time_sync_seqNo);
     xTaskNotifyGive(timeSyncProcTask); // unblock timesync task
   }
