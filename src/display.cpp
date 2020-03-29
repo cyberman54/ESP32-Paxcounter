@@ -33,7 +33,6 @@ FONT_STRETCHED: 16x32px = 8 chars / line
 
 // Basic Config
 #include "globals.h"
-#include <ss_oled.h>
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
 // local Tag for logging
@@ -43,36 +42,55 @@ static const char TAG[] = __FILE__;
 const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 uint8_t DisplayIsOn = 0;
-uint8_t displaybuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
-static uint8_t plotbuf[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8] = {0};
+uint8_t displaybuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
+static uint8_t plotbuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 
 QRCode qrcode;
+
+#if (HAS_DISPLAY) == 1
 SSOLED ssoled;
+#endif
 
-void setup_display(int contrast) {
-  int rc = oledInit(&ssoled, MY_OLED, OLED_ADDR, DISPLAY_FLIP, OLED_INVERT,
-                    USE_HW_I2C, MY_OLED_SDA, MY_OLED_SCL, MY_OLED_RST,
+void dp_setup(int contrast) {
+
+#if (HAS_DISPLAY) == 1
+  int rc = oledInit(&ssoled, MY_DISPLAY_TYPE, OLED_ADDR, MY_DISPLAY_FLIP,
+                    MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA, MY_DISPLAY_SCL,
+                    MY_DISPLAY_RST,
                     400000L); // use standard I2C bus at 400Khz
-
   assert(rc != OLED_NOT_FOUND);
 
   // set display buffer
   oledSetBackBuffer(&ssoled, displaybuf);
-  if (contrast)
-    oledSetContrast(&ssoled, contrast);
+
+#elif (HAS_DISPLAY) == 2
+
+  int rc =
+      spilcdInit(MY_DISPLAY_TYPE, 0, MY_DISPLAY_INVERT, MY_DISPLAY_FLIP, 32000000,
+                 MY_DISPLAY_CS, MY_DISPLAY_DC, MY_DISPLAY_RST, MY_DISPLAY_BL,
+                 MY_DISPLAY_MISO, MY_DISPLAY_MOSI, MY_DISPLAY_CLK);
+
+  assert(rc == 0);
+
+  // set display buffer
+  spilcdAllocBackbuffer();
+
+#endif
 
   // clear display
-  oledFill(&ssoled, 0, 1);
+  dp_clear();
+  if (contrast)
+    dp_contrast(contrast);
 }
 
-void init_display(bool verbose) {
+void dp_init(bool verbose) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
 
-    setup_display(DISPLAYCONTRAST);
+    dp_setup(DISPLAYCONTRAST);
 
     if (verbose) {
 
@@ -98,7 +116,7 @@ void init_display(bool verbose) {
       // give user some time to read or take picture
       dp_dump(displaybuf);
       delay(2000);
-      oledFill(&ssoled, 0x00, 1);
+      dp_clear();
 #endif // VERBOSE
 
 #if (HAS_LORA)
@@ -109,7 +127,7 @@ void init_display(bool verbose) {
       snprintf(deveui, 17, "%016llX", (*(uint64_t *)(p)));
 
       // display DEVEUI as QR code on the left
-      oledSetContrast(&ssoled, 30);
+      dp_contrast(30);
       dp_printqr(3, 3, deveui);
 
       // display DEVEUI as plain text on the right
@@ -121,26 +139,26 @@ void init_display(bool verbose) {
       // give user some time to read or take picture
       dp_dump(displaybuf);
       delay(8000);
-      oledSetContrast(&ssoled, DISPLAYCONTRAST);
-      oledFill(&ssoled, 0x00, 1);
+      dp_contrast(DISPLAYCONTRAST);
+      dp_clear();
 #endif // HAS_LORA
 
     } // verbose
 
-    oledPower(&ssoled, cfg.screenon); // set display off if disabled
+    dp_power(cfg.screenon); // set display off if disabled
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   }                     // mutex
-} // init_display
+} // dp_init
 
-void refreshTheDisplay(bool nextPage) {
+void dp_refresh(bool nextPage) {
 
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
 #endif
 
   // update histogram
-  oledPlotCurve(macs.size(), false);
+  dp_plotCurve(macs.size(), false);
 
   // if display is switched off we don't refresh it to relax cpu
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
@@ -156,7 +174,7 @@ void refreshTheDisplay(bool nextPage) {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
       DisplayIsOn = cfg.screenon;
-      oledPower(&ssoled, cfg.screenon);
+      dp_power(cfg.screenon);
     }
 
 #ifndef HAS_BUTTON
@@ -167,7 +185,7 @@ void refreshTheDisplay(bool nextPage) {
     }
 #endif
 
-    draw_page(t, nextPage);
+    dp_drawPage(t, nextPage);
     dp_dump(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -175,19 +193,7 @@ void refreshTheDisplay(bool nextPage) {
   } // mutex
 } // refreshDisplay()
 
-void shutdown_display(void) {
-  // block i2c bus access
-  if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
-  else {
-    cfg.screenon = 0;
-    oledShutdown();
-    delay(DISPLAYREFRESH_MS / 1000 * 1.1);
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }
-}
-
-void draw_page(time_t t, bool nextpage) {
+void dp_drawPage(time_t t, bool nextpage) {
 
   // write display content to display buffer
   // nextpage = true -> flip 1 page
@@ -206,7 +212,7 @@ start:
 
   if (nextpage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
-    oledFill(&ssoled, 0, 1);
+    dp_clear();
   }
 
   switch (DisplayPage) {
@@ -383,7 +389,7 @@ start:
     // page 6: blank screen
   case 6:
 #ifdef HAS_BUTTON
-    oledFill(&ssoled, 0, 1);
+    dp_clear();
     break;
 #else // don't show blank page if we are unattended
     DisplayPage++; // next page
@@ -394,7 +400,7 @@ start:
 
   } // switch
 
-} // draw_page
+} // dp_drawPage
 
 // display helper functions
 void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
@@ -420,13 +426,72 @@ void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
     len = vsnprintf(temp, len + 1, format, arg);
   }
   va_end(arg);
+#if (HAS_DISPLAY) == 1
   oledWriteString(&ssoled, 0, x, y, temp, font, inv, false);
+#elif (HAS_DISPLAY) == 2
+                   /*
+                     if (font = 0 || font == 1)
+                       spilcdWriteStringFast(x, y, temp, MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR,
+                                             font);
+                     else
+                     */
+  spilcdWriteString(x, y, temp, MY_DISPLAY_BGCOLOR, MY_DISPLAY_FGCOLOR, font,
+                    1);
+#endif
   if (temp != loc_buf) {
     free(temp);
   }
 }
 
-void dp_dump(uint8_t *pBuffer) { oledDumpBuffer(&ssoled, pBuffer); }
+void dp_dump(uint8_t *pBuffer) {
+#if (HAS_DISPLAY) == 1
+  oledDumpBuffer(&ssoled, pBuffer);
+#elif (HAS_DISPLAY) == 2
+  spilcdShowBuffer(0, 0, MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
+#endif
+}
+
+void dp_clear() {
+#if (HAS_DISPLAY) == 1
+  oledFill(&ssoled, 0, 1);
+#elif (HAS_DISPLAY) == 2
+  spilcdFill(0, 1);
+  spilcdScrollReset();
+#endif
+}
+
+void dp_contrast(uint8_t contrast) {
+#if (HAS_DISPLAY) == 1
+  oledSetContrast(&ssoled, contrast);
+#elif (HAS_DISPLAY) == 2
+  // to come
+#endif
+}
+
+void dp_power(uint8_t screenon) {
+#if (HAS_DISPLAY) == 1
+  oledPower(&ssoled, screenon);
+#elif (HAS_DISPLAY) == 2
+  // to come
+#endif
+}
+
+void dp_shutdown(void) {
+#if (HAS_DISPLAY) == 1
+  // block i2c bus access
+  if (!I2C_MUTEX_LOCK())
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+  else {
+    cfg.screenon = 0;
+    oledShutdown(&ssoled);
+    delay(DISPLAYREFRESH_MS / 1000 * 1.1);
+    I2C_MUTEX_UNLOCK(); // release i2c bus access
+  }
+#elif (HAS_DISPLAY) == 2
+  spilcdShutdown();
+  spilcdFreeBackbuffer();
+#endif
+}
 
 void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
   uint8_t qrcodeData[qrcode_getBufferSize(QR_VERSION)];
@@ -436,35 +501,39 @@ void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
   for (uint16_t y = 0; y < qrcode.size; y++)
     for (uint16_t x = 0; x < qrcode.size; x++)
       if (!qrcode_getModule(&qrcode, x, y)) // "black"
-        oledfillRect(x * QR_SCALEFACTOR + offset_x,
-                     y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
-                     QR_SCALEFACTOR, false);
+        dp_fillRect(x * QR_SCALEFACTOR + offset_x,
+                    y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
+                    QR_SCALEFACTOR, false);
   // draw horizontal frame lines
-  oledfillRect(0, 0, qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y,
-               false);
-  oledfillRect(0, qrcode.size * QR_SCALEFACTOR + offset_y,
-               qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y, false);
+  dp_fillRect(0, 0, qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y,
+              false);
+  dp_fillRect(0, qrcode.size * QR_SCALEFACTOR + offset_y,
+              qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y, false);
   // draw vertical frame lines
-  oledfillRect(0, 0, offset_x, qrcode.size * QR_SCALEFACTOR + 2 * offset_y,
-               false);
-  oledfillRect(qrcode.size * QR_SCALEFACTOR + offset_x, 0, offset_x,
-               qrcode.size * QR_SCALEFACTOR + 2 * offset_y, false);
+  dp_fillRect(0, 0, offset_x, qrcode.size * QR_SCALEFACTOR + 2 * offset_y,
+              false);
+  dp_fillRect(qrcode.size * QR_SCALEFACTOR + offset_x, 0, offset_x,
+              qrcode.size * QR_SCALEFACTOR + 2 * offset_y, false);
 }
 
-void oledfillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
-                  uint8_t bRender) {
+void dp_fillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
+                 uint8_t bRender) {
+#if (HAS_DISPLAY) == 1
   for (uint16_t xi = x; xi < x + width; xi++)
     oledDrawLine(&ssoled, xi, y, xi, y + height - 1, bRender);
+#elif (HAS_DISPLAY) == 2
+  spilcdRectangle(x, y, width, height, MY_DISPLAY_BGCOLOR, MY_DISPLAY_FGCOLOR, 1, 1);
+#endif
 }
 
-int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
-                  const uint8_t dot) {
+int dp_drawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
+                 const uint8_t dot) {
 
-  if (x > DISPLAY_WIDTH || y > DISPLAY_HEIGHT)
+  if (x > MY_DISPLAY_WIDTH || y > MY_DISPLAY_HEIGHT)
     return -1;
 
   uint8_t bit = y & 7;
-  uint16_t idx = y / 8 * DISPLAY_WIDTH + x;
+  uint16_t idx = y / 8 * MY_DISPLAY_WIDTH + x;
 
   buf[idx] &= ~(1 << bit); // clear pixel
   if (dot)
@@ -473,8 +542,8 @@ int oledDrawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
   return 0;
 }
 
-void oledScrollBufferHorizontal(uint8_t *buf, const uint16_t width,
-                                const uint16_t height, bool left) {
+void dp_scrollHorizontal(uint8_t *buf, const uint16_t width,
+                         const uint16_t height, bool left) {
 
   uint16_t col, page, idx = 0;
 
@@ -496,17 +565,17 @@ void oledScrollBufferHorizontal(uint8_t *buf, const uint16_t width,
   }
 }
 
-void oledScrollBufferVertical(uint8_t *buf, const uint16_t width,
-                              const uint16_t height, int offset) {
+void dp_scrollVertical(uint8_t *buf, const uint16_t width,
+                       const uint16_t height, int offset) {
 
   uint64_t buf_col;
 
   if (!offset)
     return; // nothing to do
 
-  for (uint16_t col = 0; col < DISPLAY_WIDTH; col++) {
+  for (uint16_t col = 0; col < MY_DISPLAY_WIDTH; col++) {
     // convert column bytes from display buffer to uint64_t
-    buf_col = *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8];
+    buf_col = *(uint64_t *)&buf[col * MY_DISPLAY_HEIGHT / 8];
 
     if (offset > 0) // scroll down
       buf_col <<= offset;
@@ -514,11 +583,11 @@ void oledScrollBufferVertical(uint8_t *buf, const uint16_t width,
       buf_col >>= abs(offset);
 
     // write back uint64_t to uint8_t display buffer
-    *(uint64_t *)&buf[col * DISPLAY_HEIGHT / 8] = buf_col;
+    *(uint64_t *)&buf[col * MY_DISPLAY_HEIGHT / 8] = buf_col;
   }
 }
 
-void oledPlotCurve(uint16_t count, bool reset) {
+void dp_plotCurve(uint16_t count, bool reset) {
 
   static uint16_t last_count = 0, col = 0, row = 0;
   uint16_t v_scroll = 0;
@@ -526,26 +595,26 @@ void oledPlotCurve(uint16_t count, bool reset) {
   if ((last_count == count) && !reset)
     return;
 
-  if (reset) {                   // next count cycle?
-    if (col < DISPLAY_WIDTH - 1) // matrix not full -> increment column
+  if (reset) {                      // next count cycle?
+    if (col < MY_DISPLAY_WIDTH - 1) // matrix not full -> increment column
       col++;
     else // matrix full -> scroll left 1 dot
-      oledScrollBufferHorizontal(plotbuf, DISPLAY_WIDTH, DISPLAY_HEIGHT, true);
+      dp_scrollHorizontal(plotbuf, MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT, true);
 
   } else // clear current dot
-    oledDrawPixel(plotbuf, col, row, 0);
+    dp_drawPixel(plotbuf, col, row, 0);
 
   // scroll down, if necessary
-  while ((count - v_scroll) > DISPLAY_HEIGHT - 1)
+  while ((count - v_scroll) > MY_DISPLAY_HEIGHT - 1)
     v_scroll++;
   if (v_scroll)
-    oledScrollBufferVertical(plotbuf, DISPLAY_WIDTH, DISPLAY_HEIGHT, v_scroll);
+    dp_scrollVertical(plotbuf, MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT, v_scroll);
 
   // set new dot
-  // row = DISPLAY_HEIGHT - 1 - (count - v_scroll) % DISPLAY_HEIGHT;
-  row = DISPLAY_HEIGHT - 1 - count - v_scroll;
+  // row = MY_DISPLAY_HEIGHT - 1 - (count - v_scroll) % MY_DISPLAY_HEIGHT;
+  row = MY_DISPLAY_HEIGHT - 1 - count - v_scroll;
   last_count = count;
-  oledDrawPixel(plotbuf, col, row, 1);
+  dp_drawPixel(plotbuf, col, row, 1);
 }
 
 #endif // HAS_DISPLAY

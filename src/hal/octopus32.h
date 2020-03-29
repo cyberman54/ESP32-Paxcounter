@@ -44,9 +44,9 @@
 
 // Pins for I2C interface of OLED Display
 #define HAS_DISPLAY 1
-//#define DISPLAY_FLIP  1 // uncomment this for rotated display 
-#define MY_OLED_SDA (23)
-#define MY_OLED_SCL (22)
-#define MY_OLED_RST NOT_A_PIN 
+//#define MY_DISPLAY_FLIP  1 // uncomment this for rotated display 
+#define MY_DISPLAY_SDA (23)
+#define MY_DISPLAY_SCL (22)
+#define MY_DISPLAY_RST NOT_A_PIN 
 
 #endif

@@ -5,24 +5,14 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-void i2c_init(void) {
-#ifdef HAS_DISPLAY
-  Wire.begin(MY_OLED_SDA, MY_OLED_SCL, 400000);
-#else
-  Wire.begin(SDA, SCL, 400000);
-#endif
-}
+void i2c_init(void) { 
+  Wire.begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL, 400000); }
 
 void i2c_deinit(void) {
   Wire.~TwoWire(); // shutdown/power off I2C hardware
-#ifdef HAS_DISPLAY
-  // to save power, because Wire.end() enables pullups
-  pinMode(MY_OLED_SDA, INPUT);
-  pinMode(MY_OLED_SCL, INPUT);
-#else
-  pinMode(SDA, INPUT);
-  pinMode(SCL, INPUT);
-#endif
+  // configure pins as input to save power, because Wire.end() enables pullups
+  pinMode(MY_DISPLAY_SDA, INPUT);
+  pinMode(MY_DISPLAY_SCL, INPUT);
 }
 
 int i2c_scan(void) {

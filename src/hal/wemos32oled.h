@@ -10,10 +10,10 @@
 #define HAS_LED NOT_A_PIN // no LED
 
 #define HAS_DISPLAY 1
-#define MY_OLED_SDA (5)
-#define MY_OLED_SCL (4)
-#define MY_OLED_RST NOT_A_PIN
-#define DISPLAY_FLIP  1 // use if display is rotated
+#define MY_DISPLAY_SDA (5)
+#define MY_DISPLAY_SCL (4)
+#define MY_DISPLAY_RST NOT_A_PIN
+#define MY_DISPLAY_FLIP  1 // use if display is rotated
 
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 

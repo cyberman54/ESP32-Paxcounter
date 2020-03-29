@@ -23,7 +23,7 @@ void button_init(int pin) {
 
   b->setOnClicked([]() {
 #ifdef HAS_DISPLAY
-    refreshTheDisplay(true); // switch to next display page
+    dp_refresh(true); // switch to next display page
 #endif
 #ifdef HAS_MATRIX_DISPLAY
     refreshTheMatrixDisplay(true); // switch to next display page

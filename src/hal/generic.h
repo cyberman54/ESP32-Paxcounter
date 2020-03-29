@@ -63,7 +63,7 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 1
-//#define DISPLAY_FLIP  1 // use if display is rotated
+//#define MY_DISPLAY_FLIP  1 // use if display is rotated
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
@@ -77,12 +77,12 @@
 #define GPS_INT GPIO_NUM_13 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO13
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (4)
-#define MY_OLED_SCL (15)
-#define MY_OLED_RST (16)
+#define MY_DISPLAY_SDA (4)
+#define MY_DISPLAY_SCL (15)
+#define MY_DISPLAY_RST (16)
 
 // Settings for on board DS3231 RTC chip
-#define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
+#define HAS_RTC MY_DISPLAY_SDA, MY_DISPLAY_SCL // SDA, SCL
 #define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
 
 // Settings for IF482 interface

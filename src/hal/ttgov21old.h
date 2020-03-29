@@ -28,14 +28,14 @@
 #define SDCARD_SCLK  (14)
 
 #define HAS_DISPLAY 1
-#define DISPLAY_FLIP  1 // rotated display
+#define MY_DISPLAY_FLIP  1 // rotated display
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (21)
-#define MY_OLED_SCL (22)
-#define MY_OLED_RST NOT_A_PIN
+#define MY_DISPLAY_SDA (21)
+#define MY_DISPLAY_SCL (22)
+#define MY_DISPLAY_RST NOT_A_PIN
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 

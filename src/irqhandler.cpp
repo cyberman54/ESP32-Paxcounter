@@ -39,7 +39,7 @@ void irqHandler(void *pvParameters) {
 // display needs refresh?
 #ifdef HAS_DISPLAY
     if (InterruptStatus & DISPLAY_IRQ) {
-      refreshTheDisplay();
+      dp_refresh();
       InterruptStatus &= ~DISPLAY_IRQ;
     }
 #endif

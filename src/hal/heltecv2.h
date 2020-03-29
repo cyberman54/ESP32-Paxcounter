@@ -34,9 +34,9 @@
 //#define EXT_POWER_OFF   1
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA SDA_OLED
-#define MY_OLED_SCL SCL_OLED
-#define MY_OLED_RST RST_OLED
+#define MY_DISPLAY_SDA SDA_OLED
+#define MY_DISPLAY_SCL SCL_OLED
+#define MY_DISPLAY_RST RST_OLED
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC

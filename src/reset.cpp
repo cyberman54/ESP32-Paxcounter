@@ -96,7 +96,7 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
 
 // switch off display
 #ifdef HAS_DISPLAY
-  shutdown_display();
+  dp_shutdown();
 #endif
 
 // switch off wifi & ble

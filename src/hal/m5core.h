@@ -32,8 +32,8 @@
 #define BOARD_HAS_PSRAM // use if board has external PSRAM
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-//#define HAS_DISPLAY 1
-//#define DISPLAY_FLIP  1 // use if display is rotated
+//#define HAS_DISPLAY 2 // TFT-LCD, support work in progess, not ready yet
+//#define MY_DISPLAY_FLIP  1 // use if display is rotated
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
@@ -46,12 +46,12 @@
 #define GPS_INT GPIO_NUM_35 // 30ns accurary timepulse, to be external wired on pcb: shorten R12!
 
 // Pins for interface of LC Display
-#define MY_OLED_CS GPIO_NUM_14
-#define MY_OLED_DC GPIO_NUM_27
-#define MY_OLED_CLK GPIO_NUM_18
-#define MY_OLED_RST GPIO_NUM_33
-#define MY_OLED_BL GPIO_NUM_32
-#define MY_OLED_MOSI GPIO_NUM_23
-#define MY_OLED_MISO GPIO_NUM_19
+#define MY_DISPLAY_CS GPIO_NUM_14
+#define MY_DISPLAY_DC GPIO_NUM_27
+#define MY_DISPLAY_CLK GPIO_NUM_18
+#define MY_DISPLAY_RST GPIO_NUM_33
+#define MY_DISPLAY_BL GPIO_NUM_32
+#define MY_DISPLAY_MOSI GPIO_NUM_23
+#define MY_DISPLAY_MISO GPIO_NUM_19
 
 #endif

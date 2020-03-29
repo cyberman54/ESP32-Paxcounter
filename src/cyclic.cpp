@@ -153,7 +153,7 @@ void reset_counters() {
   macs_wifi = 0;
   macs_ble = 0;
 #ifdef HAS_DISPLAY
-  oledPlotCurve(0, true);
+  dp_plotCurve(0, true);
 #endif
 
 #endif

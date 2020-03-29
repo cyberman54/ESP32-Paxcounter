@@ -21,12 +21,12 @@
 #define HAS_BUTTON GPIO_NUM_36 // on board button (next to reset)
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (21)
-#define MY_OLED_SCL (22)
-#define MY_OLED_RST NOT_A_PIN
+#define MY_DISPLAY_SDA (21)
+#define MY_DISPLAY_SCL (22)
+#define MY_DISPLAY_RST NOT_A_PIN
 
 // Settings for on board DS3231 RTC chip
-#define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
+#define HAS_RTC MY_DISPLAY_SDA, MY_DISPLAY_SCL // SDA, SCL
 #define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
 
 // Settings for IF482 interface
