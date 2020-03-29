@@ -1,7 +1,7 @@
 
 // Basic Config
 #include "globals.h"
-#include "macsniff.h
+#include "macsniff.h"
 
 #if (VENDORFILTER)
 #include "vendor_array.h"
