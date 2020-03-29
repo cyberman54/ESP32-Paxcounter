@@ -45,7 +45,7 @@ void start_ota_update() {
 // init display
 #ifdef HAS_DISPLAY
 
-  setup_display();
+  dp_setup();
 
   dp_printf(0, 0, 0, 1, "SOFTWARE UPDATE");
   dp_printf(0, 1, 0, 0, "WiFi connect  ..");

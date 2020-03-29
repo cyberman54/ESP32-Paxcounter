@@ -13,7 +13,7 @@
 #define CFG_sx1276_radio 1
 
 #define HAS_DISPLAY 1 // OLED-Display on board
-//#define DISPLAY_FLIP  1 // uncomment this for rotated display
+//#define MY_DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED LED_BUILTIN
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_BUTTON KEY_BUILTIN
@@ -27,12 +27,12 @@
 #define SDCARD_SCLK  (14)
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (4)
-#define MY_OLED_SCL (15)
-#define MY_OLED_RST (16)
+#define MY_DISPLAY_SDA (4)
+#define MY_DISPLAY_SCL (15)
+#define MY_DISPLAY_RST (16)
 
 // This board reports back the wrong I2C address, so we overwrite it here
-#define MY_OLED_ADDR 0x3C
+#define MY_DISPLAY_ADDR 0x3C
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC

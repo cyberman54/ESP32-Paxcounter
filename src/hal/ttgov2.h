@@ -13,7 +13,7 @@
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 #define HAS_DISPLAY 1
-//#define DISPLAY_FLIP  1 // uncomment this for rotated display
+//#define MY_DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED NOT_A_PIN // on-board LED is wired to SCL (used by display) therefore totally useless
 
 // disable brownout detection (needed on TTGOv2 for battery powered operation)
@@ -28,9 +28,9 @@
 #define SDCARD_SCLK  (14)
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (21)
-#define MY_OLED_SCL (22)
-#define MY_OLED_RST NOT_A_PIN
+#define MY_DISPLAY_SDA (21)
+#define MY_DISPLAY_SCL (22)
+#define MY_DISPLAY_RST NOT_A_PIN
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC

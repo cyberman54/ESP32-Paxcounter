@@ -14,7 +14,7 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 1 // OLED-Display on board
-//#define DISPLAY_FLIP  1 // uncomment this for rotated display
+//#define MY_DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED       22  // ESP32 GPIO12 (pin22) On Board LED
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, 1, GPIO_NUM_13) // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
@@ -35,9 +35,9 @@
 #define LORA_IO2  (4)
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (12)
-#define MY_OLED_SCL (14)
-#define MY_OLED_RST NOT_A_PIN
+#define MY_DISPLAY_SDA (12)
+#define MY_DISPLAY_SCL (14)
+#define MY_DISPLAY_RST NOT_A_PIN
 
 // I2C config for Microchip 24AA02E64 DEVEUI unique address
 #define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 

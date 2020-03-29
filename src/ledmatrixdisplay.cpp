@@ -39,7 +39,7 @@ void init_matrix_display(bool reverse) {
     matrix.reverse();
   matrix.clear();
   matrix.drawPoint(0, LED_MATRIX_HEIGHT - 1, 1);
-} // init_display
+} // dp_init
 
 void refreshTheMatrixDisplay(bool nextPage) {
   static uint8_t DisplayPage = 0, col = 0, row = 0;

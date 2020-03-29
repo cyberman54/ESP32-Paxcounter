@@ -21,10 +21,10 @@ Reset -> reset device
 */
 
 #define HAS_DISPLAY 1
-#define MY_OLED_SDA SDA
-#define MY_OLED_SCL SCL
-#define MY_OLED_RST NOT_A_PIN
-//#define DISPLAY_FLIP  1 // use if display is rotated
+#define MY_DISPLAY_SDA SDA
+#define MY_DISPLAY_SCL SCL
+#define MY_DISPLAY_RST NOT_A_PIN
+//#define MY_DISPLAY_FLIP  1 // use if display is rotated
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC

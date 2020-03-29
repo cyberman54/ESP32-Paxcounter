@@ -13,7 +13,7 @@
 //#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 1
-//#define DISPLAY_FLIP  1 // use if display is rotated
+//#define MY_DISPLAY_FLIP  1 // use if display is rotated
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER ((82.0+220.0)/82.0) // 82k + 220k 1%
 //#define BAT_MEASURE_EN   EXT_POWER_SW  // Turn power on for measurement
@@ -27,14 +27,14 @@
 //#define HAS_BUTTON (0) // on board button -> don't use, is same as RTC_INT!
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA SDA
-#define MY_OLED_SCL SCL
-#define MY_OLED_RST NOT_A_PIN
+#define MY_DISPLAY_SDA SDA
+#define MY_DISPLAY_SCL SCL
+#define MY_DISPLAY_RST NOT_A_PIN
 
 // Settings for on board DS3231 RTC chip
 // note: to use RTC_INT, capacitor 100nF next to red LED must be removed to sharpen interrupt signal slope
 // and setting EXT_POWER_ON is needed (this is done in main.cpp)
-#define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
+#define HAS_RTC MY_DISPLAY_SDA, MY_DISPLAY_SCL // SDA, SCL
 #define RTC_INT GPIO_NUM_0 //
 
 // Settings for IF482 interface

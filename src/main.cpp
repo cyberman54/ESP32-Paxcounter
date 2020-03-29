@@ -197,7 +197,7 @@ void setup() {
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
   // display verbose info only after a coldstart (note: blocking call!)
-  init_display(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
+  dp_init(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
 #endif
 
   // scan i2c bus for devices

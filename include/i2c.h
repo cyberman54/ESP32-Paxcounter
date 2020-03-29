@@ -11,6 +11,14 @@
 #define MCP_24AA02E64_PRIMARY_ADDRESS (0x50)
 #define QUECTEL_GPS_PRIMARY_ADDRESS (0x10)
 
+#ifndef MY_DISPLAY_SDA
+#define MY_DISPLAY_SDA SDA
+#endif
+
+#ifndef MY_DISPLAY_SCL
+#define MY_DISPLAY_SCL SCL
+#endif
+
 void i2c_init(void);
 void i2c_deinit(void);
 int i2c_scan(void);

@@ -14,7 +14,7 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 1 // OLED-Display on board
-//#define DISPLAY_FLIP  1 // uncomment this for rotated display
+//#define MY_DISPLAY_FLIP  1 // uncomment this for rotated display
 #define HAS_LED NOT_A_PIN // Led os on same pin as Lora SS pin, to avoid problems, we don't use it
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
                           // Anyway shield is on over the LoLin32 board, so we won't be able to see this LED
@@ -36,9 +36,9 @@
 #define LORA_IO2  (4)
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA SDA
-#define MY_OLED_SCL SCL
-#define MY_OLED_RST NOT_A_PIN
+#define MY_DISPLAY_SDA SDA
+#define MY_DISPLAY_SCL SCL
+#define MY_DISPLAY_RST NOT_A_PIN
 
 // I2C config for Microchip 24AA02E64 DEVEUI unique address
 #define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 

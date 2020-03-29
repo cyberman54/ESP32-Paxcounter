@@ -34,10 +34,10 @@
 
 // display (if connected)
 #define HAS_DISPLAY 1
-#define MY_OLED_SDA SDA
-#define MY_OLED_SCL SCL
-#define MY_OLED_RST NOT_A_PIN
-//#define DISPLAY_FLIP  1 // use if display is rotated
+#define MY_DISPLAY_SDA SDA
+#define MY_DISPLAY_SCL SCL
+#define MY_DISPLAY_RST NOT_A_PIN
+//#define MY_DISPLAY_FLIP  1 // use if display is rotated
 
 // user defined sensors (if connected)
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors

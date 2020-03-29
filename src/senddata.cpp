@@ -111,7 +111,7 @@ void sendData() {
       }
 #ifdef HAS_DISPLAY
       else
-        oledPlotCurve(macs.size(), true);
+        dp_plotCurve(macs.size(), true);
 #endif
       break;
 #endif
