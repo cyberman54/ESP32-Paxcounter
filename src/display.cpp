@@ -51,7 +51,7 @@ QRCode qrcode;
 #if (HAS_DISPLAY) == 1
 SSOLED ssoled;
 #elif (HAS_DISPLAY) == 2
-TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT); // Invoke library
+TFT_eSPI tft = TFT_eSPI();
 #endif
 
 void dp_setup(int contrast) {
@@ -70,13 +70,9 @@ void dp_setup(int contrast) {
 
   tft.init();
 
-  if (MY_DISPLAY_FLIP)
-    tft.setRotation(0);
-  else
-    tft.setRotation(2); // portrait
-
-  if (MY_DISPLAY_INVERT)
-    tft.invertDisplay(true); // Tell TFT to invert all displayed colours
+  tft.setRotation(MY_DISPLAY_FLIP ? true : false);
+  tft.invertDisplay(MY_DISPLAY_INVERT ? true : false);
+  tft.setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
 
 #endif
 
@@ -437,7 +433,24 @@ void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
 #if (HAS_DISPLAY) == 1
   oledWriteString(&ssoled, 0, x, y, temp, font, inv, false);
 #elif (HAS_DISPLAY) == 2
-  tft.drawString(temp, x, y, font);
+  uint8_t myfont;
+  switch (font) {
+  case MY_FONT_SMALL:
+    myfont = 6;
+    break;
+  case MY_FONT_NORMAL:
+  case MY_FONT_LARGE:
+    myfont = 8;
+    break;
+  case MY_FONT_STRETCHED:
+    myfont = 16;
+    break;
+  default:
+    myfont = 8;
+  }
+  tft.drawString(temp, x * tft.textWidth("_", font) / myfont,
+                 y * tft.fontHeight(font), font);
+
 #endif
   if (temp != loc_buf) {
     free(temp);
@@ -456,7 +469,7 @@ void dp_clear() {
 #if (HAS_DISPLAY) == 1
   oledFill(&ssoled, 0, 1);
 #elif (HAS_DISPLAY) == 2
-  tft.fillScreen(TFT_WHITE);
+  tft.fillScreen(MY_DISPLAY_BGCOLOR);
 #endif
 }
 

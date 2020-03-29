@@ -34,8 +34,6 @@
 // settings for TFT display library
 #elif (HAS_DISPLAY == 2)
 
-#define ESP32
-
 #define MY_FONT_SMALL 1
 #define MY_FONT_NORMAL 2
 #define MY_FONT_LARGE 4
