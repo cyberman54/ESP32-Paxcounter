@@ -1,7 +1,6 @@
 #ifndef _CYCLIC_H
 #define _CYCLIC_H
 
-//#include <lmic.h>
 #include "globals.h"
 #include "senddata.h"
 #include "rcommand.h"
