@@ -29,9 +29,9 @@
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (21)
-#define MY_OLED_SCL (22)
-#define MY_OLED_RST NOT_A_PIN
+#define MY_DISPLAY_SDA (21)
+#define MY_DISPLAY_SCL (22)
+#define MY_DISPLAY_RST NOT_A_PIN
 
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_SCK  (5) 
