@@ -55,8 +55,8 @@ void dp_setup(int contrast) {
 
 #if (HAS_DISPLAY) == 1
   int rc = oledInit(&ssoled, MY_DISPLAY_TYPE, OLED_ADDR, MY_DISPLAY_FLIP,
-                    MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA, MY_DISPLAY_SCL,
-                    MY_DISPLAY_RST,
+                    MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA,
+                    MY_DISPLAY_SCL, MY_DISPLAY_RST,
                     400000L); // use standard I2C bus at 400Khz
   assert(rc != OLED_NOT_FOUND);
 
@@ -65,10 +65,10 @@ void dp_setup(int contrast) {
 
 #elif (HAS_DISPLAY) == 2
 
-  int rc =
-      spilcdInit(MY_DISPLAY_TYPE, 0, MY_DISPLAY_INVERT, MY_DISPLAY_FLIP, 32000000,
-                 MY_DISPLAY_CS, MY_DISPLAY_DC, MY_DISPLAY_RST, MY_DISPLAY_BL,
-                 MY_DISPLAY_MISO, MY_DISPLAY_MOSI, MY_DISPLAY_CLK);
+  int rc = spilcdInit(MY_DISPLAY_TYPE, 0, MY_DISPLAY_INVERT, MY_DISPLAY_FLIP,
+                      32000000, MY_DISPLAY_CS, MY_DISPLAY_DC, MY_DISPLAY_RST,
+                      MY_DISPLAY_BL, MY_DISPLAY_MISO, MY_DISPLAY_MOSI,
+                      MY_DISPLAY_CLK);
 
   assert(rc == 0);
 
@@ -483,7 +483,7 @@ void dp_shutdown(void) {
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
     cfg.screenon = 0;
-    oledShutdown(&ssoled);
+    oledPower(&ssoled, false);
     delay(DISPLAYREFRESH_MS / 1000 * 1.1);
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   }
@@ -522,7 +522,8 @@ void dp_fillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
   for (uint16_t xi = x; xi < x + width; xi++)
     oledDrawLine(&ssoled, xi, y, xi, y + height - 1, bRender);
 #elif (HAS_DISPLAY) == 2
-  spilcdRectangle(x, y, width, height, MY_DISPLAY_BGCOLOR, MY_DISPLAY_FGCOLOR, 1, 1);
+  spilcdRectangle(x, y, width, height, MY_DISPLAY_BGCOLOR, MY_DISPLAY_FGCOLOR,
+                  1, 1);
 #endif
 }
 
