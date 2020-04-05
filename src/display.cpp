@@ -65,7 +65,7 @@ void dp_setup(int contrast) {
 
   // set display buffer
   oledSetBackBuffer(&ssoled, displaybuf);
-  oledSetTextWrap(&&ssoled, true);
+  oledSetTextWrap(&ssoled, true);
 
 #elif (HAS_DISPLAY) == 2 // SPI TFT
 
