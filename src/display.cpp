@@ -70,7 +70,7 @@ void dp_setup(int contrast) {
 
   tft.init();
 
-  tft.setRotation(MY_DISPLAY_FLIP ? true : false);
+  tft.setRotation(MY_DISPLAY_FLIP ? 3 : 1);
   tft.invertDisplay(MY_DISPLAY_INVERT ? true : false);
   tft.setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
 
@@ -433,23 +433,26 @@ void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
 #if (HAS_DISPLAY) == 1
   oledWriteString(&ssoled, 0, x, y, temp, font, inv, false);
 #elif (HAS_DISPLAY) == 2
-  uint8_t myfont;
+  uint8_t tft_font, font_vScale;
+  // map font oled -> tft
   switch (font) {
-  case MY_FONT_SMALL:
-    myfont = 6;
+  case MY_FONT_STRETCHED: // 16x16 on OLED
+  case MY_FONT_LARGE:     // 16x32 on OLED
+    tft_font = 4;         // 26px
+    font_vScale = 26;
     break;
-  case MY_FONT_NORMAL:
-  case MY_FONT_LARGE:
-    myfont = 8;
-    break;
-  case MY_FONT_STRETCHED:
-    myfont = 16;
+  case MY_FONT_SMALL:  // 6x8 on OLED
+  case MY_FONT_NORMAL: // 8x8 on OLED
+    tft_font = 2;      // 16px
+    font_vScale = 16;
     break;
   default:
-    myfont = 8;
+    tft_font = 2; // 16px
+    font_vScale = 16;
   }
-  tft.drawString(temp, x * tft.textWidth("_", font) / myfont,
-                 y * tft.fontHeight(font), font);
+
+  tft.setCursor(x, y * font_vScale, tft_font);
+  tft.printf(temp);
 
 #endif
   if (temp != loc_buf) {
