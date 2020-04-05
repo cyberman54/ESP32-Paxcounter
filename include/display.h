@@ -69,8 +69,8 @@
 #endif
 
 // settings for qr code generator
-#define QR_VERSION 3     // 29 x 29px
-#define QR_SCALEFACTOR 2 // 29 -> 58x < 64px
+#define QR_VERSION 3                                // 29 x 29px
+#define QR_SCALEFACTOR MY_DISPLAY_HEIGHT / (29 + 4) // 4px borderlines
 
 extern uint8_t DisplayIsOn, displaybuf[];
 
@@ -79,9 +79,11 @@ void dp_refresh(bool nextPage = false);
 void dp_init(bool verbose = false);
 void dp_shutdown(void);
 void dp_drawPage(time_t t, bool nextpage);
+void dp_println(void);
 void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
                const char *format, ...);
 void dp_dump(uint8_t *pBuffer);
+void dp_setCursor(int x, int y);
 void dp_contrast(uint8_t contrast);
 void dp_clear(void);
 void dp_power(uint8_t screenon);
