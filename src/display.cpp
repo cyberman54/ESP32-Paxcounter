@@ -45,6 +45,7 @@ const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 uint8_t DisplayIsOn = 0;
 uint8_t displaybuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static uint8_t plotbuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
+static int dp_row = 0, dp_col = 0, dp_font = 0;
 
 QRCode qrcode;
 
@@ -66,6 +67,7 @@ void dp_setup(int contrast) {
   // set display buffer
   oledSetBackBuffer(&ssoled, displaybuf);
   oledSetTextWrap(&ssoled, true);
+  dp_font = MY_FONT_NORMAL;
 
 #elif (HAS_DISPLAY) == 2 // SPI TFT
 
@@ -102,15 +104,20 @@ void dp_init(bool verbose) {
 #if (VERBOSE)
       esp_chip_info_t chip_info;
       esp_chip_info(&chip_info);
-      dp_printf(0, 0, 0, 0, "** PAXCOUNTER **");
-      dp_printf(0, 1, 0, 0, "Software v%s", PROGVERSION);
-      dp_printf(0, 3, 0, 0, "ESP32 %d cores", chip_info.cores);
-      dp_printf(0, 4, 0, 0, "Chip Rev.%d", chip_info.revision);
-      dp_printf(0, 5, 0, 0, "WiFi%s%s",
-                (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+
+      dp_setFont(MY_FONT_NORMAL);
+      dp_printf("** PAXCOUNTER **");
+      dp_println();
+      dp_printf("Software v%s", PROGVERSION);
+      dp_println();
+      dp_printf("ESP32 %d cores", chip_info.cores);
+      dp_println();
+      dp_printf("Chip Rev.%d", chip_info.revision);
+      dp_println();
+      dp_printf("WiFi%s%s", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
                 (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-      dp_printf(0, 6, 0, 0, "%dMB %s Flash",
-                spi_flash_get_chip_size() / (1024 * 1024),
+      dp_println();
+      dp_printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
                 (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int."
                                                               : "ext.");
 
@@ -132,16 +139,14 @@ void dp_init(bool verbose) {
       dp_printqr(3, 3, deveui);
 
       // display DEVEUI as plain text on the right
-      const int x_offset = QR_SCALEFACTOR * 29 + 20;
-      dp_setCursor(x_offset, 1);
-      dp_printf(x_offset, 1, MY_FONT_NORMAL, 0, "DEVEUI:");
+      const int x_offset = (QR_SCALEFACTOR * 29 + 4) / 8 + 2;
+      dp_setTextCursor(x_offset, 0);
+      dp_setFont(MY_FONT_NORMAL);
+      dp_printf("DEVEUI");
+      dp_println();
       for (uint8_t i = 0; i <= 3; i++) {
-#if (HAS_DISPLAY) == 1
-        dp_setCursor(x_offset, i + 3);
-#elif (HAS_DISPLAY) == 2
-        dp_setCursor(x_offset, 2 * (i + 3));
-#endif
-        dp_printf(x_offset, i + 3, MY_FONT_NORMAL, 0, "%4.4s", deveui + i * 4);
+        dp_setTextCursor(x_offset, i + 3);
+        dp_printf("%4.4s", deveui + i * 4);
       }
 
       // give user some time to read or take picture
@@ -223,13 +228,14 @@ start:
   }
 
   // cursor home
-  dp_setCursor(0, 0);
+  dp_setTextCursor(0, 0);
 
   // line 1/2: pax counter
+  // display number of unique macs total Wifi + BLE
   if (DisplayPage < 6) {
-    dp_printf(0, 0, MY_FONT_STRETCHED, 0, "PAX:%-4d",
-              macs.size()); // display number of unique macs total Wifi + BLE
-    dp_println();
+    dp_setFont(MY_FONT_STRETCHED);
+    dp_printf("PAX:%-4d", macs.size());
+    dp_println(3);
   }
 
   switch (DisplayPage) {
@@ -244,82 +250,79 @@ start:
 
     // page 0: parameters overview
   case 0:
+    dp_setFont(MY_FONT_SMALL);
 
     // line 3: wifi + bluetooth counters
     // WIFI:abcde BLTH:abcde
 
 #if ((WIFICOUNTER) && (BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf(0, 3, MY_FONT_SMALL, 0, "WIFI:%-5d", macs_wifi);
+      dp_printf("WIFI:%-5d", macs_wifi);
     else
-      dp_printf(0, 3, MY_FONT_SMALL, 0, "%s", "WIFI:off");
+      dp_printf("WIFI:off");
     if (cfg.blescan)
-      dp_printf(66, 3, MY_FONT_SMALL, 0, " BLTH:%-5d", macs_ble);
+      dp_printf(" BLTH:%-5d", macs_ble);
     else
-      dp_printf(66, 3, MY_FONT_SMALL, 0, "%s", " BLTH:off");
+      dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf(0, 3, MY_FONT_SMALL, 0, "WIFI:%-5d", macs_wifi);
+      dp_printf("WIFI:%-5d", macs_wifi);
     else
-      dp_printf(0, 3, MY_FONT_SMALL, 0, "%s", "WIFI:off");
+      dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan)
-      dp_printf(0, 3, MY_FONT_SMALL, 0, "BLTH:%-5d", macs_ble);
+      dp_printf("BLTH:%-5d", macs_ble);
     else
-      dp_printf(0, 3, MY_FONT_SMALL, 0, "%s", "BLTH:off");
+      dp_printf("BLTH:off");
 #else
-    dp_printf(0, 3, MY_FONT_SMALL, 0, "%s", "Sniffer disabled");
+    dp_printf("Sniffer disabled");
 #endif
     dp_println();
 
-// line 4: Battery + GPS status + Wifi channel
-// B:a.bcV Sats:ab ch:ab
+    // line 4: Battery + GPS status + Wifi channel
+    // B:a.bcV Sats:ab ch:ab
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     if (batt_voltage == 0xffff)
-      dp_printf(0, 4, MY_FONT_SMALL, 0, "%s", "USB    ");
+      dp_printf("USB     ");
     else if (batt_voltage == 0)
-      dp_printf(0, 4, MY_FONT_SMALL, 0, "%s", "No batt");
+      dp_printf("No batt ");
     else
-      dp_printf(0, 4, MY_FONT_SMALL, 0, "B:%.2fV", batt_voltage / 1000.0);
+      dp_printf("B:%.2fV ", batt_voltage / 1000.0);
 #else
-    dp_printf(0, 4, MY_FONT_SMALL, 0, "%s", "       ");
+    dp_printf("       ");
 #endif
 #if (HAS_GPS)
-    if (gps_hasfix())
-      dp_printf(48, 4, MY_FONT_SMALL, 0, " Sats:%.2d", gps.satellites.value());
-    else // if no fix then display Sats value inverse
-      dp_printf(48, 4, MY_FONT_SMALL, 1, " Sats:%.2d", gps.satellites.value());
+    dp_setFont(MY_FONT_SMALL, !gps_hasfix());
+    dp_printf("Sats:%.2d", gps.satellites.value());
+    dp_setFont(MY_FONT_SMALL);
 #else
-    dp_printf(48, 4, MY_FONT_SMALL, 0, "%s", "        ");
+    dp_printf("       ");
 #endif
-    dp_printf(96, 4, MY_FONT_SMALL, 0, " ch:%02d", channel);
+    dp_printf(" ch:%02d", channel);
     dp_println();
 
     // line 5: RSSI limiter + free memory
     // RLIM:abcd  Mem:abcdKB
-
-    dp_printf(0, 5, MY_FONT_SMALL, 0,
-              !cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-    dp_printf(66, 5, MY_FONT_SMALL, 0, "  Mem:%4dKB", getFreeRAM() / 1024);
+    dp_printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
+    dp_printf("  Mem:%4dKB", getFreeRAM() / 1024);
     dp_println();
 
     // line 6: time + date
     // 27.Feb 2019 20:27:00*
-
 #if (TIME_SYNC_INTERVAL)
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
 
-    dp_printf(0, 6, MY_FONT_SMALL, 0, "%02d.%3s %4d", day(t),
-              printmonth[month(t)], year(t));
-    dp_printf(72, 6, MY_FONT_SMALL, 0, " %02d:%02d:%02d", hour(t), minute(t),
-              second(t));
+    dp_printf("%02d.%3s %4d", day(t), printmonth[month(t)], year(t));
+    dp_printf(" %02d:%02d:%02d", hour(t), minute(t), second(t));
 
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
-    dp_printf(120, 6, MY_FONT_SMALL, 1, "%c", timeState);
+    dp_setFont(MY_FONT_SMALL, 1);
+    dp_printf("%c", timeState);
+    dp_setFont(MY_FONT_SMALL, 0);
 #else
-    dp_printf(120, 6, MY_FONT_SMALL, 0, "%c", timeState);
+    dp_printf("%c", timeState);
 #endif
     dp_println();
 #endif // TIME_SYNC_INTERVAL
@@ -329,10 +332,11 @@ start:
 
 #if (HAS_LORA)
     // LMiC event display
-    dp_printf(0, 7, MY_FONT_SMALL, 0, "%-16s", lmic_event_msg);
+    dp_printf("%-16s", lmic_event_msg);
     // LORA datarate, display inverse if ADR disabled
-    dp_printf(102, 7, MY_FONT_SMALL, !cfg.adrmode, " %-4s",
-              getSfName(updr2rps(LMIC.datarate)));
+    dp_setFont(MY_FONT_SMALL, !cfg.adrmode);
+    dp_printf(" %-4s", getSfName(updr2rps(LMIC.datarate)));
+    dp_setFont(MY_FONT_SMALL, 0);
     dp_println();
 #endif     // HAS_LORA
     break; // page0
@@ -345,22 +349,26 @@ start:
     // page 2: GPS
   case 2:
 #if (HAS_GPS)
+    dp_setFont(MY_FONT_STRETCHED);
     if (gps_hasfix()) {
       // line 5: clear "No fix"
       if (wasnofix) {
-        dp_printf(16, 5, MY_FONT_STRETCHED, 0, "      ");
+        dp_setTextCursor(2, 4);
+        dp_printf("      ");
         wasnofix = false;
       }
       // line 3-4: GPS latitude
-      dp_printf(0, 3, MY_FONT_STRETCHED, 0, "%c%07.4f",
-                gps.location.rawLat().negative ? 'S' : 'N', gps.location.lat());
+      dp_printf("%c%07.4f", gps.location.rawLat().negative ? 'S' : 'N',
+                gps.location.lat());
 
       // line 6-7: GPS longitude
-      dp_printf(0, 6, MY_FONT_STRETCHED, 0, "%c%07.4f",
-                gps.location.rawLat().negative ? 'W' : 'E', gps.location.lng());
+      dp_printf("%c%07.4f", gps.location.rawLat().negative ? 'W' : 'E',
+                gps.location.lng());
 
     } else {
-      dp_printf(16, 5, MY_FONT_STRETCHED, 1, "No fix");
+      dp_setTextCursor(2, 4);
+      dp_setFont(MY_FONT_STRETCHED, 1);
+      dp_printf("No fix");
       wasnofix = true;
     }
     break; // page2
@@ -370,19 +378,23 @@ start:
 
     // page 3: BME280/680
   case 3:
+    dp_setFont(MY_FONT_STRETCHED);
+    dp_setTextCursor(0, 2);
 #if (HAS_BME)
     // line 2-3: Temp
-    dp_printf(0, 2, MY_FONT_STRETCHED, 0, "TMP:%-2.1f", bme_status.temperature);
+    dp_printf("TMP:%-2.1f", bme_status.temperature);
+    dp_println(2);
 
     // line 4-5: Hum
-    dp_printf(0, 4, MY_FONT_STRETCHED, 0, "HUM:%-2.1f", bme_status.humidity);
+    dp_printf("HUM:%-2.1f", bme_status.humidity);
+    dp_println(2);
 
 #ifdef HAS_BME680
     // line 6-7: IAQ
-    dp_printf(0, 6, MY_FONT_STRETCHED, 0, "IAQ:%-3.0f", bme_status.iaq);
+    dp_printf("IAQ:%-3.0f", bme_status.iaq);
 #else      // is BME280 or BMP180
     // line 6-7: Pre
-    dp_printf(0, 6, MY_FONT_STRETCHED, 0, "PRE:%-2.1f", bme_status.pressure);
+    dp_printf("PRE:%-2.1f", bme_status.pressure);
 #endif     // HAS_BME680
     break; // page 3
 #else
@@ -391,34 +403,33 @@ start:
 
   // page 4: time
   case 4:
-    dp_printf(0, 4, MY_FONT_LARGE, 0, "%02d:%02d:%02d", hour(t), minute(t),
-              second(t));
+    dp_setFont(MY_FONT_LARGE);
+    dp_printf("%02d:%02d:%02d", hour(t), minute(t), second(t));
     break;
 
   // page 5: lorawan parameters
   case 5:
 
 #if (HAS_LORA)
+
     // 3|NtwkID:000000 TXpw:aa
     // 4|DevAdd:00000000  DR:0
     // 5|CHMsk:0000 Nonce:0000
     // 6|CUp:000000 CDn:000000
     // 7|SNR:-0000  RSSI:-0000
-    dp_printf(0, 3, MY_FONT_SMALL, 0, "NetwID:%06X TXpw:%-2d",
-              LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
+
+    dp_setFont(MY_FONT_SMALL);
+    dp_printf("NetwID:%06X TXpw:%-2d", LMIC.netid & 0x001FFFFF,
+              LMIC.radio_txpow);
     dp_println();
-    dp_printf(0, 4, MY_FONT_SMALL, 0, "DevAdd:%08X DR:%1d", LMIC.devaddr,
-              LMIC.datarate);
+    dp_printf("DevAdd:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
     dp_println();
-    dp_printf(0, 5, MY_FONT_SMALL, 0, "ChMsk:%04X Nonce:%04X", LMIC.channelMap,
-              LMIC.devNonce);
+    dp_printf("ChMsk:%04X Nonce:%04X", LMIC.channelMap, LMIC.devNonce);
     dp_println();
-    dp_printf(0, 6, MY_FONT_SMALL, 0, "fUp:%-6d fDn:%-6d",
-              LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
+    dp_printf("fUp:%-6d fDn:%-6d", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
               LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
     dp_println();
-    dp_printf(0, 7, MY_FONT_SMALL, 0, "SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4,
-              LMIC.rssi);
+    dp_printf("SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4, LMIC.rssi);
     break; // page5
 #else      // don't show blank page if we are unattended
     DisplayPage++; // next page
@@ -440,26 +451,57 @@ start:
 
 } // dp_drawPage
 
-// display helper functions
+// ------------- display helper functions -----------------
+
+void dp_setTextCursor(int col, int row) {
+  dp_col = col;
+  dp_row = row;
+#if (HAS_DISPLAY) == 1
+  oledSetCursor(&ssoled, dp_col * 8, dp_row);
+#elif (HAS_DISPLAY) == 2
+  tft.setCursor(dp_row, dp_col);
+#endif
+}
 
 void dp_setCursor(int x, int y) {
 #if (HAS_DISPLAY) == 1
   oledSetCursor(&ssoled, x, y);
 #elif (HAS_DISPLAY) == 2
-  tft.setCursor(x, y * 8);
+  tft.setCursor(x, y);
 #endif
 }
 
-void dp_println(void) {
+void dp_setFont(int font, int inv) {
 #if (HAS_DISPLAY) == 1
-  // to come
+  dp_font = (font << 1) | (inv & 0x01);
+#elif (HAS_DISPLAY) == 2
+  // map font oled -> tft
+  switch (font) {
+  case MY_FONT_STRETCHED: // 16x16 on OLED
+  case MY_FONT_LARGE:     // 16x32 on OLED
+    tft.setTextFont(4);   // 26px
+    break;
+  case MY_FONT_SMALL:  // 6x8 on OLED
+  case MY_FONT_NORMAL: // 8x8 on OLED
+  default:
+    tft.setTextFont(2); // 16px
+    break;
+  }
+  // to do: invers printing
+#endif
+}
+
+void dp_println(int lines) {
+  dp_col = 0;
+  dp_row += lines;
+#if (HAS_DISPLAY) == 1
+  dp_setTextCursor(dp_col, dp_row);
 #elif (HAS_DISPLAY) == 2
   tft.println();
 #endif
 };
 
-void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
-               const char *format, ...) {
+void dp_printf(const char *format, ...) {
   char loc_buf[64];
   char *temp = loc_buf;
   va_list arg;
@@ -482,25 +524,10 @@ void dp_printf(uint16_t x, uint16_t y, uint8_t font, uint8_t inv,
   }
   va_end(arg);
 #if (HAS_DISPLAY) == 1
-  oledWriteString(&ssoled, 0, x, y, temp, font, inv, false);
+  oledWriteString(&ssoled, 0, -1, dp_row, temp, dp_font >> 1, dp_font & 0x01,
+                  false);
 #elif (HAS_DISPLAY) == 2
-  // map font oled -> tft
-  uint8_t tft_font;
-  switch (font) {
-  case MY_FONT_STRETCHED: // 16x16 on OLED
-  case MY_FONT_LARGE:     // 16x32 on OLED
-    tft_font = 4;         // 26px
-    break;
-  case MY_FONT_SMALL:  // 6x8 on OLED
-  case MY_FONT_NORMAL: // 8x8 on OLED
-  default:
-    tft_font = 2; // 16px
-    break;
-  }
-
-  tft.setTextFont(tft_font);
   tft.printf(temp);
-
 #endif
   if (temp != loc_buf) {
     free(temp);
@@ -516,11 +543,10 @@ void dp_dump(uint8_t *pBuffer) {
 }
 
 void dp_clear(void) {
+  dp_setTextCursor(0, 0);
 #if (HAS_DISPLAY) == 1
-  oledSetCursor(&ssoled, 0, 0);
   oledFill(&ssoled, 0, 1);
 #elif (HAS_DISPLAY) == 2
-  tft.setCursor(0, 0);
   tft.fillScreen(MY_DISPLAY_BGCOLOR);
 #endif
 }
@@ -557,6 +583,8 @@ void dp_shutdown(void) {
 #endif
 }
 
+// ------------- QR code plotter -----------------
+
 void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
   uint8_t qrcodeData[qrcode_getBufferSize(QR_VERSION)];
   qrcode_initText(&qrcode, qrcodeData, QR_VERSION, ECC_HIGH, Message);
@@ -579,6 +607,8 @@ void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
   dp_fillRect(qrcode.size * QR_SCALEFACTOR + offset_x, 0, offset_x,
               qrcode.size * QR_SCALEFACTOR + 2 * offset_y, false);
 }
+
+// ------------- graphics primitives -----------------
 
 void dp_fillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                  uint8_t bRender) {
@@ -605,6 +635,8 @@ int dp_drawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
 
   return 0;
 }
+
+// ------------- buffer scroll functions -----------------
 
 void dp_scrollHorizontal(uint8_t *buf, const uint16_t width,
                          const uint16_t height, bool left) {
@@ -650,6 +682,8 @@ void dp_scrollVertical(uint8_t *buf, const uint16_t width,
     *(uint64_t *)&buf[col * MY_DISPLAY_HEIGHT / 8] = buf_col;
   }
 }
+
+// ------------- curve plotter -----------------
 
 void dp_plotCurve(uint16_t count, bool reset) {
 
