@@ -4,6 +4,10 @@
 #include <SmartLeds.h>
 #include "lorawan.h"
 
+#ifndef RGB_LED_COUNT
+#define RGB_LED_COUNT 1
+#endif
+
 // value for HSL color
 // see http://www.workwithcolor.com/blue-color-hue-range-01.htm
 #define COLOR_RED 0
