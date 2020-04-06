@@ -17,8 +17,10 @@
 // --> adapt to your device only if necessary
 
 // use interrupts only if LORA_IRQ and LORA_DIO are connected to interrupt
-// capable GPIO pins on your board, if not disable interrupts
+// capable and separate GPIO pins on your board, if not don't enable
+#if (LORA_IRQ) != (LORA_IO1)
 #define LMIC_USE_INTERRUPTS 1
+#endif
 
 // time sync via LoRaWAN network, note: not supported by TTNv2
 #define LMIC_ENABLE_DeviceTimeReq 1
