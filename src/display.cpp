@@ -75,7 +75,6 @@ void dp_setup(int contrast) {
   tft.setRotation(MY_DISPLAY_FLIP ? 3 : 1);
   tft.invertDisplay(MY_DISPLAY_INVERT ? true : false);
   tft.setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
-  //tft.setTextPadding(MY_DISPLAY_WIDTH);
 
 #endif
 
@@ -233,24 +232,25 @@ start:
 
   // line 1/2: pax counter
   // display number of unique macs total Wifi + BLE
-  if (DisplayPage < 6) {
+  if (DisplayPage < 5) {
     dp_setFont(MY_FONT_STRETCHED);
     dp_printf("PAX:%-4d", macs.size());
-    dp_setTextCursor(0, 2);
   }
 
   switch (DisplayPage) {
 
     // page 0: parameters overview
-    // page 1: pax graph
+    // page 1: lorawan parameters
     // page 2: GPS
     // page 3: BME280/680
     // page 4: time
-    // page 5: lorawan parameters
+    // page 5: pax graph
     // page 6: blank screen
 
-    // page 0: parameters overview
+    // ---------- page 0: parameters overview ----------
   case 0:
+
+    dp_setTextCursor(0, 3);
     dp_setFont(MY_FONT_SMALL);
 
     // line 3: wifi + bluetooth counters
@@ -339,18 +339,44 @@ start:
     dp_printf(" %-4s", getSfName(updr2rps(LMIC.datarate)));
     dp_setFont(MY_FONT_SMALL, 0);
     dp_println();
-#endif     // HAS_LORA
-    break; // page0
+#endif // HAS_LORA
+    break;
 
-    // page 1: pax graph
+  // ---------- page 1: lorawan parameters ----------
   case 1:
-    dp_dump(plotbuf);
-    break; // page1
 
-    // page 2: GPS
+#if (HAS_LORA)
+
+    // 3|NtwkID:000000 TXpw:aa
+    // 4|DevAdd:00000000  DR:0
+    // 5|CHMsk:0000 Nonce:0000
+    // 6|CUp:000000 CDn:000000
+    // 7|SNR:-0000  RSSI:-0000
+
+    dp_setFont(MY_FONT_SMALL);
+    dp_setTextCursor(0, 3);
+    dp_printf("NetwID:%06X TXpw:%-2d", LMIC.netid & 0x001FFFFF,
+              LMIC.radio_txpow);
+    dp_println();
+    dp_printf("DevAdd:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
+    dp_println();
+    dp_printf("ChMsk:%04X Nonce:%04X", LMIC.channelMap, LMIC.devNonce);
+    dp_println();
+    dp_printf("fUp:%-6d fDn:%-6d", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
+              LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
+    dp_println();
+    dp_printf("SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4, LMIC.rssi);
+    break;
+#else  // flip page if we are unattended
+    DisplayPage++;
+#endif // HAS_LORA
+
+  // ---------- page 2: GPS ----------
   case 2:
+
 #if (HAS_GPS)
     dp_setFont(MY_FONT_STRETCHED);
+    dp_setTextCursor(0, 3);
     if (gps_hasfix()) {
       // line 5: clear "No fix"
       if (wasnofix) {
@@ -372,15 +398,18 @@ start:
       dp_printf("No fix");
       wasnofix = true;
     }
-    break; // page2
-#else
-    DisplayPage++; // next page
+    break;
+#else // flip page if we are unattended
+    DisplayPage++;
 #endif
 
-    // page 3: BME280/680
+  // ---------- page 3: BME280/680 ----------
   case 3:
-    dp_setFont(MY_FONT_STRETCHED);
+
 #if (HAS_BME)
+    dp_setFont(MY_FONT_STRETCHED);
+    dp_setTextCursor(0, 2);
+
     // line 2-3: Temp
     dp_printf("TMP:%-2.1f", bme_status.temperature);
     dp_println(2);
@@ -397,58 +426,38 @@ start:
     dp_printf("PRE:%-2.1f", bme_status.pressure);
 #endif     // HAS_BME680
     break; // page 3
-#else
-    DisplayPage++; // next page
-#endif // HAS_BME
+#else      // flip page if we are unattended
+    DisplayPage++;
+#endif     // HAS_BME
 
-  // page 4: time
+  // ---------- page 4: time ----------
   case 4:
+
     dp_setFont(MY_FONT_LARGE);
+    dp_setTextCursor(0, 4);
     dp_printf("%02d:%02d:%02d", hour(t), minute(t), second(t));
     break;
 
-  // page 5: lorawan parameters
+  // ---------- page 5: pax graph ----------
   case 5:
 
-#if (HAS_LORA)
+    dp_setFont(MY_FONT_NORMAL);
+    dp_setTextCursor(0, 0);
+    dp_printf("Pax graph");
+    dp_dump(plotbuf);
+    break;
 
-    // 3|NtwkID:000000 TXpw:aa
-    // 4|DevAdd:00000000  DR:0
-    // 5|CHMsk:0000 Nonce:0000
-    // 6|CUp:000000 CDn:000000
-    // 7|SNR:-0000  RSSI:-0000
-
-    dp_setFont(MY_FONT_SMALL);
-    dp_printf("NetwID:%06X TXpw:%-2d", LMIC.netid & 0x001FFFFF,
-              LMIC.radio_txpow);
-    dp_println();
-    dp_printf("DevAdd:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
-    dp_println();
-    dp_printf("ChMsk:%04X Nonce:%04X", LMIC.channelMap, LMIC.devNonce);
-    dp_println();
-    dp_printf("fUp:%-6d fDn:%-6d", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
-              LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
-    dp_println();
-    dp_printf("SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4, LMIC.rssi);
-    break; // page5
-#else      // don't show blank page if we are unattended
-    DisplayPage++; // next page
-#endif     // HAS_LORA
-
-    // page 6: blank screen
+  // ---------- page 6: blank screen ----------
   case 6:
+
 #ifdef HAS_BUTTON
     dp_clear();
     break;
-#else // don't show blank page if we are unattended
-    DisplayPage++; // next page
+#else // flip page if we are unattended
+    DisplayPage++;
 #endif
 
-  default:
-    goto start; // start over
-
-  } // switch
-
+  } // switch (page)
 } // dp_drawPage
 
 // ------------- display helper functions -----------------
@@ -456,22 +465,12 @@ start:
 void dp_setTextCursor(int x, int y) {
   // x represents the pixel column
   // y represents the text row
-
   dp_col = x;
 
 #if (HAS_DISPLAY) == 1
-  switch (dp_font >> 1) {
-  case MY_FONT_STRETCHED: // 16x16 on OLED
-  case MY_FONT_LARGE:     // 16x32 on OLED
-    dp_row = y * 2;
-    break;
-  case MY_FONT_SMALL:  // 6x8 on OLED
-  case MY_FONT_NORMAL: // 8x8 on OLED
-  default:
-    dp_row = y;
-    break;
-  }
+  dp_row = y;
   oledSetCursor(&ssoled, dp_col, dp_row);
+
 #elif (HAS_DISPLAY) == 2
   switch (dp_font >> 1) {
   case MY_FONT_STRETCHED:
@@ -556,7 +555,9 @@ void dp_dump(uint8_t *pBuffer) {
 #if (HAS_DISPLAY) == 1
   oledDumpBuffer(&ssoled, pBuffer);
 #elif (HAS_DISPLAY) == 2
-  // to do: buffered rendering for TFT
+  // probably oled buffer stucture is not suitable for tft -> to be checked
+  tft.drawBitmap(0, 0, pBuffer, MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT,
+                 MY_DISPLAY_FGCOLOR);
 #endif
 }
 
