@@ -136,9 +136,9 @@ void RevBytes(unsigned char *b, size_t c) {
 }
 
 // LMIC callback functions
-void os_getDevKey(u1_t *buf) { 
+void os_getDevKey(u1_t *buf) {
 #ifndef LORA_ABP
-  memcpy(buf, APPKEY, 16); 
+  memcpy(buf, APPKEY, 16);
 #endif
 }
 
@@ -306,30 +306,30 @@ esp_err_t lora_stack_init(bool do_join) {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
-  #ifdef LORA_ABP
-    // Pass ABP parameters to LMIC_setSession
+#ifdef LORA_ABP
+  // Pass ABP parameters to LMIC_setSession
+  LMIC_reset();
+  uint8_t appskey[sizeof(APPSKEY)];
+  uint8_t nwkskey[sizeof(NWKSKEY)];
+  memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
+  memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
+  LMIC_setSession(NETID, DEVADDR, nwkskey, appskey);
+  // These parameters are defined as macro in loraconf.h
+  setABPParamaters();
+#else
+  // Start join procedure if not already joined,
+  // lora_setupForNetwork(true) is called by eventhandler when joined
+  // else continue current session
+  if (do_join) {
+    if (!LMIC_startJoining())
+      ESP_LOGI(TAG, "Already joined");
+  } else {
     LMIC_reset();
-    uint8_t appskey[sizeof(APPSKEY)];
-    uint8_t nwkskey[sizeof(NWKSKEY)];
-    memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
-    memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
-    LMIC_setSession (NETID, DEVADDR, nwkskey, appskey);
-    // These parameters are defined as macro in loraconf.h
-    setABPParamaters();
-  #else
-    // Start join procedure if not already joined,
-    // lora_setupForNetwork(true) is called by eventhandler when joined
-    // else continue current session
-    if (do_join) {
-      if (!LMIC_startJoining())
-        ESP_LOGI(TAG, "Already joined");
-    } else {
-      LMIC_reset();
-      LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
-      LMIC.seqnoUp = RTCseqnoUp;
-      LMIC.seqnoDn = RTCseqnoDn;
-    }
-  #endif
+    LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
+    LMIC.seqnoUp = RTCseqnoUp;
+    LMIC.seqnoDn = RTCseqnoDn;
+  }
+#endif
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
                           "lorasendtask", // name of task

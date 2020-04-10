@@ -22,6 +22,12 @@
 #define LMIC_USE_INTERRUPTS 1
 #endif
 
+// avoid lmic warning if we don't configure radio because we don't have one
+#define CFG_sx1276_radio 1
+#if ! (defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio))
+#define CFG_sx1276_radio 1
+#endif
+
 // time sync via LoRaWAN network, note: not supported by TTNv2
 #define LMIC_ENABLE_DeviceTimeReq 1
 

@@ -170,6 +170,8 @@ void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
 // callback function to receive time answer from network or answer
 void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
+#if (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
+
   // if no timesync handshake is pending then exit
   if (!timeSyncPending)
     return;
@@ -269,4 +271,6 @@ Exit:
   // inform processing task
   xTaskNotify(timeSyncProcTask, (rc ? rcv_seqNo : TIME_SYNC_END_FLAG),
               eSetBits);
+
+#endif // (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
 }
