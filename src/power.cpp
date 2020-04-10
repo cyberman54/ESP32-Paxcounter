@@ -217,5 +217,28 @@ uint16_t read_voltage() {
 
 #endif // HAS_PMU
 
+  /*
+  // set battery level value for lmic stack
+  #if (HAS_LORA)
+    // Sets the battery level returned in MAC Command DevStatusAns.
+    // Available defines in lorabase.h:
+    //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+    //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+    //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+    //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+    // When setting the battery level calculate the applicable
+    // value from MCMD_DEVS_BATT_MIN to MCMD_DEVS_BATT_MAX.
+
+    // external power
+    if (voltage == 0xffff)
+      LMIC_setBattLevel(MCMD_DEVS_EXT_POWER);
+    // scale battery millivolts to lmic battlevel
+    else
+      LMIC_setBattLevel(voltage / BAT_MAX_VOLTAGE *
+                        (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
+
+#endif // (HAS_LORA)
+*/
+
   return voltage;
 }

@@ -104,3 +104,6 @@
 #define USE_IDEETRON_AES
 //
 //#define USE_MBEDTLS_AES
+
+// Define this for devices with external power.
+//#define LMIC_MCMD_DEVS_BATT_DEFAULT MCMD_DEVS_EXT_POWER
