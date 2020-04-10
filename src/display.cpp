@@ -220,8 +220,6 @@ void dp_drawPage(time_t t, bool nextpage) {
   static bool wasnofix = true;
 #endif
 
-start:
-
   if (nextpage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
     dp_clear();

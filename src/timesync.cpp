@@ -174,9 +174,6 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   if (!timeSyncPending)
     return;
 
-  // store LMIC time when we received the timesync answer
-  ostime_t rxTime = osticks2ms(os_getTime());
-
   // mask application irq to ensure accurate timing
   mask_user_IRQ();
 
@@ -192,7 +189,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // flag: length of buffer
 
   // Store the instant the time request of the node was received on the gateway
-  timesync_store(rxTime, timesync_rx);
+  timesync_store(osticks2ms(os_getTime(), timesync_rx);
 
   //  parse pUserData:
   //  p       type      meaning
