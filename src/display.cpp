@@ -75,6 +75,7 @@ void dp_setup(int contrast) {
   tft.setRotation(MY_DISPLAY_FLIP ? 3 : 1);
   tft.invertDisplay(MY_DISPLAY_INVERT ? true : false);
   tft.setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
+  //tft.setTextPadding(MY_DISPLAY_WIDTH);
 
 #endif
 
@@ -139,7 +140,7 @@ void dp_init(bool verbose) {
       dp_printqr(3, 3, deveui);
 
       // display DEVEUI as plain text on the right
-      const int x_offset = (QR_SCALEFACTOR * 29 + 4) / 8 + 2;
+      const int x_offset = QR_SCALEFACTOR * 29 + 14;
       dp_setTextCursor(x_offset, 0);
       dp_setFont(MY_FONT_NORMAL);
       dp_printf("DEVEUI");
@@ -235,7 +236,7 @@ start:
   if (DisplayPage < 6) {
     dp_setFont(MY_FONT_STRETCHED);
     dp_printf("PAX:%-4d", macs.size());
-    dp_println(3);
+    dp_setTextCursor(0, 2);
   }
 
   switch (DisplayPage) {
@@ -379,7 +380,6 @@ start:
     // page 3: BME280/680
   case 3:
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor(0, 2);
 #if (HAS_BME)
     // line 2-3: Temp
     dp_printf("TMP:%-2.1f", bme_status.temperature);
@@ -453,21 +453,38 @@ start:
 
 // ------------- display helper functions -----------------
 
-void dp_setTextCursor(int col, int row) {
-  dp_col = col;
-  dp_row = row;
-#if (HAS_DISPLAY) == 1
-  oledSetCursor(&ssoled, dp_col * 8, dp_row);
-#elif (HAS_DISPLAY) == 2
-  tft.setCursor(dp_row, dp_col);
-#endif
-}
+void dp_setTextCursor(int x, int y) {
+  // x represents the pixel column
+  // y represents the text row
 
-void dp_setCursor(int x, int y) {
+  dp_col = x;
+
 #if (HAS_DISPLAY) == 1
-  oledSetCursor(&ssoled, x, y);
+  switch (dp_font >> 1) {
+  case MY_FONT_STRETCHED: // 16x16 on OLED
+  case MY_FONT_LARGE:     // 16x32 on OLED
+    dp_row = y * 2;
+    break;
+  case MY_FONT_SMALL:  // 6x8 on OLED
+  case MY_FONT_NORMAL: // 8x8 on OLED
+  default:
+    dp_row = y;
+    break;
+  }
+  oledSetCursor(&ssoled, dp_col, dp_row);
 #elif (HAS_DISPLAY) == 2
-  tft.setCursor(x, y);
+  switch (dp_font >> 1) {
+  case MY_FONT_STRETCHED:
+  case MY_FONT_LARGE:
+    dp_row = y * 26;
+    break;
+  case MY_FONT_SMALL:
+  case MY_FONT_NORMAL:
+  default:
+    dp_row = y * 16;
+    break;
+  }
+  tft.setCursor(dp_col, dp_row);
 #endif
 }
 
@@ -497,7 +514,8 @@ void dp_println(int lines) {
 #if (HAS_DISPLAY) == 1
   dp_setTextCursor(dp_col, dp_row);
 #elif (HAS_DISPLAY) == 2
-  tft.println();
+  for (int i = 1; i <= lines; i++)
+    tft.println();
 #endif
 };
 

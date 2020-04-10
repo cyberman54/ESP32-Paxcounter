@@ -47,12 +47,17 @@ void start_ota_update() {
 
   dp_setup();
 
-  dp_printf(0, 0, 0, 1, "SOFTWARE UPDATE");
-  dp_printf(0, 1, 0, 0, "WiFi connect  ..");
-  dp_printf(0, 2, 0, 0, "Has Update?   ..");
-  dp_printf(0, 3, 0, 0, "Fetching      ..");
-  dp_printf(0, 4, 0, 0, "Downloading   ..");
-  dp_printf(0, 5, 0, 0, "Rebooting     ..");
+  dp_printf("SOFTWARE UPDATE");
+  dp_println();
+  dp_printf("WiFi connect  ..");
+  dp_println();
+  dp_printf("Has Update?   ..");
+  dp_println();
+  dp_printf("Fetching      ..");
+  dp_println();
+  dp_printf("Downloading   ..");
+  dp_println();
+  dp_printf("Rebooting     ..");
   dp_dump(displaybuf);
 #endif
 
@@ -302,11 +307,12 @@ void ota_display(const uint8_t row, const std::string status,
                  const std::string msg) {
 #ifdef HAS_DISPLAY
   dp_setFont(MY_FONT_SMALL);
-  dp_setTextCursor(0, row);
+  dp_setTextCursor(14, row);
   dp_printf(status.substr(0, 2).c_str());
   if (!msg.empty()) {
     dp_printf("                ");
     dp_printf(msg.substr(0, 16).c_str());
+    dp_println();
   }
   dp_dump(displaybuf);
 #endif

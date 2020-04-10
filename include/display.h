@@ -83,7 +83,6 @@ void dp_println(int lines = 1);
 void dp_printf(const char *format, ...);
 void dp_setFont(int font, int inv = 0);
 void dp_dump(uint8_t *pBuffer);
-void dp_setCursor(int x, int y);
 void dp_setTextCursor(int col, int row);
 void dp_contrast(uint8_t contrast);
 void dp_clear(void);
