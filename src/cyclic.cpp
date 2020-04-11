@@ -67,10 +67,16 @@ void doHousekeeping() {
 // read battery voltage into global variable
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   batt_level = read_battlevel();
-  if (batt_level == MCMD_DEVS_EXT_POWER)
+  switch (batt_level) {
+  case MCMD_DEVS_EXT_POWER:
     ESP_LOGI(TAG, "Battery: external power");
-  else
+    break;
+  case MCMD_DEVS_BATT_NOINFO :
+    ESP_LOGI(TAG, "Battery: unknown state");
+    break;
+  default:
     ESP_LOGI(TAG, "Battery: %d%%", batt_level);
+  }
 #ifdef HAS_PMU
   AXP192_showstatus();
 #endif
@@ -116,14 +122,13 @@ void doHousekeeping() {
 #endif
 
 #if (HAS_SDS011)
-    if ( isSDS011Active ) {
-        ESP_LOGD(TAG, "SDS011: go to sleep");
-        sds011_loop();
-    }
-    else {
-        ESP_LOGD(TAG, "SDS011: wakeup");
-        sds011_wakeup();
-    }
+  if (isSDS011Active) {
+    ESP_LOGD(TAG, "SDS011: go to sleep");
+    sds011_loop();
+  } else {
+    ESP_LOGD(TAG, "SDS011: wakeup");
+    sds011_wakeup();
+  }
 #endif
 
 } // doHousekeeping()

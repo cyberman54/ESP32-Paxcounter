@@ -224,18 +224,19 @@ uint8_t read_battlevel() {
   const uint16_t batt_voltage_range = BAT_MAX_VOLTAGE - BAT_MIN_VOLTAGE;
   const uint8_t batt_level_range = MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1;
   const uint16_t batt_voltage = read_voltage() - BAT_MIN_VOLTAGE;
-  const uint8_t batt_percent =
-      batt_voltage > 0 ? batt_voltage / batt_voltage_range * 100 : 0;
+  const uint8_t batt_percent = batt_voltage > 0
+                                   ? batt_voltage / batt_voltage_range * 100
+                                   : MCMD_DEVS_BATT_NOINFO;
   uint8_t lmic_batt_level;
 
 #ifdef HAS_PMU
-  if (batt_percent > 0)
+  if ((batt_percent > 0) && (batt_percent != MCMD_DEVS_BATT_NOINFO))
     lmic_batt_level = pmu.isVBUSPlug() ? MCMD_DEVS_EXT_POWER
                                        : batt_percent / 100 * batt_level_range;
   else
     lmic_batt_level = MCMD_DEVS_BATT_NOINFO;
 #else
-  if (batt_percent > 0)
+  if ((batt_percent > 0) && (batt_percent != MCMD_DEVS_BATT_NOINFO))
     lmic_batt_level = batt_percent / 100 * batt_level_range;
   else
     lmic_batt_level = MCMD_DEVS_BATT_NOINFO;
@@ -243,7 +244,7 @@ uint8_t read_battlevel() {
 
 // set battery level value for lmic stack
 #if (HAS_LORA)
-  //LMIC_setBattLevel(lmic_batt_level);
+    // LMIC_setBattLevel(lmic_batt_level);
 #endif
 
   return batt_percent;
@@ -252,10 +253,14 @@ uint8_t read_battlevel() {
 bool batt_sufficient() {
 #if (defined HAS_PMU || defined BAT_MEASURE_ADC)
   uint8_t my_batt_level = read_battlevel();
-  if (my_batt_level == MCMD_DEVS_EXT_POWER)
+  switch (my_batt_level) {
+  case MCMD_DEVS_EXT_POWER:
     return true;
-  else
+  case MCMD_DEVS_BATT_NOINFO:
+    return true;
+  default:
     return (my_batt_level > OTA_MIN_BATT);
+  }
 #else
   return true; // we don't know batt level
 #endif
