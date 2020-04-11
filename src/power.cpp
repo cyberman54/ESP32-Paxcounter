@@ -63,7 +63,7 @@ void AXP192_powerevent_IRQ(void) {
   pmu.clearIRQ();
 
   // refresh stored voltage value
-  read_voltage();
+  read_battlevel();
 }
 
 void AXP192_power(pmu_power_t powerlevel) {
@@ -175,21 +175,11 @@ void calibrate_voltage(void) {
 #endif
 }
 
-bool batt_sufficient() {
-#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
-  uint16_t volts = read_voltage();
-  return ((volts < 1000) ||
-          (volts > OTA_MIN_BATT)); // no battery or battery sufficient
-#else
-  return true;
-#endif
-}
-
-uint16_t read_voltage() {
+uint16_t read_voltage(void) {
   uint16_t voltage = 0;
 
 #ifdef HAS_PMU
-  voltage = pmu.isVBUSPlug() ? 0xffff : pmu.getBattVoltage();
+  voltage = pmu.getBattVoltage();
 #else
 
 #ifdef BAT_MEASURE_ADC
@@ -217,28 +207,56 @@ uint16_t read_voltage() {
 
 #endif // HAS_PMU
 
-  /*
-  // set battery level value for lmic stack
-  #if (HAS_LORA)
-    // Sets the battery level returned in MAC Command DevStatusAns.
-    // Available defines in lorabase.h:
-    //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
-    //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
-    //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
-    //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
-    // When setting the battery level calculate the applicable
-    // value from MCMD_DEVS_BATT_MIN to MCMD_DEVS_BATT_MAX.
-
-    // external power
-    if (voltage == 0xffff)
-      LMIC_setBattLevel(MCMD_DEVS_EXT_POWER);
-    // scale battery millivolts to lmic battlevel
-    else
-      LMIC_setBattLevel(voltage / BAT_MAX_VOLTAGE *
-                        (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
-
-#endif // (HAS_LORA)
-*/
-
   return voltage;
+}
+
+uint8_t read_battlevel() {
+
+  // return the battery value as sent in MAC Command
+  // DevStatusAns. Available defines in lorabase.h:
+  //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+  // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
+  // MCMD_DEVS_BATT_MAX from bat_percent value
+
+  const uint16_t batt_voltage_range = BAT_MAX_VOLTAGE - BAT_MIN_VOLTAGE;
+  const uint8_t batt_level_range = MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1;
+  const uint16_t batt_voltage = read_voltage() - BAT_MIN_VOLTAGE;
+  const uint8_t batt_percent =
+      batt_voltage > 0 ? batt_voltage / batt_voltage_range * 100 : 0;
+  uint8_t lmic_batt_level;
+
+#ifdef HAS_PMU
+  if (batt_percent > 0)
+    lmic_batt_level = pmu.isVBUSPlug() ? MCMD_DEVS_EXT_POWER
+                                       : batt_percent / 100 * batt_level_range;
+  else
+    lmic_batt_level = MCMD_DEVS_BATT_NOINFO;
+#else
+  if (batt_percent > 0)
+    lmic_batt_level = batt_percent / 100 * batt_level_range;
+  else
+    lmic_batt_level = MCMD_DEVS_BATT_NOINFO;
+#endif // HAS_PMU
+
+// set battery level value for lmic stack
+#if (HAS_LORA)
+  //LMIC_setBattLevel(lmic_batt_level);
+#endif
+
+  return batt_percent;
+}
+
+bool batt_sufficient() {
+#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
+  uint8_t my_batt_level = read_battlevel();
+  if (my_batt_level == MCMD_DEVS_EXT_POWER)
+    return true;
+  else
+    return (my_batt_level > OTA_MIN_BATT);
+#else
+  return true; // we don't know batt level
+#endif
 }

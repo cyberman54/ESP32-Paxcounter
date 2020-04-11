@@ -79,8 +79,9 @@ triggers pps 1 sec impulse
 configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 uint8_t volatile channel = 0;           // channel rotation counter
-uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
-                  batt_voltage = 0; // globals for display
+uint8_t batt_level = 0;                 // display value
+uint16_t volatile macs_total = 0, macs_wifi = 0,
+                  macs_ble = 0; // globals for display
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 
@@ -260,7 +261,7 @@ void setup() {
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   strcat_P(features, " BATT");
   calibrate_voltage();
-  batt_voltage = read_voltage();
+  batt_level = read_battlevel();
 #endif
 
 #if (USE_OTA)
@@ -328,9 +329,9 @@ void setup() {
 #endif
 
 #if (HAS_SDS011)
-    ESP_LOGI(TAG, "init fine-dust-sensor");
-    if ( sds011_init() )
-        strcat_P(features, " SDS");
+  ESP_LOGI(TAG, "init fine-dust-sensor");
+  if (sds011_init())
+    strcat_P(features, " SDS");
 #endif
 
 #if (VENDORFILTER)

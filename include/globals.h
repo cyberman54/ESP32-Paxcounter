@@ -123,8 +123,8 @@ extern std::array<uint64_t, 0xff> beacons;
 extern configData_t cfg;                       // current device configuration
 extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 extern uint8_t volatile channel;               // wifi channel rotation counter
-extern uint16_t volatile macs_total, macs_wifi, macs_ble,
-    batt_voltage;                   // display values
+extern uint8_t batt_level;                     // display value
+extern uint16_t volatile macs_total, macs_wifi, macs_ble; // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;

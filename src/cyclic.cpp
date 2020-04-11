@@ -28,7 +28,7 @@ void doHousekeeping() {
     if (batt_sufficient()) {
       do_reset(true); // warmstart to runmode update
     } else {
-      ESP_LOGE(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
+      ESP_LOGE(TAG, "Battery level %d%% is too low for OTA", batt_level);
       RTC_runmode = RUNMODE_NORMAL; // keep running in normal mode
     }
   }
@@ -66,11 +66,11 @@ void doHousekeeping() {
 
 // read battery voltage into global variable
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
-  batt_voltage = read_voltage();
-  if (batt_voltage == 0xffff)
+  batt_level = read_battlevel();
+  if (batt_level == MCMD_DEVS_EXT_POWER)
     ESP_LOGI(TAG, "Battery: external power");
   else
-    ESP_LOGI(TAG, "Battery: %dmV", batt_voltage);
+    ESP_LOGI(TAG, "Battery: %d%%", batt_level);
 #ifdef HAS_PMU
   AXP192_showstatus();
 #endif
