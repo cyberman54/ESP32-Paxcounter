@@ -224,18 +224,20 @@ uint8_t read_battlevel() {
   const uint16_t batt_voltage_range = BAT_MAX_VOLTAGE - BAT_MIN_VOLTAGE;
   const uint8_t batt_level_range = MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1;
   const int batt_voltage = read_voltage() - BAT_MIN_VOLTAGE;
-  const uint8_t batt_percent = (batt_voltage > 0)
-                                   ? (float)batt_voltage / (float)batt_voltage_range * 100.0
-                                   : MCMD_DEVS_BATT_NOINFO;
+  const uint8_t batt_percent =
+      (batt_voltage > 0)
+          ? (float)batt_voltage / (float)batt_voltage_range * 100.0
+          : MCMD_DEVS_BATT_NOINFO;
   uint8_t lmic_batt_level;
 
-  ESP_LOGD(TAG, "batt_voltage = %d mV / batt_level = %u%%", batt_voltage,
-           batt_percent);
+  ESP_LOGD(TAG, "batt_voltage = %dmV / batt_level = %u%%",
+           batt_voltage + BAT_MIN_VOLTAGE, batt_percent);
 
   if (batt_percent != MCMD_DEVS_BATT_NOINFO)
 #ifdef HAS_PMU
     lmic_batt_level = pmu.isVBUSPlug() ? MCMD_DEVS_EXT_POWER
-                                       : (float)batt_percent / (float)batt_level_range * 100.0;
+                                       : (float)batt_percent /
+                                             (float)batt_level_range * 100.0;
 #else
     lmic_batt_level = (float)batt_percent / (float)batt_level_range * 100.0;
 #endif // HAS_PMU
