@@ -12,10 +12,10 @@
 #define NO_OF_SAMPLES 64  // we do some multisampling to get better values
 
 #ifndef BAT_MAX_VOLTAGE
-#define BAT_MAX_VOLTAGE 4300 // millivolts
+#define BAT_MAX_VOLTAGE 4200 // millivolts
 #endif
 #ifndef BAT_MIN_VOLTAGE
-#define BAT_MIN_VOLTAGE 3200 // millivolts
+#define BAT_MIN_VOLTAGE 2800 // millivolts
 #endif
 
 uint16_t read_voltage(void);
