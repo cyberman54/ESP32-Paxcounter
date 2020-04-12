@@ -15,7 +15,7 @@
 #define BAT_MAX_VOLTAGE 4300 // millivolts
 #endif
 #ifndef BAT_MIN_VOLTAGE
-#define BAT_MIN_VOLTAGE 3100 // millivolts
+#define BAT_MIN_VOLTAGE 3200 // millivolts
 #endif
 
 uint16_t read_voltage(void);

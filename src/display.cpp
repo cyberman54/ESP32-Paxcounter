@@ -283,7 +283,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
     switch (batt_level) {
     case MCMD_DEVS_EXT_POWER:
-      dp_printf("USB     ");
+      dp_printf("ext.Pwr ");
       break;
     case MCMD_DEVS_BATT_NOINFO:
       dp_printf("No batt ");
