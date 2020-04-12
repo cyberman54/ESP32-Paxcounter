@@ -39,6 +39,7 @@
 
 #define HAS_LED NOT_A_PIN // no on board LED (?)
 #define RGB_LED_COUNT 10
+
 #define HAS_RGB_LED SmartLed rgb_led(LED_SK6812, RGB_LED_COUNT, GPIO_NUM_15) // LED_SK6812 RGB LED on GPIO15
 #define HAS_BUTTON (39) // on board button A
 

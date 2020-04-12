@@ -14,7 +14,8 @@
 #define CFG_sx1276_radio 1
 
 #define HAS_LED (22)     // Green LED on board
-#define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, 1, GPIO_NUM_2) // WS2812B RGB LED on board
+#define RGB_LED_COUNT 1 // we have 1 LED
+#define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, RGB_LED_COUNT, GPIO_NUM_2) // WS2812B RGB LED on board
 #define HAS_BUTTON (0)   // button "FLASH" on board
 #define DISABLE_BROWNOUT 1      // comment out if you want to keep brownout feature
 
