@@ -333,19 +333,21 @@ void PayloadConvert::addSDS(sdsStatus_t sds) {
 #if (HAS_SDS011)
 // value of PM10
 #if (PAYLOAD_ENCODER == 3) // Cayenne LPP dynamic
-    buffer[cursor++] = LPP_PARTMATTER10_CHANNEL;    // for PM10 
+  buffer[cursor++] = LPP_PARTMATTER10_CHANNEL; // for PM10
 #endif
-    buffer[cursor++] = LPP_LUMINOSITY; // workaround since cayenne has no data type meter
-    buffer[cursor++] = highByte((uint16_t)(sds.pm10 * 10));
-    buffer[cursor++] = lowByte((uint16_t)(sds.pm10 * 10));
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
+  buffer[cursor++] = highByte((uint16_t)(sds.pm10 * 10));
+  buffer[cursor++] = lowByte((uint16_t)(sds.pm10 * 10));
 // value of PM2.5
 #if (PAYLOAD_ENCODER == 3) // Cayenne LPP dynamic
-    buffer[cursor++] = LPP_PARTMATTER25_CHANNEL;    // for PM2.5
+  buffer[cursor++] = LPP_PARTMATTER25_CHANNEL; // for PM2.5
 #endif
-    buffer[cursor++] = LPP_LUMINOSITY; // workaround since cayenne has no data type meter
-    buffer[cursor++] = highByte((uint16_t)(sds.pm25 * 10));
-    buffer[cursor++] = lowByte((uint16_t)(sds.pm25 * 10));
-#endif  // HAS_SDS011
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
+  buffer[cursor++] = highByte((uint16_t)(sds.pm25 * 10));
+  buffer[cursor++] = lowByte((uint16_t)(sds.pm25 * 10));
+#endif // HAS_SDS011
 }
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {

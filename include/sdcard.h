@@ -3,9 +3,10 @@
 
 #include <globals.h>
 #include <stdio.h>
-
 #include <SPI.h>
 #include <mySD.h>
+
+#include "sds011read.h"
 
 #define SDCARD_FILE_NAME       "paxcount.%02d"
 #define SDCARD_FILE_HEADER     "date, time, wifi, bluet"

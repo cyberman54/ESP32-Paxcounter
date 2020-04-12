@@ -65,8 +65,8 @@ RGBColor rgb_hsl2rgb(float h, float s, float l) {
 void rgb_set_color(uint16_t hue) {
   int i = RGB_LED_COUNT;
   if (hue == COLOR_NONE) {
-    // Off
-    while (i--)
+    // set Off
+    for (int i = 0; i < RGB_LED_COUNT; i++)
       rgb_led[i] = Rgb(0, 0, 0);
   } else {
     // see http://www.workwithcolor.com/blue-color-hue-range-01.htm
@@ -76,7 +76,7 @@ void rgb_set_color(uint16_t hue) {
     // cfg.rgblum is between 0 and 100 (percent)
     RGBColor target = rgb_hsl2rgb(hue / 360.0f, 1.0f, 0.005f * cfg.rgblum);
     // uint32_t color = target.R<<16 | target.G<<8 | target.B;
-    while (i--)
+    for (int i = 0; i < RGB_LED_COUNT; i++)
       rgb_led[i] = Rgb(target.R, target.G, target.B);
   }
   // Show

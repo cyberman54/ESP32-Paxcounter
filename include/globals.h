@@ -123,8 +123,8 @@ extern std::array<uint64_t, 0xff> beacons;
 extern configData_t cfg;                       // current device configuration
 extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 extern uint8_t volatile channel;               // wifi channel rotation counter
-extern uint16_t volatile macs_total, macs_wifi, macs_ble,
-    batt_voltage;                   // display values
+extern uint8_t batt_level;                     // display value
+extern uint16_t volatile macs_total, macs_wifi, macs_ble; // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
@@ -133,43 +133,5 @@ extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;
-
-// application includes
-#include "led.h"
-#include "payload.h"
-#include "blescan.h"
-#include "power.h"
-
-#if (HAS_GPS)
-#include "gpsread.h"
-#endif
-
-#if (HAS_LORA)
-#include "lorawan.h"
-#endif
-
-#ifdef HAS_DISPLAY
-#include "display.h"
-#endif
-
-#ifdef HAS_MATRIX_DISPLAY
-#include "ledmatrixdisplay.h"
-#endif
-
-#ifdef HAS_BUTTON
-#include "button.h"
-#endif
-
-#ifdef HAS_ANTENNA_SWITCH
-#include "antenna.h"
-#endif
-
-#if (HAS_SENSORS)
-#include "sensor.h"
-#endif
-
-#if (HAS_BME)
-#include "bmesensor.h"
-#endif
 
 #endif

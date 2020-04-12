@@ -13,11 +13,13 @@
 #define PMU_IRQ 0x200
 
 #include "globals.h"
+#include "button.h"
 #include "cyclic.h"
 #include "senddata.h"
 #include "timekeeper.h"
 #include "bmesensor.h"
 #include "power.h"
+#include "ledmatrixdisplay.h"
 
 void irqHandler(void *pvParameters);
 void mask_user_IRQ();

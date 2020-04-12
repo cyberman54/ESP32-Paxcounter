@@ -17,8 +17,16 @@
 // --> adapt to your device only if necessary
 
 // use interrupts only if LORA_IRQ and LORA_DIO are connected to interrupt
-// capable GPIO pins on your board, if not disable interrupts
+// capable and separate GPIO pins on your board, if not don't enable
+#if (LORA_IRQ) != (LORA_IO1)
 #define LMIC_USE_INTERRUPTS 1
+#endif
+
+// avoid lmic warning if we don't configure radio because we don't have one
+#define CFG_sx1276_radio 1
+#if ! (defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio))
+#define CFG_sx1276_radio 1
+#endif
 
 // time sync via LoRaWAN network, note: not supported by TTNv2
 #define LMIC_ENABLE_DeviceTimeReq 1
@@ -96,3 +104,6 @@
 #define USE_IDEETRON_AES
 //
 //#define USE_MBEDTLS_AES
+
+// Define this for devices with external power.
+//#define LMIC_MCMD_DEVS_BATT_DEFAULT MCMD_DEVS_EXT_POWER

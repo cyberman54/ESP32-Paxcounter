@@ -1,11 +1,7 @@
 #ifndef _PAYLOAD_H_
 #define _PAYLOAD_H_
 
-#include "paxcounter.conf"
-
-#if (HAS_SDS011)
 #include "sds011read.h"
-#endif
 
 // MyDevices CayenneLPP 1.0 channels for Synamic sensor payload format
 // all payload goes out on LoRa FPort 1

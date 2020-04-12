@@ -1,13 +1,11 @@
 #ifndef _LED_H
 #define _LED_H
 
-#ifdef HAS_RGB_LED
 #include <SmartLeds.h>
+#include "lorawan.h"
 
 #ifndef RGB_LED_COUNT
 #define RGB_LED_COUNT 1
-#endif
-
 #endif
 
 // value for HSL color

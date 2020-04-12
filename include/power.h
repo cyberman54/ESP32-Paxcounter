@@ -4,13 +4,22 @@
 #include <Arduino.h>
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
+
 #include "i2c.h"
 #include "reset.h"
 
 #define DEFAULT_VREF 1100 // tbd: use adc2_vref_to_gpio() for better estimate
 #define NO_OF_SAMPLES 64  // we do some multisampling to get better values
 
+#ifndef BAT_MAX_VOLTAGE
+#define BAT_MAX_VOLTAGE 4300 // millivolts
+#endif
+#ifndef BAT_MIN_VOLTAGE
+#define BAT_MIN_VOLTAGE 3200 // millivolts
+#endif
+
 uint16_t read_voltage(void);
+uint8_t read_battlevel(void);
 void calibrate_voltage(void);
 bool batt_sufficient(void);
 

@@ -1,6 +1,7 @@
 /* configmanager persists runtime configuration using NVRAM of ESP32*/
 
 #include "globals.h"
+#include "configmanager.h"
 
 // Local logging tag
 static const char TAG[] = "flash";

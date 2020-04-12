@@ -1,6 +1,5 @@
-/* code snippets taken from
-https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
-*/
+// some code snippets taken from
+// https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
 #include "blescan.h"
 

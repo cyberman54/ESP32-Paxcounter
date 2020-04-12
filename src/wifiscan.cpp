@@ -1,8 +1,6 @@
 // Basic Config
 #include "globals.h"
 #include "wifiscan.h"
-#include <esp_coexist.h>
-#include "coexist_internal.h"
 
 // Local logging tag
 static const char TAG[] = "wifi";

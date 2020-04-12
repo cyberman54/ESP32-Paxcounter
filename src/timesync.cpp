@@ -13,8 +13,6 @@ accept this.
 
 */
 
-#if (HAS_LORA)
-
 #if (TIME_SYNC_LORASERVER) && (TIME_SYNC_LORAWAN)
 #error Duplicate timesync method selected. You must select either LORASERVER or LORAWAN timesync.
 #endif
@@ -48,7 +46,7 @@ void timesync_request(void) {
     return;
   // start timesync handshake
   else {
-    ESP_LOGI(TAG, "[%0.3f] Timeserver sync request seqNo#%d started",
+    ESP_LOGI(TAG, "[%0.3f] Timeserver sync request started, seqNo#%d",
              millis() / 1000.0, time_sync_seqNo);
     xTaskNotifyGive(timeSyncProcTask); // unblock timesync task
   }
@@ -172,12 +170,11 @@ void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
 // callback function to receive time answer from network or answer
 void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
+#if (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
+
   // if no timesync handshake is pending then exit
   if (!timeSyncPending)
     return;
-
-  // store LMIC time when we received the timesync answer
-  ostime_t rxTime = osticks2ms(os_getTime());
 
   // mask application irq to ensure accurate timing
   mask_user_IRQ();
@@ -194,7 +191,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // flag: length of buffer
 
   // Store the instant the time request of the node was received on the gateway
-  timesync_store(rxTime, timesync_rx);
+  timesync_store(osticks2ms(os_getTime(), timesync_rx);
 
   //  parse pUserData:
   //  p       type      meaning
@@ -274,6 +271,6 @@ Exit:
   // inform processing task
   xTaskNotify(timeSyncProcTask, (rc ? rcv_seqNo : TIME_SYNC_END_FLAG),
               eSetBits);
-}
 
-#endif // HAS_LORA
+#endif // (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
+}

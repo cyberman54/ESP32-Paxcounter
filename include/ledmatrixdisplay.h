@@ -3,6 +3,7 @@
 
 #include "LEDMatrix.h"
 #include "ledmatrixfonts.h"
+#include "ledmatrixdisplay.h"
 
 extern uint8_t MatrixDisplayIsOn;
 
