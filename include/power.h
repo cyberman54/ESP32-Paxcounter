@@ -53,11 +53,6 @@ void AXP192_showstatus(void);
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-// Plots of the functions below available at
-// https://www.desmos.com/calculator/x0esk5bsrk
-//
-
 /**
  * Symmetric sigmoidal approximation
  * https://www.desmos.com/calculator/7m9lu26vpy
