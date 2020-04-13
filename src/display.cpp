@@ -281,16 +281,12 @@ void dp_drawPage(time_t t, bool nextpage) {
     // line 4: Battery + GPS status + Wifi channel
     // B:a.bcV Sats:ab ch:ab
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
-    switch (batt_level) {
-    case MCMD_DEVS_EXT_POWER:
-      dp_printf("ext.Pwr ");
-      break;
-    case MCMD_DEVS_BATT_NOINFO:
+    if (batt_level == 0)
       dp_printf("No batt ");
-      break;
-    default:
+    else if (batt_level < 100)
       dp_printf("B:%3d%%  ", batt_level);
-    }
+    else
+      dp_printf("ext.Pwr ");
 #else
     dp_printf("       ");
 #endif

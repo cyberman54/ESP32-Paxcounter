@@ -32,6 +32,7 @@ void os_getDevEui(u1_t *buf);
 void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
+void lora_setBattLevel(uint8_t batt_percent);
 void IRAM_ATTR myEventCallback(void *pUserData, ev_t ev);
 void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                             size_t nMsg);

@@ -67,16 +67,11 @@ void doHousekeeping() {
 // read battery voltage into global variable
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   batt_level = read_battlevel();
-  switch (batt_level) {
-  case MCMD_DEVS_EXT_POWER:
-    ESP_LOGI(TAG, "Battery: external power");
-    break;
-  case MCMD_DEVS_BATT_NOINFO :
-    ESP_LOGI(TAG, "Battery: unknown state");
-    break;
-  default:
-    ESP_LOGI(TAG, "Battery: %d%%", batt_level);
-  }
+  ESP_LOGI(TAG, "Battery: %d%%", batt_level);
+#if (HAS_LORA)
+  // to come with future LMIC version
+  // lora_setBattLevel(batt_level);
+#endif
 #ifdef HAS_PMU
   AXP192_showstatus();
 #endif
