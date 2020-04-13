@@ -7,6 +7,7 @@
 
 #include "i2c.h"
 #include "reset.h"
+#include "lorawan.h"
 
 #define DEFAULT_VREF 1100 // tbd: use adc2_vref_to_gpio() for better estimate
 #define NO_OF_SAMPLES 64  // we do some multisampling to get better values
@@ -15,11 +16,12 @@
 #define BAT_MAX_VOLTAGE 4200 // millivolts
 #endif
 #ifndef BAT_MIN_VOLTAGE
-#define BAT_MIN_VOLTAGE 2800 // millivolts
+#define BAT_MIN_VOLTAGE 3100 // millivolts
 #endif
 
+typedef uint8_t (*mapFn_t)(uint16_t, uint16_t, uint16_t);
+
 uint16_t read_voltage(void);
-uint8_t read_battlevel(void);
 void calibrate_voltage(void);
 bool batt_sufficient(void);
 
@@ -33,5 +35,68 @@ void AXP192_init(void);
 void AXP192_showstatus(void);
 
 #endif // HAS_PMU
+
+// The following map functions were taken from
+
+/*
+ Battery.h - Battery library
+ Copyright (c) 2014 Roberto Lo Giacco.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as 
+ published by the Free Software Foundation, either version 3 of the 
+ License, or (at your option) any later version.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+//
+// Plots of the functions below available at
+// https://www.desmos.com/calculator/x0esk5bsrk
+//
+
+/**
+ * Symmetric sigmoidal approximation
+ * https://www.desmos.com/calculator/7m9lu26vpy
+ *
+ * c - c / (1 + k*x/v)^3
+ */
+static inline uint8_t sigmoidal(uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
+	// slow
+	// uint8_t result = 110 - (110 / (1 + pow(1.468 * (voltage - minVoltage)/(maxVoltage - minVoltage), 6)));
+
+	// steep
+	// uint8_t result = 102 - (102 / (1 + pow(1.621 * (voltage - minVoltage)/(maxVoltage - minVoltage), 8.1)));
+
+	// normal
+	uint8_t result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
+	return result >= 100 ? 100 : result;
+}
+
+/**
+ * Asymmetric sigmoidal approximation
+ * https://www.desmos.com/calculator/oyhpsu8jnw
+ *
+ * c - c / [1 + (k*x/v)^4.5]^3
+ */
+static inline uint8_t asigmoidal(uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
+	uint8_t result = 101 - (101 / pow(1 + pow(1.33 * (voltage - minVoltage)/(maxVoltage - minVoltage) ,4.5), 3));
+	return result >= 100 ? 100 : result;
+}
+
+/**
+ * Linear mapping
+ * https://www.desmos.com/calculator/sowyhttjta
+ *
+ * x * 100 / v
+ */
+static inline uint8_t linear(uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
+	return (unsigned long)(voltage - minVoltage) * 100 / (maxVoltage - minVoltage);
+}
+
+uint8_t read_battlevel(mapFn_t mapFunction = &sigmoidal);
 
 #endif

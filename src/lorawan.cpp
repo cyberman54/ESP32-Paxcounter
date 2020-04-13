@@ -485,12 +485,10 @@ void lora_setBattLevel(uint8_t batt_percent) {
 #endif // HAS_PMU
 
   else
-    lmic_batt_level = static_cast<uint8_t>(
-        (float)batt_percent /
-        (float)(MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1) * 100.0f);
+    lmic_batt_level =
+        batt_percent / 100.0 * (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1);
 
   LMIC_setBattLevel(lmic_batt_level);
-  ESP_LOGD(TAG, "lmic_batt_level = %d", lmic_batt_level);
 }
 
 // event EV_RXCOMPLETE message handler

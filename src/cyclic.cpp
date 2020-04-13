@@ -68,10 +68,6 @@ void doHousekeeping() {
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   batt_level = read_battlevel();
   ESP_LOGI(TAG, "Battery: %d%%", batt_level);
-#if (HAS_LORA)
-  // to come with future LMIC version
-  // lora_setBattLevel(batt_level);
-#endif
 #ifdef HAS_PMU
   AXP192_showstatus();
 #endif
