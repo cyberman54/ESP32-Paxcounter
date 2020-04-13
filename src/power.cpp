@@ -212,7 +212,7 @@ uint16_t read_voltage(void) {
 
 uint8_t read_battlevel(mapFn_t mapFunction) {
 
-  // returns the estimated battery level in values 0 ... 100 [percent],
+  // returns the estimated battery level in values 0 ... 100 [percent]
 
   const uint16_t batt_voltage = read_voltage();
   uint8_t batt_percent;
@@ -230,7 +230,7 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
 
 #if (HAS_LORA)
   // to come with future LMIC version
-  // lora_setBattLevel(batt_percent);
+  lora_setBattLevel(batt_percent);
 #endif
 
   return batt_percent;

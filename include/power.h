@@ -7,7 +7,6 @@
 
 #include "i2c.h"
 #include "reset.h"
-#include "lorawan.h"
 
 #define DEFAULT_VREF 1100 // tbd: use adc2_vref_to_gpio() for better estimate
 #define NO_OF_SAMPLES 64  // we do some multisampling to get better values
@@ -28,6 +27,7 @@ bool batt_sufficient(void);
 #ifdef HAS_PMU
 
 #include <axp20x.h>
+extern AXP20X_Class pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
 void AXP192_powerevent_IRQ(void);
 void AXP192_power(pmu_power_t powerlevel);
@@ -37,22 +37,11 @@ void AXP192_showstatus(void);
 #endif // HAS_PMU
 
 // The following map functions were taken from
-
-/*
- Battery.h - Battery library
- Copyright (c) 2014 Roberto Lo Giacco.
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as 
- published by the Free Software Foundation, either version 3 of the 
- License, or (at your option) any later version.
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
+//
+// Battery.h - Battery library
+// Copyright (c) 2014 Roberto Lo Giacco
+// https://github.com/rlogiacco/BatterySense
+ 
 /**
  * Symmetric sigmoidal approximation
  * https://www.desmos.com/calculator/7m9lu26vpy

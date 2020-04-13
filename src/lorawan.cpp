@@ -488,7 +488,7 @@ void lora_setBattLevel(uint8_t batt_percent) {
     lmic_batt_level =
         batt_percent / 100.0 * (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1);
 
-  LMIC_setBattLevel(lmic_batt_level);
+  //LMIC_setBattLevel(lmic_batt_level);
 }
 
 // event EV_RXCOMPLETE message handler
