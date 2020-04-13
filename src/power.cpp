@@ -210,18 +210,28 @@ uint16_t read_voltage(void) {
   return voltage;
 }
 
-uint8_t read_battlevel() {
+uint8_t read_battlevel(mapFn_t mapFunction) {
 
-  // return the battery level in values 0 ... 255 [percent],
-  // values > 100 probably mean external power, depending on hardware
+  // returns the estimated battery level in values 0 ... 100 [percent]
 
   const uint16_t batt_voltage = read_voltage();
-  float batt_percent_fl = (float)(batt_voltage - BAT_MIN_VOLTAGE) /
-                          (float)(BAT_MAX_VOLTAGE - BAT_MIN_VOLTAGE) * 100.0f;
-  const uint8_t batt_percent = static_cast<uint8_t>(batt_percent_fl);
+  uint8_t batt_percent;
 
-  ESP_LOGD(TAG, "batt_voltage = %dmV / batt_percent = %u%%", batt_voltage,
+  if (batt_voltage <= BAT_MIN_VOLTAGE)
+    batt_percent = 0;
+  else if (batt_voltage >= BAT_MAX_VOLTAGE)
+    batt_percent = 100;
+  else
+    batt_percent =
+        (*mapFunction)(batt_voltage, BAT_MIN_VOLTAGE, BAT_MAX_VOLTAGE);
+
+  ESP_LOGD(TAG, "batt_voltage = %dmV / batt_percent = %d%%", batt_voltage,
            batt_percent);
+
+#if (HAS_LORA)
+  // to come with future LMIC version
+  lora_setBattLevel(batt_percent);
+#endif
 
   return batt_percent;
 }
