@@ -459,6 +459,40 @@ void myEventCallback(void *pUserData, ev_t ev) {
   ESP_LOGD(TAG, "%s", lmic_event_msg);
 }
 
+void lora_setBattLevel(uint8_t batt_percent) {
+
+  // set the battery value to send by LMIC in MAC Command
+  // DevStatusAns. Available defines in lorabase.h:
+  //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+  // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
+  // MCMD_DEVS_BATT_MAX from bat_percent value
+
+  uint8_t lmic_batt_level;
+
+  if (batt_percent == 0)
+    lmic_batt_level = MCMD_DEVS_BATT_NOINFO;
+  else
+
+#ifdef HAS_PMU
+      if (pmu.isVBUSPlug())
+    lmic_batt_level = MCMD_DEVS_EXT_POWER;
+#else
+      if (batt_percent > 100)
+    lmic_batt_level = MCMD_DEVS_EXT_POWER;
+#endif // HAS_PMU
+
+  else
+    lmic_batt_level = static_cast<uint8_t>(
+        (float)batt_percent /
+        (float)(MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1) * 100.0f);
+
+  LMIC_setBattLevel(lmic_batt_level);
+  ESP_LOGD(TAG, "lmic_batt_level = %d", lmic_batt_level);
+}
+
 // event EV_RXCOMPLETE message handler
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                   size_t nMsg) {
