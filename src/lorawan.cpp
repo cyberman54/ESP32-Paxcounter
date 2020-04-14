@@ -287,8 +287,7 @@ void lora_send(void *pvParameters) {
 }
 
 void lora_stack_reset() {
-  LMIC_reset();     // reset LMIC MAC
-  read_battlevel(); // refresh battery value for LMIC MAC
+  LMIC_reset(); // reset LMIC MAC
 }
 
 esp_err_t lora_stack_init(bool do_join) {
@@ -392,6 +391,8 @@ void lmictask(void *pvParameters) {
   // LMIC_reset() doesn't affect callbacks, so we can do this first.
   LMIC_registerRxMessageCb(myRxCallback, NULL);
   LMIC_registerEventCb(myEventCallback, NULL);
+  // to come with future LMIC version
+  // LMIC_registerBattLevelCb(myBattLevelCb, NULL);
 
   // Reset the MAC state. Session and pending data transfers will be
   // discarded.
@@ -470,7 +471,7 @@ void myEventCallback(void *pUserData, ev_t ev) {
   ESP_LOGD(TAG, "%s", lmic_event_msg);
 }
 
-void lora_setBattLevel(uint8_t batt_percent) {
+uint8_t myBattLevelCb(void *pUserData) {
 
   // set the battery value to send by LMIC in MAC Command
   // DevStatusAns. Available defines in lorabase.h:
@@ -482,6 +483,7 @@ void lora_setBattLevel(uint8_t batt_percent) {
   // MCMD_DEVS_BATT_MAX from bat_percent value
 
   uint8_t lmic_batt_level;
+  uint8_t const batt_percent = read_battlevel();
 
   if (batt_percent == 0)
     lmic_batt_level = MCMD_DEVS_BATT_NOINFO;
@@ -499,7 +501,7 @@ void lora_setBattLevel(uint8_t batt_percent) {
     lmic_batt_level =
         batt_percent / 100.0 * (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1);
 
-  //LMIC_setBattLevel(lmic_batt_level);
+  return lmic_batt_level;
 }
 
 // event EV_RXCOMPLETE message handler
