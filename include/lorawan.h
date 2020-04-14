@@ -20,6 +20,7 @@
 
 extern TaskHandle_t lmicTask, lorasendTask;
 
+void lora_stack_reset();
 esp_err_t lora_stack_init(bool do_join);
 void lora_setupForNetwork(bool preJoin);
 void lmictask(void *pvParameters);
