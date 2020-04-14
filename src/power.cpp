@@ -214,8 +214,8 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
 
   // returns the estimated battery level in values 0 ... 100 [percent]
 
-  const uint16_t batt_voltage = read_voltage();
   uint8_t batt_percent;
+  const uint16_t batt_voltage = read_voltage();
 
   if (batt_voltage <= BAT_MIN_VOLTAGE)
     batt_percent = 0;
@@ -227,11 +227,6 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
 
   ESP_LOGD(TAG, "batt_voltage = %dmV / batt_percent = %d%%", batt_voltage,
            batt_percent);
-
-#if (HAS_LORA)
-  // to come with future LMIC version
-  lora_setBattLevel(batt_percent);
-#endif
 
   return batt_percent;
 }
