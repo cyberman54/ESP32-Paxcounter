@@ -286,6 +286,11 @@ void lora_send(void *pvParameters) {
   }
 }
 
+void lora_stack_reset() {
+  LMIC_reset();     // reset LMIC MAC
+  read_battlevel(); // refresh battery value for LMIC MAC
+}
+
 esp_err_t lora_stack_init(bool do_join) {
   assert(SEND_QUEUE_SIZE);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
@@ -308,7 +313,7 @@ esp_err_t lora_stack_init(bool do_join) {
 
 #ifdef LORA_ABP
   // Pass ABP parameters to LMIC_setSession
-  LMIC_reset();
+  lora_stack_reset();
   uint8_t appskey[sizeof(APPSKEY)];
   uint8_t nwkskey[sizeof(NWKSKEY)];
   memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
@@ -324,7 +329,7 @@ esp_err_t lora_stack_init(bool do_join) {
     if (!LMIC_startJoining())
       ESP_LOGI(TAG, "Already joined");
   } else {
-    LMIC_reset();
+    lora_stack_reset();
     LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
     LMIC.seqnoUp = RTCseqnoUp;
     LMIC.seqnoDn = RTCseqnoDn;
@@ -390,7 +395,7 @@ void lmictask(void *pvParameters) {
 
   // Reset the MAC state. Session and pending data transfers will be
   // discarded.
-  LMIC_reset();
+  lora_stack_reset();
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
@@ -442,6 +447,12 @@ void myEventCallback(void *pUserData, ev_t ev) {
     lora_setupForNetwork(false);
     break;
 
+  case EV_JOIN_FAILED:
+    // must call LMIC_reset() to stop joining
+    // otherwise join procedure continues.
+    lora_stack_reset();
+    break;
+
   case EV_JOIN_TXCOMPLETE:
     // replace descriptor from library with more descriptive term
     snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "%-16s", "JOIN_WAIT");
@@ -480,7 +491,7 @@ void lora_setBattLevel(uint8_t batt_percent) {
       if (pmu.isVBUSPlug())
     lmic_batt_level = MCMD_DEVS_EXT_POWER;
 #else
-      if (batt_percent > 100)
+      if (batt_percent >= 100)
     lmic_batt_level = MCMD_DEVS_EXT_POWER;
 #endif // HAS_PMU
 
