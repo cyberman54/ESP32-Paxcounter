@@ -303,13 +303,11 @@ uint8_t IP5306_GetBatteryLevel(void) {
 void printIP5306Stats(void) {
   bool usb = IP5306_GetPowerSource();
   bool full = IP5306_GetBatteryFull();
-  uint8_t leds = IP5306_GetBatteryLevel();
+  uint8_t level = IP5306_GetBatteryLevel();
   ESP_LOGI(TAG,
-           "IP5306: Power Source: %s, Battery State: %s, Battery "
-           "Level: %u%%",
+           "IP5306: Power Source: %s, Battery State: %s, Battery Level: %u%%",
            usb ? "USB" : "BATTERY",
-           full ? "CHARGED" : (usb ? "CHARGING" : "DISCHARGING"),
-           IP5306_LEDS2PCT(leds));
+           full ? "CHARGED" : (usb ? "CHARGING" : "DISCHARGING"), level);
 }
 
 #endif // HAS_IP5306
