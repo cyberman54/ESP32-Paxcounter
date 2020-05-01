@@ -280,7 +280,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 
     // line 4: Battery + GPS status + Wifi channel
     // B:a.bcV Sats:ab ch:ab
-#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
     if (batt_level == 0)
       dp_printf("No batt ");
     else if (batt_level < 100)
@@ -290,6 +290,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 #else
     dp_printf("       ");
 #endif
+
 #if (HAS_GPS)
     dp_setFont(MY_FONT_SMALL, !gps_hasfix());
     dp_printf("Sats:%.2d", gps.satellites.value());

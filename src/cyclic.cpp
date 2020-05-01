@@ -65,11 +65,13 @@ void doHousekeeping() {
 #endif
 
 // read battery voltage into global variable
-#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
   batt_level = read_battlevel();
-  ESP_LOGI(TAG, "Battery: %d%%", batt_level);
 #ifdef HAS_PMU
   AXP192_showstatus();
+#endif
+#ifdef HAS_IP5306
+  printIP5306Stats();
 #endif
 #endif
 

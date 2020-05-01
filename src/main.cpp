@@ -258,10 +258,13 @@ void setup() {
 #endif
 
 // initialize battery status
-#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
   strcat_P(features, " BATT");
   calibrate_voltage();
   batt_level = read_battlevel();
+#ifdef HAS_IP5306
+  printIP5306Stats();
+#endif
 #endif
 
 #if (USE_OTA)

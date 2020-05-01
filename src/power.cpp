@@ -215,6 +215,10 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
   // returns the estimated battery level in values 0 ... 100 [percent]
 
   uint8_t batt_percent;
+
+#ifdef HAS_IP5306
+  batt_percent = IP5306_GetBatteryLevel();
+#else
   const uint16_t batt_voltage = read_voltage();
 
   if (batt_voltage <= BAT_MIN_VOLTAGE)
@@ -224,17 +228,86 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
   else
     batt_percent =
         (*mapFunction)(batt_voltage, BAT_MIN_VOLTAGE, BAT_MAX_VOLTAGE);
-
-  ESP_LOGD(TAG, "batt_voltage = %dmV / batt_percent = %d%%", batt_voltage,
-           batt_percent);
+#endif // HAS_IP5306
 
   return batt_percent;
 }
 
 bool batt_sufficient() {
-#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
+#if (defined HAS_PMU || defined BAT_MEASURE_ADC || defined HAS_IP5306)
   return (batt_level > OTA_MIN_BATT);
 #else
   return true; // we don't know batt level
 #endif
 }
+
+#ifdef HAS_IP5306
+
+// IP5306 code snippet was taken from
+// https://gist.github.com/me-no-dev/7702f08dd578de5efa47caf322250b57
+
+#define IP5306_REG_SYS_0 0x00
+#define IP5306_REG_SYS_1 0x01
+#define IP5306_REG_SYS_2 0x02
+#define IP5306_REG_CHG_0 0x20
+#define IP5306_REG_CHG_1 0x21
+#define IP5306_REG_CHG_2 0x22
+#define IP5306_REG_CHG_3 0x23
+#define IP5306_REG_CHG_4 0x24
+#define IP5306_REG_READ_0 0x70
+#define IP5306_REG_READ_1 0x71
+#define IP5306_REG_READ_2 0x72
+#define IP5306_REG_READ_3 0x77
+#define IP5306_REG_READ_4 0x78
+
+#define IP5306_LEDS2PCT(byte)                                                  \
+  ((byte & 0x01 ? 25 : 0) + (byte & 0x02 ? 25 : 0) + (byte & 0x04 ? 25 : 0) +  \
+   (byte & 0x08 ? 25 : 0))
+
+uint8_t ip5306_get_bits(uint8_t reg, uint8_t index, uint8_t bits) {
+  uint8_t value;
+  if (i2c_readBytes(IP5306_PRIMARY_ADDRESS, reg, &value, 1) == 0xff) {
+    ESP_LOGW(TAG, "IP5306 get bits fail: 0x%02x", reg);
+    return 0;
+  }
+  return (value >> index) & ((1 << bits) - 1);
+}
+
+void ip5306_set_bits(uint8_t reg, uint8_t index, uint8_t bits, uint8_t value) {
+  uint8_t mask = (1 << bits) - 1, v;
+  if (i2c_readBytes(IP5306_PRIMARY_ADDRESS, reg, &v, 1) == 0xff) {
+    ESP_LOGW(TAG, "IP5306 register read fail: 0x%02x", reg);
+    return;
+  }
+  v &= ~(mask << index);
+  v |= ((value & mask) << index);
+
+  if (i2c_writeBytes(IP5306_PRIMARY_ADDRESS, reg, &v, 1) == 0xff)
+    ESP_LOGW(TAG, "IP5306 register write fail: 0x%02x", reg);
+}
+
+uint8_t IP5306_GetPowerSource(void) {
+  return ip5306_get_bits(IP5306_REG_READ_0, 3, 1); // 0:BAT, 1:VIN
+}
+
+uint8_t IP5306_GetBatteryFull(void) {
+  return ip5306_get_bits(IP5306_REG_READ_1, 3, 1); // 0:CHG/DIS, 1:FULL
+}
+
+uint8_t IP5306_GetBatteryLevel(void) {
+  uint8_t state = (~ip5306_get_bits(IP5306_REG_READ_4, 4, 4)) & 0x0F;
+  // LED[0-4] State (inverted)
+  return IP5306_LEDS2PCT(state);
+}
+
+void printIP5306Stats(void) {
+  bool usb = IP5306_GetPowerSource();
+  bool full = IP5306_GetBatteryFull();
+  uint8_t level = IP5306_GetBatteryLevel();
+  ESP_LOGI(TAG,
+           "IP5306: Power Source: %s, Battery State: %s, Battery Level: %u%%",
+           usb ? "USB" : "BATTERY",
+           full ? "CHARGED" : (usb ? "CHARGING" : "DISCHARGING"), level);
+}
+
+#endif // HAS_IP5306

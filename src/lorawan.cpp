@@ -492,6 +492,9 @@ uint8_t myBattLevelCb(void *pUserData) {
 #ifdef HAS_PMU
       if (pmu.isVBUSPlug())
     lmic_batt_level = MCMD_DEVS_EXT_POWER;
+#elif defined HAS_IP5306
+      if (IP5306_GetPowerSource())
+    lmic_batt_level = MCMD_DEVS_EXT_POWER;
 #else
       if (batt_percent >= 100)
     lmic_batt_level = MCMD_DEVS_EXT_POWER;

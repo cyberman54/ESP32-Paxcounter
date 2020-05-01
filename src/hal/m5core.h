@@ -34,11 +34,11 @@
 
 #define HAS_DISPLAY 2 // TFT-LCD, support work in progess, not ready yet
 //#define MY_DISPLAY_FLIP  1 // use if display is rotated
-//#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
-//#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
 #define HAS_LED NOT_A_PIN // no on board LED (?)
 #define HAS_BUTTON (39) // on board button A
+
+#define HAS_IP5306 1
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
