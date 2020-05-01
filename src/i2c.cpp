@@ -5,8 +5,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-void i2c_init(void) { 
-  Wire.begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL, 400000); }
+void i2c_init(void) { Wire.begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL, 400000); }
 
 void i2c_deinit(void) {
   Wire.~TwoWire(); // shutdown/power off I2C hardware
@@ -51,6 +50,10 @@ int i2c_scan(void) {
 
         case AXP192_PRIMARY_ADDRESS:
           ESP_LOGI(TAG, "0x%X: AXP192 power management", addr);
+          break;
+
+        case IP5306_PRIMARY_ADDRESS:
+          ESP_LOGI(TAG, "0x%X: IP5306 power management", addr);
           break;
 
         case QUECTEL_GPS_PRIMARY_ADDRESS:
