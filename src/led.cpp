@@ -170,7 +170,7 @@ void ledLoop(void *parameter) {
         // select color to blink by message port
         switch (LMIC.pendTxPort) {
         case STATUSPORT:
-          LEDColor = COLOR_RED;
+          LEDColor = COLOR_PINK;
           break;
         case CONFIGPORT:
           LEDColor = COLOR_CYAN;
