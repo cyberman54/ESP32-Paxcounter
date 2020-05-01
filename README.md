@@ -56,7 +56,7 @@ Depending on board hardware following features are supported:
 - RGB LED (shows colorized status)
 - Button (short press: flip display page / long press: send alarm message)
 - Silicon unique ID
-- Battery voltage monitoring
+- Battery voltage monitoring (analog read / AXP192 / IP5306)
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
 - Environmental sensors (Bosch BMP180/BME280/BME680 I2C; SDS011 serial)
 - Real Time Clock (Maxim DS3231 I2C)
@@ -148,12 +148,13 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 
 **RGB LED:**
 
-- Green each blink: seen a new Wifi device
-- Magenta each blink: seen a new BLE device
-- Yellow quick blink: joining LoRaWAN network in progress or pending
-- Blue blink: LoRaWAN data transmit in progress or pending
-- Red long blink: LoRaWAN stack error
-- White long blink: Known Beacon detected
+- Green: seen a new Wifi device
+- Magenta: seen a new BLE device
+- Yellow: joining LoRaWAN network in progress or pending
+- Pink: LORAWAN MAC transmit in progress
+- Blue: LoRaWAN data transmit in progress or pending
+- Red: LoRaWAN stack error
+- White: Known Beacon detected
 
 # Display
 
