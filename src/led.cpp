@@ -63,7 +63,6 @@ RGBColor rgb_hsl2rgb(float h, float s, float l) {
 }
 
 void rgb_set_color(uint16_t hue) {
-  int i = RGB_LED_COUNT;
   if (hue == COLOR_NONE) {
     // set Off
     for (int i = 0; i < RGB_LED_COUNT; i++)

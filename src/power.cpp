@@ -266,7 +266,7 @@ bool batt_sufficient() {
 
 uint8_t ip5306_get_bits(uint8_t reg, uint8_t index, uint8_t bits) {
   uint8_t value;
-  if (i2c_readBytes(0x75, reg, &value, 1) == 0xff) {
+  if (i2c_readBytes(IP5306_PRIMARY_ADDRESS, reg, &value, 1) == 0xff) {
     ESP_LOGW(TAG, "IP5306 get bits fail: 0x%02x", reg);
     return 0;
   }
@@ -275,23 +275,23 @@ uint8_t ip5306_get_bits(uint8_t reg, uint8_t index, uint8_t bits) {
 
 void ip5306_set_bits(uint8_t reg, uint8_t index, uint8_t bits, uint8_t value) {
   uint8_t mask = (1 << bits) - 1, v;
-  if (i2c_readBytes(0x75, reg, &v, 1) == 0xff) {
+  if (i2c_readBytes(IP5306_PRIMARY_ADDRESS, reg, &v, 1) == 0xff) {
     ESP_LOGW(TAG, "IP5306 register read fail: 0x%02x", reg);
     return;
   }
   v &= ~(mask << index);
   v |= ((value & mask) << index);
 
-  if (i2c_writeBytes(0x75, reg, &v, 1) == 0xff)
+  if (i2c_writeBytes(IP5306_PRIMARY_ADDRESS, reg, &v, 1) == 0xff)
     ESP_LOGW(TAG, "IP5306 register write fail: 0x%02x", reg);
 }
 
 uint8_t IP5306_GetPowerSource(void) {
-  ip5306_get_bits(IP5306_REG_READ_0, 3, 1); // 0:BAT, 1:VIN
+  return ip5306_get_bits(IP5306_REG_READ_0, 3, 1); // 0:BAT, 1:VIN
 }
 
 uint8_t IP5306_GetBatteryFull(void) {
-  ip5306_get_bits(IP5306_REG_READ_1, 3, 1); // 0:CHG/DIS, 1:FULL
+  return ip5306_get_bits(IP5306_REG_READ_1, 3, 1); // 0:CHG/DIS, 1:FULL
 }
 
 uint8_t IP5306_GetBatteryLevel(void) {
