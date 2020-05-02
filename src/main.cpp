@@ -233,7 +233,6 @@ void setup() {
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
   strcat_P(features, " RGB");
-  rgb_set_color(COLOR_PINK);
 #endif
 
 #endif // HAS_LED
