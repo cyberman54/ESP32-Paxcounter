@@ -482,29 +482,22 @@ uint8_t myBattLevelCb(void *pUserData) {
   // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
   // MCMD_DEVS_BATT_MAX from bat_percent value
 
-  uint8_t lmic_batt_level;
   uint8_t const batt_percent = read_battlevel();
 
   if (batt_percent == 0)
-    lmic_batt_level = MCMD_DEVS_BATT_NOINFO;
+    return MCMD_DEVS_BATT_NOINFO;
   else
 
 #ifdef HAS_PMU
       if (pmu.isVBUSPlug())
-    lmic_batt_level = MCMD_DEVS_EXT_POWER;
+    return MCMD_DEVS_EXT_POWER;
 #elif defined HAS_IP5306
       if (IP5306_GetPowerSource())
-    lmic_batt_level = MCMD_DEVS_EXT_POWER;
+    return MCMD_DEVS_EXT_POWER;
 #else
-      if (batt_percent >= 100)
-    lmic_batt_level = MCMD_DEVS_EXT_POWER;
+    return (batt_percent / 100.0 *
+            (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
 #endif // HAS_PMU
-
-  else
-    lmic_batt_level =
-        batt_percent / 100.0 * (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1);
-
-  return lmic_batt_level;
 }
 
 // event EV_RXCOMPLETE message handler

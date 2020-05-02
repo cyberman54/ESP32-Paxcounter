@@ -283,10 +283,8 @@ void dp_drawPage(time_t t, bool nextpage) {
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
     if (batt_level == 0)
       dp_printf("No batt ");
-    else if (batt_level < 100)
-      dp_printf("B:%3d%%  ", batt_level);
     else
-      dp_printf("ext.Pwr ");
+      dp_printf("B:%3d%%  ", batt_level);
 #else
     dp_printf("       ");
 #endif
