@@ -185,8 +185,13 @@ void setup() {
   digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
   strcat_P(features, " VEXT");
 #endif
+
+#if defined HAS_PMU || defined HAS_IP5306
 #ifdef HAS_PMU
   AXP192_init();
+#elif defined HAS_IP5306
+  IP5306_init();
+#endif
   strcat_P(features, " PMU");
 #endif
 

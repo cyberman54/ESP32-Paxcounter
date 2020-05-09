@@ -18,6 +18,22 @@
 #define BAT_MIN_VOLTAGE 3100 // millivolts
 #endif
 
+#ifndef PMU_CHG_CUTOFF
+#ifdef HAS_PMU
+#define PMU_CHG_CUTOFF AXP202_TARGET_VOL_4_2V
+#elif defined HAS_IP5306
+#define PMU_CHG_CUTOFF 0
+#endif
+#endif
+
+#ifndef PMU_CHG_CURRENT
+#ifdef HAS_PMU
+#define PMU_CHG_CURRENT AXP1XX_CHARGE_CUR_450MA
+#elif defined HAS_IP5306
+#define PMU_CHG_CURRENT 2
+#endif
+#endif
+
 typedef uint8_t (*mapFn_t)(uint16_t, uint16_t, uint16_t);
 
 uint16_t read_voltage(void);
@@ -37,10 +53,14 @@ void AXP192_showstatus(void);
 #endif // HAS_PMU
 
 #ifdef HAS_IP5306
+void IP5306_init(void);
 void printIP5306Stats(void);
 uint8_t IP5306_GetPowerSource(void);
 uint8_t IP5306_GetBatteryLevel(void);
 uint8_t IP5306_GetBatteryFull(void);
+void IP5306_SetChargerEnabled(uint8_t v);
+void IP5306_SetChargeCutoffVoltage(uint8_t v);
+void IP5306_SetEndChargeCurrentDetection(uint8_t v);
 #endif
 
 // The following map functions were taken from

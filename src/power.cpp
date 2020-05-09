@@ -143,10 +143,10 @@ void AXP192_init(void) {
     pmu.clearIRQ();
 #endif // PMU_INT
 
-// set charge current according to user setting if we have
-#ifdef PMU_CHGC
-    pmu.setChargeControlCur(PMU_CHGC);
-    pmu.setChargingTargetVoltage(AXP202_TARGET_VOL_4_2V);
+// set charging parameterss according to user settings if we have (see power.h)
+#ifdef PMU_CHARGE_CURRENT
+    pmu.setChargeControlCur(PMU_CHARGE_CURRENT);
+    pmu.setChargingTargetVoltage(PMU_CHARGE_CUTOFF);
     pmu.enableChargeing(true);
 #endif
 
@@ -299,6 +299,20 @@ uint8_t IP5306_GetBatteryLevel(void) {
   return IP5306_LEDS2PCT(state);
 }
 
+void IP5306_SetChargerEnabled(uint8_t v) {
+  ip5306_set_bits(IP5306_REG_SYS_0, 4, 1, v); // 0:dis,*1:en
+}
+
+void IP5306_SetChargeCutoffVoltage(uint8_t v) {
+  ip5306_set_bits(IP5306_REG_CHG_2, 2, 2,
+                  v); //*0:4.2V, 1:4.3V, 2:4.35V, 3:4.4V
+}
+
+void IP5306_SetEndChargeCurrentDetection(uint8_t v) {
+  ip5306_set_bits(IP5306_REG_CHG_1, 6, 2,
+                  v); // 0:200mA, 1:400mA, *2:500mA, 3:600mA
+}
+
 void printIP5306Stats(void) {
   bool usb = IP5306_GetPowerSource();
   bool full = IP5306_GetBatteryFull();
@@ -307,6 +321,12 @@ void printIP5306Stats(void) {
            "IP5306: Power Source: %s, Battery State: %s, Battery Level: %u%%",
            usb ? "USB" : "BATTERY",
            full ? "CHARGED" : (usb ? "CHARGING" : "DISCHARGING"), level);
+}
+
+void IP5306_init(void) {
+  IP5306_SetChargerEnabled(1);
+  IP5306_SetChargeCutoffVoltage(PMU_CHG_CUTOFF);
+  IP5306_SetEndChargeCurrentDetection(PMU_CHG_CURRENT);
 }
 
 #endif // HAS_IP5306
