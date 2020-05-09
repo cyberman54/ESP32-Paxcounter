@@ -193,6 +193,9 @@ void setup() {
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
 
+  // now that we are powered, we scan i2c bus for devices
+  i2c_scan();
+
 // initialize display
 #ifdef HAS_DISPLAY
   strcat_P(features, " OLED");
@@ -200,9 +203,6 @@ void setup() {
   // display verbose info only after a coldstart (note: blocking call!)
   dp_init(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
 #endif
-
-  // scan i2c bus for devices
-  i2c_scan();
 
 #ifdef BOARD_HAS_PSRAM
   assert(psramFound());
