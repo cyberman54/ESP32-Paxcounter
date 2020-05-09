@@ -31,7 +31,7 @@ Reset -> reset device
 #define HAS_BUTTON GPIO_NUM_38 // middle on board button
 #define HAS_PMU 1 // AXP192 power management chip
 #define PMU_INT GPIO_NUM_35 // AXP192 interrupt
-#define PMU_CHGC AXP1XX_CHARGE_CUR_280MA // AXP102 battery charge current
+#define PMU_CHGC AXP1XX_CHARGE_CUR_1000MA // AXP102 battery charge current
 // possible AXP192 battery charge current values (mA):
 // 100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
 #define HAS_LED NOT_A_PIN
