@@ -5,7 +5,7 @@
 #include "qrcode.h"
 
 #if (HAS_DISPLAY) == 1
-#include <ss_oled.h>
+#include <OneBitDisplay.h>
 #elif (HAS_DISPLAY) == 2
 #include <TFT_eSPI.h>
 #endif
