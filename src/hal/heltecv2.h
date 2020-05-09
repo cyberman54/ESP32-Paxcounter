@@ -1,6 +1,7 @@
 // clang-format off
 // upload_speed 921600
 // board heltec_wifi_lora_32_V2
+// display_library lib_deps_oled_display
 
 #ifndef _HELTECV2_H
 #define _HELTECV2_H

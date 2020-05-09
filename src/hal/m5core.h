@@ -1,6 +1,7 @@
 // clang-format off
 // upload_speed 921600
 // board m5stack-core-esp32
+// display_library lib_deps_tft_display
 
 #ifndef _M5CORE_H
 #define _M5CORE_H
@@ -38,7 +39,12 @@
 #define HAS_LED NOT_A_PIN // no on board LED (?)
 #define HAS_BUTTON (39) // on board button A
 
-#define HAS_IP5306 1
+// power management settings
+#define HAS_IP5306 1 // has IP5306 chip
+#define PMU_CHG_CURRENT 2 // battery charge current
+// possible values: 0:200mA, 1:400mA, *2:500mA, 3:600mA
+#define PMU_CHG_CUTOFF 0 // battery charge cutoff
+// possible values: *0:4.2V, 1:4.3V, 2:4.35V, 3:4.4V
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS

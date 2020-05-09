@@ -1,6 +1,7 @@
 // clang-format off
 // upload_speed 921600
 // board featheresp32
+// display_library lib_deps_oled_display
 
 #ifndef _OCTOPUS_H
 #define _OCTOPUS_H

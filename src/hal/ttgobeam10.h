@@ -1,6 +1,7 @@
 // clang-format off
 // upload_speed 921600
 // board ttgo-t-beam
+// display_library lib_deps_oled_display
 
 #ifndef _TTGOBEAM_H
 #define _TTGOBEAM_H
@@ -29,12 +30,17 @@ Reset -> reset device
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define HAS_BUTTON GPIO_NUM_38 // middle on board button
-#define HAS_PMU 1 // AXP192 power management chip
-#define PMU_INT GPIO_NUM_35 // AXP192 interrupt
-#define PMU_CHGC AXP1XX_CHARGE_CUR_1000MA // AXP102 battery charge current
-// possible AXP192 battery charge current values (mA):
-// 100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
 #define HAS_LED NOT_A_PIN
+
+// power management settings
+#define HAS_PMU 1 // has AXP192 chip
+#define PMU_INT GPIO_NUM_35 // battery interrupt
+#define PMU_CHG_CURRENT AXP1XX_CHARGE_CUR_1000MA // battery charge current
+// possible values (mA):
+// 100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
+#define PMU_CHG_CUTOFF AXP202_TARGET_VOL_4_2V // battery charge cutoff
+// possible values (V):
+// 4_1/4_15/4_2/4_36
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
