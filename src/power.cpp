@@ -124,6 +124,11 @@ void AXP192_init(void) {
     pmu.setTimeOutShutdown(false);          // no automatic shutdown
     pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE); // TS pin mode off to save power
 
+// set charge current according to user setting if we have
+#ifdef PMU_CHGC
+    pmu.setChargeControlCur(PMU_CHGC);
+#endif
+
     // switch ADCs on
     pmu.adc1Enable(AXP202_BATT_VOL_ADC1, true);
     pmu.adc1Enable(AXP202_BATT_CUR_ADC1, true);
