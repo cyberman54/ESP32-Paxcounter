@@ -1,7 +1,6 @@
 // clang-format off
 // upload_speed 115200
 // board ttgo-lora32-v1
-// display_library lib_deps_oled_display
 
 #ifndef _TTGOV1_H
 #define _TTGOV1_H

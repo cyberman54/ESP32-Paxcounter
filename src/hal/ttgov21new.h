@@ -1,7 +1,6 @@
 // clang-format off
 // upload_speed 921600
 // board esp32dev
-// display_library lib_deps_oled_display
 
 #ifndef _TTGOV21NEW_H
 #define _TTGOV21NEW_H

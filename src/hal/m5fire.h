@@ -1,7 +1,6 @@
 // clang-format off
 // upload_speed 921600
 // board m5stack-fire
-// display_library lib_deps_tft_display
 
 #ifndef _M5FIRE_H
 #define _M5FIRE_H
