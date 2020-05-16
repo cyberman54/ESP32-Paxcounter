@@ -50,6 +50,9 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 #ifdef HAS_SPI
   spi_enqueuedata(&SendBuffer);
 #endif
+#ifdef HAS_MQTT
+  mqtt_enqueuedata(&SendBuffer);
+#endif
 
 // write data to sdcard, if present
 #ifdef HAS_SDCARD
@@ -178,5 +181,8 @@ void flushQueues() {
 #endif
 #ifdef HAS_SPI
   spi_queuereset();
+#endif
+#ifdef HAS_MQTT
+  mqtt_queuereset();
 #endif
 }

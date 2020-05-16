@@ -330,6 +330,12 @@ void setup() {
   assert(spi_init() == ESP_OK);
 #endif
 
+// initialize MQTT
+#ifdef HAS_MQTT
+  strcat_P(features, " MQTT");
+  assert(mqtt_init() == ESP_OK);
+#endif
+
 #ifdef HAS_SDCARD
   if (sdcard_init())
     strcat_P(features, " SD");
