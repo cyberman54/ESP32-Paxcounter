@@ -16,7 +16,7 @@ File fileSDCard;
 bool sdcard_init() {
   ESP_LOGI(TAG, "looking for SD-card...");
 #if HAS_SDCARD == 1
-  pinMode(SS, OUTPUT);
+  pinMode(SDCARD_CS, OUTPUT);
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
 #elif HAS_SDCARD == 2
   useSDCard = SD_MMC.begin();

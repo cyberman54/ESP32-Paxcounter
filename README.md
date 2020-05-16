@@ -207,9 +207,9 @@ There in the sensor configuration select "TheThingsNetwork" and set Decoding Pro
 # SD-card
 Data can be stored on an SD-card if one is availabe. Simply choose the file in src/hal and add the following lines to your hal-file:
 
-    #define HAS_SDCARD 1     // this board has an SD-card-reader/writer, with SPI interface
+    #define HAS_SDCARD 1     // SD-card-reader/writer, using SPI interface
 	OR
-	#define HAS_SDCARD 2     // this board has an SD-card-reader/writer, using native SD interface
+	#define HAS_SDCARD 2     // SD-card-reader/writer, using SDMMC interface
 
     // Pins for SD-card
     #define SDCARD_CS   (13) // fill in the correct numbers for your board
