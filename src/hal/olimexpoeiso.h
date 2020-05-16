@@ -1,28 +1,15 @@
 // clang-format off
 // upload_speed 921600
-// board esp32dev
+// board esp32-poe-iso
 
-#ifndef _GENERIC_H
-#define _GENERIC_H
+#ifndef _OLIMEXPOEISO_H
+#define _OLIMEXPOEISO_H
 
 #include <stdint.h>
 
-// i2c bus definitions
-#define MY_DISPLAY_SDA (13)
-#define MY_DISPLAY_SCL (16)
-
 // enable only if you want to store a local paxcount table on the device
-#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
-// Pins for SD-card
-#define SDCARD_CS    (13)
-#define SDCARD_MOSI  (15)
-#define SDCARD_MISO  (2)
-#define SDCARD_SCLK  (14)
+#define HAS_SDCARD  2      // this board has an SD-card-reader/writer
 
-// user defined sensors
-#define HAS_SENSORS 1 // comment out if device has user defined sensors
-
-//#define BOARD_HAS_PSRAM // use if board has external PSRAM
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
@@ -33,7 +20,7 @@
 #define EXT_POWER_ON    1
 //#define EXT_POWER_OFF   1
 
-#define HAS_BUTTON (34) // on board button
+#define HAS_BUTTON KEY_BUILTIN // on board button
 #define HAS_LED NOT_A_PIN // no on board LED
 
 #endif
