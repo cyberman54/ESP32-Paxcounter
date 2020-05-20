@@ -29,7 +29,6 @@
 //#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
 #define CFG_sx1276_radio 1 // select LoRa chip
-//#define BOARD_HAS_PSRAM // use if board has external PSRAM
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 2 // TFT-LCD, support work in progess, not ready yet
