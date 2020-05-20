@@ -19,7 +19,7 @@ void mqtt_queuereset(void);
 void mqtt_client_task(void *param);
 int mqtt_connect(IPAddress mqtt_host, uint16_t mqtt_port);
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
-void WiFiEvent(WiFiEvent_t event);
+void NetworkEvent(WiFiEvent_t event);
 esp_err_t mqtt_init(void);
 
 #endif // _MQTTCLIENT_H

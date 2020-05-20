@@ -12,7 +12,7 @@ TaskHandle_t mqttTask;
 WiFiClient ipClient;
 PubSubClient mqttClient(ipClient);
 
-void WiFiEvent(WiFiEvent_t event) {
+void NetworkEvent(WiFiEvent_t event) {
   switch (event) {
   case SYSTEM_EVENT_ETH_START:
     ESP_LOGI(TAG, "Ethernet link layer started");
@@ -115,7 +115,7 @@ esp_err_t mqtt_init(void) {
   ESP_LOGI(TAG, "Starting MQTTloop...");
   xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 2, &mqttTask);
 
-  WiFi.onEvent(WiFiEvent);
+  WiFi.onEvent(NetworkEvent);
   ETH.begin();
 
   return ESP_OK;

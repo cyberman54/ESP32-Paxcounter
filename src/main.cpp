@@ -29,6 +29,7 @@ Task          Core  Prio  Purpose
 -------------------------------------------------------------------------------
 ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
+mqttloop      0     2     reads/writes data on ETH interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 lmictask      1     2     MCCI LMiC LORAWAN stack
