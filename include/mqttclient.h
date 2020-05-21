@@ -6,13 +6,13 @@
 #include <ETH.h>
 #include <PubSubClient.h>
 
-#define MQTT_CLIENT "paxcounter"
-#define MQTT_INTOPIC "pax_IN"
-#define MQTT_OUTTOPIC "pax_OUT"
+#define MQTT_INTOPIC "paxcounter_in/"
+#define MQTT_OUTTOPIC "paxcounter_out/"
 #define MQTT_PORT 1883
 #define MQTT_SERVER "broker.hivemq.com"
 
 extern TaskHandle_t mqttTask;
+extern PubSubClient mqttClient;
 
 void mqtt_enqueuedata(MessageBuffer_t *message);
 void mqtt_queuereset(void);

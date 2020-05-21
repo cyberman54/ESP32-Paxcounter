@@ -14,7 +14,7 @@ void NetworkEvent(WiFiEvent_t event) {
   switch (event) {
   case SYSTEM_EVENT_ETH_START:
     ESP_LOGI(TAG, "Ethernet link layer started");
-    ETH.setHostname(MQTT_CLIENT);
+    ETH.setHostname(ETH.macAddress().c_str());
     break;
   case SYSTEM_EVENT_ETH_CONNECTED:
     ESP_LOGI(TAG, "Network link connected");
@@ -40,7 +40,7 @@ void NetworkEvent(WiFiEvent_t event) {
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
   IPAddress mqtt_server_ip;
 
-  static String clientId = "paxcounter-" + String(random(0xffff), HEX);
+  static String clientId = "paxcounter-" + ETH.macAddress();
   ESP_LOGI(TAG, "MQTT name is %s", clientId.c_str());
 
   // resolve server
@@ -53,16 +53,15 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
   }
 
   // attempt to connect to MQTT server
-  if (EthClient.connect(mqtt_server_ip, my_port)) {
-
+  if (EthClient.connect(mqtt_server_ip, my_port, HOMECYCLE * 2 * 1000)) {
     mqttClient.setServer(mqtt_server_ip, my_port);
+    mqttClient.setKeepAlive(HOMECYCLE * 2);
     mqttClient.setCallback(mqtt_callback);
 
     if (mqttClient.connect(clientId.c_str())) {
       ESP_LOGI(TAG, "MQTT server connected, subscribing...");
-      mqttClient.publish(MQTT_OUTTOPIC, "hello world");
+      mqttClient.publish(MQTT_OUTTOPIC, clientId.c_str());
       mqttClient.subscribe(MQTT_INTOPIC);
-      mqttClient.loop();
       ESP_LOGI(TAG, "MQTT topic subscribed");
     } else {
       ESP_LOGW(TAG, "MQTT server not responding, retrying later");
@@ -77,7 +76,6 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
 void mqtt_client_task(void *param) {
 
   MessageBuffer_t msg;
-  char cPort[4], cMsg[PAYLOAD_BUFFER_SIZE + 1];
 
   while (1) {
 
@@ -87,16 +85,23 @@ void mqtt_client_task(void *param) {
       continue;
     }
 
-    // send data to mqtt server
+    // send data to mqtt server, if we are connected
     if (mqttClient.connected()) {
-      snprintf(cPort, sizeof(cPort), "%d", msg.MessagePort);
-      snprintf(cMsg, sizeof(cMsg), "%0X", msg.Message);
-      ESP_LOGI(TAG, "Topic=%s | Message=%s", cPort, cMsg);
-      mqttClient.publish(cPort, cMsg);
-      mqttClient.loop();
-      ESP_LOGI(TAG, "%d byte(s) sent to MQTT", msg.MessageSize);
-    } else {
-      mqtt_enqueuedata(&msg); // re-enqueue the undelivered message
+      mqttClient.beginPublish(MQTT_OUTTOPIC, msg.MessageSize + 2, false);
+      mqttClient.write(msg.MessagePort);
+      mqttClient.write('/');
+      mqttClient.write(msg.Message, msg.MessageSize);
+      if (mqttClient.endPublish()) {
+        ESP_LOGI(TAG, "%d byte(s) sent to MQTT", msg.MessageSize + 2);
+        continue; // while(1)
+      } else
+        goto reconnect;
+
+    } else { // not connected, thus re-enqueue the undelivered message
+
+    reconnect:
+
+      mqtt_enqueuedata(&msg);
       delay(10000);
       // attempt to reconnect to MQTT server
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
@@ -149,7 +154,7 @@ void mqtt_enqueuedata(MessageBuffer_t *message) {
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length) {
-  if ((length >= 1) && (topic == MQTT_INTOPIC))
+  ESP_LOGD(TAG, "MQTT %d byte(s) received", length);
     rcommand(payload, length);
 }
 

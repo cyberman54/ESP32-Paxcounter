@@ -8,12 +8,10 @@
 #include <stdint.h>
 
 // enable only if you want to store a local paxcount table on the device
-//#define HAS_SDCARD  2      // this board has an SD-card-reader/writer
+//#define HAS_SDCARD 2 // this board has a SDMMC card-reader/writer
 
 // enable only if you want to send paxcount via ethernet port to mqtt server
 #define HAS_MQTT 1  // use MQTT on ethernet interface
-
-#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 //#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 //#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 470k/470k on board

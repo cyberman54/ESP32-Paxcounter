@@ -38,5 +38,6 @@
 
 bool sdcard_init(void);
 void sdcardWriteData(uint16_t, uint16_t);
+static void createFile(void);
 
 #endif

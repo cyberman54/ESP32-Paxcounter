@@ -9,12 +9,11 @@ static const char TAG[] = __FILE__;
 
 static bool useSDCard;
 
-static void createFile(void);
-
 File fileSDCard;
 
 bool sdcard_init() {
   ESP_LOGI(TAG, "looking for SD-card...");
+
 #if HAS_SDCARD == 1
   pinMode(SDCARD_CS, OUTPUT);
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
@@ -70,7 +69,7 @@ void createFile(void) {
 
   for (int i = 0; i < 100; i++) {
     sprintf(bufferFilename, SDCARD_FILE_NAME, i);
-    ESP_LOGD(TAG, "SD: looking for file <%s>", bufferFilename);
+    // ESP_LOGD(TAG, "SD: looking for file <%s>", bufferFilename);
 
 #if HAS_SDCARD == 1
     bool fileExists = SD.exists(bufferFilename);
@@ -79,7 +78,7 @@ void createFile(void) {
 #endif
 
     if (!fileExists) {
-      ESP_LOGD(TAG, "SD: file does not exist: opening");
+      // ESP_LOGD(TAG, "SD: file does not exist: opening");
 
 #if HAS_SDCARD == 1
       fileSDCard = SD.open(bufferFilename, FILE_WRITE);
