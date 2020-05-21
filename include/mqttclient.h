@@ -10,6 +10,7 @@
 #define MQTT_OUTTOPIC "paxcounter_out/"
 #define MQTT_PORT 1883
 #define MQTT_SERVER "broker.hivemq.com"
+#define MQTT_RETRYSEC 10 // retry reconnect every 10 seconds
 
 extern TaskHandle_t mqttTask;
 extern PubSubClient mqttClient;

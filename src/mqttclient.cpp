@@ -97,13 +97,12 @@ void mqtt_client_task(void *param) {
       } else
         goto reconnect;
 
-    } else { // not connected, thus re-enqueue the undelivered message
+    } else {
 
-    reconnect:
-
-      mqtt_enqueuedata(&msg);
-      delay(10000);
       // attempt to reconnect to MQTT server
+    reconnect:
+      mqtt_enqueuedata(&msg); // postpone the undelivered message
+      delay(MQTT_RETRYSEC * 1000);
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
     }
   } // while(1)
@@ -151,11 +150,14 @@ void mqtt_enqueuedata(MessageBuffer_t *message) {
     ESP_LOGW(TAG, "MQTT sendqueue is full");
 }
 
-void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
-
 void mqtt_callback(char *topic, byte *payload, unsigned int length) {
-  ESP_LOGD(TAG, "MQTT %d byte(s) received", length);
-    rcommand(payload, length);
+  String s = "";
+  for (int i = 0; i < length; i++)
+    s += (char)payload[i];
+  ESP_LOGD(TAG, "MQTT: Received %u byte(s) of payload [%s]", length, s);
+  // rcommand(payload, length);
 }
+
+void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
 
 #endif // HAS_MQTT
