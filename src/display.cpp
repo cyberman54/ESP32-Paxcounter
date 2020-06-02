@@ -49,10 +49,14 @@ static int dp_row = 0, dp_col = 0, dp_font = 0;
 
 QRCode qrcode;
 
+#ifdef HAS_DISPLAY
 #if (HAS_DISPLAY) == 1
 OBDISP ssoled;
 #elif (HAS_DISPLAY) == 2
 TFT_eSPI tft = TFT_eSPI();
+#else
+#error Unknown display type specified in hal file
+#endif
 #endif
 
 void dp_setup(int contrast) {
