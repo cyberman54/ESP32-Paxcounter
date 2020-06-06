@@ -15,7 +15,9 @@
 #endif
 #endif
 
+#ifdef HAS_SDS011
 #include "sds011read.h"
+#endif
 
 #ifndef SDCARD_CS
 #define SDCARD_CS SS

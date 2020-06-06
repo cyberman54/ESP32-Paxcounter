@@ -1,11 +1,11 @@
 // routines for writing data to an SD-card, if present
 
-#if (HAS_SDCARD)
-
 // Local logging tag
 static const char TAG[] = __FILE__;
 
 #include "sdcard.h"
+
+#ifdef HAS_SDCARD
 
 static bool useSDCard;
 
@@ -14,10 +14,13 @@ File fileSDCard;
 bool sdcard_init() {
   ESP_LOGI(TAG, "looking for SD-card...");
 
-#if HAS_SDCARD == 1
-  pinMode(SDCARD_CS, OUTPUT);
+  // for usage of SD drivers on ESP32 platform see
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdspi_host.html
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
+
+#if HAS_SDCARD == 1 // use SD SPI host driver
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
-#elif HAS_SDCARD == 2
+#elif HAS_SDCARD == 2 // use SD MMC host driver
   useSDCard = SD_MMC.begin();
 #endif
 
