@@ -8,6 +8,7 @@
 #ifdef HAS_SDCARD
 #if HAS_SDCARD == 1
 #include <mySD.h>
+//#include <SD.h>
 #elif HAS_SDCARD == 2
 #include <SD_MMC.h>
 #else

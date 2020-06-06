@@ -19,7 +19,13 @@ bool sdcard_init() {
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
 
 #if HAS_SDCARD == 1 // use SD SPI host driver
+
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
+
+  //SPI.begin(SDCARD_SCLK, SDCARD_MSO, SDCARD_MOSI, SDCARD_CS);
+  //delay(10);
+  //useSDCard = SD.begin(SDCARD_CS, SPI, 40000000, "/sd");
+
 #elif HAS_SDCARD == 2 // use SD MMC host driver
   useSDCard = SD_MMC.begin();
 #endif
