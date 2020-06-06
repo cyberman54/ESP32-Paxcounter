@@ -9,7 +9,7 @@
 
 /* 
 Hardware related definitions for TTGO T-Beam board
-(only) for newer T-Beam version T22_V10
+for T-Beam versions T22_V10 + T22_V11
 pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
 
 /// Button functions: ///
@@ -20,7 +20,7 @@ User, long press -> send LORA message
 Reset -> reset device
 */
 
-#define HAS_DISPLAY 1
+//#define HAS_DISPLAY 1
 #define MY_DISPLAY_SDA SDA
 #define MY_DISPLAY_SCL SCL
 #define MY_DISPLAY_RST NOT_A_PIN
