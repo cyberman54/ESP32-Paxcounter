@@ -29,6 +29,7 @@ Task          Core  Prio  Purpose
 -------------------------------------------------------------------------------
 ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
+mqttloop      0     2     reads/writes data on ETH interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 lmictask      1     2     MCCI LMiC LORAWAN stack
@@ -185,13 +186,21 @@ void setup() {
   digitalWrite(EXT_POWER_SW, EXT_POWER_ON);
   strcat_P(features, " VEXT");
 #endif
+
+#if defined HAS_PMU || defined HAS_IP5306
 #ifdef HAS_PMU
   AXP192_init();
+#elif defined HAS_IP5306
+  IP5306_init();
+#endif
   strcat_P(features, " PMU");
 #endif
 
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig(); // includes initialize if necessary
+
+  // now that we are powered, we scan i2c bus for devices
+  i2c_scan();
 
 // initialize display
 #ifdef HAS_DISPLAY
@@ -200,9 +209,6 @@ void setup() {
   // display verbose info only after a coldstart (note: blocking call!)
   dp_init(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
 #endif
-
-  // scan i2c bus for devices
-  i2c_scan();
 
 #ifdef BOARD_HAS_PSRAM
   assert(psramFound());
@@ -323,6 +329,12 @@ void setup() {
 #ifdef HAS_SPI
   strcat_P(features, " SPI");
   assert(spi_init() == ESP_OK);
+#endif
+
+// initialize MQTT
+#ifdef HAS_MQTT
+  strcat_P(features, " MQTT");
+  assert(mqtt_init() == ESP_OK);
 #endif
 
 #ifdef HAS_SDCARD

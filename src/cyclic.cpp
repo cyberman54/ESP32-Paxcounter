@@ -52,6 +52,11 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(spiTask), eTaskGetState(spiTask));
 #endif
+#ifdef HAS_MQTT
+  ESP_LOGD(TAG, "MQTTloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(mqttTask), eTaskGetState(mqttTask));
+  mqttClient.loop();
+#endif
 
 #if (defined HAS_DCF77 || defined HAS_IF482)
   ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",

@@ -1,25 +1,34 @@
 // routines for writing data to an SD-card, if present
 
-#if (HAS_SDCARD)
-
 // Local logging tag
 static const char TAG[] = __FILE__;
 
 #include "sdcard.h"
 
-static bool useSDCard;
+#ifdef HAS_SDCARD
 
-static void createFile(void);
+static bool useSDCard;
 
 File fileSDCard;
 
 bool sdcard_init() {
-  ESP_LOGD(TAG, "looking for SD-card...");
+  ESP_LOGI(TAG, "looking for SD-card...");
+
+  // for usage of SD drivers on ESP32 platform see
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdspi_host.html
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
+
+#if HAS_SDCARD == 1 // use SD SPI host driver
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
-  if (useSDCard)
+#elif HAS_SDCARD == 2 // use SD MMC host driver
+  useSDCard = SD_MMC.begin();
+#endif
+
+  if (useSDCard) {
+    ESP_LOGI(TAG, "SD-card found");
     createFile();
-  else
-    ESP_LOGD(TAG, "SD-card not found");
+  } else
+    ESP_LOGI(TAG, "SD-card not found");
   return useSDCard;
 }
 
@@ -63,11 +72,23 @@ void createFile(void) {
 
   for (int i = 0; i < 100; i++) {
     sprintf(bufferFilename, SDCARD_FILE_NAME, i);
-    ESP_LOGD(TAG, "SD: looking for file <%s>", bufferFilename);
+    // ESP_LOGD(TAG, "SD: looking for file <%s>", bufferFilename);
+
+#if HAS_SDCARD == 1
     bool fileExists = SD.exists(bufferFilename);
+#elif HAS_SDCARD == 2
+    bool fileExists = SD_MMC.exists(bufferFilename);
+#endif
+
     if (!fileExists) {
-      ESP_LOGD(TAG, "SD: file does not exist: opening");
+      // ESP_LOGD(TAG, "SD: file does not exist: opening");
+
+#if HAS_SDCARD == 1
       fileSDCard = SD.open(bufferFilename, FILE_WRITE);
+#elif HAS_SDCARD == 2
+      fileSDCard = SD_MMC.open(bufferFilename, FILE_WRITE);
+#endif
+
       if (fileSDCard) {
         ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
         fileSDCard.print(SDCARD_FILE_HEADER);

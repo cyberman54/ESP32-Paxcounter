@@ -66,15 +66,19 @@ myboard = mykeys["board"]
 myuploadspeed = mykeys["upload_speed"]
 env.Replace(BOARD=myboard)
 env.Replace(UPLOAD_SPEED=myuploadspeed)
+print('\033[94m' + "Target board: " + myboard + " @ " + myuploadspeed + "bps" + '\033[0m')
 
 # re-set partition table
 mypartitiontable = config.get("env", "board_build.partitions")
 board = env.BoardConfig(myboard)
 board.manifest['build']['partitions'] = mypartitiontable
-
-# display target
-print('\033[94m' + "TARGET BOARD: " + myboard + " @ " + myuploadspeed + "bps" + '\033[0m')
 print('\033[94m' + "Partition table: " + mypartitiontable + '\033[0m')
+
+# set display library
+if "display_library" in mykeys:
+    mydisplay = mykeys["display_library"]
+    env.Append(display_library=mydisplay)
+    print('\033[94m' + "Display library: " + mydisplay + '\033[0m')
 
 # parse ota key file
 with open(otakeyfile) as myfile:

@@ -63,7 +63,8 @@ Depending on board hardware following features are supported:
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery
 - LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
-- SD-card (see section SD-card here)
+- SD-card (see section SD-card here) for logging pax data
+- Ethernet interface for MQTT communication via TCP/IP
 
 Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -207,8 +208,11 @@ There in the sensor configuration select "TheThingsNetwork" and set Decoding Pro
 # SD-card
 Data can be stored on an SD-card if one is availabe. Simply choose the file in src/hal and add the following lines to your hal-file:
 
-    #define HAS_SDCARD 1     // this board has an SD-card-reader/writer
-    // Pins for SD-card
+    #define HAS_SDCARD 1     // SD-card-reader/writer, using SPI interface
+	OR
+	#define HAS_SDCARD 2     // SD-card-reader/writer, using SDMMC interface
+
+    // Pins for SPI interface
     #define SDCARD_CS   (13) // fill in the correct numbers for your board
     #define SDCARD_MOSI (15)
     #define SDCARD_MISO (2)

@@ -1,5 +1,6 @@
 #include "timekeeper.h"
 
+/*
 #if !(HAS_LORA)
 #if (TIME_SYNC_LORASERVER)
 #error TIME_SYNC_LORASERVER defined, but device has no LORA configured
@@ -7,6 +8,7 @@
 #error TIME_SYNC_LORAWAN defined, but device has no LORA configured
 #endif
 #endif
+*/
 
 // Local logging tag
 static const char TAG[] = __FILE__;

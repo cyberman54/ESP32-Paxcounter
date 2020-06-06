@@ -2,6 +2,7 @@
 #define _SENDDATA_H
 
 #include "spislave.h"
+#include "mqttclient.h"
 #include "cyclic.h"
 #include "sensor.h"
 #include "lorawan.h"

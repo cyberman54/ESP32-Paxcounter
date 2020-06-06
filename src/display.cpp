@@ -49,24 +49,29 @@ static int dp_row = 0, dp_col = 0, dp_font = 0;
 
 QRCode qrcode;
 
+#ifdef HAS_DISPLAY
 #if (HAS_DISPLAY) == 1
-SSOLED ssoled;
+OBDISP ssoled;
 #elif (HAS_DISPLAY) == 2
 TFT_eSPI tft = TFT_eSPI();
+#else
+#error Unknown display type specified in hal file
+#endif
 #endif
 
 void dp_setup(int contrast) {
 
 #if (HAS_DISPLAY) == 1 // I2C OLED
-  int rc = oledInit(&ssoled, OLED_TYPE, OLED_ADDR, MY_DISPLAY_FLIP,
-                    MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA,
-                    MY_DISPLAY_SCL, MY_DISPLAY_RST,
-                    OLED_FREQUENCY); // use standard I2C bus at 400Khz
+
+  int rc = obdI2CInit(&ssoled, OLED_TYPE, OLED_ADDR, MY_DISPLAY_FLIP,
+                      MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA,
+                      MY_DISPLAY_SCL, MY_DISPLAY_RST,
+                      OLED_FREQUENCY); // use standard I2C bus at 400Khz
   assert(rc != OLED_NOT_FOUND);
 
   // set display buffer
-  oledSetBackBuffer(&ssoled, displaybuf);
-  oledSetTextWrap(&ssoled, true);
+  obdSetBackBuffer(&ssoled, displaybuf);
+  obdSetTextWrap(&ssoled, true);
   dp_font = MY_FONT_NORMAL;
 
 #elif (HAS_DISPLAY) == 2 // SPI TFT
@@ -466,7 +471,7 @@ void dp_setTextCursor(int x, int y) {
 
 #if (HAS_DISPLAY) == 1
   dp_row = y;
-  oledSetCursor(&ssoled, dp_col, dp_row);
+  obdSetCursor(&ssoled, dp_col, dp_row);
 
 #elif (HAS_DISPLAY) == 2
   switch (dp_font >> 1) {
@@ -538,8 +543,8 @@ void dp_printf(const char *format, ...) {
   }
   va_end(arg);
 #if (HAS_DISPLAY) == 1
-  oledWriteString(&ssoled, 0, -1, dp_row, temp, dp_font >> 1, dp_font & 0x01,
-                  false);
+  obdWriteString(&ssoled, 0, -1, dp_row, temp, dp_font >> 1, dp_font & 0x01,
+                 false);
 #elif (HAS_DISPLAY) == 2
   tft.printf(temp);
 #endif
@@ -550,7 +555,7 @@ void dp_printf(const char *format, ...) {
 
 void dp_dump(uint8_t *pBuffer) {
 #if (HAS_DISPLAY) == 1
-  oledDumpBuffer(&ssoled, pBuffer);
+  obdDumpBuffer(&ssoled, pBuffer);
 #elif (HAS_DISPLAY) == 2
   // probably oled buffer stucture is not suitable for tft -> to be checked
   tft.drawBitmap(0, 0, pBuffer, MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT,
@@ -561,7 +566,7 @@ void dp_dump(uint8_t *pBuffer) {
 void dp_clear(void) {
   dp_setTextCursor(0, 0);
 #if (HAS_DISPLAY) == 1
-  oledFill(&ssoled, 0, 1);
+  obdFill(&ssoled, 0, 1);
 #elif (HAS_DISPLAY) == 2
   tft.fillScreen(MY_DISPLAY_BGCOLOR);
 #endif
@@ -569,7 +574,7 @@ void dp_clear(void) {
 
 void dp_contrast(uint8_t contrast) {
 #if (HAS_DISPLAY) == 1
-  oledSetContrast(&ssoled, contrast);
+  obdSetContrast(&ssoled, contrast);
 #elif (HAS_DISPLAY) == 2
   // to do: gamma correction for TFT
 #endif
@@ -577,7 +582,7 @@ void dp_contrast(uint8_t contrast) {
 
 void dp_power(uint8_t screenon) {
 #if (HAS_DISPLAY) == 1
-  oledPower(&ssoled, screenon);
+  obdPower(&ssoled, screenon);
 #elif (HAS_DISPLAY) == 2
   // to come
 #endif
@@ -590,7 +595,7 @@ void dp_shutdown(void) {
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
   else {
     cfg.screenon = 0;
-    oledPower(&ssoled, false);
+    obdPower(&ssoled, false);
     delay(DISPLAYREFRESH_MS / 1000 * 1.1);
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   }
@@ -630,7 +635,7 @@ void dp_fillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                  uint8_t bRender) {
 #if (HAS_DISPLAY) == 1
   for (uint16_t xi = x; xi < x + width; xi++)
-    oledDrawLine(&ssoled, xi, y, xi, y + height - 1, bRender);
+    obdDrawLine(&ssoled, xi, y, xi, y + height - 1, 1, bRender);
 #elif (HAS_DISPLAY) == 2
   tft.fillRect(x, y, width, height, MY_DISPLAY_FGCOLOR);
 #endif

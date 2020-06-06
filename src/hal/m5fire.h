@@ -41,7 +41,12 @@
 #define HAS_RGB_LED SmartLed rgb_led(LED_SK6812, RGB_LED_COUNT, GPIO_NUM_15) // LED_SK6812 RGB LED on GPIO15
 #define HAS_BUTTON (39) // on board button A
 
-#define HAS_IP5306 1
+// power management settings
+#define HAS_IP5306 1 // has IP5306 chip
+#define PMU_CHG_CURRENT 2 // battery charge current
+// possible values: 0:200mA, 1:400mA, *2:500mA, 3:600mA
+#define PMU_CHG_CUTOFF 0 // battery charge cutoff
+// possible values: *0:4.2V, 1:4.3V, 2:4.35V, 3:4.4V
 
 // GPS settings
 #define HAS_GPS 0 // use on board GPS

@@ -9,7 +9,7 @@
 
 /* 
 Hardware related definitions for TTGO T-Beam board
-(only) for newer T-Beam version T22_V10
+for T-Beam versions T22_V10 + T22_V11
 pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
 
 /// Button functions: ///
@@ -20,7 +20,7 @@ User, long press -> send LORA message
 Reset -> reset device
 */
 
-#define HAS_DISPLAY 1
+//#define HAS_DISPLAY 1
 #define MY_DISPLAY_SDA SDA
 #define MY_DISPLAY_SCL SCL
 #define MY_DISPLAY_RST NOT_A_PIN
@@ -29,10 +29,17 @@ Reset -> reset device
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define HAS_BUTTON GPIO_NUM_38 // middle on board button
-#define HAS_PMU 1 // AXP192 power management chip
-#define PMU_INT GPIO_NUM_35 // AXP192 interrupt
-
 #define HAS_LED NOT_A_PIN
+
+// power management settings
+#define HAS_PMU 1 // has AXP192 chip
+#define PMU_INT GPIO_NUM_35 // battery interrupt
+#define PMU_CHG_CURRENT AXP1XX_CHARGE_CUR_1000MA // battery charge current
+// possible values (mA):
+// 100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
+#define PMU_CHG_CUTOFF AXP202_TARGET_VOL_4_2V // battery charge cutoff
+// possible values (V):
+// 4_1/4_15/4_2/4_36
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
