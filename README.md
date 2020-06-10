@@ -348,6 +348,8 @@ The device listenes for remote control commands on LoRaWAN Port 2. Multiple comm
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
+Send for example `8386` as Downlink on Port 2 to get battery status and time/date from the device.
+
 0x01 set scan RSSI limit
 
 	1 ... 255 used for wifi and bluetooth scan radius (greater values increase scan radius, values 50...110 make sense)
