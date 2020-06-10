@@ -349,6 +349,7 @@ The device listenes for remote control commands on LoRaWAN Port 2. Multiple comm
 Note: all settings are stored in NVRAM and will be reloaded when device starts.
 
 Send for example `8386` as Downlink on Port 2 to get battery status and time/date from the device.
+<img src="img/paxcounter_downlink_example.png">
 
 0x01 set scan RSSI limit
 
