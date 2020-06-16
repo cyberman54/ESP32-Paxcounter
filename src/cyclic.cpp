@@ -55,7 +55,6 @@ void doHousekeeping() {
 #ifdef HAS_MQTT
   ESP_LOGD(TAG, "MQTTloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(mqttTask), eTaskGetState(mqttTask));
-  mqttClient.loop();
 #endif
 
 #if (defined HAS_DCF77 || defined HAS_IF482)
@@ -152,7 +151,6 @@ uint32_t getFreeRAM() {
 void reset_counters() {
 #if ((WIFICOUNTER) || (BLECOUNTER))
   macs.clear();   // clear all macs container
-  macs_total = 0; // reset all counters
   macs_wifi = 0;
   macs_ble = 0;
 #ifdef HAS_DISPLAY

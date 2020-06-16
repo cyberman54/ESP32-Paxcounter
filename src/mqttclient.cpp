@@ -7,8 +7,10 @@ static const char TAG[] = __FILE__;
 QueueHandle_t MQTTSendQueue;
 TaskHandle_t mqttTask;
 
-WiFiClient EthClient;
-PubSubClient mqttClient(EthClient);
+Ticker mqttTimer;
+
+WiFiClient NetClient;
+PubSubClient mqttClient(NetClient);
 
 void NetworkEvent(WiFiEvent_t event) {
   switch (event) {
@@ -16,22 +18,26 @@ void NetworkEvent(WiFiEvent_t event) {
     ESP_LOGI(TAG, "Ethernet link layer started");
     ETH.setHostname(ETH.macAddress().c_str());
     break;
+  case SYSTEM_EVENT_ETH_STOP:
+    ESP_LOGI(TAG, "Ethernet link layer stopped");
+    break;
   case SYSTEM_EVENT_ETH_CONNECTED:
+  case SYSTEM_EVENT_STA_CONNECTED:
     ESP_LOGI(TAG, "Network link connected");
+    break;
+  case SYSTEM_EVENT_ETH_DISCONNECTED:
+  case SYSTEM_EVENT_STA_DISCONNECTED:
+    ESP_LOGI(TAG, "Network link disconnected");
     break;
   case SYSTEM_EVENT_ETH_GOT_IP:
     ESP_LOGI(TAG, "ETH MAC: %s", ETH.macAddress().c_str());
     ESP_LOGI(TAG, "IPv4: %s", ETH.localIP().toString().c_str());
     ESP_LOGI(TAG, "Link Speed: %d Mbps %s", ETH.linkSpeed(),
              ETH.fullDuplex() ? "full duplex" : "half duplex");
+  case SYSTEM_EVENT_STA_GOT_IP:
     mqtt_connect(MQTT_SERVER, MQTT_PORT);
     break;
-  case SYSTEM_EVENT_ETH_DISCONNECTED:
-    ESP_LOGI(TAG, "Network link disconnected");
-    break;
-  case SYSTEM_EVENT_ETH_STOP:
-    ESP_LOGI(TAG, "Ethernet link layer stopped");
-    break;
+
   default:
     break;
   }
@@ -40,10 +46,12 @@ void NetworkEvent(WiFiEvent_t event) {
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
   IPAddress mqtt_server_ip;
 
-  static String clientId = "paxcounter-" + ETH.macAddress();
+  // static String clientId = "paxcounter-" + ETH.macAddress();
+  static String clientId = "paxcounter-" + String(random(0xffff), HEX);
+
   ESP_LOGI(TAG, "MQTT name is %s", clientId.c_str());
 
-  // resolve server
+  // resolve server host name
   if (WiFi.hostByName(my_host, mqtt_server_ip)) {
     ESP_LOGI(TAG, "Attempting to connect to %s [%s]", my_host,
              mqtt_server_ip.toString().c_str());
@@ -53,9 +61,10 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
   }
 
   // attempt to connect to MQTT server
-  if (EthClient.connect(mqtt_server_ip, my_port, HOMECYCLE * 2 * 1000)) {
+  if (NetClient.connect(mqtt_server_ip, my_port, HOMECYCLE * 2 * 1000)) {
+    NetClient.setTimeout(MQTT_KEEPALIVE); // seconds
     mqttClient.setServer(mqtt_server_ip, my_port);
-    mqttClient.setKeepAlive(HOMECYCLE * 2);
+    mqttClient.setKeepAlive(MQTT_KEEPALIVE);
     mqttClient.setCallback(mqtt_callback);
 
     if (mqttClient.connect(clientId.c_str())) {
@@ -92,23 +101,30 @@ void mqtt_client_task(void *param) {
       mqttClient.write('/');
       mqttClient.write(msg.Message, msg.MessageSize);
       if (mqttClient.endPublish()) {
-        ESP_LOGI(TAG, "%d byte(s) sent to MQTT", msg.MessageSize + 2);
-        continue; // while(1)
-      } else
-        goto reconnect;
+        ESP_LOGI(TAG, "%d byte(s) sent to MQTT server", msg.MessageSize + 2);
+        continue;
+      } else {
+        mqtt_enqueuedata(&msg); // postpone the undelivered message
+        ESP_LOGD(TAG,
+                 "Couldn't sent message to MQTT server, message postponed");
+      }
 
     } else {
-
       // attempt to reconnect to MQTT server
-    reconnect:
+      ESP_LOGD(TAG, "MQTT client reconnecting...");
       mqtt_enqueuedata(&msg); // postpone the undelivered message
       delay(MQTT_RETRYSEC * 1000);
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
     }
+
   } // while(1)
 }
 
 esp_err_t mqtt_init(void) {
+
+  WiFi.onEvent(NetworkEvent);
+  ETH.begin();
+
   assert(SEND_QUEUE_SIZE);
   MQTTSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (MQTTSendQueue == 0) {
@@ -119,10 +135,8 @@ esp_err_t mqtt_init(void) {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
-  xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 2, &mqttTask);
-
-  WiFi.onEvent(NetworkEvent);
-  ETH.begin();
+  mqttTimer.attach(MQTT_KEEPALIVE, mqtt_irq);
+  xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask);
 
   return ESP_OK;
 }
@@ -151,13 +165,17 @@ void mqtt_enqueuedata(MessageBuffer_t *message) {
 }
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length) {
-  String s = "";
-  for (int i = 0; i < length; i++)
-    s += (char)payload[i];
-  ESP_LOGD(TAG, "MQTT: Received %u byte(s) of payload [%s]", length, s);
-  // rcommand(payload, length);
+
+  char buffer[11];
+  snprintf(buffer, 10, "%X02 %X02 %X02 %X02 %X02 %X02 %X02 %X02 %X02 %X02",
+           payload);
+  ESP_LOGI(TAG, "MQTT: Received %u byte(s) of payload [%s]", length, buffer);
+
+  rcommand(payload, length);
 }
 
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
+void mqtt_irq(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
+void mqtt_loop(void) { mqttClient.loop(); }
 
 #endif // HAS_MQTT

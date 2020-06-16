@@ -11,6 +11,7 @@
 #define BME_IRQ 0x080
 #define MATRIX_DISPLAY_IRQ 0x100
 #define PMU_IRQ 0x200
+#define MQTT_IRQ 0x400
 
 #include "globals.h"
 #include "button.h"
@@ -20,10 +21,12 @@
 #include "bmesensor.h"
 #include "power.h"
 #include "ledmatrixdisplay.h"
+#include "mqttclient.h"
 
 void irqHandler(void *pvParameters);
 void mask_user_IRQ();
 void unmask_user_IRQ();
+void doIRQ(int irq);
 
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ();
@@ -40,6 +43,5 @@ void IRAM_ATTR ButtonIRQ();
 #ifdef HAS_PMU
 void IRAM_ATTR PMUIRQ();
 #endif
-
 
 #endif
