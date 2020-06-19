@@ -1,4 +1,5 @@
 // Basic Config
+
 #if (HAS_LORA)
 #include "lorawan.h"
 
@@ -319,7 +320,7 @@ esp_err_t lora_stack_init(bool do_join) {
   memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
   LMIC_setSession(NETID, DEVADDR, nwkskey, appskey);
   // These parameters are defined as macro in loraconf.h
-  setABPParamaters();
+  setABPParameters();
 #else
   // Start join procedure if not already joined,
   // lora_setupForNetwork(true) is called by eventhandler when joined

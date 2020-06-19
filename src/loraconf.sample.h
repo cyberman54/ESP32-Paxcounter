@@ -80,7 +80,7 @@ static const u4_t DEVADDR =
     0x00000000; // <-- Change this address for every node!
 
 // set additional ABP parameters in loraconf_abp.cpp
-void setABPParamaters();
+void setABPParameters();
 
 #endif
 
