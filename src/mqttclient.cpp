@@ -16,8 +16,8 @@ esp_err_t mqtt_init(void) {
   // setup network connection
   WiFi.onEvent(NetworkEvent);
   ETH.begin();
-  // WiFi.mode(WIFI_STA);
-  // WiFi.begin("SSID", "PW");
+  //WiFi.mode(WIFI_STA);
+  //WiFi.begin("SSID", "PASSWORD");
 
   // setup mqtt client
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);

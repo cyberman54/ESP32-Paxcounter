@@ -582,6 +582,7 @@ const char *getCrName(rps_t rps) {
 
 #if (VERBOSE)
 // decode LORAWAN MAC message
+// see https://github.com/mcci-catena/arduino-lmic/blob/master/doc/LoRaWAN-at-a-glance.pdf
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
 
   if (!cmdlen)

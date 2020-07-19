@@ -3,11 +3,12 @@
 
 #include "globals.h"
 #include "rcommand.h"
-#include <ETH.h>
 #include <MQTT.h>
+#include <ETH.h>
 
-#define MQTT_INTOPIC "paxcounter/in"
-#define MQTT_OUTTOPIC "paxcounter/out"
+#define MQTT_ETHERNET 0 // set to 0 to run on Wifi
+#define MQTT_INTOPIC "paxin"
+#define MQTT_OUTTOPIC "paxout"
 #define MQTT_PORT 1883
 #define MQTT_SERVER "broker.shiftr.io"
 //#define MQTT_CLIENTNAME "arduino"
