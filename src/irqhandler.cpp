@@ -69,6 +69,14 @@ void irqHandler(void *pvParameters) {
     }
 #endif
 
+// MQTT loop due?
+#if (HAS_MQTT)
+    if (InterruptStatus & MQTT_IRQ) {
+      mqtt_loop();
+      InterruptStatus &= ~MQTT_IRQ;
+    }
+#endif
+
     // are cyclic tasks due?
     if (InterruptStatus & CYCLIC_IRQ) {
       doHousekeeping();
@@ -91,53 +99,30 @@ void irqHandler(void *pvParameters) {
   } // for
 } // irqHandler()
 
-// esp32 hardware timer triggered interrupt service routines
+// timer triggered interrupt service routines
 // they notify the irq handler task
 
-#ifdef HAS_DISPLAY
-void IRAM_ATTR DisplayIRQ() {
+void IRAM_ATTR doIRQ(int irq) {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits,
-                     &xHigherPriorityTaskWoken);
+  xTaskNotifyFromISR(irqHandlerTask, irq, eSetBits, &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }
+
+#ifdef HAS_DISPLAY
+void IRAM_ATTR DisplayIRQ() { doIRQ(DISPLAY_IRQ); }
 #endif
 
 #ifdef HAS_MATRIX_DISPLAY
-void IRAM_ATTR MatrixDisplayIRQ() {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  xTaskNotifyFromISR(irqHandlerTask, MATRIX_DISPLAY_IRQ, eSetBits,
-                     &xHigherPriorityTaskWoken);
-  if (xHigherPriorityTaskWoken)
-    portYIELD_FROM_ISR();
-}
+void IRAM_ATTR MatrixDisplayIRQ() { doIRQ(MATRIX_DISPLAY_IRQ); }
 #endif
 
 #ifdef HAS_BUTTON
-void IRAM_ATTR ButtonIRQ() {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  xTaskNotifyFromISR(irqHandlerTask, BUTTON_IRQ, eSetBits,
-                     &xHigherPriorityTaskWoken);
-
-  if (xHigherPriorityTaskWoken)
-    portYIELD_FROM_ISR();
-}
+void IRAM_ATTR ButtonIRQ() { doIRQ(BUTTON_IRQ); }
 #endif
 
 #ifdef HAS_PMU
-void IRAM_ATTR PMUIRQ() {
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  xTaskNotifyFromISR(irqHandlerTask, PMU_IRQ, eSetBits,
-                     &xHigherPriorityTaskWoken);
-
-  if (xHigherPriorityTaskWoken)
-    portYIELD_FROM_ISR();
-}
+void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
 #endif
 
 void mask_user_IRQ() { xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits); }

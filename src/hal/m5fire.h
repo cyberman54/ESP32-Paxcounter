@@ -2,6 +2,9 @@
 // upload_speed 921600
 // board m5stack-fire
 
+// note use of GPIO16/17
+// https://www.bjoerns-techblog.de/2019/03/m5stack-fire-eine-uebersicht/
+
 #ifndef _M5FIRE_H
 #define _M5FIRE_H
 

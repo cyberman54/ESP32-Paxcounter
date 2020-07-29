@@ -81,8 +81,7 @@ configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 uint8_t volatile channel = 0;           // channel rotation counter
 uint8_t batt_level = 0;                 // display value
-uint16_t volatile macs_total = 0, macs_wifi = 0,
-                  macs_ble = 0; // globals for display
+uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 

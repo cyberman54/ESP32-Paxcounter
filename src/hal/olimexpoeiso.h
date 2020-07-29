@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 // enable only if you want to store a local paxcount table on the device
-//#define HAS_SDCARD 2 // this board has a SDMMC card-reader/writer
+#define HAS_SDCARD 2 // this board has a SDMMC card-reader/writer
 
 // enable only if you want to send paxcount via ethernet port to mqtt server
 #define HAS_MQTT 1  // use MQTT on ethernet interface
