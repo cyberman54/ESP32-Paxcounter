@@ -13,7 +13,7 @@ uint8_t rtc_init(void) {
   if (I2C_MUTEX_LOCK()) { // block i2c bus access
 
     Wire.begin(HAS_RTC);
-    Rtc.Begin();
+    Rtc.Begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL);
 
     // configure RTC chip
     Rtc.Enable32kHzPin(false);
