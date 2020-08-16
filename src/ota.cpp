@@ -22,6 +22,7 @@
 using namespace std;
 
 const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
+// usage of bintray: see https://github.com/r0oland/bintray-secure-ota
 
 // Connection port (HTTPS)
 const int port = 443;
