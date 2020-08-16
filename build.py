@@ -86,6 +86,8 @@ with open(otakeyfile) as myfile:
         key, value = line.partition("=")[::2]
         mykeys[key.strip()] = str(value).strip()
 
+# usage of bintray: see https://github.com/r0oland/bintray-secure-ota
+
 # get bintray user credentials from ota key file
 user = mykeys["BINTRAY_USER"]
 repository = mykeys["BINTRAY_REPO"]
