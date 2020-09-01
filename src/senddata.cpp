@@ -55,8 +55,14 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 #endif
 
 // write data to sdcard, if present
-#ifdef HAS_SDCARD
-  sdcardWriteData(macs_wifi, macs_ble);
+#if (HAS_SDCARD)
+  if ( port == COUNTERPORT ) {
+      sdcardWriteData(macs_wifi, macs_ble
+#if (COUNT_CWA)
+       , cwa_report()
+#endif              
+       );
+  }
 #endif
 
 } // SendPayload
@@ -143,21 +149,30 @@ void sendData() {
 #endif
 
 #if (HAS_SENSORS)
+#if (HAS_SENSOR_1)
     case SENSOR1_DATA:
       payload.reset();
       payload.addSensor(sensor_read(1));
       SendPayload(SENSOR1PORT, prio_normal);
+#if (COUNT_CWA)
+      cwa_clear();
+#endif
       break;
+#endif
+#if (HAS_SENSOR_2)
     case SENSOR2_DATA:
       payload.reset();
       payload.addSensor(sensor_read(2));
       SendPayload(SENSOR2PORT, prio_normal);
       break;
+#endif
+#if (HAS_SENSOR_3)
     case SENSOR3_DATA:
       payload.reset();
       payload.addSensor(sensor_read(3));
       SendPayload(SENSOR3PORT, prio_normal);
       break;
+#endif
 #endif
 
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)

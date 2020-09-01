@@ -12,6 +12,7 @@
 
 #define MAC_SNIFF_WIFI 0
 #define MAC_SNIFF_BLE 1
+#define MAC_SNIFF_BLE_CWA 2
 
 uint16_t get_salt(void);
 uint64_t macConvert(uint8_t *paddr);

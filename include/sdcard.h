@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <SPI.h>
 
-#ifdef HAS_SDCARD
+#if (HAS_SDCARD)
 #if HAS_SDCARD == 1
 #include <mySD.h>
 //#include <SD.h>
@@ -15,6 +15,11 @@
 #error HAS_SDCARD unknown card reader value, must be either 1 or 2
 #endif
 #endif
+// Pins for SD-card
+#define SDCARD_CS    (13)
+#define SDCARD_MOSI  (15)
+#define SDCARD_MISO  (2)
+#define SDCARD_SCLK  (14)
 
 #ifdef HAS_SDS011
 #include "sds011read.h"
@@ -38,9 +43,13 @@
 
 #define SDCARD_FILE_NAME "/paxcount.%02d"
 #define SDCARD_FILE_HEADER "date, time, wifi, bluet"
-
-bool sdcard_init(void);
-void sdcardWriteData(uint16_t, uint16_t);
-static void createFile(void);
-
+#define SDCARD_FILE_NAME       "paxcount.%02d"
+#define SDCARD_FILE_HEADER     "date, time, wifi, bluet"
+#if (COUNT_CWA)
+#define SDCARD_FILE_HEADER_CWA ",cwa"
 #endif
+
+bool sdcard_init( void );
+void sdcardWriteData( uint16_t, uint16_t, uint16_t = 0);
+
+#endif   // _SDCARD_H
