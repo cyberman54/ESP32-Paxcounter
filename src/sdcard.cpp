@@ -9,6 +9,8 @@ static const char TAG[] = __FILE__;
 
 static bool useSDCard;
 
+static void createFile(void);
+
 File fileSDCard;
 
 bool sdcard_init() {
@@ -19,9 +21,7 @@ bool sdcard_init() {
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
 
 #if HAS_SDCARD == 1 // use SD SPI host driver
-
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
-
   //SPI.begin(SDCARD_SCLK, SDCARD_MSO, SDCARD_MOSI, SDCARD_CS);
   //delay(10);
   //useSDCard = SD.begin(SDCARD_CS, SPI, 40000000, "/sd");
@@ -38,7 +38,7 @@ bool sdcard_init() {
   return useSDCard;
 }
 
-void sdcardWriteData(uint16_t noWifi, uint16_t noBle) {
+void sdcardWriteData(uint16_t noWifi, uint16_t noBle, __attribute__((unused)) uint16_t noBleCWA) {
   static int counterWrites = 0;
   char tempBuffer[12 + 1];
   time_t t = now();
@@ -56,6 +56,10 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle) {
   fileSDCard.print(tempBuffer);
   sprintf(tempBuffer, "%d,%d", noWifi, noBle);
   fileSDCard.print(tempBuffer);
+#if (COUNT_CWA)
+  sprintf(tempBuffer, ",%d", noBleCWA);
+  fileSDCard.print(tempBuffer);
+#endif
 #if (HAS_SDS011)
   sds011_store(&sds);
   sprintf(tempBuffer, ",%5.1f,%4.1f", sds.pm10, sds.pm25);
@@ -98,6 +102,9 @@ void createFile(void) {
       if (fileSDCard) {
         ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
         fileSDCard.print(SDCARD_FILE_HEADER);
+#if (COUNT_CWA)
+        fileSDCard.print(SDCARD_FILE_HEADER_CWA);             // for Corona-data (CWA)
+#endif
 #if (HAS_SDS011)
         fileSDCard.print(SDCARD_FILE_HEADER_SDS011);
 #endif
