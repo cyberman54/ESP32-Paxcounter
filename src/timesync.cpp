@@ -191,7 +191,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // flag: length of buffer
 
   // Store the instant the time request of the node was received on the gateway
-  timesync_store(osticks2ms(os_getTime(), timesync_rx);
+  timesync_store(osticks2ms(os_getTime()), timesync_rx);
 
   //  parse pUserData:
   //  p       type      meaning
