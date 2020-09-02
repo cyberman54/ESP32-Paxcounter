@@ -9,7 +9,7 @@
 
 /* 
 Hardware related definitions for TTGO T-Beam board
-for T-Beam versions T22_V10 + T22_V11
+for T-Beam version T22_V10 + T22_V11
 pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
 
 /// Button functions: ///
@@ -61,7 +61,7 @@ Reset -> reset device
 
 /*
 
-// T-Beam V10 has on board power management by AXP192 PMU chip:
+// T-Beam V10/V11 has on board power management by AXP192 PMU chip:
 //
 // DCDC1 0.7-3.5V @ 1200mA -> OLED
 // DCDC3 0.7-3.5V @ 700mA -> ESP32 (keep this on!)
