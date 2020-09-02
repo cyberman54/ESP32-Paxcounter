@@ -2,7 +2,7 @@
 #include "globals.h"
 #include "sensor.h"
 
-#if (COUNT_CWA)
+#if (COUNT_ENS)
 #include "payload.h"
 #include "corona.h"
 #include "macsniff.h"
@@ -55,7 +55,7 @@ uint8_t *sensor_read(uint8_t sensor) {
   case 1:
 
     // insert user specific sensor data frames here */
-#if (COUNT_CWA)
+#if (COUNT_ENS)
     payload.addCount( cwa_report(), MAC_SNIFF_BLE_CWA);
 #else
     buf[0] = length;

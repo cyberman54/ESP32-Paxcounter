@@ -56,7 +56,7 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle, __attribute__((unused)) ui
   fileSDCard.print(tempBuffer);
   sprintf(tempBuffer, "%d,%d", noWifi, noBle);
   fileSDCard.print(tempBuffer);
-#if (COUNT_CWA)
+#if (COUNT_ENS)
   sprintf(tempBuffer, ",%d", noBleCWA);
   fileSDCard.print(tempBuffer);
 #endif
@@ -102,7 +102,7 @@ void createFile(void) {
       if (fileSDCard) {
         ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
         fileSDCard.print(SDCARD_FILE_HEADER);
-#if (COUNT_CWA)
+#if (COUNT_ENS)
         fileSDCard.print(SDCARD_FILE_HEADER_CWA);             // for Corona-data (CWA)
 #endif
 #if (HAS_SDS011)

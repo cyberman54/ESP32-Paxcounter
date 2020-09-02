@@ -6,8 +6,10 @@
 #define BT_BD_ADDR_HEX(addr)                                                   \
   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
 
-// checking for CWAs we need this magic bytes:
-static const char cwaMagicBytes[] = "\x03\x03\x6F\xfd";
+// UUID of Exposure Notification Service (ENS)
+// see
+// https://blog.google/documents/70/Exposure_Notification_-_Bluetooth_Specification_v1.2.2.pdf
+static const char ensMagicBytes[] = "\x03\x03\x6F\xfd";
 
 // local Tag for logging
 static const char TAG[] = "bluetooth";
@@ -161,17 +163,14 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       // add this device and show new count total if it was not previously added
       mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 
-#if (COUNT_CWA)
-     // we can call the cwa-functions now
-     // because we use the hashed max-value
-     // done in mac_add()
+#if (COUNT_ENS)
+      // we can call the ens functions now using hashed max-value in mac_add()
 
-    // check for CWA-signature
-    if ( 0 == strncmp( (const char*)p->scan_rst.ble_adv, cwaMagicBytes , 4) ) {
-        cwa_mac_add( p->scan_rst.bda);
-   }
+      // check for ens signature
+      if (0 == strncmp((const char *)p->scan_rst.ble_adv, ensMagicBytes, 4)) {
+        cwa_mac_add(p->scan_rst.bda);
+      }
 #endif
-
 
       /* to be improved in vendorfilter if:
       // you can search for elements in the payload using the

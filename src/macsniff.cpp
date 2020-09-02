@@ -11,8 +11,8 @@
 static const char TAG[] = __FILE__;
 
 // used here and in corona.cpp
-uint16_t salt = -1;
-uint16_t hashedmac = -1; // temporary buffer for generated hash value
+uint16_t salt = 0;
+uint16_t hashedmac = 0; // temporary buffer for generated hash value
 
 uint16_t get_salt(void) {
   salt = (uint16_t)random(65536); // get new 16bit random for salting hashes
@@ -52,8 +52,8 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
   char buff[10]; // temporary buffer for printf
   bool added = false;
-  int8_t beaconID;    // beacon number in test monitor mode
-  uint32_t *mac;      // temporary buffer for shortened MAC
+  int8_t beaconID; // beacon number in test monitor mode
+  uint32_t *mac;   // temporary buffer for shortened MAC
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0.
@@ -112,22 +112,22 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
           payload.addAlarm(rssi, beaconID);
           SendPayload(BEACONPORT, prio_high);
         }
-      }; 
+      };
 
     } // added
 
     // Log scan result
-    ESP_LOGV(TAG,
+    ESP_LOGD(TAG,
              "%s %s RSSI %ddBi -> salted MAC %s -> Hash %04X -> WiFi:%d  "
              "BLTH:%d "
-#if (COUNT_CWA)
-            "(CWA:%d)"
-#endif                     
+#if (COUNT_ENS)
+             "(CWA:%d)"
+#endif
              "-> %d Bytes left",
              added ? "new  " : "known",
              sniff_type == MAC_SNIFF_WIFI ? "WiFi" : "BLTH", rssi, buff,
-             hashedmac, macs_wifi, macs_ble, 
-#if (COUNT_CWA)
+             hashedmac, macs_wifi, macs_ble,
+#if (COUNT_ENS)
              cwa_report(),
 #endif
              getFreeRAM());

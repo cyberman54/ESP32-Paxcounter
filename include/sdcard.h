@@ -15,11 +15,6 @@
 #error HAS_SDCARD unknown card reader value, must be either 1 or 2
 #endif
 #endif
-// Pins for SD-card
-#define SDCARD_CS    (13)
-#define SDCARD_MOSI  (15)
-#define SDCARD_MISO  (2)
-#define SDCARD_SCLK  (14)
 
 #ifdef HAS_SDS011
 #include "sds011read.h"
@@ -45,7 +40,7 @@
 #define SDCARD_FILE_HEADER "date, time, wifi, bluet"
 #define SDCARD_FILE_NAME       "paxcount.%02d"
 #define SDCARD_FILE_HEADER     "date, time, wifi, bluet"
-#if (COUNT_CWA)
+#if (COUNT_ENS)
 #define SDCARD_FILE_HEADER_CWA ",cwa"
 #endif
 

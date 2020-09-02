@@ -58,7 +58,7 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 #if (HAS_SDCARD)
   if ( port == COUNTERPORT ) {
       sdcardWriteData(macs_wifi, macs_ble
-#if (COUNT_CWA)
+#if (COUNT_ENS)
        , cwa_report()
 #endif              
        );
@@ -154,7 +154,7 @@ void sendData() {
       payload.reset();
       payload.addSensor(sensor_read(1));
       SendPayload(SENSOR1PORT, prio_normal);
-#if (COUNT_CWA)
+#if (COUNT_ENS)
       cwa_clear();
 #endif
       break;
