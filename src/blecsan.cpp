@@ -114,7 +114,9 @@ const char *btsig_gap_type(uint32_t gap_type) {
 // using IRAM_:ATTR here to speed up callback function
 IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
                                     esp_ble_gap_cb_param_t *param) {
+
   esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
+  uint16_t hashedmac = 0;
 
   ESP_LOGV(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
            btsig_gap_type(*p->scan_rst.ble_adv));
@@ -151,24 +153,20 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       }
 
 #if (VENDORFILTER)
-
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
         ESP_LOGV(TAG, "BT device filtered");
         break;
       }
-
 #endif
 
-      // add this device and show new count total if it was not previously added
-      mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
+      // hash and add this device and show new count total if it was not previously added
+      hashedmac = mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 
 #if (COUNT_ENS)
-      // we can call the ens functions now using hashed max-value in mac_add()
-
       // check for ens signature
       if (0 == strncmp((const char *)p->scan_rst.ble_adv, ensMagicBytes, 4)) {
-        cwa_mac_add(p->scan_rst.bda);
+        cwa_mac_add(hashedmac);
       }
 #endif
 

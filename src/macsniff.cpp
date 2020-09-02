@@ -10,9 +10,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// used here and in corona.cpp
 uint16_t salt = 0;
-uint16_t hashedmac = 0; // temporary buffer for generated hash value
 
 uint16_t get_salt(void) {
   salt = (uint16_t)random(65536); // get new 16bit random for salting hashes
@@ -45,12 +43,13 @@ uint64_t macConvert(uint8_t *paddr) {
   return (__builtin_bswap64(*mac) >> 16);
 }
 
-bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
+uint16_t mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
 
-  if (!salt) // ensure we have salt (appears after radio is turned on)
-    return false;
+  if (salt == 0) // ensure we have salt (appears after radio is turned on)
+    return 0;
 
-  char buff[10]; // temporary buffer for printf
+  uint16_t hashedmac = 0; // temporary buffer for generated hash value
+  char buff[10];          // temporary buffer for printf
   bool added = false;
   int8_t beaconID; // beacon number in test monitor mode
   uint32_t *mac;   // temporary buffer for shortened MAC
@@ -140,7 +139,7 @@ bool mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
   }
 #endif
 
-  // True if MAC WiFi/BLE was new
-  return added; // function returns bool if a new and unique Wifi or BLE mac was
-                // counted (true) or not (false)
+  // if a new and unique Wifi or BLE mac was counted, returs hash of this mac,
+  // else 0
+  return hashedmac;
 }
