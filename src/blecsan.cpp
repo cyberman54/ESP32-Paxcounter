@@ -160,14 +160,15 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       }
 #endif
 
-      // hash and add this device and show new count total if it was not previously added
-      hashedmac = mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
+      // hash and add this device and show new count total if it was not
+      // previously added
+      hashedmac =
+          mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 
 #if (COUNT_ENS)
       // check for ens signature
-      if (0 == strncmp((const char *)p->scan_rst.ble_adv, ensMagicBytes, 4)) {
+      if (0 == strncmp((const char *)p->scan_rst.ble_adv, ensMagicBytes, 4))
         cwa_mac_add(hashedmac);
-      }
 #endif
 
       /* to be improved in vendorfilter if:

@@ -15,10 +15,10 @@ static const char TAG[] = __FILE__;
 
 #include "corona.h"
 
-// When to forget old senders.
+// When to forget old senders ** currently not used **
 #define FORGET_AFTER_MINUTES 2
 
-// array of timestamps for seen notifiers
+// array of timestamps for seen notifiers: hash -> timestamp[ms]
 static std::map<uint16_t, unsigned long> cwaSeenNotifiers;
 
 // Remove notifiers last seen over FORGET_AFTER_MINUTES ago.
@@ -48,23 +48,8 @@ bool cwa_init(void) {
   return true;
 }
 
-// similar to mac_add(), found in macsniff.cpp, for comments look into this function
-bool cwa_mac_add(uint16_t hashedmac) {
-
-  bool added = false;
-  
-  ESP_LOGD(TAG, "hashed ENS mac = %X, ENS count = %d (total=%d)", hashedmac,
-           cwaSeenNotifiers.count(hashedmac), cwaSeenNotifiers.size());
-  added = !(cwaSeenNotifiers.count(hashedmac) > 0);
-
-  // Count only if this ENS MAC was not yet seen
-  if (added) {
-    cwaSeenNotifiers[hashedmac] = millis(); // last seen at ....
-    ESP_LOGD(TAG, "added device with active ENS");
-  }
-
-  // True if ENS MAC was new
-  return added;
+void cwa_mac_add(uint16_t hashedmac) {
+  cwaSeenNotifiers[hashedmac] = millis(); // hash last seen at ....
 }
 
 #endif

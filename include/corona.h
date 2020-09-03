@@ -9,7 +9,7 @@
 #include <map>
 
 bool cwa_init(void);
-bool cwa_mac_add(uint16_t hashedmac);
+void cwa_mac_add(uint16_t hashedmac);
 void cwa_clear(void);
 uint16_t cwa_report(void);
 
