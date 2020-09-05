@@ -356,17 +356,17 @@ void dp_drawPage(time_t t, bool nextpage) {
 
 #if (HAS_LORA)
 
-    // 3|NetID:000000 PWR:aa
-    // 4|DevAdd:00000000  DR:0
+    // 3|Net:000000   Pwr:aa
+    // 4|Dev:00000000 DR:0
     // 5|CHMsk:0000 Nonce:0000
-    // 6|CUp:000000 CDn:000000
+    // 6|fUp:000000 fDn:000000
     // 7|SNR:-0000  RSSI:-0000
 
     dp_setFont(MY_FONT_SMALL);
     dp_setTextCursor(0, 3);
-    dp_printf("NetID:%06X PWR:%-2d", LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
+    dp_printf("Net:%06X   Pwr:%-2d", LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
     dp_println();
-    dp_printf("DevAdd:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
+    dp_printf("Dev:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
     dp_println();
     dp_printf("ChMsk:%04X Nonce:%04X", LMIC.channelMap, LMIC.devNonce);
     dp_println();
