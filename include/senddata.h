@@ -8,6 +8,7 @@
 #include "lorawan.h"
 #include "display.h"
 #include "sdcard.h"
+#include "corona.h"
 
 extern Ticker sendcycler;
 

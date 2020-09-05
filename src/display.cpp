@@ -265,7 +265,11 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
-      dp_printf(" BLTH:%-5d", macs_ble);
+#if (!COUNT_ENS)
+      dp_printf("BLTH:%-5d", macs_ble);
+#else
+      dp_printf(" CWA:%-5d", cwa_report());
+#endif
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
@@ -274,9 +278,12 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
-    if (cfg.blescan)
+    if (cfg.blescan) {
       dp_printf("BLTH:%-5d", macs_ble);
-    else
+#if (COUNT_ENS)
+      dp_printf("(CWA:%d)", cwa_report());
+#endif
+    } else
       dp_printf("BLTH:off");
 #else
     dp_printf("Sniffer disabled");
@@ -349,18 +356,17 @@ void dp_drawPage(time_t t, bool nextpage) {
 
 #if (HAS_LORA)
 
-    // 3|NtwkID:000000 TXpw:aa
-    // 4|DevAdd:00000000  DR:0
+    // 3|Net:000000   Pwr:aa
+    // 4|Dev:00000000 DR:0
     // 5|CHMsk:0000 Nonce:0000
-    // 6|CUp:000000 CDn:000000
+    // 6|fUp:000000 fDn:000000
     // 7|SNR:-0000  RSSI:-0000
 
     dp_setFont(MY_FONT_SMALL);
     dp_setTextCursor(0, 3);
-    dp_printf("NetwID:%06X TXpw:%-2d", LMIC.netid & 0x001FFFFF,
-              LMIC.radio_txpow);
+    dp_printf("Net:%06X   Pwr:%-2d", LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
     dp_println();
-    dp_printf("DevAdd:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
+    dp_printf("Dev:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
     dp_println();
     dp_printf("ChMsk:%04X Nonce:%04X", LMIC.channelMap, LMIC.devNonce);
     dp_println();
