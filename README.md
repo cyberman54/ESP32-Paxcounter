@@ -211,10 +211,10 @@ There in the sensor configuration select "TheThingsNetwork" and set Decoding Pro
 Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this gives an indication how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best resulta withs this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
-	#define VENDORFILTER	0	// disable OUI filter (scans ALL device MACs)
+	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
 	#define BLECOUNTER		1	// enable bluetooth sniffing
 	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
-	#define HAS_SENSOR_1	1	// optional: transmit ENS counter data to server
+	#define HAS_SENSOR_1		1	// optional: transmit ENS counter data to server
 
 # SD-card
 
