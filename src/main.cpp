@@ -315,9 +315,9 @@ void setup() {
 #if (HAS_SENSOR_1)
 #if (COUNT_ENS)
   ESP_LOGI(TAG, "init CWA-counter");
-  if ( cwa_init() )
-      strcat_P(features, " CWA");
-#else        
+  if (cwa_init())
+    strcat_P(features, " CWA");
+#else
   strcat_P(features, " SENS(1)");
   sensor_init();
 #endif
@@ -402,8 +402,13 @@ void setup() {
 #if (WIFICOUNTER)
   strcat_P(features, " WIFI");
   // start wifi in monitor mode and start channel rotation timer
-  ESP_LOGI(TAG, "Starting Wifi...");
+
   wifi_sniffer_init();
+  if (cfg.blescan) {
+    ESP_LOGI(TAG, "Starting Wifi...");
+    switch_wifi_sniffer(1);
+  } else
+    switch_wifi_sniffer(0);
 #else
   // switch off wifi
   esp_wifi_deinit();

@@ -29,8 +29,8 @@ void defaultConfig() {
   cfg.blescantime =
       BLESCANINTERVAL /
       10; // BT channel scan cycle [seconds/100], default 1 (= 10ms)
-  cfg.blescan = BLECOUNTER;        // 0=disabled, 1=enabled
-  cfg.wifiscan = WIFICOUNTER;      // 0=disabled, 1=enabled
+  cfg.blescan = 1;                 // 0=disabled, 1=enabled
+  cfg.wifiscan = 1;                // 0=disabled, 1=enabled
   cfg.wifiant = 0;                 // 0=internal, 1=external (for LoPy/LoPy4)
   cfg.vendorfilter = VENDORFILTER; // 0=disabled, 1=enabled
   cfg.rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)

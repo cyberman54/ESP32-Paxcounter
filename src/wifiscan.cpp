@@ -73,14 +73,12 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // no modem power saving
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
-  ESP_ERROR_CHECK(esp_wifi_start());               // for esp_wifi v3.3
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 
   // setup wifi channel rotation timer
   WifiChanTimer =
       xTimerCreate("WifiChannelTimer", pdMS_TO_TICKS(cfg.wifichancycle * 10),
                    pdTRUE, (void *)0, switchWifiChannel);
-  switch_wifi_sniffer(1);
 }
 
 void switch_wifi_sniffer(uint8_t state) {
