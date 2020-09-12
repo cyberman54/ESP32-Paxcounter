@@ -3,8 +3,6 @@
 
 // ESP32 Functions
 #include <esp_wifi.h>
-#include <esp_coexist.h>
-#include "coexist_internal.h"
 
 #include "hash.h"    // Hash function for scrambling MAC addresses
 #include "antenna.h" // code for switching wifi antennas

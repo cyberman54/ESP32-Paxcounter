@@ -247,10 +247,9 @@ void start_BLEscan(void) {
 #if (BLECOUNTER)
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
 
-  ESP_ERROR_CHECK(esp_coex_preference_set(
-      ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
-
   // Initialize BT controller to allocate task and other resource.
+  ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_BT));
+
   btStart();
   ESP_ERROR_CHECK(esp_bluedroid_init());
   ESP_ERROR_CHECK(esp_bluedroid_enable());
@@ -269,8 +268,7 @@ void stop_BLEscan(void) {
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
   btStop(); // disable bt_controller
-  ESP_ERROR_CHECK(esp_coex_preference_set(
-      ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+  ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_WIFI));
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
 #endif // BLECOUNTER
 } // stop_BLEscan
