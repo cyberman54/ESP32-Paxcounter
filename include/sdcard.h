@@ -8,7 +8,6 @@
 #if (HAS_SDCARD)
 #if HAS_SDCARD == 1
 #include <mySD.h>
-//#include <SD.h>
 #elif HAS_SDCARD == 2
 #include <SD_MMC.h>
 #else
@@ -38,13 +37,12 @@
 
 #define SDCARD_FILE_NAME "/paxcount.%02d"
 #define SDCARD_FILE_HEADER "date, time, wifi, bluet"
-#define SDCARD_FILE_NAME       "paxcount.%02d"
-#define SDCARD_FILE_HEADER     "date, time, wifi, bluet"
+
 #if (COUNT_ENS)
 #define SDCARD_FILE_HEADER_CWA ",cwa"
 #endif
 
-bool sdcard_init( void );
-void sdcardWriteData( uint16_t, uint16_t, uint16_t = 0);
+bool sdcard_init(void);
+void sdcardWriteData(uint16_t, uint16_t, uint16_t = 0);
 
-#endif   // _SDCARD_H
+#endif // _SDCARD_H

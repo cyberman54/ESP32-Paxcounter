@@ -116,7 +116,6 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
                                     esp_ble_gap_cb_param_t *param) {
 
   esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
-  uint16_t hashedmac = 0;
 
   ESP_LOGV(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
            btsig_gap_type(*p->scan_rst.ble_adv));
@@ -162,7 +161,11 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
 
       // hash and add this device and show new count total if it was not
       // previously added
-      hashedmac =
+
+#if (COUNT_ENS)
+      uint16_t hashedmac =
+#endif
+
           mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 
 #if (COUNT_ENS)
