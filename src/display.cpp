@@ -237,7 +237,7 @@ void dp_drawPage(time_t t, bool nextpage) {
   // display number of unique macs total Wifi + BLE
   if (DisplayPage < 5) {
     dp_setFont(MY_FONT_STRETCHED);
-    dp_printf("PAX:%-4d", macs.size());
+    dp_printf("%-5d", macs.size());
   }
 
   switch (DisplayPage) {
