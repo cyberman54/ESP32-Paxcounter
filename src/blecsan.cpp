@@ -6,8 +6,10 @@
 #define BT_BD_ADDR_HEX(addr)                                                   \
   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
 
-// checking for CWAs we need this magic bytes:
-static const char cwaMagicBytes[] = "\x03\x03\x6F\xfd";
+// UUID of Exposure Notification Service (ENS)
+// see
+// https://blog.google/documents/70/Exposure_Notification_-_Bluetooth_Specification_v1.2.2.pdf
+static const char ensMagicBytes[] = "\x03\x03\x6F\xfd";
 
 // local Tag for logging
 static const char TAG[] = "bluetooth";
@@ -112,7 +114,9 @@ const char *btsig_gap_type(uint32_t gap_type) {
 // using IRAM_:ATTR here to speed up callback function
 IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
                                     esp_ble_gap_cb_param_t *param) {
+
   esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
+  uint16_t hashedmac = 0;
 
   ESP_LOGV(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
            btsig_gap_type(*p->scan_rst.ble_adv));
@@ -149,29 +153,23 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       }
 
 #if (VENDORFILTER)
-
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
         ESP_LOGV(TAG, "BT device filtered");
         break;
       }
-
 #endif
 
-      // add this device and show new count total if it was not previously added
-      mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
+      // hash and add this device and show new count total if it was not
+      // previously added
+      hashedmac =
+          mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 
-#if (COUNT_CWA)
-     // we can call the cwa-functions now
-     // because we use the hashed max-value
-     // done in mac_add()
-
-    // check for CWA-signature
-    if ( 0 == strncmp( (const char*)p->scan_rst.ble_adv, cwaMagicBytes , 4) ) {
-        cwa_mac_add( p->scan_rst.bda);
-   }
+#if (COUNT_ENS)
+      // check for ens signature
+      if (0 == strncmp((const char *)p->scan_rst.ble_adv, ensMagicBytes, 4))
+        cwa_mac_add(hashedmac);
 #endif
-
 
       /* to be improved in vendorfilter if:
       // you can search for elements in the payload using the

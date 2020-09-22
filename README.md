@@ -200,12 +200,24 @@ Paxcounter can keep it's time-of-day synced with an external time source. Set *#
 Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set *#define HAS_IF482* or *#define HAS_DCF77* in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.
 
 # mobile PaxCounter via https://opensensemap.org/
+
 This describes how to set up a mobile PaxCounter:
-Follow all steps so far for preparing the device, use the packed payload format. In paxcounter.conf set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
+Follow all steps so far for preparing the device, use the packed payload format. In [paxcounter.conf](src/paxcounter.conf) set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
 There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
 	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
 
+# Covid-19 Exposure Notification System beacon detection (Germany: "Corona Warn App counter")
+
+Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this gives an indication how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best resulta withs this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
+
+	#define COUNT_ENS		1	// enable ENS monitoring function
+	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
+	#define BLECOUNTER		1	// enable bluetooth sniffing
+	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
+	#define HAS_SENSOR_1		1	// optional: transmit ENS counter data to server
+
 # SD-card
+
 Data can be stored on an SD-card if one is availabe. Simply choose the file in src/hal and add the following lines to your hal-file:
 
     #define HAS_SDCARD 1     // SD-card-reader/writer, using SPI interface
@@ -559,4 +571,4 @@ Thanks to
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
-- [August Quint](https://github.com/AugustQu) for adding SD card data logger and SDS011 support
+- [August Quint](https://github.com/AugustQu) for adding SD card data logger, SDS011 and ENS support
