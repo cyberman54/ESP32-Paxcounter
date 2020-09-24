@@ -9,7 +9,7 @@
 // UUID of Exposure Notification Service (ENS)
 // see
 // https://blog.google/documents/70/Exposure_Notification_-_Bluetooth_Specification_v1.2.2.pdf
-static const char ensMagicBytes[] = "\x03\x03\x6F\xfd";
+static const char ensMagicBytes[] = "\x16\x6f\xfd";
 
 // local Tag for logging
 static const char TAG[] = "bluetooth";
@@ -170,7 +170,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
 
 #if (COUNT_ENS)
       // check for ens signature
-      if (0 == strncmp((const char *)p->scan_rst.ble_adv, ensMagicBytes, 4))
+      if (NULL != strstr((const char *)p->scan_rst.ble_adv, ensMagicBytes))
         cwa_mac_add(hashedmac);
 #endif
 
