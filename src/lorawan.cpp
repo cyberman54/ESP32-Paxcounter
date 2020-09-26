@@ -495,10 +495,9 @@ uint8_t myBattLevelCb(void *pUserData) {
 #elif defined HAS_IP5306
       if (IP5306_GetPowerSource())
     return MCMD_DEVS_EXT_POWER;
-#else
-    return (batt_percent / 100.0 *
-            (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
 #endif // HAS_PMU
+
+  return (batt_percent / 100.0 * (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
 }
 
 // event EV_RXCOMPLETE message handler
@@ -582,7 +581,8 @@ const char *getCrName(rps_t rps) {
 
 #if (VERBOSE)
 // decode LORAWAN MAC message
-// see https://github.com/mcci-catena/arduino-lmic/blob/master/doc/LoRaWAN-at-a-glance.pdf
+// see
+// https://github.com/mcci-catena/arduino-lmic/blob/master/doc/LoRaWAN-at-a-glance.pdf
 void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
 
   if (!cmdlen)
