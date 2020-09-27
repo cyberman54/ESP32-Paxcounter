@@ -49,14 +49,10 @@ void calibrateTime(void) {
 // no RTC -> fallback to GPS time
 #if (HAS_GPS)
     t = get_gpstime(&t_msec);
-    if (t) {
-      // only set time source to GPS if GPS time was actually valid
-      timeSource = _gps;
-    }
+    timeSource = _gps;
 #endif
 
-    if (t)
-      setMyTime((uint32_t)t, t_msec, timeSource); // set time
+    setMyTime((uint32_t)t, t_msec, timeSource); // set time
 
   } // fallback
 
