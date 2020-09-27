@@ -56,12 +56,13 @@ void SendPayload(uint8_t port, sendprio_t prio) {
 
 // write data to sdcard, if present
 #if (HAS_SDCARD)
-  if ( port == COUNTERPORT ) {
-      sdcardWriteData(macs_wifi, macs_ble
+  if (port == COUNTERPORT) {
+    sdcardWriteData(macs_wifi, macs_ble
 #if (COUNT_ENS)
-       , cwa_report()
-#endif              
-       );
+                    ,
+                    cwa_report()
+#endif
+    );
   }
 #endif
 
@@ -86,8 +87,7 @@ void sendData() {
     case COUNT_DATA:
       payload.reset();
 #if !(PAYLOAD_OPENSENSEBOX)
-      if (cfg.wifiscan)
-        payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
+      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 #endif
@@ -102,8 +102,7 @@ void sendData() {
       }
 #endif
 #if (PAYLOAD_OPENSENSEBOX)
-      if (cfg.wifiscan)
-        payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
+      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 #endif
