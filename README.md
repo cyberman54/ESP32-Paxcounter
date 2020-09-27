@@ -85,11 +85,11 @@ By default bluetooth sniffing not installed (#define *BLECOUNTER* 0 in paxcounte
 
 Compile time configuration is spread across several files. Before compiling the code, edit or create the following files:
 
-## platformio.ini
-Edit `platformio.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections boards.
+## platformio_orig.ini
+Edit `platformio_orig.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections boards. and rename to `platformio.ini`
 
-## src/paxcounter.conf
-Edit `src/paxcounter.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use.
+## src/paxcounter_orig.conf
+Edit `src/paxcounter.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Rename to `paxcounter.conf`
 
 If your device has a **real time clock** it can be updated bei either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in `paxcounter.conf`.
 
