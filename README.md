@@ -282,8 +282,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #1:** Paxcount data
 
-	byte 1-2:	Number of unique devices, seen on Wifi
-	byte 3-4:	Number of unique devices, seen on Bluetooth [ommited if BT disabled]
+	byte 1-2:	Number of unique devices, seen on Wifi [00 00 if Wifi scan disabled]
+	byte 3-4:	Number of unique devices, seen on Bluetooth [ommited if BT scan disabled]
 
 **Port #2:** Device status query result
 
@@ -542,9 +542,9 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 	
 # License
 
-Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
+Copyright  2018-2020 Oliver Brandmueller <ob@sysadm.in>
 
-Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
+Copyright  2018-2020 Klaus Wilting <verkehrsrot@arcor.de>
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
