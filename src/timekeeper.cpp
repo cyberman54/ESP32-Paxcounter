@@ -26,7 +26,8 @@ Ticker timesyncer;
 void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 void calibrateTime(void) {
-
+  ESP_LOGD(TAG, "[%0.3f] calibrateTime, timeSource == %d", millis() / 1000.0,
+           timeSource);
   time_t t = 0;
   uint16_t t_msec = 0;
 
@@ -49,7 +50,9 @@ void calibrateTime(void) {
 // no RTC -> fallback to GPS time
 #if (HAS_GPS)
     t = get_gpstime(&t_msec);
-    timeSource = _gps;
+    if (t) {
+      timeSource = _gps;
+    }
 #endif
 
     setMyTime((uint32_t)t, t_msec, timeSource); // set time

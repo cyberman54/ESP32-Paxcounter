@@ -21,6 +21,9 @@ static uint16_t nmea_txDelay_ms =
 static uint16_t nmea_txDelay_ms = 0;
 #endif
 
+// did the last packet contain a valid time?
+bool hasValidTime = false;
+
 // initialize and configure GPS
 int gps_init(void) {
 
@@ -159,6 +162,18 @@ void gps_loop(void *pvParameters) {
         delay(2); // 2ms delay according L76 datasheet
       }
 #endif
+
+#if !TIME_SYNC_LORASERVER && !TIME_SYNC_LORAWAN
+      if (!hasValidTime) {
+        if (gpstime.isUpdated() && gpstime.isValid()) {
+          hasValidTime = true;
+          if (timeSource == _unsynced) {
+            calibrateTime();
+          }
+        }
+      }
+#endif
+
     } // if
 
     // show NMEA data in verbose mode, useful for debugging GPS, bu tvery noisy
