@@ -2,6 +2,14 @@
 #include "globals.h"
 #include "sensor.h"
 
+#if (COUNT_ENS)
+#include "payload.h"
+#include "corona.h"
+#include "macsniff.h"
+
+extern PayloadConvert payload;
+#endif
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -47,10 +55,14 @@ uint8_t *sensor_read(uint8_t sensor) {
   case 1:
 
     // insert user specific sensor data frames here */
+#if (COUNT_ENS)
+    payload.addCount( cwa_report(), MAC_SNIFF_BLE_CWA);
+#else
     buf[0] = length;
     buf[1] = 0x01;
     buf[2] = 0x02;
     buf[3] = 0x03;
+#endif
     break;
 
   case 2:

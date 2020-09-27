@@ -6,6 +6,11 @@
 #define BT_BD_ADDR_HEX(addr)                                                   \
   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
 
+// UUID of Exposure Notification Service (ENS)
+// see
+// https://blog.google/documents/70/Exposure_Notification_-_Bluetooth_Specification_v1.2.2.pdf
+static const char ensMagicBytes[] = "\x16\x6f\xfd";
+
 // local Tag for logging
 static const char TAG[] = "bluetooth";
 
@@ -109,6 +114,7 @@ const char *btsig_gap_type(uint32_t gap_type) {
 // using IRAM_:ATTR here to speed up callback function
 IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
                                     esp_ble_gap_cb_param_t *param) {
+
   esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 
   ESP_LOGV(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
@@ -146,22 +152,29 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       }
 
 #if (VENDORFILTER)
-
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
         ESP_LOGV(TAG, "BT device filtered");
         break;
       }
-
 #endif
 
-      // add this device and show new count total if it was not previously added
-      mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
+      // hash and add this device and show new count total if it was not
+      // previously added
+
+#if (COUNT_ENS)
+      uint16_t hashedmac =
+#endif
+
+          mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
+
+#if (COUNT_ENS)
+      // check for ens signature
+      if (NULL != strstr((const char *)p->scan_rst.ble_adv, ensMagicBytes))
+        cwa_mac_add(hashedmac);
+#endif
 
       /* to be improved in vendorfilter if:
-      
-
-
       // you can search for elements in the payload using the
       // function esp_ble_resolve_adv_data()
       //
@@ -237,10 +250,9 @@ void start_BLEscan(void) {
 #if (BLECOUNTER)
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
 
-  ESP_ERROR_CHECK(esp_coex_preference_set(
-      ESP_COEX_PREFER_BALANCE)); // configure Wifi/BT coexist lib
-
   // Initialize BT controller to allocate task and other resource.
+  ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_BT));
+
   btStart();
   ESP_ERROR_CHECK(esp_bluedroid_init());
   ESP_ERROR_CHECK(esp_bluedroid_enable());
@@ -259,8 +271,7 @@ void stop_BLEscan(void) {
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
   btStop(); // disable bt_controller
-  ESP_ERROR_CHECK(esp_coex_preference_set(
-      ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+  ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_WIFI));
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
 #endif // BLECOUNTER
 } // stop_BLEscan

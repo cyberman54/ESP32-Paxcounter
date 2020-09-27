@@ -2,8 +2,8 @@
 
 //////////////////////// ESP32-Paxcounter \\\\\\\\\\\\\\\\\\\\\\\\\\
 
-Copyright  2018 Oliver Brandmueller <ob@sysadm.in>
-Copyright  2018 Klaus Wilting <verkehrsrot@arcor.de>
+Copyright  2018-2020 Oliver Brandmueller <ob@sysadm.in>
+Copyright  2018-2020 Klaus Wilting <verkehrsrot@arcor.de>
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -312,8 +312,24 @@ void setup() {
 
 // initialize sensors
 #if (HAS_SENSORS)
-  strcat_P(features, " SENS");
+#if (HAS_SENSOR_1)
+#if (COUNT_ENS)
+  ESP_LOGI(TAG, "init CWA-counter");
+  if (cwa_init())
+    strcat_P(features, " CWA");
+#else
+  strcat_P(features, " SENS(1)");
   sensor_init();
+#endif
+#endif
+#if (HAS_SENSOR_2)
+  strcat_P(features, " SENS(2)");
+  sensor_init();
+#endif
+#if (HAS_SENSOR_3)
+  strcat_P(features, " SENS(3)");
+  sensor_init();
+#endif
 #endif
 
 // initialize LoRa
@@ -336,7 +352,7 @@ void setup() {
   assert(mqtt_init() == ESP_OK);
 #endif
 
-#ifdef HAS_SDCARD
+#if (HAS_SDCARD)
   if (sdcard_init())
     strcat_P(features, " SD");
 #endif
@@ -386,8 +402,13 @@ void setup() {
 #if (WIFICOUNTER)
   strcat_P(features, " WIFI");
   // start wifi in monitor mode and start channel rotation timer
-  ESP_LOGI(TAG, "Starting Wifi...");
+
   wifi_sniffer_init();
+  if (cfg.blescan) {
+    ESP_LOGI(TAG, "Starting Wifi...");
+    switch_wifi_sniffer(1);
+  } else
+    switch_wifi_sniffer(0);
 #else
   // switch off wifi
   esp_wifi_deinit();
