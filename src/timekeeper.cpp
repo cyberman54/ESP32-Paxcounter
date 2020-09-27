@@ -35,8 +35,10 @@ void calibrateTime(void) {
   timesync_request();
 #endif
 
-  // (only!) if we lost time, we try to fallback to local time source RTS or GPS
-  if (timeSource == _unsynced) {
+  // if no LORA timesource is available, or if we lost time, then fallback to
+  // local time source RTS or GPS
+  if (((!TIME_SYNC_LORASERVER) && (!TIME_SYNC_LORAWAN)) ||
+      (timeSource == _unsynced)) {
 
 // has RTC -> fallback to RTC time
 #ifdef HAS_RTC
@@ -50,8 +52,7 @@ void calibrateTime(void) {
     timeSource = _gps;
 #endif
 
-    if (t)
-      setMyTime((uint32_t)t, t_msec, timeSource); // set time
+    setMyTime((uint32_t)t, t_msec, timeSource); // set time
 
   } // fallback
 
