@@ -44,7 +44,7 @@ void calibrateTime(void) {
 // has RTC -> fallback to RTC time
 #ifdef HAS_RTC
     t = get_rtctime();
-    // set time from RTC
+    // set time from RTC - method will check if time is valid
     setMyTime((uint32_t)t, t_msec, _rtc);
 #endif
 
