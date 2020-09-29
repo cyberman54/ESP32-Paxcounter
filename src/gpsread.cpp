@@ -6,8 +6,11 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// we use NMEA $GPZDA sentence field 1 for time synchronization
-// $GPZDA gives time for preceding pps pulse, but does not has a constant offset
+// we use NMEA ZDA sentence field 1 for time synchronization
+// ZDA gives time for preceding pps pulse
+// downsight is that it does not have a constant offset
+// thus precision is only +/- 1 second
+
 TinyGPSPlus gps;
 TinyGPSCustom gpstime(gps, "GPZDA", 1); // field 1 = UTC time
 static const String ZDA_Request = "$EIGPQ,ZDA*39\r\n";
@@ -95,7 +98,7 @@ time_t get_gpstime(uint16_t *msec) {
 
   time_t time_sec = 0;
 
-  // poll NMEA $GPZDA sentence
+  // poll NMEA ZDA sentence
 #ifdef GPS_SERIAL
   GPS_Serial.print(ZDA_Request);
   // wait for gps NMEA answer
@@ -159,6 +162,13 @@ void gps_loop(void *pvParameters) {
         delay(2); // 2ms delay according L76 datasheet
       }
 #endif
+
+      // if time hasn't been synchronised yet, and we have a valid GPS time,
+      // update time from GPS.
+      if (timeSource == _unsynced && gpstime.isUpdated() && gpstime.isValid()) {
+        calibrateTime();
+      }
+
     } // if
 
     // show NMEA data in verbose mode, useful for debugging GPS, bu tvery noisy
