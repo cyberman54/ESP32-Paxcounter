@@ -32,7 +32,7 @@ void calibrateTime(void) {
   uint16_t t_msec = 0;
 
   // kick off asychronous lora timesync if we have
-#if (HAS_LORA) && (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
+#if (HAS_LORA) && ((TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN))
   timesync_request();
 #endif
 
@@ -44,18 +44,16 @@ void calibrateTime(void) {
 // has RTC -> fallback to RTC time
 #ifdef HAS_RTC
     t = get_rtctime();
-    timeSource = _rtc;
+    // set time from RTC
+    setMyTime((uint32_t)t, t_msec, _rtc);
 #endif
 
 // no RTC -> fallback to GPS time
 #if (HAS_GPS)
     t = get_gpstime(&t_msec);
-    if (t) {
-      timeSource = _gps;
-    }
+    // set time from GPS - method will check if time is valid
+    setMyTime((uint32_t)t, t_msec, _gps);
 #endif
-
-    setMyTime((uint32_t)t, t_msec, timeSource); // set time
 
   } // fallback
 

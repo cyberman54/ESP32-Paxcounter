@@ -21,9 +21,6 @@ static uint16_t nmea_txDelay_ms =
 static uint16_t nmea_txDelay_ms = 0;
 #endif
 
-// did the last packet contain a valid time?
-bool hasValidTime = false;
-
 // initialize and configure GPS
 int gps_init(void) {
 
@@ -163,16 +160,11 @@ void gps_loop(void *pvParameters) {
       }
 #endif
 
-#if !TIME_SYNC_LORASERVER && !TIME_SYNC_LORAWAN
-      if (!hasValidTime) {
-        if (gpstime.isUpdated() && gpstime.isValid()) {
-          hasValidTime = true;
-          if (timeSource == _unsynced) {
-            calibrateTime();
-          }
-        }
+      // if time hasn't been synchronised yet, and we have a valid GPS time,
+      // update time from GPS.
+      if (timeSource == _unsynced && gpstime.isUpdated() && gpstime.isValid()) {
+        calibrateTime();
       }
-#endif
 
     } // if
 
