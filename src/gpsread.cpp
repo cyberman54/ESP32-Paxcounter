@@ -159,6 +159,13 @@ void gps_loop(void *pvParameters) {
         delay(2); // 2ms delay according L76 datasheet
       }
 #endif
+
+      // if time hasn't been synchronised yet, and we have a valid GPS time,
+      // update time from GPS.
+      if (timeSource == _unsynced && gpstime.isUpdated() && gpstime.isValid()) {
+        calibrateTime();
+      }
+
     } // if
 
     // show NMEA data in verbose mode, useful for debugging GPS, bu tvery noisy
