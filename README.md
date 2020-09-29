@@ -85,11 +85,11 @@ By default bluetooth sniffing not installed (#define *BLECOUNTER* 0 in paxcounte
 
 Compile time configuration is spread across several files. Before compiling the code, edit or create the following files:
 
-## platformio.ini
-Edit `platformio.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections boards.
+## platformio_orig.ini
+Edit `platformio_orig.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections board. Copy or rename to `platformio.ini`.
 
-## src/paxcounter.conf
-Edit `src/paxcounter.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use.
+## src/paxcounter_orig.conf
+Edit `src/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `src/paxcounter.conf`.
 
 If your device has a **real time clock** it can be updated bei either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in `paxcounter.conf`.
 
@@ -97,11 +97,10 @@ If your device has a **real time clock** it can be updated bei either LoRaWAN ne
 Edit `src/lmic_config.h` and tailor settings in this file according to your country and device hardware. Please take care of national regulations when selecting the frequency band for LoRaWAN.
 
 ## src/loraconf.h
-Create file `src/loraconf.h` using the template [src/loraconf.sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf.sample.h) and modify it, to use your personal values.
-To join the network and activate your paxcounter, you have to configure either the preferred OTAA method or the ABP method. You should use OTAA, whenever possible. To understand the differences of the two methods, [this article](https://www.thethingsnetwork.org/docs/devices/registration.html) may be useful.
+Create file `src/loraconf.h` using the template [src/loraconf_sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf_sample.h) and adjust settings to use your personal values. To join the network and activate your paxcounter, you must configure either OTAA or ABP join method. You should use OTAA, whenever possible. To understand the differences of the two methods, [this article](https://www.thethingsnetwork.org/docs/devices/registration.html) may be useful.
 
 To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP, activate (uncomment) `#define LORA_ABP` in the file `src/loraconf.h`.
-The file `src/loraconf.h.sample` contains more information about the values to provide.
+The file `src/loraconf_sample.h` contains more information about the values to provide.
 
 ## src/ota.conf
 Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates. If you want to push own OTA updates you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
@@ -480,7 +479,16 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 
 0x14 set payload mask
 
-	byte 1 = sensor data payload mask (0..255, meaning of bits see above)
+	byte 1 = sensor data payload mask (0..255, meaning of bits see below)
+        0x01 = GPS_DATA
+        0x02 = ALARM_DATA
+        0x04 = MEMS_DATA
+        0x08 = COUNT_DATA (default)
+        0x10 = SENSOR_1_DATA (ENS-COUNTS)
+        0x20 = SENSOR_2_DATA
+        0x40 = SENSOR_3_DATA
+        0x80 = BATT_DATA
+    bytes can be combined eg COUNT_DATA ;SENSOR_1_DATA ;BATT_DATA: `0x08 | 0x10 |0x80 = 0x98`
 
 0x15 set BME data on/off
 
