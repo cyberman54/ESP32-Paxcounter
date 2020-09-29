@@ -116,7 +116,7 @@ uint16_t mac_add(uint8_t *paddr, int8_t rssi, bool sniff_type) {
     } // added
 
     // Log scan result
-    ESP_LOGD(TAG,
+    ESP_LOGV(TAG,
              "%s %s RSSI %ddBi -> salted MAC %s -> Hash %04X -> WiFi:%d  "
              "BLTH:%d "
 #if (COUNT_ENS)
