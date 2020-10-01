@@ -81,7 +81,7 @@ void saveConfig() {
   open_storage();
   if (err == ESP_OK) {
     uint8_t flash8 = 0;
-    uint16_t flash16 = 0;
+    int16_t flash16 = 0;
     size_t required_size;
     uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE + 1];
     char storedversion[10];
@@ -162,9 +162,9 @@ void saveConfig() {
         flash8 != cfg.monitormode)
       nvs_set_u8(my_handle, "monitormode", cfg.monitormode);
 
-    if (nvs_get_u16(my_handle, "rssilimit", &flash16) != ESP_OK ||
+    if (nvs_get_i16(my_handle, "rssilimit", &flash16) != ESP_OK ||
         flash16 != cfg.rssilimit)
-      nvs_set_u16(my_handle, "rssilimit", cfg.rssilimit);
+      nvs_set_i16(my_handle, "rssilimit", cfg.rssilimit);
 
     err = nvs_commit(my_handle);
     nvs_close(my_handle);
@@ -196,7 +196,7 @@ void loadConfig() {
   } // saves factory settings to NVRAM
   else {
     uint8_t flash8 = 0;
-    uint16_t flash16 = 0;
+    int16_t flash16 = 0;
     size_t required_size;
 
     // check if configuration stored in NVRAM matches PROGVERSION
@@ -335,7 +335,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_u16(my_handle, "rssilimit", &flash16) == ESP_OK) {
+    if (nvs_get_i16(my_handle, "rssilimit", &flash16) == ESP_OK) {
       cfg.rssilimit = flash16;
       ESP_LOGI(TAG, "rssilimit = %d", flash16);
     } else {
