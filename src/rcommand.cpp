@@ -48,7 +48,7 @@ void set_rssi(uint8_t val[]) {
 
 void set_sendcycle(uint8_t val[]) {
   cfg.sendcycle = val[0];
-  // update send cycle interrupt [seconds
+  // update send cycle interrupt [seconds / 2]
   sendcycler.attach(cfg.sendcycle * 2, sendcycle);
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);

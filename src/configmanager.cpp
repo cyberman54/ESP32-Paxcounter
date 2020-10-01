@@ -80,8 +80,8 @@ void saveConfig() {
   ESP_LOGI(TAG, "Storing settings in NVS");
   open_storage();
   if (err == ESP_OK) {
-    int8_t flash8 = 0;
-    int16_t flash16 = 0;
+    uint8_t flash8 = 0;
+    uint16_t flash16 = 0;
     size_t required_size;
     uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE + 1];
     char storedversion[10];
@@ -98,73 +98,73 @@ void saveConfig() {
         strcmp(storedversion, cfg.version) != 0)
       nvs_set_str(my_handle, "version", cfg.version);
 
-    if (nvs_get_i8(my_handle, "loradr", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "loradr", &flash8) != ESP_OK ||
         flash8 != cfg.loradr)
-      nvs_set_i8(my_handle, "loradr", cfg.loradr);
+      nvs_set_u8(my_handle, "loradr", cfg.loradr);
 
-    if (nvs_get_i8(my_handle, "txpower", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "txpower", &flash8) != ESP_OK ||
         flash8 != cfg.txpower)
-      nvs_set_i8(my_handle, "txpower", cfg.txpower);
+      nvs_set_u8(my_handle, "txpower", cfg.txpower);
 
-    if (nvs_get_i8(my_handle, "adrmode", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "adrmode", &flash8) != ESP_OK ||
         flash8 != cfg.adrmode)
-      nvs_set_i8(my_handle, "adrmode", cfg.adrmode);
+      nvs_set_u8(my_handle, "adrmode", cfg.adrmode);
 
-    if (nvs_get_i8(my_handle, "screensaver", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "screensaver", &flash8) != ESP_OK ||
         flash8 != cfg.screensaver)
-      nvs_set_i8(my_handle, "screensaver", cfg.screensaver);
+      nvs_set_u8(my_handle, "screensaver", cfg.screensaver);
 
-    if (nvs_get_i8(my_handle, "screenon", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "screenon", &flash8) != ESP_OK ||
         flash8 != cfg.screenon)
-      nvs_set_i8(my_handle, "screenon", cfg.screenon);
+      nvs_set_u8(my_handle, "screenon", cfg.screenon);
 
-    if (nvs_get_i8(my_handle, "countermode", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "countermode", &flash8) != ESP_OK ||
         flash8 != cfg.countermode)
-      nvs_set_i8(my_handle, "countermode", cfg.countermode);
+      nvs_set_u8(my_handle, "countermode", cfg.countermode);
 
-    if (nvs_get_i8(my_handle, "sendcycle", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "sendcycle", &flash8) != ESP_OK ||
         flash8 != cfg.sendcycle)
-      nvs_set_i8(my_handle, "sendcycle", cfg.sendcycle);
+      nvs_set_u8(my_handle, "sendcycle", cfg.sendcycle);
 
-    if (nvs_get_i8(my_handle, "wifichancycle", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "wifichancycle", &flash8) != ESP_OK ||
         flash8 != cfg.wifichancycle)
-      nvs_set_i8(my_handle, "wifichancycle", cfg.wifichancycle);
+      nvs_set_u8(my_handle, "wifichancycle", cfg.wifichancycle);
 
-    if (nvs_get_i8(my_handle, "blescantime", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "blescantime", &flash8) != ESP_OK ||
         flash8 != cfg.blescantime)
-      nvs_set_i8(my_handle, "blescantime", cfg.blescantime);
+      nvs_set_u8(my_handle, "blescantime", cfg.blescantime);
 
-    if (nvs_get_i8(my_handle, "blescanmode", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "blescanmode", &flash8) != ESP_OK ||
         flash8 != cfg.blescan)
-      nvs_set_i8(my_handle, "blescanmode", cfg.blescan);
+      nvs_set_u8(my_handle, "blescanmode", cfg.blescan);
 
-    if (nvs_get_i8(my_handle, "wifiscanmode", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "wifiscanmode", &flash8) != ESP_OK ||
         flash8 != cfg.wifiscan)
-      nvs_set_i8(my_handle, "wifiscanmode", cfg.wifiscan);
+      nvs_set_u8(my_handle, "wifiscanmode", cfg.wifiscan);
 
-    if (nvs_get_i8(my_handle, "wifiant", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "wifiant", &flash8) != ESP_OK ||
         flash8 != cfg.wifiant)
-      nvs_set_i8(my_handle, "wifiant", cfg.wifiant);
+      nvs_set_u8(my_handle, "wifiant", cfg.wifiant);
 
-    if (nvs_get_i8(my_handle, "vendorfilter", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "vendorfilter", &flash8) != ESP_OK ||
         flash8 != cfg.vendorfilter)
-      nvs_set_i8(my_handle, "vendorfilter", cfg.vendorfilter);
+      nvs_set_u8(my_handle, "vendorfilter", cfg.vendorfilter);
 
-    if (nvs_get_i8(my_handle, "rgblum", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "rgblum", &flash8) != ESP_OK ||
         flash8 != cfg.rgblum)
-      nvs_set_i8(my_handle, "rgblum", cfg.rgblum);
+      nvs_set_u8(my_handle, "rgblum", cfg.rgblum);
 
-    if (nvs_get_i8(my_handle, "payloadmask", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "payloadmask", &flash8) != ESP_OK ||
         flash8 != cfg.payloadmask)
-      nvs_set_i8(my_handle, "payloadmask", cfg.payloadmask);
+      nvs_set_u8(my_handle, "payloadmask", cfg.payloadmask);
 
-    if (nvs_get_i8(my_handle, "monitormode", &flash8) != ESP_OK ||
+    if (nvs_get_u8(my_handle, "monitormode", &flash8) != ESP_OK ||
         flash8 != cfg.monitormode)
-      nvs_set_i8(my_handle, "monitormode", cfg.monitormode);
+      nvs_set_u8(my_handle, "monitormode", cfg.monitormode);
 
-    if (nvs_get_i16(my_handle, "rssilimit", &flash16) != ESP_OK ||
+    if (nvs_get_u16(my_handle, "rssilimit", &flash16) != ESP_OK ||
         flash16 != cfg.rssilimit)
-      nvs_set_i16(my_handle, "rssilimit", cfg.rssilimit);
+      nvs_set_u16(my_handle, "rssilimit", cfg.rssilimit);
 
     err = nvs_commit(my_handle);
     nvs_close(my_handle);
@@ -195,8 +195,8 @@ void loadConfig() {
     saveConfig();
   } // saves factory settings to NVRAM
   else {
-    int8_t flash8 = 0;
-    int16_t flash16 = 0;
+    uint8_t flash8 = 0;
+    uint16_t flash16 = 0;
     size_t required_size;
 
     // check if configuration stored in NVRAM matches PROGVERSION
@@ -223,7 +223,7 @@ void loadConfig() {
       ESP_LOGI(TAG, "bsecstate = %d", cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE]);
     };
 
-    if (nvs_get_i8(my_handle, "loradr", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "loradr", &flash8) == ESP_OK) {
       cfg.loradr = flash8;
       ESP_LOGI(TAG, "loradr = %d", flash8);
     } else {
@@ -231,7 +231,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "txpower", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "txpower", &flash8) == ESP_OK) {
       cfg.txpower = flash8;
       ESP_LOGI(TAG, "txpower = %d", flash8);
     } else {
@@ -239,7 +239,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "adrmode", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "adrmode", &flash8) == ESP_OK) {
       cfg.adrmode = flash8;
       ESP_LOGI(TAG, "adrmode = %d", flash8);
     } else {
@@ -247,7 +247,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "screensaver", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "screensaver", &flash8) == ESP_OK) {
       cfg.screensaver = flash8;
       ESP_LOGI(TAG, "screensaver = %d", flash8);
     } else {
@@ -255,7 +255,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "screenon", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "screenon", &flash8) == ESP_OK) {
       cfg.screenon = flash8;
       ESP_LOGI(TAG, "screenon = %d", flash8);
     } else {
@@ -263,7 +263,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "countermode", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "countermode", &flash8) == ESP_OK) {
       cfg.countermode = flash8;
       ESP_LOGI(TAG, "countermode = %d", flash8);
     } else {
@@ -271,7 +271,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "sendcycle", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "sendcycle", &flash8) == ESP_OK) {
       cfg.sendcycle = flash8;
       ESP_LOGI(TAG, "sendcycle = %d", flash8);
     } else {
@@ -279,7 +279,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "wifichancycle", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "wifichancycle", &flash8) == ESP_OK) {
       cfg.wifichancycle = flash8;
       ESP_LOGI(TAG, "wifichancycle = %d", flash8);
     } else {
@@ -287,7 +287,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "wifiant", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "wifiant", &flash8) == ESP_OK) {
       cfg.wifiant = flash8;
       ESP_LOGI(TAG, "wifiantenna = %d", flash8);
     } else {
@@ -295,7 +295,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "vendorfilter", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "vendorfilter", &flash8) == ESP_OK) {
       cfg.vendorfilter = flash8;
       ESP_LOGI(TAG, "vendorfilter = %d", flash8);
     } else {
@@ -303,7 +303,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "rgblum", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "rgblum", &flash8) == ESP_OK) {
       cfg.rgblum = flash8;
       ESP_LOGI(TAG, "rgbluminosity = %d", flash8);
     } else {
@@ -311,7 +311,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "blescantime", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "blescantime", &flash8) == ESP_OK) {
       cfg.blescantime = flash8;
       ESP_LOGI(TAG, "blescantime = %d", flash8);
     } else {
@@ -319,7 +319,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "blescanmode", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "blescanmode", &flash8) == ESP_OK) {
       cfg.blescan = flash8;
       ESP_LOGI(TAG, "BLEscanmode = %d", flash8);
     } else {
@@ -327,7 +327,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "wifiscanmode", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "wifiscanmode", &flash8) == ESP_OK) {
       cfg.wifiscan = flash8;
       ESP_LOGI(TAG, "WIFIscanmode = %d", flash8);
     } else {
@@ -335,7 +335,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i16(my_handle, "rssilimit", &flash16) == ESP_OK) {
+    if (nvs_get_u16(my_handle, "rssilimit", &flash16) == ESP_OK) {
       cfg.rssilimit = flash16;
       ESP_LOGI(TAG, "rssilimit = %d", flash16);
     } else {
@@ -343,7 +343,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "payloadmask", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "payloadmask", &flash8) == ESP_OK) {
       cfg.payloadmask = flash8;
       ESP_LOGI(TAG, "payloadmask = %hhu", flash8);
     } else {
@@ -351,7 +351,7 @@ void loadConfig() {
       saveConfig();
     }
 
-    if (nvs_get_i8(my_handle, "monitormode", &flash8) == ESP_OK) {
+    if (nvs_get_u8(my_handle, "monitormode", &flash8) == ESP_OK) {
       cfg.monitormode = flash8;
       ESP_LOGI(TAG, "Monitor mode = %d", flash8);
     } else {
