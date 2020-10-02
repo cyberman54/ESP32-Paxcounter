@@ -60,7 +60,7 @@ enum runmode_t {
 };
 
 // Struct holding devices's runtime configuration
-typedef struct {
+typedef struct __attribute__((packed)) {
   uint8_t loradr;      // 0-15, lora datarate
   uint8_t txpower;     // 2-15, lora tx power
   uint8_t adrmode;     // 0=disabled, 1=enabled
@@ -80,8 +80,10 @@ typedef struct {
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
   char version[10];      // Firmware version
+#ifdef HAS_BME680
   uint8_t
       bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
+#endif
 } configData_t;
 
 // Struct holding payload for data send queue

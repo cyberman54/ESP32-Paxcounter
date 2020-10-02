@@ -1,11 +1,11 @@
 #ifndef _CONFIGMANAGER_H
 #define _CONFIGMANAGER_H
 
-#include <nvs.h>
-#include <nvs_flash.h>
+#include <Preferences.h>
+#include "globals.h"
 
-void eraseConfig(void);
-void saveConfig(void);
+void saveConfig(bool erase = false);
 void loadConfig(void);
+void eraseConfig(void);
 
 #endif
