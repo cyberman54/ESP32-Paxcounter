@@ -60,6 +60,7 @@ enum runmode_t {
 };
 
 // Struct holding devices's runtime configuration
+// using packed to avoid compiler padding, because struct will be memcpy'd to byte array
 typedef struct __attribute__((packed)) {
   uint8_t loradr;      // 0-15, lora datarate
   uint8_t txpower;     // 2-15, lora tx power
