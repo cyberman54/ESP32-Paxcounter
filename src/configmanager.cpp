@@ -16,11 +16,14 @@ static const char TAG[] = __FILE__;
 
 Preferences nvram;
 
+static const size_t cfgLen = sizeof(cfg);
+
 // populate runtime config with factory settings
 void defaultConfig(configData_t *myconfig) {
   char version[10];
   snprintf(version, 10, "%-10s", PROGVERSION);
 
+  // factory settings
   myconfig->loradr = LORADRDEFAULT; // 0-15, lora datarate, see paxcounter.conf
   myconfig->txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
   myconfig->adrmode = 1;                // 0=disabled, 1=enabled
@@ -38,11 +41,12 @@ void defaultConfig(configData_t *myconfig) {
   myconfig->blescan = 1;  // 0=disabled, 1=enabled
   myconfig->wifiscan = 1; // 0=disabled, 1=enabled
   myconfig->wifiant = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
-  myconfig->vendorfilter = VENDORFILTER; // 0=disabled, 1=enabled
-  myconfig->rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
-  myconfig->monitormode = 0;             // 0=disabled, 1=enabled
-  myconfig->payloadmask = PAYLOADMASK;   // all payload switched on
+  myconfig->vendorfilter = VENDORFILTER;  // 0=disabled, 1=enabled
+  myconfig->rgblum = RGBLUMINOSITY;       // RGB Led luminosity (0..100%)
+  myconfig->monitormode = 0;              // 0=disabled, 1=enabled
+  myconfig->payloadmask = PAYLOADMASK;    // all payload switched on
   memcpy(myconfig->version, version, 10); // Firmware version [exactly 10 chars]
+
 #ifdef HAS_BME680
   // initial BSEC state for BME680 sensor
   myconfig->bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = {0};
@@ -62,7 +66,6 @@ void saveConfig(bool erase) {
   }
 
   // Copy device runtime config cfg to byte array
-  const size_t cfgLen = sizeof(configData_t);
   char buffer[cfgLen];
   memcpy(buffer, &cfg, cfgLen);
 
@@ -81,9 +84,7 @@ void loadConfig() {
     eraseConfig();
   } else {
     // simple check that runtime config data matches
-    const size_t cfgLen = nvram.getBytesLength(DEVCONFIG);
-
-    if (cfgLen % sizeof(configData_t)) {
+    if (nvram.getBytesLength(DEVCONFIG) != cfgLen) {
       ESP_LOGW(TAG, "NVRAM settings invalid");
       eraseConfig();
     } else {
