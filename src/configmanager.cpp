@@ -17,6 +17,7 @@ static const char TAG[] = __FILE__;
 Preferences nvram;
 
 static const size_t cfgLen = sizeof(cfg);
+static char buffer[cfgLen];
 
 // populate runtime config with factory settings
 void defaultConfig(configData_t *myconfig) {
@@ -66,7 +67,6 @@ void saveConfig(bool erase) {
   }
 
   // Copy device runtime config cfg to byte array
-  char buffer[cfgLen];
   memcpy(buffer, &cfg, cfgLen);
 
   // save byte array to NVRAM
@@ -90,7 +90,6 @@ void loadConfig() {
     } else {
 
       // load device runtime config from nvram and copy it to byte array
-      char *buffer = new char[cfgLen];
       nvram.getBytes(DEVCONFIG, buffer, cfgLen);
       nvram.end();
 
