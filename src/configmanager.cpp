@@ -21,13 +21,14 @@ static const size_t cfgLen = sizeof(cfg), cfgLen2 = sizeof(cfgMagicBytes);
 static uint8_t buffer[cfgLen + cfgLen2];
 
 // populate runtime config with device factory settings
+//
+// configuration frame structure in NVRAM;
+// 1. version header [10 bytes, containing version string]
+// 2. user settings [cfgLen bytes, containing default runtime settings (configData_t cfg)]
+// 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
+
 static void defaultConfig(configData_t *myconfig) {
-  // char version[10];
-  // snprintf(version, 10, "%-10s", PROGVERSION);
-  // memcpy(myconfig->version, version, 10); // Firmware version [exactly 10
-  // chars]
-  memcpy(myconfig->version, &PROGVERSION,
-         10); // Firmware version [exactly 10 chars]
+  memcpy(myconfig->version, &PROGVERSION, 10); // Firmware version
 
   // device factory settings
   myconfig->loradr = LORADRDEFAULT; // 0-15, lora datarate, see paxcounter.conf
