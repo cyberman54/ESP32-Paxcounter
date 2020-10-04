@@ -96,7 +96,7 @@ bool gps_hasfix() {
           gps.altitude.age() < 4000);
 }
 
-// function to fetch current time from struct; note: this is costly
+// function to poll current time from GPS data; note: this is costly
 time_t get_gpstime(uint16_t *msec) {
 
   time_t time_sec = 0;
@@ -162,8 +162,8 @@ void gps_loop(void *pvParameters) {
       }
 #endif
 
-      // if time hasn't been synchronised yet, and we have a valid GPS time,
-      // update time from GPS.
+      // (only) while device time is not set or unsynched, and we have a valid GPS
+      // time, we trigger a device time update to poll time from GPS
       if (timeSource == _unsynced && gpstime.isUpdated() && gpstime.isValid() &&
           gpsday.isValid())
         calibrateTime();
