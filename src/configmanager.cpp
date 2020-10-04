@@ -16,11 +16,12 @@ static const char TAG[] = __FILE__;
 
 Preferences nvram;
 
-static const size_t cfgLen = sizeof(cfg);
-static char buffer[cfgLen];
+static const char cfgMagicBytes[] = {0x21, 0x76, 0x87, 0x32, 0xf3};
+static const size_t cfgLen = sizeof(cfg), cfgLen2 = sizeof(cfgMagicBytes);
+static char buffer[cfgLen + cfgLen2];
 
 // populate runtime config with factory settings
-void defaultConfig(configData_t *myconfig) {
+static void defaultConfig(configData_t *myconfig) {
   char version[10];
   snprintf(version, 10, "%-10s", PROGVERSION);
 
@@ -56,45 +57,60 @@ void defaultConfig(configData_t *myconfig) {
 
 // save current configuration from RAM to NVRAM
 void saveConfig(bool erase) {
-  ESP_LOGI(TAG, "Storing settings in NVRAM");
+  ESP_LOGI(TAG, "Storing settings to NVRAM...");
 
   nvram.begin(DEVCONFIG, false);
 
   if (erase) {
-    ESP_LOGI(TAG, "Resetting NVRAM to factory settings");
+    ESP_LOGI(TAG, "Resetting device to factory settings");
     nvram.clear();
     defaultConfig(&cfg);
   }
 
-  // Copy device runtime config cfg to byte array
+  // Copy device runtime config cfg to byte array, padding it with magicBytes
   memcpy(buffer, &cfg, cfgLen);
+  memcpy(buffer + cfgLen, &cfgMagicBytes, cfgLen2);
 
-  // save byte array to NVRAM
-  nvram.putBytes(DEVCONFIG, buffer, cfgLen);
+  // save byte array to NVRAM, padding with cfg magicbyes
+  if (nvram.putBytes(DEVCONFIG, buffer, cfgLen + cfgLen2))
+    ESP_LOGI(TAG, "Device settings saved");
+  else
+    ESP_LOGE(TAG, "NVRAM Error, device settings not saved");
+
   nvram.end();
 }
 
 // load configuration from NVRAM into RAM and make it current
-void loadConfig() {
+bool loadConfig() {
 
-  ESP_LOGI(TAG, "Loading runtime settings from NVS");
+  ESP_LOGI(TAG, "Loading device runtime configuration from NVRAM...");
 
   if (!nvram.begin(DEVCONFIG, true)) {
-    ESP_LOGI(TAG, "Initializing NVRAM");
+    ESP_LOGW(TAG, "NVRAM initialized, device starts with factory settings");
     eraseConfig();
+    return true;
+
   } else {
     // simple check that runtime config data matches
-    if (nvram.getBytesLength(DEVCONFIG) != cfgLen) {
-      ESP_LOGW(TAG, "NVRAM settings invalid");
-      eraseConfig();
+    if (nvram.getBytesLength(DEVCONFIG) != (cfgLen + cfgLen2)) {
+      ESP_LOGE(TAG, "configuration invalid");
+      return false;
+
     } else {
-
       // load device runtime config from nvram and copy it to byte array
-      nvram.getBytes(DEVCONFIG, buffer, cfgLen);
+      nvram.getBytes(DEVCONFIG, buffer, cfgLen + cfgLen2);
       nvram.end();
+      // validate configuration by checking magic bytes at end of array
+      if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
+        ESP_LOGW(TAG, "No configuration found");
+        return false;
 
-      // copy the byte array into runtime cfg struct
-      memcpy(&cfg, buffer, cfgLen);
+      } else {
+        // copy byte array into runtime cfg struct
+        memcpy(&cfg, buffer, cfgLen);
+        ESP_LOGI(TAG, "Runtime configuration loaded");
+        return true;
+      }
     }
   }
 }

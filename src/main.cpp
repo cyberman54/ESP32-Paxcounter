@@ -196,7 +196,7 @@ void setup() {
 #endif
 
   // read (and initialize on first run) runtime settings from NVRAM
-  loadConfig(); // includes initialize if necessary
+  assert(loadConfig()); // includes initialize if necessary
 
   // now that we are powered, we scan i2c bus for devices
   i2c_scan();

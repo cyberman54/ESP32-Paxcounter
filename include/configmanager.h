@@ -5,7 +5,7 @@
 #include "globals.h"
 
 void saveConfig(bool erase = false);
-void loadConfig(void);
+bool loadConfig(void);
 void eraseConfig(void);
 
 #endif
