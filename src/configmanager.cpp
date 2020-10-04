@@ -24,7 +24,8 @@ static uint8_t buffer[cfgLen + cfgLen2];
 //
 // configuration frame structure in NVRAM;
 // 1. version header [10 bytes, containing version string]
-// 2. user settings [cfgLen bytes, containing default runtime settings (configData_t cfg)]
+// 2. user settings [cfgLen bytes, containing default runtime settings
+// (configData_t cfg)]
 // 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
 
 static void defaultConfig(configData_t *myconfig) {
@@ -61,9 +62,7 @@ static void defaultConfig(configData_t *myconfig) {
 
 // migrate runtime configuration from earlier to current version
 static void migrateConfig(void) {
-  // currently no migration rules are implemented, we just reset config to
-  // factory settings
-  eraseConfig();
+  // currently no configuration migration rules are implemented
 }
 
 // save current configuration from RAM to NVRAM
