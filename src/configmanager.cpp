@@ -16,16 +16,22 @@ static const char TAG[] = __FILE__;
 
 Preferences nvram;
 
-static const char cfgMagicBytes[] = {0x21, 0x76, 0x87, 0x32, 0xf3};
+static const uint8_t cfgMagicBytes[] = {0x21, 0x76, 0x87, 0x32, 0xf4};
 static const size_t cfgLen = sizeof(cfg), cfgLen2 = sizeof(cfgMagicBytes);
-static char buffer[cfgLen + cfgLen2];
+static uint8_t buffer[cfgLen + cfgLen2];
 
-// populate runtime config with factory settings
+// populate runtime config with device factory settings
+//
+// configuration frame structure in NVRAM;
+// 1. version header [10 bytes, containing version string]
+// 2. user settings [cfgLen bytes, containing default runtime settings
+// (configData_t cfg)]
+// 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
+
 static void defaultConfig(configData_t *myconfig) {
-  char version[10];
-  snprintf(version, 10, "%-10s", PROGVERSION);
+  memcpy(myconfig->version, &PROGVERSION, 10); // Firmware version
 
-  // factory settings
+  // device factory settings
   myconfig->loradr = LORADRDEFAULT; // 0-15, lora datarate, see paxcounter.conf
   myconfig->txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
   myconfig->adrmode = 1;                // 0=disabled, 1=enabled
@@ -56,6 +62,11 @@ static void defaultConfig(configData_t *myconfig) {
 #endif
 }
 
+// migrate runtime configuration from earlier to current version
+static void migrateConfig(void) {
+  // currently no configuration migration rules are implemented
+}
+
 // save current configuration from RAM to NVRAM
 void saveConfig(bool erase) {
   ESP_LOGI(TAG, "Storing settings to NVRAM...");
@@ -84,36 +95,65 @@ void saveConfig(bool erase) {
 // load configuration from NVRAM into RAM and make it current
 bool loadConfig() {
 
-  ESP_LOGI(TAG, "Loading device runtime configuration from NVRAM...");
+  ESP_LOGI(TAG, "Loading device configuration from NVRAM...");
 
   if (!nvram.begin(DEVCONFIG, true)) {
-    ESP_LOGW(TAG, "NVRAM initialized, device starts with factory settings");
+    ESP_LOGI(TAG, "NVRAM initialized, device starts with factory settings");
     eraseConfig();
     return true;
-
-  } else {
-    // simple check that runtime config data matches
-    if (nvram.getBytesLength(DEVCONFIG) != (cfgLen + cfgLen2)) {
-      ESP_LOGE(TAG, "configuration invalid");
-      return false;
-
-    } else {
-      // load device runtime config from nvram and copy it to byte array
-      nvram.getBytes(DEVCONFIG, buffer, cfgLen + cfgLen2);
-      nvram.end();
-      // validate configuration by checking magic bytes at end of array
-      if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
-        ESP_LOGW(TAG, "No configuration found");
-        return false;
-
-      } else {
-        // copy byte array into runtime cfg struct
-        memcpy(&cfg, buffer, cfgLen);
-        ESP_LOGI(TAG, "Runtime configuration loaded");
-        return true;
-      }
-    }
   }
+
+  // simple check that runtime config data matches
+  if (nvram.getBytesLength(DEVCONFIG) != (cfgLen + cfgLen2)) {
+    ESP_LOGE(TAG, "Configuration invalid");
+    return false;
+  }
+
+  // load device runtime config from nvram and copy it to byte array
+  nvram.getBytes(DEVCONFIG, buffer, cfgLen + cfgLen2);
+  nvram.end();
+
+  // validate loaded configuration by checking magic bytes at end of array
+  if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
+    ESP_LOGW(TAG, "No configuration found");
+    return false;
+  }
+
+  // copy loaded configuration into runtime cfg struct
+  memcpy(&cfg, buffer, cfgLen);
+  ESP_LOGI(TAG, "Runtime configuration v%s loaded", cfg.version);
+
+  // check if config version matches current firmware version
+  switch (version_compare(PROGVERSION, cfg.version)) {
+  case -1: // device configuration belongs to newer than current firmware
+    ESP_LOGE(TAG, "Incompatible device configuration");
+    return false;
+  case 1: // device configuration belongs to older than current firmware
+    ESP_LOGW(TAG, "Device was updated, attempt to migrate configuration");
+    migrateConfig();
+    return true;
+  default: // device configuration version matches current firmware version
+    return true;
+  }
+}
+
+// helper function to convert strings into lower case
+bool comp(char s1, char s2) { return (tolower(s1) < tolower(s2)); }
+
+// helper function to lexicographically compare two versions. Returns 1 if v2
+// is smaller, -1 if v1 is smaller, 0 if equal
+int version_compare(const String v1, const String v2) {
+
+  if (v1 == v2)
+    return 0;
+
+  const char *a1 = v1.c_str(), *a2 = v2.c_str();
+
+  if (std::lexicographical_compare(a1, a1 + strlen(a1), a2, a2 + strlen(a2),
+                                   comp))
+    return -1;
+  else
+    return 1;
 }
 
 void eraseConfig(void) { saveConfig(true); }
