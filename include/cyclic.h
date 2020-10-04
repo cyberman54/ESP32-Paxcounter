@@ -11,7 +11,7 @@
 #include "sds011read.h"
 #include "sdcard.h"
 
-extern Ticker cyclicTimer;
+extern Ticker housekeeper;
 
 void setCyclicIRQ(void);
 void doHousekeeping(void);

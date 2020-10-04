@@ -47,6 +47,7 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->rgblum = RGBLUMINOSITY;       // RGB Led luminosity (0..100%)
   myconfig->monitormode = 0;              // 0=disabled, 1=enabled
   myconfig->payloadmask = PAYLOADMASK;    // all payload switched on
+  myconfig->enscount =0; // 0= disabled, 1 = enabled
   memcpy(myconfig->version, version, 10); // Firmware version [exactly 10 chars]
 
 #ifdef HAS_BME680
