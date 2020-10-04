@@ -58,12 +58,10 @@ static void defaultConfig(configData_t *myconfig) {
 #endif
 }
 
-// migrate runtime config from earlier version to current
+// migrate runtime configuration from earlier to current version
 static void migrateConfig(void) {
   // currently no migration rules are implemented, we just reset config to
   // factory settings
-  ESP_LOGI(TAG, "Migrating device configuration from %s to %s", cfg.version,
-           PROGVERSION);
   eraseConfig();
 }
 
@@ -95,10 +93,10 @@ void saveConfig(bool erase) {
 // load configuration from NVRAM into RAM and make it current
 bool loadConfig() {
 
-  ESP_LOGI(TAG, "Loading device runtime configuration from NVRAM...");
+  ESP_LOGI(TAG, "Loading device configuration from NVRAM...");
 
   if (!nvram.begin(DEVCONFIG, true)) {
-    ESP_LOGW(TAG, "NVRAM initialized, device starts with factory settings");
+    ESP_LOGI(TAG, "NVRAM initialized, device starts with factory settings");
     eraseConfig();
     return true;
   }
@@ -126,10 +124,10 @@ bool loadConfig() {
   // check if config version matches current firmware version
   switch (version_compare(PROGVERSION, cfg.version)) {
   case -1: // device configuration belongs to newer than current firmware
-    ESP_LOGE(TAG, "Incompatible device configuration, aborting");
+    ESP_LOGE(TAG, "Incompatible device configuration");
     return false;
   case 1: // device configuration belongs to older than current firmware
-    ESP_LOGW(TAG, "Device was updated, migrating device configuration");
+    ESP_LOGW(TAG, "Device was updated, attempt to migrate configuration");
     migrateConfig();
     return true;
   default: // device configuration version matches current firmware version
@@ -149,7 +147,8 @@ int version_compare(const String v1, const String v2) {
 
   const char *a1 = v1.c_str(), *a2 = v2.c_str();
 
-  if (std::lexicographical_compare(a1, a1 + strlen(a1), a2, a2 + strlen(a2), comp))
+  if (std::lexicographical_compare(a1, a1 + strlen(a1), a2, a2 + strlen(a2),
+                                   comp))
     return -1;
   else
     return 1;
