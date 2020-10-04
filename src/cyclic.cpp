@@ -7,13 +7,13 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-Ticker housekeeper;
+Ticker cyclicTimer;
 
 #if (HAS_SDS011)
 extern boolean isSDS011Active;
 #endif
 
-void housekeeping() {
+void setCyclicIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
 }
 

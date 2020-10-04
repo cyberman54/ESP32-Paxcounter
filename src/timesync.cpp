@@ -151,7 +151,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
   Fail:
     // set retry timer
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
 
   Finish:
     // end of time critical section: release app irq lock

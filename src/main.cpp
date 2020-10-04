@@ -55,17 +55,24 @@ So don't do it if you do not own a digital oscilloscope.
 // Interrupt routines
 -------------------------------------------------------------------------------
 
+irqHandlerTask (Core 1), see irqhandler.cpp
+
 fired by hardware
-DisplayIRQ      -> esp32 timer 0  -> irqHandlerTask (Core 1)
-CLOCKIRQ        -> esp32 timer 1  -> ClockTask (Core 1)
-ButtonIRQ       -> external gpio  -> irqHandlerTask (Core 1)
-PMUIRQ          -> PMU chip gpio  -> irqHandlerTask (Core 1)
+DisplayIRQ      -> esp32 timer 0
+ButtonIRQ       -> external gpio
+PMUIRQ          -> PMU chip gpio
 
 fired by software (Ticker.h)
-TIMESYNC_IRQ    -> timeSync()     -> irqHandlerTask (Core 1)
-CYCLIC_IRQ      -> housekeeping() -> irqHandlerTask (Core 1)
-SENDCYCLE_IRQ   -> sendcycle()    -> irqHandlerTask (Core 1)
-BME_IRQ         -> bmecycle()     -> irqHandlerTask (Core 1)
+TIMESYNC_IRQ    -> setTimeSyncIRQ()
+CYCLIC_IRQ      -> setCyclicIRQ()
+SENDCYCLE_IRQ   -> setSendIRQ()  
+BME_IRQ         -> setBMEIRQ()     
+MQTT_IRQ        -> setMqttIRQ()
+
+ClockTask (Core 1), see timekeeper.cpp
+
+fired by hardware
+CLOCKIRQ        -> esp32 timer 1
 
 
 // External RTC timer (if present)
@@ -478,8 +485,8 @@ void setup() {
 #endif // HAS_BUTTON
 
   // cyclic function interrupts
-  sendcycler.attach(SENDCYCLE * 2, sendcycle);
-  housekeeper.attach(HOMECYCLE, housekeeping);
+  sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
+  cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
 #if (TIME_SYNC_INTERVAL)
 

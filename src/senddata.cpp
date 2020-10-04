@@ -1,9 +1,9 @@
 // Basic Config
 #include "senddata.h"
 
-Ticker sendcycler;
+Ticker sendTimer;
 
-void sendcycle() {
+void setSendIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL);
 }
 

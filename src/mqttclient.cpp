@@ -33,7 +33,7 @@ esp_err_t mqtt_init(void) {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
-  mqttTimer.attach(MQTT_KEEPALIVE, mqtt_irq);
+  mqttTimer.attach(MQTT_KEEPALIVE, setMqttIRQ);
   xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask);
 
   return ESP_OK;
@@ -183,6 +183,6 @@ void mqtt_loop(void) {
 }
 
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
-void mqtt_irq(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
+void setMqttIRQ(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
 
 #endif // HAS_MQTT

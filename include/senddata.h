@@ -10,12 +10,12 @@
 #include "sdcard.h"
 #include "corona.h"
 
-extern Ticker sendcycler;
+extern Ticker sendTimer;
 
 void SendPayload(uint8_t port, sendprio_t prio);
 void sendData(void);
 void checkSendQueues(void);
 void flushQueues();
-void sendcycle(void);
+void setSendIRQ(void);
 
 #endif // _SENDDATA_H_

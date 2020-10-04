@@ -49,7 +49,7 @@ void set_rssi(uint8_t val[]) {
 void set_sendcycle(uint8_t val[]) {
   cfg.sendcycle = val[0];
   // update send cycle interrupt [seconds / 2]
-  sendcycler.attach(cfg.sendcycle * 2, sendcycle);
+  sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
 }
@@ -330,7 +330,7 @@ void get_time(uint8_t val[]) {
 
 void set_time(uint8_t val[]) {
   ESP_LOGI(TAG, "Timesync requested by timeserver");
-  timeSync();
+  setTimeSyncIRQ();
 };
 
 void set_flush(uint8_t val[]) {
