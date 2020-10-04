@@ -478,7 +478,7 @@ void setup() {
 #endif // HAS_BUTTON
 
   // cyclic function interrupts
-  sendcycler.attach(SENDCYCLE * 2, sendcycle);
+  sendcycler.attach(cfg.sendcycle * 2, sendcycle);
   housekeeper.attach(HOMECYCLE, housekeeping);
 
 #if (TIME_SYNC_INTERVAL)
