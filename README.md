@@ -209,9 +209,9 @@ Follow all steps so far for preparing the device, use the packed payload format.
 There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
 	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
 
-# Covid-19 Exposure Notification System beacon detection (Germany: "Corona Warn App counter")
+# Covid-19 Exposure Notification System beacon detection
 
-Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this gives an indication how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best resulta withs this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
+Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this gives an indication how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
 	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
@@ -511,7 +511,7 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
     
 0x18 set ENS counter on/off
 
-    0 = disabled (default)
+    0 = disabled [default]
     1 = enabled
 
 0x80 get device configuration
