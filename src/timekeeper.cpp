@@ -85,7 +85,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGD(TAG, "[%0.3f] UTC time: %d.%03d sec", millis() / 1000.0,
+    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", millis() / 1000.0,
              time_to_set, t_msec % 1000);
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
@@ -105,11 +105,11 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
-    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
+    ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
              millis() / 1000.0, timeSetSymbols[mytimesource]);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
-    ESP_LOGI(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
+    ESP_LOGD(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
              millis() / 1000.0, timeSetSymbols[mytimesource]);
   }
 }

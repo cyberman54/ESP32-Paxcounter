@@ -99,8 +99,6 @@ bool gps_hasfix() {
 // function to poll current time from GPS data; note: this is costly
 time_t get_gpstime(uint16_t *msec) {
 
-  time_t time_sec = 0;
-
   // poll NMEA ZDA sentence
 #ifdef GPS_SERIAL
   GPS_Serial.print(ZDA_Request);
@@ -111,28 +109,36 @@ time_t get_gpstime(uint16_t *msec) {
 #endif
 
   // did we get a current date & time?
-  if (gpstime.isUpdated() && gpstime.isValid() && gpsday.isValid()) {
+  if (gpstime.isValid() && gpsday.isValid()) {
 
+    time_t t = 0;
     tmElements_t tm;
-
-    uint32_t time_bcd = atof(gpstime.value()) * 100;
     uint32_t delay_ms =
         gpstime.age() + nmea_txDelay_ms + NMEA_COMPENSATION_FACTOR;
+    uint32_t zdatime = atof(gpstime.value());
 
-    tm.Second = (time_bcd / 100) % 100;   // second
-    tm.Minute = (time_bcd / 10000) % 100; // minute
-    tm.Hour = time_bcd / 1000000;         // hour
-    tm.Day = atoi(gpsday.value());        // day
-    tm.Month = atoi(gpsmonth.value());    // month
-    tm.Year = CalendarYrToTm(
-        atoi(gpsyear.value())); // year offset from 1970 in microTime.h
+    // convert time to maketime format and make time
+    tm.Second = zdatime % 100;                       // second
+    tm.Minute = (zdatime / 100) % 100;               // minute
+    tm.Hour = zdatime / 10000;                       // hour
+    tm.Day = atoi(gpsday.value());                   // day
+    tm.Month = atoi(gpsmonth.value());               // month
+    tm.Year = CalendarYrToTm(atoi(gpsyear.value())); // year offset from 1970
+    t = makeTime(tm);
 
-    // add protocol delay to time with millisecond precision
-    time_sec = makeTime(tm) + delay_ms / 1000 - 1;
-    *msec = (delay_ms % 1000) ? delay_ms % 1000 : 0;
+    ESP_LOGD(TAG, "GPS time/date = %2d:%2d:%2d / %2d.%2d.%2d", tm.Hour,
+             tm.Minute, tm.Second, tm.Day, tm.Month, tm.Year + 1970);
+
+    // add protocol delay with millisecond precision
+    t += delay_ms / 1000 - 1; // whole seconds
+    *msec = delay_ms % 1000;  // fractional seconds
+
+    return t;
   }
 
-  return timeIsValid(time_sec);
+  ESP_LOGD(TAG, "no valid GPS time");
+
+  return 0;
 
 } // get_gpstime()
 
@@ -162,10 +168,9 @@ void gps_loop(void *pvParameters) {
       }
 #endif
 
-      // (only) while device time is not set or unsynched, and we have a valid GPS
-      // time, we trigger a device time update to poll time from GPS
-      if (timeSource == _unsynced && gpstime.isUpdated() && gpstime.isValid() &&
-          gpsday.isValid())
+      // (only) while device time is not set or unsynched, and we have a valid
+      // GPS time, we trigger a device time update to poll time from GPS
+      if (timeSource == _unsynced && gpstime.isUpdated())
         calibrateTime();
 
     } // if
