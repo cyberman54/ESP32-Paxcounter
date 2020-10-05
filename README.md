@@ -512,7 +512,7 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 0x18 set ENS counter on/off
 
         0 = disabled (default)
-	1 = enabled
+        1 = enabled
 
 0x80 get device configuration
 
