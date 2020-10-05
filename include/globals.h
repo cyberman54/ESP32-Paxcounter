@@ -82,11 +82,11 @@ typedef struct __attribute__((packed)) {
   uint8_t monitormode;   // 0=disabled, 1=enabled
   uint8_t runmode;       // 0=normal, 1=update
   uint8_t payloadmask;   // bitswitches for payload data
-
   uint8_t enscount;      // 0=disabled 1= enabled
-    
+
 #ifdef HAS_BME680
-  uint8_t bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
+  uint8_t
+      bsecstate[BSEC_MAX_STATE_BLOB_SIZE + 1]; // BSEC state for BME680 sensor
 #endif
 } configData_t;
 

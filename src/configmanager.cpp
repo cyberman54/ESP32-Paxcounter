@@ -49,12 +49,11 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->blescan = 1;  // 0=disabled, 1=enabled
   myconfig->wifiscan = 1; // 0=disabled, 1=enabled
   myconfig->wifiant = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
-  myconfig->vendorfilter = VENDORFILTER;  // 0=disabled, 1=enabled
-  myconfig->rgblum = RGBLUMINOSITY;       // RGB Led luminosity (0..100%)
-  myconfig->monitormode = 0;              // 0=disabled, 1=enabled
-  myconfig->payloadmask = PAYLOADMASK;    // all payload switched on
-  myconfig->enscount =0; // 0= disabled, 1 = enabled
-  
+  myconfig->vendorfilter = VENDORFILTER; // 0=disabled, 1=enabled
+  myconfig->rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
+  myconfig->monitormode = 0;             // 0=disabled, 1=enabled
+  myconfig->payloadmask = PAYLOADMASK;   // all payload switched on
+  myconfig->enscount = 0;                // 0=disabled, 1=enabled
 
 #ifdef HAS_BME680
   // initial BSEC state for BME680 sensor
