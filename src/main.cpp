@@ -486,7 +486,7 @@ void setup() {
 
   // cyclic function interrupts
   sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
-  cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
+  housekeeper.attach(HOMECYCLE, setCyclicIRQ);
 
 #if (TIME_SYNC_INTERVAL)
 

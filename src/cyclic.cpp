@@ -7,7 +7,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-Ticker cyclicTimer;
+Ticker housekeeper;
 
 #if (HAS_SDS011)
 extern boolean isSDS011Active;
