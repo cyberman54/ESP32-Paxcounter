@@ -63,7 +63,9 @@ static void defaultConfig(configData_t *myconfig) {
 
 // migrate runtime configuration from earlier to current version
 static void migrateConfig(void) {
-  // currently no configuration migration rules are implemented
+  // currently no configuration migration rules are implemented, we reset to
+  // factory settings instead
+  eraseConfig();
 }
 
 // save current configuration from RAM to NVRAM
@@ -99,24 +101,23 @@ bool loadConfig() {
   if (!nvram.begin(DEVCONFIG, true)) {
     ESP_LOGI(TAG, "NVRAM initialized, device starts with factory settings");
     eraseConfig();
-    return true;
   }
 
   // simple check that runtime config data matches
-  if (nvram.getBytesLength(DEVCONFIG) != (cfgLen + cfgLen2)) {
-    ESP_LOGE(TAG, "Configuration invalid");
-    return false;
-  }
+  // if (nvram.getBytesLength(DEVCONFIG) != (cfgLen + cfgLen2)) {
+  //  ESP_LOGE(TAG, "Configuration invalid");
+  //  return false;
+  //}
 
   // load device runtime config from nvram and copy it to byte array
   nvram.getBytes(DEVCONFIG, buffer, cfgLen + cfgLen2);
   nvram.end();
 
   // validate loaded configuration by checking magic bytes at end of array
-  if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
-    ESP_LOGW(TAG, "No configuration found");
-    return false;
-  }
+  // if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
+  //  ESP_LOGW(TAG, "No configuration found");
+  //  return false;
+  //}
 
   // copy loaded configuration into runtime cfg struct
   memcpy(&cfg, buffer, cfgLen);
