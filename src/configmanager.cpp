@@ -28,10 +28,8 @@ static uint8_t buffer[cfgLen + cfgLen2];
 // (configData_t cfg)]
 // 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
 
-static void defaultConfig(configData_t *myconfig) {
+static void defaultConfig(configData_t *myconfig) {   //device factory settings
   memcpy(myconfig->version, &PROGVERSION, 10); // Firmware version
-
-  // device factory settings
   myconfig->loradr = LORADRDEFAULT; // 0-15, lora datarate, see paxcounter.conf
   myconfig->txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
   myconfig->adrmode = 1;                // 0=disabled, 1=enabled
@@ -44,8 +42,7 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->wifichancycle =
       WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
   myconfig->blescantime =
-      BLESCANINTERVAL /
-      10; // BT channel scan cycle [seconds/100], default 1 (= 10ms)
+      BLESCANINTERVAL /10; // BT channel scan cycle [seconds/100], default 1 (= 10ms)
   myconfig->blescan = 1;  // 0=disabled, 1=enabled
   myconfig->wifiscan = 1; // 0=disabled, 1=enabled
   myconfig->wifiant = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
@@ -54,7 +51,6 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->monitormode = 0;              // 0=disabled, 1=enabled
   myconfig->payloadmask = PAYLOADMASK;    // all payload switched on
   myconfig->enscount =0; // 0= disabled, 1 = enabled
-  memcpy(myconfig->version, version, 10); // Firmware version [exactly 10 chars]
 
 #ifdef HAS_BME680
   // initial BSEC state for BME680 sensor
