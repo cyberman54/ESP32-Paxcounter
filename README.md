@@ -211,7 +211,7 @@ There in the sensor configuration select "TheThingsNetwork" and set Decoding Pro
 
 # Covid-19 Exposure Notification System beacon detection
 
-Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this gives an indication how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
+Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
 	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
