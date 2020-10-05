@@ -81,7 +81,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
 
 // send timesync request
-#if (TIME_SYNC_LORASERVER) // aks user's timeserver (for LoRAWAN < 1.0.3)
+#if (TIME_SYNC_LORASERVER) // ask user's timeserver (for LoRAWAN < 1.0.3)
       payload.reset();
       payload.addByte(time_sync_seqNo);
       SendPayload(TIMEPORT, prio_high);
