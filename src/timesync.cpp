@@ -32,7 +32,7 @@ static TaskHandle_t timeSyncProcTask;
 void timesync_init(void) {
   xTaskCreatePinnedToCore(timesync_processReq, // task function
                           "timesync_proc",     // name of task
-                          2048,                // stack size of task
+                          4096,                // stack size of task
                           (void *)1,           // task parameter
                           3,                   // priority of the task
                           &timeSyncProcTask,   // task handle
