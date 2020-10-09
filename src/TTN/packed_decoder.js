@@ -257,7 +257,7 @@ var bitmap2 = function (byte) {
     }
     var i = bytesToInt(byte);
     var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
-    return ['gps', 'alarm', 'bme', 'counter', 'sensor1', 'sensor2', 'sensor3', 'battery']
+    return ['battery', 'sensor3', 'sensor2', 'sensor1', 'counter', 'bme', 'alarm', 'gps']
         .reduce(function (obj, pos, index) {
             obj[pos] = +bm[index];
             return obj;
