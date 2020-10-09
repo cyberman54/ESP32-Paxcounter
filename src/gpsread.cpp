@@ -126,7 +126,7 @@ time_t get_gpstime(uint16_t *msec) {
     tm.Year = CalendarYrToTm(atoi(gpsyear.value())); // year offset from 1970
     t = makeTime(tm);
 
-    //ESP_LOGD(TAG, "GPS time/date = %2d:%2d:%2d / %2d.%2d.%2d", tm.Hour,
+    // ESP_LOGD(TAG, "GPS time/date = %2d:%2d:%2d / %2d.%2d.%2d", tm.Hour,
     //         tm.Minute, tm.Second, tm.Day, tm.Month, tm.Year + 1970);
 
     // add protocol delay with millisecond precision
@@ -170,8 +170,10 @@ void gps_loop(void *pvParameters) {
 
       // (only) while device time is not set or unsynched, and we have a valid
       // GPS time, we trigger a device time update to poll time from GPS
-      if (timeSource == _unsynced && gpstime.isUpdated())
+      if (timeSource == _unsynced && gpstime.isUpdated()) {
+        now();
         calibrateTime();
+      }
 
     } // if
 
