@@ -29,7 +29,7 @@ static uint32_t timesync_timestamp[TIME_SYNC_SAMPLES][no_of_timestamps];
 static TaskHandle_t timeSyncProcTask;
 
 // create task for timeserver handshake processing, called from main.cpp
-void timesync_init() {
+void timesync_init(void) {
   xTaskCreatePinnedToCore(timesync_processReq, // task function
                           "timesync_proc",     // name of task
                           2048,                // stack size of task
@@ -69,8 +69,12 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
     // wait for kickoff
     ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+
+    // initialize flag and counters
     timeSyncPending = true;
     time_offset_ms = sample_idx = 0;
+    if (++time_sync_seqNo > TIME_SYNC_MAX_SEQNO)
+      time_sync_seqNo = 0;
 
     // wait until we are joined if we are not
     while (!LMIC.devaddr) {
@@ -111,9 +115,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
                         timesync_timestamp[sample_idx][timesync_tx];
 #endif
 
-      // increment sample_idx and time_sync_seqNo, keeping it in range
-      if (++time_sync_seqNo > TIME_SYNC_MAX_SEQNO)
-        time_sync_seqNo = 0;
+      // increment sample index
       sample_idx++;
 
       // if we are not in last cycle, pause until next cycle
