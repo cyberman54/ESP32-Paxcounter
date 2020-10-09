@@ -329,7 +329,7 @@ void get_time(uint8_t val[]) {
 };
 
 void set_time(uint8_t val[]) {
-  ESP_LOGI(TAG, "Timesync requested by timeserver");
+  ESP_LOGI(TAG, "Remote command: timesync requested");
   setTimeSyncIRQ();
 };
 
