@@ -154,9 +154,11 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
   Fail:
     // set retry timer
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
+    // intentionally fallthrough to Finish here
 
   Finish:
     // end of time critical section: release app irq lock
+    timeSyncPending = false;
     unmask_user_IRQ();
 
   } // infinite while(1)
@@ -181,6 +183,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // mask application irq to ensure accurate timing
   mask_user_IRQ();
 
+  // return code: 0 = failed / 1 = success
   int rc = 0;
   // cast back void parameter to a pointer
   uint8_t *p = (uint8_t *)pUserData, rcv_seqNo = *p;
