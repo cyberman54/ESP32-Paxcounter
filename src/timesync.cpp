@@ -148,7 +148,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     // send timesync end char to show timesync was successful
     payload.reset();
     payload.addByte(TIME_SYNC_END_FLAG);
-    SendPayload(RCMDPORT, prio_high);
+    SendPayload(TIMEPORT, prio_high);
     goto Finish;
 
   Fail:
