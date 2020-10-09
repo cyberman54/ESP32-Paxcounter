@@ -83,12 +83,16 @@ By default bluetooth sniffing not installed (#define *BLECOUNTER* 0 in paxcounte
 
 # Preparing
 
+## Install Platformio
+
+Install <A HREF="https://platformio.org/">PlatformIO IDE for embedded development</A> to make this project. Platformio integrates with your favorite IDE, choose eg. Visual Studio, Atom, Eclipse etc.
+
 Compile time configuration is spread across several files. Before compiling the code, edit or create the following files:
 
-## platformio_orig.ini
-Edit `platformio_orig.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections board. Copy or rename to `platformio.ini`.
+## platformio.ini
+Edit `platformio_orig.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections board. Copy or rename to `platformio.ini` in the root directory of the project. Now start Platformio. Note: Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file.
 
-## src/paxcounter_orig.conf
+## src/paxcounter.conf
 Edit `src/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `src/paxcounter.conf`.
 
 If your device has a **real time clock** it can be updated bei either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in `paxcounter.conf`.
@@ -205,9 +209,9 @@ Follow all steps so far for preparing the device, use the packed payload format.
 There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
 	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
 
-# Covid-19 Exposure Notification System beacon detection (Germany: "Corona Warn App counter")
+# Covid-19 Exposure Notification System beacon detection
 
-Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this gives an indication how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best resulta withs this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
+Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
 	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
@@ -504,6 +508,11 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 
 	0 = disabled
 	1 = enabled [default]
+    
+0x18 set ENS counter on/off
+
+    0 = disabled [default]
+    1 = enabled
 
 0x80 get device configuration
 

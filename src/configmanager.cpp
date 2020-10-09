@@ -4,362 +4,157 @@
 #include "configmanager.h"
 
 // Local logging tag
-static const char TAG[] = "flash";
+static const char TAG[] = __FILE__;
 
-nvs_handle my_handle;
-esp_err_t err;
+// default settings for device data to be sent
+#define PAYLOADMASK                                                            \
+  ((GPS_DATA | ALARM_DATA | MEMS_DATA | COUNT_DATA | SENSOR1_DATA |            \
+    SENSOR2_DATA | SENSOR3_DATA) &                                             \
+   (~BATT_DATA))
 
-#define PAYLOADMASK                                  \
-  ((GPS_DATA | ALARM_DATA | MEMS_DATA | COUNT_DATA | \
-    SENSOR1_DATA | SENSOR2_DATA | SENSOR3_DATA) &    \
-   (~BATT_DATA) )
+// namespace for device runtime preferences
+#define DEVCONFIG "paxcntcfg"
 
-// populate cfg vars with factory settings
-void defaultConfig() {
-  cfg.loradr = LORADRDEFAULT;     // 0-15, lora datarate, see paxcounter.conf
-  cfg.txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
-  cfg.adrmode = 1;                // 0=disabled, 1=enabled
-  cfg.screensaver = 0;            // 0=disabled, 1=enabled
-  cfg.screenon = 1;               // 0=disabled, 1=enabled
-  cfg.countermode = COUNTERMODE;  // 0=cyclic, 1=cumulative, 2=cyclic confirmed
-  cfg.rssilimit = 0;              // threshold for rssilimiter, negative value!
-  cfg.sendcycle = SENDCYCLE;      // payload send cycle [seconds/2]
-  cfg.wifichancycle =
+Preferences nvram;
+
+static const uint8_t cfgMagicBytes[] = {0x21, 0x76, 0x87, 0x32, 0xf4};
+static const size_t cfgLen = sizeof(cfg), cfgLen2 = sizeof(cfgMagicBytes);
+static uint8_t buffer[cfgLen + cfgLen2];
+
+// populate runtime config with device factory settings
+//
+// configuration frame structure in NVRAM;
+// 1. version header [10 bytes, containing version string]
+// 2. user settings [cfgLen bytes, containing default runtime settings
+// (configData_t cfg)]
+// 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
+
+static void defaultConfig(configData_t *myconfig) {
+  memcpy(myconfig->version, &PROGVERSION, 10); // Firmware version
+
+  // device factory settings
+  myconfig->loradr = LORADRDEFAULT; // 0-15, lora datarate, see paxcounter.conf
+  myconfig->txpower = LORATXPOWDEFAULT; // 0-15, lora tx power
+  myconfig->adrmode = 1;                // 0=disabled, 1=enabled
+  myconfig->screensaver = 0;            // 0=disabled, 1=enabled
+  myconfig->screenon = 1;               // 0=disabled, 1=enabled
+  myconfig->countermode =
+      COUNTERMODE;                 // 0=cyclic, 1=cumulative, 2=cyclic confirmed
+  myconfig->rssilimit = 0;         // threshold for rssilimiter, negative value!
+  myconfig->sendcycle = SENDCYCLE; // payload send cycle [seconds/2]
+  myconfig->wifichancycle =
       WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
-  cfg.blescantime =
+  myconfig->blescantime =
       BLESCANINTERVAL /
       10; // BT channel scan cycle [seconds/100], default 1 (= 10ms)
-  cfg.blescan = 1;                 // 0=disabled, 1=enabled
-  cfg.wifiscan = 1;                // 0=disabled, 1=enabled
-  cfg.wifiant = 0;                 // 0=internal, 1=external (for LoPy/LoPy4)
-  cfg.vendorfilter = VENDORFILTER; // 0=disabled, 1=enabled
-  cfg.rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
-  cfg.monitormode = 0;             // 0=disabled, 1=enabled
-  cfg.payloadmask = PAYLOADMASK;   // all payload switched on
-  cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = {
-      0}; // init BSEC state for BME680 sensor
+  myconfig->blescan = 1;  // 0=disabled, 1=enabled
+  myconfig->wifiscan = 1; // 0=disabled, 1=enabled
+  myconfig->wifiant = 0;  // 0=internal, 1=external (for LoPy/LoPy4)
+  myconfig->vendorfilter = VENDORFILTER; // 0=disabled, 1=enabled
+  myconfig->rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
+  myconfig->monitormode = 0;             // 0=disabled, 1=enabled
+  myconfig->payloadmask = PAYLOADMASK;   // payloads as defined in default 
+  myconfig->enscount = COUNT_ENS;        // 0=disabled, 1=enabled
 
-  strncpy(cfg.version, PROGVERSION, sizeof(cfg.version) - 1);
+#ifdef HAS_BME680
+  // initial BSEC state for BME680 sensor
+  myconfig->bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = {0};
+#endif
 }
 
-void open_storage() {
-  err = nvs_flash_init();
-  if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
-    // NVS partition was truncated and needs to be erased
-    // Retry nvs_flash_init
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    err = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(err);
-
-  // Open
-  ESP_LOGI(TAG, "Opening NVS");
-  err = nvs_open("config", NVS_READWRITE, &my_handle);
-  if (err != ESP_OK)
-    ESP_LOGI(TAG, "Error (%d) opening NVS handle", err);
-  else
-    ESP_LOGI(TAG, "Done");
-}
-
-// erase all keys and values in NVRAM
-void eraseConfig() {
-  ESP_LOGI(TAG, "Clearing settings in NVS");
-  open_storage();
-  if (err == ESP_OK) {
-    nvs_erase_all(my_handle);
-    nvs_commit(my_handle);
-    nvs_close(my_handle);
-    ESP_LOGI(TAG, "Done");
-  } else {
-    ESP_LOGW(TAG, "NVS erase failed");
-  }
+// migrate runtime configuration from earlier to current version
+static void migrateConfig(void) {
+  // currently no configuration migration rules are implemented, we reset to
+  // factory settings instead
+  eraseConfig();
 }
 
 // save current configuration from RAM to NVRAM
-void saveConfig() {
-  ESP_LOGI(TAG, "Storing settings in NVS");
-  open_storage();
-  if (err == ESP_OK) {
-    int8_t flash8 = 0;
-    int16_t flash16 = 0;
-    size_t required_size;
-    uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE + 1];
-    char storedversion[10];
+void saveConfig(bool erase) {
+  ESP_LOGI(TAG, "Storing settings to NVRAM...");
 
-    if (nvs_get_blob(my_handle, "bsecstate", bsecstate_buffer,
-                     &required_size) != ESP_OK ||
-        memcmp(bsecstate_buffer, cfg.bsecstate, BSEC_MAX_STATE_BLOB_SIZE + 1) !=
-            0)
-      nvs_set_blob(my_handle, "bsecstate", cfg.bsecstate,
-                   BSEC_MAX_STATE_BLOB_SIZE + 1);
+  nvram.begin(DEVCONFIG, false);
 
-    if (nvs_get_str(my_handle, "version", storedversion, &required_size) !=
-            ESP_OK ||
-        strcmp(storedversion, cfg.version) != 0)
-      nvs_set_str(my_handle, "version", cfg.version);
-
-    if (nvs_get_i8(my_handle, "loradr", &flash8) != ESP_OK ||
-        flash8 != cfg.loradr)
-      nvs_set_i8(my_handle, "loradr", cfg.loradr);
-
-    if (nvs_get_i8(my_handle, "txpower", &flash8) != ESP_OK ||
-        flash8 != cfg.txpower)
-      nvs_set_i8(my_handle, "txpower", cfg.txpower);
-
-    if (nvs_get_i8(my_handle, "adrmode", &flash8) != ESP_OK ||
-        flash8 != cfg.adrmode)
-      nvs_set_i8(my_handle, "adrmode", cfg.adrmode);
-
-    if (nvs_get_i8(my_handle, "screensaver", &flash8) != ESP_OK ||
-        flash8 != cfg.screensaver)
-      nvs_set_i8(my_handle, "screensaver", cfg.screensaver);
-
-    if (nvs_get_i8(my_handle, "screenon", &flash8) != ESP_OK ||
-        flash8 != cfg.screenon)
-      nvs_set_i8(my_handle, "screenon", cfg.screenon);
-
-    if (nvs_get_i8(my_handle, "countermode", &flash8) != ESP_OK ||
-        flash8 != cfg.countermode)
-      nvs_set_i8(my_handle, "countermode", cfg.countermode);
-
-    if (nvs_get_i8(my_handle, "sendcycle", &flash8) != ESP_OK ||
-        flash8 != cfg.sendcycle)
-      nvs_set_i8(my_handle, "sendcycle", cfg.sendcycle);
-
-    if (nvs_get_i8(my_handle, "wifichancycle", &flash8) != ESP_OK ||
-        flash8 != cfg.wifichancycle)
-      nvs_set_i8(my_handle, "wifichancycle", cfg.wifichancycle);
-
-    if (nvs_get_i8(my_handle, "blescantime", &flash8) != ESP_OK ||
-        flash8 != cfg.blescantime)
-      nvs_set_i8(my_handle, "blescantime", cfg.blescantime);
-
-    if (nvs_get_i8(my_handle, "blescanmode", &flash8) != ESP_OK ||
-        flash8 != cfg.blescan)
-      nvs_set_i8(my_handle, "blescanmode", cfg.blescan);
-
-    if (nvs_get_i8(my_handle, "wifiscanmode", &flash8) != ESP_OK ||
-        flash8 != cfg.wifiscan)
-      nvs_set_i8(my_handle, "wifiscanmode", cfg.wifiscan);
-
-    if (nvs_get_i8(my_handle, "wifiant", &flash8) != ESP_OK ||
-        flash8 != cfg.wifiant)
-      nvs_set_i8(my_handle, "wifiant", cfg.wifiant);
-
-    if (nvs_get_i8(my_handle, "vendorfilter", &flash8) != ESP_OK ||
-        flash8 != cfg.vendorfilter)
-      nvs_set_i8(my_handle, "vendorfilter", cfg.vendorfilter);
-
-    if (nvs_get_i8(my_handle, "rgblum", &flash8) != ESP_OK ||
-        flash8 != cfg.rgblum)
-      nvs_set_i8(my_handle, "rgblum", cfg.rgblum);
-
-    if (nvs_get_i8(my_handle, "payloadmask", &flash8) != ESP_OK ||
-        flash8 != cfg.payloadmask)
-      nvs_set_i8(my_handle, "payloadmask", cfg.payloadmask);
-
-    if (nvs_get_i8(my_handle, "monitormode", &flash8) != ESP_OK ||
-        flash8 != cfg.monitormode)
-      nvs_set_i8(my_handle, "monitormode", cfg.monitormode);
-
-    if (nvs_get_i16(my_handle, "rssilimit", &flash16) != ESP_OK ||
-        flash16 != cfg.rssilimit)
-      nvs_set_i16(my_handle, "rssilimit", cfg.rssilimit);
-
-    err = nvs_commit(my_handle);
-    nvs_close(my_handle);
-    if (err == ESP_OK) {
-      ESP_LOGI(TAG, "Done");
-    } else {
-      ESP_LOGW(TAG, "NVS config write failed");
-    }
-  } else {
-    ESP_LOGW(TAG, "Error (%d) opening NVS handle", err);
+  if (erase) {
+    ESP_LOGI(TAG, "Resetting device to factory settings");
+    nvram.clear();
+    defaultConfig(&cfg);
   }
-}
 
-// set and save cfg.version
-void migrateVersion() {
-  snprintf(cfg.version, 10, "%s", PROGVERSION);
-  ESP_LOGI(TAG, "version set to %s", cfg.version);
-  saveConfig();
+  // Copy device runtime config cfg to byte array, padding it with magicBytes
+  memcpy(buffer, &cfg, cfgLen);
+  memcpy(buffer + cfgLen, &cfgMagicBytes, cfgLen2);
+
+  // save byte array to NVRAM, padding with cfg magicbyes
+  if (nvram.putBytes(DEVCONFIG, buffer, cfgLen + cfgLen2))
+    ESP_LOGI(TAG, "Device settings saved");
+  else
+    ESP_LOGE(TAG, "NVRAM Error, device settings not saved");
+
+  nvram.end();
 }
 
 // load configuration from NVRAM into RAM and make it current
-void loadConfig() {
-  defaultConfig(); // start with factory settings
-  ESP_LOGI(TAG, "Reading settings from NVS");
-  open_storage();
-  if (err != ESP_OK) {
-    ESP_LOGW(TAG, "Error (%d) opening NVS handle, storing defaults", err);
-    saveConfig();
-  } // saves factory settings to NVRAM
-  else {
-    int8_t flash8 = 0;
-    int16_t flash16 = 0;
-    size_t required_size;
+bool loadConfig() {
 
-    // check if configuration stored in NVRAM matches PROGVERSION
-    if (nvs_get_str(my_handle, "version", NULL, &required_size) == ESP_OK) {
-      nvs_get_str(my_handle, "version", cfg.version, &required_size);
-      ESP_LOGI(TAG, "NVRAM settings version = %s", cfg.version);
-      if (strcmp(cfg.version, PROGVERSION)) {
-        ESP_LOGI(TAG, "migrating NVRAM settings to new version %s",
-                 PROGVERSION);
-        nvs_close(my_handle);
-        migrateVersion();
-      }
-    } else {
-      ESP_LOGI(TAG, "new version %s, deleting NVRAM settings", PROGVERSION);
-      nvs_close(my_handle);
-      eraseConfig();
-      migrateVersion();
-    }
+  ESP_LOGI(TAG, "Loading device configuration from NVRAM...");
 
-    // populate pre set defaults with current values from NVRAM
-
-    if (nvs_get_blob(my_handle, "bsecstate", NULL, &required_size) == ESP_OK) {
-      nvs_get_blob(my_handle, "bsecstate", cfg.bsecstate, &required_size);
-      ESP_LOGI(TAG, "bsecstate = %d", cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE]);
-    };
-
-    if (nvs_get_i8(my_handle, "loradr", &flash8) == ESP_OK) {
-      cfg.loradr = flash8;
-      ESP_LOGI(TAG, "loradr = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "loradr set to default %d", cfg.loradr);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "txpower", &flash8) == ESP_OK) {
-      cfg.txpower = flash8;
-      ESP_LOGI(TAG, "txpower = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "txpower set to default %d", cfg.txpower);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "adrmode", &flash8) == ESP_OK) {
-      cfg.adrmode = flash8;
-      ESP_LOGI(TAG, "adrmode = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "adrmode set to default %d", cfg.adrmode);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "screensaver", &flash8) == ESP_OK) {
-      cfg.screensaver = flash8;
-      ESP_LOGI(TAG, "screensaver = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "screensaver set to default %d", cfg.screensaver);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "screenon", &flash8) == ESP_OK) {
-      cfg.screenon = flash8;
-      ESP_LOGI(TAG, "screenon = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "screenon set to default %d", cfg.screenon);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "countermode", &flash8) == ESP_OK) {
-      cfg.countermode = flash8;
-      ESP_LOGI(TAG, "countermode = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "countermode set to default %d", cfg.countermode);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "sendcycle", &flash8) == ESP_OK) {
-      cfg.sendcycle = flash8;
-      ESP_LOGI(TAG, "sendcycle = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "Payload send cycle set to default %d", cfg.sendcycle);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "wifichancycle", &flash8) == ESP_OK) {
-      cfg.wifichancycle = flash8;
-      ESP_LOGI(TAG, "wifichancycle = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "WIFI channel cycle set to default %d", cfg.wifichancycle);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "wifiant", &flash8) == ESP_OK) {
-      cfg.wifiant = flash8;
-      ESP_LOGI(TAG, "wifiantenna = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "WIFI antenna switch set to default %d", cfg.wifiant);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "vendorfilter", &flash8) == ESP_OK) {
-      cfg.vendorfilter = flash8;
-      ESP_LOGI(TAG, "vendorfilter = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "Vendorfilter mode set to default %d", cfg.vendorfilter);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "rgblum", &flash8) == ESP_OK) {
-      cfg.rgblum = flash8;
-      ESP_LOGI(TAG, "rgbluminosity = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "RGB luminosity set to default %d", cfg.rgblum);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "blescantime", &flash8) == ESP_OK) {
-      cfg.blescantime = flash8;
-      ESP_LOGI(TAG, "blescantime = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "BLEscantime set to default %d", cfg.blescantime);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "blescanmode", &flash8) == ESP_OK) {
-      cfg.blescan = flash8;
-      ESP_LOGI(TAG, "BLEscanmode = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "BLEscanmode set to default %d", cfg.blescan);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "wifiscanmode", &flash8) == ESP_OK) {
-      cfg.wifiscan = flash8;
-      ESP_LOGI(TAG, "WIFIscanmode = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "WIFIscanmode set to default %d", cfg.wifiscan);
-      saveConfig();
-    }
-
-    if (nvs_get_i16(my_handle, "rssilimit", &flash16) == ESP_OK) {
-      cfg.rssilimit = flash16;
-      ESP_LOGI(TAG, "rssilimit = %d", flash16);
-    } else {
-      ESP_LOGI(TAG, "rssilimit set to default %d", cfg.rssilimit);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "payloadmask", &flash8) == ESP_OK) {
-      cfg.payloadmask = flash8;
-      ESP_LOGI(TAG, "payloadmask = %hhu", flash8);
-    } else {
-      ESP_LOGI(TAG, "payloadmask set to default %hhu", cfg.payloadmask);
-      saveConfig();
-    }
-
-    if (nvs_get_i8(my_handle, "monitormode", &flash8) == ESP_OK) {
-      cfg.monitormode = flash8;
-      ESP_LOGI(TAG, "Monitor mode = %d", flash8);
-    } else {
-      ESP_LOGI(TAG, "Monitor mode set to default %d", cfg.monitormode);
-      saveConfig();
-    }
-
-    nvs_close(my_handle);
-    ESP_LOGI(TAG, "Done");
+  if (!nvram.begin(DEVCONFIG, true)) {
+    ESP_LOGI(TAG, "NVRAM initialized, device starts with factory settings");
+    eraseConfig();
   }
-} // loadConfig()
+
+  // simple check that runtime config data matches
+  // if (nvram.getBytesLength(DEVCONFIG) != (cfgLen + cfgLen2)) {
+  //  ESP_LOGE(TAG, "Configuration invalid");
+  //  return false;
+  //}
+
+  // load device runtime config from nvram and copy it to byte array
+  nvram.getBytes(DEVCONFIG, buffer, cfgLen + cfgLen2);
+  nvram.end();
+
+  // validate loaded configuration by checking magic bytes at end of array
+  // if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
+  //  ESP_LOGW(TAG, "No configuration found");
+  //  return false;
+  //}
+
+  // copy loaded configuration into runtime cfg struct
+  memcpy(&cfg, buffer, cfgLen);
+  ESP_LOGI(TAG, "Runtime configuration v%s loaded", cfg.version);
+
+  // check if config version matches current firmware version
+  switch (version_compare(PROGVERSION, cfg.version)) {
+  case -1: // device configuration belongs to newer than current firmware
+    ESP_LOGE(TAG, "Incompatible device configuration");
+    return false;
+  case 1: // device configuration belongs to older than current firmware
+    ESP_LOGW(TAG, "Device was updated, attempt to migrate configuration");
+    migrateConfig();
+    return true;
+  default: // device configuration version matches current firmware version
+    return true;
+  }
+}
+
+// helper function to convert strings into lower case
+bool comp(char s1, char s2) { return (tolower(s1) < tolower(s2)); }
+
+// helper function to lexicographically compare two versions. Returns 1 if v2
+// is smaller, -1 if v1 is smaller, 0 if equal
+int version_compare(const String v1, const String v2) {
+
+  if (v1 == v2)
+    return 0;
+
+  const char *a1 = v1.c_str(), *a2 = v2.c_str();
+
+  if (std::lexicographical_compare(a1, a1 + strlen(a1), a2, a2 + strlen(a2),
+                                   comp))
+    return -1;
+  else
+    return 1;
+}
+
+void eraseConfig(void) { saveConfig(true); }

@@ -57,7 +57,8 @@ uint8_t *sensor_read(uint8_t sensor) {
     // insert user specific sensor data frames here
     // note: Sensor1 fields are used for ENS count, if ENS detection enabled
 #if (COUNT_ENS)
-    payload.addCount(cwa_report(), MAC_SNIFF_BLE_CWA);
+    if (cfg.enscount)
+      payload.addCount(cwa_report(), MAC_SNIFF_BLE_CWA);
 #else
     buf[0] = length;
     buf[1] = 0x01;
@@ -65,7 +66,6 @@ uint8_t *sensor_read(uint8_t sensor) {
     buf[3] = 0x03;
 #endif
     break;
-
   case 2:
 
     buf[0] = length;

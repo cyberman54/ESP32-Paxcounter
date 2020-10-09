@@ -1,9 +1,9 @@
 // Basic Config
 #include "senddata.h"
 
-Ticker sendcycler;
+Ticker sendTimer;
 
-void sendcycle() {
+void setSendIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL);
 }
 
@@ -154,7 +154,8 @@ void sendData() {
       payload.addSensor(sensor_read(1));
       SendPayload(SENSOR1PORT, prio_normal);
 #if (COUNT_ENS)
-      cwa_clear();
+      if (cfg.countermode != 1)
+        cwa_clear();
 #endif
       break;
 #endif

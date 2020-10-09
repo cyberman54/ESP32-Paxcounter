@@ -61,7 +61,7 @@ const uint8_t bsec_config_iaq[454] = {
 
 // Helper functions declarations
 int bme_init();
-void bmecycle(void);
+void setBMEIRQ(void);
 void bme_storedata(bmeStatus_t *bme_store);
 int checkIaqSensorStatus(void);
 void loadState(void);

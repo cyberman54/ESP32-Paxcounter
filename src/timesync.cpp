@@ -29,7 +29,7 @@ static uint32_t timesync_timestamp[TIME_SYNC_SAMPLES][no_of_timestamps];
 static TaskHandle_t timeSyncProcTask;
 
 // create task for timeserver handshake processing, called from main.cpp
-void timesync_init() {
+void timesync_init(void) {
   xTaskCreatePinnedToCore(timesync_processReq, // task function
                           "timesync_proc",     // name of task
                           2048,                // stack size of task
@@ -69,8 +69,12 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
     // wait for kickoff
     ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+
+    // initialize flag and counters
     timeSyncPending = true;
     time_offset_ms = sample_idx = 0;
+    if (++time_sync_seqNo > TIME_SYNC_MAX_SEQNO)
+      time_sync_seqNo = 0;
 
     // wait until we are joined if we are not
     while (!LMIC.devaddr) {
@@ -81,7 +85,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
 
 // send timesync request
-#if (TIME_SYNC_LORASERVER) // aks user's timeserver (for LoRAWAN < 1.0.3)
+#if (TIME_SYNC_LORASERVER) // ask user's timeserver (for LoRAWAN < 1.0.3)
       payload.reset();
       payload.addByte(time_sync_seqNo);
       SendPayload(TIMEPORT, prio_high);
@@ -111,9 +115,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
                         timesync_timestamp[sample_idx][timesync_tx];
 #endif
 
-      // increment sample_idx and time_sync_seqNo, keeping it in range
-      if (++time_sync_seqNo > TIME_SYNC_MAX_SEQNO)
-        time_sync_seqNo = 0;
+      // increment sample index
       sample_idx++;
 
       // if we are not in last cycle, pause until next cycle
@@ -146,15 +148,17 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     // send timesync end char to show timesync was successful
     payload.reset();
     payload.addByte(TIME_SYNC_END_FLAG);
-    SendPayload(RCMDPORT, prio_high);
+    SendPayload(TIMEPORT, prio_high);
     goto Finish;
 
   Fail:
     // set retry timer
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
+    // intentionally fallthrough to Finish here
 
   Finish:
     // end of time critical section: release app irq lock
+    timeSyncPending = false;
     unmask_user_IRQ();
 
   } // infinite while(1)
@@ -179,6 +183,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // mask application irq to ensure accurate timing
   mask_user_IRQ();
 
+  // return code: 0 = failed / 1 = success
   int rc = 0;
   // cast back void parameter to a pointer
   uint8_t *p = (uint8_t *)pUserData, rcv_seqNo = *p;

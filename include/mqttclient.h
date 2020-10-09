@@ -26,7 +26,7 @@ extern TaskHandle_t mqttTask;
 
 void mqtt_enqueuedata(MessageBuffer_t *message);
 void mqtt_queuereset(void);
-void mqtt_irq(void);
+void setMqttIRQ(void);
 void mqtt_loop(void);
 void mqtt_client_task(void *param);
 int mqtt_connect(const char *my_host, const uint16_t my_port);
