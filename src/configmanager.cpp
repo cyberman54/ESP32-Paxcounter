@@ -54,7 +54,7 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->rgblum = RGBLUMINOSITY;      // RGB Led luminosity (0..100%)
   myconfig->monitormode = 0;             // 0=disabled, 1=enabled
   myconfig->payloadmask = PAYLOADMASK;   // payloads as defined in default 
-  myconfig->enscount = 0;                // 0=disabled, 1=enabled
+  myconfig->enscount = COUNT_ENS;        // 0=disabled, 1=enabled
 
 #ifdef HAS_BME680
   // initial BSEC state for BME680 sensor
