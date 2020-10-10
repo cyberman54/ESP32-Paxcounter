@@ -92,7 +92,7 @@ with open(otakeyfile) as myfile:
 user = mykeys["BINTRAY_USER"]
 repository = mykeys["BINTRAY_REPO"]
 apitoken = mykeys["BINTRAY_API_TOKEN"]
-package = mykeys["BINTRAY_PACKAGE"]
+
 
 
 # get bintray upload parameters from platformio environment
@@ -103,7 +103,7 @@ version = config.get("common", "release_version")
 env.Replace(BINTRAY_USER=user)
 env.Replace(BINTRAY_REPO=repository)
 env.Replace(BINTRAY_API_TOKEN=apitoken)
-env.Replace(BINTRAY_PACKAGE=package)
+
 
 
 # get runtime credentials and put them to compiler directive
