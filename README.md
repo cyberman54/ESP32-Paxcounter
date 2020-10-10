@@ -66,7 +66,7 @@ Depending on board hardware following features are supported:
 - SD-card (see section SD-card here) for logging pax data
 - Ethernet interface for MQTT communication via TCP/IP
 
-Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
+Target platform must be selected in `platformio.ini`.<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
 
 Some <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
@@ -204,7 +204,7 @@ Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time tele
 
 # Mobile PaxCounter using <A HREF="https://opensensemap.org/">openSenseMap</A>
 
-This describes how to set up a mobile PaxCounter: Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
+This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
 # Covid-19 Exposure Notification System beacon detection
 
