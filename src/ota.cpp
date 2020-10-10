@@ -328,22 +328,4 @@ void show_progress(unsigned long current, unsigned long size) {
 #endif
 }
 
-// helper function to convert strings into lower case
-bool comp(char s1, char s2) { return tolower(s1) < tolower(s2); }
-
-// helper function to lexicographically compare two versions. Returns 1 if v2 is
-// smaller, -1 if v1 is smaller, 0 if equal
-int version_compare(const String v1, const String v2) {
-
-  if (v1 == v2)
-    return 0;
-
-  const char *a1 = v1.c_str(), *a2 = v2.c_str();
-
-  if (lexicographical_compare(a1, a1 + strlen(a1), a2, a2 + strlen(a2), comp))
-    return -1;
-  else
-    return 1;
-}
-
 #endif // USE_OTA

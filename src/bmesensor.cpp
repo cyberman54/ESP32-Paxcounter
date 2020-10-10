@@ -44,7 +44,7 @@ Adafruit_BMP085 bmp; // I2C
 
 #endif
 
-void bmecycle() { xTaskNotify(irqHandlerTask, BME_IRQ, eSetBits); }
+void setBMEIRQ() { xTaskNotify(irqHandlerTask, BME_IRQ, eSetBits); }
 
 // initialize BME680 sensor
 int bme_init(void) {
@@ -133,7 +133,7 @@ int bme_init(void) {
 finish:
   I2C_MUTEX_UNLOCK(); // release i2c bus access
   if (rc)
-    bmecycler.attach(BMECYCLE, bmecycle);
+    bmecycler.attach(BMECYCLE, setBMEIRQ);
   return rc;
 
 } // bme_init()

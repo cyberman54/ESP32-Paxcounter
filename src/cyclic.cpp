@@ -7,13 +7,13 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-Ticker housekeeper;
+Ticker cyclicTimer;
 
 #if (HAS_SDS011)
 extern boolean isSDS011Active;
 #endif
 
-void housekeeping() {
+void setCyclicIRQ() {
   xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
 }
 
@@ -150,7 +150,7 @@ uint32_t getFreeRAM() {
 
 void reset_counters() {
 #if ((WIFICOUNTER) || (BLECOUNTER))
-  macs.clear();   // clear all macs container
+  macs.clear(); // clear all macs container
   macs_wifi = 0;
   macs_ble = 0;
 #ifdef HAS_DISPLAY

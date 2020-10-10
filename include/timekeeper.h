@@ -17,7 +17,7 @@ void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);
 void clock_loop(void *pvParameters);
 void timepulse_start(void);
-void timeSync(void);
+void setTimeSyncIRQ(void);
 uint8_t timepulse_init(void);
 time_t timeIsValid(time_t const t);
 void calibrateTime(void);

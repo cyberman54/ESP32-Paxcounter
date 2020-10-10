@@ -48,8 +48,8 @@ void set_rssi(uint8_t val[]) {
 
 void set_sendcycle(uint8_t val[]) {
   cfg.sendcycle = val[0];
-  // update send cycle interrupt [seconds
-  sendcycler.attach(cfg.sendcycle * 2, sendcycle);
+  // update send cycle interrupt [seconds / 2]
+  sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
 }
@@ -329,8 +329,8 @@ void get_time(uint8_t val[]) {
 };
 
 void set_time(uint8_t val[]) {
-  ESP_LOGI(TAG, "Timesync requested by timeserver");
-  timeSync();
+  ESP_LOGI(TAG, "Remote command: timesync requested");
+  setTimeSyncIRQ();
 };
 
 void set_flush(uint8_t val[]) {
@@ -338,6 +338,15 @@ void set_flush(uint8_t val[]) {
   // does nothing
   // used to open receive window on LoRaWAN class a nodes
 };
+
+void set_enscount(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: set ENS_COUNT to %s", val[0] ? "on" : "off");
+  cfg.enscount = val[0] ? 1 : 0;
+  if (val[0])
+    cfg.payloadmask |= SENSOR1_DATA;
+  else
+    cfg.payloadmask &= ~SENSOR1_DATA;
+}
 
 // assign previously defined functions to set of numeric remote commands
 // format: opcode, function, #bytes params,
@@ -355,11 +364,11 @@ static const cmd_t table[] = {
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
     {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},
     {0x15, set_bme, 1, true},           {0x16, set_batt, 1, true},
-    {0x17, set_wifiscan, 1, true},      {0x80, get_config, 0, false},
-    {0x81, get_status, 0, false},       {0x83, get_batt, 0, false},
-    {0x84, get_gps, 0, false},          {0x85, get_bme, 0, false},
-    {0x86, get_time, 0, false},         {0x87, set_time, 0, false},
-    {0x99, set_flush, 0, false}};
+    {0x17, set_wifiscan, 1, true},      {0x18, set_enscount, 1, true},
+    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
+    {0x83, get_batt, 0, false},         {0x84, get_gps, 0, false},
+    {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
+    {0x87, set_time, 0, false},         {0x99, set_flush, 0, false}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table

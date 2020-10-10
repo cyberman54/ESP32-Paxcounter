@@ -23,7 +23,7 @@ HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
 
 Ticker timesyncer;
 
-void timeSync() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
+void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 void calibrateTime(void) {
   ESP_LOGD(TAG, "[%0.3f] calibrateTime, timeSource == %d", millis() / 1000.0,
@@ -85,7 +85,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGD(TAG, "[%0.3f] UTC time: %d.%03d sec", millis() / 1000.0,
+    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", millis() / 1000.0,
              time_to_set, t_msec % 1000);
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
@@ -104,12 +104,12 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     setTime(time_to_set); // set the time on top of second
 
     timeSource = mytimesource; // set global variable
-    timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
-    ESP_LOGI(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
+    timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
+    ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
              millis() / 1000.0, timeSetSymbols[mytimesource]);
   } else {
-    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, timeSync);
-    ESP_LOGI(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
+    timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
+    ESP_LOGD(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
              millis() / 1000.0, timeSetSymbols[mytimesource]);
   }
 }
@@ -167,8 +167,8 @@ void timepulse_start(void) {
 #endif
 
   // start cyclic time sync
-  timeSync(); // init systime by RTC or GPS or LORA
-  timesyncer.attach(TIME_SYNC_INTERVAL * 60, timeSync);
+  setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
+  timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
 }
 
 // interrupt service routine triggered by either pps or esp32 hardware timer

@@ -1,6 +1,6 @@
 /* LoRaWAN Timeserver
 
-VERSION: 1.3
+VERSION: 1.4
 
 construct 6 byte timesync_answer from gateway timestamp and node's time_sync_req
 
@@ -26,6 +26,7 @@ function timecompare(a, b) {
 }
 
 let confidence = 1000; // max millisecond diff gateway time to server time
+let TIME_SYNC_END_FLAG = 255;
 
 // guess if we have received a valid time_sync_req command
 if (msg.payload.payload_raw.length != 1)
@@ -35,6 +36,10 @@ var deviceMsg = { payload: msg.payload.dev_id };
 var seqNo = msg.payload.payload_raw[0];
 var seqNoMsg = { payload: seqNo };
 var gateway_list = msg.payload.metadata.gateways;
+
+// don't answer on TIME_SYNC_END_FLAG
+if (seqNo == TIME_SYNC_END_FLAG)
+  return;
 
 // filter all gateway timestamps that have milliseconds part (which we assume have a ".")
 var gateways = gateway_list.filter(function (element) {

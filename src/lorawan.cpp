@@ -537,14 +537,6 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
     break;
 #endif
 
-    // decode any piggybacked downlink MAC commands if we want to print those
-  default:
-#if (VERBOSE)
-    if (LMIC.dataBeg > 1)
-      mac_decode(LMIC.frame, LMIC.dataBeg - 1, true);
-#endif // VERBOSE
-
-    break;
   } // switch
 }
 

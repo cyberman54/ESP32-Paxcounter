@@ -169,9 +169,11 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
           mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 
 #if (COUNT_ENS)
-      // check for ens signature
-      if (NULL != strstr((const char *)p->scan_rst.ble_adv, ensMagicBytes))
-        cwa_mac_add(hashedmac);
+      if (cfg.enscount) {
+        // check for ens signature
+        if (NULL != strstr((const char *)p->scan_rst.ble_adv, ensMagicBytes))
+          cwa_mac_add(hashedmac);
+      }
 #endif
 
       /* to be improved in vendorfilter if:
