@@ -181,6 +181,7 @@ void PayloadConvert::addConfig(configData_t value) {
               value.blescan ? true : false, value.wifiant ? true : false,
               value.vendorfilter ? true : false,
               value.monitormode ? true : false);
+  writeUint8(value.enscount ? true: false);
   writeUint8(value.payloadmask);
   writeVersion(value.version);
 }
