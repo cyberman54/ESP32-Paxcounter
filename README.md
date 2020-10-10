@@ -202,13 +202,13 @@ Paxcounter can keep it's time-of-day synced with an external time source. Set *#
 
 Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set *#define HAS_IF482* or *#define HAS_DCF77* in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.
 
-# Mobile PaxCounter using <A HREF="https://opensensemap.org/">OpenSenseMap</A>
+# Mobile PaxCounter using <A HREF="https://opensensemap.org/">openSenseMap</A>
 
 This describes how to set up a mobile PaxCounter: Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
 # Covid-19 Exposure Notification System beacon detection
 
-Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
+Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
 	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
@@ -259,7 +259,7 @@ If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
 
 # Payload format
 
-You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L12):
+You can select different payload formats in `paxcounter.conf`:
 
 - ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 
