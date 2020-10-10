@@ -82,5 +82,13 @@ function Decoder(bytes, port) {
       decoded.timestatus = bytes[i++];
     }
   }
+
+  if (port === 10) {
+    var i = 0;
+    if (bytes.length >= 2) {
+      decoded.ens = (bytes[i++] << 8) | bytes[i++];
+    }
+  }
+
   return decoded;
 }

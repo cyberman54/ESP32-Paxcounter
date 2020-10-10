@@ -355,7 +355,11 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #9:** Time/Date
 
-  	bytes 1-4:	board's local time/date in UNIX epoch (number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds) 
+  	bytes 1-4:	board's local time/date in UNIX epoch (number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds)
+
+**Ports #10, #11, #12:** User sensor data
+
+	Format is specified by user in function `sensor_read(uint8_t sensor)`, see `src/sensor.cpp`. Port #10 is also used for ENS counter (2 bytes = 16 bit), if ENS is compiled AND ENS data transfer is enabled
 
 # Remote control
 

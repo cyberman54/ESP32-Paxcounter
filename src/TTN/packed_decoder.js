@@ -89,6 +89,11 @@ function Decoder(bytes, port) {
         }
     }
 
+    if (port === 10) {
+        // ENS count      
+        return decode(bytes, [uint16], ['ens']);
+    }
+
 }
 
 
