@@ -1,6 +1,6 @@
 // clang-format off
 // upload_speed 921600
-// board esp32dev
+// board ttgo-lora32-v21new
 
 #ifndef _TTGOV21NEW_H
 #define _TTGOV21NEW_H
