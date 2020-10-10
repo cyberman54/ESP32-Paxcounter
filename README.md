@@ -175,7 +175,7 @@ by pressing the button of the device.
 
 # Sensors and Peripherals
 
-You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
+You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in `platformio.ini` and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
 Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 
@@ -204,10 +204,7 @@ Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time tele
 
 # mobile PaxCounter via https://opensensemap.org/
 
-This describes how to set up a mobile PaxCounter:
-Follow all steps so far for preparing the device, use the packed payload format. In [paxcounter.conf](src/paxcounter.conf) set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
-There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
-	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
+This describes how to set up a mobile PaxCounter: Follow all steps so far for preparing the device, use the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
 # Covid-19 Exposure Notification System beacon detection
 
