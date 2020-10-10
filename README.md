@@ -66,7 +66,7 @@ Depending on board hardware following features are supported:
 - SD-card (see section SD-card here) for logging pax data
 - Ethernet interface for MQTT communication via TCP/IP
 
-Target platform must be selected in [platformio.ini](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/platformio.ini).<br>
+Target platform must be selected in `platformio.ini`.<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
 
 Some <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thingiverse, see 
@@ -175,7 +175,7 @@ by pressing the button of the device.
 
 # Sensors and Peripherals
 
-You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in [*platformio.ini*](src/platformio.ini) and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
+You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in `platformio.ini` and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
 Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 
@@ -202,16 +202,13 @@ Paxcounter can keep it's time-of-day synced with an external time source. Set *#
 
 Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set *#define HAS_IF482* or *#define HAS_DCF77* in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.
 
-# mobile PaxCounter via https://opensensemap.org/
+# Mobile PaxCounter using <A HREF="https://opensensemap.org/">openSenseMap</A>
 
-This describes how to set up a mobile PaxCounter:
-Follow all steps so far for preparing the device, use the packed payload format. In [paxcounter.conf](src/paxcounter.conf) set PAYLOAD_OPENSENSEBOX to 1. Register a new sensbox on https://opensensemap.org/.
-There in the sensor configuration select "TheThingsNetwork" and set Decoding Profil to "LoRa serialization", enter your TTN Application and Device Id. Decoding option has to be
-	[{"decoder":"latLng"},{"decoder":"uint16","sensor_id":"yoursensorid"}] 
+This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
 # Covid-19 Exposure Notification System beacon detection
 
-Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in [paxcounter.conf](src/paxcounter.conf):
+Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
 	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
@@ -262,7 +259,7 @@ If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
 
 # Payload format
 
-You can select different payload formats in [paxcounter.conf](src/paxcounter.conf#L12):
+You can select different payload formats in `paxcounter.conf`:
 
 - ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 
@@ -355,7 +352,11 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #9:** Time/Date
 
-  	bytes 1-4:	board's local time/date in UNIX epoch (number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds) 
+  	bytes 1-4:	board's local time/date in UNIX epoch (number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT), not counting leap seconds)
+
+**Ports #10, #11, #12:** User sensor data
+
+	Format is specified by user in function `sensor_read(uint8_t sensor)`, see `src/sensor.cpp`. Port #10 is also used for ENS counter (2 bytes = 16 bit), if ENS is compiled AND ENS data transfer is enabled
 
 # Remote control
 
