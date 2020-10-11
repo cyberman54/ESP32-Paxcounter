@@ -32,7 +32,7 @@ static TaskHandle_t timeSyncProcTask;
 void timesync_init(void) {
   xTaskCreatePinnedToCore(timesync_processReq, // task function
                           "timesync_proc",     // name of task
-                          4096,                // stack size of task
+                          2048,                // stack size of task
                           (void *)1,           // task parameter
                           3,                   // priority of the task
                           &timeSyncProcTask,   // task handle
@@ -148,7 +148,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     // send timesync end char to show timesync was successful
     payload.reset();
     payload.addByte(TIME_SYNC_END_FLAG);
-    SendPayload(TIMEPORT, prio_high);
+    SendPayload(RCMDPORT, prio_high);
     goto Finish;
 
   Fail:
