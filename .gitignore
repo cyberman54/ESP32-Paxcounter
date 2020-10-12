@@ -14,5 +14,5 @@ src/loraconf.h
 src/ota.conf
 platformio.ini
 src/paxcounter.conf
-mybuild.py
 src/lmic_config.h
+mybuild.py
