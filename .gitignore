@@ -15,8 +15,12 @@ src/ota.conf
 platformio.ini
 src/paxcounter.conf
 <<<<<<< HEAD
+<<<<<<< HEAD
 src/lmic_config.h
 =======
 >>>>>>> added mybuild.py to .gitignore and renamed build.py to mybild.py and reworked build.py to the origin.
 mybuild.py
+=======
+>>>>>>> altered .gitignore
 src/lmic_config.h
+mybuild.py
