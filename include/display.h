@@ -24,7 +24,7 @@
 #else
 #define OLED_ADDR -1
 #endif
-#ifndef USW_HW_I2C
+#ifndef USE_HW_I2C
 #define USE_HW_I2C 1
 #endif
 #ifndef OLED_FREQUENCY
