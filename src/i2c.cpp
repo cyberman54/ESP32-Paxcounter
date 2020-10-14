@@ -5,7 +5,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-void i2c_init(void) { Wire.begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL, 400000); }
+void i2c_init(void) { Wire.begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL, 100000); }
 
 void i2c_deinit(void) {
   Wire.~TwoWire(); // shutdown/power off I2C hardware
@@ -14,73 +14,77 @@ void i2c_deinit(void) {
   pinMode(MY_DISPLAY_SCL, INPUT);
 }
 
-int i2c_scan(void) {
+void i2c_scan(void) {
 
-  int i2c_ret, addr;
-  int devices = 0;
+  // parts of the code in this function were taken from:
+  //
+  // Copyright (c) 2019 BitBank Software, Inc.
+  // Written by Larry Bank
+  // email: bitbank@pobox.com
+  // Project started 25/02/2019
+  //
+  // This program is free software: you can redistribute it and/or modify
+  // it under the terms of the GNU General Public License as published by
+  // the Free Software Foundation, either version 3 of the License, or
+  // (at your option) any later version.
+  //
+  // This program is distributed in the hope that it will be useful,
+  // but WITHOUT ANY WARRANTY; without even the implied warranty of
+  // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  // GNU General Public License for more details.
+  //
+  // You should have received a copy of the GNU General Public License
+  // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  BBI2C bbi2c;
+
+  const char *szNames[] = {
+      "Unknown", "SSD1306",  "SH1106",   "VL53L0X", "BMP180",  "BMP280",
+      "BME280",  "MPU-60x0", "MPU-9250", "MCP9808", "LSM6DS3", "ADXL345",
+      "ADS1115", "MAX44009", "MAG3110",  "CCS811",  "HTS221",  "LPS25H",
+      "LSM9DS1", "LM8330",   "DS3231",   "LIS3DH",  "LIS3DSH", "INA219",
+      "SHT3X",   "HDC1080",  "MPU6886",  "BME680"};
 
   ESP_LOGI(TAG, "Starting I2C bus scan...");
 
   // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
 
-    // Scan at 100KHz low speed
-    Wire.setClock(100000);
+    memset(&bbi2c, 0, sizeof(bbi2c));
+    bbi2c.bWire = 1; // use wire library, no bitbanging
+    bbi2c.iSDA = MY_DISPLAY_SDA;
+    bbi2c.iSCL = MY_DISPLAY_SCL;
+    I2CInit(&bbi2c, 100000L); // Scan at 100KHz low speed
+    delay(100);               // allow devices to power up
 
-    for (addr = 8; addr <= 119; addr++) {
+    uint8_t map[16];
+    uint8_t i;
+    int iDevice, iCount;
 
-      Wire.beginTransmission(addr);
-      Wire.write(addr);
-      i2c_ret = Wire.endTransmission();
-
-      if (i2c_ret == 0) {
-        devices++;
-
-        switch (addr) {
-
-        case SSD1306_PRIMARY_ADDRESS:
-        case SSD1306_SECONDARY_ADDRESS:
-          ESP_LOGI(TAG, "0x%X: SSD1306 Display controller", addr);
-          break;
-
-        case BME_PRIMARY_ADDRESS:
-        case BME_SECONDARY_ADDRESS:
-          ESP_LOGI(TAG, "0x%X: Bosch BME MEMS", addr);
-          break;
-
-        case AXP192_PRIMARY_ADDRESS:
-          ESP_LOGI(TAG, "0x%X: AXP192 power management", addr);
-          break;
-
-        case IP5306_PRIMARY_ADDRESS:
-          ESP_LOGI(TAG, "0x%X: IP5306 power management", addr);
-          break;
-
-        case QUECTEL_GPS_PRIMARY_ADDRESS:
-          ESP_LOGI(TAG, "0x%X: Quectel GPS", addr);
-          break;
-
-        case MCP_24AA02E64_PRIMARY_ADDRESS:
-          ESP_LOGI(TAG, "0x%X: 24AA02E64 serial EEPROM", addr);
-          break;
-
-        default:
-          ESP_LOGI(TAG, "0x%X: Unknown device", addr);
-          break;
+    I2CScan(&bbi2c, map); // get bitmap of connected I2C devices
+    if (map[0] == 0xfe)   // something is wrong with the I2C bus
+    {
+      ESP_LOGI(TAG, "I2C pins are not correct or the bus is being pulled low "
+                    "by a bad device; unable to run scan");
+    } else {
+      iCount = 0;
+      for (i = 1; i < 128; i++) // skip address 0 (general call address) since
+                                // more than 1 device can respond
+      {
+        if (map[i >> 3] & (1 << (i & 7))) // device found
+        {
+          iCount++;
+          iDevice = I2CDiscoverDevice(&bbi2c, i);
+          ESP_LOGI(TAG, "Device found at 0x%X, type = %s", i,
+                   szNames[iDevice]); // show the device name as a string
         }
-      } // switch
-    }   // for loop
-
-    ESP_LOGI(TAG, "I2C scan done, %u devices found.", devices);
-
-    // Set back to 400KHz
-    Wire.setClock(400000);
+      } // for i
+      ESP_LOGI(TAG, "%u I2C device(s) found", iCount);
+    }
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
   } else
-    ESP_LOGE(TAG, "I2c bus busy - scan error");
-
-  return devices;
+    ESP_LOGE(TAG, "I2C bus busy - scan error");
 }
 
 // mutexed functions for i2c r/w access
