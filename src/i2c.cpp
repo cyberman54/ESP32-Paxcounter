@@ -38,12 +38,10 @@ void i2c_scan(void) {
 
   BBI2C bbi2c;
 
-  const char *szNames[] = {
-      "Unknown", "SSD1306",  "SH1106",   "VL53L0X", "BMP180",  "BMP280",
-      "BME280",  "MPU-60x0", "MPU-9250", "MCP9808", "LSM6DS3", "ADXL345",
-      "ADS1115", "MAX44009", "MAG3110",  "CCS811",  "HTS221",  "LPS25H",
-      "LSM9DS1", "LM8330",   "DS3231",   "LIS3DH",  "LIS3DSH", "INA219",
-      "SHT3X",   "HDC1080",  "MPU6886",  "BME680"};
+  const char *szNames[]  = {"Unknown","SSD1306","SH1106","VL53L0X","BMP180", "BMP280","BME280",
+                "MPU-60x0", "MPU-9250", "MCP9808","LSM6DS3", "ADXL345", "ADS1115","MAX44009",
+                "MAG3110", "CCS811", "HTS221", "LPS25H", "LSM9DS1","LM8330", "DS3231", "LIS3DH",
+                "LIS3DSH","INA219","SHT3X","HDC1080","MPU6886","BME680", "AXP202", "AXP192", "24AA02XEXX", "DS1307"};
 
   ESP_LOGI(TAG, "Starting I2C bus scan...");
 
