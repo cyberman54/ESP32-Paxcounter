@@ -67,17 +67,9 @@ void lora_setupForNetwork(bool preJoin) {
     // settings for TheThingsNetwork
     // Enable link check validation
     LMIC_setLinkCheckMode(true);
-    /*for(dr_t dr=5;dr>=0;dr--){
-      for(int att=0; att>=3; att++){
-        ESP_LOGD(TAG,"Attempt: %d, Datarate %d", att, dr);
-        LMIC_setDrTxpow(assertDR(dr), 15);
-      }
-    }*/
-
-    
 #endif
-
-  } else {
+  } 
+  else {
     // set data rate adaptation according to saved setting
     LMIC_setAdrMode(cfg.adrmode);
     // set data rate and transmit power to stored device values if no ADR

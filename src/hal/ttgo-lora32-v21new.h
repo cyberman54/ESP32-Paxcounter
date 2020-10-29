@@ -16,7 +16,7 @@
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 // enable only if you want to store a local paxcount table on the device
-#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+#define HAS_SDCARD  2      // this board has an SD-card-reader/writer
 
 #define HAS_DISPLAY 1
 #define HAS_LED (25) // green on board LED
