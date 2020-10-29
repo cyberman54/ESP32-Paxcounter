@@ -16,8 +16,8 @@ esp_err_t mqtt_init(void) {
   // setup network connection
   WiFi.onEvent(NetworkEvent);
   ETH.begin();
-  //WiFi.mode(WIFI_STA);
-  //WiFi.begin("SSID", "PASSWORD");
+  // WiFi.mode(WIFI_STA);
+  // WiFi.begin("SSID", "PASSWORD");
 
   // setup mqtt client
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
@@ -33,7 +33,7 @@ esp_err_t mqtt_init(void) {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
-  mqttTimer.attach(MQTT_KEEPALIVE, mqtt_irq);
+  mqttTimer.attach(MQTT_KEEPALIVE, setMqttIRQ);
   xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask);
 
   return ESP_OK;
@@ -69,6 +69,8 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
     ESP_LOGW(TAG, "MQTT server not responding, retrying later");
     return -1;
   }
+
+  return 0;
 }
 
 void NetworkEvent(WiFiEvent_t event) {
@@ -122,7 +124,7 @@ void mqtt_client_task(void *param) {
     if (mqttClient.connected()) {
 
       char buffer[PAYLOAD_BUFFER_SIZE + 3];
-      snprintf(buffer, msg.MessageSize + 3, "%s/%s", msg.MessagePort,
+      snprintf(buffer, msg.MessageSize + 3, "%s/%u", msg.MessagePort,
                msg.Message);
 
       if (mqttClient.publish(MQTT_OUTTOPIC, buffer)) {
@@ -183,6 +185,6 @@ void mqtt_loop(void) {
 }
 
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
-void mqtt_irq(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
+void setMqttIRQ(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
 
 #endif // HAS_MQTT

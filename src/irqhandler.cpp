@@ -84,7 +84,7 @@ void irqHandler(void *pvParameters) {
     }
 
 // do we have a power event?
-#if (HAS_PMU)
+#ifdef HAS_PMU
     if (InterruptStatus & PMU_IRQ) {
       AXP192_powerevent_IRQ();
       InterruptStatus &= ~PMU_IRQ;

@@ -265,11 +265,10 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
-#if (!COUNT_ENS)
-      dp_printf("BLTH:%-5d", macs_ble);
-#else
+        if (!cfg.enscount)
+            dp_printf("BLTH:%-5d", macs_ble);
+        else
       dp_printf(" CWA:%-5d", cwa_report());
-#endif
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
@@ -280,10 +279,10 @@ void dp_drawPage(time_t t, bool nextpage) {
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan) {
       dp_printf("BLTH:%-5d", macs_ble);
-#if (COUNT_ENS)
-      dp_printf("(CWA:%d)", cwa_report());
-#endif
-    } else
+        if (cfg.enscount)
+            dp_printf("(CWA:%d)", cwa_report());
+    } 
+    else
       dp_printf("BLTH:off");
 #else
     dp_printf("Sniffer disabled");

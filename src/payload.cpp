@@ -181,14 +181,7 @@ void PayloadConvert::addConfig(configData_t value) {
               value.blescan ? true : false, value.wifiant ? true : false,
               value.vendorfilter ? true : false,
               value.monitormode ? true : false);
-  writeBitmap(value.payloadmask && GPS_DATA ? true : false,
-              value.payloadmask && ALARM_DATA ? true : false,
-              value.payloadmask && MEMS_DATA ? true : false,
-              value.payloadmask && COUNT_DATA ? true : false,
-              value.payloadmask && SENSOR1_DATA ? true : false,
-              value.payloadmask && SENSOR2_DATA ? true : false,
-              value.payloadmask && SENSOR3_DATA ? true : false,
-              value.payloadmask && BATT_DATA ? true : false);
+  writeUint8(value.payloadmask);
   writeVersion(value.version);
 }
 
