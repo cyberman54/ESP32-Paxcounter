@@ -175,7 +175,7 @@ by pressing the button of the device.
 
 # Sensors and Peripherals
 
-You can add up to 3 user defined sensors. Insert sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported. Enable flag *lib_deps_sensors* for your board in `platformio.ini` and configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
+You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported, to activate configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
 Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 

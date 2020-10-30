@@ -46,7 +46,7 @@ Adafruit_BMP085 bmp; // I2C
 
 void setBMEIRQ() { xTaskNotify(irqHandlerTask, BME_IRQ, eSetBits); }
 
-// initialize BME680 sensor
+// initialize MEMS sensor
 int bme_init(void) {
 
   // return = 0 -> error / return = 1 -> success
