@@ -67,7 +67,7 @@ void dp_setup(int contrast) {
                       MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA,
                       MY_DISPLAY_SCL, MY_DISPLAY_RST,
                       OLED_FREQUENCY); // use standard I2C bus at 400Khz
-  assert(rc != OLED_NOT_FOUND);
+  _ASSERT (rc != OLED_NOT_FOUND);
 
   // set display buffer
   obdSetBackBuffer(&ssoled, displaybuf);
@@ -265,10 +265,10 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
-        if (!cfg.enscount)
-            dp_printf("BLTH:%-5d", macs_ble);
-        else
-      dp_printf(" CWA:%-5d", cwa_report());
+      if (!cfg.enscount)
+        dp_printf("BLTH:%-5d", macs_ble);
+      else
+        dp_printf(" CWA:%-5d", cwa_report());
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
@@ -279,10 +279,9 @@ void dp_drawPage(time_t t, bool nextpage) {
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan) {
       dp_printf("BLTH:%-5d", macs_ble);
-        if (cfg.enscount)
-            dp_printf("(CWA:%d)", cwa_report());
-    } 
-    else
+      if (cfg.enscount)
+        dp_printf("(CWA:%d)", cwa_report());
+    } else
       dp_printf("BLTH:off");
 #else
     dp_printf("Sniffer disabled");

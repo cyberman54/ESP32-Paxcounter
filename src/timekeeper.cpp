@@ -245,7 +245,7 @@ void clock_init(void) {
                           &ClockTask,           // task handle
                           1);                   // CPU core
 
-  assert(ClockTask); // has clock task started?
+  _ASSERT(ClockTask != NULL); // has clock task started?
 } // clock_init
 
 void clock_loop(void *taskparameter) { // ClockTask

@@ -45,7 +45,7 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
 
 // Software-timer driven Wifi channel rotation callback function
 void switchWifiChannel(TimerHandle_t xTimer) {
-  configASSERT(xTimer);
+  _ASSERT(xTimer != NULL);
   channel =
       (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
@@ -82,7 +82,7 @@ void wifi_sniffer_init(void) {
 }
 
 void switch_wifi_sniffer(uint8_t state) {
-  assert(WifiChanTimer);
+  _ASSERT(WifiChanTimer != NULL);
   if (state) {
     // switch wifi sniffer on
     ESP_ERROR_CHECK(esp_wifi_start());

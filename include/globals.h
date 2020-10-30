@@ -1,5 +1,6 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
+#endif
 
 // The mother of all embedded development...
 #include <Arduino.h>
@@ -48,6 +49,16 @@
 #define I2C_MUTEX_LOCK()                                                       \
   (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(DISPLAYREFRESH_MS)) == pdTRUE)
 #define I2C_MUTEX_UNLOCK() (xSemaphoreGive(I2Caccess))
+
+// pseudo system halt function, useful to prevent writeloops to NVRAM
+#ifndef _ASSERT
+#define _ASSERT(cond)                                                          \
+  if ((cond) == 0) {                                                           \
+    ESP_LOGE(TAG, "FAILURE in %s:%d", __FILE__, __LINE__);                     \
+    mask_user_IRQ();                                                           \
+    for (;;)                                                                   \
+      ;                                                                        \
+  }
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };

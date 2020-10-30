@@ -23,7 +23,7 @@ esp_err_t mqtt_init(void) {
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
   mqttClient.onMessageAdvanced(mqtt_callback);
 
-  assert(SEND_QUEUE_SIZE);
+  _ASSERT(SEND_QUEUE_SIZE > 0);
   MQTTSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (MQTTSendQueue == 0) {
     ESP_LOGE(TAG, "Could not create MQTT send queue. Aborting.");

@@ -227,7 +227,7 @@ void showLoraKeys(void) {
 
 // LMIC send task
 void lora_send(void *pvParameters) {
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+  _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
   MessageBuffer_t SendBuffer;
 
@@ -292,7 +292,7 @@ void lora_stack_reset() {
 }
 
 esp_err_t lora_stack_init(bool do_join) {
-  assert(SEND_QUEUE_SIZE);
+  _ASSERT(SEND_QUEUE_SIZE > 0);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
     ESP_LOGE(TAG, "Could not create LORA send queue. Aborting.");
@@ -382,7 +382,7 @@ void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
 
 // LMIC lorawan stack task
 void lmictask(void *pvParameters) {
-  configASSERT(((uint32_t)pvParameters) == 1);
+  _ASSERT((uint32_t)pvParameters == 1);
 
   // setup LMIC stack
   os_init_ex(&myPinmap); // initialize lmic run-time environment

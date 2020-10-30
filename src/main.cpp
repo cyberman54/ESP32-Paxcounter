@@ -65,8 +65,8 @@ PMUIRQ          -> PMU chip gpio
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> setTimeSyncIRQ()
 CYCLIC_IRQ      -> setCyclicIRQ()
-SENDCYCLE_IRQ   -> setSendIRQ()  
-BME_IRQ         -> setBMEIRQ()     
+SENDCYCLE_IRQ   -> setSendIRQ()
+BME_IRQ         -> setBMEIRQ()
 MQTT_IRQ        -> setMqttIRQ()
 
 ClockTask (Core 1), see timekeeper.cpp
@@ -118,7 +118,7 @@ void setup() {
 
   // create some semaphores for syncing / mutexing tasks
   I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
-  assert(I2Caccess != NULL);
+  _ASSERT(I2Caccess != NULL);
   I2C_MUTEX_UNLOCK();
 
   // disable brownout detection
@@ -203,7 +203,7 @@ void setup() {
 #endif
 
   // read (and initialize on first run) runtime settings from NVRAM
-  assert(loadConfig()); // includes initialize if necessary
+  _ASSERT(loadConfig()); // includes initialize if necessary
 
   // now that we are powered, we scan i2c bus for devices
   i2c_scan();
@@ -217,7 +217,7 @@ void setup() {
 #endif
 
 #ifdef BOARD_HAS_PSRAM
-  assert(psramFound());
+  _ASSERT(psramFound());
   ESP_LOGI(TAG, "PSRAM found and initialized");
   strcat_P(features, " PSRAM");
 #endif
@@ -343,20 +343,20 @@ void setup() {
 #if (HAS_LORA)
   strcat_P(features, " LORA");
   // kick off join, except we come from sleep
-  assert(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
+  _ASSERT(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
          ESP_OK);
 #endif
 
 // initialize SPI
 #ifdef HAS_SPI
   strcat_P(features, " SPI");
-  assert(spi_init() == ESP_OK);
+  _ASSERT(spi_init() == ESP_OK);
 #endif
 
 // initialize MQTT
 #ifdef HAS_MQTT
   strcat_P(features, " MQTT");
-  assert(mqtt_init() == ESP_OK);
+  _ASSERT(mqtt_init() == ESP_OK);
 #endif
 
 #if (HAS_SDCARD)
@@ -395,7 +395,7 @@ void setup() {
 // initialize RTC
 #ifdef HAS_RTC
   strcat_P(features, " RTC");
-  assert(rtc_init());
+  _ASSERT(rtc_init());
 #endif
 
 #if defined HAS_DCF77
@@ -446,11 +446,13 @@ void setup() {
   strcat_P(features, " BMP180");
 #endif
   if (bme_init())
-    ESP_LOGI(TAG, "Starting BME sensor...");
+    ESP_LOGI(TAG, "BME sensor initialized");
+  else
+    ESP_LOGE(TAG, "BME sensor could not be initialized");
 #endif
 
   // starting timers and interrupts
-  assert(irqHandlerTask != NULL); // has interrupt handler task started?
+  _ASSERT(irqHandlerTask != NULL); // has interrupt handler task started?
   ESP_LOGI(TAG, "Starting Timers...");
 
 // display interrupt
@@ -505,7 +507,7 @@ void setup() {
 #endif
 
   ESP_LOGI(TAG, "Starting Timekeeper...");
-  assert(timepulse_init()); // setup pps timepulse
+  _ASSERT(timepulse_init()); // setup pps timepulse
   timepulse_start();        // starts pps and cyclic time sync
 
 #endif // TIME_SYNC_INTERVAL

@@ -150,7 +150,7 @@ time_t get_gpstime(void) {
 // GPS serial feed FreeRTos Task
 void gps_loop(void *pvParameters) {
 
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+  _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
   while (1) {
 
