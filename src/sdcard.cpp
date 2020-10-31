@@ -27,7 +27,7 @@ bool sdcard_init() {
   //useSDCard = SD.begin(SDCARD_CS, SPI, 40000000, "/sd");
 
 #elif HAS_SDCARD == 2 // use SD MMC host driver
-gpio_set_pull_mode(gpio_num_t(SDCARD_DATA0), GPIO_PULLUP_ONLY);
+gpio_set_pull_mode(gpio_num_t(SDCARD_DATA0), GPIO_PULLUP_ONLY); // enable internal pullups of sd-data lines
 gpio_set_pull_mode(gpio_num_t(SDCARD_DATA1), GPIO_PULLUP_ONLY);
 gpio_set_pull_mode(gpio_num_t(SDCARD_DATA2), GPIO_PULLUP_ONLY);
 gpio_set_pull_mode(gpio_num_t(SDCARD_DATA3), GPIO_PULLUP_ONLY);
