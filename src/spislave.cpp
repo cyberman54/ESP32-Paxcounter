@@ -104,7 +104,7 @@ void spi_slave_task(void *param) {
 }
 
 esp_err_t spi_init() {
-  assert(SEND_QUEUE_SIZE);
+  _ASSERT(SEND_QUEUE_SIZE > 0);
   SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (SPISendQueue == 0) {
     ESP_LOGE(TAG, "Could not create SPI send queue. Aborting.");

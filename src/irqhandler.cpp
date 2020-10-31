@@ -6,7 +6,7 @@ static const char TAG[] = __FILE__;
 // irq handler task, handles all our application level interrupts
 void irqHandler(void *pvParameters) {
 
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+  _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
   uint32_t InterruptStatus;
 

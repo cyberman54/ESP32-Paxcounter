@@ -22,9 +22,8 @@
 #define LMIC_USE_INTERRUPTS 1
 #endif
 
-// avoid lmic warning if we don't configure radio because we don't have one
-#define CFG_sx1276_radio 1
-#if ! (defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio))
+// avoid lmic warning if we don't configure radio in case we haven't one
+#if !(defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio))
 #define CFG_sx1276_radio 1
 #endif
 
