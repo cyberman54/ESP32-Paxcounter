@@ -16,12 +16,12 @@
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 // enable only if you want to store a local paxcount table on the device
-#define HAS_SDCARD  2      // this board has an SD-card-reader/writer
+#define HAS_SDCARD  2      // this board has an SD-cardMMC-reader/writer
 #define SDCARD_CS    (13)
 #define SDCARD_MOSI  (15)
 #define SDCARD_MISO  (2)
 #define SDCARD_SCLK  (14)
-#define SDCARD_DATA0 SDCARD_MISO
+#define SDCARD_DATA0 SDCARD_MISO //Needs internal Pullups on DATA0-DATA3 (will work fine)
 #define SDCARD_CMD SDCARD_MOSI
 #define SDCARD_DATA1 (4)
 #define SDCARD_DATA2 (12)
