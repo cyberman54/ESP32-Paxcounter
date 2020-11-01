@@ -8,7 +8,10 @@
 #include "lorawan.h"
 #include "display.h"
 #include "sdcard.h"
+
+#if (COUNT_ENS)
 #include "corona.h"
+#endif
 
 extern Ticker sendTimer;
 

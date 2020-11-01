@@ -10,6 +10,10 @@
 #include "cyclic.h"
 #include "led.h"
 
+#if (COUNT_ENS)
+#include "corona.h"
+#endif
+
 #define MAC_SNIFF_WIFI 0
 #define MAC_SNIFF_BLE 1
 #define MAC_SNIFF_BLE_CWA 2
