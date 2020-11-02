@@ -39,9 +39,6 @@
 #define MY_DISPLAY_RST NOT_A_PIN
 //#define MY_DISPLAY_FLIP  1 // use if display is rotated
 
-// user defined sensors (if connected)
-//#define HAS_SENSORS 1 // comment out if device has user defined sensors
-
 //#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #endif

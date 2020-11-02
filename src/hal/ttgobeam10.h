@@ -52,9 +52,6 @@ Reset -> reset device
 //#define HAS_BME680 SDA, SCL
 //#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
 
-// user defined sensors (if connected)
-//#define HAS_SENSORS 1 // comment out if device has user defined sensors
-
 //#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #endif
