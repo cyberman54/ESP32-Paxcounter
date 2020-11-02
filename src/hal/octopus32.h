@@ -20,9 +20,6 @@
 #define HAS_BME680 GPIO_NUM_23, GPIO_NUM_22 // SDA, SCL
 #define BME680_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
 
-// user defined sensors
-//#define HAS_SENSORS 1 // comment out if device has user defined sensors
-
 #define HAS_LED        13  // ESP32 GPIO12 (pin22) On Board LED
 //#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 //#define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, 1, GPIO_NUM_13) // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED

@@ -25,9 +25,6 @@
 #define SDCARD_MISO  MISO
 #define SDCARD_SCLK  SCK
 
-// user defined sensors
-//#define HAS_SENSORS 1 // comment out if device has user defined sensors
-
 #define CFG_sx1276_radio 1 // select LoRa chip
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 

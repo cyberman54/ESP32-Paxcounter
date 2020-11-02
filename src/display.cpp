@@ -67,7 +67,7 @@ void dp_setup(int contrast) {
                       MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA,
                       MY_DISPLAY_SCL, MY_DISPLAY_RST,
                       OLED_FREQUENCY); // use standard I2C bus at 400Khz
-  _ASSERT (rc != OLED_NOT_FOUND);
+  _ASSERT(rc != OLED_NOT_FOUND);
 
   // set display buffer
   obdSetBackBuffer(&ssoled, displaybuf);
@@ -94,7 +94,7 @@ void dp_init(bool verbose) {
 #if (HAS_DISPLAY) == 1 // i2c
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
 #endif
 
@@ -190,7 +190,7 @@ void dp_refresh(bool nextPage) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
@@ -265,10 +265,12 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
-      if (!cfg.enscount)
-        dp_printf("BLTH:%-5d", macs_ble);
-      else
+#if (COUNT_ENS)
+      if (cfg.enscount)
         dp_printf(" CWA:%-5d", cwa_report());
+      else
+#endif
+        dp_printf("BLTH:%-5d", macs_ble);
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
@@ -277,11 +279,13 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
-    if (cfg.blescan) {
+    if (cfg.blescan)
       dp_printf("BLTH:%-5d", macs_ble);
-      if (cfg.enscount)
-        dp_printf("(CWA:%d)", cwa_report());
-    } else
+#if (COUNT_ENS)
+    if (cfg.enscount)
+      dp_printf("(CWA:%d)", cwa_report());
+    else
+#endif
       dp_printf("BLTH:off");
 #else
     dp_printf("Sniffer disabled");
@@ -596,7 +600,7 @@ void dp_shutdown(void) {
 #if (HAS_DISPLAY) == 1
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
     cfg.screenon = 0;
     obdPower(&ssoled, false);

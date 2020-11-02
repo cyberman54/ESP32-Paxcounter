@@ -6,7 +6,6 @@
 #include "payload.h"
 #include "corona.h"
 #include "macsniff.h"
-
 extern PayloadConvert payload;
 #endif
 

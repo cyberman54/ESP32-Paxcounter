@@ -540,23 +540,6 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
   } // switch
 }
 
-/*
-// event EV_TXCOMPLETE message handler
-void myTxCallback(void *pUserData, int fSuccess) {
-
-  uint8_t *const pMsg = (uint8_t *)pUserData;
-
-  // LMIC did successful transmit data
-  if (fSuccess) {
-    RTCseqnoUp = LMIC.seqnoUp;
-    RTCseqnoDn = LMIC.seqnoDn;
-  } else {
-    // LMIC could not transmit data
-    // -> error handling yet to come
-  }
-}
-*/
-
 const char *getSfName(rps_t rps) {
   const char *const t[] = {"FSK",  "SF7",  "SF8",  "SF9",
                            "SF10", "SF11", "SF12", "SF?"};

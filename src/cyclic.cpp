@@ -33,7 +33,10 @@ void doHousekeeping() {
     }
   }
 
-  // task storage debugging //
+  // heap and task storage debugging
+  ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
+           ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
+           ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
@@ -130,15 +133,7 @@ void doHousekeeping() {
 
 } // doHousekeeping()
 
-// uptime counter 64bit to prevent millis() rollover after 49 days
-uint64_t uptime() {
-  static uint32_t low32, high32;
-  uint32_t new_low32 = millis();
-  if (new_low32 < low32)
-    high32++;
-  low32 = new_low32;
-  return (uint64_t)high32 << 32 | low32;
-}
+uint64_t uptime() { return _millis(); }
 
 uint32_t getFreeRAM() {
 #ifndef BOARD_HAS_PSRAM
