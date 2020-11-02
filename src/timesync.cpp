@@ -47,7 +47,7 @@ void timesync_request(void) {
   // start timesync handshake
   else {
     ESP_LOGI(TAG, "[%0.3f] Timeserver sync request started, seqNo#%d",
-             millis() / 1000.0, time_sync_seqNo);
+             _seconds(), time_sync_seqNo);
     xTaskNotifyGive(timeSyncProcTask); // unblock timesync task
   }
 }
@@ -98,14 +98,14 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
       if (xTaskNotifyWait(0x00, ULONG_MAX, &rcv_seqNo,
                           pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) {
         ESP_LOGW(TAG, "[d%0.3f] Timesync aborted: timed out",
-                 millis() / 1000.0);
+                 _seconds());
         goto Fail; // no timestamp received before timeout
       }
 
       // check if we are in handshake with server
       if (rcv_seqNo != time_sync_seqNo) {
         ESP_LOGW(TAG, "[%0.3f] Timesync aborted: handshake out of sync",
-                 millis() / 1000.0);
+                 _seconds());
         goto Fail;
       }
 
@@ -166,7 +166,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
 // store incoming timestamps
 void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
-  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", millis() / 1000.0,
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", _seconds(),
            time_sync_seqNo, sample_idx, timestamp_type, timestamp);
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
@@ -214,10 +214,10 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   if (flag != TIME_SYNC_FRAME_LENGTH) {
     if (rcv_seqNo == TIME_SYNC_END_FLAG)
       ESP_LOGI(TAG, "[%0.3f] Timeserver error: no confident time available",
-               millis() / 1000.0);
+               _seconds());
     else
       ESP_LOGW(TAG, "[%0.3f] Timeserver error: spurious data received",
-               millis() / 1000.0);
+               _seconds());
     goto Exit; // failure
   }
 
@@ -233,13 +233,13 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
 
   if (flag != 1) {
     ESP_LOGW(TAG, "[%0.3f] Network did not answer time request",
-             millis() / 1000.0);
+             _seconds());
     goto Exit;
   }
 
   // Populate lmic_time_reference
   if ((LMIC_getNetworkTimeReference(&lmicTime)) != 1) {
-    ESP_LOGW(TAG, "[%0.3f] Network time request failed", millis() / 1000.0);
+    ESP_LOGW(TAG, "[%0.3f] Network time request failed", _seconds());
     goto Exit;
   }
 
@@ -267,7 +267,7 @@ Finish:
     rc = 1;
   } else {
     ESP_LOGW(TAG, "[%0.3f] Timeserver error: outdated time received",
-             millis() / 1000.0);
+             _seconds());
   }
 
 Exit:

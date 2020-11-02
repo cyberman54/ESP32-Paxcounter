@@ -109,7 +109,7 @@ uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     return ret;
   } else {
-    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
     return 0xFF;
   }
 }
@@ -128,7 +128,7 @@ uint8_t i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
     I2C_MUTEX_UNLOCK(); // release i2c bus access
     return ret ? ret : 0xFF;
   } else {
-    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGW(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
     return 0xFF;
   }
 }

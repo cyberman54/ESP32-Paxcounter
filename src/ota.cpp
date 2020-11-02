@@ -178,9 +178,9 @@ int do_ota_update() {
     client.print("Cache-Control: no-cache\r\n");
     client.print("Connection: close\r\n\r\n");
 
-    unsigned long timeout = millis();
+    unsigned long timeout = _millis();
     while (client.available() == 0) {
-      if ((millis() - timeout) > (RESPONSE_TIMEOUT_MS)) {
+      if ((_millis() - timeout) > (RESPONSE_TIMEOUT_MS)) {
         ESP_LOGI(TAG, "Client timeout");
         ota_display(3, " E", "client timeout");
         goto abort;

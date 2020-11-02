@@ -94,7 +94,7 @@ void dp_init(bool verbose) {
 #if (HAS_DISPLAY) == 1 // i2c
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
 #endif
 
@@ -190,7 +190,7 @@ void dp_refresh(bool nextPage) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
@@ -600,7 +600,7 @@ void dp_shutdown(void) {
 #if (HAS_DISPLAY) == 1
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
     cfg.screenon = 0;
     obdPower(&ssoled, false);
