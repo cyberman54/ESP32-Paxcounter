@@ -344,7 +344,7 @@ void setup() {
   strcat_P(features, " LORA");
   // kick off join, except we come from sleep
   _ASSERT(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
-         ESP_OK);
+          ESP_OK);
 #endif
 
 // initialize SPI
@@ -490,12 +490,9 @@ void setup() {
   sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
-#if (TIME_SYNC_INTERVAL)
-
-#if (!(TIME_SYNC_LORAWAN) && !(TIME_SYNC_LORASERVER) && !defined HAS_GPS &&    \
-     !defined HAS_RTC)
-#warning you did not specify a time source, time will not be synched
-#endif
+// only if we have a timesource we do timesync
+#if ((TIME_SYNC_LORAWAN) || (TIME_SYNC_LORASERVER) || (HAS_GPS) ||             \
+     defined HAS_RTC)
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting Clock Controller...");
@@ -508,9 +505,11 @@ void setup() {
 
   ESP_LOGI(TAG, "Starting Timekeeper...");
   _ASSERT(timepulse_init()); // setup pps timepulse
-  timepulse_start();        // starts pps and cyclic time sync
+  timepulse_start();         // starts pps and cyclic time sync
 
-#endif // TIME_SYNC_INTERVAL
+  strcat_P(features, "TIME");
+
+#endif // timesync
 
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
