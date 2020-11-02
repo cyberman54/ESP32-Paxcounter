@@ -31,18 +31,18 @@
 #define HAS_ANTENNA_SWITCH  (21) // pin for switching wifi antenna (P12)
 #define WIFI_ANTENNA 0    // 0 = internal, 1 = external
 
-// uncomment this only if your LoPy runs on a PYTRACK BOARD
+// uncomment defines in this section ONLY if your LoPy lives  on a PYTRACK BOARD
 //#define HAS_GPS 1
 //#define GPS_I2C GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
 //#define GPS_ADDR 0x10
 
-// uncomment this only if your LoPy runs on a EXPANSION BOARD
-#define HAS_LED (12) // use if LoPy is on Expansion Board, this has a user LED
-#define LED_ACTIVE_LOW 1 // use if LoPy is on Expansion Board, this has a user LED
-#define HAS_BUTTON (13) // user button on expansion board
-#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
-#define BAT_MEASURE_ADC ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
-#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 1MOhm/1MOhm -> expansion board 3.0
+// uncomment defines in this section ONLY if your LoPy lives on a EXPANSION BOARD
+//#define HAS_LED (12) // use if LoPy is on Expansion Board, this has a user LED
+//#define LED_ACTIVE_LOW 1 // use if LoPy is on Expansion Board, this has a user LED
+//#define HAS_BUTTON (13) // user button on expansion board
+//#define BUTTON_PULLUP 1  // Button need pullup instead of default pulldown
+//#define BAT_MEASURE_ADC ADC1_GPIO39_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
+//#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 1MOhm/1MOhm -> expansion board 3.0
 //#define BAT_VOLTAGE_DIVIDER 4 // voltage divider 115kOhm/56kOhm -> expansion board 2.0
 
 #endif
