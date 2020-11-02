@@ -60,6 +60,9 @@
       ;                                                                        \
   }
 
+// emulate millis to avoid rollovers
+#define _millis() esp_timer_get_time() / 1000
+
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
 
