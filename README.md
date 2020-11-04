@@ -423,7 +423,7 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 
 	useful to clear pending commands from LoRaWAN server quere, or to check RSSI on device
 
-0x09 reset functions (send this command with confirmed ack only to avoid boot loops!)
+0x09 reset functions (send this command UNconfirmed only to avoid boot loops!)
 
 	0 = restart device (coldstart)
 	1 = reset MAC counter to zero
