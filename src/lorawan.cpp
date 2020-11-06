@@ -162,49 +162,7 @@ void os_getDevEui(u1_t *buf) {
   } else {
     gen_lora_deveui(buf); // generate DEVEUI from device's MAC
   }
-
-// Get MCP 24AA02E64 hardware DEVEUI (override default settings if found)
-#ifdef MCP_24AA02E64_I2C_ADDRESS
-  get_hard_deveui(buf);
-  RevBytes(buf, 8); // swap bytes to LSB format
 #endif
-#endif
-}
-
-void get_hard_deveui(uint8_t *pdeveui) {
-  // read DEVEUI from Microchip 24AA02E64 2Kb serial eeprom if present
-#ifdef MCP_24AA02E64_I2C_ADDRESS
-
-  uint8_t i2c_ret;
-
-  // Init this just in case, no more to 100KHz
-  Wire.begin(SDA, SCL, 100000);
-  Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
-  Wire.write(MCP_24AA02E64_MAC_ADDRESS);
-  i2c_ret = Wire.endTransmission();
-
-  // check if device was seen on i2c bus
-  if (i2c_ret == 0) {
-    char deveui[32] = "";
-    uint8_t data;
-
-    Wire.beginTransmission(MCP_24AA02E64_I2C_ADDRESS);
-    Wire.write(MCP_24AA02E64_MAC_ADDRESS);
-    Wire.endTransmission();
-
-    Wire.requestFrom(MCP_24AA02E64_I2C_ADDRESS, 8);
-    while (Wire.available()) {
-      data = Wire.read();
-      sprintf(deveui + strlen(deveui), "%02X ", data);
-      *pdeveui++ = data;
-    }
-    ESP_LOGI(TAG, "Serial EEPROM found, read DEVEUI %s", deveui);
-  } else
-    ESP_LOGI(TAG, "Could not read DEVEUI from serial EEPROM");
-
-  // Set back to 400KHz to speed up OLED
-  Wire.setClock(400000);
-#endif // MCP 24AA02E64
 }
 
 #if (VERBOSE)

@@ -105,8 +105,4 @@
 #define LORA_IO1  (33)
 #define LORA_IO2  LMIC_UNUSED_PIN
 
-// I2C config for Microchip 24AA02E64 DEVEUI unique address
-#define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 
-#define MCP_24AA02E64_MAC_ADDRESS 0xF8 // Memory adress of unique deveui 64 bits
-
 #endif
