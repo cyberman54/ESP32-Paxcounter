@@ -18,10 +18,6 @@
 #include "mallocator.h"
 #include <bsec.h>
 
-// sniffing types
-#define MAC_SNIFF_WIFI 0
-#define MAC_SNIFF_BLE 1
-
 // bits in payloadmask for filtering payload data
 #define GPS_DATA (0x01)
 #define ALARM_DATA (0x02)
@@ -75,6 +71,9 @@ enum runmode_t {
   RUNMODE_UPDATE
 };
 
+// sniffing types
+enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
+
 // Struct holding devices's runtime configuration
 // using packed to avoid compiler padding, because struct will be memcpy'd to
 // byte array
@@ -114,6 +113,13 @@ typedef struct {
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 
+// Struct for MAC processing queue
+typedef struct {
+  uint8_t mac[6];
+  int8_t rssi;
+  snifftype_t sniff_type;
+} MacBuffer_t;
+
 typedef struct {
   int32_t latitude;
   int32_t longitude;
@@ -151,7 +157,7 @@ extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
 extern SemaphoreHandle_t I2Caccess;
-extern TaskHandle_t irqHandlerTask, ClockTask;
+extern TaskHandle_t irqHandlerTask, ClockTask, macProcessTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;

@@ -35,9 +35,10 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 lmictask      1     2     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_proc 1     3     processes realtime time sync requests
-irqhandler    1     1     cyclic tasks (i.e. displayrefresh) triggered by timers
+irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
+macprocess    1     1     analyzes sniffed MACs
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -284,6 +285,10 @@ void setup() {
   if (RTC_runmode == RUNMODE_UPDATE)
     start_ota_update();
 #endif
+
+  // start mac processing task
+  ESP_LOGI(TAG, "Starting MAC processor...");
+  macQueueInit();
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or switch off bluetooth, if not compiled

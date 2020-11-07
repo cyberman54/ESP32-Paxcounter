@@ -6,14 +6,10 @@
 #define BT_BD_ADDR_HEX(addr)                                                   \
   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]
 
-// UUID of Exposure Notification Service (ENS)
-// see
-// https://blog.google/documents/70/Exposure_Notification_-_Bluetooth_Specification_v1.2.2.pdf
-static const char ensMagicBytes[] = "\x16\x6f\xfd";
-
 // local Tag for logging
 static const char TAG[] = "bluetooth";
 
+#ifdef VERBOSE
 const char *bt_addr_t_to_string(esp_ble_addr_type_t type) {
   switch (type) {
   case BLE_ADDR_TYPE_PUBLIC:
@@ -110,15 +106,24 @@ const char *btsig_gap_type(uint32_t gap_type) {
     return "Unknown type";
   }
 } // btsig_gap_type
+#endif
 
-// using IRAM_:ATTR here to speed up callback function
+// using IRAM_ATTR here to speed up callback function
 IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
                                     esp_ble_gap_cb_param_t *param) {
 
   esp_ble_gap_cb_param_t *p = (esp_ble_gap_cb_param_t *)param;
 
+#if (COUNT_ENS)
+  // UUID of Exposure Notification Service (ENS)
+  // https://blog.google/documents/70/Exposure_Notification_-_Bluetooth_Specification_v1.2.2.pdf
+  static const char ensMagicBytes[] = "\x16\x6f\xfd";
+#endif
+
+#ifdef VERBOSE
   ESP_LOGV(TAG, "BT payload rcvd -> type: 0x%.2x -> %s", *p->scan_rst.ble_adv,
            btsig_gap_type(*p->scan_rst.ble_adv));
+#endif
 
   switch (event) {
   case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:
@@ -138,11 +143,13 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
     if (p->scan_rst.search_evt ==
         ESP_GAP_SEARCH_INQ_RES_EVT) // Inquiry result for a peer device
     {                               // evaluate sniffed packet
+#ifdef VERBOSE
       ESP_LOGV(TAG, "Device address (bda): %02x:%02x:%02x:%02x:%02x:%02x",
                BT_BD_ADDR_HEX(p->scan_rst.bda));
       ESP_LOGV(TAG, "Addr_type           : %s",
                bt_addr_t_to_string(p->scan_rst.ble_addr_type));
       ESP_LOGV(TAG, "RSSI                : %d", p->scan_rst.rssi);
+#endif
 
       if ((cfg.rssilimit) &&
           (p->scan_rst.rssi < cfg.rssilimit)) { // rssi is negative value
@@ -154,26 +161,26 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
 #if (VENDORFILTER)
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
+#ifdef VERBOSE
         ESP_LOGV(TAG, "BT device filtered");
+#endif
         break;
       }
 #endif
 
-      // hash and add this device and show new count total if it was not
-      // previously added
+      // add this device mac to processing queue
 
 #if (COUNT_ENS)
-      uint16_t hashedmac =
-#endif
-
-          mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
-
-#if (COUNT_ENS)
+      // check for ens signature
       if (cfg.enscount) {
-        // check for ens signature
-        if (NULL != strstr((const char *)p->scan_rst.ble_adv, ensMagicBytes))
-          cwa_mac_add(hashedmac);
+        if (strstr((const char *)p->scan_rst.ble_adv, ensMagicBytes) != NULL)
+          mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi,
+                  MAC_SNIFF_BLE_ENS);
+        else
+          mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
       }
+#else
+      mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 #endif
 
       /* to be improved in vendorfilter if:
@@ -186,8 +193,8 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       // uint8_t *data = esp_ble_resolve_adv_data(p->scan_rst.ble_adv,
       ESP_BLE_AD_TYPE_NAME_CMPL, &len);
 
-      filter BLE devices using their advertisements to get filter alternative to
-      vendor OUI if vendorfiltering is on, we ...
+      filter BLE devices using their advertisements to get filter alternative
+      to vendor OUI if vendorfiltering is on, we ...
       - want to count: mobile phones and tablets
       - don't want to count: beacons, peripherals (earphones, headsets,
       printers), cars and machines see
@@ -211,13 +218,13 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
 
   default:
     break;
-  }
+  } // switch
 } // gap_callback_handler
 
 esp_err_t register_ble_callback(void) {
   ESP_LOGI(TAG, "Register GAP callback");
 
-  // This function is called to occur gap event, such as scan result.
+  // This function is called when gap event occurs, such as scan result.
   // register the scan callback function to the gap module
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(&gap_callback_handler));
 
