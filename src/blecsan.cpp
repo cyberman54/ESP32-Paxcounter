@@ -151,13 +151,6 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       ESP_LOGV(TAG, "RSSI                : %d", p->scan_rst.rssi);
 #endif
 
-      if ((cfg.rssilimit) &&
-          (p->scan_rst.rssi < cfg.rssilimit)) { // rssi is negative value
-        ESP_LOGI(TAG, "BLTH RSSI %d -> ignoring (limit: %d)", p->scan_rst.rssi,
-                 cfg.rssilimit);
-        break;
-      }
-
 #if (VENDORFILTER)
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
