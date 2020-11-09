@@ -26,7 +26,7 @@ typedef struct {
   uint8_t payload[0]; // network data ended with 4 bytes csum (CRC32)
 } wifi_ieee80211_packet_t;
 
-// using IRAM_:ATTR here to speed up callback function
+// using IRAM_ATTR here to speed up callback function
 IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
                                            wifi_promiscuous_pkt_type_t type) {
 
