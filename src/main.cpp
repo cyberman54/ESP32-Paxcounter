@@ -511,8 +511,7 @@ void setup() {
   ESP_LOGI(TAG, "Starting Timekeeper...");
   _ASSERT(timepulse_init()); // setup pps timepulse
   timepulse_start();         // starts pps and cyclic time sync
-
-  strcat_P(features, "TIME");
+  strcat_P(features, " TIME");
 
 #endif // timesync
 
