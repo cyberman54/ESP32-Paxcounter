@@ -292,7 +292,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 #endif
     dp_println();
 
-    // line 4: Battery + GPS status + Wifi channel
+    // line 4: Battery + GPS status + RF traffic
     // B:a.bcV Sats:ab ch:ab
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
     if (batt_level == 0)
@@ -310,7 +310,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 #else
     dp_printf("       ");
 #endif
-    dp_printf(" ch:%02d", channel);
+    dp_printf(" due:%02d", rf_load);
     dp_println();
 
     // line 5: RSSI limiter + free memory

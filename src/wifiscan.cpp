@@ -41,6 +41,7 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
 
 // Software-timer driven Wifi channel rotation callback function
 void switchWifiChannel(TimerHandle_t xTimer) {
+  static uint8_t channel = 0; // channel rotation counter
   _ASSERT(xTimer != NULL);
   channel =
       (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX

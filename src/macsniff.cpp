@@ -79,8 +79,12 @@ void mac_process(void *pvParameters) {
     if (xQueueReceive(MacQueue, &MacBuffer, portMAX_DELAY) != pdTRUE) {
       ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
       continue;
-    } else
-      mac_analyze(MacBuffer);
+    }
+
+    // update traffic indicator
+    rf_load = uxQueueMessagesWaiting(MacQueue);
+    // process fetched mac
+    mac_analyze(MacBuffer);
   }
   delay(2); // yield to CPU
 }

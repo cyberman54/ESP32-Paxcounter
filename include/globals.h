@@ -63,16 +63,13 @@
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
-
+enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 enum runmode_t {
-  RUNMODE_POWERCYCLE = 0,
+  RUNMODE_POWERCYCLE,
   RUNMODE_NORMAL,
   RUNMODE_WAKEUP,
   RUNMODE_UPDATE
 };
-
-// sniffing types
-enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 
 // Struct holding devices's runtime configuration
 // using packed to avoid compiler padding, because struct will be memcpy'd to
@@ -150,10 +147,10 @@ extern std::array<uint64_t, 0xff> beacons;
 
 extern configData_t cfg;                       // current device configuration
 extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
-extern uint8_t volatile channel;               // wifi channel rotation counter
-extern uint8_t batt_level;                     // display value
-extern uint16_t volatile macs_wifi, macs_ble;  // display values
-extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
+extern uint8_t volatile rf_load;              // RF traffic indicator
+extern uint8_t batt_level;                    // display value
+extern uint16_t volatile macs_wifi, macs_ble; // display values
+extern bool volatile TimePulseTick;           // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
 extern SemaphoreHandle_t I2Caccess;
