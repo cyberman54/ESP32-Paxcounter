@@ -55,7 +55,6 @@ Depending on board hardware following features are supported:
 - OLED Display (shows detailed status)
 - RGB LED (shows colorized status)
 - Button (short press: flip display page / long press: send alarm message)
-- Silicon unique ID
 - Battery voltage monitoring (analog read / AXP192 / IP5306)
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
 - Environmental sensors (Bosch BMP180/BME280/BME680 I2C; SDS011 serial)

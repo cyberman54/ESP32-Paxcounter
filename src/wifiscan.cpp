@@ -26,7 +26,7 @@ typedef struct {
   uint8_t payload[0]; // network data ended with 4 bytes csum (CRC32)
 } wifi_ieee80211_packet_t;
 
-// using IRAM_:ATTR here to speed up callback function
+// using IRAM_ATTR here to speed up callback function
 IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
                                            wifi_promiscuous_pkt_type_t type) {
 
@@ -35,16 +35,13 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
       (wifi_ieee80211_packet_t *)ppkt->payload;
   const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
 
-  if ((cfg.rssilimit) &&
-      (ppkt->rx_ctrl.rssi < cfg.rssilimit)) // rssi is negative value
-    ESP_LOGD(TAG, "WiFi RSSI %d -> ignoring (limit: %d)", ppkt->rx_ctrl.rssi,
-             cfg.rssilimit);
-  else // count seen MAC
-    mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
+  // process seen MAC
+  mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
 }
 
 // Software-timer driven Wifi channel rotation callback function
 void switchWifiChannel(TimerHandle_t xTimer) {
+  // static uint8_t channel = 0; // channel rotation counter
   _ASSERT(xTimer != NULL);
   channel =
       (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX

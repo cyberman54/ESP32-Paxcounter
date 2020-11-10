@@ -311,6 +311,7 @@ void dp_drawPage(time_t t, bool nextpage) {
     dp_printf("       ");
 #endif
     dp_printf(" ch:%02d", channel);
+    // dp_printf(" due:%02d", rf_load);
     dp_println();
 
     // line 5: RSSI limiter + free memory

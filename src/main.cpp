@@ -35,9 +35,10 @@ IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 lmictask      1     2     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
 timesync_proc 1     3     processes realtime time sync requests
-irqhandler    1     1     cyclic tasks (i.e. displayrefresh) triggered by timers
+irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
+macprocess    1     1     analyzes sniffed MACs
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -86,8 +87,9 @@ triggers pps 1 sec impulse
 
 configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
-uint8_t volatile channel = 0;           // channel rotation counter
 uint8_t batt_level = 0;                 // display value
+uint8_t volatile channel = 0;           // channel rotation counter
+uint8_t volatile rf_load = 0;           // RF traffic indicator
 uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
@@ -285,6 +287,10 @@ void setup() {
     start_ota_update();
 #endif
 
+  // start mac processing task
+  ESP_LOGI(TAG, "Starting MAC processor...");
+  macQueueInit();
+
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or switch off bluetooth, if not compiled
 #if (BLECOUNTER)
@@ -344,7 +350,7 @@ void setup() {
   strcat_P(features, " LORA");
   // kick off join, except we come from sleep
   _ASSERT(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
-         ESP_OK);
+          ESP_OK);
 #endif
 
 // initialize SPI
@@ -490,12 +496,9 @@ void setup() {
   sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
-#if (TIME_SYNC_INTERVAL)
-
-#if (!(TIME_SYNC_LORAWAN) && !(TIME_SYNC_LORASERVER) && !defined HAS_GPS &&    \
-     !defined HAS_RTC)
-#warning you did not specify a time source, time will not be synched
-#endif
+// only if we have a timesource we do timesync
+#if ((TIME_SYNC_LORAWAN) || (TIME_SYNC_LORASERVER) || (HAS_GPS) ||             \
+     defined HAS_RTC)
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting Clock Controller...");
@@ -508,9 +511,10 @@ void setup() {
 
   ESP_LOGI(TAG, "Starting Timekeeper...");
   _ASSERT(timepulse_init()); // setup pps timepulse
-  timepulse_start();        // starts pps and cyclic time sync
+  timepulse_start();         // starts pps and cyclic time sync
+  strcat_P(features, " TIME");
 
-#endif // TIME_SYNC_INTERVAL
+#endif // timesync
 
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);

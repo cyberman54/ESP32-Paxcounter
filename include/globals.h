@@ -18,10 +18,6 @@
 #include "mallocator.h"
 #include <bsec.h>
 
-// sniffing types
-#define MAC_SNIFF_WIFI 0
-#define MAC_SNIFF_BLE 1
-
 // bits in payloadmask for filtering payload data
 #define GPS_DATA (0x01)
 #define ALARM_DATA (0x02)
@@ -67,9 +63,9 @@
 
 enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
-
+enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 enum runmode_t {
-  RUNMODE_POWERCYCLE = 0,
+  RUNMODE_POWERCYCLE,
   RUNMODE_NORMAL,
   RUNMODE_WAKEUP,
   RUNMODE_UPDATE
@@ -114,6 +110,13 @@ typedef struct {
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 
+// Struct for MAC processing queue
+typedef struct {
+  uint8_t mac[6];
+  int8_t rssi;
+  snifftype_t sniff_type;
+} MacBuffer_t;
+
 typedef struct {
   int32_t latitude;
   int32_t longitude;
@@ -145,13 +148,14 @@ extern std::array<uint64_t, 0xff> beacons;
 extern configData_t cfg;                       // current device configuration
 extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 extern uint8_t volatile channel;               // wifi channel rotation counter
+extern uint8_t volatile rf_load;               // RF traffic indicator
 extern uint8_t batt_level;                     // display value
 extern uint16_t volatile macs_wifi, macs_ble;  // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
 extern SemaphoreHandle_t I2Caccess;
-extern TaskHandle_t irqHandlerTask, ClockTask;
+extern TaskHandle_t irqHandlerTask, ClockTask, macProcessTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;

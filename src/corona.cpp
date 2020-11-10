@@ -23,18 +23,13 @@ static std::map<uint16_t, unsigned long> cwaSeenNotifiers;
 
 // Remove notifiers last seen over FORGET_AFTER_MINUTES ago.
 void cwa_clear() {
-  /*
-
-    #ifdef SOME_FORM_OF_DEBUG
-  ESP_LOGD(TAG, "CWA: forget old notifier: %d", cwaSeenNotifiers.size());
-    for (auto const &notifier : cwaSeenNotifiers) {
-      ESP_LOGD(TAG, "CWA forget <%X>", notifier.first);
-      //    }
-    }
-  #endif
-
-  */
-
+#ifdef VERBOSE
+  ESP_LOGV(TAG, "CWA: forget old notifier: %d", cwaSeenNotifiers.size());
+  for (auto const &notifier : cwaSeenNotifiers) {
+    ESP_LOGD(TAG, "CWA forget <%04X>", notifier.first);
+    //    }
+  }
+#endif
   // clear everything, otherwise we would count the same device again, as in the
   // next cycle it likely will advertise with a different hash-value
   cwaSeenNotifiers.clear();
