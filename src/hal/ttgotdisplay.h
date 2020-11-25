@@ -1,6 +1,6 @@
 // clang-format off
-// upload_speed 921600
-// board m5stack-core-esp32
+// upload_speed 1500000
+// board esp32dev
 
 #ifndef _TTGOTDISPLAY_H
 #define _TTGOTDISPLAY_H
@@ -9,11 +9,11 @@
 
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
-#define HAS_DISPLAY 2 // TFT-LCD, support work in progess, not ready yet
-//#define MY_DISPLAY_FLIP  1 // use if display is rotated
+#define HAS_DISPLAY 2      // TFT-LCD, support work in progess, not ready yet
+#define MY_DISPLAY_FLIP  1 // use if display is rotated
 
-#define HAS_LED NOT_A_PIN // no on board LED (?)
-#define HAS_BUTTON (35) // on board button A
+#define HAS_LED NOT_A_PIN  // no on board LED (?)
+#define HAS_BUTTON (35)    // on board button A
 
 // power management settings
 #define HAS_IP5306 1 // has IP5306 chip
@@ -27,17 +27,17 @@
 #define MY_DISPLAY_HEIGHT 240
 #define MY_DISPLAY_INVERT 1
 
-// setting for M5 display
+// setting for TTGO T-display
 #define USER_SETUP_LOADED 1
 #define ST7789_DRIVER 1
 
 #define CGRAM_OFFSET
 
-#define TFT_MOSI MOSI // SPI
-#define TFT_SCLK CLK  // SPI
+#define TFT_MOSI GPIO_NUM_19 // SPI
+#define TFT_SCLK GPIO_NUM_18 // SPI
 #define TFT_CS   GPIO_NUM_5  // Chip select control
-#define TFT_DC   GPIO_NUM_16  // Data Command control
-#define TFT_RST  GPIO_NUM_23  // Reset
+#define TFT_DC   GPIO_NUM_16 // Data Command control
+#define TFT_RST  GPIO_NUM_23 // Reset
 #define TFT_BL   GPIO_NUM_4  // LED back-light
 
 #define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
