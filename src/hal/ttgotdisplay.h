@@ -16,11 +16,8 @@
 #define HAS_BUTTON (35)    // on board button A
 
 // power management settings
-#define HAS_IP5306 1 // has IP5306 chip
-#define PMU_CHG_CURRENT 2 // battery charge current
-// possible values: 0:200mA, 1:400mA, *2:500mA, 3:600mA
-#define PMU_CHG_CUTOFF 0 // battery charge cutoff
-// possible values: *0:4.2V, 1:4.3V, 2:4.35V, 3:4.4V
+#define BAT_MEASURE_ADC ADC1_GPIO34_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_6
+#define BAT_VOLTAGE_DIVIDER 2.7620f // voltage divider 100k/100k on board
 
 // Display Settings
 #define MY_DISPLAY_WIDTH 135
