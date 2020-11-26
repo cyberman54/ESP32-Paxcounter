@@ -134,7 +134,7 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
   uint32_t *oui; // temporary buffer for vendor OUI
   oui = (uint32_t *)MacBuffer.mac;
   // if we find OUI on vendor filter list we don't analyze and return early
-  if (std::find(vendors.begin(), vendors.end(), __builtin_bswap32(*oui) >> 8) !=
+  if (std::find(vendors.begin(), vendors.end(), __builtin_bswap32(*oui) >> 8) ==
       vendors.end())
     return 0;
 #endif
