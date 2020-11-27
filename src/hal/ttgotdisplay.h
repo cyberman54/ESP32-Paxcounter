@@ -17,7 +17,7 @@
 
 // power management settings
 #define BAT_MEASURE_ADC ADC1_GPIO34_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_6
-#define BAT_VOLTAGE_DIVIDER 2.7620f // voltage divider 100k/100k on board
+#define BAT_VOLTAGE_DIVIDER 2.605f           // voltage divider
 
 // Display Settings
 #define MY_DISPLAY_WIDTH 135
