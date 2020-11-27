@@ -53,7 +53,7 @@ QRCode qrcode;
 #if (HAS_DISPLAY) == 1
 OBDISP ssoled;
 #elif (HAS_DISPLAY) == 2
-TFT_eSPI tft = TFT_eSPI();
+TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
 #else
 #error Unknown display type specified in hal file
 #endif
