@@ -47,12 +47,10 @@ void AXP192_powerevent_IRQ(void) {
   if (pmu.isBattTempHighIRQ())
     ESP_LOGI(TAG, "Battery low temperature.");
 
-// short press -> esp32 deep sleep mode, can be exited by pressing user button
-#ifdef HAS_BUTTON
+  // short press -> esp32 deep sleep mode, can be exited by pressing user button
   if (pmu.isPEKShortPressIRQ() && (RTC_runmode == RUNMODE_NORMAL)) {
     enter_deepsleep(0, HAS_BUTTON);
   }
-#endif
 
   // long press -> shutdown power, can be exited by another longpress
   if (pmu.isPEKLongtPressIRQ()) {
@@ -85,10 +83,12 @@ void AXP192_power(pmu_power_t powerlevel) {
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF); // lora off
     break;
 
-  default:                                       // all rails power on
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);  // Lora on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);  // Gps on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON); // OLED on T-Beam v1.0
+  default:                                        // all rails power on
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);   // Lora on T-Beam V1.0
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);   // Gps on T-Beam V1.0
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);  // OLED on T-Beam v1.0
+    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF); // unused on T-Beam v1.0
+    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF); // unused on T-Beam v1.0
     pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
     break;
   }
@@ -121,6 +121,8 @@ void AXP192_init(void) {
 
     // configure AXP192
     pmu.setDCDC1Voltage(3300);              // for external OLED display
+    pmu.setLDO2Voltage(3300);               // LORA VDD 3v3
+    pmu.setLDO3Voltage(3300);               // GPS VDD 3v3
     pmu.setTimeOutShutdown(false);          // no automatic shutdown
     pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE); // TS pin mode off to save power
 
@@ -138,7 +140,8 @@ void AXP192_init(void) {
     attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
     pmu.enableIRQ(AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ |
                       AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ |
-                      AXP202_CHARGING_FINISHED_IRQ,
+                      AXP202_CHARGING_FINISHED_IRQ | AXP202_PEK_SHORTPRESS_IRQ |
+                      AXP202_PEK_LONGPRESS_IRQ,
                   1);
     pmu.clearIRQ();
 #endif // PMU_INT
