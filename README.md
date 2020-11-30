@@ -48,6 +48,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
 - Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
+- TTGO: [T-Display](https://www.aliexpress.com/item/33048962331.html)
 - Generic ESP32
 
 Depending on board hardware following features are supported:
@@ -422,7 +423,7 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 
 	useful to clear pending commands from LoRaWAN server quere, or to check RSSI on device
 
-0x09 reset functions (send this command with confirmed ack only to avoid boot loops!)
+0x09 reset functions (send this command UNconfirmed only to avoid boot loops!)
 
 	0 = restart device (coldstart)
 	1 = reset MAC counter to zero
