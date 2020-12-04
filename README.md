@@ -515,6 +515,11 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
     0 = disabled [default]
     1 = enabled
 
+0x19 set sleep cycle
+
+	0 ... 255 device sleep cycle in seconds/2
+	e.g. 120 -> device sleeps 240 seconds after each send cycle [default = 0]
+
 0x80 get device configuration
 
 	Device answers with it's current configuration on Port 3. 

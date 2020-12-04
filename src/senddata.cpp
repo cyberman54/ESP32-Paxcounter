@@ -188,6 +188,10 @@ void sendData() {
     mask <<= 1;
   } // while (bitmask)
 
+  // goto sleep if we have a sleep cycle
+  if ((cfg.sleepcycle) && (RTC_runmode == RUNMODE_NORMAL))
+    enter_deepsleep(cfg.sleepcycle * 2, HAS_BUTTON);
+
 } // sendData()
 
 void flushQueues() {

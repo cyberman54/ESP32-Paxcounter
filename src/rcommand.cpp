@@ -54,6 +54,12 @@ void set_sendcycle(uint8_t val[]) {
            cfg.sendcycle * 2);
 }
 
+void set_sleepcycle(uint8_t val[]) {
+  cfg.sleepcycle = val[0];
+  ESP_LOGI(TAG, "Remote command: set sleep cycle to %d seconds",
+           cfg.sleepcycle * 2);
+}
+
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
   // update Wifi channel rotation timer period
@@ -365,10 +371,11 @@ static const cmd_t table[] = {
     {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},
     {0x15, set_bme, 1, true},           {0x16, set_batt, 1, true},
     {0x17, set_wifiscan, 1, true},      {0x18, set_enscount, 1, true},
-    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
-    {0x83, get_batt, 0, false},         {0x84, get_gps, 0, false},
-    {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
-    {0x87, set_time, 0, false},         {0x99, set_flush, 0, false}};
+    {0x19, set_sleepcycle, 1, true},    {0x80, get_config, 0, false},
+    {0x81, get_status, 0, false},       {0x83, get_batt, 0, false},
+    {0x84, get_gps, 0, false},          {0x85, get_bme, 0, false},
+    {0x86, get_time, 0, false},         {0x87, set_time, 0, false},
+    {0x99, set_flush, 0, false}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table

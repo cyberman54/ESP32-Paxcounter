@@ -69,12 +69,12 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   if ((!wakeup_sec) && (!wakeup_gpio) && (RTC_runmode == RUNMODE_NORMAL))
     return;
 
-// assure LMIC is in safe state
+// wait until LMIC is in safe state before going to sleep
 #if (HAS_LORA)
-  if (os_queryTimeCriticalJobs(ms2osticks(10000)))
-    return;
+  while (os_queryTimeCriticalJobs(ms2osticks(wakeup_sec * 1000)))
+    vTaskDelay(pdMS_TO_TICKS(100));
 
-    // to be done: save LoRaWAN channel configuration here
+    // to be done: save current LoRaWAN configuration here
 
 #endif
 
@@ -99,10 +99,15 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   dp_shutdown();
 #endif
 
-// switch off wifi & ble
+/*
+// switch off radio
 #if (BLECOUNTER)
-  stop_BLEscan();
+  btStop();
 #endif
+#if (WIFICOUNTER)
+  switch_wifi_sniffer(0);
+#endif
+*/
 
 // reduce power if has PMU
 #ifdef HAS_PMU
