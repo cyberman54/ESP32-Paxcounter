@@ -79,8 +79,8 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
 #endif
 
   // set up power domains
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
-
+  //esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
+  
   // set wakeup timer
   if (wakeup_sec)
     esp_sleep_enable_timer_wakeup(wakeup_sec * 1000000);
@@ -99,15 +99,14 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   dp_shutdown();
 #endif
 
-/*
 // switch off radio
 #if (BLECOUNTER)
+  stop_BLEscan();
   btStop();
 #endif
 #if (WIFICOUNTER)
   switch_wifi_sniffer(0);
 #endif
-*/
 
 // reduce power if has PMU
 #ifdef HAS_PMU

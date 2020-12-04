@@ -77,7 +77,7 @@ void AXP192_power(pmu_power_t powerlevel) {
     break;
 
   case pmu_power_sleep:
-    pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
+    pmu.setChgLEDMode(AXP20X_LED_OFF);
     // we don't cut off DCDC1, because then display blocks i2c bus
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF); // gps off
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF); // lora off
