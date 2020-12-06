@@ -13,7 +13,7 @@ for T-Beam version T22_V10 + T22_V11
 pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
 
 /// Button functions: ///
-Power, short press -> set device on (toggles display while device is on)
+Power, short press -> set device on / while device is on: goto sleep
 Power, long press -> set device off
 User, short press -> flip display page 
 User, long press -> send LORA message
@@ -29,7 +29,7 @@ Reset -> reset device
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define HAS_BUTTON GPIO_NUM_38 // middle on board button
-#define HAS_LED NOT_A_PIN
+#define HAS_LED GPIO_NUM_4 // not present on all T-Beam 1.0 boards
 
 // power management settings
 #define HAS_PMU 1 // has AXP192 chip
