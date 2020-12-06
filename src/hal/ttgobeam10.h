@@ -20,7 +20,7 @@ User, long press -> send LORA message
 Reset -> reset device
 */
 
-//#define HAS_DISPLAY 1
+#define HAS_DISPLAY 1
 #define MY_DISPLAY_SDA SDA
 #define MY_DISPLAY_SCL SCL
 #define MY_DISPLAY_RST NOT_A_PIN
@@ -30,6 +30,7 @@ Reset -> reset device
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define HAS_BUTTON GPIO_NUM_38 // middle on board button
 #define HAS_LED GPIO_NUM_4 // not present on all T-Beam 1.0 boards
+#define LED_ACTIVE_LOW 1
 
 // power management settings
 #define HAS_PMU 1 // has AXP192 chip
@@ -48,9 +49,9 @@ Reset -> reset device
 
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
-//#define HAS_BME 1 // Enable BME sensors in general
-//#define HAS_BME680 SDA, SCL
-//#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
+#define HAS_BME 1 // Enable BME sensors in general
+#define HAS_BME680 SDA, SCL
+#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
 
 //#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
