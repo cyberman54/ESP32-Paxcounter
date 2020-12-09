@@ -150,24 +150,7 @@ void mqtt_client_task(void *param) {
 
 void mqtt_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in MQTT send queue
-  BaseType_t ret;
-  MessageBuffer_t DummyBuffer;
-  sendprio_t prio = message->MessagePrio;
-
-  switch (prio) {
-  case prio_high:
-    // clear space in queue if full, then fallthrough to normal
-    if (!uxQueueSpacesAvailable(MQTTSendQueue))
-      xQueueReceive(MQTTSendQueue, &DummyBuffer, (TickType_t)0);
-  case prio_normal:
-    ret = xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0);
-    break;
-  case prio_low:
-  default:
-    ret = xQueueSendToFront(MQTTSendQueue, (void *)message, (TickType_t)0);
-    break;
-  }
-  if (ret != pdTRUE)
+  if (xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0) != pdTRUE)
     ESP_LOGW(TAG, "MQTT sendqueue is full");
 }
 

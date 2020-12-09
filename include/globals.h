@@ -61,7 +61,6 @@
 #define _micros() esp_timer_get_time()
 #define _seconds() _millis() / 1000.0
 
-enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
 enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 enum runmode_t {
@@ -107,7 +106,6 @@ typedef struct __attribute__((packed)) {
 typedef struct {
   uint8_t MessageSize;
   uint8_t MessagePort;
-  sendprio_t MessagePrio;
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 

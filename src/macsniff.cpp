@@ -126,7 +126,7 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
 #endif
       payload.reset();
       payload.addAlarm(MacBuffer.rssi, beaconID);
-      SendPayload(BEACONPORT, prio_high);
+      SendPayload(BEACONPORT);
     }
   };
 

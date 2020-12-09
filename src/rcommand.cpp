@@ -279,7 +279,7 @@ void get_config(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  SendPayload(CONFIGPORT, prio_high);
+  SendPayload(CONFIGPORT);
 };
 
 void get_status(uint8_t val[]) {
@@ -288,7 +288,7 @@ void get_status(uint8_t val[]) {
   payload.addStatus(read_voltage(), uptime() / 1000, temperatureRead(),
                     getFreeRAM(), rtc_get_reset_reason(0),
                     rtc_get_reset_reason(1));
-  SendPayload(STATUSPORT, prio_high);
+  SendPayload(STATUSPORT);
 };
 
 void get_gps(uint8_t val[]) {
@@ -298,7 +298,7 @@ void get_gps(uint8_t val[]) {
   gps_storelocation(&gps_status);
   payload.reset();
   payload.addGPS(gps_status);
-  SendPayload(GPSPORT, prio_high);
+  SendPayload(GPSPORT);
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif
@@ -309,7 +309,7 @@ void get_bme(uint8_t val[]) {
 #if (HAS_BME)
   payload.reset();
   payload.addBME(bme_status);
-  SendPayload(BMEPORT, prio_high);
+  SendPayload(BMEPORT);
 #else
   ESP_LOGW(TAG, "BME sensor not supported");
 #endif
@@ -320,7 +320,7 @@ void get_batt(uint8_t val[]) {
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   payload.reset();
   payload.addVoltage(read_voltage());
-  SendPayload(BATTPORT, prio_normal);
+  SendPayload(BATTPORT);
 #else
   ESP_LOGW(TAG, "Battery voltage not supported");
 #endif
@@ -331,7 +331,7 @@ void get_time(uint8_t val[]) {
   payload.reset();
   payload.addTime(now());
   payload.addByte(timeStatus() << 4 | timeSource);
-  SendPayload(TIMEPORT, prio_high);
+  SendPayload(TIMEPORT);
 };
 
 void set_time(uint8_t val[]) {

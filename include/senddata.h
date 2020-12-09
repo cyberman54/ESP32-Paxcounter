@@ -15,7 +15,7 @@
 
 extern Ticker sendTimer;
 
-void SendPayload(uint8_t port, sendprio_t prio);
+void SendPayload(uint8_t port);
 void sendData(void);
 void checkSendQueues(void);
 void flushQueues(void);

@@ -96,7 +96,7 @@ void spi_slave_task(void *param) {
     ESP_LOG_BUFFER_HEXDUMP(TAG, rxbuf, transaction_size, ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Transaction finished with size %zu bits",
              spi_transaction.trans_len);
-             
+
     // delete sent item from queue
     xQueueReceive(SPISendQueue, &msg, (TickType_t)0);
 
@@ -153,24 +153,7 @@ esp_err_t spi_init() {
 
 void spi_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in SPI send queue
-  BaseType_t ret;
-  MessageBuffer_t DummyBuffer;
-  sendprio_t prio = message->MessagePrio;
-
-  switch (prio) {
-  case prio_high:
-    // clear space in queue if full, then fallthrough to normal
-    if (!uxQueueSpacesAvailable(SPISendQueue))
-      xQueueReceive(SPISendQueue, &DummyBuffer, (TickType_t)0);
-  case prio_normal:
-    ret = xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
-    break;
-  case prio_low:
-  default:
-    ret = xQueueSendToFront(SPISendQueue, (void *)message, (TickType_t)0);
-    break;
-  }
-  if (ret != pdTRUE)
+  if (xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0) != pdTRUE)
     ESP_LOGW(TAG, "SPI sendqueue is full");
 }
 

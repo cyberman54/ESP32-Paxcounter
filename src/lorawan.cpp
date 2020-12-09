@@ -230,7 +230,7 @@ void lora_send(void *pvParameters) {
 
     }         // switch
     delay(2); // yield to CPU
-  } // while(1)
+  }           // while(1)
 }
 
 esp_err_t lmic_init(void) {
@@ -318,26 +318,8 @@ esp_err_t lmic_init(void) {
 
 void lora_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in LORA send queue
-  BaseType_t ret = pdFALSE;
-  MessageBuffer_t DummyBuffer;
-  sendprio_t prio = message->MessagePrio;
-
-  switch (prio) {
-  case prio_high:
-    // clear some space in queue if full, then fallthrough to prio_normal
-    if (uxQueueSpacesAvailable(LoraSendQueue) == 0) {
-      xQueueReceive(LoraSendQueue, &DummyBuffer, (TickType_t)0);
-      ESP_LOGW(TAG, "LORA sendqueue purged, data is lost");
-    }
-  case prio_normal:
-    ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
-    break;
-  case prio_low:
-  default:
-    ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
-    break;
-  }
-  if (ret != pdTRUE) {
+  if (xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0) !=
+      pdTRUE) {
     snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "<>");
     ESP_LOGW(TAG, "LORA sendqueue is full");
   } else {
