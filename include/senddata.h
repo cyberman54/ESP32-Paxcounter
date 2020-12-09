@@ -18,7 +18,8 @@ extern Ticker sendTimer;
 void SendPayload(uint8_t port, sendprio_t prio);
 void sendData(void);
 void checkSendQueues(void);
-void flushQueues();
+void flushQueues(void);
+bool allQueuesEmtpy(void);
 void setSendIRQ(void);
 
 #endif // _SENDDATA_H_

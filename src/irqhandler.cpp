@@ -95,6 +95,13 @@ void irqHandler(void *pvParameters) {
     if (InterruptStatus & SENDCYCLE_IRQ) {
       sendData();
       InterruptStatus &= ~SENDCYCLE_IRQ;
+      // goto sleep if we have a sleep cycle
+      if (cfg.sleepcycle)
+#ifdef HAS_BUTTON
+        enter_deepsleep(cfg.sleepcycle * 2, HAS_BUTTON);
+#else
+        enter_deepsleep(cfg.sleepcycle * 2);
+#endif
     }
   } // for
 } // irqHandler()

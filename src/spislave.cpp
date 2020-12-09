@@ -57,7 +57,8 @@ void spi_slave_task(void *param) {
     memset(rxbuf, 0, sizeof(rxbuf));
 
     // fetch next or wait for payload to send from queue
-    if (xQueueReceive(SPISendQueue, &msg, portMAX_DELAY) != pdTRUE) {
+    // do not delete item from queue until it is transmitted
+    if (xQueuePeek(SPISendQueue, &msg, portMAX_DELAY) != pdTRUE) {
       ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
       continue;
     }
@@ -95,6 +96,9 @@ void spi_slave_task(void *param) {
     ESP_LOG_BUFFER_HEXDUMP(TAG, rxbuf, transaction_size, ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Transaction finished with size %zu bits",
              spi_transaction.trans_len);
+             
+    // delete sent item from queue
+    xQueueReceive(SPISendQueue, &msg, (TickType_t)0);
 
     // check if command was received, then call interpreter with command payload
     if ((spi_transaction.trans_len) && ((rxbuf[2]) == RCMDPORT)) {
@@ -159,11 +163,11 @@ void spi_enqueuedata(MessageBuffer_t *message) {
     if (!uxQueueSpacesAvailable(SPISendQueue))
       xQueueReceive(SPISendQueue, &DummyBuffer, (TickType_t)0);
   case prio_normal:
-    ret = xQueueSendToFront(SPISendQueue, (void *)message, (TickType_t)0);
+    ret = xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
     break;
   case prio_low:
   default:
-    ret = xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
+    ret = xQueueSendToFront(SPISendQueue, (void *)message, (TickType_t)0);
     break;
   }
   if (ret != pdTRUE)
@@ -171,5 +175,7 @@ void spi_enqueuedata(MessageBuffer_t *message) {
 }
 
 void spi_queuereset(void) { xQueueReset(SPISendQueue); }
+
+uint32_t spi_queuewaiting(void) { return uxQueueMessagesWaiting(SPISendQueue); }
 
 #endif // HAS_SPI

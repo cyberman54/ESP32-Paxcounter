@@ -5,21 +5,27 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+// Conversion factor for micro seconds to seconds
+#define uS_TO_S_FACTOR 1000000ULL
+
 // variable keep its values after restart or wakeup from sleep
 RTC_NOINIT_ATTR runmode_t RTC_runmode;
 
+const char *runmode[4] = {"powercycle", "normal", "wakeup", "update"};
+
 void do_reset(bool warmstart) {
   if (warmstart) {
-    // store LMIC keys and counters in RTC memory
-    ESP_LOGI(TAG, "restarting device (warmstart), keeping runmode %d",
-             RTC_runmode);
+    ESP_LOGI(TAG, "restarting device (warmstart), keeping runmode %s",
+             runmode[RTC_runmode]);
   } else {
 #if (HAS_LORA)
-    if (RTC_runmode == RUNMODE_NORMAL)
+    if (RTC_runmode == RUNMODE_NORMAL) {
       LMIC_shutdown();
+    }
 #endif
     RTC_runmode = RUNMODE_POWERCYCLE;
-    ESP_LOGI(TAG, "restarting device (coldstart), set runmode %d", RTC_runmode);
+    ESP_LOGI(TAG, "restarting device (coldstart), setting runmode %s",
+             runmode[RTC_runmode]);
   }
   esp_restart();
 }
@@ -40,9 +46,6 @@ void do_after_reset(int reason) {
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
     RTC_runmode = RUNMODE_WAKEUP;
-#if (HAS_LORA)
-    // to be done: restore LoRaWAN channel configuration and datarate here
-#endif
     break;
 
   case SW_RESET:         // 0x03 Software reset digital core
@@ -61,32 +64,61 @@ void do_after_reset(int reason) {
     break;
   }
 
-  ESP_LOGI(TAG, "Starting Software v%s, runmode %d", PROGVERSION, RTC_runmode);
+  ESP_LOGI(TAG, "Starting Software v%s, runmode %s", PROGVERSION,
+           runmode[RTC_runmode]);
 }
 
-void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
+void enter_deepsleep(const int wakeup_sec = 60,
+                     const gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
 
-  if ((!wakeup_sec) && (!wakeup_gpio) && (RTC_runmode == RUNMODE_NORMAL))
-    return;
-
-// wait until LMIC is in safe state before going to sleep
+  // ensure we are in normal runmode, not udpate or wakeup
+  if ((RTC_runmode != RUNMODE_NORMAL)
 #if (HAS_LORA)
-  while (os_queryTimeCriticalJobs(ms2osticks(wakeup_sec * 1000)))
-    vTaskDelay(pdMS_TO_TICKS(100));
+      || (LMIC.opmode & (OP_JOINING | OP_REJOIN))
+#endif
+  ) {
+    ESP_LOGE(TAG, "Can't go to sleep now");
+    return;
+  } else {
+    ESP_LOGI(TAG, "Attempting to sleep...");
+  }
 
-    // to be done: save current LoRaWAN configuration here
-
+  // switch off radio
+#if (BLECOUNTER)
+  stop_BLEscan();
+  btStop();
+#endif
+#if (WIFICOUNTER)
+  switch_wifi_sniffer(0);
 #endif
 
-  // set up power domains
-  //esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
-  
-  // set wakeup timer
-  if (wakeup_sec)
-    esp_sleep_enable_timer_wakeup(wakeup_sec * 1000000);
+  // wait until all send queues are empty
+  ESP_LOGI(TAG, "Waiting until send queues are empty...");
+  while (!allQueuesEmtpy())
+    vTaskDelay(pdMS_TO_TICKS(100));
 
-  // set wakeup gpio
-  if (wakeup_gpio != NOT_A_PIN) {
+#if (HAS_LORA)
+  // shutdown LMIC safely
+  ESP_LOGI(TAG, "Waiting until LMIC is idle...");
+  while ((LMIC.opmode & OP_TXRXPEND) ||
+         os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+  SaveLMICToRTC(wakeup_sec);
+// vTaskDelete(lmicTask);
+// LMIC_shutdown();
+#endif // (HAS_LORA)
+
+  // set up RTC power domains
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
+
+  // set up RTC wakeup timer, if we have
+  if (wakeup_sec > 0) {
+    esp_sleep_enable_timer_wakeup(wakeup_sec * uS_TO_S_FACTOR);
+  }
+
+  // set wakeup gpio, if we have
+  if (wakeup_gpio != GPIO_NUM_MAX) {
     rtc_gpio_isolate(wakeup_gpio);
     esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
   }
@@ -99,15 +131,6 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   dp_shutdown();
 #endif
 
-// switch off radio
-#if (BLECOUNTER)
-  stop_BLEscan();
-  btStop();
-#endif
-#if (WIFICOUNTER)
-  switch_wifi_sniffer(0);
-#endif
-
 // reduce power if has PMU
 #ifdef HAS_PMU
   AXP192_power(pmu_power_sleep);
@@ -117,6 +140,6 @@ void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
   i2c_deinit();
 
   // enter sleep mode
-  ESP_LOGI(TAG, "Going to sleep...");
+  ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 }

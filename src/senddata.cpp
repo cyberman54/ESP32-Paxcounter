@@ -10,6 +10,8 @@ void setSendIRQ() {
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port, sendprio_t prio) {
 
+  ESP_LOGD(TAG, "sending Payload for Port %d (prio %d)", port, prio);
+
   MessageBuffer_t
       SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
 
@@ -187,14 +189,9 @@ void sendData() {
     bitmask &= ~mask;
     mask <<= 1;
   } // while (bitmask)
-
-  // goto sleep if we have a sleep cycle
-  if ((cfg.sleepcycle) && (RTC_runmode == RUNMODE_NORMAL))
-    enter_deepsleep(cfg.sleepcycle * 2, HAS_BUTTON);
-
 } // sendData()
 
-void flushQueues() {
+void flushQueues(void) {
 #if (HAS_LORA)
   lora_queuereset();
 #endif
@@ -204,4 +201,18 @@ void flushQueues() {
 #ifdef HAS_MQTT
   mqtt_queuereset();
 #endif
+}
+
+bool allQueuesEmtpy(void) {
+  uint32_t rc = 0;
+#if (HAS_LORA)
+  rc += lora_queuewaiting();
+#endif
+#ifdef HAS_SPI
+  rc += spi_queuewaiting();
+#endif
+#ifdef HAS_MQTT
+  rc += mqtt_queuewaiting();
+#endif
+  return (rc == 0) ? true : false;
 }

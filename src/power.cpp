@@ -48,7 +48,7 @@ void AXP192_powerevent_IRQ(void) {
     ESP_LOGI(TAG, "Battery low temperature.");
 
   // short press -> esp32 deep sleep mode, can be exited by pressing user button
-  if (pmu.isPEKShortPressIRQ() && (RTC_runmode == RUNMODE_NORMAL)) {
+  if (pmu.isPEKShortPressIRQ()) {
     enter_deepsleep(0, HAS_BUTTON);
   }
 

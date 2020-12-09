@@ -115,7 +115,8 @@ void mqtt_client_task(void *param) {
   while (1) {
 
     // fetch next or wait for payload to send from queue
-    if (xQueueReceive(MQTTSendQueue, &msg, portMAX_DELAY) != pdTRUE) {
+    // do not delete item from queue until it is transmitted
+    if (xQueuePeek(MQTTSendQueue, &msg, portMAX_DELAY) != pdTRUE) {
       ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
       continue;
     }
@@ -129,19 +130,17 @@ void mqtt_client_task(void *param) {
 
       if (mqttClient.publish(MQTT_OUTTOPIC, buffer)) {
         ESP_LOGI(TAG, "%d byte(s) sent to MQTT server", msg.MessageSize + 2);
+        // delete sent item from queue
+        xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
         continue;
-      } else {
-        mqtt_enqueuedata(&msg); // postpone the undelivered message
-        ESP_LOGD(TAG,
-                 "Couldn't sent message to MQTT server, message postponed");
-      }
+      } else
+        ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
 
     } else {
       // attempt to reconnect to MQTT server
       ESP_LOGD(TAG, "MQTT client reconnecting...");
       ESP_LOGD(TAG, "MQTT last_error = %d / rc = %d", mqttClient.lastError(),
                mqttClient.returnCode());
-      mqtt_enqueuedata(&msg); // postpone the undelivered message
       delay(MQTT_RETRYSEC * 1000);
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
     }
@@ -161,11 +160,11 @@ void mqtt_enqueuedata(MessageBuffer_t *message) {
     if (!uxQueueSpacesAvailable(MQTTSendQueue))
       xQueueReceive(MQTTSendQueue, &DummyBuffer, (TickType_t)0);
   case prio_normal:
-    ret = xQueueSendToFront(MQTTSendQueue, (void *)message, (TickType_t)0);
+    ret = xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0);
     break;
   case prio_low:
   default:
-    ret = xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0);
+    ret = xQueueSendToFront(MQTTSendQueue, (void *)message, (TickType_t)0);
     break;
   }
   if (ret != pdTRUE)
@@ -185,6 +184,11 @@ void mqtt_loop(void) {
 }
 
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
+
+uint32_t mqtt_queuewaiting(void) {
+  return uxQueueMessagesWaitingMQTTSendQueue);
+}
+
 void setMqttIRQ(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
 
 #endif // HAS_MQTT

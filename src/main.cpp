@@ -348,9 +348,7 @@ void setup() {
 // initialize LoRa
 #if (HAS_LORA)
   strcat_P(features, " LORA");
-  // kick off join, except we come from sleep
-  _ASSERT(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
-          ESP_OK);
+  _ASSERT(lmic_init() == ESP_OK);
 #endif
 
 // initialize SPI
