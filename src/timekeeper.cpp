@@ -26,7 +26,7 @@ Ticker timesyncer;
 void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 void calibrateTime(void) {
-  ESP_LOGD(TAG, "[%0.3f] calibrateTime, timeSource == %d", _millis() / 1000.0,
+  ESP_LOGD(TAG, "[%0.3f] calibrateTime, timeSource == %d", millis() / 1000.0,
            timeSource);
   time_t t = 0;
   uint16_t t_msec = 0;

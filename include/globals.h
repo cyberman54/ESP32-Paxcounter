@@ -56,10 +56,7 @@
       ;                                                                        \
   }
 
-// emulate millis to avoid rollovers
-#define _millis() esp_timer_get_time() / 1000
-#define _micros() esp_timer_get_time()
-#define _seconds() _millis() / 1000.0
+#define _seconds() millis() / 1000.0
 
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
 enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };

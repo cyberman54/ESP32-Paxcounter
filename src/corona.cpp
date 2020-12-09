@@ -44,7 +44,7 @@ bool cwa_init(void) {
 }
 
 void cwa_mac_add(uint16_t hashedmac) {
-  cwaSeenNotifiers[hashedmac] = _millis(); // hash last seen at ....
+  cwaSeenNotifiers[hashedmac] = millis(); // hash last seen at ....
 }
 
 #endif

@@ -228,7 +228,7 @@ void updateState(void) {
   } else {
 
     /* Update every STATE_SAVE_PERIOD minutes */
-    if ((stateUpdateCounter * STATE_SAVE_PERIOD) < _millis()) {
+    if ((stateUpdateCounter * STATE_SAVE_PERIOD) < millis()) {
       update = true;
       stateUpdateCounter++;
     }

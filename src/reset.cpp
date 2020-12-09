@@ -8,8 +8,9 @@ static const char TAG[] = __FILE__;
 // Conversion factor for micro seconds to seconds
 #define uS_TO_S_FACTOR 1000000ULL
 
-// variable keep its values after restart or wakeup from sleep
-RTC_NOINIT_ATTR runmode_t RTC_runmode;
+// variables keep its values after a wakeup from sleep
+RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
+static RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 
 const char *runmode[4] = {"powercycle", "normal", "wakeup", "update"};
 
@@ -30,45 +31,44 @@ void do_reset(bool warmstart) {
   esp_restart();
 }
 
-void do_after_reset(int reason) {
+void do_after_reset(void) {
 
-  switch (reason) {
+  struct timeval sleep_stop_time;
+  uint64_t sleep_time_ms;
 
-  case POWERON_RESET:          // 0x01 Vbat power on reset
-  case RTCWDT_BROWN_OUT_RESET: // 0x0f Reset when the vdd voltage is not
-                               // stable
-    RTC_runmode = RUNMODE_POWERCYCLE;
-    break;
+  switch (esp_sleep_get_wakeup_cause()) {
+  case ESP_SLEEP_WAKEUP_EXT0:  // Wakeup caused by external signal using RTC_IO
+  case ESP_SLEEP_WAKEUP_EXT1:  // Wakeup caused by external signal using
+                               // RTC_CNTL
+  case ESP_SLEEP_WAKEUP_TIMER: // Wakeup caused by timer
+  case ESP_SLEEP_WAKEUP_TOUCHPAD: // Wakeup caused by touchpad
+  case ESP_SLEEP_WAKEUP_ULP:      // Wakeup caused by ULP program
 
-  case SW_CPU_RESET: // 0x0c Software reset CPU
-                     // keep previous runmode (could be RUNMODE_UPDATE)
-    break;
+    // calculate time spent in deep sleep
+    gettimeofday(&sleep_stop_time, NULL);
+    sleep_time_ms =
+        (sleep_stop_time.tv_sec - RTC_sleep_start_time.tv_sec) * 1000 +
+        (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
+    ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
 
-  case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
     RTC_runmode = RUNMODE_WAKEUP;
     break;
 
-  case SW_RESET:         // 0x03 Software reset digital core
-  case OWDT_RESET:       // 0x04 Legacy watch dog reset digital core
-  case SDIO_RESET:       // 0x06 Reset by SLC module, reset digital core
-  case TG0WDT_SYS_RESET: // 0x07 Timer Group0 Watch dog reset digital core
-  case TG1WDT_SYS_RESET: // 0x08 Timer Group1 Watch dog reset digital core
-  case RTCWDT_SYS_RESET: // 0x09 RTC Watch dog Reset digital core
-  case INTRUSION_RESET:  // 0x0a Instrusion tested to reset CPU
-  case TGWDT_CPU_RESET:  // 0x0b Time Group reset CPU
-  case RTCWDT_CPU_RESET: // 0x0d RTC Watch dog Reset CPU
-  case EXT_CPU_RESET:    // 0x0e for APP CPU, reseted by PRO CPU
-  case RTCWDT_RTC_RESET: // 0x10 RTC Watch dog reset digital core and rtc mode
+  case ESP_SLEEP_WAKEUP_ALL:
+  case ESP_SLEEP_WAKEUP_GPIO:
+  case ESP_SLEEP_WAKEUP_UART:
+  case ESP_SLEEP_WAKEUP_UNDEFINED:
   default:
+    // not a deep sleep reset
     RTC_runmode = RUNMODE_POWERCYCLE;
     break;
-  }
+  } // switch
 
   ESP_LOGI(TAG, "Starting Software v%s, runmode %s", PROGVERSION,
            runmode[RTC_runmode]);
 }
 
-void enter_deepsleep(const int wakeup_sec = 60,
+void enter_deepsleep(const uint64_t wakeup_sec = 60,
                      const gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
 
   // ensure we are in normal runmode, not udpate or wakeup
@@ -83,15 +83,6 @@ void enter_deepsleep(const int wakeup_sec = 60,
     ESP_LOGI(TAG, "Attempting to sleep...");
   }
 
-  // switch off radio
-#if (BLECOUNTER)
-  stop_BLEscan();
-  btStop();
-#endif
-#if (WIFICOUNTER)
-  switch_wifi_sniffer(0);
-#endif
-
   // wait until all send queues are empty
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
   while (!allQueuesEmtpy())
@@ -105,23 +96,16 @@ void enter_deepsleep(const int wakeup_sec = 60,
     vTaskDelay(pdMS_TO_TICKS(100));
 
   SaveLMICToRTC(wakeup_sec);
-// vTaskDelete(lmicTask);
-// LMIC_shutdown();
 #endif // (HAS_LORA)
 
-  // set up RTC power domains
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
-
-  // set up RTC wakeup timer, if we have
-  if (wakeup_sec > 0) {
-    esp_sleep_enable_timer_wakeup(wakeup_sec * uS_TO_S_FACTOR);
-  }
-
-  // set wakeup gpio, if we have
-  if (wakeup_gpio != GPIO_NUM_MAX) {
-    rtc_gpio_isolate(wakeup_gpio);
-    esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
-  }
+// switch off radio
+#if (BLECOUNTER)
+  stop_BLEscan();
+  btStop();
+#endif
+#if (WIFICOUNTER)
+  switch_wifi_sniffer(0);
+#endif
 
   // halt interrupts accessing i2c bus
   mask_user_IRQ();
@@ -139,7 +123,22 @@ void enter_deepsleep(const int wakeup_sec = 60,
   // shutdown i2c bus
   i2c_deinit();
 
-  // enter sleep mode
+  // configure wakeup sources
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
+
+  // set up RTC wakeup timer, if we have
+  if (wakeup_sec > 0) {
+    esp_sleep_enable_timer_wakeup(wakeup_sec * uS_TO_S_FACTOR);
+  }
+
+  // set wakeup gpio, if we have
+  if (wakeup_gpio != GPIO_NUM_MAX) {
+    rtc_gpio_isolate(wakeup_gpio); // minimize deep sleep current
+    esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
+  }
+
+  // save sleep start time. Deep sleep.
+  gettimeofday(&RTC_sleep_start_time, NULL);
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 }

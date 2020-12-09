@@ -136,7 +136,7 @@ void doHousekeeping() {
 
 } // doHousekeeping()
 
-uint64_t uptime() { return _millis(); }
+uint64_t uptime() { return millis(); }
 
 uint32_t getFreeRAM() {
 #ifndef BOARD_HAS_PSRAM

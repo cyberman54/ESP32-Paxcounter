@@ -138,7 +138,7 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
-  do_after_reset(rtc_get_reset_reason(0));
+  do_after_reset();
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)

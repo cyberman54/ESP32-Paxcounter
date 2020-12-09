@@ -9,7 +9,7 @@ led_states previousLEDState =
 TaskHandle_t ledLoopTask;
 
 uint16_t LEDColor = COLOR_NONE, LEDBlinkDuration = 0; // state machine variables
-unsigned long LEDBlinkStarted = 0; // When (in _millis() led blink started)
+unsigned long LEDBlinkStarted = 0; // When (in millis() led blink started)
 
 #ifdef HAS_RGB_LED
 
@@ -133,7 +133,7 @@ void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
   LEDColor = set_color;                 // set color for RGB LED
   LEDBlinkDuration = set_blinkduration; // duration
-  LEDBlinkStarted = _millis();           // Time Start here
+  LEDBlinkStarted = millis();           // Time Start here
   LEDState = LED_ON;                    // Let main set LED on
 #endif
 }
@@ -145,8 +145,8 @@ void ledLoop(void *parameter) {
     // Custom blink running always have priority other LoRaWAN led
     // management
     if (LEDBlinkStarted && LEDBlinkDuration) {
-      // Custom blink is finished, let this order, avoid _millis() overflow
-      if ((_millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
+      // Custom blink is finished, let this order, avoid millis() overflow
+      if ((millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
         // Led becomes off, and stop blink
         LEDState = LED_OFF;
         LEDBlinkStarted = 0;
@@ -165,7 +165,7 @@ void ledLoop(void *parameter) {
         LEDColor = COLOR_YELLOW;
         // quick blink 20ms on each 1/5 second
         LEDState =
-            ((_millis() % 200) < 20) ? LED_ON : LED_OFF; // TX data pending
+            ((millis() % 200) < 20) ? LED_ON : LED_OFF; // TX data pending
       } else if (LMIC.opmode & (OP_TXDATA | OP_TXRXPEND)) {
         // select color to blink by message port
         switch (LMIC.pendTxPort) {
@@ -180,13 +180,13 @@ void ledLoop(void *parameter) {
           break;
         }
         // small blink 10ms on each 1/2sec (not when joining)
-        LEDState = ((_millis() % 500) < 10) ? LED_ON : LED_OFF;
+        LEDState = ((millis() % 500) < 10) ? LED_ON : LED_OFF;
         // This should not happen so indicate a problem
       } else if (LMIC.opmode &
                  ((OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0)) {
         LEDColor = COLOR_RED;
         // heartbeat long blink 200ms on each 2 seconds
-        LEDState = ((_millis() % 2000) < 200) ? LED_ON : LED_OFF;
+        LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;
       } else
 #endif // HAS_LORA
       {
