@@ -42,8 +42,7 @@ esp_err_t mqtt_init(void) {
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
   IPAddress mqtt_server_ip;
 
-  // static String clientId = "paxcounter-" + ETH.macAddress();
-  static String clientId = "paxcounter-" + String(random(0xffff), HEX);
+  static String clientId = "paxcounter-" + ETH.macAddress();
 
   ESP_LOGI(TAG, "MQTT name is %s", MQTT_CLIENTNAME);
 
@@ -169,7 +168,7 @@ void mqtt_loop(void) {
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
 
 uint32_t mqtt_queuewaiting(void) {
-  return uxQueueMessagesWaitingMQTTSendQueue);
+  return uxQueueMessagesWaiting(MQTTSendQueue);
 }
 
 void setMqttIRQ(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
