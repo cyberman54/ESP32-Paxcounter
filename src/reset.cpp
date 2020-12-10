@@ -91,6 +91,19 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   // stop further enqueuing of senddata
   sendTimer.detach();
 
+  // shutdown MQTT safely
+#ifdef HAS_MQTT
+// to come
+#endif
+
+// shutdown SPI safely
+#ifdef HAS_SPI
+// to come
+#endif
+
+  // halt interrupts accessing i2c bus
+  mask_user_IRQ();
+
   // switch off radio
 #if (BLECOUNTER)
   stop_BLEscan();
@@ -126,19 +139,6 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
 
   SaveLMICToRTC(wakeup_sec);
 #endif // (HAS_LORA)
-
-// shutdown MQTT safely
-#ifdef HAS_MQTT
-// to come
-#endif
-
-// shutdown SPI safely
-#ifdef HAS_SPI
-// to come
-#endif
-
-  // halt interrupts accessing i2c bus
-  mask_user_IRQ();
 
 // switch off display
 #ifdef HAS_DISPLAY
