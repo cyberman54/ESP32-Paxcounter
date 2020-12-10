@@ -10,7 +10,8 @@ static const char TAG[] = __FILE__;
 
 // variables keep its values after a wakeup from sleep
 RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
-static RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
+RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
+timeval sleep_stop_time;
 
 const char *runmode[4] = {"powercycle", "normal", "wakeup", "update"};
 
@@ -69,42 +70,71 @@ void do_after_reset(void) {
 }
 
 void enter_deepsleep(const uint64_t wakeup_sec = 60,
-                     const gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
+                     gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
+
+  int i;
+
+  // validate wake up pin, if we have
+  if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
+    wakeup_gpio = GPIO_NUM_MAX;
 
   // ensure we are in normal runmode, not udpate or wakeup
   if ((RTC_runmode != RUNMODE_NORMAL)
 #if (HAS_LORA)
       || (LMIC.opmode & (OP_JOINING | OP_REJOIN))
 #endif
-  ) {
-    ESP_LOGE(TAG, "Can't go to sleep now");
+  )
     return;
-  } else {
-    ESP_LOGI(TAG, "Attempting to sleep...");
-  }
 
-  // wait until all send queues are empty
-  ESP_LOGI(TAG, "Waiting until send queues are empty...");
-  while (!allQueuesEmtpy())
-    vTaskDelay(pdMS_TO_TICKS(100));
+  ESP_LOGI(TAG, "Preparing to sleep...");
 
-#if (HAS_LORA)
-  // shutdown LMIC safely
-  ESP_LOGI(TAG, "Waiting until LMIC is idle...");
-  while ((LMIC.opmode & OP_TXRXPEND) ||
-         os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
-    vTaskDelay(pdMS_TO_TICKS(100));
+  // stop further enqueuing of senddata
+  sendTimer.detach();
 
-  SaveLMICToRTC(wakeup_sec);
-#endif // (HAS_LORA)
-
-// switch off radio
+  // switch off radio
 #if (BLECOUNTER)
   stop_BLEscan();
   btStop();
 #endif
 #if (WIFICOUNTER)
   switch_wifi_sniffer(0);
+#endif
+
+  // wait a while (max 100 sec) to clear send queues
+  ESP_LOGI(TAG, "Waiting until send queues are empty...");
+  for (i = 10; i > 0; i--) {
+    if (!allQueuesEmtpy())
+      vTaskDelay(pdMS_TO_TICKS(10000));
+    else
+      break;
+  }
+  if (i == 0)
+    goto Error;
+
+    // shutdown LMIC safely, waiting max 100 sec
+#if (HAS_LORA)
+  ESP_LOGI(TAG, "Waiting until LMIC is idle...");
+  for (i = 10; i > 0; i--) {
+    if ((LMIC.opmode & OP_TXRXPEND) ||
+        os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
+      vTaskDelay(pdMS_TO_TICKS(10000));
+    else
+      break;
+  }
+  if (i == 0)
+    goto Error;
+
+  SaveLMICToRTC(wakeup_sec);
+#endif // (HAS_LORA)
+
+// shutdown MQTT safely
+#ifdef HAS_MQTT
+// to come
+#endif
+
+// shutdown SPI safely
+#ifdef HAS_SPI
+// to come
 #endif
 
   // halt interrupts accessing i2c bus
@@ -137,8 +167,12 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
     esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
   }
 
-  // save sleep start time. Deep sleep.
+  // time stamp sleep start time. Deep sleep.
   gettimeofday(&RTC_sleep_start_time, NULL);
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
+
+Error:
+  ESP_LOGE(TAG, "Can't go to sleep. Resetting.");
+  do_reset(true);
 }
