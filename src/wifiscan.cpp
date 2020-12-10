@@ -41,8 +41,6 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
 
 // Software-timer driven Wifi channel rotation callback function
 void switchWifiChannel(TimerHandle_t xTimer) {
-  // static uint8_t channel = 0; // channel rotation counter
-  _ASSERT(xTimer != NULL);
   channel =
       (channel % WIFI_CHANNEL_MAX) + 1; // rotate channel 1..WIFI_CHANNEL_MAX
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
@@ -74,20 +72,29 @@ void wifi_sniffer_init(void) {
 
   // setup wifi channel rotation timer
   WifiChanTimer =
-      xTimerCreate("WifiChannelTimer", pdMS_TO_TICKS(cfg.wifichancycle * 10),
+      xTimerCreate("WifiChannelTimer",
+                   (cfg.wifichancycle > 0) ? pdMS_TO_TICKS(cfg.wifichancycle)
+                                           : pdMS_TO_TICKS(50),
                    pdTRUE, (void *)0, switchWifiChannel);
+  if (cfg.wifichancycle > 0)
+    xTimerStart(WifiChanTimer, (TickType_t) 0);
+  else
+    esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
 }
 
 void switch_wifi_sniffer(uint8_t state) {
-  _ASSERT(WifiChanTimer != NULL);
   if (state) {
     // switch wifi sniffer on
     ESP_ERROR_CHECK(esp_wifi_start());
-    xTimerStart(WifiChanTimer, 0);
+    if (cfg.wifichancycle > 0)
+      xTimerStart(WifiChanTimer, (TickType_t) 0);
+    else
+      esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
     esp_wifi_set_promiscuous(true);
   } else {
     // switch wifi sniffer off
-    xTimerStop(WifiChanTimer, 0);
+    if (xTimerIsTimerActive(WifiChanTimer) != pdFALSE)
+      xTimerStop(WifiChanTimer, (TickType_t) 0);
     esp_wifi_set_promiscuous(false);
     ESP_ERROR_CHECK(esp_wifi_stop());
     macs_wifi = 0; // clear WIFI counter

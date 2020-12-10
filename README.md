@@ -303,7 +303,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 6:		Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
 	bytes 7-8:	RSSI limiter threshold value (negative) [default 0]
 	byte 9:		Lora Payload send cycle in seconds/2 (0..255) [default 120]
-	byte 10:	Wifi channel switch interval in seconds/100 (0..255) [default 50]
+	byte 10:	Wifi channel hopping interval in seconds/100 (0..255), 0 means no hopping [default 50]
 	byte 11:	Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
 	byte 12:	Bluetooth scanner status (1=on, 0=0ff) [default 1]
 	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
@@ -437,10 +437,11 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 	0 ... 255 payload send cycle in seconds/2
 	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
-0x0B set Wifi channel switch interval timer
+0x0B set Wifi channel hopping interval timer
 
 	0 ... 255 duration for scanning a wifi channel in seconds/100
 	e.g. 50 -> each channel is scanned for 500 milliseconds [default]
+	0 means no hopping, scanning on  channel WIFI_CHANNEL_MIN only
 
 0x0C set Bluetooth channel switch interval timer
 

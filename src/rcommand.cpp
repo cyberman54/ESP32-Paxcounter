@@ -63,11 +63,20 @@ void set_sleepcycle(uint8_t val[]) {
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
   // update Wifi channel rotation timer period
-  xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10), 100);
-
+  if (cfg.wifichancycle > 0) {
+    if (xTimerIsTimerActive(WifiChanTimer) == pdFALSE)
+      xTimerStart(WifiChanTimer, (TickType_t) 0);
+    xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10),
+                       100);
   ESP_LOGI(TAG,
-           "Remote command: set Wifi channel switch interval to %.1f seconds",
+           "Remote command: set Wifi channel hopping interval to %.1f seconds",
            cfg.wifichancycle / float(100));
+  } else {
+    xTimerStop(WifiChanTimer, (TickType_t) 0);
+    esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
+    channel = WIFI_CHANNEL_MIN;
+    ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
+  }
 }
 
 void set_blescantime(uint8_t val[]) {
@@ -404,10 +413,10 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
           table[i].func(
               foundcmd); // execute assigned function with given parameters
         } else
-          ESP_LOGI(
-              TAG,
-              "Remote command x%02X called with missing parameter(s), skipped",
-              table[i].opcode);
+          ESP_LOGI(TAG,
+                   "Remote command x%02X called with missing parameter(s), "
+                   "skipped",
+                   table[i].opcode);
         break;   // command found -> exit table lookup loop
       }          // end of command validation
     }            // end of command table lookup loop
