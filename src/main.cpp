@@ -292,7 +292,7 @@ void setup() {
   macQueueInit();
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
-// or switch off bluetooth, if not compiled
+// or remove bluetooth stack from RAM, if option bluetooth is not compiled
 #if (BLECOUNTER)
   strcat_P(features, " BLE");
   if (cfg.blescan) {
@@ -412,16 +412,17 @@ void setup() {
 
 #if (WIFICOUNTER)
   strcat_P(features, " WIFI");
-  // start wifi in monitor mode and start channel rotation timer
-
+  // install wifi driver in RAM and start channel hopping
   wifi_sniffer_init();
-  if (cfg.blescan) {
+
+  // start wifi sniffing, if enabled
+  if (cfg.wifiscan) {
     ESP_LOGI(TAG, "Starting Wifi...");
     switch_wifi_sniffer(1);
   } else
     switch_wifi_sniffer(0);
 #else
-  // switch off wifi
+  // remove wifi driver from RAM, if option wifi not compiled
   esp_wifi_deinit();
 #endif
 

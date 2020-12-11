@@ -5,6 +5,9 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+// global variable indicating if rcommand() is executing
+bool rcmd_busy = false;
+
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
   switch (val[0]) {
@@ -65,14 +68,15 @@ void set_wifichancycle(uint8_t val[]) {
   // update Wifi channel rotation timer period
   if (cfg.wifichancycle > 0) {
     if (xTimerIsTimerActive(WifiChanTimer) == pdFALSE)
-      xTimerStart(WifiChanTimer, (TickType_t) 0);
+      xTimerStart(WifiChanTimer, (TickType_t)0);
     xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10),
                        100);
-  ESP_LOGI(TAG,
-           "Remote command: set Wifi channel hopping interval to %.1f seconds",
-           cfg.wifichancycle / float(100));
+    ESP_LOGI(
+        TAG,
+        "Remote command: set Wifi channel hopping interval to %.1f seconds",
+        cfg.wifichancycle / float(100));
   } else {
-    xTimerStop(WifiChanTimer, (TickType_t) 0);
+    xTimerStop(WifiChanTimer, (TickType_t)0);
     esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
     channel = WIFI_CHANNEL_MIN;
     ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
@@ -397,6 +401,7 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
 
   uint8_t foundcmd[cmdlength], cursor = 0;
   bool storeflag = false;
+  rcmd_busy = true;
 
   while (cursor < cmdlength) {
 
@@ -428,4 +433,7 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
 
   if (storeflag)
     saveConfig();
+
+  rcmd_busy = false;
+
 } // rcommand()

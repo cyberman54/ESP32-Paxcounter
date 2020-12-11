@@ -13,12 +13,11 @@ RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 timeval sleep_stop_time;
 
-const char *runmode[4] = {"powercycle", "normal", "wakeup", "update"};
+const char *runmode[5] = {"powercycle", "normal", "wakeup", "update", "sleep"};
 
 void do_reset(bool warmstart) {
   if (warmstart) {
-    ESP_LOGI(TAG, "restarting device (warmstart), keeping runmode %s",
-             runmode[RTC_runmode]);
+    ESP_LOGI(TAG, "restarting device (warmstart)");
   } else {
 #if (HAS_LORA)
     if (RTC_runmode == RUNMODE_NORMAL) {
@@ -26,8 +25,7 @@ void do_reset(bool warmstart) {
     }
 #endif
     RTC_runmode = RUNMODE_POWERCYCLE;
-    ESP_LOGI(TAG, "restarting device (coldstart), setting runmode %s",
-             runmode[RTC_runmode]);
+    ESP_LOGI(TAG, "restarting device (coldstart)");
   }
   esp_restart();
 }
@@ -78,40 +76,15 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
     wakeup_gpio = GPIO_NUM_MAX;
 
-  // ensure we are in normal runmode, not udpate or wakeup
-  if ((RTC_runmode != RUNMODE_NORMAL)
-#if (HAS_LORA)
-      || (LMIC.opmode & (OP_JOINING | OP_REJOIN))
-#endif
-  )
-    return;
-
   ESP_LOGI(TAG, "Preparing to sleep...");
+
+  RTC_runmode = RUNMODE_SLEEP;
 
   // stop further enqueuing of senddata
   sendTimer.detach();
 
-  // shutdown MQTT safely
-#ifdef HAS_MQTT
-// to come
-#endif
-
-// shutdown SPI safely
-#ifdef HAS_SPI
-// to come
-#endif
-
   // halt interrupts accessing i2c bus
   mask_user_IRQ();
-
-  // switch off radio
-#if (BLECOUNTER)
-  stop_BLEscan();
-  btStop();
-#endif
-#if (WIFICOUNTER)
-  switch_wifi_sniffer(0);
-#endif
 
   // wait a while (max 100 sec) to clear send queues
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
@@ -136,11 +109,43 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   }
   if (i == 0)
     goto Error;
+#endif // (HAS_LORA)
 
+// shutdown MQTT safely
+#ifdef HAS_MQTT
+// to come
+#endif
+
+// shutdown SPI safely
+#ifdef HAS_SPI
+// to come
+#endif
+
+  // wait until rcommands are all done
+  for (i = 10; i > 0; i--) {
+    if (rcmd_busy)
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    else
+      break;
+  }
+  if (i == 0)
+    goto Error;
+
+// switch off radio
+#if (WIFICOUNTER)
+  switch_wifi_sniffer(0);
+#endif
+#if (BLECOUNTER)
+  stop_BLEscan();
+  btStop();
+#endif
+
+  // save LMIC state to RTC RAM
+#if (HAS_LORA)
   SaveLMICToRTC(wakeup_sec);
 #endif // (HAS_LORA)
 
-// switch off display
+// set display to power save mode
 #ifdef HAS_DISPLAY
   dp_shutdown();
 #endif

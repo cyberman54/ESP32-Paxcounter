@@ -254,8 +254,11 @@ void start_BLEscan(void) {
 
   // Initialize BT controller to allocate task and other resource.
   ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_BT));
+  if (!btStart()) { // enable bt_controller
+    ESP_LOGE(TAG, "Bluetooth controller start failed. Resetting device");
+    do_reset(true);
+  }
 
-  btStart();
   ESP_ERROR_CHECK(esp_bluedroid_init());
   ESP_ERROR_CHECK(esp_bluedroid_enable());
 
@@ -269,10 +272,18 @@ void start_BLEscan(void) {
 void stop_BLEscan(void) {
 #if (BLECOUNTER)
   ESP_LOGI(TAG, "Shutting down bluetooth scanner ...");
+
+  ESP_LOGD(TAG, "unregister GAP callback...");
   ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
+  ESP_LOGD(TAG, "bluedroid disable...");
   ESP_ERROR_CHECK(esp_bluedroid_disable());
+  ESP_LOGD(TAG, "bluedroid deinit...");
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
-  btStop(); // disable bt_controller
+
+  if (!btStop()) { // disable bt_controller
+    ESP_LOGE(TAG, "Bluetooth controller stop failed. Resetting device");
+    do_reset(true);
+  }
   ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_WIFI));
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
 #endif // BLECOUNTER

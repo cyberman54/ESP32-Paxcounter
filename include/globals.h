@@ -64,7 +64,8 @@ enum runmode_t {
   RUNMODE_POWERCYCLE,
   RUNMODE_NORMAL,
   RUNMODE_WAKEUP,
-  RUNMODE_UPDATE
+  RUNMODE_UPDATE,
+  RUNMODE_SLEEP
 };
 
 // Struct holding devices's runtime configuration
