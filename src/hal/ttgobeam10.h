@@ -36,6 +36,13 @@ Reset -> reset device
 #define HAS_PMU 1 // has AXP192 chip
 #define PMU_INT GPIO_NUM_35 // battery interrupt
 #define PMU_CHG_CURRENT AXP1XX_CHARGE_CUR_1000MA // battery charge current
+
+//blue onboard led settings
+//possible values:
+// AXP20X_LED_LOW_LEVEL / AXP20X_LED_OFF / AXP20X_LED_BLINK_1HZ
+ #define PMU_LED_RUN_MODE AXP20X_LED_BLINK_1HZ 
+ #define PMU_LED_SLEEP_MODE AXP20X_LED_OFF
+ 
 // possible values (mA):
 // 100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
 #define PMU_CHG_CUTOFF AXP202_TARGET_VOL_4_2V // battery charge cutoff

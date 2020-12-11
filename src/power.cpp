@@ -78,6 +78,9 @@ void AXP192_power(pmu_power_t powerlevel) {
 
   case pmu_power_sleep:
     pmu.setChgLEDMode(AXP20X_LED_OFF);
+    #ifdef PMU_LED_RUN_MODE
+    pmu.setChgLEDMode(PMU_LED_SLEEP_MODE);
+    #endif
     // we don't cut off DCDC1, because then display blocks i2c bus
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF); // gps off
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF); // lora off
@@ -90,6 +93,9 @@ void AXP192_power(pmu_power_t powerlevel) {
     pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF); // unused on T-Beam v1.0
     pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF); // unused on T-Beam v1.0
     pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+    #ifdef PMU_LED_RUN_MODE
+    pmu.setChgLEDMode(PMU_LED_RUN_MODE);
+    #endif
     break;
   }
 }
