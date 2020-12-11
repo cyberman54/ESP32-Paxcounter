@@ -374,7 +374,7 @@ void setup() {
     strcat_P(features, " SDS");
 #endif
 
-#if (VENDORFILTER)
+#if (MACFILTER)
   strcat_P(features, " FILTER");
 #endif
 

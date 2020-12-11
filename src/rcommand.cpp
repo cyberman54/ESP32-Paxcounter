@@ -259,10 +259,10 @@ void set_wifiant(uint8_t val[]) {
 #endif
 }
 
-void set_vendorfilter(uint8_t val[]) {
-  ESP_LOGI(TAG, "Remote command: set vendorfilter mode to %s",
+void set_macfilter(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: set macfilter mode to %s",
            val[0] ? "on" : "off");
-  cfg.vendorfilter = val[0] ? 1 : 0;
+  cfg.macfilter = val[0] ? 1 : 0;
 }
 
 void set_rgblum(uint8_t val[]) {
@@ -378,7 +378,7 @@ static const cmd_t table[] = {
     {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
     {0x09, set_reset, 1, false},        {0x0a, set_sendcycle, 1, true},
     {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
-    {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
+    {0x0d, set_macfilter, 1, false},    {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
     {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},

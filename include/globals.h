@@ -87,7 +87,7 @@ typedef struct __attribute__((packed)) {
   uint8_t blescan;       // 0=disabled, 1=enabled
   uint8_t wifiscan;      // 0=disabled, 1=enabled
   uint8_t wifiant;       // 0=internal, 1=external (for LoPy/LoPy4)
-  uint8_t vendorfilter;  // 0=disabled, 1=enabled
+  uint8_t macfilter;     // 0=disabled, 1=enabled
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t monitormode;   // 0=disabled, 1=enabled
   uint8_t runmode;       // 0=normal, 1=update
