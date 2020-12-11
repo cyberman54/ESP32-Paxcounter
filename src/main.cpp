@@ -417,7 +417,7 @@ void setup() {
   // start wifi in monitor mode and start channel rotation timer
 
   wifi_sniffer_init();
-  if (cfg.blescan) {
+  if (cfg.wifiscan) {
     ESP_LOGI(TAG, "Starting Wifi...");
     switch_wifi_sniffer(1);
   } else
