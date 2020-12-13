@@ -16,7 +16,7 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 
 # Use case
 
-Paxcounter is a proof-of-concept device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by filtering vendor OUIs in the MAC adress.
+Paxcounter is a proof-of-concept device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by filtering their MAC adresses.
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
@@ -211,7 +211,7 @@ This describes how to set up a mobile PaxCounter:<br> Follow all steps so far fo
 Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
-	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
+	#define MACFILTER		0	// disable MAC filter
 	#define BLECOUNTER		1	// enable bluetooth sniffing
 	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
 	#define HAS_SENSOR_1		1	// optional: transmit ENS counter data to server
@@ -307,7 +307,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 11:	Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
 	byte 12:	Bluetooth scanner status (1=on, 0=0ff) [default 1]
 	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
-	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
+	byte 14:	count randomizated MACs only (0=disabled, 1=enabled) [default 1]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
 	byte 16:	Payload filter mask
 	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
@@ -448,7 +448,7 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 	0 ... 255 duration for scanning a bluetooth advertising channel in seconds/100
 	e.g. 8 -> each channel is scanned for 80 milliseconds [default]
 
-0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
+0x0D (NOT YET IMPLEMENTED) set BLE and WIFI MAC filter mode
 
 	0 = disabled (use to count devices, not people)
 	1 = enabled [default]

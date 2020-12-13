@@ -151,7 +151,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       ESP_LOGV(TAG, "RSSI                : %d", p->scan_rst.rssi);
 #endif
 
-#if (VENDORFILTER)
+#if (MACFILTER)
       if ((p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RANDOM) ||
           (p->scan_rst.ble_addr_type == BLE_ADDR_TYPE_RPA_RANDOM)) {
 #ifdef VERBOSE
@@ -176,7 +176,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       mac_add((uint8_t *)p->scan_rst.bda, p->scan_rst.rssi, MAC_SNIFF_BLE);
 #endif
 
-      /* to be improved in vendorfilter if:
+      /* to be improved in macfilter:
       // you can search for elements in the payload using the
       // function esp_ble_resolve_adv_data()
       //
@@ -187,7 +187,7 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
       ESP_BLE_AD_TYPE_NAME_CMPL, &len);
 
       filter BLE devices using their advertisements to get filter alternative
-      to vendor OUI if vendorfiltering is on, we ...
+      to vendor OUI if macfiltering is on, we ...
       - want to count: mobile phones and tablets
       - don't want to count: beacons, peripherals (earphones, headsets,
       printers), cars and machines see
@@ -225,11 +225,11 @@ esp_err_t register_ble_callback(void) {
     .scan_type = BLE_SCAN_TYPE_PASSIVE,
     .own_addr_type = BLE_ADDR_TYPE_RANDOM,
 
-#if (VENDORFILTER)
+#if (MACFILTER)
     .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
   // ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for broadcasting
   // data in broadcast applications (e.g., Beacons), so we don't want them in
-  // vendorfilter mode
+  // macfilter mode
 #else
     .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
 #endif

@@ -35,8 +35,14 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
       (wifi_ieee80211_packet_t *)ppkt->payload;
   const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
 
-  // process seen MAC
-  mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
+// process seen MAC
+#if MACFILTER
+  // we guess it's a smartphone, if randomization bit of MAC is set
+  if (!(hdr->addr2[0] & 0b10))
+    return;
+  else
+#endif
+    mac_add((uint8_t *)hdr->addr2, ppkt->rx_ctrl.rssi, MAC_SNIFF_WIFI);
 }
 
 // Software-timer driven Wifi channel rotation callback function
