@@ -7,10 +7,6 @@ static const char TAG[] = "wifi";
 
 TimerHandle_t WifiChanTimer;
 
-static wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
-                                      WIFI_CHANNEL_MAX, 100,
-                                      WIFI_COUNTRY_POLICY_MANUAL};
-
 typedef struct {
   unsigned frame_ctrl : 16;
   unsigned duration_id : 16;
@@ -53,26 +49,30 @@ void switchWifiChannel(TimerHandle_t xTimer) {
 }
 
 void wifi_sniffer_init(void) {
-  wifi_init_config_t wificfg = WIFI_INIT_CONFIG_DEFAULT();
-  wificfg.nvs_enable = 0;        // we don't need any wifi settings from NVRAM
-  wificfg.wifi_task_core_id = 0; // we want wifi task running on core 0
 
-  // wifi_promiscuous_filter_t filter = {
-  //    .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT}; // only MGMT frames
-  // .filter_mask = WIFI_PROMIS_FILTER_MASK_ALL}; // we use all frames
+  wifi_country_t wifi_country = {WIFI_MY_COUNTRY, WIFI_CHANNEL_MIN,
+                                 WIFI_CHANNEL_MAX, 100,
+                                 WIFI_COUNTRY_POLICY_MANUAL};
 
-  wifi_promiscuous_filter_t filter = {.filter_mask =
-                                          WIFI_PROMIS_FILTER_MASK_MGMT |
-                                          WIFI_PROMIS_FILTER_MASK_DATA};
+  wifi_init_config_t wifi_cfg = WIFI_INIT_CONFIG_DEFAULT();
+  wifi_cfg.event_handler = NULL;  // we don't need a wifi event handler
+  wifi_cfg.nvs_enable = 0;        // we don't need any wifi settings from NVRAM
+  wifi_cfg.wifi_task_core_id = 0; // we want wifi task running on core 0
 
-  ESP_ERROR_CHECK(esp_wifi_init(&wificfg)); // configure Wifi with cfg
+  wifi_promiscuous_filter_t wifi_filter = {.filter_mask =
+                                               WIFI_PROMIS_FILTER_MASK_MGMT |
+                                               WIFI_PROMIS_FILTER_MASK_DATA};
+
+  ESP_ERROR_CHECK(esp_event_loop_init(NULL, NULL));
+  ESP_ERROR_CHECK(esp_wifi_init(&wifi_cfg)); // start Wifi task
   ESP_ERROR_CHECK(
       esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
-  ESP_ERROR_CHECK(
-      esp_wifi_set_storage(WIFI_STORAGE_RAM)); // we don't need NVRAM
+  ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
   ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // no modem power saving
-  ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&filter)); // set frame filter
+
+  ESP_ERROR_CHECK(
+      esp_wifi_set_promiscuous_filter(&wifi_filter)); // set frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 
@@ -97,7 +97,6 @@ void switch_wifi_sniffer(uint8_t state) {
       xTimerStart(WifiChanTimer, (TickType_t)0);
   } else {
     // switch wifi sniffer off
-    macs_wifi = 0; // clear WIFI counter
     if (xTimerIsTimerActive(WifiChanTimer) != pdFALSE)
       xTimerStop(WifiChanTimer, (TickType_t)0);
     esp_wifi_set_promiscuous(false);
