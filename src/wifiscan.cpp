@@ -63,7 +63,6 @@ void wifi_sniffer_init(void) {
                                                WIFI_PROMIS_FILTER_MASK_MGMT |
                                                WIFI_PROMIS_FILTER_MASK_DATA};
 
-  ESP_ERROR_CHECK(esp_event_loop_init(NULL, NULL));
   ESP_ERROR_CHECK(esp_wifi_init(&wifi_cfg)); // start Wifi task
   ESP_ERROR_CHECK(
       esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
