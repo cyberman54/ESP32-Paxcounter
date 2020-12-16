@@ -55,7 +55,6 @@ void AXP192_powerevent_IRQ(void) {
   // long press -> shutdown power, can be exited by another longpress
   if (pmu.isPEKLongtPressIRQ()) {
     AXP192_power(pmu_power_off); // switch off Lora, GPS, display
-    pmu.shutdown();              // switch off device
   }
 
   pmu.clearIRQ();
@@ -73,23 +72,32 @@ void AXP192_power(pmu_power_t powerlevel) {
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
-    // pmu.setPowerOutPut(AXP192_DCDC3, AXP202_OFF);
+    pmu.shutdown();
     break;
 
   case pmu_power_sleep:
+#ifdef PMU_LED_SLEEP_MODE
+    pmu.setChgLEDMode(PMU_LED_SLEEP_MODE);
+#else
     pmu.setChgLEDMode(AXP20X_LED_OFF);
+#endif
     // we don't cut off DCDC1, because then display blocks i2c bus
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF); // gps off
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF); // lora off
     break;
 
+  case pmu_power_on:
   default:                                        // all rails power on
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);   // Lora on T-Beam V1.0
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);   // Gps on T-Beam V1.0
     pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);  // OLED on T-Beam v1.0
     pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF); // unused on T-Beam v1.0
     pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF); // unused on T-Beam v1.0
+#ifdef PMU_LED_RUN_MODE
+    pmu.setChgLEDMode(PMU_LED_RUN_MODE);
+#else
     pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+#endif
     break;
   }
 }
