@@ -51,10 +51,6 @@ void do_after_reset(void) {
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
 
     RTC_runmode = RUNMODE_WAKEUP;
-// power on all rails if has PMU
-#ifdef HAS_PMU
-    AXP192_power(pmu_power_on);
-#endif
     break;
 
   case ESP_SLEEP_WAKEUP_ALL:

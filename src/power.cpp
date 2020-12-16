@@ -140,9 +140,6 @@ void AXP192_init(void) {
     pmu.adc1Enable(AXP202_VBUS_VOL_ADC1, true);
     pmu.adc1Enable(AXP202_VBUS_CUR_ADC1, true);
 
-    // switch power rails on
-    AXP192_power(pmu_power_on);
-
 #ifdef PMU_INT
     pinMode(PMU_INT, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
@@ -160,6 +157,9 @@ void AXP192_init(void) {
     pmu.setChargingTargetVoltage(PMU_CHARGE_CUTOFF);
     pmu.enableChargeing(true);
 #endif
+
+    // switch power rails on
+    AXP192_power(pmu_power_on);
 
     ESP_LOGI(TAG, "AXP192 PMU initialized");
   }
