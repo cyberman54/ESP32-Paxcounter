@@ -70,6 +70,12 @@ void do_after_reset(void) {
 void enter_deepsleep(const uint64_t wakeup_sec = 60,
                      gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
 
+#if (HAS_LORA)
+  if (!LMIC.devaddr)
+    ESP_LOGI(TAG, "Can't go to sleep while joining");
+  return;
+#endif
+
   int i;
 
   // validate wake up pin, if we have
