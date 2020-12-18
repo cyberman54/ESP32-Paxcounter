@@ -237,18 +237,16 @@ esp_err_t register_ble_callback(bool unregister = false) {
         .own_addr_type = BLE_ADDR_TYPE_RANDOM,
         .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
 
-        /*
+/*
         #if (MACFILTER)
               .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
-            // ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for
-        broadcasting
-            // data in broadcast applications (e.g., Beacons), so we don't want
-        them in
+            // ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for broadcasting
+            // data in broadcast applications (e.g., Beacons), so we don't want them in
             // macfilter mode
         #else
               .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
         #endif
-        */
+*/
 
         .scan_interval =
             (uint16_t)(cfg.blescantime * 10 / 0.625), // Time = N * 0.625 msec
@@ -275,7 +273,7 @@ void start_BLEscan(void) {
     ESP_ERROR_CHECK(esp_bluedroid_init());
     ESP_ERROR_CHECK(esp_bluedroid_enable());
     // Register callback function for capturing bluetooth packets
-    ESP_ERROR_CHECK(register_ble_callback(true));
+    ESP_ERROR_CHECK(register_ble_callback(false));
     ESP_LOGI(TAG, "Bluetooth scanner started");
 #endif // BLECOUNTER
   } else {
@@ -288,7 +286,7 @@ void start_BLEscan(void) {
 void stop_BLEscan(void) {
 #if (BLECOUNTER)
   ESP_LOGI(TAG, "Shutting down bluetooth scanner ...");
-  ESP_ERROR_CHECK(register_ble_callback(false)); // unregister capture function
+  ESP_ERROR_CHECK(register_ble_callback(true)); // unregister capture function
   ESP_LOGD(TAG, "bluedroid disable...");
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_LOGD(TAG, "bluedroid deinit...");
