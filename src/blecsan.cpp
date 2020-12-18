@@ -214,35 +214,53 @@ IRAM_ATTR void gap_callback_handler(esp_gap_ble_cb_event_t event,
   } // switch
 } // gap_callback_handler
 
-esp_err_t register_ble_callback(void) {
-  ESP_LOGI(TAG, "Register GAP callback");
+esp_err_t register_ble_callback(bool unregister = false) {
 
-  // This function is called when gap event occurs, such as scan result.
-  // register the scan callback function to the gap module
-  ESP_ERROR_CHECK(esp_ble_gap_register_callback(&gap_callback_handler));
+  if (unregister) {
 
-  static esp_ble_scan_params_t ble_scan_params = {
-    .scan_type = BLE_SCAN_TYPE_PASSIVE,
-    .own_addr_type = BLE_ADDR_TYPE_RANDOM,
+    ESP_LOGI(TAG, "Unregister GAP callback...");
+    ESP_ERROR_CHECK(esp_ble_gap_stop_scanning());
+    ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
 
-#if (MACFILTER)
-    .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
-  // ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for broadcasting
-  // data in broadcast applications (e.g., Beacons), so we don't want them in
-  // macfilter mode
-#else
-    .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
-#endif
+  }
 
-    .scan_interval =
-        (uint16_t)(cfg.blescantime * 10 / 0.625),    // Time = N * 0.625 msec
-    .scan_window = (uint16_t)(BLESCANWINDOW / 0.625) // Time = N * 0.625 msec
-  };
+  else {
 
-  ESP_LOGI(TAG, "Set GAP scan parameters");
+    ESP_LOGI(TAG, "Register GAP callback...");
 
-  // This function is called to set scan parameters.
-  ESP_ERROR_CHECK(esp_ble_gap_set_scan_params(&ble_scan_params));
+    // This function is called when gap event occurs, such as scan result.
+    // register the scan callback function to the gap module
+    ESP_ERROR_CHECK(esp_ble_gap_register_callback(&gap_callback_handler));
+
+    static esp_ble_scan_params_t ble_scan_params = {
+        .scan_type = BLE_SCAN_TYPE_PASSIVE,
+        .own_addr_type = BLE_ADDR_TYPE_RANDOM,
+        .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
+
+        /*
+        #if (MACFILTER)
+              .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_WLIST_PRA_DIR,
+            // ADV_IND, ADV_NONCONN_IND, ADV_SCAN_IND packets are used for
+        broadcasting
+            // data in broadcast applications (e.g., Beacons), so we don't want
+        them in
+            // macfilter mode
+        #else
+              .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
+        #endif
+        */
+
+        .scan_interval =
+            (uint16_t)(cfg.blescantime * 10 / 0.625), // Time = N * 0.625 msec
+        .scan_window =
+            (uint16_t)(BLESCANWINDOW / 0.625) // Time = N * 0.625 msec
+    };
+
+    ESP_LOGI(TAG, "Set GAP scan parameters");
+
+    // This function is called to set scan parameters.
+    ESP_ERROR_CHECK(esp_ble_gap_set_scan_params(&ble_scan_params));
+  }
 
   return ESP_OK;
 
@@ -251,35 +269,30 @@ esp_err_t register_ble_callback(void) {
 void start_BLEscan(void) {
 #if (BLECOUNTER)
   ESP_LOGI(TAG, "Initializing bluetooth scanner ...");
-
   // Initialize BT controller to allocate task and other resource.
-  ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_BT));
-  if (!btStart()) { // enable bt_controller
+  if (btStart()) { // enable bt_controller
+    ESP_ERROR_CHECK(esp_coex_preference_set(ESP_COEX_PREFER_BT));
+    ESP_ERROR_CHECK(esp_bluedroid_init());
+    ESP_ERROR_CHECK(esp_bluedroid_enable());
+    // Register callback function for capturing bluetooth packets
+    ESP_ERROR_CHECK(register_ble_callback(true));
+    ESP_LOGI(TAG, "Bluetooth scanner started");
+#endif // BLECOUNTER
+  } else {
     ESP_LOGE(TAG, "Bluetooth controller start failed. Resetting device");
     do_reset(true);
   }
 
-  ESP_ERROR_CHECK(esp_bluedroid_init());
-  ESP_ERROR_CHECK(esp_bluedroid_enable());
-
-  // Register callback function for capturing bluetooth packets
-  ESP_ERROR_CHECK(register_ble_callback());
-
-  ESP_LOGI(TAG, "Bluetooth scanner started");
-#endif // BLECOUNTER
 } // start_BLEscan
 
 void stop_BLEscan(void) {
 #if (BLECOUNTER)
   ESP_LOGI(TAG, "Shutting down bluetooth scanner ...");
-
-  ESP_LOGD(TAG, "unregister GAP callback...");
-  ESP_ERROR_CHECK(esp_ble_gap_register_callback(NULL));
+  ESP_ERROR_CHECK(register_ble_callback(false)); // unregister capture function
   ESP_LOGD(TAG, "bluedroid disable...");
   ESP_ERROR_CHECK(esp_bluedroid_disable());
   ESP_LOGD(TAG, "bluedroid deinit...");
   ESP_ERROR_CHECK(esp_bluedroid_deinit());
-
   if (!btStop()) { // disable bt_controller
     ESP_LOGE(TAG, "Bluetooth controller stop failed. Resetting device");
     do_reset(true);
