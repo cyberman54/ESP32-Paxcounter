@@ -33,8 +33,9 @@ IRAM_ATTR void wifi_sniffer_packet_handler(void *buff,
 
 // process seen MAC
 #if MACFILTER
-  // we guess it's a smartphone, if randomization bit of MAC is set
-  if (!(hdr->addr2[0] & 0b10))
+  // we guess it's a smartphone, if U/L bit #2 of MAC is set
+  // bit #2 = 1 -> local mac (randomized) / bit #2 = 0 -> universal mac
+  if ((hdr->addr2[0] & 0b10) == 0)
     return;
   else
 #endif
