@@ -49,6 +49,7 @@ void do_after_reset(void) {
         (sleep_stop_time.tv_sec - RTC_sleep_start_time.tv_sec) * 1000 +
         (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
+    _uptime(sleep_time_ms); // increment uptime
 
     RTC_runmode = RUNMODE_WAKEUP;
     break;
