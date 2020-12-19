@@ -46,7 +46,7 @@ Reset -> reset device
 // possible values: 
 // AXP20X_LED_OFF / AXP20X_LED_LOW_LEVEL (means LED ON) / AXP20X_LED_BLINK_1HZ / AXP20X_LED_BLINK_4HZ
 #define PMU_LED_RUN_MODE AXP20X_LED_LOW_LEVEL 
-#define PMU_LED_SLEEP_MODE AXP20X_LED_BLINK_1HZ
+#define PMU_LED_SLEEP_MODE AXP20X_LED_OFF
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
