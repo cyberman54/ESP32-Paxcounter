@@ -194,6 +194,10 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 *) GPS data can also be combined with payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
 
+# Power saving mode
+
+Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT). Set *#define SLEEPCYCLE* in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle. Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by  MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See *power.cpp* for power management, and *reset.cpp* for sleep and wakeup logic.
+
 # Time sync
 
 Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](/src/Timeserver/Nodered-Timeserver.json). Configure MQTT nodes in Node-Red to the same LORAWAN application as  paxocunter device is using.
