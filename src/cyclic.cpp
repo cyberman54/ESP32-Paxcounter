@@ -20,8 +20,6 @@ void setCyclicIRQ() {
 // do all housekeeping
 void doHousekeeping() {
 
-  // update uptime counter
-  uptime();
   // check if update mode trigger switch was set
   if (RTC_runmode == RUNMODE_UPDATE) {
     // check battery status if we can before doing ota
@@ -136,13 +134,7 @@ void doHousekeeping() {
 
 } // doHousekeeping()
 
-uint64_t _uptime(uint64_t diff) {
-  static uint64_t offset = 0;
-  offset += diff;
-  return millis() + offset;
-}
-
-uint64_t uptime(void){return _uptime(0);};
+uint64_t uptime() { return (RTC_millis + millis()); }
 
 uint32_t getFreeRAM() {
 #ifndef BOARD_HAS_PSRAM

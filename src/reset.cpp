@@ -11,6 +11,7 @@ static const char TAG[] = __FILE__;
 // variables keep its values after a wakeup from sleep
 RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
+RTC_DATA_ATTR unsigned long RTC_millis = 0;
 timeval sleep_stop_time;
 
 const char *runmode[5] = {"powercycle", "normal", "wakeup", "update", "sleep"};
@@ -49,7 +50,7 @@ void do_after_reset(void) {
         (sleep_stop_time.tv_sec - RTC_sleep_start_time.tv_sec) * 1000 +
         (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
-    _uptime(sleep_time_ms); // increment uptime
+    RTC_millis += sleep_time_ms; // increment system monotonic time
 
     RTC_runmode = RUNMODE_WAKEUP;
     break;
@@ -180,8 +181,9 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
     esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
   }
 
-  // time stamp sleep start time. Deep sleep.
+  // time stamp sleep start time and save system monotonic time. Deep sleep.
   gettimeofday(&RTC_sleep_start_time, NULL);
+  RTC_millis = millis();
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 
