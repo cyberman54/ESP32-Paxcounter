@@ -134,8 +134,6 @@ void doHousekeeping() {
 
 } // doHousekeeping()
 
-uint64_t uptime() { return (RTC_millis + millis()); }
-
 uint32_t getFreeRAM() {
 #ifndef BOARD_HAS_PSRAM
   return ESP.getFreeHeap();

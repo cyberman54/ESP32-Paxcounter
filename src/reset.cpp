@@ -183,7 +183,7 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
 
   // time stamp sleep start time and save system monotonic time. Deep sleep.
   gettimeofday(&RTC_sleep_start_time, NULL);
-  RTC_millis = millis();
+  RTC_millis += millis();
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 
@@ -191,3 +191,5 @@ Error:
   ESP_LOGE(TAG, "Can't go to sleep. Resetting.");
   do_reset(true);
 }
+
+uint64_t uptime() { return (RTC_millis + millis()); }
