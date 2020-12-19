@@ -415,7 +415,6 @@ void setup() {
   strcat_P(features, " WIFI");
   // install wifi driver in RAM and start channel hopping
   wifi_sniffer_init();
-
   // start wifi sniffing, if enabled
   if (cfg.wifiscan) {
     ESP_LOGI(TAG, "Starting Wifi...");
