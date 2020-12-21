@@ -70,11 +70,9 @@ void wifi_sniffer_init(void) {
   ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
   ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // no modem power saving
-
   ESP_ERROR_CHECK(
       esp_wifi_set_promiscuous_filter(&wifi_filter)); // set frame filter
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
-  ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true)); // now switch on monitor mode
 
   // setup wifi channel hopping timer
   WifiChanTimer =
@@ -82,24 +80,24 @@ void wifi_sniffer_init(void) {
                    (cfg.wifichancycle > 0) ? pdMS_TO_TICKS(cfg.wifichancycle)
                                            : pdMS_TO_TICKS(50),
                    pdTRUE, (void *)0, switchWifiChannel);
-  // start timer
-  if (cfg.wifichancycle > 0)
-    xTimerStart(WifiChanTimer, (TickType_t)0);
 }
 
 void switch_wifi_sniffer(uint8_t state) {
   if (state) {
-    // switch wifi sniffer on
+    // start sniffer
     ESP_ERROR_CHECK(esp_wifi_start());
-    esp_wifi_set_promiscuous(true);
-    esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
+    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
+    ESP_ERROR_CHECK(
+        esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE));
+    // start channel hopping timer
     if (cfg.wifichancycle > 0)
       xTimerStart(WifiChanTimer, (TickType_t)0);
   } else {
-    // switch wifi sniffer off
+    // start channel hopping timer
     if (xTimerIsTimerActive(WifiChanTimer) != pdFALSE)
       xTimerStop(WifiChanTimer, (TickType_t)0);
-    esp_wifi_set_promiscuous(false);
+    // stop sniffer
+    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
     ESP_ERROR_CHECK(esp_wifi_stop());
   }
 }

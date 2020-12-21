@@ -89,8 +89,18 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
 
   RTC_runmode = RUNMODE_SLEEP;
 
-  // stop further enqueuing of senddata
+  // switch off radio
+#if (WIFICOUNTER)
+  switch_wifi_sniffer(0);
+#endif
+#if (BLECOUNTER)
+  stop_BLEscan();
+  btStop();
+#endif
+
+  // stop further enqueuing of senddata and MAC processing
   sendTimer.detach();
+  vTaskDelete(macProcessTask);
 
   // halt interrupts accessing i2c bus
   mask_user_IRQ();
@@ -140,16 +150,7 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   if (i == 0)
     goto Error;
 
-// switch off radio
-#if (WIFICOUNTER)
-  switch_wifi_sniffer(0);
-#endif
-#if (BLECOUNTER)
-  stop_BLEscan();
-  btStop();
-#endif
-
-  // save LMIC state to RTC RAM
+    // save LMIC state to RTC RAM
 #if (HAS_LORA)
   SaveLMICToRTC(wakeup_sec);
 #endif // (HAS_LORA)
