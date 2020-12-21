@@ -490,15 +490,15 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 0x14 set payload mask
 
 	byte 1 = sensor data payload mask (0..255, meaning of bits see below)
-        0x01 = GPS_DATA
+        0x01 = COUNT_DATA
         0x02 = ALARM_DATA
         0x04 = MEMS_DATA
-        0x08 = COUNT_DATA (default)
-        0x10 = SENSOR_1_DATA (ENS-COUNTS)
+        0x08 = GPS_DATA
+        0x10 = SENSOR_1_DATA (also ENS counter)
         0x20 = SENSOR_2_DATA
         0x40 = SENSOR_3_DATA
         0x80 = BATT_DATA
-    bytes can be combined eg COUNT_DATA ;SENSOR_1_DATA ;BATT_DATA: `0x08 | 0x10 |0x80 = 0x98`
+    bytes can be combined eg COUNT_DATA + SENSOR_1_DATA + BATT_DATA: `0x01 | 0x10 | 0x80 = 0x91`
 
 0x15 set BME data on/off
 

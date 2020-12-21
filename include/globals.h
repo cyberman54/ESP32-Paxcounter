@@ -19,10 +19,10 @@
 #include <bsec.h>
 
 // bits in payloadmask for filtering payload data
-#define GPS_DATA (0x01)
+#define COUNT_DATA (0x01)
 #define ALARM_DATA (0x02)
 #define MEMS_DATA (0x04)
-#define COUNT_DATA (0x08)
+#define GPS_DATA (0x08)
 #define SENSOR1_DATA (0x10)
 #define SENSOR2_DATA (0x20)
 #define SENSOR3_DATA (0x40)
