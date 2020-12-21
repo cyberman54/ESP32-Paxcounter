@@ -183,16 +183,16 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 | Bit | Sensordata    | Default
 | --- | ------------- | -------
-| 0   | GPS*          | on
+| 0   | Paxcounter    | on
 | 1   | Beacon alarm  | on
 | 2   | BME280/680    | on
-| 3   | Paxcounter    | on
+| 3   | GPS*	      | on
 | 4   | User sensor 1 | on
 | 5   | User sensor 2 | on
 | 6   | User sensor 3 | on
 | 7   | Batterylevel  | off
 
-*) GPS data can also be combined with payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
+*) GPS data can also be combined with paxcounter payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
 
 # Power saving mode
 
