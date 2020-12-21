@@ -11,7 +11,7 @@ static const char TAG[] = __FILE__;
 // variables keep its values after a wakeup from sleep
 RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
-RTC_DATA_ATTR unsigned long RTC_millis = 0;
+RTC_DATA_ATTR unsigned long long RTC_millis = 0;
 timeval sleep_stop_time;
 
 const char *runmode[5] = {"powercycle", "normal", "wakeup", "update", "sleep"};
@@ -193,4 +193,4 @@ Error:
   do_reset(true);
 }
 
-uint64_t uptime() { return (RTC_millis + millis()); }
+unsigned long long uptime() { return (RTC_millis + millis()); }
