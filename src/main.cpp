@@ -304,9 +304,9 @@ void setup() {
 #else
   // remove bluetooth stack to gain more free memory
   btStop();
-  ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
-  ESP_ERROR_CHECK(esp_coex_preference_set(
-      ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+  esp_bt_mem_release(ESP_BT_MODE_BTDM);
+  esp_coex_preference_set(
+      ESP_COEX_PREFER_WIFI); // configure Wifi/BT coexist lib
 #endif
 
 // initialize gps

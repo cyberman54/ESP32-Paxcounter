@@ -171,11 +171,11 @@ void calibrate_voltage(void) {
 #ifdef BAT_MEASURE_ADC
 // configure ADC
 #ifndef BAT_MEASURE_ADC_UNIT // ADC1
-  ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
-  ESP_ERROR_CHECK(adc1_config_channel_atten(adc_channel, atten));
+  adc1_config_width(ADC_WIDTH_BIT_12);
+  adc1_config_channel_atten(adc_channel, atten);
 #else // ADC2
-      // ESP_ERROR_CHECK(adc2_config_width(ADC_WIDTH_BIT_12));
-  ESP_ERROR_CHECK(adc2_config_channel_atten(adc_channel, atten));
+      // adc2_config_width(ADC_WIDTH_BIT_12);
+  adc2_config_channel_atten(adc_channel, atten);
 #endif
   // calibrate ADC
   esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
@@ -210,7 +210,7 @@ uint16_t read_voltage(void) {
 #else                        // ADC2
   int adc_buf = 0;
   for (int i = 0; i < NO_OF_SAMPLES; i++) {
-    ESP_ERROR_CHECK(adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf));
+    adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf);
     adc_reading += adc_buf;
   }
 #endif                       // BAT_MEASURE_ADC_UNIT

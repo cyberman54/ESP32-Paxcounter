@@ -64,15 +64,13 @@ void wifi_sniffer_init(void) {
                                                WIFI_PROMIS_FILTER_MASK_MGMT |
                                                WIFI_PROMIS_FILTER_MASK_DATA};
 
-  ESP_ERROR_CHECK(esp_wifi_init(&wifi_cfg)); // start Wifi task
-  ESP_ERROR_CHECK(
-      esp_wifi_set_country(&wifi_country)); // set locales for RF and channels
-  ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
-  ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // no modem power saving
-  ESP_ERROR_CHECK(
-      esp_wifi_set_promiscuous_filter(&wifi_filter)); // set frame filter
-  ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler));
+  esp_wifi_init(&wifi_cfg);            // start Wifi task
+  esp_wifi_set_country(&wifi_country); // set locales for RF and channels
+  esp_wifi_set_storage(WIFI_STORAGE_RAM);
+  esp_wifi_set_mode(WIFI_MODE_NULL);
+  esp_wifi_set_ps(WIFI_PS_NONE);                 // no modem power saving
+  esp_wifi_set_promiscuous_filter(&wifi_filter); // set frame filter
+  esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
 
   // setup wifi channel hopping timer
   WifiChanTimer =
@@ -85,10 +83,9 @@ void wifi_sniffer_init(void) {
 void switch_wifi_sniffer(uint8_t state) {
   if (state) {
     // start sniffer
-    ESP_ERROR_CHECK(esp_wifi_start());
-    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
-    ESP_ERROR_CHECK(
-        esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE));
+    esp_wifi_start();
+    esp_wifi_set_promiscuous(true);
+    esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
     // start channel hopping timer
     if (cfg.wifichancycle > 0)
       xTimerStart(WifiChanTimer, (TickType_t)0);
@@ -97,7 +94,7 @@ void switch_wifi_sniffer(uint8_t state) {
     if (xTimerIsTimerActive(WifiChanTimer) != pdFALSE)
       xTimerStop(WifiChanTimer, (TickType_t)0);
     // stop sniffer
-    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
-    ESP_ERROR_CHECK(esp_wifi_stop());
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_stop();
   }
 }

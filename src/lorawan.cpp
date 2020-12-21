@@ -106,7 +106,7 @@ breaking change
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
-  ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
+  esp_efuse_mac_get_default(dmac);
   // deveui is LSB, we reverse it so TTN DEVEUI display
   // will remain the same as MAC address
   // MAC is 6 bytes, devEUI 8, set middle 2 ones
