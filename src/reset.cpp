@@ -89,6 +89,9 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
 
   RTC_runmode = RUNMODE_SLEEP;
 
+  // stop further enqueuing of senddata and MAC processing
+  sendTimer.detach();
+
   // switch off radio
 #if (WIFICOUNTER)
   switch_wifi_sniffer(0);
@@ -98,8 +101,7 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   btStop();
 #endif
 
-  // stop further enqueuing of senddata and MAC processing
-  sendTimer.detach();
+  // stop MAC processing
   vTaskDelete(macProcessTask);
 
   // halt interrupts accessing i2c bus
