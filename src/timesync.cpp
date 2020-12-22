@@ -82,7 +82,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     }
 
     // collect timestamp samples in timestamp array
-    for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
+    for (int8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
 
 // send timesync request
 #if (TIME_SYNC_LORASERVER) // ask user's timeserver (for LoRAWAN < 1.0.3)

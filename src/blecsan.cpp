@@ -253,8 +253,8 @@ esp_err_t register_ble_callback(bool unregister = false) {
         .scan_interval =
             (uint16_t)(cfg.blescantime * 10 / 0.625), // Time = N * 0.625 msec
         .scan_window =
-            (uint16_t)(BLESCANWINDOW / 0.625) // Time = N * 0.625 msec
-    };
+            (uint16_t)(BLESCANWINDOW / 0.625), // Time = N * 0.625 msec
+        .scan_duplicate = BLE_SCAN_DUPLICATE_ENABLE};
 
     ESP_LOGI(TAG, "Set GAP scan parameters");
 

@@ -267,7 +267,7 @@ void set_macfilter(uint8_t val[]) {
 
 void set_rgblum(uint8_t val[]) {
   // Avoid wrong parameters
-  cfg.rgblum = (val[0] >= 0 && val[0] <= 100) ? (uint8_t)val[0] : RGBLUMINOSITY;
+  cfg.rgblum = (val[0] <= 100) ? (uint8_t)val[0] : RGBLUMINOSITY;
   ESP_LOGI(TAG, "Remote command: set RGB Led luminosity %d", cfg.rgblum);
 };
 
