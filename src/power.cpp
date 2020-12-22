@@ -131,7 +131,7 @@ void AXP192_init(void) {
     pmu.setDCDC1Voltage(3300);              // for external OLED display
     pmu.setLDO2Voltage(3300);               // LORA VDD 3v3
     pmu.setLDO3Voltage(3300);               // GPS VDD 3v3
-    pmu.setTimeOutShutdown(false);          // no automatic shutdown
+    pmu.setTimeOutShutdown(true);           // shutdown by longpress
     pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE); // TS pin mode off to save power
 
     // switch ADCs on
