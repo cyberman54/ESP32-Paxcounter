@@ -134,12 +134,12 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
 
 // shutdown MQTT safely
 #ifdef HAS_MQTT
-// to come
+  mqtt_deinit();
 #endif
 
 // shutdown SPI safely
 #ifdef HAS_SPI
-// to come
+  spi_deinit();
 #endif
 
   // wait until rcommands are all done
