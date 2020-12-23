@@ -68,7 +68,6 @@ TIMESYNC_IRQ    -> setTimeSyncIRQ()
 CYCLIC_IRQ      -> setCyclicIRQ()
 SENDCYCLE_IRQ   -> setSendIRQ()
 BME_IRQ         -> setBMEIRQ()
-MQTT_IRQ        -> setMqttIRQ()
 
 ClockTask (Core 1), see timekeeper.cpp
 

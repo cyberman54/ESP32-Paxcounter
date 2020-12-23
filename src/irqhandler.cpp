@@ -69,14 +69,6 @@ void irqHandler(void *pvParameters) {
     }
 #endif
 
-// MQTT loop due?
-#if (HAS_MQTT)
-    if (InterruptStatus & MQTT_IRQ) {
-      mqtt_loop();
-      InterruptStatus &= ~MQTT_IRQ;
-    }
-#endif
-
     // are cyclic tasks due?
     if (InterruptStatus & CYCLIC_IRQ) {
       doHousekeeping();

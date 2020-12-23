@@ -11,13 +11,17 @@ Ticker mqttTimer;
 WiFiClient netClient;
 MQTTClient mqttClient;
 
+void mqtt_deinit(void) {
+  mqttClient.onMessageAdvanced(NULL);
+  mqttClient.disconnect();
+  vTaskDelete(mqttTask);
+}
+
 esp_err_t mqtt_init(void) {
 
   // setup network connection
   WiFi.onEvent(NetworkEvent);
   ETH.begin();
-  // WiFi.mode(WIFI_STA);
-  // WiFi.begin("SSID", "PASSWORD");
 
   // setup mqtt client
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
@@ -33,7 +37,6 @@ esp_err_t mqtt_init(void) {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
-  mqttTimer.attach(MQTT_KEEPALIVE, setMqttIRQ);
   xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask);
 
   return ESP_OK;
@@ -113,16 +116,19 @@ void mqtt_client_task(void *param) {
 
   while (1) {
 
-    // fetch next or wait for payload to send from queue
-    // do not delete item from queue until it is transmitted
-    if (xQueuePeek(MQTTSendQueue, &msg, portMAX_DELAY) != pdTRUE) {
-      ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
-      continue;
-    }
-
-    // send data to mqtt server, if we are connected
     if (mqttClient.connected()) {
 
+      // check for incoming messages
+      mqttClient.loop();
+
+      // fetch next or wait for payload to send from queue
+      // do not delete item from queue until it is transmitted
+      // consider mqtt timeout while waiting
+      if (xQueuePeek(MQTTSendQueue, &msg,
+                     MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE)
+        continue;
+
+      // send data to mqtt server
       char buffer[PAYLOAD_BUFFER_SIZE + 3];
       snprintf(buffer, msg.MessageSize + 3, "%u/%s", msg.MessagePort,
                msg.Message);
@@ -131,20 +137,17 @@ void mqtt_client_task(void *param) {
         ESP_LOGI(TAG, "%d byte(s) sent to MQTT server", msg.MessageSize + 2);
         // delete sent item from queue
         xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
-        continue;
       } else
         ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
-
     } else {
       // attempt to reconnect to MQTT server
-      ESP_LOGD(TAG, "MQTT client reconnecting...");
-      ESP_LOGD(TAG, "MQTT last_error = %d / rc = %d", mqttClient.lastError(),
+      ESP_LOGD(TAG, "MQTT error = %d / rc = %d", mqttClient.lastError(),
                mqttClient.returnCode());
+      ESP_LOGD(TAG, "MQTT client reconnecting...");
       delay(MQTT_RETRYSEC * 1000);
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
     }
-
-  } // while(1)
+  } // while (1)
 }
 
 void mqtt_enqueuedata(MessageBuffer_t *message) {
@@ -159,18 +162,10 @@ void mqtt_callback(MQTTClient *client, char topic[], char payload[],
     rcommand((const uint8_t *)payload, (const uint8_t)length);
 }
 
-void mqtt_loop(void) {
-  if (!mqttClient.loop())
-    ESP_LOGD(TAG, "MQTT last_error = %d / rc = %d", mqttClient.lastError(),
-             mqttClient.returnCode());
-}
-
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
 
 uint32_t mqtt_queuewaiting(void) {
   return uxQueueMessagesWaiting(MQTTSendQueue);
 }
-
-void setMqttIRQ(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
 
 #endif // HAS_MQTT
