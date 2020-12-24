@@ -18,25 +18,28 @@
 #include "mallocator.h"
 #include <bsec.h>
 
+#define _bit(b) (1U << (b))
+#define _bitl(b) (1UL << (b))
+
 // bits in payloadmask for filtering payload data
-#define COUNT_DATA (0x01)
-#define ALARM_DATA (0x02)
-#define MEMS_DATA (0x04)
-#define GPS_DATA (0x08)
-#define SENSOR1_DATA (0x10)
-#define SENSOR2_DATA (0x20)
-#define SENSOR3_DATA (0x40)
-#define BATT_DATA (0x80)
+#define COUNT_DATA _bit(1)
+#define ALARM_DATA _bit(2)
+#define MEMS_DATA _bit(3)
+#define GPS_DATA _bit(4)
+#define SENSOR1_DATA _bit(5)
+#define SENSOR2_DATA _bit(6)
+#define SENSOR3_DATA _bit(7)
+#define BATT_DATA _bit(8)
 
 // bits in configmask for device runmode control
-#define GPS_MODE (0x01)
-#define ALARM_MODE (0x02)
-#define BEACON_MODE (0x04)
-#define UPDATE_MODE (0x08)
-#define FILTER_MODE (0x10)
-#define ANTENNA_MODE (0x20)
-#define BLE_MODE (0x40)
-#define SCREEN_MODE (0x80)
+#define GPS_MODE _bit(1)
+#define ALARM_MODE _bit(2)
+#define BEACON_MODE _bit(3)
+#define UPDATE_MODE _bit(4)
+#define FILTER_MODE _bit(5)
+#define ANTENNA_MODE _bit(6)
+#define BLE_MODE _bit(7)
+#define SCREEN_MODE _bit(8)
 
 // length of display buffer for lmic event messages
 #define LMIC_EVENTMSG_LEN 17
