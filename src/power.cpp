@@ -127,12 +127,22 @@ void AXP192_init(void) {
     ESP_LOGI(TAG, "AXP192 PMU initialization failed");
   else {
 
-    // configure AXP192
-    pmu.setDCDC1Voltage(3300);              // for external OLED display
-    pmu.setLDO2Voltage(3300);               // LORA VDD 3v3
-    pmu.setLDO3Voltage(3300);               // GPS VDD 3v3
-    pmu.setTimeOutShutdown(true);           // shutdown by longpress
-    pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE); // TS pin mode off to save power
+    // configure voltages
+    pmu.setDCDC1Voltage(3300); // for external OLED display
+    pmu.setLDO2Voltage(3300);  // LORA VDD 3v3
+    pmu.setLDO3Voltage(3300);  // GPS VDD 3v3
+
+    // configure PEK button settings
+    pmu.setTimeOutShutdown(false); // forced shutdown by PEK enabled
+    pmu.setShutdownTime(
+        AXP_POWER_OFF_TIME_65); // 6 sec button press for shutdown
+    pmu.setlongPressTime(
+        AXP_LONGPRESS_TIME_1S5); // 1.5 sec button press for long press
+    pmu.setStartupTime(
+        AXP192_STARTUP_TIME_1S); // 1 sec button press for startup
+
+    // set battery temperature sensing pin off to save power
+    pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE);
 
     // switch ADCs on
     pmu.adc1Enable(AXP202_BATT_VOL_ADC1, true);
@@ -145,8 +155,7 @@ void AXP192_init(void) {
     attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
     pmu.enableIRQ(AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ |
                       AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ |
-                      AXP202_CHARGING_FINISHED_IRQ | AXP202_PEK_SHORTPRESS_IRQ |
-                      AXP202_PEK_LONGPRESS_IRQ,
+                      AXP202_CHARGING_FINISHED_IRQ | AXP202_PEK_SHORTPRESS_IRQ,
                   1);
     pmu.clearIRQ();
 #endif // PMU_INT
