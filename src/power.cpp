@@ -68,10 +68,6 @@ void AXP192_power(pmu_power_t powerlevel) {
   switch (powerlevel) {
 
   case pmu_power_off:
-    pmu.setChgLEDMode(AXP20X_LED_OFF);
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
     pmu.shutdown();
     break;
 
@@ -81,18 +77,19 @@ void AXP192_power(pmu_power_t powerlevel) {
 #else
     pmu.setChgLEDMode(AXP20X_LED_OFF);
 #endif
-    // we don't cut off DCDC1, because then display blocks i2c bus
+    // we don't cut off DCDC1, because OLED display will then block i2c bus
+    // pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF); // OLED off
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF); // gps off
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF); // lora off
     break;
 
   case pmu_power_on:
-  default:                                        // all rails power on
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);   // Lora on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);   // Gps on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);  // OLED on T-Beam v1.0
-    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF); // unused on T-Beam v1.0
-    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF); // unused on T-Beam v1.0
+  default:
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);   // Lora on T-Beam V1.0/1.1
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);   // Gps on T-Beam V1.0/1.1
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);  // OLED on T-Beam v1.0/1.1
+    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF); // unused on T-Beam v1.0/1.1
+    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF); // unused on T-Beam v1.0/1.1
 #ifdef PMU_LED_RUN_MODE
     pmu.setChgLEDMode(PMU_LED_RUN_MODE);
 #else
