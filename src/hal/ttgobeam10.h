@@ -14,9 +14,9 @@ pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
 
 /// Button functions: ///
 Power, short press -> set device on / while device is on: goto sleep
-Power, long press -> set device off
-User, short press -> flip display page 
-User, long press -> send LORA message
+Power, long press   -> set device off
+User, short press   -> flip display page 
+User, long press    -> send a button message
 Reset -> reset device
 */
 
