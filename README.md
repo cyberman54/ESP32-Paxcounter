@@ -16,15 +16,13 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 
 # Use case
 
-Paxcounter is a proof-of-concept device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by filtering their MAC adresses.
+Paxcounter is an [ESP32](https://www.espressif.com/en/products/socs/esp32) MCU based device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by evaluating their MAC adresses.
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
-Data is transferred to a server via a LoRaWAN network, and/or a wired SPI slave interface. It can also be stored on a local SD-card.
+Data can either be be stored on a local SD-card, transferred to cloud using LoRaWAN network or MQTT over TCP/IP, or transmitted to a local host using serial (SPI) interface.
 
-You can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
-
-This can all be done with a single small and cheap ESP32 board for less than $20.
+You can build this project battery powered using ESP32 deep sleep mode and reach long uptimes with a single 18650 Li-Ion cell.
 
 # Hardware
 
