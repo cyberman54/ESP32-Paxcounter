@@ -48,14 +48,13 @@ void AXP192_powerevent_IRQ(void) {
     ESP_LOGI(TAG, "Battery low temperature.");
 
   // short press -> esp32 deep sleep mode, can be exited by pressing user button
-  if (pmu.isPEKShortPressIRQ() && (RTC_runmode == RUNMODE_NORMAL)) {
+  if (pmu.isPEKShortPressIRQ()) {
     enter_deepsleep(0, HAS_BUTTON);
   }
 
   // long press -> shutdown power, can be exited by another longpress
   if (pmu.isPEKLongtPressIRQ()) {
     AXP192_power(pmu_power_off); // switch off Lora, GPS, display
-    pmu.shutdown();              // switch off device
   }
 
   pmu.clearIRQ();
@@ -69,27 +68,33 @@ void AXP192_power(pmu_power_t powerlevel) {
   switch (powerlevel) {
 
   case pmu_power_off:
-    pmu.setChgLEDMode(AXP20X_LED_OFF);
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF);
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF);
-    // pmu.setPowerOutPut(AXP192_DCDC3, AXP202_OFF);
+    pmu.shutdown();
     break;
 
   case pmu_power_sleep:
-    pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
-    // we don't cut off DCDC1, because then display blocks i2c bus
+#ifdef PMU_LED_SLEEP_MODE
+    pmu.setChgLEDMode(PMU_LED_SLEEP_MODE);
+#else
+    pmu.setChgLEDMode(AXP20X_LED_OFF);
+#endif
+    // we don't cut off DCDC1, because OLED display will then block i2c bus
+    // pmu.setPowerOutPut(AXP192_DCDC1, AXP202_OFF); // OLED off
     pmu.setPowerOutPut(AXP192_LDO3, AXP202_OFF); // gps off
     pmu.setPowerOutPut(AXP192_LDO2, AXP202_OFF); // lora off
     break;
 
-  default:                                        // all rails power on
-    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);   // Lora on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);   // Gps on T-Beam V1.0
-    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);  // OLED on T-Beam v1.0
-    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF); // unused on T-Beam v1.0
-    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF); // unused on T-Beam v1.0
+  case pmu_power_on:
+  default:
+    pmu.setPowerOutPut(AXP192_LDO2, AXP202_ON);   // Lora on T-Beam V1.0/1.1
+    pmu.setPowerOutPut(AXP192_LDO3, AXP202_ON);   // Gps on T-Beam V1.0/1.1
+    pmu.setPowerOutPut(AXP192_DCDC1, AXP202_ON);  // OLED on T-Beam v1.0/1.1
+    pmu.setPowerOutPut(AXP192_DCDC2, AXP202_OFF); // unused on T-Beam v1.0/1.1
+    pmu.setPowerOutPut(AXP192_EXTEN, AXP202_OFF); // unused on T-Beam v1.0/1.1
+#ifdef PMU_LED_RUN_MODE
+    pmu.setChgLEDMode(PMU_LED_RUN_MODE);
+#else
     pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+#endif
     break;
   }
 }
@@ -119,12 +124,22 @@ void AXP192_init(void) {
     ESP_LOGI(TAG, "AXP192 PMU initialization failed");
   else {
 
-    // configure AXP192
-    pmu.setDCDC1Voltage(3300);              // for external OLED display
-    pmu.setLDO2Voltage(3300);               // LORA VDD 3v3
-    pmu.setLDO3Voltage(3300);               // GPS VDD 3v3
-    pmu.setTimeOutShutdown(false);          // no automatic shutdown
-    pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE); // TS pin mode off to save power
+    // configure voltages
+    pmu.setDCDC1Voltage(3300); // for external OLED display
+    pmu.setLDO2Voltage(3300);  // LORA VDD 3v3
+    pmu.setLDO3Voltage(3300);  // GPS VDD 3v3
+
+    // configure PEK button settings
+    pmu.setTimeOutShutdown(false); // forced shutdown by PEK enabled
+    pmu.setShutdownTime(
+        AXP_POWER_OFF_TIME_65); // 6 sec button press for shutdown
+    pmu.setlongPressTime(
+        AXP_LONGPRESS_TIME_1S5); // 1.5 sec button press for long press
+    pmu.setStartupTime(
+        AXP192_STARTUP_TIME_1S); // 1 sec button press for startup
+
+    // set battery temperature sensing pin off to save power
+    pmu.setTSmode(AXP_TS_PIN_MODE_DISABLE);
 
     // switch ADCs on
     pmu.adc1Enable(AXP202_BATT_VOL_ADC1, true);
@@ -132,16 +147,12 @@ void AXP192_init(void) {
     pmu.adc1Enable(AXP202_VBUS_VOL_ADC1, true);
     pmu.adc1Enable(AXP202_VBUS_CUR_ADC1, true);
 
-    // switch power rails on
-    AXP192_power(pmu_power_on);
-
 #ifdef PMU_INT
     pinMode(PMU_INT, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
     pmu.enableIRQ(AXP202_VBUS_REMOVED_IRQ | AXP202_VBUS_CONNECT_IRQ |
                       AXP202_BATT_REMOVED_IRQ | AXP202_BATT_CONNECT_IRQ |
-                      AXP202_CHARGING_FINISHED_IRQ | AXP202_PEK_SHORTPRESS_IRQ |
-                      AXP202_PEK_LONGPRESS_IRQ,
+                      AXP202_CHARGING_FINISHED_IRQ | AXP202_PEK_SHORTPRESS_IRQ,
                   1);
     pmu.clearIRQ();
 #endif // PMU_INT
@@ -153,6 +164,9 @@ void AXP192_init(void) {
     pmu.enableChargeing(true);
 #endif
 
+    // switch power rails on
+    AXP192_power(pmu_power_on);
+
     ESP_LOGI(TAG, "AXP192 PMU initialized");
   }
 }
@@ -163,11 +177,11 @@ void calibrate_voltage(void) {
 #ifdef BAT_MEASURE_ADC
 // configure ADC
 #ifndef BAT_MEASURE_ADC_UNIT // ADC1
-  ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
-  ESP_ERROR_CHECK(adc1_config_channel_atten(adc_channel, atten));
+  adc1_config_width(ADC_WIDTH_BIT_12);
+  adc1_config_channel_atten(adc_channel, atten);
 #else // ADC2
-      // ESP_ERROR_CHECK(adc2_config_width(ADC_WIDTH_BIT_12));
-  ESP_ERROR_CHECK(adc2_config_channel_atten(adc_channel, atten));
+      // adc2_config_width(ADC_WIDTH_BIT_12);
+  adc2_config_channel_atten(adc_channel, atten);
 #endif
   // calibrate ADC
   esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
@@ -202,7 +216,7 @@ uint16_t read_voltage(void) {
 #else                        // ADC2
   int adc_buf = 0;
   for (int i = 0; i < NO_OF_SAMPLES; i++) {
-    ESP_ERROR_CHECK(adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf));
+    adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf);
     adc_reading += adc_buf;
   }
 #endif                       // BAT_MEASURE_ADC_UNIT

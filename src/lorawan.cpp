@@ -6,6 +6,9 @@
 // Local logging Tag
 static const char TAG[] = "lora";
 
+// Saves the LMIC structure during deep sleep
+RTC_DATA_ATTR lmic_t RTC_LMIC;
+
 #if CLOCK_ERROR_PROCENTAGE > 7
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
 #endif
@@ -15,11 +18,6 @@ static const char TAG[] = "lora";
 #define LMIC_ENABLE_DeviceTimeReq 1
 #endif
 #endif
-
-// variable keep its values after restart or wakeup from sleep
-RTC_NOINIT_ATTR u4_t RTCnetid, RTCdevaddr;
-RTC_NOINIT_ATTR u1_t RTCnwkKey[16], RTCartKey[16];
-RTC_NOINIT_ATTR int RTCseqnoUp, RTCseqnoDn;
 
 QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
@@ -83,8 +81,6 @@ void lora_setupForNetwork(bool preJoin) {
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
              getCrName(updr2rps(LMIC.datarate)));
-    // store LMIC keys and counters in RTC memory
-    LMIC_getSessionKeys(&RTCnetid, &RTCdevaddr, RTCnwkKey, RTCartKey);
   }
 }
 
@@ -110,7 +106,7 @@ breaking change
 // DevEUI generator using devices's MAC address
 void gen_lora_deveui(uint8_t *pdeveui) {
   uint8_t *p = pdeveui, dmac[6];
-  ESP_ERROR_CHECK(esp_efuse_mac_get_default(dmac));
+  esp_efuse_mac_get_default(dmac);
   // deveui is LSB, we reverse it so TTN DEVEUI display
   // will remain the same as MAC address
   // MAC is 6 bytes, devEUI 8, set middle 2 ones
@@ -197,59 +193,47 @@ void lora_send(void *pvParameters) {
     }
 
     // fetch next or wait for payload to send from queue
-    if (xQueueReceive(LoraSendQueue, &SendBuffer, portMAX_DELAY) != pdTRUE) {
+    // do not delete item from queue until it is transmitted
+    if (xQueuePeek(LoraSendQueue, &SendBuffer, portMAX_DELAY) != pdTRUE) {
       ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
       continue;
     }
 
     // attempt to transmit payload
-    else {
+    switch (LMIC_setTxData2_strict(SendBuffer.MessagePort, SendBuffer.Message,
+                                   SendBuffer.MessageSize,
+                                   (cfg.countermode & 0x02))) {
 
-      switch (LMIC_setTxData2_strict(SendBuffer.MessagePort, SendBuffer.Message,
-                                     SendBuffer.MessageSize,
-                                     (cfg.countermode & 0x02))) {
-
-      case LMIC_ERROR_SUCCESS:
-        // save current Fcnt to RTC RAM
-        RTCseqnoUp = LMIC.seqnoUp;
-        RTCseqnoDn = LMIC.seqnoDn;
-
+    case LMIC_ERROR_SUCCESS:
 #if (TIME_SYNC_LORASERVER)
-        // if last packet sent was a timesync request, store TX timestamp
-        if (SendBuffer.MessagePort == TIMEPORT)
-          // store LMIC time when we started transmit of timesync request
-          timesync_store(osticks2ms(os_getTime()), timesync_tx);
+      // if last packet sent was a timesync request, store TX timestamp
+      if (SendBuffer.MessagePort == TIMEPORT)
+        // store LMIC time when we started transmit of timesync request
+        timesync_store(osticks2ms(os_getTime()), timesync_tx);
 #endif
+      ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
+      // delete sent item from queue
+      xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0);
+      break;
+    case LMIC_ERROR_TX_BUSY:   // LMIC already has a tx message pending
+    case LMIC_ERROR_TX_FAILED: // message was not sent
+      vTaskDelay(pdMS_TO_TICKS(500 + random(400))); // wait a while
+      break;
+    case LMIC_ERROR_TX_TOO_LARGE:    // message size exceeds LMIC buffer size
+    case LMIC_ERROR_TX_NOT_FEASIBLE: // message too large for current
+                                     // datarate
+      ESP_LOGI(TAG, "Message too large to send, message not sent and deleted");
+      // we need some kind of error handling here -> to be done
+      break;
+    default: // other LMIC return code
+      ESP_LOGE(TAG, "LMIC error, message not sent and deleted");
 
-        ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
-        break;
-      case LMIC_ERROR_TX_BUSY:   // LMIC already has a tx message pending
-      case LMIC_ERROR_TX_FAILED: // message was not sent
-        // ESP_LOGD(TAG, "LMIC busy, message re-enqueued"); // very noisy
-        vTaskDelay(pdMS_TO_TICKS(1000 + random(500))); // wait a while
-        lora_enqueuedata(&SendBuffer); // re-enqueue the undelivered message
-        break;
-      case LMIC_ERROR_TX_TOO_LARGE:    // message size exceeds LMIC buffer size
-      case LMIC_ERROR_TX_NOT_FEASIBLE: // message too large for current
-                                       // datarate
-        ESP_LOGI(TAG,
-                 "Message too large to send, message not sent and deleted");
-        // we need some kind of error handling here -> to be done
-        break;
-      default: // other LMIC return code
-        ESP_LOGE(TAG, "LMIC error, message not sent and deleted");
-
-      } // switch
-    }
+    }         // switch
     delay(2); // yield to CPU
-  }
+  }           // while(1)
 }
 
-void lora_stack_reset() {
-  LMIC_reset(); // reset LMIC MAC
-}
-
-esp_err_t lora_stack_init(bool do_join) {
+esp_err_t lmic_init(void) {
   _ASSERT(SEND_QUEUE_SIZE > 0);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (LoraSendQueue == 0) {
@@ -258,89 +242,6 @@ esp_err_t lora_stack_init(bool do_join) {
   }
   ESP_LOGI(TAG, "LORA send queue created, size %d Bytes",
            SEND_QUEUE_SIZE * sizeof(MessageBuffer_t));
-
-  // start lorawan stack
-  ESP_LOGI(TAG, "Starting LMIC...");
-  xTaskCreatePinnedToCore(lmictask,   // task function
-                          "lmictask", // name of task
-                          4096,       // stack size of task
-                          (void *)1,  // parameter of the task
-                          2,          // priority of the task
-                          &lmicTask,  // task handle
-                          1);         // CPU core
-
-#ifdef LORA_ABP
-  // Pass ABP parameters to LMIC_setSession
-  lora_stack_reset();
-  uint8_t appskey[sizeof(APPSKEY)];
-  uint8_t nwkskey[sizeof(NWKSKEY)];
-  memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
-  memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
-  LMIC_setSession(NETID, DEVADDR, nwkskey, appskey);
-  // These parameters are defined as macro in loraconf.h
-  setABPParameters();
-#else
-  // Start join procedure if not already joined,
-  // lora_setupForNetwork(true) is called by eventhandler when joined
-  // else continue current session
-  if (do_join) {
-    if (!LMIC_startJoining())
-      ESP_LOGI(TAG, "Already joined");
-  } else {
-    lora_stack_reset();
-    LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
-    LMIC.seqnoUp = RTCseqnoUp;
-    LMIC.seqnoDn = RTCseqnoDn;
-  }
-#endif
-  // start lmic send task
-  xTaskCreatePinnedToCore(lora_send,      // task function
-                          "lorasendtask", // name of task
-                          3072,           // stack size of task
-                          (void *)1,      // parameter of the task
-                          1,              // priority of the task
-                          &lorasendTask,  // task handle
-                          1);             // CPU core
-
-  return ESP_OK;
-}
-
-void lora_enqueuedata(MessageBuffer_t *message) {
-  // enqueue message in LORA send queue
-  BaseType_t ret = pdFALSE;
-  MessageBuffer_t DummyBuffer;
-  sendprio_t prio = message->MessagePrio;
-
-  switch (prio) {
-  case prio_high:
-    // clear some space in queue if full, then fallthrough to prio_normal
-    if (uxQueueSpacesAvailable(LoraSendQueue) == 0) {
-      xQueueReceive(LoraSendQueue, &DummyBuffer, (TickType_t)0);
-      ESP_LOGW(TAG, "LORA sendqueue purged, data is lost");
-    }
-  case prio_normal:
-    ret = xQueueSendToFront(LoraSendQueue, (void *)message, (TickType_t)0);
-    break;
-  case prio_low:
-  default:
-    ret = xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0);
-    break;
-  }
-  if (ret != pdTRUE) {
-    snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "<>");
-    ESP_LOGW(TAG, "LORA sendqueue is full");
-  } else {
-    // add Lora send queue length to display
-    snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "%2u",
-             uxQueueMessagesWaiting(LoraSendQueue));
-  }
-}
-
-void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
-
-// LMIC lorawan stack task
-void lmictask(void *pvParameters) {
-  _ASSERT((uint32_t)pvParameters == 1);
 
   // setup LMIC stack
   os_init_ex(&myPinmap); // initialize lmic run-time environment
@@ -355,7 +256,7 @@ void lmictask(void *pvParameters) {
 
   // Reset the MAC state. Session and pending data transfers will be
   // discarded.
-  lora_stack_reset();
+  LMIC_reset();
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
@@ -365,11 +266,83 @@ void lmictask(void *pvParameters) {
   LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 1000);
 #endif
 
+// Pass ABP parameters to LMIC_setSession
+#ifdef LORA_ABP
+  setABPParameters(); // These parameters are defined as macro in loraconf.h
+
+  // load saved session from RTC, if we have one
+  if (RTC_runmode == RUNMODE_WAKEUP) {
+    LoadLMICFromRTC();
+  } else {
+    uint8_t appskey[sizeof(APPSKEY)];
+    uint8_t nwkskey[sizeof(NWKSKEY)];
+    memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
+    memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
+    LMIC_setSession(NETID, DEVADDR, nwkskey, appskey);
+  }
+
+  // Pass OTA parameters to LMIC_setSession
+#else
+  // load saved session from RTC, if we have one
+  if (RTC_runmode == RUNMODE_WAKEUP) {
+    LoadLMICFromRTC();
+  }
+  // otherwise start join procedure if not already joined
+  else {
+    if (!LMIC_startJoining())
+      ESP_LOGI(TAG, "Already joined");
+  }
+#endif
+
+  // start lmic loop task
+  ESP_LOGI(TAG, "Starting LMIC...");
+  xTaskCreatePinnedToCore(lmictask,   // task function
+                          "lmictask", // name of task
+                          4096,       // stack size of task
+                          (void *)1,  // parameter of the task
+                          2,          // priority of the task
+                          &lmicTask,  // task handle
+                          1);         // CPU core
+
+  // start lora send task
+  xTaskCreatePinnedToCore(lora_send,      // task function
+                          "lorasendtask", // name of task
+                          3072,           // stack size of task
+                          (void *)1,      // parameter of the task
+                          1,              // priority of the task
+                          &lorasendTask,  // task handle
+                          1);             // CPU core
+
+  return ESP_OK;
+}
+
+void lora_enqueuedata(MessageBuffer_t *message) {
+  // enqueue message in LORA send queue
+  if (xQueueSendToBack(LoraSendQueue, (void *)message, (TickType_t)0) !=
+      pdTRUE) {
+    snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "<>");
+    ESP_LOGW(TAG, "LORA sendqueue is full");
+  } else {
+    // add Lora send queue length to display
+    snprintf(lmic_event_msg + 14, LMIC_EVENTMSG_LEN - 14, "%2u",
+             uxQueueMessagesWaiting(LoraSendQueue));
+  }
+}
+
+void lora_queuereset(void) { xQueueReset(LoraSendQueue); }
+
+uint32_t lora_queuewaiting(void) {
+  return uxQueueMessagesWaiting(LoraSendQueue);
+}
+
+// LMIC loop task
+void lmictask(void *pvParameters) {
+  _ASSERT((uint32_t)pvParameters == 1);
   while (1) {
     os_runloop_once(); // execute lmic scheduled jobs and events
     delay(2);          // yield to CPU
   }
-} // lmictask
+}
 
 // lmic event handler
 void myEventCallback(void *pUserData, ev_t ev) {
@@ -410,7 +383,7 @@ void myEventCallback(void *pUserData, ev_t ev) {
   case EV_JOIN_FAILED:
     // must call LMIC_reset() to stop joining
     // otherwise join procedure continues.
-    lora_stack_reset();
+    LMIC_reset();
     break;
 
   case EV_JOIN_TXCOMPLETE:
@@ -559,5 +532,45 @@ void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
 
 } // mac_decode()
 #endif // VERBOSE
+
+// following code snippet was taken from
+// https://github.com/JackGruber/ESP32-LMIC-DeepSleep-example/blob/master/src/main.cpp
+
+void SaveLMICToRTC(int deepsleep_sec) {
+  RTC_LMIC = LMIC;
+
+  // ESP32 can't track millis during DeepSleep and no option to advance
+  // millis after DeepSleep. Therefore reset DutyCyles
+
+  unsigned long now = millis();
+
+  // EU Like Bands
+#if defined(CFG_LMIC_EU_like)
+  for (int i = 0; i < MAX_BANDS; i++) {
+    ostime_t correctedAvail =
+        RTC_LMIC.bands[i].avail -
+        ((now / 1000.0 + deepsleep_sec) * OSTICKS_PER_SEC);
+    if (correctedAvail < 0) {
+      correctedAvail = 0;
+    }
+    RTC_LMIC.bands[i].avail = correctedAvail;
+  }
+
+  RTC_LMIC.globalDutyAvail = RTC_LMIC.globalDutyAvail -
+                             ((now / 1000.0 + deepsleep_sec) * OSTICKS_PER_SEC);
+  if (RTC_LMIC.globalDutyAvail < 0) {
+    RTC_LMIC.globalDutyAvail = 0;
+  }
+#else
+  ESP_LOGW(TAG, "No DutyCycle recalculation function!");
+#endif
+
+  ESP_LOGI(TAG, "LMIC state saved");
+}
+
+void LoadLMICFromRTC() {
+  LMIC = RTC_LMIC;
+  ESP_LOGI(TAG, "LMIC state loaded");
+}
 
 #endif // HAS_LORA

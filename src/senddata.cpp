@@ -8,13 +8,14 @@ void setSendIRQ() {
 }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
-void SendPayload(uint8_t port, sendprio_t prio) {
+void SendPayload(uint8_t port) {
+
+  ESP_LOGD(TAG, "sending Payload for Port %d", port);
 
   MessageBuffer_t
-      SendBuffer; // contains MessageSize, MessagePort, MessagePrio, Message[]
+      SendBuffer; // contains MessageSize, MessagePort, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
-  SendBuffer.MessagePrio = prio;
 
   switch (PAYLOAD_ENCODER) {
   case 1: // plain -> no mapping
@@ -110,7 +111,7 @@ void sendData() {
       sds011_store(&sds_status);
       payload.addSDS(sds_status);
 #endif
-      SendPayload(COUNTERPORT, prio_normal);
+      SendPayload(COUNTERPORT);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
         reset_counters(); // clear macs container and reset all counters
@@ -128,7 +129,7 @@ void sendData() {
     case MEMS_DATA:
       payload.reset();
       payload.addBME(bme_status);
-      SendPayload(BMEPORT, prio_normal);
+      SendPayload(BMEPORT);
       break;
 #endif
 
@@ -140,7 +141,7 @@ void sendData() {
           gps_storelocation(&gps_status);
           payload.reset();
           payload.addGPS(gps_status);
-          SendPayload(GPSPORT, prio_high);
+          SendPayload(GPSPORT);
         } else
           ESP_LOGD(TAG, "No valid GPS position");
       }
@@ -152,7 +153,7 @@ void sendData() {
     case SENSOR1_DATA:
       payload.reset();
       payload.addSensor(sensor_read(1));
-      SendPayload(SENSOR1PORT, prio_normal);
+      SendPayload(SENSOR1PORT);
 #if (COUNT_ENS)
       if (cfg.countermode != 1)
         cwa_clear();
@@ -163,14 +164,14 @@ void sendData() {
     case SENSOR2_DATA:
       payload.reset();
       payload.addSensor(sensor_read(2));
-      SendPayload(SENSOR2PORT, prio_normal);
+      SendPayload(SENSOR2PORT);
       break;
 #endif
 #if (HAS_SENSOR_3)
     case SENSOR3_DATA:
       payload.reset();
       payload.addSensor(sensor_read(3));
-      SendPayload(SENSOR3PORT, prio_normal);
+      SendPayload(SENSOR3PORT);
       break;
 #endif
 #endif
@@ -179,7 +180,7 @@ void sendData() {
     case BATT_DATA:
       payload.reset();
       payload.addVoltage(read_voltage());
-      SendPayload(BATTPORT, prio_normal);
+      SendPayload(BATTPORT);
       break;
 #endif
 
@@ -187,10 +188,9 @@ void sendData() {
     bitmask &= ~mask;
     mask <<= 1;
   } // while (bitmask)
-
 } // sendData()
 
-void flushQueues() {
+void flushQueues(void) {
 #if (HAS_LORA)
   lora_queuereset();
 #endif
@@ -200,4 +200,18 @@ void flushQueues() {
 #ifdef HAS_MQTT
   mqtt_queuereset();
 #endif
+}
+
+bool allQueuesEmtpy(void) {
+  uint32_t rc = 0;
+#if (HAS_LORA)
+  rc += lora_queuewaiting();
+#endif
+#ifdef HAS_SPI
+  rc += spi_queuewaiting();
+#endif
+#ifdef HAS_MQTT
+  rc += mqtt_queuewaiting();
+#endif
+  return (rc == 0) ? true : false;
 }

@@ -11,13 +11,17 @@ Ticker mqttTimer;
 WiFiClient netClient;
 MQTTClient mqttClient;
 
+void mqtt_deinit(void) {
+  mqttClient.onMessageAdvanced(NULL);
+  mqttClient.disconnect();
+  vTaskDelete(mqttTask);
+}
+
 esp_err_t mqtt_init(void) {
 
   // setup network connection
   WiFi.onEvent(NetworkEvent);
   ETH.begin();
-  // WiFi.mode(WIFI_STA);
-  // WiFi.begin("SSID", "PASSWORD");
 
   // setup mqtt client
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
@@ -33,7 +37,6 @@ esp_err_t mqtt_init(void) {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
-  mqttTimer.attach(MQTT_KEEPALIVE, setMqttIRQ);
   xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask);
 
   return ESP_OK;
@@ -42,8 +45,7 @@ esp_err_t mqtt_init(void) {
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
   IPAddress mqtt_server_ip;
 
-  // static String clientId = "paxcounter-" + ETH.macAddress();
-  static String clientId = "paxcounter-" + String(random(0xffff), HEX);
+  static String clientId = "paxcounter-" + ETH.macAddress();
 
   ESP_LOGI(TAG, "MQTT name is %s", MQTT_CLIENTNAME);
 
@@ -114,61 +116,43 @@ void mqtt_client_task(void *param) {
 
   while (1) {
 
-    // fetch next or wait for payload to send from queue
-    if (xQueueReceive(MQTTSendQueue, &msg, portMAX_DELAY) != pdTRUE) {
-      ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
-      continue;
-    }
-
-    // send data to mqtt server, if we are connected
     if (mqttClient.connected()) {
 
+      // check for incoming messages
+      mqttClient.loop();
+
+      // fetch next or wait for payload to send from queue
+      // do not delete item from queue until it is transmitted
+      // consider mqtt timeout while waiting
+      if (xQueuePeek(MQTTSendQueue, &msg,
+                     MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE)
+        continue;
+
+      // send data to mqtt server
       char buffer[PAYLOAD_BUFFER_SIZE + 3];
       snprintf(buffer, msg.MessageSize + 3, "%u/%s", msg.MessagePort,
                msg.Message);
 
       if (mqttClient.publish(MQTT_OUTTOPIC, buffer)) {
         ESP_LOGI(TAG, "%d byte(s) sent to MQTT server", msg.MessageSize + 2);
-        continue;
-      } else {
-        mqtt_enqueuedata(&msg); // postpone the undelivered message
-        ESP_LOGD(TAG,
-                 "Couldn't sent message to MQTT server, message postponed");
-      }
-
+        // delete sent item from queue
+        xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
+      } else
+        ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
     } else {
       // attempt to reconnect to MQTT server
-      ESP_LOGD(TAG, "MQTT client reconnecting...");
-      ESP_LOGD(TAG, "MQTT last_error = %d / rc = %d", mqttClient.lastError(),
+      ESP_LOGD(TAG, "MQTT error = %d / rc = %d", mqttClient.lastError(),
                mqttClient.returnCode());
-      mqtt_enqueuedata(&msg); // postpone the undelivered message
+      ESP_LOGD(TAG, "MQTT client reconnecting...");
       delay(MQTT_RETRYSEC * 1000);
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
     }
-
-  } // while(1)
+  } // while (1)
 }
 
 void mqtt_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in MQTT send queue
-  BaseType_t ret;
-  MessageBuffer_t DummyBuffer;
-  sendprio_t prio = message->MessagePrio;
-
-  switch (prio) {
-  case prio_high:
-    // clear space in queue if full, then fallthrough to normal
-    if (!uxQueueSpacesAvailable(MQTTSendQueue))
-      xQueueReceive(MQTTSendQueue, &DummyBuffer, (TickType_t)0);
-  case prio_normal:
-    ret = xQueueSendToFront(MQTTSendQueue, (void *)message, (TickType_t)0);
-    break;
-  case prio_low:
-  default:
-    ret = xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0);
-    break;
-  }
-  if (ret != pdTRUE)
+  if (xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0) != pdTRUE)
     ESP_LOGW(TAG, "MQTT sendqueue is full");
 }
 
@@ -178,13 +162,10 @@ void mqtt_callback(MQTTClient *client, char topic[], char payload[],
     rcommand((const uint8_t *)payload, (const uint8_t)length);
 }
 
-void mqtt_loop(void) {
-  if (!mqttClient.loop())
-    ESP_LOGD(TAG, "MQTT last_error = %d / rc = %d", mqttClient.lastError(),
-             mqttClient.returnCode());
-}
-
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
-void setMqttIRQ(void) { xTaskNotify(irqHandlerTask, MQTT_IRQ, eSetBits); }
+
+uint32_t mqtt_queuewaiting(void) {
+  return uxQueueMessagesWaiting(MQTTSendQueue);
+}
 
 #endif // HAS_MQTT

@@ -5,6 +5,9 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+// global variable indicating if rcommand() is executing
+bool rcmd_busy = false;
+
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
   switch (val[0]) {
@@ -54,14 +57,30 @@ void set_sendcycle(uint8_t val[]) {
            cfg.sendcycle * 2);
 }
 
+void set_sleepcycle(uint8_t val[]) {
+  cfg.sleepcycle = val[0];
+  ESP_LOGI(TAG, "Remote command: set sleep cycle to %d seconds",
+           cfg.sleepcycle * 2);
+}
+
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
   // update Wifi channel rotation timer period
-  xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10), 100);
-
-  ESP_LOGI(TAG,
-           "Remote command: set Wifi channel switch interval to %.1f seconds",
-           cfg.wifichancycle / float(100));
+  if (cfg.wifichancycle > 0) {
+    if (xTimerIsTimerActive(WifiChanTimer) == pdFALSE)
+      xTimerStart(WifiChanTimer, (TickType_t)0);
+    xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10),
+                       100);
+    ESP_LOGI(
+        TAG,
+        "Remote command: set Wifi channel hopping interval to %.1f seconds",
+        cfg.wifichancycle / float(100));
+  } else {
+    xTimerStop(WifiChanTimer, (TickType_t)0);
+    esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
+    channel = WIFI_CHANNEL_MIN;
+    ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
+  }
 }
 
 void set_blescantime(uint8_t val[]) {
@@ -215,18 +234,18 @@ void set_loraadr(uint8_t val[]) {
 
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
+  macs_ble = 0; // clear BLE counter
   cfg.blescan = val[0] ? 1 : 0;
   if (cfg.blescan)
     start_BLEscan();
-  else {
-    macs_ble = 0; // clear BLE counter
+  else
     stop_BLEscan();
-  }
 }
 
 void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
+  macs_wifi = 0; // clear WIFI counter
   cfg.wifiscan = val[0] ? 1 : 0;
   switch_wifi_sniffer(cfg.wifiscan);
 }
@@ -240,15 +259,15 @@ void set_wifiant(uint8_t val[]) {
 #endif
 }
 
-void set_vendorfilter(uint8_t val[]) {
-  ESP_LOGI(TAG, "Remote command: set vendorfilter mode to %s",
+void set_macfilter(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: set macfilter mode to %s",
            val[0] ? "on" : "off");
-  cfg.vendorfilter = val[0] ? 1 : 0;
+  cfg.macfilter = val[0] ? 1 : 0;
 }
 
 void set_rgblum(uint8_t val[]) {
   // Avoid wrong parameters
-  cfg.rgblum = (val[0] >= 0 && val[0] <= 100) ? (uint8_t)val[0] : RGBLUMINOSITY;
+  cfg.rgblum = (val[0] <= 100) ? (uint8_t)val[0] : RGBLUMINOSITY;
   ESP_LOGI(TAG, "Remote command: set RGB Led luminosity %d", cfg.rgblum);
 };
 
@@ -273,16 +292,16 @@ void get_config(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
-  SendPayload(CONFIGPORT, prio_high);
+  SendPayload(CONFIGPORT);
 };
 
 void get_status(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device status");
   payload.reset();
-  payload.addStatus(read_voltage(), uptime() / 1000, temperatureRead(),
-                    getFreeRAM(), rtc_get_reset_reason(0),
+  payload.addStatus(read_voltage(), (uint64_t)(uptime() / 1000ULL),
+                    temperatureRead(), getFreeRAM(), rtc_get_reset_reason(0),
                     rtc_get_reset_reason(1));
-  SendPayload(STATUSPORT, prio_high);
+  SendPayload(STATUSPORT);
 };
 
 void get_gps(uint8_t val[]) {
@@ -292,7 +311,7 @@ void get_gps(uint8_t val[]) {
   gps_storelocation(&gps_status);
   payload.reset();
   payload.addGPS(gps_status);
-  SendPayload(GPSPORT, prio_high);
+  SendPayload(GPSPORT);
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif
@@ -303,7 +322,7 @@ void get_bme(uint8_t val[]) {
 #if (HAS_BME)
   payload.reset();
   payload.addBME(bme_status);
-  SendPayload(BMEPORT, prio_high);
+  SendPayload(BMEPORT);
 #else
   ESP_LOGW(TAG, "BME sensor not supported");
 #endif
@@ -314,7 +333,7 @@ void get_batt(uint8_t val[]) {
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   payload.reset();
   payload.addVoltage(read_voltage());
-  SendPayload(BATTPORT, prio_normal);
+  SendPayload(BATTPORT);
 #else
   ESP_LOGW(TAG, "Battery voltage not supported");
 #endif
@@ -325,7 +344,7 @@ void get_time(uint8_t val[]) {
   payload.reset();
   payload.addTime(now());
   payload.addByte(timeStatus() << 4 | timeSource);
-  SendPayload(TIMEPORT, prio_high);
+  SendPayload(TIMEPORT);
 };
 
 void set_time(uint8_t val[]) {
@@ -359,16 +378,17 @@ static const cmd_t table[] = {
     {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
     {0x09, set_reset, 1, false},        {0x0a, set_sendcycle, 1, true},
     {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
-    {0x0d, set_vendorfilter, 1, false}, {0x0e, set_blescan, 1, true},
+    {0x0d, set_macfilter, 1, false},    {0x0e, set_blescan, 1, true},
     {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
     {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
     {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},
     {0x15, set_bme, 1, true},           {0x16, set_batt, 1, true},
     {0x17, set_wifiscan, 1, true},      {0x18, set_enscount, 1, true},
-    {0x80, get_config, 0, false},       {0x81, get_status, 0, false},
-    {0x83, get_batt, 0, false},         {0x84, get_gps, 0, false},
-    {0x85, get_bme, 0, false},          {0x86, get_time, 0, false},
-    {0x87, set_time, 0, false},         {0x99, set_flush, 0, false}};
+    {0x19, set_sleepcycle, 1, true},    {0x80, get_config, 0, false},
+    {0x81, get_status, 0, false},       {0x83, get_batt, 0, false},
+    {0x84, get_gps, 0, false},          {0x85, get_bme, 0, false},
+    {0x86, get_time, 0, false},         {0x87, set_time, 0, false},
+    {0x99, set_flush, 0, false}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
@@ -381,6 +401,7 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
 
   uint8_t foundcmd[cmdlength], cursor = 0;
   bool storeflag = false;
+  rcmd_busy = true;
 
   while (cursor < cmdlength) {
 
@@ -397,10 +418,10 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
           table[i].func(
               foundcmd); // execute assigned function with given parameters
         } else
-          ESP_LOGI(
-              TAG,
-              "Remote command x%02X called with missing parameter(s), skipped",
-              table[i].opcode);
+          ESP_LOGI(TAG,
+                   "Remote command x%02X called with missing parameter(s), "
+                   "skipped",
+                   table[i].opcode);
         break;   // command found -> exit table lookup loop
       }          // end of command validation
     }            // end of command table lookup loop
@@ -412,4 +433,7 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
 
   if (storeflag)
     saveConfig();
+
+  rcmd_busy = false;
+
 } // rcommand()

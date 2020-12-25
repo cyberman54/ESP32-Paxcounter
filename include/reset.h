@@ -10,7 +10,8 @@
 #include "power.h"
 
 void do_reset(bool warmstart);
-void do_after_reset(int reason);
-void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio);
+void do_after_reset(void);
+void enter_deepsleep(const uint64_t wakeup_sec, const gpio_num_t wakeup_gpio);
+unsigned long long uptime(void);
 
 #endif // _RESET_H

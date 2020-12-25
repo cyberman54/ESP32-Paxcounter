@@ -3,10 +3,6 @@
 #include "globals.h"
 #include "macsniff.h"
 
-#if (VENDORFILTER)
-#include "vendor_array.h"
-#endif
-
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -58,7 +54,7 @@ esp_err_t macQueueInit() {
 
   xTaskCreatePinnedToCore(mac_process,     // task function
                           "mac_process",   // name of task
-                          2048,            // stack size of task
+                          3072,            // stack size of task
                           (void *)1,       // parameter of the task
                           1,               // priority of the task
                           &macProcessTask, // task handle
@@ -126,18 +122,9 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
 #endif
       payload.reset();
       payload.addAlarm(MacBuffer.rssi, beaconID);
-      SendPayload(BEACONPORT, prio_high);
+      SendPayload(BEACONPORT);
     }
   };
-
-#if (VENDORFILTER)
-  uint32_t *oui; // temporary buffer for vendor OUI
-  oui = (uint32_t *)MacBuffer.mac;
-  // if we find OUI on vendor filter list we don't analyze and return early
-  if (std::find(vendors.begin(), vendors.end(), __builtin_bswap32(*oui) >> 8) ==
-      vendors.end())
-    return 0;
-#endif
 
   char buff[10]; // temporary buffer for printf
   uint32_t *mac; // temporary buffer for shortened MAC

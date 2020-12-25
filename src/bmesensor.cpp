@@ -5,7 +5,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-bmeStatus_t bme_status = {0};
+bmeStatus_t bme_status = {0, 0, 0, 0, 0, 0, 0, 0};
 
 Ticker bmecycler;
 
@@ -26,7 +26,6 @@ bsec_virtual_sensor_t sensorList[10] = {
 };
 
 uint8_t bsecstate_buffer[BSEC_MAX_STATE_BLOB_SIZE] = {0};
-uint16_t stateUpdateCounter = 0;
 
 Bsec iaqSensor;
 
@@ -218,6 +217,7 @@ void loadState(void) {
 
 void updateState(void) {
   bool update = false;
+  static uint16_t stateUpdateCounter = 0;
 
   if (stateUpdateCounter == 0) {
     // first state update when IAQ accuracy is >= 1
@@ -228,7 +228,7 @@ void updateState(void) {
   } else {
 
     /* Update every STATE_SAVE_PERIOD minutes */
-    if ((stateUpdateCounter * STATE_SAVE_PERIOD) < _millis()) {
+    if ((long)(millis() - stateUpdateCounter * STATE_SAVE_PERIOD) >= 0) {
       update = true;
       stateUpdateCounter++;
     }
