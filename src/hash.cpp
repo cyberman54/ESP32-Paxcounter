@@ -85,3 +85,7 @@ uint32_t IRAM_ATTR rokkit(const char *data, int len) {
 
   return hash;
 }
+
+uint32_t IRAM_ATTR hash(const char *data, int len) {
+  return rokkit(data, len);
+}

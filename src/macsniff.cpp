@@ -141,7 +141,7 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
   snprintf(buff, sizeof(buff), "%08X",
            *mac + (uint32_t)salt); // convert unsigned 32-bit salted MAC
                                    // to 8 digit hex string
-  uint16_t hashedmac = rokkit(&buff[3], 5); // hash MAC 8 digit -> 5 digit
+  uint16_t hashedmac = hash(&buff[3], 5); // hash MAC 8 digit -> 5 digit
   auto newmac = macs.insert(hashedmac);     // add hashed MAC, if new unique
   bool added =
       newmac.second ? true : false; // true if hashed MAC is unique in container
