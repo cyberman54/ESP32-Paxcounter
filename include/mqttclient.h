@@ -17,7 +17,7 @@
 #define MQTT_KEEPALIVE 10 // keep alive interval in seconds
 
 #ifndef MQTT_CLIENTNAME
-#define MQTT_CLIENTNAME clientId.c_str()
+#define MQTT_CLIENTNAME clientId
 #endif
 
 extern TaskHandle_t mqttTask;
