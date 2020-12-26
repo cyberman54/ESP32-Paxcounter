@@ -49,7 +49,6 @@ void do_after_reset(void) {
     break;
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
-    RTC_runmode = RUNMODE_WAKEUP;
     // calculate time spent in deep sleep
     gettimeofday(&sleep_stop_time, NULL);
     sleep_time_ms =
@@ -57,6 +56,9 @@ void do_after_reset(void) {
         (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
     RTC_millis += sleep_time_ms; // increment system monotonic time
+    // set wakeup state, not if we have pending OTA update
+    if (RTC_runmode == RUNMODE_SLEEP)
+      RTC_runmode = RUNMODE_WAKEUP;
     break;
 
   case SW_RESET:         // 0x03 Software reset digital core
@@ -103,13 +105,16 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   // stop further enqueuing of senddata and MAC processing
   sendTimer.detach();
 
-  // switch off radio
+  // switch off radio and other power consuming hardware
 #if (WIFICOUNTER)
   switch_wifi_sniffer(0);
 #endif
 #if (BLECOUNTER)
   stop_BLEscan();
   btStop();
+#endif
+#if (HAS_SDS011)
+  sds011_sleep(void);
 #endif
 
   // stop MAC processing

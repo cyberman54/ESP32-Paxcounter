@@ -35,7 +35,11 @@ void set_reset(uint8_t val[]) {
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
 #if (USE_OTA)
-    RTC_runmode = RUNMODE_UPDATE;
+    // check power status before scheduling ota update
+    if (batt_sufficient())
+      RTC_runmode = RUNMODE_UPDATE;
+    else
+      ESP_LOGE(TAG, "Battery level %d%% is too low for OTA", batt_level);
 #endif // USE_OTA
     break;
 
