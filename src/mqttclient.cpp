@@ -37,7 +37,7 @@ esp_err_t mqtt_init(void) {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
-  xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask);
+  xTaskCreatePinnedToCore(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask, 1);
 
   return ESP_OK;
 }

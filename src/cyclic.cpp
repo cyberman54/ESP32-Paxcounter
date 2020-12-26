@@ -20,16 +20,9 @@ void setCyclicIRQ() {
 // do all housekeeping
 void doHousekeeping() {
 
-  // check if update mode trigger switch was set
-  if (RTC_runmode == RUNMODE_UPDATE) {
-    // check battery status if we can before doing ota
-    if (batt_sufficient()) {
-      do_reset(true); // warmstart to runmode update
-    } else {
-      ESP_LOGE(TAG, "Battery level %d%% is too low for OTA", batt_level);
-      RTC_runmode = RUNMODE_NORMAL; // keep running in normal mode
-    }
-  }
+  // check if update mode trigger switch was set by rcommand
+  if (RTC_runmode == RUNMODE_UPDATE)
+    do_reset(true);
 
   // heap and task storage debugging
   ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
