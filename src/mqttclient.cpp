@@ -41,7 +41,10 @@ esp_err_t mqtt_init(void) {
 
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
   IPAddress mqtt_server_ip;
-  static String clientId = "paxcounter-" + ETH.macAddress();
+  const uint16_t hashed = hash(&ETH.macAddress()[0], 4); // hash MAC to 4 digits
+  char clientId[16];
+  snprintf(clientId, 16, "paxcounter_%d", hashed);
+
   ESP_LOGI(TAG, "MQTT name is %s", MQTT_CLIENTNAME);
 
   // resolve server host name
