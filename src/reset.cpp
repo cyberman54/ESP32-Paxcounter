@@ -9,7 +9,7 @@ static const char TAG[] = __FILE__;
 #define uS_TO_S_FACTOR 1000000ULL
 
 // variables keep its values after a wakeup from sleep
-RTC_DATA_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
+RTC_NOINIT_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
 timeval sleep_stop_time;
@@ -36,14 +36,20 @@ void do_after_reset(void) {
   struct timeval sleep_stop_time;
   uint64_t sleep_time_ms;
 
-  switch (esp_sleep_get_wakeup_cause()) {
-  case ESP_SLEEP_WAKEUP_EXT0:  // Wakeup caused by external signal using RTC_IO
-  case ESP_SLEEP_WAKEUP_EXT1:  // Wakeup caused by external signal using
-                               // RTC_CNTL
-  case ESP_SLEEP_WAKEUP_TIMER: // Wakeup caused by timer
-  case ESP_SLEEP_WAKEUP_TOUCHPAD: // Wakeup caused by touchpad
-  case ESP_SLEEP_WAKEUP_ULP:      // Wakeup caused by ULP program
+  switch (rtc_get_reset_reason(0)) {
 
+  case POWERON_RESET:          // 0x01 Vbat power on reset
+  case RTCWDT_BROWN_OUT_RESET: // 0x0f Reset when the vdd voltage is not
+                               // stable
+    RTC_runmode = RUNMODE_POWERCYCLE;
+    break;
+
+  case SW_CPU_RESET: // 0x0c Software reset CPU
+                     // keep previous runmode (could be RUNMODE_UPDATE)
+    break;
+
+  case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
+    RTC_runmode = RUNMODE_WAKEUP;
     // calculate time spent in deep sleep
     gettimeofday(&sleep_stop_time, NULL);
     sleep_time_ms =
@@ -51,19 +57,23 @@ void do_after_reset(void) {
         (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
     RTC_millis += sleep_time_ms; // increment system monotonic time
-
-    RTC_runmode = RUNMODE_WAKEUP;
     break;
 
-  case ESP_SLEEP_WAKEUP_ALL:
-  case ESP_SLEEP_WAKEUP_GPIO:
-  case ESP_SLEEP_WAKEUP_UART:
-  case ESP_SLEEP_WAKEUP_UNDEFINED:
+  case SW_RESET:         // 0x03 Software reset digital core
+  case OWDT_RESET:       // 0x04 Legacy watch dog reset digital core
+  case SDIO_RESET:       // 0x06 Reset by SLC module, reset digital core
+  case TG0WDT_SYS_RESET: // 0x07 Timer Group0 Watch dog reset digital core
+  case TG1WDT_SYS_RESET: // 0x08 Timer Group1 Watch dog reset digital core
+  case RTCWDT_SYS_RESET: // 0x09 RTC Watch dog Reset digital core
+  case INTRUSION_RESET:  // 0x0a Instrusion tested to reset CPU
+  case TGWDT_CPU_RESET:  // 0x0b Time Group reset CPU
+  case RTCWDT_CPU_RESET: // 0x0d RTC Watch dog Reset CPU
+  case EXT_CPU_RESET:    // 0x0e for APP CPU, reseted by PRO CPU
+  case RTCWDT_RTC_RESET: // 0x10 RTC Watch dog reset digital core and rtc mode
   default:
-    // not a deep sleep reset
     RTC_runmode = RUNMODE_POWERCYCLE;
     break;
-  } // switch
+  }
 
   ESP_LOGI(TAG, "Starting Software v%s, runmode %s", PROGVERSION,
            runmode[RTC_runmode]);
@@ -72,6 +82,7 @@ void do_after_reset(void) {
 void enter_deepsleep(const uint64_t wakeup_sec = 60,
                      gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
 
+  // don't go to sleep while unjoined
 #if (HAS_LORA)
   if (!LMIC.devaddr) {
     ESP_LOGI(TAG, "Can't go to sleep while joining");
@@ -162,9 +173,11 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   dp_shutdown();
 #endif
 
-// reduce power if has PMU
+// reduce power if has PMU or VEXT
 #ifdef HAS_PMU
   AXP192_power(pmu_power_sleep);
+#elif EXT_POWER_SW
+  digitalWrite(EXT_POWER_SW, EXT_POWER_OFF);
 #endif
 
   // shutdown i2c bus

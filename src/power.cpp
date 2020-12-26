@@ -251,10 +251,11 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
 
 bool batt_sufficient() {
 #if (defined HAS_PMU || defined BAT_MEASURE_ADC || defined HAS_IP5306)
-  return (batt_level > OTA_MIN_BATT);
-#else
-  return true; // we don't know batt level
+  if (batt_level) // we have a battery voltage
+    return (batt_level > OTA_MIN_BATT);
+  else
 #endif
+    return true; // we don't know batt level
 }
 
 #ifdef HAS_IP5306
