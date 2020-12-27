@@ -42,12 +42,12 @@ esp_err_t mqtt_init(void) {
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
   IPAddress mqtt_server_ip;
   uint8_t mac[6];
-  char clientId[16];
+  char clientId[20];
 
-  // hash 6 digit MAC to 4 digits
+  // hash 6 byte MAC to 4 byte hash
   esp_eth_get_mac(mac);
-  const uint16_t hashedmac = hash((const char *)mac, 4);
-  snprintf(clientId, 16, "paxcounter_%04x", hashedmac);
+  const uint32_t hashedmac = hash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
 
   ESP_LOGI(TAG, "MQTT name is %s", MQTT_CLIENTNAME);
 
