@@ -61,7 +61,7 @@ uint32_t IRAM_ATTR rokkit(const char *data, int len) {
   case 3:
     hash += *((uint16_t *)data);
     hash ^= hash << 16;
-    hash ^= ((unit32_t)data[2]) << 18;
+    hash ^= ((uint32_t)data[2]) << 18;
     hash += hash >> 11;
     break;
   case 2:
