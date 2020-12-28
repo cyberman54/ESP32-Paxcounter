@@ -6,16 +6,6 @@
 #include <MQTT.h>
 #include <ETH.h>
 
-#define MQTT_ETHERNET 0 // select PHY: set 0 for Wifi, 1 for ethernet
-#define MQTT_INTOPIC "paxin"
-#define MQTT_OUTTOPIC "paxout"
-#define MQTT_PORT 1883
-#define MQTT_SERVER "paxcounter.cloud.shiftr.io"
-#define MQTT_USER "public"
-#define MQTT_PASSWD "public"
-#define MQTT_RETRYSEC 20  // retry reconnect every 20 seconds
-#define MQTT_KEEPALIVE 10 // keep alive interval in seconds
-
 #ifndef MQTT_CLIENTNAME
 #define MQTT_CLIENTNAME clientId
 #endif

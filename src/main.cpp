@@ -428,7 +428,7 @@ void setup() {
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
-  get_salt(); // get new 16bit for salting hashes
+  reset_counters();
 
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
@@ -451,8 +451,10 @@ void setup() {
 #endif
   if (bme_init())
     ESP_LOGI(TAG, "BME sensor initialized");
-  else
+  else {
     ESP_LOGE(TAG, "BME sensor could not be initialized");
+    cfg.payloadmask &= ~MEMS_DATA; // switch off transmit of BME data
+  }
 #endif
 
   // starting timers and interrupts

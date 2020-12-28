@@ -9,10 +9,11 @@ static const char TAG[] = __FILE__;
 QueueHandle_t MacQueue;
 TaskHandle_t macProcessTask;
 
-uint16_t salt = 0;
+static uint32_t salt = renew_salt();
 
-uint16_t get_salt(void) {
-  salt = (uint16_t)random(65536); // get new 16bit random for salting hashes
+uint32_t renew_salt(void) {
+  salt = esp_random();
+  ESP_LOGV(TAG, "new salt = %04X", salt);
   return salt;
 }
 
@@ -101,9 +102,6 @@ void IRAM_ATTR mac_add(uint8_t *paddr, int8_t rssi, snifftype_t sniff_type) {
 
 uint16_t mac_analyze(MacBuffer_t MacBuffer) {
 
-  if (salt == 0) // ensure we have salt (appears after radio is turned on)
-    return 0;
-
   if ((cfg.rssilimit) &&
       (MacBuffer.rssi < cfg.rssilimit)) { // rssi is negative value
     ESP_LOGI(TAG, "%s RSSI %d -> ignoring (limit: %d)",
@@ -126,8 +124,7 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
     }
   };
 
-  char buff[10]; // temporary buffer for printf
-  uint32_t *mac; // temporary buffer for shortened MAC
+  uint32_t *mac; // pointer to shortened 4 byte MAC
 
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0.
@@ -138,11 +135,15 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
   // and increment counter on display
   // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 
-  snprintf(buff, sizeof(buff), "%08X",
-           *mac + (uint32_t)salt); // convert unsigned 32-bit salted MAC
-                                   // to 8 digit hex string
-  uint16_t hashedmac = hash(&buff[3], 5); // hash MAC 8 digit -> 5 digit
-  auto newmac = macs.insert(hashedmac);     // add hashed MAC, if new unique
+  // reversed 4 byte MAC added to current salt
+  const uint32_t saltedmac = *mac + salt;
+
+  // hashed 4 byte MAC
+  // to save RAM, we use only lower 2 bytes of hash, since collisions don't
+  // matter in our use case
+  const uint16_t hashedmac = hash((const char *)&saltedmac, 4);
+
+  auto newmac = macs.insert(hashedmac); // add hashed MAC, if new unique
   bool added =
       newmac.second ? true : false; // true if hashed MAC is unique in container
 
@@ -183,7 +184,8 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
 
   // Log scan result
   ESP_LOGV(TAG,
-           "%s %s RSSI %ddBi -> salted MAC %s -> Hash %04X -> WiFi:%d  "
+           "%s %s RSSI %ddBi -> MAC %0x:%0x:%0x:%0x:%0x:%0x -> salted %04X"
+           " -> hashed %04X -> WiFi:%d  "
            "BLTH:%d "
 #if (COUNT_ENS)
            "(CWA:%d)"
@@ -191,7 +193,9 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
            "-> %d Bytes left",
            added ? "new  " : "known",
            MacBuffer.sniff_type == MAC_SNIFF_WIFI ? "WiFi" : "BLTH",
-           MacBuffer.rssi, buff, hashedmac, macs_wifi, macs_ble,
+           MacBuffer.rssi, MacBuffer.mac[0], MacBuffer.mac[1], MacBuffer.mac[2],
+           MacBuffer.mac[3], MacBuffer.mac[4], MacBuffer.mac[5], saltedmac,
+           hashedmac, macs_wifi, macs_ble,
 #if (COUNT_ENS)
            cwa_report(),
 #endif

@@ -18,7 +18,6 @@ void set_reset(uint8_t val[]) {
   case 1: // reset MAC counter
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
     reset_counters(); // clear macs
-    get_salt();       // get new salt
     break;
   case 2: // reset device to factory settings
     ESP_LOGI(TAG, "Remote command: reset device to factory settings");
@@ -119,7 +118,6 @@ void set_countmode(uint8_t val[]) {
     return;
   }
   reset_counters(); // clear macs
-  get_salt();       // get new salt
 }
 
 void set_screensaver(uint8_t val[]) {

@@ -115,7 +115,6 @@ void sendData() {
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
         reset_counters(); // clear macs container and reset all counters
-        get_salt();       // get new salt for salting hashes
         ESP_LOGI(TAG, "Counter cleared");
       }
 #ifdef HAS_DISPLAY

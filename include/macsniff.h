@@ -14,7 +14,7 @@
 #include "corona.h"
 #endif
 
-uint16_t get_salt(void);
+uint32_t renew_salt(void);
 uint64_t macConvert(uint8_t *paddr);
 esp_err_t macQueueInit(void);
 void mac_process(void *pvParameters);

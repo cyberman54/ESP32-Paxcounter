@@ -284,14 +284,10 @@ esp_err_t lmic_init(void) {
   // Pass OTA parameters to LMIC_setSession
 #else
   // load saved session from RTC, if we have one
-  if (RTC_runmode == RUNMODE_WAKEUP) {
+  if (RTC_runmode == RUNMODE_WAKEUP)
     LoadLMICFromRTC();
-  }
-  // otherwise start join procedure if not already joined
-  else {
-    if (!LMIC_startJoining())
-      ESP_LOGI(TAG, "Already joined");
-  }
+  if (!LMIC_startJoining())
+    ESP_LOGI(TAG, "Already joined");
 #endif
 
   // start lmic loop task
