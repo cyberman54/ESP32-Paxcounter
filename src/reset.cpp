@@ -117,10 +117,9 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   // wait a while (max 100 sec) to clear send queues
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
   for (i = 100; i > 0; i--) {
-    if (!allQueuesEmtpy())
-      vTaskDelay(pdMS_TO_TICKS(1000));
-    else
+    if (allQueuesEmtpy())
       break;
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
 
   // shutdown LMIC safely, waiting max 100 sec
