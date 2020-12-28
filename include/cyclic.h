@@ -10,6 +10,7 @@
 #include "display.h"
 #include "sds011read.h"
 #include "sdcard.h"
+#include "macsniff.h"
 
 extern Ticker cyclicTimer;
 

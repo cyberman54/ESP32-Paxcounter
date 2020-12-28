@@ -97,7 +97,6 @@ void doHousekeeping() {
              "free heap = %d bytes)",
              ESP.getMinFreeHeap(), ESP.getFreeHeap());
     reset_counters(); // clear macs container and reset all counters
-    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreeHeap() <= MEM_LOW) // check again
       do_reset(true);                    // memory leak, reset device
@@ -108,7 +107,6 @@ void doHousekeeping() {
   if (ESP.getMinFreePsram() <= MEM_LOW) {
     ESP_LOGI(TAG, "PSRAM full, counter cleared");
     reset_counters(); // clear macs container and reset all counters
-    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreePsram() <= MEM_LOW) // check again
       do_reset(true);                     // memory leak, reset device
@@ -140,6 +138,7 @@ void reset_counters() {
   macs.clear(); // clear all macs container
   macs_wifi = 0;
   macs_ble = 0;
+  renew_salt(); // get new salt
 #ifdef HAS_DISPLAY
   dp_plotCurve(0, true);
 #endif

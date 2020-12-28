@@ -428,7 +428,7 @@ void setup() {
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
-  get_salt(); // get new 16bit for salting hashes
+  reset_counters();
 
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
