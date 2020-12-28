@@ -46,10 +46,10 @@ Adafruit_BMP085 bmp; // I2C
 void setBMEIRQ() { xTaskNotify(irqHandlerTask, BME_IRQ, eSetBits); }
 
 // initialize MEMS sensor
+// return = 0 -> error / return = 1 -> success
 int bme_init(void) {
 
-  // return = 0 -> error / return = 1 -> success
-  int rc = 1;
+  int rc = 0;
 
 #ifdef HAS_BME680
   // block i2c bus access
@@ -63,76 +63,33 @@ int bme_init(void) {
              iaqSensor.version.minor_bugfix);
 
     iaqSensor.setConfig(bsec_config_iaq);
-
-    if (checkIaqSensorStatus())
-      ESP_LOGI(TAG, "BME680 sensor found and initialized");
-    else {
-      ESP_LOGE(TAG, "BME680 sensor not found");
-      rc = 0;
-      goto finish;
-    }
-
     loadState();
-
     iaqSensor.setTemperatureOffset((float)BME_TEMP_OFFSET);
     iaqSensor.updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
 
-    if (checkIaqSensorStatus())
-      ESP_LOGI(TAG, "BSEC subscription succesful");
-    else {
-      ESP_LOGE(TAG, "BSEC subscription error");
-      rc = 0;
-      goto finish;
-    }
-  } else {
+    rc = checkIaqSensorStatus();
+
+  } else
     ESP_LOGE(TAG, "I2c bus busy - BME680 initialization error");
-    rc = 0;
-    goto finish;
-  }
 
 #elif defined HAS_BME280
-
-  bool status;
-
-  // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
-
-    status = bme.begin(BME280_ADDR);
-    if (!status) {
-      ESP_LOGE(TAG, "BME280 sensor not found");
-      rc = 0;
-      goto finish;
-    }
-    ESP_LOGI(TAG, "BME280 sensor found and initialized");
-  } else {
+    rc = bme.begin(BME280_ADDR);
+  } else
     ESP_LOGE(TAG, "I2c bus busy - BME280 initialization error");
-    rc = 0;
-    goto finish;
-  }
 
 #elif defined HAS_BMP180
-  bool status;
-  // block i2c bus access
   if (I2C_MUTEX_LOCK()) {
     // Wire.begin(21, 22);
-    status = bmp.begin();
-    if (!status) {
-      ESP_LOGE(TAG, "BMP180 sensor not found");
-      rc = 0;
-      goto finish;
-    }
-    ESP_LOGI(TAG, "BMP180 sensor found and initialized");
-  } else {
+    rc = bmp.begin();
+  } else
     ESP_LOGE(TAG, "I2c bus busy - BMP180 initialization error");
-    rc = 0;
-    goto finish;
-  }
+
 #endif
 
-finish:
   I2C_MUTEX_UNLOCK(); // release i2c bus access
   if (rc)
-    bmecycler.attach(BMECYCLE, setBMEIRQ);
+    bmecycler.attach(BMECYCLE, setBMEIRQ); // start cyclic data transmit
   return rc;
 
 } // bme_init()
