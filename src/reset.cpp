@@ -84,23 +84,14 @@ void do_after_reset(void) {
 void enter_deepsleep(const uint64_t wakeup_sec = 60,
                      gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
 
-  // don't go to sleep while unjoined
-#if (HAS_LORA)
-  if (!LMIC.devaddr) {
-    ESP_LOGI(TAG, "Can't go to sleep while joining");
-    return;
-  }
-#endif
+  ESP_LOGI(TAG, "Preparing to sleep...");
 
+  RTC_runmode = RUNMODE_SLEEP;
   int i;
 
   // validate wake up pin, if we have
   if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
     wakeup_gpio = GPIO_NUM_MAX;
-
-  ESP_LOGI(TAG, "Preparing to sleep...");
-
-  RTC_runmode = RUNMODE_SLEEP;
 
   // stop further enqueuing of senddata and MAC processing
   sendTimer.detach();
@@ -125,27 +116,23 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
 
   // wait a while (max 100 sec) to clear send queues
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
-  for (i = 10; i > 0; i--) {
+  for (i = 100; i > 0; i--) {
     if (!allQueuesEmtpy())
-      vTaskDelay(pdMS_TO_TICKS(10000));
+      vTaskDelay(pdMS_TO_TICKS(1000));
     else
       break;
   }
-  if (i == 0)
-    goto Error;
 
-    // shutdown LMIC safely, waiting max 100 sec
+  // shutdown LMIC safely, waiting max 100 sec
 #if (HAS_LORA)
   ESP_LOGI(TAG, "Waiting until LMIC is idle...");
-  for (i = 10; i > 0; i--) {
+  for (i = 100; i > 0; i--) {
     if ((LMIC.opmode & OP_TXRXPEND) ||
         os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
-      vTaskDelay(pdMS_TO_TICKS(10000));
+      vTaskDelay(pdMS_TO_TICKS(1000));
     else
       break;
   }
-  if (i == 0)
-    goto Error;
 #endif // (HAS_LORA)
 
 // shutdown MQTT safely
@@ -165,10 +152,8 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
     else
       break;
   }
-  if (i == 0)
-    goto Error;
 
-    // save LMIC state to RTC RAM
+  // save LMIC state to RTC RAM
 #if (HAS_LORA)
   SaveLMICToRTC(wakeup_sec);
 #endif // (HAS_LORA)
@@ -207,10 +192,6 @@ void enter_deepsleep(const uint64_t wakeup_sec = 60,
   RTC_millis += millis();
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
-
-Error:
-  ESP_LOGE(TAG, "Can't go to sleep. Resetting.");
-  do_reset(true);
 }
 
 unsigned long long uptime() { return (RTC_millis + millis()); }
