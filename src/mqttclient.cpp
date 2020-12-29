@@ -1,6 +1,7 @@
 #ifdef HAS_MQTT
 
 #include "mqttclient.h"
+#include <base64.h>
 
 static const char TAG[] = __FILE__;
 
@@ -95,14 +96,15 @@ void mqtt_client_task(void *param) {
                      MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE)
         continue;
 
-      // prepare data to send
-      char buffer[PAYLOAD_BUFFER_SIZE + 3];
-      snprintf(buffer, msg.MessageSize + 3, "%u/%s", msg.MessagePort,
-               msg.Message);
+      // prepare mqtt topic
+      char topic[16];
+      snprintf(topic, 16, "%s/%u", MQTT_OUTTOPIC, msg.MessagePort);
 
-      // send data to mqtt server and delete sent item from queue
-      if (mqttClient.publish(MQTT_OUTTOPIC, buffer)) {
-        ESP_LOGI(TAG, "%d byte(s) sent to MQTT server", msg.MessageSize + 2);
+      // send base64 encoded message to mqtt server and delete it from queue
+      if (mqttClient.publish(topic,
+                             base64::encode(msg.Message, msg.MessageSize))) {
+        ESP_LOGD(TAG, "%s/%s sent to MQTT server", topic,
+                 base64::encode(msg.Message, msg.MessageSize));
         xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
       } else
         ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
