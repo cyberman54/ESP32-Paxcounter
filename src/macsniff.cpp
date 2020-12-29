@@ -102,6 +102,10 @@ void IRAM_ATTR mac_add(uint8_t *paddr, int8_t rssi, snifftype_t sniff_type) {
 
 uint16_t mac_analyze(MacBuffer_t MacBuffer) {
 
+  uint32_t *mac; // pointer to shortened 4 byte MAC
+  uint32_t saltedmac;
+  uint16_t hashedmac;
+
   if ((cfg.rssilimit) &&
       (MacBuffer.rssi < cfg.rssilimit)) { // rssi is negative value
     ESP_LOGI(TAG, "%s RSSI %d -> ignoring (limit: %d)",
@@ -124,8 +128,6 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
     }
   };
 
-  uint32_t *mac; // pointer to shortened 4 byte MAC
-
   // only last 3 MAC Address bytes are used for MAC address anonymization
   // but since it's uint32 we take 4 bytes to avoid 1st value to be 0.
   // this gets MAC in msb (= reverse) order, but doesn't matter for hashing it.
@@ -136,12 +138,12 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
   // https://en.wikipedia.org/wiki/MAC_Address_Anonymization
 
   // reversed 4 byte MAC added to current salt
-  const uint32_t saltedmac = *mac + salt;
+  saltedmac = *mac + salt;
 
   // hashed 4 byte MAC
   // to save RAM, we use only lower 2 bytes of hash, since collisions don't
   // matter in our use case
-  const uint16_t hashedmac = hash((const char *)&saltedmac, 4);
+  hashedmac = hash((const char *)&saltedmac, 4);
 
   auto newmac = macs.insert(hashedmac); // add hashed MAC, if new unique
   bool added =
