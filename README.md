@@ -50,6 +50,9 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - Generic ESP32
 
 Depending on board hardware following features are supported:
+- LoRaWAN communication, supporting various payload formats (see enclosed .js converters)
+- MQTT communication via TCP/IP and Ethernet interface (note: payload transmitted over MQTT will be base64 encoded)
+- SPI serial communication to a local host
 - LED (shows power & status)
 - OLED Display (shows detailed status)
 - RGB LED (shows colorized status)
@@ -62,7 +65,6 @@ Depending on board hardware following features are supported:
 - Switch external power / battery
 - LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
 - SD-card (see section SD-card here) for logging pax data
-- Ethernet interface for MQTT communication via TCP/IP
 
 Target platform must be selected in `platformio.ini`.<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>

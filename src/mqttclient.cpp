@@ -95,14 +95,23 @@ void mqtt_client_task(void *param) {
                      MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE)
         continue;
 
-      // prepare data to send
-      char buffer[PAYLOAD_BUFFER_SIZE + 3];
-      snprintf(buffer, msg.MessageSize + 3, "%u/%s", msg.MessagePort,
-               msg.Message);
+      // prepare mqtt topic
+      char topic[16];
+      snprintf(topic, 16, "%s/%u", MQTT_OUTTOPIC, msg.MessagePort);
+      size_t out_len = 0;
 
-      // send data to mqtt server and delete sent item from queue
-      if (mqttClient.publish(MQTT_OUTTOPIC, buffer)) {
-        ESP_LOGI(TAG, "%d byte(s) sent to MQTT server", msg.MessageSize + 2);
+      // get length of base64 encoded message
+      mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char *)msg.Message,
+                            msg.MessageSize);
+
+      // base64 encode the message
+      unsigned char encoded[out_len];
+      mbedtls_base64_encode(encoded, out_len, &out_len,
+                            (unsigned char *)msg.Message, msg.MessageSize);
+
+      // send encoded message to mqtt server and delete it from queue
+      if (mqttClient.publish(topic, (const char *)encoded, out_len)) {
+        ESP_LOGD(TAG, "%u bytes sent to MQTT server", out_len);
         xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
       } else
         ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
@@ -115,17 +124,27 @@ void mqtt_client_task(void *param) {
   } // while (1)
 }
 
+// process incoming MQTT messages
+void mqtt_callback(MQTTClient *client, char *topic, char *payload, int length) {
+  if (strcmp(topic, MQTT_INTOPIC) == 0) {
+
+    // get length of base64 encoded message
+    size_t out_len = 0;
+    mbedtls_base64_decode(NULL, 0, &out_len, (unsigned char *)payload, length);
+
+    // decode the base64 message
+    unsigned char decoded[out_len];
+    mbedtls_base64_decode(decoded, out_len, &out_len, (unsigned char *)payload,
+                          length);
+
+    rcommand(decoded, out_len);
+  }
+}
+
 // enqueue outgoing messages in MQTT send queue
 void mqtt_enqueuedata(MessageBuffer_t *message) {
   if (xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0) != pdTRUE)
     ESP_LOGW(TAG, "MQTT sendqueue is full");
-}
-
-// process incoming MQTT messages
-void mqtt_callback(MQTTClient *client, char topic[], char payload[],
-                   int length) {
-  if (strcmp(topic, MQTT_INTOPIC) == 0)
-    rcommand((const uint8_t *)payload, (const uint8_t)length);
 }
 
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }

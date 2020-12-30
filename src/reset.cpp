@@ -81,8 +81,7 @@ void do_after_reset(void) {
            runmode[RTC_runmode]);
 }
 
-void enter_deepsleep(const uint64_t wakeup_sec = 60,
-                     gpio_num_t wakeup_gpio = GPIO_NUM_MAX) {
+void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
 
   ESP_LOGI(TAG, "Preparing to sleep...");
 
