@@ -5,7 +5,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-QueueHandle_t RcmdQueue;
+static QueueHandle_t RcmdQueue;
 TaskHandle_t rcmdTask;
 
 // set of functions that can be triggered by remote commands

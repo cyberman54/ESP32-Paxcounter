@@ -43,7 +43,7 @@ static const char TAG[] = __FILE__;
 DMA_ATTR uint8_t txbuf[BUFFER_SIZE];
 DMA_ATTR uint8_t rxbuf[BUFFER_SIZE];
 
-QueueHandle_t SPISendQueue;
+static QueueHandle_t SPISendQueue;
 
 TaskHandle_t spiTask;
 

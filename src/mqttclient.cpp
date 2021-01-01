@@ -4,7 +4,7 @@
 
 static const char TAG[] = __FILE__;
 
-QueueHandle_t MQTTSendQueue;
+static QueueHandle_t MQTTSendQueue;
 TaskHandle_t mqttTask;
 
 Ticker mqttTimer;
