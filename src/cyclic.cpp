@@ -14,7 +14,7 @@ extern boolean isSDS011Active;
 #endif
 
 void setCyclicIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
+  xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits);
 }
 
 // do all housekeeping

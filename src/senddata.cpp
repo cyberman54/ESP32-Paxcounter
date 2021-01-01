@@ -4,7 +4,7 @@
 Ticker sendTimer;
 
 void setSendIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL);
+  xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
