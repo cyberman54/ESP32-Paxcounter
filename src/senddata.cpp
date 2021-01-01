@@ -12,8 +12,7 @@ void SendPayload(uint8_t port) {
 
   ESP_LOGD(TAG, "sending Payload for Port %d", port);
 
-  MessageBuffer_t
-      SendBuffer; // contains MessageSize, MessagePort, Message[]
+  MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
 
@@ -190,6 +189,7 @@ void sendData() {
 } // sendData()
 
 void flushQueues(void) {
+  rcmd_queuereset();
 #if (HAS_LORA)
   lora_queuereset();
 #endif
@@ -202,7 +202,7 @@ void flushQueues(void) {
 }
 
 bool allQueuesEmtpy(void) {
-  uint32_t rc = 0;
+  uint32_t rc = rcmd_queuewaiting();
 #if (HAS_LORA)
   rc += lora_queuewaiting();
 #endif
