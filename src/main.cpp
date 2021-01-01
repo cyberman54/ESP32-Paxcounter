@@ -61,8 +61,10 @@ irqHandlerTask (Core 1), see irqhandler.cpp
 
 fired by hardware
 DisplayIRQ      -> esp32 timer 0
-ButtonIRQ       -> external gpio
-PMUIRQ          -> PMU chip gpio
+CLOCKIRQ        -> esp32 timer 1 or external GPIO (RTC_INT or GPS_INT)
+MatrixDisplayIRQ-> esp32 timer 3
+ButtonIRQ       -> external GPIO
+PMUIRQ          -> PMU chip GPIO
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> setTimeSyncIRQ()
