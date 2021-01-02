@@ -143,15 +143,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   spi_deinit();
 #endif
 
-  // wait until rcommands are all done
-  for (i = 10; i > 0; i--) {
-    if (rcmd_busy)
-      vTaskDelay(pdMS_TO_TICKS(1000));
-    else
-      break;
-  }
-
-  // save LMIC state to RTC RAM
+// save LMIC state to RTC RAM
 #if (HAS_LORA)
   SaveLMICToRTC(wakeup_sec);
 #endif // (HAS_LORA)

@@ -364,7 +364,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 # Remote control
 
-The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
+The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them, but must not exceed a maximum of 10 bytes per downlink.
 
 Note: all settings are stored in NVRAM and will be reloaded when device starts.
 

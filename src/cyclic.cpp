@@ -14,7 +14,7 @@ extern boolean isSDS011Active;
 #endif
 
 void setCyclicIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
+  xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits);
 }
 
 // do all housekeeping
@@ -34,6 +34,8 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "MACprocessor %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(macProcessTask),
            eTaskGetState(macProcessTask));
+  ESP_LOGD(TAG, "Rcommand interpreter %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
 #if (HAS_LORA)
   ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));

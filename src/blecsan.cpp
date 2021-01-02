@@ -277,12 +277,11 @@ void start_BLEscan(void) {
     // Register callback function for capturing bluetooth packets
     register_ble_callback(false);
     ESP_LOGI(TAG, "Bluetooth scanner started");
-#endif // BLECOUNTER
   } else {
     ESP_LOGE(TAG, "Bluetooth controller start failed. Resetting device");
     do_reset(true);
   }
-
+#endif // BLECOUNTER
 } // start_BLEscan
 
 void stop_BLEscan(void) {

@@ -38,7 +38,8 @@ timesync_proc 1     3     processes realtime time sync requests
 irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
-macprocess    1     1     analyzes sniffed MACs
+macprocess    1     1     MAC analyzer loop
+rmcd_process  1     1     Remote command interpreter loop
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -60,8 +61,10 @@ irqHandlerTask (Core 1), see irqhandler.cpp
 
 fired by hardware
 DisplayIRQ      -> esp32 timer 0
-ButtonIRQ       -> external gpio
-PMUIRQ          -> PMU chip gpio
+CLOCKIRQ        -> esp32 timer 1 or external GPIO (RTC_INT or GPS_INT)
+MatrixDisplayIRQ-> esp32 timer 3
+ButtonIRQ       -> external GPIO
+PMUIRQ          -> PMU chip GPIO
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> setTimeSyncIRQ()
@@ -290,6 +293,10 @@ void setup() {
   // start mac processing task
   ESP_LOGI(TAG, "Starting MAC processor...");
   macQueueInit();
+
+  // start rcommand processing task
+  ESP_LOGI(TAG, "Starting rcommand interpreter...");
+  rcmd_init();
 
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or remove bluetooth stack from RAM, if option bluetooth is not compiled

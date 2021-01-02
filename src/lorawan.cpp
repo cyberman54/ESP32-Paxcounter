@@ -19,7 +19,7 @@ RTC_DATA_ATTR lmic_t RTC_LMIC;
 #endif
 #endif
 
-QueueHandle_t LoraSendQueue;
+static QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {

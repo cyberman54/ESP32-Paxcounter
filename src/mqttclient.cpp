@@ -4,7 +4,7 @@
 
 static const char TAG[] = __FILE__;
 
-QueueHandle_t MQTTSendQueue;
+static QueueHandle_t MQTTSendQueue;
 TaskHandle_t mqttTask;
 
 Ticker mqttTimer;
@@ -12,6 +12,7 @@ WiFiClient netClient;
 MQTTClient mqttClient;
 
 void mqtt_deinit(void) {
+  mqttClient.unsubscribe(MQTT_INTOPIC);
   mqttClient.onMessageAdvanced(NULL);
   mqttClient.disconnect();
   vTaskDelete(mqttTask);
@@ -22,6 +23,7 @@ esp_err_t mqtt_init(void) {
   // setup network connection and MQTT client
   ETH.begin();
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
+  mqttClient.setKeepAlive(MQTT_KEEPALIVE);
   mqttClient.onMessageAdvanced(mqtt_callback);
 
   _ASSERT(SEND_QUEUE_SIZE > 0);

@@ -6,7 +6,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-QueueHandle_t MacQueue;
+static QueueHandle_t MacQueue;
 TaskHandle_t macProcessTask;
 
 static uint32_t salt = renew_salt();

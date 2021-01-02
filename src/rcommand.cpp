@@ -5,8 +5,8 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// global variable indicating if rcommand() is executing
-bool rcmd_busy = false;
+static QueueHandle_t RcmdQueue;
+TaskHandle_t rcmdTask;
 
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
@@ -396,14 +396,13 @@ static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
 
 // check and execute remote command
-void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
+void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
 
   if (cmdlength == 0)
     return;
 
   uint8_t foundcmd[cmdlength], cursor = 0;
   bool storeflag = false;
-  rcmd_busy = true;
 
   while (cursor < cmdlength) {
 
@@ -436,6 +435,65 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
   if (storeflag)
     saveConfig();
 
-  rcmd_busy = false;
+} //  rcmd_execute()
 
+// remote command processing task
+void rcmd_process(void *pvParameters) {
+  _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
+
+  RcmdBuffer_t RcmdBuffer;
+
+  while (1) {
+    // fetch next or wait for incoming rcommand from queue
+    if (xQueueReceive(RcmdQueue, &RcmdBuffer, portMAX_DELAY) != pdTRUE) {
+      ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
+      continue;
+    }
+    rcmd_execute(RcmdBuffer.cmd, RcmdBuffer.cmdLen);
+  }
+
+  delay(2); // yield to CPU
+} // rcmd_process()
+
+// enqueue remote command
+void IRAM_ATTR rcommand(const uint8_t *cmd, const size_t cmdlength) {
+
+  RcmdBuffer_t rcmd = {0};
+
+  rcmd.cmdLen = cmdlength;
+  memcpy(rcmd.cmd, cmd, cmdlength);
+
+  if (xQueueSendToBack(RcmdQueue, (void *)&rcmd, (TickType_t)0) != pdTRUE)
+    ESP_LOGW(TAG, "Remote command queue is full");
 } // rcommand()
+
+void rcmd_queuereset(void) { xQueueReset(RcmdQueue); }
+
+uint32_t rcmd_queuewaiting(void) { return uxQueueMessagesWaiting(RcmdQueue); }
+
+void rcmd_deinit(void) {
+  rcmd_queuereset();
+  vTaskDelete(rcmdTask);
+}
+
+esp_err_t rcmd_init(void) {
+
+  _ASSERT(RCMD_QUEUE_SIZE > 0);
+  RcmdQueue = xQueueCreate(RCMD_QUEUE_SIZE, sizeof(RcmdBuffer_t));
+  if (RcmdQueue == 0) {
+    ESP_LOGE(TAG, "Could not create rcommand send queue. Aborting.");
+    return ESP_FAIL;
+  }
+  ESP_LOGI(TAG, "Rcommand send queue created, size %d Bytes",
+           RCMD_QUEUE_SIZE * sizeof(RcmdBuffer_t));
+
+  xTaskCreatePinnedToCore(rcmd_process, // task function
+                          "rcmdloop",   // name of task
+                          3072,         // stack size of task
+                          (void *)1,    // parameter of the task
+                          1,            // priority of the task
+                          &rcmdTask,    // task handle
+                          1);           // CPU core
+
+  return ESP_OK;
+} // rcmd_init()
