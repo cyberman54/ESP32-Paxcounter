@@ -484,7 +484,8 @@ esp_err_t rcmd_init(void) {
     ESP_LOGE(TAG, "Could not create rcommand send queue. Aborting.");
     return ESP_FAIL;
   }
-  ESP_LOGI(TAG, "Rcommand send queue created, size %d Bytes", RCMD_QUEUE_SIZE);
+  ESP_LOGI(TAG, "Rcommand send queue created, size %d Bytes",
+           RCMD_QUEUE_SIZE * sizeof(RcmdBuffer_t));
 
   xTaskCreatePinnedToCore(rcmd_process, // task function
                           "rcmdloop",   // name of task
