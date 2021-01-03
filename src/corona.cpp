@@ -5,6 +5,10 @@
 // (c) by Kaspar Metz
 // modified for use in the Paxcounter by AQ
 
+#if (COUNT_ENS) && !(BLECOUNTER)
+#warning ENS-Counter needs Bluetooth, but Bluetooth compile option is disabled
+#endif
+
 #if (COUNT_ENS)
 
 // Local logging tag
