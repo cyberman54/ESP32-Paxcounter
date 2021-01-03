@@ -400,7 +400,7 @@ void dp_drawPage(time_t t, bool nextpage) {
                 gps.location.lat());
 
       // line 6-7: GPS longitude
-      dp_printf("%c%07.4f", gps.location.rawLat().negative ? 'W' : 'E',
+      dp_printf("%c%07.4f", gps.location.rawLng().negative ? 'W' : 'E',
                 gps.location.lng());
 
     } else {
