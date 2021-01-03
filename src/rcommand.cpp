@@ -369,28 +369,37 @@ void set_enscount(uint8_t val[]) {
     cfg.payloadmask &= ~SENSOR1_DATA;
 }
 
+void set_loadconfig(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: load config from NVRAM");
+  loadConfig();
+};
+
+void set_saveconfig(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: save config to NVRAM");
+  saveConfig(false);
+};
+
 // assign previously defined functions to set of numeric remote commands
-// format: opcode, function, #bytes params,
-// flag (true = do make settings persistent / false = don't)
-//
+// format: {opcode, function, number of function arguments}
 static const cmd_t table[] = {
-    {0x01, set_rssi, 1, true},          {0x02, set_countmode, 1, true},
-    {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
-    {0x05, set_loradr, 1, true},        {0x06, set_lorapower, 1, true},
-    {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
-    {0x09, set_reset, 1, false},        {0x0a, set_sendcycle, 1, true},
-    {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
-    {0x0d, set_macfilter, 1, false},    {0x0e, set_blescan, 1, true},
-    {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
-    {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
-    {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},
-    {0x15, set_bme, 1, true},           {0x16, set_batt, 1, true},
-    {0x17, set_wifiscan, 1, true},      {0x18, set_enscount, 1, true},
-    {0x19, set_sleepcycle, 1, true},    {0x80, get_config, 0, false},
-    {0x81, get_status, 0, false},       {0x83, get_batt, 0, false},
-    {0x84, get_gps, 0, false},          {0x85, get_bme, 0, false},
-    {0x86, get_time, 0, false},         {0x87, set_time, 0, false},
-    {0x99, set_flush, 0, false}};
+    {0x01, set_rssi, 1},          {0x02, set_countmode, 1},
+    {0x03, set_gps, 1},           {0x04, set_display, 1},
+    {0x05, set_loradr, 1},        {0x06, set_lorapower, 1},
+    {0x07, set_loraadr, 1},       {0x08, set_screensaver, 1},
+    {0x09, set_reset, 1},         {0x0a, set_sendcycle, 1},
+    {0x0b, set_wifichancycle, 1}, {0x0c, set_blescantime, 1},
+    {0x0d, set_macfilter, 1},     {0x0e, set_blescan, 1},
+    {0x0f, set_wifiant, 1},       {0x10, set_rgblum, 1},
+    {0x11, set_monitor, 1},       {0x12, set_beacon, 7},
+    {0x13, set_sensor, 2},        {0x14, set_payloadmask, 1},
+    {0x15, set_bme, 1},           {0x16, set_batt, 1},
+    {0x17, set_wifiscan, 1},      {0x18, set_enscount, 1},
+    {0x19, set_sleepcycle, 1},    {0x20, set_loadconfig, 0},
+    {0x21, set_saveconfig, 0},    {0x80, get_config, 0},
+    {0x81, get_status, 0},        {0x83, get_batt, 0},
+    {0x84, get_gps, 0},           {0x85, get_bme, 0},
+    {0x86, get_time, 0},          {0x87, set_time, 0},
+    {0x99, set_flush, 0}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
@@ -402,7 +411,6 @@ void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
     return;
 
   uint8_t foundcmd[cmdlength], cursor = 0;
-  bool storeflag = false;
 
   while (cursor < cmdlength) {
 
@@ -414,8 +422,6 @@ void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
           memmove(foundcmd, cmd + cursor,
                   table[i].params); // strip opcode from cmd array
           cursor += table[i].params;
-          if (table[i].store) // ceck if function needs to store configuration
-            storeflag = true;
           table[i].func(
               foundcmd); // execute assigned function with given parameters
         } else
@@ -431,9 +437,6 @@ void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
       break;
     }
   } // command parsing loop
-
-  if (storeflag)
-    saveConfig();
 
 } //  rcmd_execute()
 
