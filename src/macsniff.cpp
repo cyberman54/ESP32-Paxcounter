@@ -119,9 +119,7 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
     int8_t beaconID = isBeacon(macConvert(MacBuffer.mac));
     if (beaconID >= 0) {
       ESP_LOGI(TAG, "Beacon ID#%d detected", beaconID);
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
       blink_LED(COLOR_WHITE, 2000);
-#endif
       payload.reset();
       payload.addAlarm(MacBuffer.rssi, beaconID);
       SendPayload(BEACONPORT);
@@ -156,30 +154,22 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
 
     case MAC_SNIFF_WIFI:
       macs_wifi++; // increment Wifi MACs counter
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
       blink_LED(COLOR_GREEN, 50);
-#endif
       break;
 
-#if (BLECOUNTER)
     case MAC_SNIFF_BLE:
       macs_ble++; // increment BLE Macs counter
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
       blink_LED(COLOR_MAGENTA, 50);
-#endif
       break;
 
-#if (COUNT_ENS)
     case MAC_SNIFF_BLE_ENS:
       macs_ble++;             // increment BLE Macs counter
       cwa_mac_add(hashedmac); // process ENS beacon
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
       blink_LED(COLOR_WHITE, 50);
-#endif
       break;
 
-#endif // COUNT_ENS
-#endif // BLECOUNTER
+    default:
+      break;
 
     } // switch
   }   // added
