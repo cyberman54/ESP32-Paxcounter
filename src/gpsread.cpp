@@ -109,7 +109,7 @@ time_t get_gpstime(uint16_t *msec) {
 #endif
 
   // did we get a current date & time?
-  if (gpstime.isValid() && gpsday.isValid()) {
+  if (gpstime.isValid()) {
 
     time_t t = 0;
     tmElements_t tm;
