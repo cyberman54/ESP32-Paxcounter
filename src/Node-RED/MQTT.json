@@ -1,0 +1,467 @@
+[
+    {
+        "id": "7bc3eb4f.fe4b64",
+        "type": "mqtt in",
+        "z": "c26229c6.2d1ae8",
+        "name": "Olimex",
+        "topic": "paxout/#",
+        "qos": "2",
+        "datatype": "utf8",
+        "broker": "bd56b04d.db0ff",
+        "x": 190,
+        "y": 160,
+        "wires": [
+            [
+                "d0276db6.83c46"
+            ]
+        ]
+    },
+    {
+        "id": "4f59740b.296b7c",
+        "type": "debug",
+        "z": "c26229c6.2d1ae8",
+        "name": "data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1050,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "f10f8199.25183",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "wifi",
+        "property": "payload",
+        "pattern": "l16, x16",
+        "x": 630,
+        "y": 100,
+        "wires": [
+            [
+                "800f5faa.15155"
+            ]
+        ]
+    },
+    {
+        "id": "df4bdce5.dc219",
+        "type": "switch",
+        "z": "c26229c6.2d1ae8",
+        "name": "Ports",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "paxout/1",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/2",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/3",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/4",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/5",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/6",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/7",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/8",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/9",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "paxout/10",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "status",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 11,
+        "x": 370,
+        "y": 260,
+        "wires": [
+            [
+                "f10f8199.25183"
+            ],
+            [
+                "e2974f79.55d5b"
+            ],
+            [
+                "5f6987dd.b89378"
+            ],
+            [],
+            [
+                "eaca83c4.5fcaf"
+            ],
+            [],
+            [],
+            [
+                "7b6cbc9d.18fe44"
+            ],
+            [
+                "d269537.4738fb"
+            ],
+            [
+                "409e4762.71ff68"
+            ],
+            [
+                "13fbfc5d.40dcc4"
+            ]
+        ]
+    },
+    {
+        "id": "eaca83c4.5fcaf",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "button",
+        "property": "payload",
+        "pattern": "b8  => button",
+        "x": 630,
+        "y": 280,
+        "wires": [
+            [
+                "a6037445.eb8ac8"
+            ]
+        ]
+    },
+    {
+        "id": "409e4762.71ff68",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "cwa",
+        "property": "payload",
+        "pattern": "l16  => cwa",
+        "x": 630,
+        "y": 140,
+        "wires": [
+            [
+                "2966fd1c.0b33d2"
+            ]
+        ]
+    },
+    {
+        "id": "d0276db6.83c46",
+        "type": "base64",
+        "z": "c26229c6.2d1ae8",
+        "name": "Decode",
+        "action": "",
+        "property": "payload",
+        "x": 200,
+        "y": 260,
+        "wires": [
+            [
+                "df4bdce5.dc219"
+            ]
+        ]
+    },
+    {
+        "id": "13fbfc5d.40dcc4",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "Connection",
+        "property": "payload",
+        "pattern": "b8[19]|str(\"ascii\")",
+        "x": 650,
+        "y": 440,
+        "wires": [
+            [
+                "4f59740b.296b7c"
+            ]
+        ]
+    },
+    {
+        "id": "800f5faa.15155",
+        "type": "ui_chart",
+        "z": "c26229c6.2d1ae8",
+        "name": "pax",
+        "group": "6838565d.06bf08",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "Pax [Wifi]",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "Noch keine Daten",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "x": 810,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2966fd1c.0b33d2",
+        "type": "ui_chart",
+        "z": "c26229c6.2d1ae8",
+        "name": "cwa",
+        "group": "6838565d.06bf08",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "CWA",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "x": 810,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a6037445.eb8ac8",
+        "type": "ui_toast",
+        "z": "c26229c6.2d1ae8",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "topic": "Button",
+        "name": "Popup",
+        "x": 810,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "b4478f8.f8b747",
+        "type": "mqtt out",
+        "z": "c26229c6.2d1ae8",
+        "name": "Olimex",
+        "topic": "paxin",
+        "qos": "",
+        "retain": "",
+        "broker": "bd56b04d.db0ff",
+        "x": 190,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "e2974f79.55d5b",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "device status",
+        "property": "payload",
+        "pattern": "l16 => voltage,\nl64 => uptime,\nb8 => temperature,\nl32 => ram,\nb8 => reset0,\nb8 => reset1",
+        "x": 650,
+        "y": 200,
+        "wires": [
+            [
+                "4f59740b.296b7c"
+            ]
+        ]
+    },
+    {
+        "id": "5f6987dd.b89378",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "device config",
+        "property": "payload",
+        "pattern": "b8 => loradr,\nb8 => txPower,\nl16 => rssilimit,\nb8 => sendcycle,\nb8 => wifichancycle,\nb8 => blescantime,\nb8 => rgblum,\nb8 => configmask,\nb8 => payloadmask,\nb8z|str(\"ascii\") => version",
+        "x": 650,
+        "y": 240,
+        "wires": [
+            [
+                "4f59740b.296b7c"
+            ]
+        ]
+    },
+    {
+        "id": "7b6cbc9d.18fe44",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "battery",
+        "property": "payload",
+        "pattern": "l16  => voltage",
+        "x": 630,
+        "y": 360,
+        "wires": [
+            [
+                "4f59740b.296b7c"
+            ]
+        ]
+    },
+    {
+        "id": "d269537.4738fb",
+        "type": "binary",
+        "z": "c26229c6.2d1ae8",
+        "name": "time",
+        "property": "payload",
+        "pattern": "l32  => unixtime",
+        "x": 630,
+        "y": 400,
+        "wires": [
+            [
+                "4f59740b.296b7c"
+            ]
+        ]
+    },
+    {
+        "id": "ce0cb32b.b7b96",
+        "type": "base64",
+        "z": "c26229c6.2d1ae8",
+        "name": "Encode",
+        "action": "",
+        "property": "payload",
+        "x": 200,
+        "y": 420,
+        "wires": [
+            [
+                "b4478f8.f8b747"
+            ]
+        ]
+    },
+    {
+        "id": "c246a129.eeb5e",
+        "type": "inject",
+        "z": "c26229c6.2d1ae8",
+        "name": "rcmd",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "paxin",
+        "payload": "[128, 129]",
+        "payloadType": "bin",
+        "x": 190,
+        "y": 360,
+        "wires": [
+            [
+                "ce0cb32b.b7b96"
+            ]
+        ]
+    },
+    {
+        "id": "bd56b04d.db0ff",
+        "type": "mqtt-broker",
+        "name": "Shiftr.io",
+        "broker": "public.cloud.shiftr.io",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "paxout/status",
+        "birthQos": "0",
+        "birthPayload": "on",
+        "closeTopic": "paxout/status",
+        "closeQos": "0",
+        "closePayload": "off",
+        "willTopic": "paxout/status",
+        "willQos": "0",
+        "willPayload": "unknown"
+    },
+    {
+        "id": "6838565d.06bf08",
+        "type": "ui_group",
+        "name": "MQTT",
+        "tab": "ad5894fa.466c58",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "ad5894fa.466c58",
+        "type": "ui_tab",
+        "name": "Paxcounter",
+        "icon": "people",
+        "order": 4
+    }
+]
