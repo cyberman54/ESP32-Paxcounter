@@ -161,13 +161,13 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
       macs_ble++; // increment BLE Macs counter
       blink_LED(COLOR_MAGENTA, 50);
       break;
-
+#if (COUNT_ENS)
     case MAC_SNIFF_BLE_ENS:
       macs_ble++;             // increment BLE Macs counter
       cwa_mac_add(hashedmac); // process ENS beacon
       blink_LED(COLOR_WHITE, 50);
       break;
-
+#endif
     default:
       break;
 
