@@ -381,6 +381,7 @@ void set_saveconfig(uint8_t val[]) {
 
 // assign previously defined functions to set of numeric remote commands
 // format: {opcode, function, number of function arguments}
+
 static const cmd_t table[] = {
     {0x01, set_rssi, 1},          {0x02, set_countmode, 1},
     {0x03, set_gps, 1},           {0x04, set_display, 1},
@@ -429,9 +430,10 @@ void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
                    "Remote command x%02X called with missing parameter(s), "
                    "skipped",
                    table[i].opcode);
-        break;   // command found -> exit table lookup loop
-      }          // end of command validation
-    }            // end of command table lookup loop
+        break; // command found -> exit table lookup loop
+      }        // end of command validation
+    }          // end of command table lookup loop
+
     if (i < 0) { // command not found -> exit parser
       ESP_LOGI(TAG, "Unknown remote command x%02X, ignored", cmd[cursor]);
       break;

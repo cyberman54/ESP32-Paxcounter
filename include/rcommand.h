@@ -25,7 +25,6 @@ typedef struct {
   const uint8_t opcode;
   void (*func)(uint8_t[]);
   const uint8_t params;
-  const bool store;
 } cmd_t;
 
 // Struct for remote command processing queue
