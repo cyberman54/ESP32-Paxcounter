@@ -82,13 +82,13 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     }
 
     // collect timestamp samples in timestamp array
-    for (uint8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
+    for (int8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
 
 // send timesync request
 #if (TIME_SYNC_LORASERVER) // ask user's timeserver (for LoRAWAN < 1.0.3)
       payload.reset();
       payload.addByte(time_sync_seqNo);
-      SendPayload(TIMEPORT, prio_high);
+      SendPayload(TIMEPORT);
 #elif (TIME_SYNC_LORAWAN) // ask network (requires LoRAWAN >= 1.0.3)
       LMIC_requestNetworkTime(timesync_serverAnswer, &time_sync_seqNo);
       // trigger to immediately get DevTimeAns from class A device
@@ -148,7 +148,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     // send timesync end char to show timesync was successful
     payload.reset();
     payload.addByte(TIME_SYNC_END_FLAG);
-    SendPayload(TIMEPORT, prio_high);
+    SendPayload(TIMEPORT);
     goto Finish;
 
   Fail:

@@ -69,14 +69,6 @@ void irqHandler(void *pvParameters) {
     }
 #endif
 
-// MQTT loop due?
-#if (HAS_MQTT)
-    if (InterruptStatus & MQTT_IRQ) {
-      mqtt_loop();
-      InterruptStatus &= ~MQTT_IRQ;
-    }
-#endif
-
     // are cyclic tasks due?
     if (InterruptStatus & CYCLIC_IRQ) {
       doHousekeeping();
@@ -95,6 +87,13 @@ void irqHandler(void *pvParameters) {
     if (InterruptStatus & SENDCYCLE_IRQ) {
       sendData();
       InterruptStatus &= ~SENDCYCLE_IRQ;
+      // goto sleep if we have a sleep cycle
+      if (cfg.sleepcycle)
+#ifdef HAS_BUTTON
+        enter_deepsleep(cfg.sleepcycle * 2, (gpio_num_t)HAS_BUTTON);
+#else
+        enter_deepsleep(cfg.sleepcycle * 2);
+#endif
     }
   } // for
 } // irqHandler()

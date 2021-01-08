@@ -5,6 +5,10 @@
 // (c) by Kaspar Metz
 // modified for use in the Paxcounter by AQ
 
+#if (COUNT_ENS) && !(BLECOUNTER)
+#warning ENS-Counter needs Bluetooth, but Bluetooth compile option is disabled
+#endif
+
 #if (COUNT_ENS)
 
 // Local logging tag
@@ -44,7 +48,7 @@ bool cwa_init(void) {
 }
 
 void cwa_mac_add(uint16_t hashedmac) {
-  cwaSeenNotifiers[hashedmac] = _millis(); // hash last seen at ....
+  cwaSeenNotifiers[hashedmac] = millis(); // hash last seen at ....
 }
 
 #endif

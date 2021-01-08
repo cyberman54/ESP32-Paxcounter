@@ -29,16 +29,17 @@ Task          Core  Prio  Purpose
 -------------------------------------------------------------------------------
 ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
-mqttloop      0     2     reads/writes data on ETH interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 lmictask      1     2     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
+mqttloop      1     2     reads/writes data on ETH interface
 timesync_proc 1     3     processes realtime time sync requests
 irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
-macprocess    1     1     analyzes sniffed MACs
+macprocess    1     1     MAC analyzer loop
+rmcd_process  1     1     Remote command interpreter loop
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -60,15 +61,16 @@ irqHandlerTask (Core 1), see irqhandler.cpp
 
 fired by hardware
 DisplayIRQ      -> esp32 timer 0
-ButtonIRQ       -> external gpio
-PMUIRQ          -> PMU chip gpio
+CLOCKIRQ        -> esp32 timer 1 or external GPIO (RTC_INT or GPS_INT)
+MatrixDisplayIRQ-> esp32 timer 3
+ButtonIRQ       -> external GPIO
+PMUIRQ          -> PMU chip GPIO
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> setTimeSyncIRQ()
 CYCLIC_IRQ      -> setCyclicIRQ()
 SENDCYCLE_IRQ   -> setSendIRQ()
 BME_IRQ         -> setBMEIRQ()
-MQTT_IRQ        -> setMqttIRQ()
 
 ClockTask (Core 1), see timekeeper.cpp
 
@@ -88,8 +90,8 @@ triggers pps 1 sec impulse
 configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 uint8_t batt_level = 0;                 // display value
-uint8_t volatile channel = 0;           // channel rotation counter
-uint8_t volatile rf_load = 0;           // RF traffic indicator
+uint8_t volatile channel = WIFI_CHANNEL_MIN;   // channel rotation counter
+uint8_t volatile rf_load = 0;                  // RF traffic indicator
 uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
@@ -101,7 +103,7 @@ timesource_t timeSource = _unsynced;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
-std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
+DRAM_ATTR std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
@@ -138,7 +140,7 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
-  do_after_reset(rtc_get_reset_reason(0));
+  do_after_reset();
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
@@ -208,7 +210,8 @@ void setup() {
   _ASSERT(loadConfig()); // includes initialize if necessary
 
   // now that we are powered, we scan i2c bus for devices
-  i2c_scan();
+  if (RTC_runmode == RUNMODE_POWERCYCLE)
+    i2c_scan();
 
 // initialize display
 #ifdef HAS_DISPLAY
@@ -291,8 +294,12 @@ void setup() {
   ESP_LOGI(TAG, "Starting MAC processor...");
   macQueueInit();
 
+  // start rcommand processing task
+  ESP_LOGI(TAG, "Starting rcommand interpreter...");
+  rcmd_init();
+
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
-// or switch off bluetooth, if not compiled
+// or remove bluetooth stack from RAM, if option bluetooth is not compiled
 #if (BLECOUNTER)
   strcat_P(features, " BLE");
   if (cfg.blescan) {
@@ -303,9 +310,9 @@ void setup() {
 #else
   // remove bluetooth stack to gain more free memory
   btStop();
-  ESP_ERROR_CHECK(esp_bt_mem_release(ESP_BT_MODE_BTDM));
-  ESP_ERROR_CHECK(esp_coex_preference_set(
-      ESP_COEX_PREFER_WIFI)); // configure Wifi/BT coexist lib
+  esp_bt_mem_release(ESP_BT_MODE_BTDM);
+  esp_coex_preference_set(
+      ESP_COEX_PREFER_WIFI); // configure Wifi/BT coexist lib
 #endif
 
 // initialize gps
@@ -348,9 +355,7 @@ void setup() {
 // initialize LoRa
 #if (HAS_LORA)
   strcat_P(features, " LORA");
-  // kick off join, except we come from sleep
-  _ASSERT(lora_stack_init(RTC_runmode == RUNMODE_WAKEUP ? false : true) ==
-          ESP_OK);
+  _ASSERT(lmic_init() == ESP_OK);
 #endif
 
 // initialize SPI
@@ -376,7 +381,7 @@ void setup() {
     strcat_P(features, " SDS");
 #endif
 
-#if (VENDORFILTER)
+#if (MACFILTER)
   strcat_P(features, " FILTER");
 #endif
 
@@ -414,23 +419,23 @@ void setup() {
 
 #if (WIFICOUNTER)
   strcat_P(features, " WIFI");
-  // start wifi in monitor mode and start channel rotation timer
-
+  // install wifi driver in RAM and start channel hopping
   wifi_sniffer_init();
-  if (cfg.blescan) {
+  // start wifi sniffing, if enabled
+  if (cfg.wifiscan) {
     ESP_LOGI(TAG, "Starting Wifi...");
     switch_wifi_sniffer(1);
   } else
     switch_wifi_sniffer(0);
 #else
-  // switch off wifi
+  // remove wifi driver from RAM, if option wifi not compiled
   esp_wifi_deinit();
 #endif
 
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
-  get_salt(); // get new 16bit for salting hashes
+  reset_counters();
 
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
@@ -453,8 +458,10 @@ void setup() {
 #endif
   if (bme_init())
     ESP_LOGI(TAG, "BME sensor initialized");
-  else
+  else {
     ESP_LOGE(TAG, "BME sensor could not be initialized");
+    cfg.payloadmask &= ~MEMS_DATA; // switch off transmit of BME data
+  }
 #endif
 
   // starting timers and interrupts

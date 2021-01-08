@@ -18,25 +18,28 @@
 #include "mallocator.h"
 #include <bsec.h>
 
+#define _bit(b) (1U << (b))
+#define _bitl(b) (1UL << (b))
+
 // bits in payloadmask for filtering payload data
-#define GPS_DATA (0x01)
-#define ALARM_DATA (0x02)
-#define MEMS_DATA (0x04)
-#define COUNT_DATA (0x08)
-#define SENSOR1_DATA (0x10)
-#define SENSOR2_DATA (0x20)
-#define SENSOR3_DATA (0x40)
-#define BATT_DATA (0x80)
+#define COUNT_DATA _bit(1)
+#define ALARM_DATA _bit(2)
+#define MEMS_DATA _bit(3)
+#define GPS_DATA _bit(4)
+#define SENSOR1_DATA _bit(5)
+#define SENSOR2_DATA _bit(6)
+#define SENSOR3_DATA _bit(7)
+#define BATT_DATA _bit(8)
 
 // bits in configmask for device runmode control
-#define GPS_MODE (0x01)
-#define ALARM_MODE (0x02)
-#define BEACON_MODE (0x04)
-#define UPDATE_MODE (0x08)
-#define FILTER_MODE (0x10)
-#define ANTENNA_MODE (0x20)
-#define BLE_MODE (0x40)
-#define SCREEN_MODE (0x80)
+#define GPS_MODE _bit(1)
+#define ALARM_MODE _bit(2)
+#define BEACON_MODE _bit(3)
+#define UPDATE_MODE _bit(4)
+#define FILTER_MODE _bit(5)
+#define ANTENNA_MODE _bit(6)
+#define BLE_MODE _bit(7)
+#define SCREEN_MODE _bit(8)
 
 // length of display buffer for lmic event messages
 #define LMIC_EVENTMSG_LEN 17
@@ -56,19 +59,16 @@
       ;                                                                        \
   }
 
-// emulate millis to avoid rollovers
-#define _millis() esp_timer_get_time() / 1000
-#define _micros() esp_timer_get_time()
-#define _seconds() _millis() / 1000.0
+#define _seconds() millis() / 1000.0
 
-enum sendprio_t { prio_low, prio_normal, prio_high };
 enum timesource_t { _gps, _rtc, _lora, _unsynced };
 enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 enum runmode_t {
   RUNMODE_POWERCYCLE,
   RUNMODE_NORMAL,
   RUNMODE_WAKEUP,
-  RUNMODE_UPDATE
+  RUNMODE_UPDATE,
+  RUNMODE_SLEEP
 };
 
 // Struct holding devices's runtime configuration
@@ -84,12 +84,13 @@ typedef struct __attribute__((packed)) {
   uint8_t countermode; // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
   int16_t rssilimit;   // threshold for rssilimiter, negative value!
   uint8_t sendcycle;   // payload send cycle [seconds/2]
+  uint8_t sleepcycle;  // sleep cycle [seconds/2]
   uint8_t wifichancycle; // wifi channel switch cycle [seconds/100]
   uint8_t blescantime;   // BLE scan cycle duration [seconds]
   uint8_t blescan;       // 0=disabled, 1=enabled
   uint8_t wifiscan;      // 0=disabled, 1=enabled
   uint8_t wifiant;       // 0=internal, 1=external (for LoPy/LoPy4)
-  uint8_t vendorfilter;  // 0=disabled, 1=enabled
+  uint8_t macfilter;     // 0=disabled, 1=enabled
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t monitormode;   // 0=disabled, 1=enabled
   uint8_t runmode;       // 0=normal, 1=update
@@ -106,7 +107,6 @@ typedef struct __attribute__((packed)) {
 typedef struct {
   uint8_t MessageSize;
   uint8_t MessagePort;
-  sendprio_t MessagePrio;
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 

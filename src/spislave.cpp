@@ -43,7 +43,7 @@ static const char TAG[] = __FILE__;
 DMA_ATTR uint8_t txbuf[BUFFER_SIZE];
 DMA_ATTR uint8_t rxbuf[BUFFER_SIZE];
 
-QueueHandle_t SPISendQueue;
+static QueueHandle_t SPISendQueue;
 
 TaskHandle_t spiTask;
 
@@ -57,7 +57,8 @@ void spi_slave_task(void *param) {
     memset(rxbuf, 0, sizeof(rxbuf));
 
     // fetch next or wait for payload to send from queue
-    if (xQueueReceive(SPISendQueue, &msg, portMAX_DELAY) != pdTRUE) {
+    // do not delete item from queue until it is transmitted
+    if (xQueuePeek(SPISendQueue, &msg, portMAX_DELAY) != pdTRUE) {
       ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
       continue;
     }
@@ -90,11 +91,13 @@ void spi_slave_task(void *param) {
     // wait until spi master clocks out the data, and read results in rx buffer
     ESP_LOGI(TAG, "Prepared SPI transaction for %zu byte(s)", transaction_size);
     ESP_LOG_BUFFER_HEXDUMP(TAG, txbuf, transaction_size, ESP_LOG_DEBUG);
-    ESP_ERROR_CHECK_WITHOUT_ABORT(
-        spi_slave_transmit(HSPI_HOST, &spi_transaction, portMAX_DELAY));
+    spi_slave_transmit(HSPI_HOST, &spi_transaction, portMAX_DELAY);
     ESP_LOG_BUFFER_HEXDUMP(TAG, rxbuf, transaction_size, ESP_LOG_DEBUG);
     ESP_LOGI(TAG, "Transaction finished with size %zu bits",
              spi_transaction.trans_len);
+
+    // delete sent item from queue
+    xQueueReceive(SPISendQueue, &msg, (TickType_t)0);
 
     // check if command was received, then call interpreter with command payload
     if ((spi_transaction.trans_len) && ((rxbuf[2]) == RCMDPORT)) {
@@ -103,7 +106,9 @@ void spi_slave_task(void *param) {
   }
 }
 
-esp_err_t spi_init() {
+void spi_deinit(void) { vTaskDelete(spiTask); }
+
+esp_err_t spi_init(void) {
   _ASSERT(SEND_QUEUE_SIZE > 0);
   SPISendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
   if (SPISendQueue == 0) {
@@ -149,27 +154,12 @@ esp_err_t spi_init() {
 
 void spi_enqueuedata(MessageBuffer_t *message) {
   // enqueue message in SPI send queue
-  BaseType_t ret;
-  MessageBuffer_t DummyBuffer;
-  sendprio_t prio = message->MessagePrio;
-
-  switch (prio) {
-  case prio_high:
-    // clear space in queue if full, then fallthrough to normal
-    if (!uxQueueSpacesAvailable(SPISendQueue))
-      xQueueReceive(SPISendQueue, &DummyBuffer, (TickType_t)0);
-  case prio_normal:
-    ret = xQueueSendToFront(SPISendQueue, (void *)message, (TickType_t)0);
-    break;
-  case prio_low:
-  default:
-    ret = xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0);
-    break;
-  }
-  if (ret != pdTRUE)
+  if (xQueueSendToBack(SPISendQueue, (void *)message, (TickType_t)0) != pdTRUE)
     ESP_LOGW(TAG, "SPI sendqueue is full");
 }
 
 void spi_queuereset(void) { xQueueReset(SPISendQueue); }
+
+uint32_t spi_queuewaiting(void) { return uxQueueMessagesWaiting(SPISendQueue); }
 
 #endif // HAS_SPI

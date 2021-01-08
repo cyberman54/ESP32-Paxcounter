@@ -33,7 +33,7 @@ void button_init(int pin) {
   b->setOnHolding([]() {
     payload.reset();
     payload.addButton(0x01);
-    SendPayload(BUTTONPORT, prio_normal);
+    SendPayload(BUTTONPORT);
   });
 
   // attach interrupt to the button

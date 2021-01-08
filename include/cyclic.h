@@ -10,12 +10,12 @@
 #include "display.h"
 #include "sds011read.h"
 #include "sdcard.h"
+#include "macsniff.h"
 
 extern Ticker cyclicTimer;
 
 void setCyclicIRQ(void);
 void doHousekeeping(void);
-uint64_t uptime(void);
 void reset_counters(void);
 uint32_t getFreeRAM();
 

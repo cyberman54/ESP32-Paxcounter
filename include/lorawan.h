@@ -20,9 +20,10 @@
 
 extern TaskHandle_t lmicTask, lorasendTask;
 
-void lora_stack_reset();
-esp_err_t lora_stack_init(bool do_join);
+esp_err_t lmic_init(void);
 void lora_setupForNetwork(bool preJoin);
+void SaveLMICToRTC(int deepsleep_sec);
+void LoadLMICFromRTC();
 void lmictask(void *pvParameters);
 void gen_lora_deveui(uint8_t *pdeveui);
 void RevBytes(unsigned char *b, size_t c);
@@ -33,6 +34,7 @@ void os_getDevEui(u1_t *buf);
 void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
+uint32_t lora_queuewaiting(void);
 uint8_t myBattLevelCb(void *pUserData);
 void IRAM_ATTR myEventCallback(void *pUserData, ev_t ev);
 void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,

@@ -49,7 +49,7 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.blescantime;
   buffer[cursor++] = value.blescan;
   buffer[cursor++] = value.wifiant;
-  buffer[cursor++] = value.vendorfilter;
+  buffer[cursor++] = value.macfilter;
   buffer[cursor++] = value.rgblum;
   buffer[cursor++] = value.payloadmask;
   buffer[cursor++] = value.monitormode;
@@ -179,8 +179,7 @@ void PayloadConvert::addConfig(configData_t value) {
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
               value.blescan ? true : false, value.wifiant ? true : false,
-              value.vendorfilter ? true : false,
-              value.monitormode ? true : false);
+              value.macfilter ? true : false, value.monitormode ? true : false);
   writeUint8(value.payloadmask);
   writeVersion(value.version);
 }

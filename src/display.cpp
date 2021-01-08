@@ -400,7 +400,7 @@ void dp_drawPage(time_t t, bool nextpage) {
                 gps.location.lat());
 
       // line 6-7: GPS longitude
-      dp_printf("%c%07.4f", gps.location.rawLat().negative ? 'W' : 'E',
+      dp_printf("%c%07.4f", gps.location.rawLng().negative ? 'W' : 'E',
                 gps.location.lng());
 
     } else {
@@ -603,7 +603,6 @@ void dp_shutdown(void) {
   if (!I2C_MUTEX_LOCK())
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
-    cfg.screenon = 0;
     obdPower(&ssoled, false);
     delay(DISPLAYREFRESH_MS / 1000 * 1.1);
     I2C_MUTEX_UNLOCK(); // release i2c bus access

@@ -16,15 +16,13 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 
 # Use case
 
-Paxcounter is a proof-of-concept device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by filtering vendor OUIs in the MAC adress.
+Paxcounter is an [ESP32](https://www.espressif.com/en/products/socs/esp32) MCU based device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by evaluating their MAC adresses.
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
-Data is transferred to a server via a LoRaWAN network, and/or a wired SPI slave interface. It can also be stored on a local SD-card.
+Data can either be be stored on a local SD-card, transferred to cloud using LoRaWAN network or MQTT over TCP/IP, or transmitted to a local host using serial (SPI) interface.
 
-You can build this project battery powered and reach a full day uptime with a single 18650 Li-Ion cell.
-
-This can all be done with a single small and cheap ESP32 board for less than $20.
+You can build this project battery powered using ESP32 deep sleep mode and reach long uptimes with a single 18650 Li-Ion cell.
 
 # Hardware
 
@@ -52,6 +50,9 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - Generic ESP32
 
 Depending on board hardware following features are supported:
+- LoRaWAN communication, supporting various payload formats (see enclosed .js converters)
+- MQTT communication via TCP/IP and Ethernet interface (note: payload transmitted over MQTT will be base64 encoded)
+- SPI serial communication to a local host
 - LED (shows power & status)
 - OLED Display (shows detailed status)
 - RGB LED (shows colorized status)
@@ -64,7 +65,6 @@ Depending on board hardware following features are supported:
 - Switch external power / battery
 - LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
 - SD-card (see section SD-card here) for logging pax data
-- Ethernet interface for MQTT communication via TCP/IP
 
 Target platform must be selected in `platformio.ini`.<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -183,20 +183,24 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 | Bit | Sensordata    | Default
 | --- | ------------- | -------
-| 0   | GPS*          | on
+| 0   | Paxcounter    | on
 | 1   | Beacon alarm  | on
 | 2   | BME280/680    | on
-| 3   | Paxcounter    | on
+| 3   | GPS*	      | on
 | 4   | User sensor 1 | on
 | 5   | User sensor 2 | on
 | 6   | User sensor 3 | on
 | 7   | Batterylevel  | off
 
-*) GPS data can also be combined with payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
+*) GPS data can also be combined with paxcounter payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
+
+# Power saving mode
+
+Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT). Set *#define SLEEPCYCLE* in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle. Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by  MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See *power.cpp* for power management, and *reset.cpp* for sleep and wakeup logic.
 
 # Time sync
 
-Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](/src/Timeserver/Nodered-Timeserver.json). Configure MQTT nodes in Node-Red to the same LORAWAN application as  paxocunter device is using.
+Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](/src/Node-RED/Timeserver.json). Configure MQTT nodes in Node-Red for the LORAWAN application used by paxocunter device.
 
 # Wall clock controller
 
@@ -211,7 +215,7 @@ This describes how to set up a mobile PaxCounter:<br> Follow all steps so far fo
 Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
-	#define VENDORFILTER		0	// disable OUI filter (scans ALL device MACs)
+	#define MACFILTER		0	// disable MAC filter
 	#define BLECOUNTER		1	// enable bluetooth sniffing
 	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
 	#define HAS_SENSOR_1		1	// optional: transmit ENS counter data to server
@@ -303,11 +307,11 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 6:		Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
 	bytes 7-8:	RSSI limiter threshold value (negative) [default 0]
 	byte 9:		Lora Payload send cycle in seconds/2 (0..255) [default 120]
-	byte 10:	Wifi channel switch interval in seconds/100 (0..255) [default 50]
+	byte 10:	Wifi channel hopping interval in seconds/100 (0..255), 0 means no hopping [default 50]
 	byte 11:	Bluetooth channel switch interval in seconds/100 (0..255) [efault 10]
 	byte 12:	Bluetooth scanner status (1=on, 0=0ff) [default 1]
 	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
-	byte 14:	Vendorfilter mode (0=disabled, 1=enabled) [default 0]
+	byte 14:	count randomizated MACs only (0=disabled, 1=enabled) [default 1]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
 	byte 16:	Payload filter mask
 	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
@@ -360,9 +364,9 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 # Remote control
 
-The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
+The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them, but must not exceed a maximum of 10 bytes per downlink.
 
-Note: all settings are stored in NVRAM and will be reloaded when device starts.
+Note: settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command 0x20. 
 
 Send for example `8386` as Downlink on Port 2 to get battery status and time/date from the device.
 <img src="img/paxcounter_downlink_example.png">
@@ -437,17 +441,18 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 	0 ... 255 payload send cycle in seconds/2
 	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
-0x0B set Wifi channel switch interval timer
+0x0B set Wifi channel hopping interval timer
 
 	0 ... 255 duration for scanning a wifi channel in seconds/100
 	e.g. 50 -> each channel is scanned for 500 milliseconds [default]
+	0 means no hopping, scanning on  channel WIFI_CHANNEL_MIN only
 
 0x0C set Bluetooth channel switch interval timer
 
 	0 ... 255 duration for scanning a bluetooth advertising channel in seconds/100
 	e.g. 8 -> each channel is scanned for 80 milliseconds [default]
 
-0x0D (NOT YET IMPLEMENTED) set BLE and WIFI vendorfilter mode
+0x0D (NOT YET IMPLEMENTED) set BLE and WIFI MAC filter mode
 
 	0 = disabled (use to count devices, not people)
 	1 = enabled [default]
@@ -485,15 +490,15 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 0x14 set payload mask
 
 	byte 1 = sensor data payload mask (0..255, meaning of bits see below)
-        0x01 = GPS_DATA
+        0x01 = COUNT_DATA
         0x02 = ALARM_DATA
         0x04 = MEMS_DATA
-        0x08 = COUNT_DATA (default)
-        0x10 = SENSOR_1_DATA (ENS-COUNTS)
+        0x08 = GPS_DATA
+        0x10 = SENSOR_1_DATA (also ENS counter)
         0x20 = SENSOR_2_DATA
         0x40 = SENSOR_3_DATA
         0x80 = BATT_DATA
-    bytes can be combined eg COUNT_DATA ;SENSOR_1_DATA ;BATT_DATA: `0x08 | 0x10 |0x80 = 0x98`
+    bytes can be combined eg COUNT_DATA + SENSOR_1_DATA + BATT_DATA: `0x01 | 0x10 | 0x80 = 0x91`
 
 0x15 set BME data on/off
 
@@ -514,6 +519,19 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 
     0 = disabled [default]
     1 = enabled
+
+0x19 set sleep cycle
+
+	0 ... 255 device sleep cycle in seconds/2
+	e.g. 120 -> device sleeps 240 seconds after each send cycle [default = 0]
+
+0x20 store device configuration
+
+	Current device runtime configuration is stored in NVRAM, will be reloaded after restart
+
+0x21 load device configuration
+
+	Current device runtime configuration will be loaded from NVRAM, replacing current settings immediately (use with care!)
 
 0x80 get device configuration
 
