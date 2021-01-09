@@ -22,24 +22,24 @@
 #define _bitl(b) (1UL << (b))
 
 // bits in payloadmask for filtering payload data
-#define COUNT_DATA _bit(1)
-#define ALARM_DATA _bit(2)
-#define MEMS_DATA _bit(3)
-#define GPS_DATA _bit(4)
-#define SENSOR1_DATA _bit(5)
-#define SENSOR2_DATA _bit(6)
-#define SENSOR3_DATA _bit(7)
-#define BATT_DATA _bit(8)
+#define COUNT_DATA _bit(0)
+#define ALARM_DATA _bit(1)
+#define MEMS_DATA _bit(2)
+#define GPS_DATA _bit(3)
+#define SENSOR1_DATA _bit(4)
+#define SENSOR2_DATA _bit(5)
+#define SENSOR3_DATA _bit(6)
+#define BATT_DATA _bit(7)
 
 // bits in configmask for device runmode control
-#define GPS_MODE _bit(1)
-#define ALARM_MODE _bit(2)
-#define BEACON_MODE _bit(3)
-#define UPDATE_MODE _bit(4)
-#define FILTER_MODE _bit(5)
-#define ANTENNA_MODE _bit(6)
-#define BLE_MODE _bit(7)
-#define SCREEN_MODE _bit(8)
+#define GPS_MODE _bit(0)
+#define ALARM_MODE _bit(1)
+#define BEACON_MODE _bit(2)
+#define UPDATE_MODE _bit(3)
+#define FILTER_MODE _bit(4)
+#define ANTENNA_MODE _bit(5)
+#define BLE_MODE _bit(6)
+#define SCREEN_MODE _bit(7)
 
 // length of display buffer for lmic event messages
 #define LMIC_EVENTMSG_LEN 17
