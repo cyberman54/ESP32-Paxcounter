@@ -31,16 +31,6 @@
 #define SENSOR3_DATA _bit(6)
 #define BATT_DATA _bit(7)
 
-// bits in configmask for device runmode control
-#define GPS_MODE _bit(0)
-#define ALARM_MODE _bit(1)
-#define BEACON_MODE _bit(2)
-#define UPDATE_MODE _bit(3)
-#define FILTER_MODE _bit(4)
-#define ANTENNA_MODE _bit(5)
-#define BLE_MODE _bit(6)
-#define SCREEN_MODE _bit(7)
-
 // length of display buffer for lmic event messages
 #define LMIC_EVENTMSG_LEN 17
 
