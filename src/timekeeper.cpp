@@ -109,8 +109,9 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
              _seconds(), timeSetSymbols[mytimesource]);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
-    ESP_LOGD(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
-             _seconds(), timeSetSymbols[mytimesource]);
+    time_t unix_sec_at_compilation = compiledUTC();
+    ESP_LOGD(TAG, "[%0.3f] Failed to synchronise time from source %c | unix sec obtained from source: %d | unix sec at program compilation: %d",
+             _seconds(), timeSetSymbols[mytimesource], time_to_set, unix_sec_at_compilation);
   }
 }
 
