@@ -1,6 +1,6 @@
 // clang-format off
 // upload_speed 1500000
-// board esp32dev
+// board pico32
 
 #ifndef _TTGOTWRISTBAND_H
 #define _TTGOTWRISTBAND_H
@@ -30,14 +30,14 @@
 
 #define CGRAM_OFFSET
 
+#define TFT_MISO -1
 #define TFT_MOSI GPIO_NUM_19 // SPI
 #define TFT_SCLK GPIO_NUM_18 // SPI
 #define TFT_CS   GPIO_NUM_5  // Chip select control
 #define TFT_DC   GPIO_NUM_23 // Data Command control
 #define TFT_RST  GPIO_NUM_26 // Reset
 #define TFT_BL   GPIO_NUM_27 // LED back-light
-
-#define TFT_BACKLIGHT_ON
+#define TFT_BACKLIGHT_ON 1
 #define ST7735_GREENTAB160x80
 
 #define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
