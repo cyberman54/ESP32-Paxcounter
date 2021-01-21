@@ -541,7 +541,7 @@ void SaveLMICToRTC(int deepsleep_sec) {
   unsigned long now = millis();
 
   // EU Like Bands
-#if defined(CFG_LMIC_EU_like)
+#if CFG_LMIC_EU_like
   for (int i = 0; i < MAX_BANDS; i++) {
     ostime_t correctedAvail =
         RTC_LMIC.bands[i].avail -
