@@ -146,7 +146,7 @@ void ledLoop(void *parameter) {
     // management
     if (LEDBlinkStarted && LEDBlinkDuration) {
       // Custom blink is finished, let this order, avoid millis() overflow
-      if ((millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
+      if ((long)(millis() - LEDBlinkStarted) >= LEDBlinkDuration) {
         // Led becomes off, and stop blink
         LEDState = LED_OFF;
         LEDBlinkStarted = 0;

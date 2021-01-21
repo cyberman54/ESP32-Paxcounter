@@ -27,11 +27,12 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include "globals.h"
 #include "rcommand.h"
 
-esp_err_t spi_init();
-
 extern TaskHandle_t spiTask;
 
+esp_err_t spi_init();
+void spi_deinit(void);
 void spi_enqueuedata(MessageBuffer_t *message);
-void spi_queuereset();
+uint32_t spi_queuewaiting(void);
+void spi_queuereset(void);
 
 #endif // _SPISLAVE_H

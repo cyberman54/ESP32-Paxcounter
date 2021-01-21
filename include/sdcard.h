@@ -35,6 +35,25 @@
 #define SDCARD_SCLK SCK
 #endif
 
+// Default config for SDMMC_HOST_DEFAULT (4-bit bus width, slot 1)
+// https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
+
+#ifndef SDCARD_DATA0
+#define SDCARD_DATA0 2
+#endif
+
+#ifndef SDCARD_DATA1
+#define SDCARD_DATA1 4
+#endif
+
+#ifndef SDCARD_DATA2
+#define SDCARD_DATA2 12
+#endif
+
+#ifndef SDCARD_DATA3
+#define SDCARD_DATA3 13
+#endif
+
 #define SDCARD_FILE_NAME "/paxcount.%02d"
 #define SDCARD_FILE_HEADER "date, time, wifi, bluet"
 

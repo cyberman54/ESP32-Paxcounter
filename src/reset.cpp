@@ -5,28 +5,38 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// variable keep its values after restart or wakeup from sleep
-RTC_NOINIT_ATTR runmode_t RTC_runmode;
+// Conversion factor for micro seconds to seconds
+#define uS_TO_S_FACTOR 1000000ULL
+
+// variables keep its values after a wakeup from sleep
+RTC_NOINIT_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
+RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
+RTC_DATA_ATTR unsigned long long RTC_millis = 0;
+timeval sleep_stop_time;
+
+const char *runmode[5] = {"powercycle", "normal", "wakeup", "update", "sleep"};
 
 void do_reset(bool warmstart) {
   if (warmstart) {
-    // store LMIC keys and counters in RTC memory
-    ESP_LOGI(TAG, "restarting device (warmstart), keeping runmode %d",
-             RTC_runmode);
+    ESP_LOGI(TAG, "restarting device (warmstart)");
   } else {
 #if (HAS_LORA)
-    if (RTC_runmode == RUNMODE_NORMAL)
+    if (RTC_runmode == RUNMODE_NORMAL) {
       LMIC_shutdown();
+    }
 #endif
     RTC_runmode = RUNMODE_POWERCYCLE;
-    ESP_LOGI(TAG, "restarting device (coldstart), set runmode %d", RTC_runmode);
+    ESP_LOGI(TAG, "restarting device (coldstart)");
   }
   esp_restart();
 }
 
-void do_after_reset(int reason) {
+void do_after_reset(void) {
 
-  switch (reason) {
+  struct timeval sleep_stop_time;
+  uint64_t sleep_time_ms;
+
+  switch (rtc_get_reset_reason(0)) {
 
   case POWERON_RESET:          // 0x01 Vbat power on reset
   case RTCWDT_BROWN_OUT_RESET: // 0x0f Reset when the vdd voltage is not
@@ -39,10 +49,16 @@ void do_after_reset(int reason) {
     break;
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
-    RTC_runmode = RUNMODE_WAKEUP;
-#if (HAS_LORA)
-    // to be done: restore LoRaWAN channel configuration and datarate here
-#endif
+    // calculate time spent in deep sleep
+    gettimeofday(&sleep_stop_time, NULL);
+    sleep_time_ms =
+        (sleep_stop_time.tv_sec - RTC_sleep_start_time.tv_sec) * 1000 +
+        (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
+    ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
+    RTC_millis += sleep_time_ms; // increment system monotonic time
+    // set wakeup state, not if we have pending OTA update
+    if (RTC_runmode == RUNMODE_SLEEP)
+      RTC_runmode = RUNMODE_WAKEUP;
     break;
 
   case SW_RESET:         // 0x03 Software reset digital core
@@ -61,58 +77,111 @@ void do_after_reset(int reason) {
     break;
   }
 
-  ESP_LOGI(TAG, "Starting Software v%s, runmode %d", PROGVERSION, RTC_runmode);
+  ESP_LOGI(TAG, "Starting Software v%s, runmode %s", PROGVERSION,
+           runmode[RTC_runmode]);
 }
 
-void enter_deepsleep(const int wakeup_sec, const gpio_num_t wakeup_gpio) {
+void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
 
-  if ((!wakeup_sec) && (!wakeup_gpio) && (RTC_runmode == RUNMODE_NORMAL))
-    return;
+  ESP_LOGI(TAG, "Preparing to sleep...");
 
-// assure LMIC is in safe state
-#if (HAS_LORA)
-  if (os_queryTimeCriticalJobs(ms2osticks(10000)))
-    return;
+  RTC_runmode = RUNMODE_SLEEP;
+  int i;
 
-    // to be done: save LoRaWAN channel configuration here
+  // validate wake up pin, if we have
+  if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
+    wakeup_gpio = GPIO_NUM_MAX;
 
+  // stop further enqueuing of senddata and MAC processing
+  sendTimer.detach();
+
+  // switch off radio and other power consuming hardware
+#if (WIFICOUNTER)
+  switch_wifi_sniffer(0);
+#endif
+#if (BLECOUNTER)
+  stop_BLEscan();
+  btStop();
+#endif
+#if (HAS_SDS011)
+  sds011_sleep(void);
 #endif
 
-  // set up power domains
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
-
-  // set wakeup timer
-  if (wakeup_sec)
-    esp_sleep_enable_timer_wakeup(wakeup_sec * 1000000);
-
-  // set wakeup gpio
-  if (wakeup_gpio != NOT_A_PIN) {
-    rtc_gpio_isolate(wakeup_gpio);
-    esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
-  }
+  // stop MAC processing
+  vTaskDelete(macProcessTask);
 
   // halt interrupts accessing i2c bus
   mask_user_IRQ();
 
-// switch off display
+  // wait a while (max 100 sec) to clear send queues
+  ESP_LOGI(TAG, "Waiting until send queues are empty...");
+  for (i = 100; i > 0; i--) {
+    if (allQueuesEmtpy())
+      break;
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+
+  // shutdown LMIC safely, waiting max 100 sec
+#if (HAS_LORA)
+  ESP_LOGI(TAG, "Waiting until LMIC is idle...");
+  for (i = 100; i > 0; i--) {
+    if ((LMIC.opmode & OP_TXRXPEND) ||
+        os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    else
+      break;
+  }
+#endif // (HAS_LORA)
+
+// shutdown MQTT safely
+#ifdef HAS_MQTT
+  mqtt_deinit();
+#endif
+
+// shutdown SPI safely
+#ifdef HAS_SPI
+  spi_deinit();
+#endif
+
+// save LMIC state to RTC RAM
+#if (HAS_LORA)
+  SaveLMICToRTC(wakeup_sec);
+#endif // (HAS_LORA)
+
+// set display to power save mode
 #ifdef HAS_DISPLAY
   dp_shutdown();
 #endif
 
-// switch off wifi & ble
-#if (BLECOUNTER)
-  stop_BLEscan();
-#endif
-
-// reduce power if has PMU
+// reduce power if has PMU or VEXT
 #ifdef HAS_PMU
   AXP192_power(pmu_power_sleep);
+#elif EXT_POWER_SW
+  digitalWrite(EXT_POWER_SW, EXT_POWER_OFF);
 #endif
 
   // shutdown i2c bus
   i2c_deinit();
 
-  // enter sleep mode
-  ESP_LOGI(TAG, "Going to sleep...");
+  // configure wakeup sources
+  // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
+
+  // set up RTC wakeup timer, if we have
+  if (wakeup_sec > 0) {
+    esp_sleep_enable_timer_wakeup(wakeup_sec * uS_TO_S_FACTOR);
+  }
+
+  // set wakeup gpio, if we have
+  if (wakeup_gpio != GPIO_NUM_MAX) {
+    rtc_gpio_isolate(wakeup_gpio); // minimize deep sleep current
+    esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ALL_LOW);
+  }
+
+  // time stamp sleep start time and save system monotonic time. Deep sleep.
+  gettimeofday(&RTC_sleep_start_time, NULL);
+  RTC_millis += millis();
+  ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 }
+
+unsigned long long uptime() { return (RTC_millis + millis()); }

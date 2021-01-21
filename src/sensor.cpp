@@ -6,7 +6,6 @@
 #include "payload.h"
 #include "corona.h"
 #include "macsniff.h"
-
 extern PayloadConvert payload;
 #endif
 
@@ -58,7 +57,7 @@ uint8_t *sensor_read(uint8_t sensor) {
     // note: Sensor1 fields are used for ENS count, if ENS detection enabled
 #if (COUNT_ENS)
     if (cfg.enscount)
-      payload.addCount(cwa_report(), MAC_SNIFF_BLE_CWA);
+      payload.addCount(cwa_report(), MAC_SNIFF_BLE_ENS);
 #else
     buf[0] = length;
     buf[1] = 0x01;

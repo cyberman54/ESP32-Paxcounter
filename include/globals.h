@@ -1,5 +1,6 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
+#endif
 
 // The mother of all embedded development...
 #include <Arduino.h>
@@ -17,29 +18,18 @@
 #include "mallocator.h"
 #include <bsec.h>
 
-// sniffing types
-#define MAC_SNIFF_WIFI 0
-#define MAC_SNIFF_BLE 1
+#define _bit(b) (1U << (b))
+#define _bitl(b) (1UL << (b))
 
 // bits in payloadmask for filtering payload data
-#define GPS_DATA (0x01)
-#define ALARM_DATA (0x02)
-#define MEMS_DATA (0x04)
-#define COUNT_DATA (0x08)
-#define SENSOR1_DATA (0x10)
-#define SENSOR2_DATA (0x20)
-#define SENSOR3_DATA (0x40)
-#define BATT_DATA (0x80)
-
-// bits in configmask for device runmode control
-#define GPS_MODE (0x01)
-#define ALARM_MODE (0x02)
-#define BEACON_MODE (0x04)
-#define UPDATE_MODE (0x08)
-#define FILTER_MODE (0x10)
-#define ANTENNA_MODE (0x20)
-#define BLE_MODE (0x40)
-#define SCREEN_MODE (0x80)
+#define COUNT_DATA _bit(0)
+#define ALARM_DATA _bit(1)
+#define MEMS_DATA _bit(2)
+#define GPS_DATA _bit(3)
+#define SENSOR1_DATA _bit(4)
+#define SENSOR2_DATA _bit(5)
+#define SENSOR3_DATA _bit(6)
+#define BATT_DATA _bit(7)
 
 // length of display buffer for lmic event messages
 #define LMIC_EVENTMSG_LEN 17
@@ -49,14 +39,26 @@
   (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(DISPLAYREFRESH_MS)) == pdTRUE)
 #define I2C_MUTEX_UNLOCK() (xSemaphoreGive(I2Caccess))
 
-enum sendprio_t { prio_low, prio_normal, prio_high };
-enum timesource_t { _gps, _rtc, _lora, _unsynced };
+// pseudo system halt function, useful to prevent writeloops to NVRAM
+#ifndef _ASSERT
+#define _ASSERT(cond)                                                          \
+  if ((cond) == 0) {                                                           \
+    ESP_LOGE(TAG, "FAILURE in %s:%d", __FILE__, __LINE__);                     \
+    mask_user_IRQ();                                                           \
+    for (;;)                                                                   \
+      ;                                                                        \
+  }
 
+#define _seconds() millis() / 1000.0
+
+enum timesource_t { _gps, _rtc, _lora, _unsynced };
+enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 enum runmode_t {
-  RUNMODE_POWERCYCLE = 0,
+  RUNMODE_POWERCYCLE,
   RUNMODE_NORMAL,
   RUNMODE_WAKEUP,
-  RUNMODE_UPDATE
+  RUNMODE_UPDATE,
+  RUNMODE_SLEEP
 };
 
 // Struct holding devices's runtime configuration
@@ -72,12 +74,13 @@ typedef struct __attribute__((packed)) {
   uint8_t countermode; // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
   int16_t rssilimit;   // threshold for rssilimiter, negative value!
   uint8_t sendcycle;   // payload send cycle [seconds/2]
+  uint8_t sleepcycle;  // sleep cycle [seconds/2]
   uint8_t wifichancycle; // wifi channel switch cycle [seconds/100]
   uint8_t blescantime;   // BLE scan cycle duration [seconds]
   uint8_t blescan;       // 0=disabled, 1=enabled
   uint8_t wifiscan;      // 0=disabled, 1=enabled
   uint8_t wifiant;       // 0=internal, 1=external (for LoPy/LoPy4)
-  uint8_t vendorfilter;  // 0=disabled, 1=enabled
+  uint8_t macfilter;     // 0=disabled, 1=enabled
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t monitormode;   // 0=disabled, 1=enabled
   uint8_t runmode;       // 0=normal, 1=update
@@ -94,9 +97,15 @@ typedef struct __attribute__((packed)) {
 typedef struct {
   uint8_t MessageSize;
   uint8_t MessagePort;
-  sendprio_t MessagePrio;
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
+
+// Struct for MAC processing queue
+typedef struct {
+  uint8_t mac[6];
+  int8_t rssi;
+  snifftype_t sniff_type;
+} MacBuffer_t;
 
 typedef struct {
   int32_t latitude;
@@ -129,13 +138,14 @@ extern std::array<uint64_t, 0xff> beacons;
 extern configData_t cfg;                       // current device configuration
 extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 extern uint8_t volatile channel;               // wifi channel rotation counter
+extern uint8_t volatile rf_load;               // RF traffic indicator
 extern uint8_t batt_level;                     // display value
 extern uint16_t volatile macs_wifi, macs_ble;  // display values
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
 extern SemaphoreHandle_t I2Caccess;
-extern TaskHandle_t irqHandlerTask, ClockTask;
+extern TaskHandle_t irqHandlerTask, ClockTask, macProcessTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;

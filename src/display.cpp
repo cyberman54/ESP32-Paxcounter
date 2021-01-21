@@ -53,7 +53,7 @@ QRCode qrcode;
 #if (HAS_DISPLAY) == 1
 OBDISP ssoled;
 #elif (HAS_DISPLAY) == 2
-TFT_eSPI tft = TFT_eSPI();
+TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
 #else
 #error Unknown display type specified in hal file
 #endif
@@ -67,7 +67,7 @@ void dp_setup(int contrast) {
                       MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA,
                       MY_DISPLAY_SCL, MY_DISPLAY_RST,
                       OLED_FREQUENCY); // use standard I2C bus at 400Khz
-  assert(rc != OLED_NOT_FOUND);
+  _ASSERT(rc != OLED_NOT_FOUND);
 
   // set display buffer
   obdSetBackBuffer(&ssoled, displaybuf);
@@ -94,7 +94,7 @@ void dp_init(bool verbose) {
 #if (HAS_DISPLAY) == 1 // i2c
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
 #endif
 
@@ -190,7 +190,7 @@ void dp_refresh(bool nextPage) {
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
     // set display on/off according to current device configuration
     if (DisplayIsOn != cfg.screenon) {
@@ -265,10 +265,12 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
-        if (!cfg.enscount)
-            dp_printf("BLTH:%-5d", macs_ble);
-        else
-      dp_printf(" CWA:%-5d", cwa_report());
+#if (COUNT_ENS)
+      if (cfg.enscount)
+        dp_printf(" CWA:%-5d", cwa_report());
+      else
+#endif
+        dp_printf("BLTH:%-5d", macs_ble);
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
@@ -277,12 +279,13 @@ void dp_drawPage(time_t t, bool nextpage) {
     else
       dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
-    if (cfg.blescan) {
+    if (cfg.blescan)
       dp_printf("BLTH:%-5d", macs_ble);
-        if (cfg.enscount)
-            dp_printf("(CWA:%d)", cwa_report());
-    } 
+#if (COUNT_ENS)
+    if (cfg.enscount)
+      dp_printf("(CWA:%d)", cwa_report());
     else
+#endif
       dp_printf("BLTH:off");
 #else
     dp_printf("Sniffer disabled");
@@ -308,6 +311,7 @@ void dp_drawPage(time_t t, bool nextpage) {
     dp_printf("       ");
 #endif
     dp_printf(" ch:%02d", channel);
+    // dp_printf(" due:%02d", rf_load);
     dp_println();
 
     // line 5: RSSI limiter + free memory
@@ -341,10 +345,10 @@ void dp_drawPage(time_t t, bool nextpage) {
 
 #if (HAS_LORA)
     // LMiC event display
-    dp_printf("%-16s", lmic_event_msg);
+    dp_printf("%-16s ", lmic_event_msg);
     // LORA datarate, display inverse if ADR disabled
     dp_setFont(MY_FONT_SMALL, !cfg.adrmode);
-    dp_printf(" %-4s", getSfName(updr2rps(LMIC.datarate)));
+    dp_printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
     dp_setFont(MY_FONT_SMALL, 0);
     dp_println();
 #endif // HAS_LORA
@@ -396,7 +400,7 @@ void dp_drawPage(time_t t, bool nextpage) {
                 gps.location.lat());
 
       // line 6-7: GPS longitude
-      dp_printf("%c%07.4f", gps.location.rawLat().negative ? 'W' : 'E',
+      dp_printf("%c%07.4f", gps.location.rawLng().negative ? 'W' : 'E',
                 gps.location.lng());
 
     } else {
@@ -597,9 +601,8 @@ void dp_shutdown(void) {
 #if (HAS_DISPLAY) == 1
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", millis() / 1000.0);
+    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
   else {
-    cfg.screenon = 0;
     obdPower(&ssoled, false);
     delay(DISPLAYREFRESH_MS / 1000 * 1.1);
     I2C_MUTEX_UNLOCK(); // release i2c bus access

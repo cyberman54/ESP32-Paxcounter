@@ -55,8 +55,10 @@
 #define SDS_TX 19     // connect to RX on the SDS011
 #define SDS_RX 23     // connect to TX on the SDS011
 
-// user defined sensors
-#define HAS_SENSORS 1 // comment out if device has user defined sensors
+// up to three user defined sensors (if connected)
+//#define HAS_SENSOR_1 1 // comment out if device has user defined sensor #1
+//#define HAS_SENSOR_2 1 // comment out if device has user defined sensor #2
+//#define HAS_SENSOR_3 1 // comment out if device has user defined sensor #3
 
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
@@ -102,9 +104,5 @@
 #define LORA_IRQ  (26)
 #define LORA_IO1  (33)
 #define LORA_IO2  LMIC_UNUSED_PIN
-
-// I2C config for Microchip 24AA02E64 DEVEUI unique address
-#define MCP_24AA02E64_I2C_ADDRESS 0x50 // I2C address for the 24AA02E64 
-#define MCP_24AA02E64_MAC_ADDRESS 0xF8 // Memory adress of unique deveui 64 bits
 
 #endif

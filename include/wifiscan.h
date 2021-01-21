@@ -8,6 +8,8 @@
 #include "antenna.h" // code for switching wifi antennas
 #include "macsniff.h"
 
+extern TimerHandle_t WifiChanTimer;
+
 void wifi_sniffer_init(void);
 void switch_wifi_sniffer(uint8_t state);
 void IRAM_ATTR wifi_sniffer_packet_handler(void *buff,

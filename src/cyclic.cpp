@@ -14,29 +14,28 @@ extern boolean isSDS011Active;
 #endif
 
 void setCyclicIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
+  xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits);
 }
 
 // do all housekeeping
 void doHousekeeping() {
 
-  // update uptime counter
-  uptime();
-  // check if update mode trigger switch was set
-  if (RTC_runmode == RUNMODE_UPDATE) {
-    // check battery status if we can before doing ota
-    if (batt_sufficient()) {
-      do_reset(true); // warmstart to runmode update
-    } else {
-      ESP_LOGE(TAG, "Battery level %d%% is too low for OTA", batt_level);
-      RTC_runmode = RUNMODE_NORMAL; // keep running in normal mode
-    }
-  }
+  // check if update mode trigger switch was set by rcommand
+  if (RTC_runmode == RUNMODE_UPDATE)
+    do_reset(true);
 
-  // task storage debugging //
+  // heap and task storage debugging
+  ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
+           ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
+           ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
+  ESP_LOGD(TAG, "MACprocessor %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(macProcessTask),
+           eTaskGetState(macProcessTask));
+  ESP_LOGD(TAG, "Rcommand interpreter %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
 #if (HAS_LORA)
   ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));
@@ -100,7 +99,6 @@ void doHousekeeping() {
              "free heap = %d bytes)",
              ESP.getMinFreeHeap(), ESP.getFreeHeap());
     reset_counters(); // clear macs container and reset all counters
-    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreeHeap() <= MEM_LOW) // check again
       do_reset(true);                    // memory leak, reset device
@@ -111,7 +109,6 @@ void doHousekeeping() {
   if (ESP.getMinFreePsram() <= MEM_LOW) {
     ESP_LOGI(TAG, "PSRAM full, counter cleared");
     reset_counters(); // clear macs container and reset all counters
-    get_salt();       // get new salt for salting hashes
 
     if (ESP.getMinFreePsram() <= MEM_LOW) // check again
       do_reset(true);                     // memory leak, reset device
@@ -130,16 +127,6 @@ void doHousekeeping() {
 
 } // doHousekeeping()
 
-// uptime counter 64bit to prevent millis() rollover after 49 days
-uint64_t uptime() {
-  static uint32_t low32, high32;
-  uint32_t new_low32 = millis();
-  if (new_low32 < low32)
-    high32++;
-  low32 = new_low32;
-  return (uint64_t)high32 << 32 | low32;
-}
-
 uint32_t getFreeRAM() {
 #ifndef BOARD_HAS_PSRAM
   return ESP.getFreeHeap();
@@ -153,6 +140,7 @@ void reset_counters() {
   macs.clear(); // clear all macs container
   macs_wifi = 0;
   macs_ble = 0;
+  renew_salt(); // get new salt
 #ifdef HAS_DISPLAY
   dp_plotCurve(0, true);
 #endif

@@ -4,6 +4,10 @@
 #include "cyclic.h"
 #include "qrcode.h"
 
+#if (COUNT_ENS)
+#include "corona.h"
+#endif
+
 #if (HAS_DISPLAY) == 1
 #include <OneBitDisplay.h>
 #elif (HAS_DISPLAY) == 2
@@ -24,7 +28,7 @@
 #else
 #define OLED_ADDR -1
 #endif
-#ifndef USW_HW_I2C
+#ifndef USE_HW_I2C
 #define USE_HW_I2C 1
 #endif
 #ifndef OLED_FREQUENCY

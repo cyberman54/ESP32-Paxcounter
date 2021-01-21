@@ -22,11 +22,12 @@ bool sdcard_init() {
 
 #if HAS_SDCARD == 1 // use SD SPI host driver
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
-  //SPI.begin(SDCARD_SCLK, SDCARD_MSO, SDCARD_MOSI, SDCARD_CS);
-  //delay(10);
-  //useSDCard = SD.begin(SDCARD_CS, SPI, 40000000, "/sd");
-
 #elif HAS_SDCARD == 2 // use SD MMC host driver
+  // enable internal pullups of sd-data lines
+  gpio_set_pull_mode(gpio_num_t(SDCARD_DATA0), GPIO_PULLUP_ONLY);
+  gpio_set_pull_mode(gpio_num_t(SDCARD_DATA1), GPIO_PULLUP_ONLY);
+  gpio_set_pull_mode(gpio_num_t(SDCARD_DATA2), GPIO_PULLUP_ONLY);
+  gpio_set_pull_mode(gpio_num_t(SDCARD_DATA3), GPIO_PULLUP_ONLY);
   useSDCard = SD_MMC.begin();
 #endif
 
@@ -38,7 +39,8 @@ bool sdcard_init() {
   return useSDCard;
 }
 
-void sdcardWriteData(uint16_t noWifi, uint16_t noBle, __attribute__((unused)) uint16_t noBleCWA) {
+void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
+                     __attribute__((unused)) uint16_t noBleCWA) {
   static int counterWrites = 0;
   char tempBuffer[12 + 1];
   time_t t = now();
@@ -103,7 +105,7 @@ void createFile(void) {
         ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
         fileSDCard.print(SDCARD_FILE_HEADER);
 #if (COUNT_ENS)
-        fileSDCard.print(SDCARD_FILE_HEADER_CWA);             // for Corona-data (CWA)
+        fileSDCard.print(SDCARD_FILE_HEADER_CWA); // for Corona-data (CWA)
 #endif
 #if (HAS_SDS011)
         fileSDCard.print(SDCARD_FILE_HEADER_SDS011);

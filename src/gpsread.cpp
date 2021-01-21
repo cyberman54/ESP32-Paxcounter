@@ -30,34 +30,27 @@ static uint16_t nmea_txDelay_ms = 0;
 // initialize and configure GPS
 int gps_init(void) {
 
-  int ret = 1;
-
   if (!gps_config()) {
     ESP_LOGE(TAG, "GPS chip initializiation error");
     return 0;
   }
 
 #ifdef GPS_SERIAL
+  ESP_LOGI(TAG, "Opening serial GPS");
   GPS_Serial.begin(GPS_SERIAL);
-  ESP_LOGI(TAG, "Using serial GPS");
 #elif defined GPS_I2C
+  ESP_LOGI(TAG, "Opening I2C GPS");
   Wire.begin(GPS_I2C, 400000); // I2C connect to GPS device with 400 KHz
   Wire.beginTransmission(GPS_ADDR);
-  Wire.write(0x00);             // dummy write
-  ret = Wire.endTransmission(); // check if chip is seen on i2c bus
-
-  if (ret) {
-    ESP_LOGE(TAG,
-             "Quectel L76 GPS chip not found on i2c bus, bus error %d. "
-             "Stopping GPS-Task.",
-             ret);
-    ret = 0;
-  } else {
+  Wire.write(0x00); // dummy write
+  if (Wire.endTransmission()) {
+    ESP_LOGE(TAG, "Quectel L76 GPS chip not found");
+    return 0;
+  } else
     ESP_LOGI(TAG, "Quectel L76 GPS chip found");
-  }
 #endif
 
-  return ret;
+  return 1;
 } // gps_init()
 
 // detect gps chipset type and configure it with device specific settings
@@ -109,7 +102,7 @@ time_t get_gpstime(uint16_t *msec) {
 #endif
 
   // did we get a current date & time?
-  if (gpstime.isValid() && gpsday.isValid()) {
+  if (gpstime.isValid()) {
 
     time_t t = 0;
     tmElements_t tm;
@@ -126,8 +119,8 @@ time_t get_gpstime(uint16_t *msec) {
     tm.Year = CalendarYrToTm(atoi(gpsyear.value())); // year offset from 1970
     t = makeTime(tm);
 
-    // ESP_LOGD(TAG, "GPS time/date = %2d:%2d:%2d / %2d.%2d.%2d", tm.Hour,
-    //         tm.Minute, tm.Second, tm.Day, tm.Month, tm.Year + 1970);
+    ESP_LOGD(TAG, "GPS time/date = %2d:%2d:%2d / %2d.%2d.%2d", tm.Hour,
+            tm.Minute, tm.Second, tm.Day, tm.Month, tm.Year + 1970);
 
     // add protocol delay with millisecond precision
     t += delay_ms / 1000 - 1; // whole seconds
@@ -150,7 +143,7 @@ time_t get_gpstime(void) {
 // GPS serial feed FreeRTos Task
 void gps_loop(void *pvParameters) {
 
-  configASSERT(((uint32_t)pvParameters) == 1); // FreeRTOS check
+  _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
   while (1) {
 

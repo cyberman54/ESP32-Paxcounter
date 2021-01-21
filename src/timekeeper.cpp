@@ -85,7 +85,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", millis() / 1000.0,
+    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", _seconds(),
              time_to_set, t_msec % 1000);
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
@@ -106,11 +106,12 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
     ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
-             millis() / 1000.0, timeSetSymbols[mytimesource]);
+             _seconds(), timeSetSymbols[mytimesource]);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
-    ESP_LOGD(TAG, "[%0.3f] Timesync failed, invalid time fetched | source: %c",
-             millis() / 1000.0, timeSetSymbols[mytimesource]);
+    time_t unix_sec_at_compilation = compiledUTC();
+    ESP_LOGD(TAG, "[%0.3f] Failed to synchronise time from source %c | unix sec obtained from source: %d | unix sec at program compilation: %d",
+             _seconds(), timeSetSymbols[mytimesource], time_to_set, unix_sec_at_compilation);
   }
 }
 
@@ -245,7 +246,7 @@ void clock_init(void) {
                           &ClockTask,           // task handle
                           1);                   // CPU core
 
-  assert(ClockTask); // has clock task started?
+  _ASSERT(ClockTask != NULL); // has clock task started?
 } // clock_init
 
 void clock_loop(void *taskparameter) { // ClockTask

@@ -38,7 +38,7 @@
 #define RTC_INT GPIO_NUM_0 //
 
 // Settings for IF482 interface
-#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_3, GPIO_NUM_1 // RX, TX
+//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_3, GPIO_NUM_1 // RX, TX
 
 // Settings for DCF77 interface
 //#define HAS_DCF77 GPIO_NUM_14 // JP8 #13

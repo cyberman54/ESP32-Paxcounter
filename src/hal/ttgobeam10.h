@@ -13,10 +13,10 @@ for T-Beam version T22_V10 + T22_V11
 pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
 
 /// Button functions: ///
-Power, short press -> set device on (toggles display while device is on)
-Power, long press -> set device off
-User, short press -> flip display page 
-User, long press -> send LORA message
+Power, short press -> set device on / while device is on: goto sleep
+Power, long press   -> set device off
+User, short press   -> flip display page 
+User, long press    -> send a button message
 Reset -> reset device
 */
 
@@ -29,7 +29,8 @@ Reset -> reset device
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 #define HAS_BUTTON GPIO_NUM_38 // middle on board button
-#define HAS_LED NOT_A_PIN
+#define HAS_LED GPIO_NUM_4 // not present on all T-Beam 1.0 boards
+#define LED_ACTIVE_LOW 1
 
 // power management settings
 #define HAS_PMU 1 // has AXP192 chip
@@ -41,6 +42,12 @@ Reset -> reset device
 // possible values (V):
 // 4_1/4_15/4_2/4_36
 
+// blue onboard led settings
+// possible values: 
+// AXP20X_LED_OFF / AXP20X_LED_LOW_LEVEL (means LED ON) / AXP20X_LED_BLINK_1HZ / AXP20X_LED_BLINK_4HZ
+#define PMU_LED_RUN_MODE AXP20X_LED_LOW_LEVEL 
+#define PMU_LED_SLEEP_MODE AXP20X_LED_OFF
+
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
 #define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_34, GPIO_NUM_12 // UBlox NEO 6M
@@ -51,9 +58,6 @@ Reset -> reset device
 //#define HAS_BME 1 // Enable BME sensors in general
 //#define HAS_BME680 SDA, SCL
 //#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
-
-// user defined sensors (if connected)
-//#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
 //#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
