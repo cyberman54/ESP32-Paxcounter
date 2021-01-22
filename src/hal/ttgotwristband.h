@@ -16,7 +16,7 @@
 #define HAS_BUTTON (33)    // on board button A
 
 // power management settings
-#define BAT_MEASURE_ADC ADC1_GPIO34_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_6
+#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER 2.605f           // voltage divider
 
 // Display Settings
