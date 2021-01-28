@@ -158,9 +158,9 @@ void AXP192_init(void) {
 #endif // PMU_INT
 
 // set charging parameterss according to user settings if we have (see power.h)
-#ifdef PMU_CHARGE_CURRENT
-    pmu.setChargeControlCur(PMU_CHARGE_CURRENT);
-    pmu.setChargingTargetVoltage(PMU_CHARGE_CUTOFF);
+#ifdef PMU_CHG_CURRENT
+    pmu.setChargeControlCur(PMU_CHG_CURRENT);
+    pmu.setChargingTargetVoltage(PMU_CHG_CUTOFF);
     pmu.enableChargeing(true);
 #endif
 
