@@ -84,7 +84,7 @@ void i2c_scan(void) {
 }
 
 // mutexed functions for i2c r/w access
-uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
+int i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
   if (I2C_MUTEX_LOCK()) {
 
     uint8_t ret = 0;
@@ -112,7 +112,7 @@ uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
   }
 }
 
-uint8_t i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
+int i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
   if (I2C_MUTEX_LOCK()) {
 
     uint8_t ret = 0;

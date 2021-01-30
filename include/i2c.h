@@ -24,7 +24,7 @@
 void i2c_init(void);
 void i2c_deinit(void);
 void i2c_scan(void);
-uint8_t i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len);
-uint8_t i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len);
+int i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len);
+int i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len);
 
 #endif

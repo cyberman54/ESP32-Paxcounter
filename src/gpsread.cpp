@@ -119,7 +119,7 @@ time_t get_gpstime(uint16_t *msec) {
     tm.Year = CalendarYrToTm(atoi(gpsyear.value())); // year offset from 1970
     t = makeTime(tm);
 
-    ESP_LOGD(TAG, "GPS time/date = %2d:%2d:%2d / %2d.%2d.%2d", tm.Hour,
+    ESP_LOGD(TAG, "GPS time/date = %02d:%02d:%02d / %02d.%02d.%2d", tm.Hour,
             tm.Minute, tm.Second, tm.Day, tm.Month, tm.Year + 1970);
 
     // add protocol delay with millisecond precision
