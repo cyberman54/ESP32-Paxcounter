@@ -46,6 +46,14 @@ void AXP192_powerevent_IRQ(void) {
     ESP_LOGI(TAG, "Battery high temperature.");
   if (pmu.isBattTempHighIRQ())
     ESP_LOGI(TAG, "Battery low temperature.");
+  if (pmu.isLowVoltageLevel1IRQ()) {
+    ESP_LOGI(TAG, "Battery has reached voltage level 1.");
+    pmu.setChgLEDMode(AXP20X_LED_BLINK_4HZ);
+  }
+  if (pmu.isLowVoltageLevel2IRQ()) {
+    ESP_LOGI(TAG, "Battery has reached voltage level 2.");
+    pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
+  }
 
   // short press -> esp32 deep sleep mode, can be exited by pressing user button
   if (pmu.isPEKShortPressIRQ()) {
@@ -129,10 +137,15 @@ void AXP192_init(void) {
     pmu.setLDO2Voltage(3300);  // LORA VDD 3v3
     pmu.setLDO3Voltage(3300);  // GPS VDD 3v3
 
+    // configure voltage warning levels
+    pmu.setVWarningLevel1(3600);
+    pmu.setVWarningLevel2(3800);
+    pmu.setPowerDownVoltage(3300);
+
     // configure PEK button settings
     pmu.setTimeOutShutdown(false); // forced shutdown by PEK enabled
     pmu.setShutdownTime(
-        AXP_POWER_OFF_TIME_65); // 6 sec button press for shutdown
+        AXP_POWER_OFF_TIME_6S); // 6 sec button press for shutdown
     pmu.setlongPressTime(
         AXP_LONGPRESS_TIME_1S5); // 1.5 sec button press for long press
     pmu.setStartupTime(

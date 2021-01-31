@@ -166,7 +166,7 @@ void set_payloadmask(uint8_t val[]) {
 
 void set_sensor(uint8_t val[]) {
 #if (HAS_SENSORS)
-  switch (val[0]) { // check if valid sensor number 1...4
+  switch (val[0]) { // check if valid sensor number 1..3
   case 1:
   case 2:
   case 3:
