@@ -4,7 +4,7 @@
 Ticker sendTimer;
 
 void setSendIRQ() {
-  xTaskNotifyFromISR(irqHandlerTask, SENDCYCLE_IRQ, eSetBits, NULL);
+  xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
@@ -12,8 +12,7 @@ void SendPayload(uint8_t port) {
 
   ESP_LOGD(TAG, "sending Payload for Port %d", port);
 
-  MessageBuffer_t
-      SendBuffer; // contains MessageSize, MessagePort, Message[]
+  MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
 
@@ -115,7 +114,6 @@ void sendData() {
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
         reset_counters(); // clear macs container and reset all counters
-        get_salt();       // get new salt for salting hashes
         ESP_LOGI(TAG, "Counter cleared");
       }
 #ifdef HAS_DISPLAY
@@ -191,6 +189,7 @@ void sendData() {
 } // sendData()
 
 void flushQueues(void) {
+  rcmd_queuereset();
 #if (HAS_LORA)
   lora_queuereset();
 #endif
@@ -203,7 +202,7 @@ void flushQueues(void) {
 }
 
 bool allQueuesEmtpy(void) {
-  uint32_t rc = 0;
+  uint32_t rc = rcmd_queuewaiting();
 #if (HAS_LORA)
   rc += lora_queuewaiting();
 #endif

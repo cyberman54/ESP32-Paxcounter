@@ -15,17 +15,28 @@
 #include "timesync.h"
 #include "blescan.h"
 
+// maximum number of elements in rcommand interpreter queue
+#define RCMD_QUEUE_SIZE 5
+
+extern TaskHandle_t rcmdTask;
+
 // table of remote commands and assigned functions
 typedef struct {
   const uint8_t opcode;
   void (*func)(uint8_t[]);
   const uint8_t params;
-  const bool store;
 } cmd_t;
 
-extern bool rcmd_busy;
+// Struct for remote command processing queue
+typedef struct {
+  uint8_t cmd[10];
+  uint8_t cmdLen;
+} RcmdBuffer_t;
 
-void rcommand(const uint8_t cmd[], const uint8_t cmdlength);
-void do_reset(bool warmstart);
+void IRAM_ATTR rcommand(const uint8_t *cmd, const size_t cmdlength);
+void rcmd_queuereset(void);
+uint32_t rcmd_queuewaiting(void);
+void rcmd_deinit(void);
+esp_err_t rcmd_init(void);
 
 #endif

@@ -11,7 +11,8 @@
 
 void do_reset(bool warmstart);
 void do_after_reset(void);
-void enter_deepsleep(const uint64_t wakeup_sec, const gpio_num_t wakeup_gpio);
+void enter_deepsleep(const uint64_t wakeup_sec = 60,
+                     const gpio_num_t wakeup_gpio = GPIO_NUM_MAX);
 unsigned long long uptime(void);
 
 #endif // _RESET_H

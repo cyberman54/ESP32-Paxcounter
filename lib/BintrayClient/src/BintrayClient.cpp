@@ -113,16 +113,17 @@ String BintrayClient::getLatestVersion() const
         ESP_LOGE(TAG, "Error: Firmware version data invalid.");
         return version;
     }
-    StaticJsonBuffer<bufferSize> jsonBuffer;
+    StaticJsonDocument<bufferSize> doc;
 
-    JsonObject &root = jsonBuffer.parseObject(jsonResult.c_str());
+    DeserializationError err = deserializeJson(doc, jsonResult.c_str());
+
     // Check for errors in parsing
-    if (!root.success())
+    if (err)
     {
         ESP_LOGE(TAG, "Error: Firmware version data not found.");
         return version;
     }
-    return root.get<String>("name");
+    return doc["name"].as<String>();
 }
 
 String BintrayClient::getBinaryPath(const String &version) const
@@ -137,14 +138,15 @@ String BintrayClient::getBinaryPath(const String &version) const
         ESP_LOGE(TAG, "Error: Firmware download path data invalid.");
         return path;
     }
-    StaticJsonBuffer<bufferSize> jsonBuffer;
+    StaticJsonDocument<bufferSize> doc;
 
-    JsonArray &root = jsonBuffer.parseArray(jsonResult.c_str());
-    JsonObject &firstItem = root[0];
-    if (!root.success())
+    DeserializationError err = deserializeJson(doc, jsonResult.c_str());
+
+    JsonObject firstItem = doc[0];
+    if (err)
     { //Check for errors in parsing
         ESP_LOGE(TAG, "Error: Firmware download path not found.");
         return path;
     }
-    return "/" + getUser() + "/" + getRepository() + "/" + firstItem.get<String>("path");
+    return "/" + getUser() + "/" + getRepository() + "/" + firstItem["path"].as<String>();
 }

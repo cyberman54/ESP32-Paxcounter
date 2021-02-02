@@ -5,8 +5,8 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// global variable indicating if rcommand() is executing
-bool rcmd_busy = false;
+static QueueHandle_t RcmdQueue;
+TaskHandle_t rcmdTask;
 
 // set of functions that can be triggered by remote commands
 void set_reset(uint8_t val[]) {
@@ -18,7 +18,6 @@ void set_reset(uint8_t val[]) {
   case 1: // reset MAC counter
     ESP_LOGI(TAG, "Remote command: reset MAC counter");
     reset_counters(); // clear macs
-    get_salt();       // get new salt
     break;
   case 2: // reset device to factory settings
     ESP_LOGI(TAG, "Remote command: reset device to factory settings");
@@ -35,7 +34,11 @@ void set_reset(uint8_t val[]) {
   case 9: // reset and ask for software update via Wifi OTA
     ESP_LOGI(TAG, "Remote command: software update via Wifi");
 #if (USE_OTA)
-    RTC_runmode = RUNMODE_UPDATE;
+    // check power status before scheduling ota update
+    if (batt_sufficient())
+      RTC_runmode = RUNMODE_UPDATE;
+    else
+      ESP_LOGE(TAG, "Battery level %d%% is too low for OTA", batt_level);
 #endif // USE_OTA
     break;
 
@@ -115,7 +118,6 @@ void set_countmode(uint8_t val[]) {
     return;
   }
   reset_counters(); // clear macs
-  get_salt();       // get new salt
 }
 
 void set_screensaver(uint8_t val[]) {
@@ -164,7 +166,7 @@ void set_payloadmask(uint8_t val[]) {
 
 void set_sensor(uint8_t val[]) {
 #if (HAS_SENSORS)
-  switch (val[0]) { // check if valid sensor number 1...4
+  switch (val[0]) { // check if valid sensor number 1..3
   case 1:
   case 2:
   case 3:
@@ -367,41 +369,49 @@ void set_enscount(uint8_t val[]) {
     cfg.payloadmask &= ~SENSOR1_DATA;
 }
 
+void set_loadconfig(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: load config from NVRAM");
+  loadConfig();
+};
+
+void set_saveconfig(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: save config to NVRAM");
+  saveConfig(false);
+};
+
 // assign previously defined functions to set of numeric remote commands
-// format: opcode, function, #bytes params,
-// flag (true = do make settings persistent / false = don't)
-//
+// format: {opcode, function, number of function arguments}
+
 static const cmd_t table[] = {
-    {0x01, set_rssi, 1, true},          {0x02, set_countmode, 1, true},
-    {0x03, set_gps, 1, true},           {0x04, set_display, 1, true},
-    {0x05, set_loradr, 1, true},        {0x06, set_lorapower, 1, true},
-    {0x07, set_loraadr, 1, true},       {0x08, set_screensaver, 1, true},
-    {0x09, set_reset, 1, false},        {0x0a, set_sendcycle, 1, true},
-    {0x0b, set_wifichancycle, 1, true}, {0x0c, set_blescantime, 1, true},
-    {0x0d, set_macfilter, 1, false},    {0x0e, set_blescan, 1, true},
-    {0x0f, set_wifiant, 1, true},       {0x10, set_rgblum, 1, true},
-    {0x11, set_monitor, 1, true},       {0x12, set_beacon, 7, false},
-    {0x13, set_sensor, 2, true},        {0x14, set_payloadmask, 1, true},
-    {0x15, set_bme, 1, true},           {0x16, set_batt, 1, true},
-    {0x17, set_wifiscan, 1, true},      {0x18, set_enscount, 1, true},
-    {0x19, set_sleepcycle, 1, true},    {0x80, get_config, 0, false},
-    {0x81, get_status, 0, false},       {0x83, get_batt, 0, false},
-    {0x84, get_gps, 0, false},          {0x85, get_bme, 0, false},
-    {0x86, get_time, 0, false},         {0x87, set_time, 0, false},
-    {0x99, set_flush, 0, false}};
+    {0x01, set_rssi, 1},          {0x02, set_countmode, 1},
+    {0x03, set_gps, 1},           {0x04, set_display, 1},
+    {0x05, set_loradr, 1},        {0x06, set_lorapower, 1},
+    {0x07, set_loraadr, 1},       {0x08, set_screensaver, 1},
+    {0x09, set_reset, 1},         {0x0a, set_sendcycle, 1},
+    {0x0b, set_wifichancycle, 1}, {0x0c, set_blescantime, 1},
+    {0x0d, set_macfilter, 1},     {0x0e, set_blescan, 1},
+    {0x0f, set_wifiant, 1},       {0x10, set_rgblum, 1},
+    {0x11, set_monitor, 1},       {0x12, set_beacon, 7},
+    {0x13, set_sensor, 2},        {0x14, set_payloadmask, 1},
+    {0x15, set_bme, 1},           {0x16, set_batt, 1},
+    {0x17, set_wifiscan, 1},      {0x18, set_enscount, 1},
+    {0x19, set_sleepcycle, 1},    {0x20, set_loadconfig, 0},
+    {0x21, set_saveconfig, 0},    {0x80, get_config, 0},
+    {0x81, get_status, 0},        {0x83, get_batt, 0},
+    {0x84, get_gps, 0},           {0x85, get_bme, 0},
+    {0x86, get_time, 0},          {0x87, set_time, 0},
+    {0x99, set_flush, 0}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
 
 // check and execute remote command
-void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
+void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
 
   if (cmdlength == 0)
     return;
 
   uint8_t foundcmd[cmdlength], cursor = 0;
-  bool storeflag = false;
-  rcmd_busy = true;
 
   while (cursor < cmdlength) {
 
@@ -413,8 +423,6 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
           memmove(foundcmd, cmd + cursor,
                   table[i].params); // strip opcode from cmd array
           cursor += table[i].params;
-          if (table[i].store) // ceck if function needs to store configuration
-            storeflag = true;
           table[i].func(
               foundcmd); // execute assigned function with given parameters
         } else
@@ -422,18 +430,75 @@ void rcommand(const uint8_t cmd[], const uint8_t cmdlength) {
                    "Remote command x%02X called with missing parameter(s), "
                    "skipped",
                    table[i].opcode);
-        break;   // command found -> exit table lookup loop
-      }          // end of command validation
-    }            // end of command table lookup loop
+        break; // command found -> exit table lookup loop
+      }        // end of command validation
+    }          // end of command table lookup loop
+
     if (i < 0) { // command not found -> exit parser
       ESP_LOGI(TAG, "Unknown remote command x%02X, ignored", cmd[cursor]);
       break;
     }
   } // command parsing loop
 
-  if (storeflag)
-    saveConfig();
+} //  rcmd_execute()
 
-  rcmd_busy = false;
+// remote command processing task
+void rcmd_process(void *pvParameters) {
+  _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
+  RcmdBuffer_t RcmdBuffer;
+
+  while (1) {
+    // fetch next or wait for incoming rcommand from queue
+    if (xQueueReceive(RcmdQueue, &RcmdBuffer, portMAX_DELAY) != pdTRUE) {
+      ESP_LOGE(TAG, "Premature return from xQueueReceive() with no data!");
+      continue;
+    }
+    rcmd_execute(RcmdBuffer.cmd, RcmdBuffer.cmdLen);
+  }
+
+  delay(2); // yield to CPU
+} // rcmd_process()
+
+// enqueue remote command
+void IRAM_ATTR rcommand(const uint8_t *cmd, const size_t cmdlength) {
+
+  RcmdBuffer_t rcmd = {0};
+
+  rcmd.cmdLen = cmdlength;
+  memcpy(rcmd.cmd, cmd, cmdlength);
+
+  if (xQueueSendToBack(RcmdQueue, (void *)&rcmd, (TickType_t)0) != pdTRUE)
+    ESP_LOGW(TAG, "Remote command queue is full");
 } // rcommand()
+
+void rcmd_queuereset(void) { xQueueReset(RcmdQueue); }
+
+uint32_t rcmd_queuewaiting(void) { return uxQueueMessagesWaiting(RcmdQueue); }
+
+void rcmd_deinit(void) {
+  rcmd_queuereset();
+  vTaskDelete(rcmdTask);
+}
+
+esp_err_t rcmd_init(void) {
+
+  _ASSERT(RCMD_QUEUE_SIZE > 0);
+  RcmdQueue = xQueueCreate(RCMD_QUEUE_SIZE, sizeof(RcmdBuffer_t));
+  if (RcmdQueue == 0) {
+    ESP_LOGE(TAG, "Could not create rcommand send queue. Aborting.");
+    return ESP_FAIL;
+  }
+  ESP_LOGI(TAG, "Rcommand send queue created, size %d Bytes",
+           RCMD_QUEUE_SIZE * sizeof(RcmdBuffer_t));
+
+  xTaskCreatePinnedToCore(rcmd_process, // task function
+                          "rcmdloop",   // name of task
+                          3072,         // stack size of task
+                          (void *)1,    // parameter of the task
+                          1,            // priority of the task
+                          &rcmdTask,    // task handle
+                          1);           // CPU core
+
+  return ESP_OK;
+} // rcmd_init()

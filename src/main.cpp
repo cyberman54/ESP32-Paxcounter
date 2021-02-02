@@ -29,16 +29,17 @@ Task          Core  Prio  Purpose
 -------------------------------------------------------------------------------
 ledloop       0     3     blinks LEDs
 spiloop       0     2     reads/writes data on spi interface
-mqttloop      0     2     reads/writes data on ETH interface
 IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
 
 lmictask      1     2     MCCI LMiC LORAWAN stack
 clockloop     1     4     generates realtime telegrams for external clock
+mqttloop      1     2     reads/writes data on ETH interface
 timesync_proc 1     3     processes realtime time sync requests
 irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
-macprocess    1     1     analyzes sniffed MACs
+macprocess    1     1     MAC analyzer loop
+rmcd_process  1     1     Remote command interpreter loop
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
 Low priority numbers denote low priority tasks.
@@ -60,8 +61,10 @@ irqHandlerTask (Core 1), see irqhandler.cpp
 
 fired by hardware
 DisplayIRQ      -> esp32 timer 0
-ButtonIRQ       -> external gpio
-PMUIRQ          -> PMU chip gpio
+CLOCKIRQ        -> esp32 timer 1 or external GPIO (RTC_INT or GPS_INT)
+MatrixDisplayIRQ-> esp32 timer 3
+ButtonIRQ       -> external GPIO
+PMUIRQ          -> PMU chip GPIO
 
 fired by software (Ticker.h)
 TIMESYNC_IRQ    -> setTimeSyncIRQ()
@@ -100,7 +103,7 @@ timesource_t timeSource = _unsynced;
 
 // container holding unique MAC address hashes with Memory Alloctor using PSRAM,
 // if present
-std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
+DRAM_ATTR std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
@@ -291,6 +294,10 @@ void setup() {
   ESP_LOGI(TAG, "Starting MAC processor...");
   macQueueInit();
 
+  // start rcommand processing task
+  ESP_LOGI(TAG, "Starting rcommand interpreter...");
+  rcmd_init();
+
 // start BLE scan callback if BLE function is enabled in NVRAM configuration
 // or remove bluetooth stack from RAM, if option bluetooth is not compiled
 #if (BLECOUNTER)
@@ -428,7 +435,7 @@ void setup() {
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
-  get_salt(); // get new 16bit for salting hashes
+  reset_counters();
 
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
@@ -451,8 +458,10 @@ void setup() {
 #endif
   if (bme_init())
     ESP_LOGI(TAG, "BME sensor initialized");
-  else
+  else {
     ESP_LOGE(TAG, "BME sensor could not be initialized");
+    cfg.payloadmask &= ~MEMS_DATA; // switch off transmit of BME data
+  }
 #endif
 
   // starting timers and interrupts

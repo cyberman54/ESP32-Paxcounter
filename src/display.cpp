@@ -345,10 +345,10 @@ void dp_drawPage(time_t t, bool nextpage) {
 
 #if (HAS_LORA)
     // LMiC event display
-    dp_printf("%-16s", lmic_event_msg);
+    dp_printf("%-16s ", lmic_event_msg);
     // LORA datarate, display inverse if ADR disabled
     dp_setFont(MY_FONT_SMALL, !cfg.adrmode);
-    dp_printf(" %-4s", getSfName(updr2rps(LMIC.datarate)));
+    dp_printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
     dp_setFont(MY_FONT_SMALL, 0);
     dp_println();
 #endif // HAS_LORA
@@ -400,7 +400,7 @@ void dp_drawPage(time_t t, bool nextpage) {
                 gps.location.lat());
 
       // line 6-7: GPS longitude
-      dp_printf("%c%07.4f", gps.location.rawLat().negative ? 'W' : 'E',
+      dp_printf("%c%07.4f", gps.location.rawLng().negative ? 'W' : 'E',
                 gps.location.lng());
 
     } else {

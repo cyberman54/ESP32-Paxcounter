@@ -19,7 +19,7 @@ RTC_DATA_ATTR lmic_t RTC_LMIC;
 #endif
 #endif
 
-QueueHandle_t LoraSendQueue;
+static QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
@@ -284,14 +284,10 @@ esp_err_t lmic_init(void) {
   // Pass OTA parameters to LMIC_setSession
 #else
   // load saved session from RTC, if we have one
-  if (RTC_runmode == RUNMODE_WAKEUP) {
+  if (RTC_runmode == RUNMODE_WAKEUP)
     LoadLMICFromRTC();
-  }
-  // otherwise start join procedure if not already joined
-  else {
-    if (!LMIC_startJoining())
-      ESP_LOGI(TAG, "Already joined");
-  }
+  if (!LMIC_startJoining())
+    ESP_LOGI(TAG, "Already joined");
 #endif
 
   // start lmic loop task
@@ -545,7 +541,7 @@ void SaveLMICToRTC(int deepsleep_sec) {
   unsigned long now = millis();
 
   // EU Like Bands
-#if defined(CFG_LMIC_EU_like)
+#if CFG_LMIC_EU_like
   for (int i = 0; i < MAX_BANDS; i++) {
     ostime_t correctedAvail =
         RTC_LMIC.bands[i].avail -

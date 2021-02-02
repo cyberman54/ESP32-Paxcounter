@@ -13,6 +13,8 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 <img src="img/TTGO-curves.jpg">
 <img src="img/Paxcounter-LEDmatrix.jpg">
 <img src="img/Paxcounter-Clock.png">
+<img src="img/Paxcounter-ttgo-twristband.jpg">
+
 
 # Use case
 
@@ -47,9 +49,13 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
 - Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
 - TTGO: [T-Display](https://www.aliexpress.com/item/33048962331.html)
+- TTGO: [T-Wristband](https://www.aliexpress.com/item/4000527495064.html)
 - Generic ESP32
 
 Depending on board hardware following features are supported:
+- LoRaWAN communication, supporting various payload formats (see enclosed .js converters)
+- MQTT communication via TCP/IP and Ethernet interface (note: payload transmitted over MQTT will be base64 encoded)
+- SPI serial communication to a local host
 - LED (shows power & status)
 - OLED Display (shows detailed status)
 - RGB LED (shows colorized status)
@@ -62,7 +68,6 @@ Depending on board hardware following features are supported:
 - Switch external power / battery
 - LED Matrix display (similar to [this 64x16 model](https://www.instructables.com/id/64x16-RED-LED-Marquee/), can be ordered on [Aliexpress](https://www.aliexpress.com/item/P3-75-dot-matrix-led-module-3-75mm-high-clear-top1-for-text-display-304-60mm/32616683948.html))
 - SD-card (see section SD-card here) for logging pax data
-- Ethernet interface for MQTT communication via TCP/IP
 
 Target platform must be selected in `platformio.ini`.<br>
 Hardware dependent settings (pinout etc.) are stored in board files in /hal directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
@@ -198,7 +203,7 @@ Paxcounter supports a battery friendly power saving mode. In this mode the devic
 
 # Time sync
 
-Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](/src/Timeserver/Nodered-Timeserver.json). Configure MQTT nodes in Node-Red to the same LORAWAN application as  paxocunter device is using.
+Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](/src/Node-RED/Timeserver.json). Configure MQTT nodes in Node-Red for the LORAWAN application used by paxocunter device.
 
 # Wall clock controller
 
@@ -362,9 +367,9 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 # Remote control
 
-The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them.
+The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them, but must not exceed a maximum of 10 bytes per downlink.
 
-Note: all settings are stored in NVRAM and will be reloaded when device starts.
+Note: settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command 0x20. 
 
 Send for example `8386` as Downlink on Port 2 to get battery status and time/date from the device.
 <img src="img/paxcounter_downlink_example.png">
@@ -522,6 +527,14 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 
 	0 ... 255 device sleep cycle in seconds/2
 	e.g. 120 -> device sleeps 240 seconds after each send cycle [default = 0]
+
+0x20 store device configuration
+
+	Current device runtime configuration is stored in NVRAM, will be reloaded after restart
+
+0x21 load device configuration
+
+	Current device runtime configuration will be loaded from NVRAM, replacing current settings immediately (use with care!)
 
 0x80 get device configuration
 

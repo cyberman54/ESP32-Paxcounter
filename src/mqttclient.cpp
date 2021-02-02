@@ -4,7 +4,7 @@
 
 static const char TAG[] = __FILE__;
 
-QueueHandle_t MQTTSendQueue;
+static QueueHandle_t MQTTSendQueue;
 TaskHandle_t mqttTask;
 
 Ticker mqttTimer;
@@ -12,6 +12,7 @@ WiFiClient netClient;
 MQTTClient mqttClient;
 
 void mqtt_deinit(void) {
+  mqttClient.unsubscribe(MQTT_INTOPIC);
   mqttClient.onMessageAdvanced(NULL);
   mqttClient.disconnect();
   vTaskDelete(mqttTask);
@@ -19,12 +20,10 @@ void mqtt_deinit(void) {
 
 esp_err_t mqtt_init(void) {
 
-  // setup network connection
-  WiFi.onEvent(NetworkEvent);
+  // setup network connection and MQTT client
   ETH.begin();
-
-  // setup mqtt client
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
+  mqttClient.setKeepAlive(MQTT_KEEPALIVE);
   mqttClient.onMessageAdvanced(mqtt_callback);
 
   _ASSERT(SEND_QUEUE_SIZE > 0);
@@ -37,15 +36,20 @@ esp_err_t mqtt_init(void) {
            SEND_QUEUE_SIZE * PAYLOAD_BUFFER_SIZE);
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
-  xTaskCreate(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1, &mqttTask);
-
+  xTaskCreatePinnedToCore(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 1,
+                          &mqttTask, 1);
   return ESP_OK;
 }
 
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
   IPAddress mqtt_server_ip;
+  uint8_t mac[6];
+  char clientId[20];
 
-  static String clientId = "paxcounter-" + ETH.macAddress();
+  // hash 6 byte MAC to 4 byte hash
+  esp_eth_get_mac(mac);
+  const uint32_t hashedmac = hash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
 
   ESP_LOGI(TAG, "MQTT name is %s", MQTT_CLIENTNAME);
 
@@ -75,41 +79,6 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
   return 0;
 }
 
-void NetworkEvent(WiFiEvent_t event) {
-  switch (event) {
-  case SYSTEM_EVENT_ETH_START:
-  case SYSTEM_EVENT_STA_START:
-    ESP_LOGI(TAG, "Network link layer started");
-    // ETH.setHostname(ETH.macAddress().c_str());
-    break;
-  case SYSTEM_EVENT_ETH_STOP:
-  case SYSTEM_EVENT_STA_STOP:
-    ESP_LOGI(TAG, "Network link layer stopped");
-    break;
-  case SYSTEM_EVENT_ETH_CONNECTED:
-  case SYSTEM_EVENT_STA_CONNECTED:
-    ESP_LOGI(TAG, "Network link connected");
-    break;
-  case SYSTEM_EVENT_ETH_DISCONNECTED:
-  case SYSTEM_EVENT_STA_DISCONNECTED:
-    ESP_LOGI(TAG, "Network link disconnected");
-    break;
-  case SYSTEM_EVENT_ETH_GOT_IP:
-    ESP_LOGI(TAG, "IP: %s", ETH.localIP().toString().c_str());
-    ESP_LOGI(TAG, "Link Speed: %d Mbps %s", ETH.linkSpeed(),
-             ETH.fullDuplex() ? "full duplex" : "half duplex");
-    mqtt_connect(MQTT_SERVER, MQTT_PORT);
-    break;
-  case SYSTEM_EVENT_STA_GOT_IP:
-    ESP_LOGI(TAG, "IP: %s", WiFi.localIP().toString().c_str());
-    mqtt_connect(MQTT_SERVER, MQTT_PORT);
-    break;
-
-  default:
-    break;
-  }
-}
-
 void mqtt_client_task(void *param) {
 
   MessageBuffer_t msg;
@@ -128,21 +97,28 @@ void mqtt_client_task(void *param) {
                      MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE)
         continue;
 
-      // send data to mqtt server
-      char buffer[PAYLOAD_BUFFER_SIZE + 3];
-      snprintf(buffer, msg.MessageSize + 3, "%u/%s", msg.MessagePort,
-               msg.Message);
+      // prepare mqtt topic
+      char topic[16];
+      snprintf(topic, 16, "%s/%u", MQTT_OUTTOPIC, msg.MessagePort);
+      size_t out_len = 0;
 
-      if (mqttClient.publish(MQTT_OUTTOPIC, buffer)) {
-        ESP_LOGI(TAG, "%d byte(s) sent to MQTT server", msg.MessageSize + 2);
-        // delete sent item from queue
+      // get length of base64 encoded message
+      mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char *)msg.Message,
+                            msg.MessageSize);
+
+      // base64 encode the message
+      unsigned char encoded[out_len];
+      mbedtls_base64_encode(encoded, out_len, &out_len,
+                            (unsigned char *)msg.Message, msg.MessageSize);
+
+      // send encoded message to mqtt server and delete it from queue
+      if (mqttClient.publish(topic, (const char *)encoded, out_len)) {
+        ESP_LOGD(TAG, "%u bytes sent to MQTT server", out_len);
         xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
       } else
         ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
     } else {
       // attempt to reconnect to MQTT server
-      ESP_LOGD(TAG, "MQTT error = %d / rc = %d", mqttClient.lastError(),
-               mqttClient.returnCode());
       ESP_LOGD(TAG, "MQTT client reconnecting...");
       delay(MQTT_RETRYSEC * 1000);
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
@@ -150,16 +126,27 @@ void mqtt_client_task(void *param) {
   } // while (1)
 }
 
-void mqtt_enqueuedata(MessageBuffer_t *message) {
-  // enqueue message in MQTT send queue
-  if (xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0) != pdTRUE)
-    ESP_LOGW(TAG, "MQTT sendqueue is full");
+// process incoming MQTT messages
+void mqtt_callback(MQTTClient *client, char *topic, char *payload, int length) {
+  if (strcmp(topic, MQTT_INTOPIC) == 0) {
+
+    // get length of base64 encoded message
+    size_t out_len = 0;
+    mbedtls_base64_decode(NULL, 0, &out_len, (unsigned char *)payload, length);
+
+    // decode the base64 message
+    unsigned char decoded[out_len];
+    mbedtls_base64_decode(decoded, out_len, &out_len, (unsigned char *)payload,
+                          length);
+
+    rcommand(decoded, out_len);
+  }
 }
 
-void mqtt_callback(MQTTClient *client, char topic[], char payload[],
-                   int length) {
-  if (strcmp(topic, MQTT_INTOPIC) == 0)
-    rcommand((const uint8_t *)payload, (const uint8_t)length);
+// enqueue outgoing messages in MQTT send queue
+void mqtt_enqueuedata(MessageBuffer_t *message) {
+  if (xQueueSendToBack(MQTTSendQueue, (void *)message, (TickType_t)0) != pdTRUE)
+    ESP_LOGW(TAG, "MQTT sendqueue is full");
 }
 
 void mqtt_queuereset(void) { xQueueReset(MQTTSendQueue); }
