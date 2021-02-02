@@ -594,6 +594,7 @@ Thanks to
 - [Oliver Brandmüller](https://github.com/spmrider) for idea and initial setup of this project
 - [Charles Hallard](https://github.com/hallard) for major code contributions to this project
 - [robbi5](https://github.com/robbi5) for the payload converter
+- [Caspar Armster](https://www.dasdigidings.de/) for the The Things Stack V3 payload converter
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
