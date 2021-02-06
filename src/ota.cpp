@@ -189,6 +189,8 @@ int do_ota_update() {
 
     while (client.available()) {
       String line = client.readStringUntil('\n');
+      String lineLowerCase = line;
+      lineLowerCase.toLowerCase();
       // Check if the line is end of headers by removing space symbol
       line.trim();
       // if the the line is empty, this is the end of the headers
@@ -213,8 +215,8 @@ int do_ota_update() {
       }
 
       // Extracting new redirect location
-      if (line.startsWith("Location: ")) {
-        String newUrl = getHeaderValue(line, "Location: ");
+      if (lineLowerCase.startsWith("location: ")) {
+        String newUrl = getHeaderValue(line, "location: ");
         ESP_LOGI(TAG, "Got new url: %s", newUrl.c_str());
         newUrl.remove(0, newUrl.indexOf("//") + 2);
         currentHost = newUrl.substring(0, newUrl.indexOf('/'));
@@ -224,14 +226,14 @@ int do_ota_update() {
       }
 
       // Checking headers
-      if (line.startsWith("Content-Length: ")) {
+      if (lineLowerCase.startsWith("content-length: ")) {
         contentLength =
-            atoi((getHeaderValue(line, "Content-Length: ")).c_str());
+            atoi((getHeaderValue(line, "content-length: ")).c_str());
         ESP_LOGI(TAG, "Got %d bytes from server", contentLength);
       }
 
-      if (line.startsWith("Content-Type: ")) {
-        String contentType = getHeaderValue(line, "Content-Type: ");
+      if (lineLowerCase.startsWith("content-type: ")) {
+        String contentType = getHeaderValue(line, "content-type: ");
         ESP_LOGI(TAG, "Got %s payload", contentType.c_str());
         if (contentType == "application/octet-stream") {
           isValidContentType = true;
