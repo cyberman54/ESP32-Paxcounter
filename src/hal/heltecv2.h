@@ -23,7 +23,7 @@
 #define HAS_BUTTON KEY_BUILTIN                        // button "PROG" on board
 
 // caveat: activating ADC2 conflicts with Wifi in current arduino-esp32
-// see https://github.com/espressif/arduino-esp32/issues/3222
+// see https://github.com/espressif/arduino-esp32/issues/102
 // thus we must waiver of battery monitoring 
 //#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
 //#define BAT_MEASURE_ADC_UNIT 2 // ADC 2
