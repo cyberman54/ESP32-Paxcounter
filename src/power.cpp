@@ -14,6 +14,7 @@ esp_adc_cal_characteristics_t *adc_characs =
 static const adc1_channel_t adc_channel = BAT_MEASURE_ADC;
 #else // ADC2
 static const adc2_channel_t adc_channel = BAT_MEASURE_ADC;
+RTC_NOINIT_ATTR uint64_t RTC_reg_b;
 #endif
 static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
@@ -193,8 +194,10 @@ void calibrate_voltage(void) {
   adc1_config_width(ADC_WIDTH_BIT_12);
   adc1_config_channel_atten(adc_channel, atten);
 #else // ADC2
-      // adc2_config_width(ADC_WIDTH_BIT_12);
   adc2_config_channel_atten(adc_channel, atten);
+  // ADC2 wifi bug workaround, see
+  // https://github.com/espressif/arduino-esp32/issues/102
+  RTC_reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
 #endif
   // calibrate ADC
   esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
@@ -229,6 +232,10 @@ uint16_t read_voltage(void) {
 #else                        // ADC2
   int adc_buf = 0;
   for (int i = 0; i < NO_OF_SAMPLES; i++) {
+    // ADC2 wifi bug workaround, see
+    // https://github.com/espressif/arduino-esp32/issues/102
+    WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, RTC_reg_b);
+    SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
     adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf);
     adc_reading += adc_buf;
   }

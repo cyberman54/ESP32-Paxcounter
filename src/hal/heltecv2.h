@@ -23,12 +23,9 @@
 #define HAS_LED LED_BUILTIN                           // white LED on board
 #define HAS_BUTTON KEY_BUILTIN                        // button "PROG" on board
 
-// caveat: activating ADC2 conflicts with Wifi in current arduino-esp32
-// see https://github.com/espressif/arduino-esp32/issues/102
-// thus we must waiver of battery monitoring 
-//#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
-//#define BAT_MEASURE_ADC_UNIT 2 // ADC 2
-//#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 220k/100k on board
+#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
+#define BAT_MEASURE_ADC_UNIT 2 // ADC 2
+#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 220k/100k on board
 
 // switches battery power and Vext, switch logic 0 = on / 1 = off
 #define EXT_POWER_SW Vext

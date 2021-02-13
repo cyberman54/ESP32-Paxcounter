@@ -2,8 +2,8 @@
 #define _POWER_H
 
 #include <Arduino.h>
-#include <driver/adc.h>
 #include <esp_adc_cal.h>
+//#include <esp32-hal-adc.h>
 
 #include "i2c.h"
 #include "reset.h"
@@ -41,6 +41,11 @@
 #ifndef EXT_POWER_OFF
 #define EXT_POWER_OFF (!EXT_POWER_ON)
 #endif
+#endif
+
+#ifdef BAT_MEASURE_ADC_UNIT // ADC2 wifi bug workaround
+extern RTC_NOINIT_ATTR uint64_t RTC_reg_b;
+#include "soc/sens_reg.h" // needed for adc pin reset
 #endif
 
 typedef uint8_t (*mapFn_t)(uint16_t, uint16_t, uint16_t);
