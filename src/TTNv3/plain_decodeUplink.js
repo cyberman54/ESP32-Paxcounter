@@ -104,7 +104,7 @@ function decodeUplink(input) {
     }
 
     data.bytes = input.bytes; // comment out if you do not want to include the original payload
-    data.port = input.fPort; // comment out if you do not want to inlude the port
+    data.port = input.fPort; // comment out if you do not want to include the port
 
     return {
         data: data,
