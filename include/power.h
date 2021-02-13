@@ -34,6 +34,15 @@
 #endif
 #endif
 
+#ifdef EXT_POWER_SW
+#ifndef EXT_POWER_ON
+#define EXT_POWER_ON 1
+#endif
+#ifndef EXT_POWER_OFF
+#define EXT_POWER_OFF (!EXT_POWER_ON)
+#endif
+#endif
+
 typedef uint8_t (*mapFn_t)(uint16_t, uint16_t, uint16_t);
 
 uint16_t read_voltage(void);

@@ -15,7 +15,6 @@
 
 #define EXT_POWER_SW GPIO_NUM_25 // switches power for LoRa chip
 #define EXT_POWER_ON    0
-#define EXT_POWER_OFF   1
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 #define HAS_BUTTON GPIO_NUM_36 // on board button (next to reset)

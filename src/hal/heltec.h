@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 // Hardware related definitions for Heltec V1 LoRa-32 Board
+// see https://heltec-automation-docs.readthedocs.io/en/latest/esp32/wifi_lora_32/hardware_update_log.html#v1
 
 //#define HAS_BME 1 // Enable BME sensors in general
 //#define HAS_BME680 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL
