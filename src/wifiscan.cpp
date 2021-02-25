@@ -73,11 +73,11 @@ void wifi_sniffer_init(void) {
   esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
 
   // setup wifi channel hopping timer
-  WifiChanTimer =
-      xTimerCreate("WifiChannelTimer",
-                   (cfg.wifichancycle > 0) ? pdMS_TO_TICKS(cfg.wifichancycle)
-                                           : pdMS_TO_TICKS(50),
-                   pdTRUE, (void *)0, switchWifiChannel);
+  WifiChanTimer = xTimerCreate("WifiChannelTimer",
+                               (cfg.wifichancycle > 0)
+                                   ? pdMS_TO_TICKS(cfg.wifichancycle * 10)
+                                   : pdMS_TO_TICKS(50),
+                               pdTRUE, (void *)0, switchWifiChannel);
 }
 
 void switch_wifi_sniffer(uint8_t state) {
