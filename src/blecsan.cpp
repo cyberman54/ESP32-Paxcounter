@@ -1,3 +1,4 @@
+#ifndef LIBPAX
 // some code snippets taken from
 // https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
@@ -300,3 +301,4 @@ void stop_BLEscan(void) {
   ESP_LOGI(TAG, "Bluetooth scanner stopped");
 #endif // BLECOUNTER
 } // stop_BLEscan
+#endif

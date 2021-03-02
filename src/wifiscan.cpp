@@ -1,3 +1,4 @@
+#ifndef LIBPAX
 // Basic Config
 #include "globals.h"
 #include "wifiscan.h"
@@ -103,3 +104,4 @@ void switch_wifi_sniffer(uint8_t state) {
     esp_wifi_stop();
   }
 }
+#endif

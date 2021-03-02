@@ -72,6 +72,7 @@ void set_sleepcycle(uint8_t val[]) {
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
+  #ifndef LIBAPX
   // update Wifi channel rotation timer period
   if (cfg.wifichancycle > 0) {
     if (xTimerIsTimerActive(WifiChanTimer) == pdFALSE)
@@ -88,10 +89,14 @@ void set_wifichancycle(uint8_t val[]) {
     channel = WIFI_CHANNEL_MIN;
     ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
   }
+  #else
+  // TODO update libpax configuration
+  #endif
 }
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
+  #ifndef LIBPAX
   ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds",
            cfg.blescantime / float(100));
   // stop & restart BLE scan task to apply new parameter
@@ -99,6 +104,9 @@ void set_blescantime(uint8_t val[]) {
     stop_BLEscan();
     start_BLEscan();
   }
+  #else
+    // TODO update libpax configuration
+  #endif
 }
 
 void set_countmode(uint8_t val[]) {
@@ -240,20 +248,28 @@ void set_loraadr(uint8_t val[]) {
 
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
+  #ifndef LIBPAX
   macs_ble = 0; // clear BLE counter
   cfg.blescan = val[0] ? 1 : 0;
   if (cfg.blescan)
     start_BLEscan();
   else
     stop_BLEscan();
+  #else
+  // TODO update libpax configuration
+  #endif 
 }
 
 void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
+  #ifndef LIBPAX
   macs_wifi = 0; // clear WIFI counter
   cfg.wifiscan = val[0] ? 1 : 0;
   switch_wifi_sniffer(cfg.wifiscan);
+  #else
+  // TODO update libpax configuration
+  #endif 
 }
 
 void set_wifiant(uint8_t val[]) {

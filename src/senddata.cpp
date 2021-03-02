@@ -57,7 +57,11 @@ void SendPayload(uint8_t port) {
 // write data to sdcard, if present
 #if (HAS_SDCARD)
   if (port == COUNTERPORT) {
+#ifndef LIBPAX
     sdcardWriteData(macs_wifi, macs_ble
+#else
+    sdcardWriteData(libpax_macs_wifi, libpax_macs_ble
+#endif
 #if (COUNT_ENS)
                     ,
                     cwa_report()
@@ -87,9 +91,20 @@ void sendData() {
     case COUNT_DATA:
       payload.reset();
 #if !(PAYLOAD_OPENSENSEBOX)
+#ifndef LIBPAX     
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
-      if (cfg.blescan)
+#else
+      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
+      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+#endif
+      if (cfg.blescan) {
+#ifndef LIBPAX
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
+#else    
+        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
+        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
+#endif
+      }
 #endif
 #if (HAS_GPS)
       if (GPSPORT == COUNTERPORT) {
@@ -102,9 +117,19 @@ void sendData() {
       }
 #endif
 #if (PAYLOAD_OPENSENSEBOX)
+#ifndef LIBPAX     
       payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
-      if (cfg.blescan)
+#else
+      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
+      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+#endif
+      if (cfg.blescan) {
+#ifndef LIBPAX
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
+#else    
+        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
+        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
+#endif
 #endif
 #if (HAS_SDS011)
       sds011_store(&sds_status);
