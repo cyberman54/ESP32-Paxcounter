@@ -93,6 +93,7 @@ uint8_t batt_level = 0;                 // display value
 uint8_t volatile channel = WIFI_CHANNEL_MIN;   // channel rotation counter
 uint8_t volatile rf_load = 0;                  // RF traffic indicator
 uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
+char clientId[20];                             // generated device name
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 
@@ -141,6 +142,12 @@ void setup() {
 #endif
 
   do_after_reset();
+
+  // generate unique clientId from device's MAC
+  uint8_t mac[6];
+  esp_eth_get_mac(mac);
+  const uint32_t hashedmac = hash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
@@ -289,6 +296,10 @@ void setup() {
   if (RTC_runmode == RUNMODE_UPDATE)
     start_ota_update();
 #endif
+
+  // start local webserver if maintenance trigger switch is set
+  if (RTC_runmode == RUNMODE_MAINTENANCE)
+    start_maintenance();
 
   // start mac processing task
   ESP_LOGI(TAG, "Starting MAC processor...");

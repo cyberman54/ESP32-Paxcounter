@@ -14,7 +14,7 @@ RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
 timeval sleep_stop_time;
 
-const char *runmode[5] = {"powercycle", "normal", "wakeup", "update", "sleep"};
+const char *runmode[6] = {"powercycle", "normal", "wakeup", "update", "sleep", "maintenance"};
 
 void do_reset(bool warmstart) {
   if (warmstart) {

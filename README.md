@@ -437,6 +437,7 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 	2 = reset device to factory settings
 	3 = flush send queues
 	4 = restart device (warmstart)
+	8 = reboot device to maintenance mode (local web server)
 	9 = reboot device to OTA update via Wifi mode
 
 0x0A set LoRaWAN payload send cycle

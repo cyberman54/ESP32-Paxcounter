@@ -13,8 +13,13 @@
 #include <WiFiClientSecure.h>
 #include <BintrayClient.h>
 
+#include <WiFiClient.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+
 int do_ota_update();
 void start_ota_update();
+void start_maintenance();
 void ota_display(const uint8_t row, const std::string status,
                  const std::string msg);
 void show_progress(unsigned long current, unsigned long size);
