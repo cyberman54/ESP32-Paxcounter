@@ -149,6 +149,5 @@ extern TaskHandle_t irqHandlerTask, ClockTask, macProcessTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;
-extern char clientId[20]; // generated device name
 
 #endif

@@ -330,15 +330,15 @@ void show_progress(unsigned long current, unsigned long size) {
 #endif
 }
 
-// start local web user with user interface for maintenance mode
-// currently used only for manually uploading a firmware file via wifi
+// start local web server with user interface for maintenance mode
+// used for manually uploading a firmware file via wifi
 
 void start_maintenance(void) {
 
   // code snippets taken from
-  // https://github.com/espressif/arduino-esp32/blob/master/libraries/ArduinoOTA/examples/OTAWebUpdater/OTAWebUpdater.ino
+  // github.com/espressif/arduino-esp32/blob/master/libraries/ArduinoOTA/examples/OTAWebUpdater/OTAWebUpdater.ino
 
-  const char *host = MQTT_CLIENTNAME;
+  const char *host = "paxcounter";
   const char *ssid = WIFI_SSID;
   const char *password = WIFI_PASS;
 
@@ -388,10 +388,11 @@ void start_maintenance(void) {
   WiFi.begin(ssid, password);
 
   // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
     delay(500);
-  }
+
   ESP_LOGI(TAG, "Connected to %s", ssid);
+  ESP_LOGI(TAG, "Open http://%s.local in your browser", host);
 
   // use mdns for host name resolution
   if (!MDNS.begin(host)) {
@@ -399,6 +400,7 @@ void start_maintenance(void) {
     delay(3000);
     do_reset(false);
   }
+
   server.on("/", HTTP_GET, [&server, &serverIndex]() {
     server.sendHeader("Connection", "close");
     server.send(200, "text/html", serverIndex);
@@ -439,7 +441,9 @@ void start_maintenance(void) {
           do_reset(false);
         }
       });
+
   server.begin();
+  MDNS.addService("http", "tcp", 80);
 
   while (1) {
     server.handleClient();
