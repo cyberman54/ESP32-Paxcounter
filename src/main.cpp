@@ -86,6 +86,7 @@ triggers pps 1 sec impulse
 
 // Basic Config
 #include "main.h"
+#include "libpax_helpers.h"
 
 configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
@@ -96,8 +97,6 @@ uint8_t volatile channel = WIFI_CHANNEL_MIN;   // channel rotation counter
 uint8_t volatile rf_load = 0;                  // RF traffic indicator
 #ifndef LIBPAX
 uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
-#else
-uint16_t volatile libpax_macs_ble, libpax_macs_wifi;
 #endif
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
@@ -119,16 +118,6 @@ TimeChangeRule myDST = DAYLIGHT_TIME;
 TimeChangeRule mySTD = STANDARD_TIME;
 Timezone myTZ(myDST, mySTD);
 
-// libpax payload
-#ifdef LIBPAX
-struct count_payload_t count_from_libpax;
-
-void process_count(void) {
-  printf("pax: %d; %d; %d;\n", count_from_libpax.pax, count_from_libpax.wifi_count, count_from_libpax.ble_count);
-  libpax_macs_ble = count_from_libpax.ble_count;
-  libpax_macs_wifi = count_from_libpax.wifi_count;
-}
-#endif
 
 // local Tag for logging
 static const char TAG[] = __FILE__;
@@ -340,8 +329,7 @@ ESP_LOGI(TAG, "Starting libpax...");
     if(config_update != 0) {
       ESP_LOGE(TAG, "Error in libpax configuration.");
     } else {
-      libpax_counter_init(process_count, &count_from_libpax, 60*1000, 1); 
-      libpax_counter_start();
+      init_libpax();
     }
   } else {
     ESP_LOGE(TAG, "Error in libpax configuration: Wifi and BLE are not supported at the same time!");

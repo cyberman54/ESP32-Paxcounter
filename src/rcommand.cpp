@@ -1,6 +1,7 @@
 // Basic Config
 #include "globals.h"
 #include "rcommand.h"
+#include "libpax_helpers.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;
@@ -248,27 +249,47 @@ void set_loraadr(uint8_t val[]) {
 
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
+  cfg.blescan = val[0] ? 1 : 0;
   #ifndef LIBPAX
   macs_ble = 0; // clear BLE counter
-  cfg.blescan = val[0] ? 1 : 0;
   if (cfg.blescan)
     start_BLEscan();
   else
     stop_BLEscan();
   #else
-  // TODO update libpax configuration
+  if(cfg.blescan) {
+    cfg.wifiscan = 0;
+    // Restart of libpax while switching scannings does not work atm
+    // libpax_counter_stop();
+    // libpax_config_t current_config;
+    // libpax_get_current_config(&current_config);
+    // current_config.wificounter = 0;
+    // current_config.blecounter = 1;
+    // libpax_update_config(&current_config);
+    // init_libpax();
+  }
   #endif 
 }
 
 void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
+  cfg.wifiscan = val[0] ? 1 : 0;
   #ifndef LIBPAX
   macs_wifi = 0; // clear WIFI counter
-  cfg.wifiscan = val[0] ? 1 : 0;
   switch_wifi_sniffer(cfg.wifiscan);
   #else
-  // TODO update libpax configuration
+  if(cfg.wifiscan) {
+    cfg.blescan = 0;
+    // Restart of libpax while switching scannings does not work atm
+    // libpax_counter_stop();
+    // libpax_config_t current_config;
+    // libpax_get_current_config(&current_config);
+    // current_config.wificounter = 1;
+    // current_config.blecounter = 0;
+    // libpax_update_config(&current_config);
+    // init_libpax();
+  }
   #endif 
 }
 
