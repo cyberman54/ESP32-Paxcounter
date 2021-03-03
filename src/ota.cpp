@@ -403,6 +403,7 @@ void start_maintenance(void) {
     server.sendHeader("Connection", "close");
     server.send(200, "text/html", serverIndex);
   });
+
   // handling uploading firmware file
   server.on(
       "/update", HTTP_POST,
@@ -428,11 +429,14 @@ void start_maintenance(void) {
         } else if (upload.status == UPLOAD_FILE_END) {
           if (Update.end(
                   true)) { // true to set the size to the current progress
-            ESP_LOGI(TAG, "Update Success: %u\nRebooting...\n",
+            ESP_LOGI(TAG, "Update finished, %u bytes written",
                      upload.totalSize);
+
           } else {
             ESP_LOGE(TAG, "Update failed");
           }
+          delay(3000);
+          do_reset(false);
         }
       });
   server.begin();
