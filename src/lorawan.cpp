@@ -64,7 +64,7 @@ void lora_setupForNetwork(bool preJoin) {
 #elif CFG_LMIC_EU_like
     // settings for TheThingsNetwork
     // Enable link check validation
-    LMIC_setLinkCheckMode(true);
+    LMIC_setLinkCheckMode(1);
 #endif
 
   } else {
