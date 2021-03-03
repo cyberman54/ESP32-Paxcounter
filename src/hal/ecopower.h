@@ -20,7 +20,6 @@
 
 #define EXT_POWER_SW    15            // Switch VDD on pin JP10, needed for RTC DS3231
 #define EXT_POWER_ON    0
-#define EXT_POWER_OFF   1
 
 #define HAS_LED (2) // on board green LED
 #define HAS_TWO_LED (12) // on board red LED

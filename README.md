@@ -13,6 +13,8 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 <img src="img/TTGO-curves.jpg">
 <img src="img/Paxcounter-LEDmatrix.jpg">
 <img src="img/Paxcounter-Clock.png">
+<img src="img/Paxcounter-ttgo-twristband.jpg">
+
 
 # Use case
 
@@ -47,6 +49,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
 - Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
 - TTGO: [T-Display](https://www.aliexpress.com/item/33048962331.html)
+- TTGO: [T-Wristband](https://www.aliexpress.com/item/4000527495064.html)
 - Generic ESP32
 
 Depending on board hardware following features are supported:
@@ -604,6 +607,7 @@ Thanks to
 - [Oliver Brandmüller](https://github.com/spmrider) for idea and initial setup of this project
 - [Charles Hallard](https://github.com/hallard) for major code contributions to this project
 - [robbi5](https://github.com/robbi5) for the payload converter
+- [Caspar Armster](https://www.dasdigidings.de/) for the The Things Stack V3 payload converter
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration

@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 // Hardware related definitions for Heltec V2 LoRa-32 Board
+// see https://heltec-automation-docs.readthedocs.io/en/latest/esp32/wifi_lora_32/hardware_update_log.html#v2
 
 //#define HAS_BME 1 // Enable BME sensors in general
 //#define HAS_BME680 GPIO_NUM_4, GPIO_NUM_15 // SDA, SCL
@@ -22,16 +23,13 @@
 #define HAS_LED LED_BUILTIN                           // white LED on board
 #define HAS_BUTTON KEY_BUILTIN                        // button "PROG" on board
 
-// caveat: activating ADC2 conflicts with Wifi in current arduino-esp32
-// see https://github.com/espressif/arduino-esp32/issues/3222
-// thus we must waiver of battery monitoring 
-//#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
-//#define BAT_MEASURE_ADC_UNIT 2 // ADC 2
-//#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 220k/100k on board
+#define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin
+#define BAT_MEASURE_ADC_UNIT 2 // ADC 2
+#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 220k/100k on board
 
-#define EXT_POWER_SW Vext // switches battery power, Vext control 0 = on / 1 = off
-#define EXT_POWER_ON    0
-//#define EXT_POWER_OFF   1
+// switches battery power and Vext, switch logic 0 = on / 1 = off
+#define EXT_POWER_SW Vext
+#define EXT_POWER_ON 0
 
 // Pins for I2C interface of OLED Display
 #define MY_DISPLAY_SDA SDA_OLED
@@ -43,7 +41,7 @@
 #define LORA_IRQ DIO0
 #define LORA_IO1 DIO1
 #define LORA_IO2 DIO2
-#define LORA_SCK GPIO_NUM_5
+#define LORA_SCK SCK
 #define LORA_MISO MISO
 #define LORA_MOSI MOSI
 #define LORA_RST RST_LoRa

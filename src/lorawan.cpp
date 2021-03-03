@@ -64,7 +64,7 @@ void lora_setupForNetwork(bool preJoin) {
 #elif CFG_LMIC_EU_like
     // settings for TheThingsNetwork
     // Enable link check validation
-    LMIC_setLinkCheckMode(true);
+    LMIC_setLinkCheckMode(1);
 #endif
 
   } else {
@@ -541,7 +541,7 @@ void SaveLMICToRTC(int deepsleep_sec) {
   unsigned long now = millis();
 
   // EU Like Bands
-#if defined(CFG_LMIC_EU_like)
+#if CFG_LMIC_EU_like
   for (int i = 0; i < MAX_BANDS; i++) {
     ostime_t correctedAvail =
         RTC_LMIC.bands[i].avail -
