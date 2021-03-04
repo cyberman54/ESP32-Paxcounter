@@ -4,6 +4,6 @@
 #include <Arduino.h>
 #include <RokkitHash.h>
 
-uint32_t IRAM_ATTR hash(const char *data, int len);
+uint32_t IRAM_ATTR myhash(const char *data, int len);
 
 #endif

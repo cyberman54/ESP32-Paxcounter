@@ -32,11 +32,11 @@ void set_reset(uint8_t val[]) {
     do_reset(true);
     break;
   case 8: // reset and start local web server for manual software update
-    ESP_LOGI(TAG, "Remote command: software update via user interface");
+    ESP_LOGI(TAG, "Remote command: reboot to maintenance mode");
     RTC_runmode = RUNMODE_MAINTENANCE;
     break;
   case 9: // reset and ask OTA server via Wifi for automated software update
-    ESP_LOGI(TAG, "Remote command: software update via Wifi");
+    ESP_LOGI(TAG, "Remote command: reboot to ota update mode");
 #if (USE_OTA)
     // check power status before scheduling ota update
     if (batt_sufficient())
