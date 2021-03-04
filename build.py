@@ -118,7 +118,7 @@ def publish_bintray(source, target, env):
     firmware_path = str(source[0])
     firmware_name = basename(firmware_path)
     url = "/".join([
-        "https://api.bintray.com", "content",
+        "https://pax.express", "content",
         user, repository, package, version, firmware_name
     ])
 

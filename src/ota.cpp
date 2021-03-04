@@ -150,7 +150,6 @@ int do_ota_update() {
 
   WiFiClientSecure client;
 
-  client.setCACert(bintray.getCertificate(currentHost));
   client.setTimeout(RESPONSE_TIMEOUT_MS);
 
   if (!client.connect(currentHost.c_str(), port)) {
@@ -162,7 +161,6 @@ int do_ota_update() {
   while (redirect) {
     if (currentHost != prevHost) {
       client.stop();
-      client.setCACert(bintray.getCertificate(currentHost));
       if (!client.connect(currentHost.c_str(), port)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());
