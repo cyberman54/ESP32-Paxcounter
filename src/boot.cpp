@@ -122,6 +122,8 @@ void start_boot_menu(void) {
       [&server]() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+        WiFi.disconnect(true, true);
+        do_reset(false); // coldstart
       },
       [&server, &timer]() {
         HTTPUpload &upload = server.upload();
@@ -136,7 +138,6 @@ void start_boot_menu(void) {
 #else
           if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
 #endif
-
             ESP_LOGE(TAG, "Error: %s", Update.errorString());
           }
         } else if (upload.status == UPLOAD_FILE_WRITE) {
@@ -150,10 +151,8 @@ void start_boot_menu(void) {
                   true)) { // true to set the size to the current progress
             ESP_LOGI(TAG, "Update finished, %u bytes written",
                      upload.totalSize);
-            WiFi.disconnect(true, true);
-            do_reset(false); // coldstart
           } else {
-            ESP_LOGE(TAG, "Update failed");
+            ESP_LOGE(TAG, "Update failed, status=%d", upload.status);
           }
         }
       });

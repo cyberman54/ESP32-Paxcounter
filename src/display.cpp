@@ -160,7 +160,6 @@ void dp_init(bool verbose) {
       delay(8000);
 #endif
       dp_contrast(DISPLAYCONTRAST);
-      //dp_clear();
 #endif // HAS_LORA
 
     } // verbose
