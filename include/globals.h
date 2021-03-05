@@ -148,6 +148,6 @@ extern SemaphoreHandle_t I2Caccess;
 extern TaskHandle_t irqHandlerTask, ClockTask, macProcessTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
-extern RTC_DATA_ATTR runmode_t RTC_runmode;
+extern RTC_NOINIT_ATTR runmode_t RTC_runmode;
 
 #endif

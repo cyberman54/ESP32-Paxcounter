@@ -34,12 +34,25 @@ void start_boot_menu(void) {
 
   WebServer server(80);
 
-  /*
-    const char *serverIndex =
-        "<form method='POST' action='/update' "
-        "enctype='multipart/form-data'><input type='file' name='update'><input "
-        "type='submit' value='Update'></form>";
-  */
+  const char *loginMenu =
+      "<form name='loginForm'>"
+      "<table width='20%' bgcolor='A09F9F' align='center'>"
+      "<tr>"
+      "<td colspan=2>"
+      "<center><font size=4><b>Maintenance Menu</b></font></center>"
+      "<br>"
+      "</td>"
+      "<br>"
+      "<br>"
+      "</tr>"
+      "<tr>"
+      "<td><input type='submit' onclick='start(this.form)' value='Start'></td>"
+      "</tr>"
+      "</table>"
+      "</form>"
+      "<script>"
+      "function start(form) {window.open('/serverIndex')}"
+      "</script>";
 
   const char *serverIndex =
       "<script "
@@ -82,7 +95,7 @@ void start_boot_menu(void) {
       "</script>";
 
   // Connect to WiFi network
-  // WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
   // Wait for connection
@@ -92,7 +105,13 @@ void start_boot_menu(void) {
 
   MDNS.begin(host);
 
-  server.on("/", HTTP_GET, [&server, &serverIndex]() {
+  server.on("/", HTTP_GET, [&server, &loginMenu]() {
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/html", loginMenu);
+  });
+
+  server.on("/serverIndex", HTTP_GET, [&server, &serverIndex, &timer]() {
+    timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false);
     server.sendHeader("Connection", "close");
     server.send(200, "text/html", serverIndex);
   });
@@ -107,10 +126,17 @@ void start_boot_menu(void) {
       [&server, &timer]() {
         HTTPUpload &upload = server.upload();
         if (upload.status == UPLOAD_FILE_START) {
-          timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false);
           ESP_LOGI(TAG, "Update: %s\n", upload.filename.c_str());
-          if (!Update.begin(
-                  UPDATE_SIZE_UNKNOWN)) { // start with max available size
+#if (HAS_LED != NOT_A_PIN)
+#ifndef LED_ACTIVE_LOW
+          if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH, HAS_LED, HIGH)) {
+#else
+          if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH, HAS_LED, LOW)) {
+#endif
+#else
+          if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+#endif
+
             ESP_LOGE(TAG, "Error: %s", Update.errorString());
           }
         } else if (upload.status == UPLOAD_FILE_WRITE) {
@@ -134,12 +160,13 @@ void start_boot_menu(void) {
 
   server.begin();
   MDNS.addService("http", "tcp", 80);
-  ESP_LOGI(TAG, "WiFi connected to '%s', open http://%s in your browser",
-           WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
+  ESP_LOGI(TAG,
+           "WiFi connected to '%s', open http://%s.local or http://%s in your "
+           "browser",
+           WiFi.SSID().c_str(), clientId, WiFi.localIP().toString().c_str());
 
   while (1) {
     server.handleClient();
-    timerWrite(timer, 0); // reset timer (feed watchdog)
     delay(1);
   }
 }
