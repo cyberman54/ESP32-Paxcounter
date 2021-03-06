@@ -4,11 +4,6 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-void IRAM_ATTR exit_boot_menu() {
-  RTC_runmode = RUNMODE_NORMAL;
-  esp_restart();
-}
-
 // start local web server with user interface for maintenance mode
 // used for manually uploading a firmware file via wifi
 
@@ -26,9 +21,11 @@ void start_boot_menu(void) {
   const char *ssid = WIFI_SSID;
   const char *password = WIFI_PASS;
 
+  RTC_runmode = RUNMODE_NORMAL;
+
   hw_timer_t *timer = NULL;
-  timer = timerBegin(2, 80, true); // timer 2, div 80, countup
-  timerAttachInterrupt(timer, &exit_boot_menu, true); // attach callback
+  timer = timerBegin(2, 80, true);                 // timer 2, div 80, countup
+  timerAttachInterrupt(timer, &esp_restart, true); // callback device reset
   timerAlarmWrite(timer, BOOTDELAY * 1000000, false); // set time in us
   timerAlarmEnable(timer);                            // enable interrupt
 
@@ -46,7 +43,8 @@ void start_boot_menu(void) {
       "<br>"
       "</tr>"
       "<tr>"
-      "<td><input type='submit' onclick='start(this.form)' value='Start'></td>"
+      "<td><input type='submit' onclick='start(this.form)' "
+      "value='Start'></td>"
       "</tr>"
       "</table>"
       "</form>"
@@ -95,12 +93,24 @@ void start_boot_menu(void) {
       "</script>";
 
   // Connect to WiFi network
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  // workaround applied here to avoid WIFI_AUTH failure
+  // see https://github.com/espressif/arduino-esp32/issues/2501
 
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
+  WiFi.disconnect(true, true);
+  WiFi.mode(WIFI_STA);
+
+  // 1st try
+  WiFi.begin(ssid, password);
+  while (WiFi.status() == WL_DISCONNECTED) {
     delay(500);
+  }
+
+  // 2nd try
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+    }
   }
 
   MDNS.begin(host);
@@ -122,8 +132,9 @@ void start_boot_menu(void) {
       [&server]() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+        RTC_runmode = Update.hasError() ? RUNMODE_NORMAL : RUNMODE_POWERCYCLE;
         WiFi.disconnect(true, true);
-        do_reset(false); // coldstart
+        esp_restart();
       },
       [&server, &timer]() {
         HTTPUpload &upload = server.upload();

@@ -11,7 +11,6 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 
-void IRAM_ATTR exit_boot_menu(void);
 void start_boot_menu(void);
 
 #endif // BOOT_H
