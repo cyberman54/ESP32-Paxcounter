@@ -51,6 +51,7 @@ So don't do it if you do not own a digital oscilloscope.
 -------------------------------------------------------------------------------
 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
 1 ppsIRQ -> pps clock irq -> 1sec
+2 watchdog -> used in boot.cpp
 3	MatrixDisplayIRQ -> matrix mux cycle -> 0,5ms (MATRIX_DISPLAY_SCAN_US)
 
 
@@ -290,6 +291,17 @@ void setup() {
     start_ota_update();
 #endif
 
+#if (BOOTMENU)
+  // start local webserver after device powers up or on rcommand request
+  if ((RTC_runmode == RUNMODE_POWERCYCLE) ||
+      (RTC_runmode == RUNMODE_MAINTENANCE))
+    start_boot_menu();
+#else
+  // start local webserver on rcommand request only
+  if (RTC_runmode == RUNMODE_MAINTENANCE)
+    start_boot_menu();
+#endif
+
   // start mac processing task
   ESP_LOGI(TAG, "Starting MAC processor...");
   macQueueInit();
@@ -470,6 +482,8 @@ void setup() {
 
 // display interrupt
 #ifdef HAS_DISPLAY
+  dp_clear();
+  dp_contrast(DISPLAYCONTRAST);
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
   displayIRQ = timerBegin(0, 80, true);

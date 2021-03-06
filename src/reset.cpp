@@ -14,7 +14,8 @@ RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
 timeval sleep_stop_time;
 
-const char *runmode[5] = {"powercycle", "normal", "wakeup", "update", "sleep"};
+const char *runmode[6] = {"powercycle", "normal", "wakeup",
+                          "update",     "sleep",  "maintenance"};
 
 void do_reset(bool warmstart) {
   if (warmstart) {
@@ -45,7 +46,8 @@ void do_after_reset(void) {
     break;
 
   case SW_CPU_RESET: // 0x0c Software reset CPU
-                     // keep previous runmode (could be RUNMODE_UPDATE)
+                     // keep previous runmode
+                     // (i.e. RUNMODE_UPDATE or RUNMODE_MAINTENANCE)
     break;
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core

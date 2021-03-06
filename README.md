@@ -95,7 +95,7 @@ Compile time configuration is spread across several files. Before compiling the 
 ## platformio.ini
 Edit `platformio_orig.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections board. Copy or rename to `platformio.ini` in the root directory of the project. Now start Platformio. Note: Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file.
 
-## src/paxcounter.conf
+## paxcounter.conf
 Edit `src/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `src/paxcounter.conf`.
 
 If your device has a **real time clock** it can be updated bei either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in `paxcounter.conf`.
@@ -110,7 +110,7 @@ To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP,
 The file `src/loraconf_sample.h` contains more information about the values to provide.
 
 ## src/ota.conf
-Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates. If you want to push own OTA updates you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
+Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
 # Building
 
@@ -124,8 +124,11 @@ The LoPy/LoPy4/FiPy board needs to be set manually. See these
 <A HREF="https://www.thethingsnetwork.org/labs/story/program-your-lopy-from-the-arduino-ide-using-lmic">instructions</A> how to do it. Don't forget to press on board reset button after switching between run and bootloader mode.<p>
 The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
 	
-- **During runtime, using FOTA via WIFI:**
-After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by FOTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WIFI to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for FOTA are: 1. You own a Bintray repository, 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WIFI is present at the board's site, 4. WIFI credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
+- **During runtime, automated using OTA via WIFI:**
+After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by OTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WiFi to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for OTA are: 1. You own a Bintray repository, 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WiFi is present at the board's site, 4. WiFi credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
+
+- **During runtime, manually using OTA via WIFI:**
+If option *BOOTMENU* is defined in `paxcounter.conf`, the ESP32 board will try to connect to a known WiFi access point each time cold starting (after a power cycle or a reset), using the WiFi credentials given in `ota.conf`. Once connected to the WiFi it will fire up a simple webserver, providing a bootstrap menu waiting for a user interaction (pressing "START" button in menu). This process will be aborted by ESP32 hardware watchdog after *BOOTDELAY* seconds, ensuring booting the device to runmode. Once a user interaction in bootstrap menu was detected, the watchdog time will be extended to *BOOTTIMEOUT* seconds. During this time a firmware upload can be performed manually by user, e.g. using a smartphone in tethering mode providing the firmware upload file.
 
 # Legal note
 
@@ -437,6 +440,7 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 	2 = reset device to factory settings
 	3 = flush send queues
 	4 = restart device (warmstart)
+	8 = reboot device to maintenance mode (local web server)
 	9 = reboot device to OTA update via Wifi mode
 
 0x0A set LoRaWAN payload send cycle

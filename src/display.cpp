@@ -156,9 +156,10 @@ void dp_init(bool verbose) {
 
       // give user some time to read or take picture
       dp_dump(displaybuf);
+#if !(BOOTMENU)
       delay(8000);
-      dp_contrast(DISPLAYCONTRAST);
-      dp_clear();
+#endif
+     
 #endif // HAS_LORA
 
     } // verbose

@@ -141,7 +141,7 @@ uint16_t mac_analyze(MacBuffer_t MacBuffer) {
   // hashed 4 byte MAC
   // to save RAM, we use only lower 2 bytes of hash, since collisions don't
   // matter in our use case
-  hashedmac = hash((const char *)&saltedmac, 4);
+  hashedmac = myhash((const char *)&saltedmac, 4);
 
   auto newmac = macs.insert(hashedmac); // add hashed MAC, if new unique
   bool added =

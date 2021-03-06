@@ -3,6 +3,7 @@
 
 #include "globals.h"
 #include "rcommand.h"
+#include "hash.h"
 #include <MQTT.h>
 #include <ETH.h>
 #include <mbedtls/base64.h>

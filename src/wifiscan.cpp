@@ -82,7 +82,12 @@ void wifi_sniffer_init(void) {
 
 void switch_wifi_sniffer(uint8_t state) {
   if (state) {
-    // start sniffer
+// start sniffer
+#if (BLECOUNTER)
+    // workaround needed for ESP-IDF v3.3
+    // see https://github.com/espressif/esp-idf/issues/5427
+    esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
+#endif
     esp_wifi_start();
     esp_wifi_set_promiscuous(true);
     esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
