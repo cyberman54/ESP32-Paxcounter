@@ -129,7 +129,8 @@ bool loadConfig() {
   switch (version_compare(PROGVERSION, cfg.version)) {
   case -1: // device configuration belongs to newer than current firmware
     ESP_LOGE(TAG, "Incompatible device configuration");
-    return false;
+    eraseConfig();
+    return true;
   case 1: // device configuration belongs to older than current firmware
     ESP_LOGW(TAG, "Device was updated, attempt to migrate configuration");
     migrateConfig();
