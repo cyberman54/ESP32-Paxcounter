@@ -159,7 +159,7 @@ void dp_init(bool verbose) {
 #if !(BOOTMENU)
       delay(8000);
 #endif
-      dp_contrast(DISPLAYCONTRAST);
+     
 #endif // HAS_LORA
 
     } // verbose

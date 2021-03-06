@@ -540,6 +540,8 @@ void setup() {
 
   // set runmode to normal
   RTC_runmode = RUNMODE_NORMAL;
+  dp_clear();
+  dp_contrast(DISPLAYCONTRAST);
 
   vTaskDelete(NULL);
 
