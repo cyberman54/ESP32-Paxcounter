@@ -92,19 +92,21 @@ void start_boot_menu(void) {
       "});"
       "</script>";
 
+  WiFi.disconnect(true);
+  WiFi.config(INADDR_NONE, INADDR_NONE,
+              INADDR_NONE); // call is only a workaround for bug in WiFi class
+  // see https://github.com/espressif/arduino-esp32/issues/806
+  WiFi.setHostname(host);
+  WiFi.mode(WIFI_STA);
+
   // Connect to WiFi network
   // workaround applied here to avoid WIFI_AUTH failure
   // see https://github.com/espressif/arduino-esp32/issues/2501
-
-  WiFi.disconnect(true, true);
-  WiFi.mode(WIFI_STA);
-
   // 1st try
   WiFi.begin(ssid, password);
   while (WiFi.status() == WL_DISCONNECTED) {
     delay(500);
   }
-
   // 2nd try
   if (WiFi.status() != WL_CONNECTED) {
     WiFi.begin(ssid, password);
@@ -133,7 +135,7 @@ void start_boot_menu(void) {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
         RTC_runmode = Update.hasError() ? RUNMODE_NORMAL : RUNMODE_POWERCYCLE;
-        WiFi.disconnect(true, true);
+        WiFi.disconnect(true);
         esp_restart();
       },
       [&server, &timer]() {
