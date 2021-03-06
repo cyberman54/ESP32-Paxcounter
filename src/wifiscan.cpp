@@ -84,7 +84,7 @@ void switch_wifi_sniffer(uint8_t state) {
   if (state) {
 // start sniffer
 #if (BLECOUNTER)
-    // workaround needed for IDF 4.1
+    // workaround needed for ESP-IDF v3.3
     // see https://github.com/espressif/esp-idf/issues/5427
     esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
 #endif
