@@ -482,6 +482,8 @@ void setup() {
 
 // display interrupt
 #ifdef HAS_DISPLAY
+  dp_clear();
+  dp_contrast(DISPLAYCONTRAST);
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
   displayIRQ = timerBegin(0, 80, true);
@@ -540,8 +542,6 @@ void setup() {
 
   // set runmode to normal
   RTC_runmode = RUNMODE_NORMAL;
-  dp_clear();
-  dp_contrast(DISPLAYCONTRAST);
 
   vTaskDelete(NULL);
 
