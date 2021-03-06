@@ -128,45 +128,60 @@ void start_boot_menu(void) {
     server.send(200, "text/html", serverIndex);
   });
 
+  server.onNotFound([&server, &loginMenu]() {
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/html", loginMenu);
+  });
+
   // handling uploading firmware file
   server.on(
       "/update", HTTP_POST,
       [&server]() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
-        RTC_runmode = Update.hasError() ? RUNMODE_NORMAL : RUNMODE_POWERCYCLE;
         WiFi.disconnect(true);
+        if (!Update.hasError())
+          RTC_runmode = RUNMODE_POWERCYCLE;
         esp_restart();
       },
+
       [&server, &timer]() {
+        bool success = false;
         HTTPUpload &upload = server.upload();
-        if (upload.status == UPLOAD_FILE_START) {
-          ESP_LOGI(TAG, "Update: %s\n", upload.filename.c_str());
-#if (HAS_LED != NOT_A_PIN)
-#ifndef LED_ACTIVE_LOW
-          if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH, HAS_LED, HIGH)) {
-#else
-          if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH, HAS_LED, LOW)) {
-#endif
-#else
-          if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-#endif
-            ESP_LOGE(TAG, "Error: %s", Update.errorString());
-          }
-        } else if (upload.status == UPLOAD_FILE_WRITE) {
+
+        switch (upload.status) {
+
+        case UPLOAD_FILE_START:
+          // start file transfer
+          ESP_LOGI(TAG, "Uploading %s", upload.filename.c_str());
+          success = Update.begin();
+          break;
+
+        case UPLOAD_FILE_WRITE:
           // flashing firmware to ESP
-          if (Update.write(upload.buf, upload.currentSize) !=
-              upload.currentSize) {
-            ESP_LOGE(TAG, "Error: %s", Update.errorString());
-          }
-        } else if (upload.status == UPLOAD_FILE_END) {
-          if (Update.end(
-                  true)) { // true to set the size to the current progress
-            ESP_LOGI(TAG, "Update finished, %u bytes written",
+          success = (Update.write(upload.buf, upload.currentSize) ==
+                     upload.currentSize);
+          break;
+
+        case UPLOAD_FILE_END:
+          success = Update.end(true); // true to set the size to the current
+          if (success)
+            ESP_LOGI(TAG, "Upload finished, %u bytes written",
                      upload.totalSize);
-          } else {
-            ESP_LOGE(TAG, "Update failed, status=%d", upload.status);
-          }
+          else
+            ESP_LOGE(TAG, "Upload failed, status=%d", upload.status);
+          break;
+
+        case UPLOAD_FILE_ABORTED:
+        default:
+          break;
+
+        } // switch
+
+        if (!success) {
+          ESP_LOGE(TAG, "Error: %s", Update.errorString());
+          WiFi.disconnect(true);
+          esp_restart();
         }
       });
 
