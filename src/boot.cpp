@@ -21,13 +21,13 @@ void start_boot_menu(void) {
   const char *ssid = WIFI_SSID;
   const char *password = WIFI_PASS;
 
-  RTC_runmode = RUNMODE_NORMAL;
+  RTC_runmode = RUNMODE_NORMAL; // if watchdog fires, boot to production
 
   hw_timer_t *timer = NULL;
   timer = timerBegin(2, 80, true);                 // timer 2, div 80, countup
-  timerAttachInterrupt(timer, &esp_restart, true); // callback device reset
-  timerAlarmWrite(timer, BOOTDELAY * 1000000, false); // set time in us
-  timerAlarmEnable(timer);                            // enable interrupt
+  timerAttachInterrupt(timer, &esp_restart, true); // apply watchdog reset
+  timerAlarmWrite(timer, BOOTDELAY * 1000000, false); // watchdog time in us
+  timerAlarmEnable(timer);                            // enable watchdog
 
   WebServer server(80);
 
@@ -100,8 +100,9 @@ void start_boot_menu(void) {
   WiFi.mode(WIFI_STA);
 
   // Connect to WiFi network
-  // workaround applied here to avoid WIFI_AUTH failure
+  // workaround applied here to bypass WIFI_AUTH failure
   // see https://github.com/espressif/arduino-esp32/issues/2501
+
   // 1st try
   WiFi.begin(ssid, password);
   while (WiFi.status() == WL_DISCONNECTED) {
@@ -117,20 +118,17 @@ void start_boot_menu(void) {
 
   MDNS.begin(host);
 
+  // send start button page
   server.on("/", HTTP_GET, [&server, &loginMenu]() {
     server.sendHeader("Connection", "close");
     server.send(200, "text/html", loginMenu);
   });
 
+  // send upload button page
   server.on("/serverIndex", HTTP_GET, [&server, &serverIndex, &timer]() {
     timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false);
     server.sendHeader("Connection", "close");
     server.send(200, "text/html", serverIndex);
-  });
-
-  server.onNotFound([&server, &loginMenu]() {
-    server.sendHeader("Connection", "close");
-    server.send(200, "text/html", loginMenu);
   });
 
   // handling uploading firmware file
@@ -139,6 +137,7 @@ void start_boot_menu(void) {
       [&server]() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+        delay(5000);
         WiFi.disconnect(true);
         if (!Update.hasError())
           RTC_runmode = RUNMODE_POWERCYCLE;
