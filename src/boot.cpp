@@ -120,14 +120,14 @@ void start_boot_menu(void) {
 
   // send start button page
   server.on("/", HTTP_GET, [&server, &loginMenu]() {
-    server.sendHeader("Connection", "close");
+    server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", loginMenu);
   });
 
   // send upload button page
   server.on("/serverIndex", HTTP_GET, [&server, &serverIndex, &timer]() {
     timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false);
-    server.sendHeader("Connection", "close");
+    server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", serverIndex);
   });
 
@@ -137,7 +137,6 @@ void start_boot_menu(void) {
       [&server]() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
-        delay(5000);
         WiFi.disconnect(true);
         if (!Update.hasError())
           RTC_runmode = RUNMODE_POWERCYCLE;
