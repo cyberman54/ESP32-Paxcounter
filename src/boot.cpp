@@ -4,6 +4,73 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+static hw_timer_t *wdTimer = NULL;
+static WebServer server(80);
+static TaskHandle_t RestartHandle;
+
+static const char *loginMenu =
+    "<form name='loginForm'>"
+    "<table width='20%' bgcolor='A09F9F' align='center'>"
+    "<tr>"
+    "<td colspan=2>"
+    "<center><font size=4><b>Maintenance Menu</b></font></center>"
+    "<br>"
+    "</td>"
+    "<br>"
+    "<br>"
+    "</tr>"
+    "<tr>"
+    "<td><input type='submit' onclick='start(this.form)' "
+    "value='Start'></td>"
+    "</tr>"
+    "</table>"
+    "</form>"
+    "<script>"
+    "function start(form) {window.open('/serverIndex')}"
+    "</script>";
+
+static const char *serverIndex =
+    "<script "
+    "src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/"
+    "jquery.min.js'></script>"
+    "<form method='POST' action='#' enctype='multipart/form-data' "
+    "id='upload_form'>"
+    "<input type='file' name='update'>"
+    "<input type='submit' value='Update'>"
+    "</form>"
+    "<div id='prg'>progress: 0%</div>"
+    "<script>"
+    "$('form').submit(function(e){"
+    "e.preventDefault();"
+    "var form = $('#upload_form')[0];"
+    "var data = new FormData(form);"
+    " $.ajax({"
+    "url: '/update',"
+    "type: 'POST',"
+    "data: data,"
+    "contentType: false,"
+    "processData:false,"
+    "xhr: function() {"
+    "var xhr = new window.XMLHttpRequest();"
+    "xhr.upload.addEventListener('progress', function(evt) {"
+    "if (evt.lengthComputable) {"
+    "var per = evt.loaded / evt.total;"
+    "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
+    "}"
+    "}, false);"
+    "return xhr;"
+    "},"
+    "success:function(d, s) {"
+    "console.log('success!')"
+    "},"
+    "error: function (a, b, c) {"
+    "}"
+    "});"
+    "});"
+    "</script>";
+
+void IRAM_ATTR watchdog() { xTaskResumeFromISR(RestartHandle); }
+
 // start local web server with user interface for maintenance mode
 // used for manually uploading a firmware file via wifi
 
@@ -21,76 +88,24 @@ void start_boot_menu(void) {
   const char *ssid = WIFI_SSID;
   const char *password = WIFI_PASS;
 
-  RTC_runmode = RUNMODE_NORMAL; // if watchdog fires, boot to production
+  // set runmode normal makes watchdog booting to production if triggered
+  RTC_runmode = RUNMODE_NORMAL;
 
-  hw_timer_t *timer = NULL;
-  timer = timerBegin(2, 80, true);                 // timer 2, div 80, countup
-  timerAttachInterrupt(timer, &esp_restart, true); // apply watchdog reset
-  timerAlarmWrite(timer, BOOTDELAY * 1000000, false); // watchdog time in us
-  timerAlarmEnable(timer);                            // enable watchdog
+  // setup restart handle task for resetting ESP32, which is callable from ISR
+  // (because esp_restart() from ISR would trigger the ESP32 task watchdog)
+  xTaskCreate(
+      [](void *p) {
+        vTaskSuspend(NULL);
+        ESP.restart();
+      },
+      "Restart", configMINIMAL_STACK_SIZE, NULL, (3 | portPRIVILEGE_BIT),
+      &RestartHandle);
 
-  WebServer server(80);
-
-  const char *loginMenu =
-      "<form name='loginForm'>"
-      "<table width='20%' bgcolor='A09F9F' align='center'>"
-      "<tr>"
-      "<td colspan=2>"
-      "<center><font size=4><b>Maintenance Menu</b></font></center>"
-      "<br>"
-      "</td>"
-      "<br>"
-      "<br>"
-      "</tr>"
-      "<tr>"
-      "<td><input type='submit' onclick='start(this.form)' "
-      "value='Start'></td>"
-      "</tr>"
-      "</table>"
-      "</form>"
-      "<script>"
-      "function start(form) {window.open('/serverIndex')}"
-      "</script>";
-
-  const char *serverIndex =
-      "<script "
-      "src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/"
-      "jquery.min.js'></script>"
-      "<form method='POST' action='#' enctype='multipart/form-data' "
-      "id='upload_form'>"
-      "<input type='file' name='update'>"
-      "<input type='submit' value='Update'>"
-      "</form>"
-      "<div id='prg'>progress: 0%</div>"
-      "<script>"
-      "$('form').submit(function(e){"
-      "e.preventDefault();"
-      "var form = $('#upload_form')[0];"
-      "var data = new FormData(form);"
-      " $.ajax({"
-      "url: '/update',"
-      "type: 'POST',"
-      "data: data,"
-      "contentType: false,"
-      "processData:false,"
-      "xhr: function() {"
-      "var xhr = new window.XMLHttpRequest();"
-      "xhr.upload.addEventListener('progress', function(evt) {"
-      "if (evt.lengthComputable) {"
-      "var per = evt.loaded / evt.total;"
-      "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
-      "}"
-      "}, false);"
-      "return xhr;"
-      "},"
-      "success:function(d, s) {"
-      "console.log('success!')"
-      "},"
-      "error: function (a, b, c) {"
-      "}"
-      "});"
-      "});"
-      "</script>";
+  // setup watchdog, based on esp32 timer2 interrupt
+  wdTimer = timerBegin(0, 80, true);              // timer 0, div 80, countup
+  timerAttachInterrupt(wdTimer, &watchdog, true); // callback for device reset
+  timerAlarmWrite(wdTimer, BOOTDELAY * 1000000, false); // set time in us
+  timerAlarmEnable(wdTimer);                            // enable watchdog
 
   WiFi.disconnect(true);
   WiFi.config(INADDR_NONE, INADDR_NONE,
@@ -111,75 +126,74 @@ void start_boot_menu(void) {
   // 2nd try
   if (WiFi.status() != WL_CONNECTED) {
     WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-    }
+    delay(500);
   }
 
   MDNS.begin(host);
+  timerWrite(wdTimer, 0); // reset timer (feed watchdog)
 
-  // send start button page
-  server.on("/", HTTP_GET, [&server, &loginMenu]() {
+  server.on("/", HTTP_GET, []() {
     server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", loginMenu);
   });
 
-  // send upload button page
-  server.on("/serverIndex", HTTP_GET, [&server, &serverIndex, &timer]() {
-    timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false);
+  server.on("/serverIndex", HTTP_GET, []() {
+    timerAlarmWrite(wdTimer, BOOTTIMEOUT * 1000000, false); // set time in us
     server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", serverIndex);
   });
 
-  // handling uploading firmware file
   server.on(
       "/update", HTTP_POST,
-      [&server]() {
+      []() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
         WiFi.disconnect(true);
-        if (!Update.hasError())
-          RTC_runmode = RUNMODE_POWERCYCLE;
         esp_restart();
       },
 
-      [&server, &timer]() {
+      // handling uploading firmware file
+      []() {
         bool success = false;
         HTTPUpload &upload = server.upload();
 
-        switch (upload.status) {
+        // did we get a file name?
+        if (upload.filename != NULL) {
 
-        case UPLOAD_FILE_START:
-          // start file transfer
-          ESP_LOGI(TAG, "Uploading %s", upload.filename.c_str());
-          success = Update.begin();
-          break;
+          switch (upload.status) {
 
-        case UPLOAD_FILE_WRITE:
-          // flashing firmware to ESP
-          success = (Update.write(upload.buf, upload.currentSize) ==
-                     upload.currentSize);
-          break;
+          case UPLOAD_FILE_START:
+            // start file transfer
+            ESP_LOGI(TAG, "Uploading %s", upload.filename.c_str());
+            success = Update.begin();
+            break;
 
-        case UPLOAD_FILE_END:
-          success = Update.end(true); // true to set the size to the current
-          if (success)
-            ESP_LOGI(TAG, "Upload finished, %u bytes written",
-                     upload.totalSize);
-          else
-            ESP_LOGE(TAG, "Upload failed, status=%d", upload.status);
-          break;
+          case UPLOAD_FILE_WRITE:
+            // flashing firmware to ESP
+            success = (Update.write(upload.buf, upload.currentSize) ==
+                       upload.currentSize);
+            break;
 
-        case UPLOAD_FILE_ABORTED:
-        default:
-          break;
+          case UPLOAD_FILE_END:
+            success = Update.end(true); // true to set the size to the current
+            if (success)
+              ESP_LOGI(TAG, "Upload finished, %u bytes written",
+                       upload.totalSize);
+            else
+              ESP_LOGE(TAG, "Upload failed, status=%d", upload.status);
+            break;
 
-        } // switch
+          case UPLOAD_FILE_ABORTED:
+          default:
+            break;
 
-        if (!success) {
-          ESP_LOGE(TAG, "Error: %s", Update.errorString());
-          WiFi.disconnect(true);
-          esp_restart();
+          } // switch
+
+          // don't boot to production if update failed
+          if (!success) {
+            ESP_LOGE(TAG, "Error: %s", Update.errorString());
+            RTC_runmode = RUNMODE_POWERCYCLE;
+          }
         }
       });
 
@@ -192,6 +206,6 @@ void start_boot_menu(void) {
 
   while (1) {
     server.handleClient();
-    delay(1);
+    delay(2);
   }
 }
