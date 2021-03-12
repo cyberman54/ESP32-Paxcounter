@@ -115,7 +115,7 @@ void start_boot_menu(void) {
   WiFi.mode(WIFI_STA);
 
   // Connect to WiFi network
-  // workaround applied here to avoid WIFI_AUTH failure
+  // workaround applied here to bypass WIFI_AUTH failure
   // see https://github.com/espressif/arduino-esp32/issues/2501
 
   // 1st try
