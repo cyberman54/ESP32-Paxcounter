@@ -11,6 +11,7 @@ void start_boot_menu(void) {
 
   uint8_t mac[6];
   char clientId[20];
+  unsigned long timeout = millis();
 
   // hash 6 byte MAC to 4 byte hash
   esp_eth_get_mac(mac);
@@ -21,13 +22,15 @@ void start_boot_menu(void) {
   const char *ssid = WIFI_SSID;
   const char *password = WIFI_PASS;
 
+  // set runmode normal makes watchdog booting to production if triggered
   RTC_runmode = RUNMODE_NORMAL;
 
+  // setup watchdog, based on esp32 timer2 interrupt
   hw_timer_t *timer = NULL;
   timer = timerBegin(2, 80, true);                 // timer 2, div 80, countup
-  timerAttachInterrupt(timer, &esp_restart, true); // callback device reset
-  timerAlarmWrite(timer, BOOTDELAY * 1000000, false); // set time in us
-  timerAlarmEnable(timer);                            // enable interrupt
+  timerAttachInterrupt(timer, &esp_restart, true); // callback for device reset
+  timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false); // set time in us
+  timerAlarmEnable(timer);                              // enable watchdog
 
   WebServer server(80);
 
@@ -102,86 +105,91 @@ void start_boot_menu(void) {
   // Connect to WiFi network
   // workaround applied here to avoid WIFI_AUTH failure
   // see https://github.com/espressif/arduino-esp32/issues/2501
+
   // 1st try
   WiFi.begin(ssid, password);
   while (WiFi.status() == WL_DISCONNECTED) {
-    delay(500);
+    if ((long)(millis() - timeout) > (BOOTDELAY * 1000))
+      esp_restart();
+    else
+      delay(500);
   }
   // 2nd try
   if (WiFi.status() != WL_CONNECTED) {
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
+      if ((long)(millis() - timeout) > (BOOTDELAY * 1000))
+        esp_restart();
+      else
+        delay(500);
     }
   }
 
   MDNS.begin(host);
+  timerWrite(timer, 0); // reset timer (feed watchdog)
 
   server.on("/", HTTP_GET, [&server, &loginMenu]() {
-    server.sendHeader("Connection", "close");
+    server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", loginMenu);
   });
 
   server.on("/serverIndex", HTTP_GET, [&server, &serverIndex, &timer]() {
-    timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false);
-    server.sendHeader("Connection", "close");
+    timerWrite(timer, 0); // reset timer (feed watchdog)
+    server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", serverIndex);
   });
 
-  server.onNotFound([&server, &loginMenu]() {
-    server.sendHeader("Connection", "close");
-    server.send(200, "text/html", loginMenu);
-  });
-
-  // handling uploading firmware file
   server.on(
       "/update", HTTP_POST,
       [&server]() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
         WiFi.disconnect(true);
-        if (!Update.hasError())
-          RTC_runmode = RUNMODE_POWERCYCLE;
         esp_restart();
       },
 
+      // handling uploading firmware file
       [&server, &timer]() {
         bool success = false;
         HTTPUpload &upload = server.upload();
 
-        switch (upload.status) {
+        // did we get a file name?
+        if (upload.filename != NULL) {
 
-        case UPLOAD_FILE_START:
-          // start file transfer
-          ESP_LOGI(TAG, "Uploading %s", upload.filename.c_str());
-          success = Update.begin();
-          break;
+          switch (upload.status) {
 
-        case UPLOAD_FILE_WRITE:
-          // flashing firmware to ESP
-          success = (Update.write(upload.buf, upload.currentSize) ==
-                     upload.currentSize);
-          break;
+          case UPLOAD_FILE_START:
+            // start file transfer
+            ESP_LOGI(TAG, "Uploading %s", upload.filename.c_str());
+            success = Update.begin();
+            break;
 
-        case UPLOAD_FILE_END:
-          success = Update.end(true); // true to set the size to the current
-          if (success)
-            ESP_LOGI(TAG, "Upload finished, %u bytes written",
-                     upload.totalSize);
-          else
-            ESP_LOGE(TAG, "Upload failed, status=%d", upload.status);
-          break;
+          case UPLOAD_FILE_WRITE:
+            // flashing firmware to ESP
+            success = (Update.write(upload.buf, upload.currentSize) ==
+                       upload.currentSize);
+            break;
 
-        case UPLOAD_FILE_ABORTED:
-        default:
-          break;
+          case UPLOAD_FILE_END:
+            success = Update.end(true); // true to set the size to the current
+            if (success)
+              ESP_LOGI(TAG, "Upload finished, %u bytes written",
+                       upload.totalSize);
+            else
+              ESP_LOGE(TAG, "Upload failed, status=%d", upload.status);
+            break;
 
-        } // switch
+          case UPLOAD_FILE_ABORTED:
+          default:
+            break;
 
-        if (!success) {
-          ESP_LOGE(TAG, "Error: %s", Update.errorString());
-          WiFi.disconnect(true);
-          esp_restart();
+          } // switch
+
+          // don't boot to production if update failed
+          if (!success) {
+            ESP_LOGE(TAG, "Error: %s", Update.errorString());
+            RTC_runmode = RUNMODE_POWERCYCLE;
+          }
         }
       });
 
@@ -194,6 +202,6 @@ void start_boot_menu(void) {
 
   while (1) {
     server.handleClient();
-    delay(1);
+    delay(2);
   }
 }
