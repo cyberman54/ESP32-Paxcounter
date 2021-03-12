@@ -4,6 +4,73 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+static hw_timer_t *wdTimer = NULL;
+static WebServer server(80);
+static TaskHandle_t RestartHandle;
+
+static const char *loginMenu =
+    "<form name='loginForm'>"
+    "<table width='20%' bgcolor='A09F9F' align='center'>"
+    "<tr>"
+    "<td colspan=2>"
+    "<center><font size=4><b>Maintenance Menu</b></font></center>"
+    "<br>"
+    "</td>"
+    "<br>"
+    "<br>"
+    "</tr>"
+    "<tr>"
+    "<td><input type='submit' onclick='start(this.form)' "
+    "value='Start'></td>"
+    "</tr>"
+    "</table>"
+    "</form>"
+    "<script>"
+    "function start(form) {window.open('/serverIndex')}"
+    "</script>";
+
+static const char *serverIndex =
+    "<script "
+    "src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/"
+    "jquery.min.js'></script>"
+    "<form method='POST' action='#' enctype='multipart/form-data' "
+    "id='upload_form'>"
+    "<input type='file' name='update'>"
+    "<input type='submit' value='Update'>"
+    "</form>"
+    "<div id='prg'>progress: 0%</div>"
+    "<script>"
+    "$('form').submit(function(e){"
+    "e.preventDefault();"
+    "var form = $('#upload_form')[0];"
+    "var data = new FormData(form);"
+    " $.ajax({"
+    "url: '/update',"
+    "type: 'POST',"
+    "data: data,"
+    "contentType: false,"
+    "processData:false,"
+    "xhr: function() {"
+    "var xhr = new window.XMLHttpRequest();"
+    "xhr.upload.addEventListener('progress', function(evt) {"
+    "if (evt.lengthComputable) {"
+    "var per = evt.loaded / evt.total;"
+    "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
+    "}"
+    "}, false);"
+    "return xhr;"
+    "},"
+    "success:function(d, s) {"
+    "console.log('success!')"
+    "},"
+    "error: function (a, b, c) {"
+    "}"
+    "});"
+    "});"
+    "</script>";
+
+void IRAM_ATTR watchdog() { xTaskResumeFromISR(RestartHandle); }
+
 // start local web server with user interface for maintenance mode
 // used for manually uploading a firmware file via wifi
 
@@ -11,7 +78,6 @@ void start_boot_menu(void) {
 
   uint8_t mac[6];
   char clientId[20];
-  unsigned long timeout = millis();
 
   // hash 6 byte MAC to 4 byte hash
   esp_eth_get_mac(mac);
@@ -25,75 +91,21 @@ void start_boot_menu(void) {
   // set runmode normal makes watchdog booting to production if triggered
   RTC_runmode = RUNMODE_NORMAL;
 
+  // setup restart handle task for resetting ESP32, which is callable from ISR
+  // (because esp_restart() from ISR would trigger the ESP32 task watchdog)
+  xTaskCreate(
+      [](void *p) {
+        vTaskSuspend(NULL);
+        ESP.restart();
+      },
+      "Restart", configMINIMAL_STACK_SIZE, NULL, (3 | portPRIVILEGE_BIT),
+      &RestartHandle);
+
   // setup watchdog, based on esp32 timer2 interrupt
-  hw_timer_t *timer = NULL;
-  timer = timerBegin(2, 80, true);                 // timer 2, div 80, countup
-  timerAttachInterrupt(timer, &esp_restart, true); // callback for device reset
-  timerAlarmWrite(timer, BOOTTIMEOUT * 1000000, false); // set time in us
-  timerAlarmEnable(timer);                              // enable watchdog
-
-  WebServer server(80);
-
-  const char *loginMenu =
-      "<form name='loginForm'>"
-      "<table width='20%' bgcolor='A09F9F' align='center'>"
-      "<tr>"
-      "<td colspan=2>"
-      "<center><font size=4><b>Maintenance Menu</b></font></center>"
-      "<br>"
-      "</td>"
-      "<br>"
-      "<br>"
-      "</tr>"
-      "<tr>"
-      "<td><input type='submit' onclick='start(this.form)' "
-      "value='Start'></td>"
-      "</tr>"
-      "</table>"
-      "</form>"
-      "<script>"
-      "function start(form) {window.open('/serverIndex')}"
-      "</script>";
-
-  const char *serverIndex =
-      "<script "
-      "src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/"
-      "jquery.min.js'></script>"
-      "<form method='POST' action='#' enctype='multipart/form-data' "
-      "id='upload_form'>"
-      "<input type='file' name='update'>"
-      "<input type='submit' value='Update'>"
-      "</form>"
-      "<div id='prg'>progress: 0%</div>"
-      "<script>"
-      "$('form').submit(function(e){"
-      "e.preventDefault();"
-      "var form = $('#upload_form')[0];"
-      "var data = new FormData(form);"
-      " $.ajax({"
-      "url: '/update',"
-      "type: 'POST',"
-      "data: data,"
-      "contentType: false,"
-      "processData:false,"
-      "xhr: function() {"
-      "var xhr = new window.XMLHttpRequest();"
-      "xhr.upload.addEventListener('progress', function(evt) {"
-      "if (evt.lengthComputable) {"
-      "var per = evt.loaded / evt.total;"
-      "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
-      "}"
-      "}, false);"
-      "return xhr;"
-      "},"
-      "success:function(d, s) {"
-      "console.log('success!')"
-      "},"
-      "error: function (a, b, c) {"
-      "}"
-      "});"
-      "});"
-      "</script>";
+  wdTimer = timerBegin(0, 80, true);              // timer 0, div 80, countup
+  timerAttachInterrupt(wdTimer, &watchdog, true); // callback for device reset
+  timerAlarmWrite(wdTimer, BOOTDELAY * 1000000, false); // set time in us
+  timerAlarmEnable(wdTimer);                            // enable watchdog
 
   WiFi.disconnect(true);
   WiFi.config(INADDR_NONE, INADDR_NONE,
@@ -109,39 +121,31 @@ void start_boot_menu(void) {
   // 1st try
   WiFi.begin(ssid, password);
   while (WiFi.status() == WL_DISCONNECTED) {
-    if ((long)(millis() - timeout) > (BOOTDELAY * 1000))
-      esp_restart();
-    else
-      delay(500);
+    delay(500);
   }
   // 2nd try
   if (WiFi.status() != WL_CONNECTED) {
     WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-      if ((long)(millis() - timeout) > (BOOTDELAY * 1000))
-        esp_restart();
-      else
-        delay(500);
-    }
+    delay(500);
   }
 
   MDNS.begin(host);
-  timerWrite(timer, 0); // reset timer (feed watchdog)
+  timerWrite(wdTimer, 0); // reset timer (feed watchdog)
 
-  server.on("/", HTTP_GET, [&server, &loginMenu]() {
+  server.on("/", HTTP_GET, []() {
     server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", loginMenu);
   });
 
-  server.on("/serverIndex", HTTP_GET, [&server, &serverIndex, &timer]() {
-    timerWrite(timer, 0); // reset timer (feed watchdog)
+  server.on("/serverIndex", HTTP_GET, []() {
+    timerAlarmWrite(wdTimer, BOOTTIMEOUT * 1000000, false); // set time in us
     server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", serverIndex);
   });
 
   server.on(
       "/update", HTTP_POST,
-      [&server]() {
+      []() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
         WiFi.disconnect(true);
@@ -149,7 +153,7 @@ void start_boot_menu(void) {
       },
 
       // handling uploading firmware file
-      [&server, &timer]() {
+      []() {
         bool success = false;
         HTTPUpload &upload = server.upload();
 
