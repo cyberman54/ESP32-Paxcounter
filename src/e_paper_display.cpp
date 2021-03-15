@@ -1,11 +1,11 @@
-#ifdef HAS_EINK_DISPLAY
+#ifdef HAS_E_PAPER_DISPLAY
 
 #include "globals.h"
-#include "eink_display.h"
+#include "e_paper_display.h"
 #include <GxEPD2_BW.h>
 #include <GxEPD2_3C.h>
 #include <GxEPD2_7C.h>
-#include <eink_choose_board.h>
+#include <e_paper_choose_board.h>
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
 // local Tag for logging
@@ -27,9 +27,9 @@ const char *printmonth[] = {
   "Dec"
 };
 
-uint8_t EInkDisplayIsOn = 0;
+uint8_t E_paper_displayIsOn = 0;
 
-void eInk_init(bool verbose) {
+void ePaper_init(bool verbose) {
   display.init();
   display.setRotation(1);
   display.setTextColor(GxEPD_BLACK);
@@ -74,7 +74,7 @@ void eInk_init(bool verbose) {
   draw_page();
   display.hibernate();
 }
-void refreshEInk_display(bool nextPage) {
+void refresh_ePaperDisplay(bool nextPage) {
   draw_page();
 }
 

@@ -55,7 +55,7 @@
 
 
 
-#define HAS_EINK_DISPLAY 1
+#define HAS_E_PAPER_DISPLAY 1
 
 //
 //Copied from https://github.com/ZinggJM/GxEPD2/blob/master/examples/GxEPD2_Example/GxEPD2_display_selection_new_style.h

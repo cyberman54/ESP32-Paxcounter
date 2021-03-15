@@ -405,10 +405,10 @@ void setup() {
 #endif
 
 // initialize matrix display
-#ifdef HAS_EINK_DISPLAY
+#ifdef HAS_E_PAPER_DISPLAY
   strcat_P(features, " E-INK display");
-  EInkDisplayIsOn = cfg.screenon;
-  eInk_init(RTC_runmode == RUNMODE_POWERCYCLE);
+  E_paper_displayIsOn = cfg.screenon;
+  ePaper_init(RTC_runmode == RUNMODE_POWERCYCLE);
 #endif
 
 // show payload encoder

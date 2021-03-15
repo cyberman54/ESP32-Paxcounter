@@ -28,8 +28,8 @@ void button_init(int pin) {
 #ifdef HAS_MATRIX_DISPLAY
     refreshTheMatrixDisplay(true); // switch to next display page
 #endif
-#ifdef HAS_EINK_DISPLAY
-    refreshEInk_display(true); // switch to next display page
+#ifdef HAS_E_PAPER_DISPLAY
+    refresh_ePaperDisplay(true); // switch to next display page
 #endif
   });
 

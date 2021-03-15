@@ -11,7 +11,7 @@
 #define BME_IRQ _bitl(7)
 #define MATRIX_DISPLAY_IRQ _bitl(8)
 #define PMU_IRQ _bitl(9)
-#define EINK_DISPLAY_IRQ _bitl(10)
+#define E_PAPER_DISPLAY_IRQ _bitl(10)
 
 #include "globals.h"
 #include "button.h"
@@ -35,8 +35,8 @@ void IRAM_ATTR DisplayIRQ();
 void IRAM_ATTR MatrixDisplayIRQ();
 #endif
 
-#ifdef HAS_EINK_DISPLAY
-#include "eink_display.h"
+#ifdef HAS_E_PAPER_DISPLAY
+#include "e_paper_display.h"
 #endif
 
 #ifdef HAS_BUTTON
