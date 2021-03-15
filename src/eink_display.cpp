@@ -8,11 +8,6 @@
 #include <eink_choose_board.h>
 #include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
 
-
-// #include "eink_display.h"
-// GxIO_Class io(SPI, ELINK_SS, ELINK_DC, ELINK_RESET);
-// GxEPD_Class display(io, ELINK_RESET, ELINK_BUSY);
-
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
@@ -35,25 +30,12 @@ const char *printmonth[] = {
 uint8_t EInkDisplayIsOn = 0;
 
 void eInk_init(bool verbose) {
-  // display.init();
-  // display.setRotation(1);
-  // // display.eraseDisplay();
-  // display.setTextColor(GxEPD_BLACK);
-  // display.setTextSize(0);
-
-  // display.setCursor(0, 0);
-  // display.println("test2");
-  // display.update();
-
-  // ESP_LOGI(TAG, "init screen");
   display.init();
   display.setRotation(1);
   display.setTextColor(GxEPD_BLACK);
   display.setFullWindow();
 
   if (verbose) {
-    // show startup screen
-    // to come -> display .bmp file with logo
 
     // show chip information
     #if (VERBOSE)

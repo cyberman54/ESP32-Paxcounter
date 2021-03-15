@@ -52,6 +52,14 @@ void irqHandler(void *pvParameters) {
     }
 #endif
 
+// E-Ink display needs refresh?
+#ifdef HAS_EINK_DISPLAY
+if (InterruptStatus & EINK_DISPLAY_IRQ) {
+    refreshEInk_display();
+    InterruptStatus &= ~EINK_DISPLAY_IRQ;
+}
+#endif
+
 #if (TIME_SYNC_INTERVAL)
     // is time to be synced?
     if (InterruptStatus & TIMESYNC_IRQ) {

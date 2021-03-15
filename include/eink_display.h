@@ -2,16 +2,6 @@
 #define _EINK_DISPLAY_H
 
 
-// #include <GxEPD.h>
-// #include <GxIO/GxIO_SPI/GxIO_SPI.h>
-// #include <GxIO/GxIO.h>
-// #include <eink_choose_board.h>
-
-
-
-
-
-
 extern uint8_t EInkDisplayIsOn;
 
 void eInk_init(bool verbose);
