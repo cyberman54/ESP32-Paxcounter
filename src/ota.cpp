@@ -151,7 +151,7 @@ int do_ota_update() {
   WiFiClientSecure client;
 
   client.setTimeout(RESPONSE_TIMEOUT_MS);
-
+  client.setInsecure();
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     ota_display(3, " E", "connection lost");
