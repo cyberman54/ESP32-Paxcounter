@@ -1,4 +1,4 @@
-#ifndef LIBPAX
+#if !(LIBPAX)   
 // Basic Config
 #include "globals.h"
 #include "wifiscan.h"

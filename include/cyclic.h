@@ -12,7 +12,7 @@
 #include "sdcard.h"
 #include "macsniff.h"
 #include "reset.h"
-#ifdef LIBPAX
+#if LIBPAX
 #include <libpax_api.h>
 #endif
 

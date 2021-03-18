@@ -97,7 +97,7 @@ void set_wifichancycle(uint8_t val[]) {
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
-  #ifndef LIBPAX
+  #if !(LIBPAX)   
   ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds",
            cfg.blescantime / float(100));
   // stop & restart BLE scan task to apply new parameter
@@ -250,24 +250,19 @@ void set_loraadr(uint8_t val[]) {
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
   cfg.blescan = val[0] ? 1 : 0;
-  #ifndef LIBPAX
+  #if !(LIBPAX)   
   macs_ble = 0; // clear BLE counter
   if (cfg.blescan)
     start_BLEscan();
   else
     stop_BLEscan();
   #else
-  if(cfg.blescan) {
-    cfg.wifiscan = 0;
-    // Restart of libpax while switching scannings does not work atm
-    // libpax_counter_stop();
-    // libpax_config_t current_config;
-    // libpax_get_current_config(&current_config);
-    // current_config.wificounter = 0;
-    // current_config.blecounter = 1;
-    // libpax_update_config(&current_config);
-    // init_libpax();
-  }
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.blecounter = cfg.blescan;
+  libpax_update_config(&current_config);
+  init_libpax();
   #endif 
 }
 
@@ -275,21 +270,16 @@ void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
   cfg.wifiscan = val[0] ? 1 : 0;
-  #ifndef LIBPAX
+  #if !(LIBPAX)   
   macs_wifi = 0; // clear WIFI counter
   switch_wifi_sniffer(cfg.wifiscan);
   #else
-  if(cfg.wifiscan) {
-    cfg.blescan = 0;
-    // Restart of libpax while switching scannings does not work atm
-    // libpax_counter_stop();
-    // libpax_config_t current_config;
-    // libpax_get_current_config(&current_config);
-    // current_config.wificounter = 1;
-    // current_config.blecounter = 0;
-    // libpax_update_config(&current_config);
-    // init_libpax();
-  }
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.wificounter = cfg.wifiscan;
+  libpax_update_config(&current_config);
+  init_libpax();
   #endif 
 }
 

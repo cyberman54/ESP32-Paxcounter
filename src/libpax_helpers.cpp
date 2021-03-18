@@ -1,7 +1,7 @@
 #include "libpax_helpers.h"
 
 // libpax payload
-#ifdef LIBPAX
+#if LIBPAX
 struct count_payload_t count_from_libpax;
 uint16_t volatile libpax_macs_ble, libpax_macs_wifi;
 

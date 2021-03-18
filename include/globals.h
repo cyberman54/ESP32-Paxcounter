@@ -141,7 +141,7 @@ extern uint8_t volatile channel;               // wifi channel rotation counter
 extern uint8_t volatile rf_load;               // RF traffic indicator
 extern uint8_t batt_level;                     // display value
 extern uint16_t volatile macs_wifi, macs_ble;  // display values
-#ifdef LIBPAX
+#if LIBPAX
 extern uint16_t volatile libpax_macs_ble, libpax_macs_wifi; // libpax values
 #endif
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC

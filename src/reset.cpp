@@ -107,7 +107,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   sendTimer.detach();
 
   // switch off radio and other power consuming hardware
-#ifndef LIBPAX
+#if !(LIBPAX)   
 #if (WIFICOUNTER)
   switch_wifi_sniffer(0);
 #endif

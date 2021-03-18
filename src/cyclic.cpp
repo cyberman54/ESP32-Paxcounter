@@ -136,7 +136,7 @@ uint32_t getFreeRAM() {
 void reset_counters() {
 
 #if ((WIFICOUNTER) || (BLECOUNTER))
-#ifndef LIBPAX   
+#if !(LIBPAX)   
   macs.clear(); // clear all macs container
   macs_wifi = 0;
   macs_ble = 0;

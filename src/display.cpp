@@ -262,7 +262,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 
 #if ((WIFICOUNTER) && (BLECOUNTER))
     if (cfg.wifiscan)
-#ifndef LIBPAX
+#if !(LIBPAX)   
       dp_printf("WIFI:%-5d", macs_wifi);
 #else
       dp_printf("WIFI:%-5d", libpax_macs_wifi);
@@ -275,7 +275,7 @@ void dp_drawPage(time_t t, bool nextpage) {
         dp_printf(" CWA:%-5d", cwa_report());
       else
 #endif
-#ifndef LIBPAX
+#if !(LIBPAX)   
       dp_printf("BLTH:%-5d", macs_ble);
 #else
       dp_printf("BLTH:%-5d", libpax_macs_ble);
@@ -284,7 +284,7 @@ void dp_drawPage(time_t t, bool nextpage) {
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
     if (cfg.wifiscan)
-#ifndef LIBPAX
+#if !(LIBPAX)   
       dp_printf("WIFI:%-5d", macs_wifi);
 #else
       dp_printf("WIFI:%-5d", libpax_macs_wifi);
@@ -293,7 +293,7 @@ void dp_drawPage(time_t t, bool nextpage) {
       dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan)
-#ifndef LIBPAX
+#if !(LIBPAX)   
       dp_printf("BLTH:%-5d", macs_ble);
 #else
       dp_printf("BLTH:%-5d", libpax_macs_ble);

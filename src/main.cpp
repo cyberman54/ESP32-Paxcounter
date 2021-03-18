@@ -91,11 +91,11 @@ triggers pps 1 sec impulse
 configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 uint8_t batt_level = 0;                 // display value
-#ifndef LIBPAX
+#if !(LIBPAX)   
 uint8_t volatile channel = WIFI_CHANNEL_MIN;   // channel rotation counter
 #endif
 uint8_t volatile rf_load = 0;                  // RF traffic indicator
-#ifndef LIBPAX
+#if !(LIBPAX)   
 uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
 #endif
 
@@ -304,35 +304,31 @@ void setup() {
   if (RTC_runmode == RUNMODE_MAINTENANCE)
     start_boot_menu();
 
-#ifndef LIBPAX
+#if !(LIBPAX)   
   // start mac processing task
   ESP_LOGI(TAG, "Starting MAC processor...");
   macQueueInit();
 #else
-ESP_LOGI(TAG, "Starting libpax...");
+  ESP_LOGI(TAG, "Starting libpax...");
 #if (defined WIFICOUNTER || defined BLECOUNTER) 
   struct libpax_config_t configuration;
   libpax_default_config(&configuration);
   ESP_LOGI(TAG, "BLESCAN: %d", cfg.blescan);
   ESP_LOGI(TAG, "WIFISCAN: %d", cfg.wifiscan);
-  if(!(cfg.blescan && cfg.wifiscan)) {
-    configuration.wificounter = cfg.wifiscan;
-    configuration.blecounter = cfg.blescan;
+  configuration.wificounter = cfg.wifiscan;
+  configuration.blecounter = cfg.blescan;
 
-    configuration.wifi_channel_map = WIFI_CHANNEL_ALL;
-    configuration.wifi_channel_switch_interval = cfg.wifichancycle;
-    configuration.wifi_rssi_threshold = cfg.rssilimit;
+  configuration.wifi_channel_map = WIFI_CHANNEL_ALL;
+  configuration.wifi_channel_switch_interval = cfg.wifichancycle;
+  configuration.wifi_rssi_threshold = cfg.rssilimit;
 
-    configuration.blescantime = cfg.blescantime;
+  configuration.blescantime = cfg.blescantime;
 
-    int config_update = libpax_update_config(&configuration);
-    if(config_update != 0) {
-      ESP_LOGE(TAG, "Error in libpax configuration.");
-    } else {
-      init_libpax();
-    }
+  int config_update = libpax_update_config(&configuration);
+  if(config_update != 0) {
+    ESP_LOGE(TAG, "Error in libpax configuration.");
   } else {
-    ESP_LOGE(TAG, "Error in libpax configuration: Wifi and BLE are not supported at the same time!");
+    init_libpax();
   }
 #endif
 #endif
@@ -345,7 +341,7 @@ ESP_LOGI(TAG, "Starting libpax...");
 // or remove bluetooth stack from RAM, if option bluetooth is not compiled
 #if (BLECOUNTER)
   strcat_P(features, " BLE");
-#ifndef LIBPAX
+#if !(LIBPAX)   
   if (cfg.blescan) {
     ESP_LOGI(TAG, "Starting Bluetooth...");
     start_BLEscan();
@@ -354,12 +350,13 @@ ESP_LOGI(TAG, "Starting libpax...");
 #endif
 #else
   // remove bluetooth stack to gain more free memory
-#ifndef LIBPAX
+#if !(LIBPAX)   
   btStop();
-#endif
   esp_bt_mem_release(ESP_BT_MODE_BTDM);
   esp_coex_preference_set(
       ESP_COEX_PREFER_WIFI); // configure Wifi/BT coexist lib
+#endif
+
 #endif
 
 // initialize gps
@@ -466,7 +463,7 @@ ESP_LOGI(TAG, "Starting libpax...");
 
 #if (WIFICOUNTER)
   strcat_P(features, " WIFI");
-#ifndef LIBPAX
+#if !(LIBPAX)   
   // install wifi driver in RAM and start channel hopping
   wifi_sniffer_init();
   // start wifi sniffing, if enabled
@@ -485,7 +482,7 @@ ESP_LOGI(TAG, "Starting libpax...");
   // initialize salt value using esp_random() called by random() in
   // arduino-esp32 core. Note: do this *after* wifi has started, since
   // function gets it's seed from RF noise
-#ifndef LIBPAX
+#if !(LIBPAX)   
   reset_counters();
 #endif
 

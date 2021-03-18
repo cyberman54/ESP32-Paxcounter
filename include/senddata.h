@@ -14,7 +14,7 @@
 #include "corona.h"
 #endif
 
-#if (LIBPAX)
+#if LIBPAX
 #include <libpax_api.h>
 
 extern struct count_payload_t count_from_libpax;

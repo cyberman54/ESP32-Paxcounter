@@ -1,4 +1,4 @@
-#ifndef LIBPAX
+#if !(LIBPAX)
 // some code snippets taken from
 // https://github.com/nkolban/esp32-snippets/tree/master/BLE/scanner
 
