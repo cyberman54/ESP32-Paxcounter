@@ -11,6 +11,7 @@
 #include "sds011read.h"
 #include "sdcard.h"
 #include "macsniff.h"
+#include "reset.h"
 
 extern Ticker cyclicTimer;
 
