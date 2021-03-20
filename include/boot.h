@@ -3,6 +3,7 @@
 
 #include "globals.h"
 #include "hash.h"
+#include "reset.h"
 
 #include <Update.h>
 #include <WiFi.h>

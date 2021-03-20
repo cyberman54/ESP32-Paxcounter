@@ -8,10 +8,13 @@ static const char TAG[] = __FILE__;
 // Conversion factor for micro seconds to seconds
 #define uS_TO_S_FACTOR 1000000ULL
 
-// variables keep its values after a wakeup from sleep
-RTC_NOINIT_ATTR runmode_t RTC_runmode = RUNMODE_POWERCYCLE;
+// RTC_NOINIT_ATTR -> keep value after a software restart or system crash
+RTC_NOINIT_ATTR runmode_t RTC_runmode;
+
+// RTC_DATA_ATTR -> keep values after a wakeup from sleep
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
+
 timeval sleep_stop_time;
 
 const char *runmode[6] = {"powercycle", "normal", "wakeup",
@@ -46,8 +49,10 @@ void do_after_reset(void) {
     break;
 
   case SW_CPU_RESET: // 0x0c Software reset CPU
-                     // keep previous runmode
-                     // (i.e. RUNMODE_UPDATE or RUNMODE_MAINTENANCE)
+    // keep previous runmode, if RTC_runmode has valid value
+    // sets runmode, if RTC_runmode is invalid (i.e. not initialized)
+    if ((RTC_runmode != RUNMODE_UPDATE) && (RTC_runmode != RUNMODE_NORMAL))
+      RTC_runmode = RUNMODE_POWERCYCLE;
     break;
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
