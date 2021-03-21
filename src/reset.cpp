@@ -10,15 +10,13 @@ static const char TAG[] = __FILE__;
 
 // RTC_NOINIT_ATTR -> keep value after a software restart or system crash
 RTC_NOINIT_ATTR runmode_t RTC_runmode;
+RTC_NOINIT_ATTR uint32_t RTC_restarts;
 
 // RTC_DATA_ATTR -> keep values after a wakeup from sleep
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
 
 timeval sleep_stop_time;
-
-const char *runmode[6] = {"powercycle", "normal", "wakeup",
-                          "update",     "sleep",  "maintenance"};
 
 void do_reset(bool warmstart) {
   if (warmstart) {
@@ -46,13 +44,11 @@ void do_after_reset(void) {
   case RTCWDT_BROWN_OUT_RESET: // 0x0f Reset when the vdd voltage is not
                                // stable
     RTC_runmode = RUNMODE_POWERCYCLE;
+    RTC_restarts = 0;
     break;
 
   case SW_CPU_RESET: // 0x0c Software reset CPU
-    // keep previous runmode, if RTC_runmode has valid value
-    // sets runmode, if RTC_runmode is invalid (i.e. not initialized)
-    if ((RTC_runmode != RUNMODE_UPDATE) && (RTC_runmode != RUNMODE_NORMAL))
-      RTC_runmode = RUNMODE_POWERCYCLE;
+    // keep previous set runmode (update / normal / maintenance)
     break;
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
@@ -84,8 +80,9 @@ void do_after_reset(void) {
     break;
   }
 
-  ESP_LOGI(TAG, "Starting Software v%s, runmode %s", PROGVERSION,
-           runmode[RTC_runmode]);
+  RTC_restarts++;
+  ESP_LOGI(TAG, "Starting Software v%s (runmode=%d / restarts=%d)", PROGVERSION,
+           RTC_runmode, RTC_restarts);
 }
 
 void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {

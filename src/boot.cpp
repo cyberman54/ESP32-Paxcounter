@@ -95,8 +95,8 @@ void start_boot_menu(void) {
   // (because esp_restart() from ISR would trigger the ESP32 task watchdog)
   xTaskCreate(
       [](void *p) {
-        vTaskSuspend(NULL);
-        ESP.restart();
+        vTaskSuspend(NULL); // wait for task resume call by watchdog
+        esp_restart();
       },
       "Restart", configMINIMAL_STACK_SIZE, NULL, (3 | portPRIVILEGE_BIT),
       &RestartHandle);
@@ -148,7 +148,6 @@ void start_boot_menu(void) {
       []() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
-        WiFi.disconnect(true);
         esp_restart();
       },
 

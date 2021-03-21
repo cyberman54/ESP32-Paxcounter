@@ -291,15 +291,14 @@ void setup() {
 #endif
 
 #if (BOOTMENU)
-  // start local webserver after device powers up or on rcommand request
-  if ((RTC_runmode == RUNMODE_POWERCYCLE) ||
-      (RTC_runmode == RUNMODE_MAINTENANCE))
-    start_boot_menu();
-#else
-  // start local webserver on rcommand request only
-  if (RTC_runmode == RUNMODE_MAINTENANCE)
+  // start local webserver after each coldstart
+  if (RTC_runmode == RUNMODE_POWERCYCLE)
     start_boot_menu();
 #endif
+
+  // start local webserver on rcommand request
+  if (RTC_runmode == RUNMODE_MAINTENANCE)
+    start_boot_menu();
 
   // start mac processing task
   ESP_LOGI(TAG, "Starting MAC processor...");
