@@ -18,6 +18,11 @@ RTC_DATA_ATTR unsigned long long RTC_millis = 0;
 
 timeval sleep_stop_time;
 
+void reset_rtc_vars(void) {
+  RTC_runmode = RUNMODE_POWERCYCLE;
+  RTC_restarts = 0;
+}
+
 void do_reset(bool warmstart) {
   if (warmstart) {
     ESP_LOGI(TAG, "restarting device (warmstart)");
@@ -38,13 +43,15 @@ void do_after_reset(void) {
   struct timeval sleep_stop_time;
   uint64_t sleep_time_ms;
 
+  // read (and initialize on first run) runtime settings from NVRAM
+  loadConfig();
+
   switch (rtc_get_reset_reason(0)) {
 
   case POWERON_RESET:          // 0x01 Vbat power on reset
   case RTCWDT_BROWN_OUT_RESET: // 0x0f Reset when the vdd voltage is not
                                // stable
-    RTC_runmode = RUNMODE_POWERCYCLE;
-    RTC_restarts = 0;
+    reset_rtc_vars();
     break;
 
   case SW_CPU_RESET: // 0x0c Software reset CPU
