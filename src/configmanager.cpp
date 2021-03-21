@@ -48,7 +48,7 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->blescantime =
       BLESCANINTERVAL /
       10; // BT channel scan cycle [seconds/100], default 1 (= 10ms)
-  myconfig->blescan = BLECOUNTER;    // 0=disabled, 1=enabled
+  myconfig->blescan = BLECOUNTER;   // 0=disabled, 1=enabled
   myconfig->wifiscan = WIFICOUNTER; // 0=disabled, 1=enabled
   myconfig->wifiant = 0;            // 0=internal, 1=external (for LoPy/LoPy4)
   myconfig->macfilter = MACFILTER;  // 0=disabled, 1=enabled
@@ -159,4 +159,7 @@ int version_compare(const String v1, const String v2) {
     return 1;
 }
 
-void eraseConfig(void) { saveConfig(true); }
+void eraseConfig(void) {
+  reset_rtc_vars();
+  saveConfig(true);
+}

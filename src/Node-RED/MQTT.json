@@ -328,7 +328,7 @@
         "z": "c26229c6.2d1ae8",
         "name": "device status",
         "property": "payload",
-        "pattern": "l16 => voltage,\nl64 => uptime,\nb8 => temperature,\nl32 => ram,\nb8 => reset0,\nb8 => reset1",
+        "pattern": "l16 => voltage,\nl64 => uptime,\nb8 => temperature,\nl32 => ram,\nb8 => reset0,\nl32 => restarts",
         "x": 650,
         "y": 200,
         "wires": [

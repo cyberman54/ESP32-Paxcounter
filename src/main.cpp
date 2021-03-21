@@ -140,6 +140,7 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
+  // load device configuration from NVRAM and set runmode
   do_after_reset();
 
   // print chip information on startup if in verbose mode after coldstart
@@ -205,9 +206,6 @@ void setup() {
 #endif
   strcat_P(features, " PMU");
 #endif
-
-  // read (and initialize on first run) runtime settings from NVRAM
-  _ASSERT(loadConfig()); // includes initialize if necessary
 
   // now that we are powered, we scan i2c bus for devices
   if (RTC_runmode == RUNMODE_POWERCYCLE)
@@ -291,15 +289,14 @@ void setup() {
 #endif
 
 #if (BOOTMENU)
-  // start local webserver after device powers up or on rcommand request
-  if ((RTC_runmode == RUNMODE_POWERCYCLE) ||
-      (RTC_runmode == RUNMODE_MAINTENANCE))
-    start_boot_menu();
-#else
-  // start local webserver on rcommand request only
-  if (RTC_runmode == RUNMODE_MAINTENANCE)
+  // start local webserver after each coldstart
+  if (RTC_runmode == RUNMODE_POWERCYCLE)
     start_boot_menu();
 #endif
+
+  // start local webserver on rcommand request
+  if (RTC_runmode == RUNMODE_MAINTENANCE)
+    start_boot_menu();
 
   // start mac processing task
   ESP_LOGI(TAG, "Starting MAC processor...");
