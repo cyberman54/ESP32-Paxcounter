@@ -58,7 +58,7 @@ void PayloadConvert::addConfig(configData_t value) {
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
-                               uint32_t mem, uint8_t reset1, uint8_t reset2) {
+                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
 
   buffer[cursor++] = highByte(voltage);
   buffer[cursor++] = lowByte(voltage);
@@ -75,8 +75,11 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
   buffer[cursor++] = (byte)((mem & 0x00FF0000) >> 16);
   buffer[cursor++] = (byte)((mem & 0x0000FF00) >> 8);
   buffer[cursor++] = (byte)((mem & 0x000000FF));
-  buffer[cursor++] = (byte)(reset1);
-  buffer[cursor++] = (byte)(reset2);
+  buffer[cursor++] = (byte)(reset0);
+  buffer[cursor++] = (byte)((restarts & 0xFF000000) >> 24);
+  buffer[cursor++] = (byte)((restarts & 0x00FF0000) >> 16);
+  buffer[cursor++] = (byte)((restarts & 0x0000FF00) >> 8);
+  buffer[cursor++] = (byte)((restarts & 0x000000FF));
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
@@ -185,13 +188,13 @@ void PayloadConvert::addConfig(configData_t value) {
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
-                               uint32_t mem, uint8_t reset1, uint8_t reset2) {
+                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
   writeUint16(voltage);
   writeUptime(uptime);
   writeUint8((byte)cputemp);
   writeUint32(mem);
-  writeUint8(reset1);
-  writeUint8(reset2);
+  writeUint8(reset0);
+  writeUint32(restarts);
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
@@ -397,7 +400,7 @@ void PayloadConvert::addConfig(configData_t value) {
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
-                               uint32_t mem, uint8_t reset1, uint8_t reset2) {
+                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
   uint16_t temp = celsius * 10;
   uint16_t volt = voltage / 10;
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
