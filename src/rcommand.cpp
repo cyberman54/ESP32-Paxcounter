@@ -20,8 +20,9 @@ void set_reset(uint8_t val[]) {
     reset_counters(); // clear macs
     break;
   case 2: // reset device to factory settings
-    ESP_LOGI(TAG, "Remote command: reset device to factory settings");
+    ESP_LOGI(TAG, "Remote command: reset device to factory settings and restart");
     eraseConfig();
+    do_reset(false);
     break;
   case 3: // reset send queues
     ESP_LOGI(TAG, "Remote command: flush send queue");

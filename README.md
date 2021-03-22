@@ -437,8 +437,8 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 0x09 reset functions (send this command UNconfirmed only to avoid boot loops!)
 
 	0 = restart device (coldstart)
-	1 = reset MAC counter to zero
-	2 = reset device to factory settings
+	1 = zeroize MAC counter
+	2 = reset device to factory settings and restart device
 	3 = flush send queues
 	4 = restart device (warmstart)
 	8 = reboot device to maintenance mode (local web server)
