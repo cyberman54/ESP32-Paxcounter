@@ -1,6 +1,7 @@
 // Basic Config
 #include "globals.h"
 #include "rcommand.h"
+#include "libpax_helpers.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;
@@ -73,6 +74,7 @@ void set_sleepcycle(uint8_t val[]) {
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
+  #ifndef LIBAPX
   // update Wifi channel rotation timer period
   if (cfg.wifichancycle > 0) {
     if (xTimerIsTimerActive(WifiChanTimer) == pdFALSE)
@@ -89,10 +91,14 @@ void set_wifichancycle(uint8_t val[]) {
     channel = WIFI_CHANNEL_MIN;
     ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
   }
+  #else
+  // TODO update libpax configuration
+  #endif
 }
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
+  #if !(LIBPAX)   
   ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds",
            cfg.blescantime / float(100));
   // stop & restart BLE scan task to apply new parameter
@@ -100,6 +106,9 @@ void set_blescantime(uint8_t val[]) {
     stop_BLEscan();
     start_BLEscan();
   }
+  #else
+    // TODO update libpax configuration
+  #endif
 }
 
 void set_countmode(uint8_t val[]) {
@@ -241,20 +250,38 @@ void set_loraadr(uint8_t val[]) {
 
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
-  macs_ble = 0; // clear BLE counter
   cfg.blescan = val[0] ? 1 : 0;
+  #if !(LIBPAX)   
+  macs_ble = 0; // clear BLE counter
   if (cfg.blescan)
     start_BLEscan();
   else
     stop_BLEscan();
+  #else
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.blecounter = cfg.blescan;
+  libpax_update_config(&current_config);
+  init_libpax();
+  #endif 
 }
 
 void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
-  macs_wifi = 0; // clear WIFI counter
   cfg.wifiscan = val[0] ? 1 : 0;
+  #if !(LIBPAX)   
+  macs_wifi = 0; // clear WIFI counter
   switch_wifi_sniffer(cfg.wifiscan);
+  #else
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.wificounter = cfg.wifiscan;
+  libpax_update_config(&current_config);
+  init_libpax();
+  #endif 
 }
 
 void set_wifiant(uint8_t val[]) {
