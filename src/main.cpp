@@ -436,6 +436,13 @@ void setup() {
   init_matrix_display(); // note: blocking call
 #endif
 
+// initialize matrix display
+#ifdef HAS_E_PAPER_DISPLAY
+  strcat_P(features, " E-INK display");
+  E_paper_displayIsOn = cfg.screenon;
+  ePaper_init(RTC_runmode == RUNMODE_POWERCYCLE);
+#endif
+
 // show payload encoder
 #if PAYLOAD_ENCODER == 1
   strcat_P(features, " PLAIN");
