@@ -32,7 +32,7 @@ function Decoder(bytes, port) {
     decoded.temp = bytes[i++];
     decoded.memory = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
     decoded.reset0 = bytes[i++];
-    decoded.reset1 = bytes[i++];
+    decoded.restarts = ((bytes[i++] << 24) | (bytes[i++] << 16) | (bytes[i++] << 8) | bytes[i++]);
   }
 
   if (port === 4) {

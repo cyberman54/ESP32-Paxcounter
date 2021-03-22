@@ -39,7 +39,7 @@ function decodeUplink(input) {
         data.cputemp = input.bytes[i++];
         data.memory = ((input.bytes[i++] << 24) | (input.bytes[i++] << 16) | (input.bytes[i++] << 8) | input.bytes[i++]);
         data.reset0 = input.bytes[i++];
-        data.reset1 = input.bytes[i++];
+        data.restarts = ((input.bytes[i++] << 24) | (input.bytes[i++] << 16) | (input.bytes[i++] << 8) | input.bytes[i++]);
     }
 
     if (input.fPort === 4) {

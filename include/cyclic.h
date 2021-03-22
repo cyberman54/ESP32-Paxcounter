@@ -11,6 +11,10 @@
 #include "sds011read.h"
 #include "sdcard.h"
 #include "macsniff.h"
+#include "reset.h"
+#if LIBPAX
+#include <libpax_api.h>
+#endif
 
 extern Ticker cyclicTimer;
 

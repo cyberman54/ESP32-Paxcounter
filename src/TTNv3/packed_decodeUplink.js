@@ -46,8 +46,8 @@ function decodeUplink(input) {
 
     if (input.fPort === 2) {
         // device status data
-        if (input.bytes.length === 17) {
-            data = decode(input.bytes, [uint16, uptime, uint8, uint32, uint8, uint8], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'reset1']);
+        if (input.bytes.length === 20) {
+            data = decode(input.bytes, [uint16, uptime, uint8, uint32, uint8, uint32], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'restarts']);
         }
     }
 

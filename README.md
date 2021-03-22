@@ -110,7 +110,7 @@ To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP,
 The file `src/loraconf_sample.h` contains more information about the values to provide.
 
 ## src/ota.conf
-Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
+Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://github.com/paxexpress/docs">PAX.express repository</A>. Enter your PAX.express credentials in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
 # Building
 
@@ -125,7 +125,7 @@ The LoPy/LoPy4/FiPy board needs to be set manually. See these
 The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
 	
 - **over the air (OTA), download via WiFi:**
-After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by OTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WiFi to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for OTA are: 1. You own a Bintray repository, 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WiFi is present at the board's site, 4. WiFi credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
+After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by OTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WiFi to a cloud service (<A HREF="https://github.com/paxexpress">PAX.express</A>), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for OTA are: 1. You own a PAX.express repository, 2. you pushed the update binary to your PAX.express repository, 3. internet access via encrypted (WPA2) WiFi is present at the board's site, 4. WiFi credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
 
 - **over the air (OTA), upload via WiFi:**
 If option *BOOTMENU* is defined in `paxcounter.conf`, the ESP32 board will try to connect to a known WiFi access point each time cold starting (after a power cycle or a reset), using the WiFi credentials given in `ota.conf`. Once connected to the WiFi it will fire up a simple webserver, providing a bootstrap menu waiting for a user interaction (pressing "START" button in menu). This process will time out after *BOOTDELAY* seconds, ensuring booting the device to runmode. Once a user interaction in bootstrap menu was detected, the timeout will be extended to *BOOTTIMEOUT* seconds. During this time a firmware upload can be performed manually by user, e.g. using a smartphone in tethering mode providing the firmware upload file.
@@ -301,7 +301,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 3-10:	Uptime [seconds]
 	byte 11: 	CPU temperature [°C]
 	bytes 12-15:	Free RAM [bytes]
-	bytes 16-17:	Last CPU reset reason [core 0, core 1]
+	byte 16:	Last CPU core 0 reset reason
+	bytes 17-20:	Number of restarts since last power cycle
 
 **Port #3:** Device configuration query result
 
@@ -436,8 +437,8 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 0x09 reset functions (send this command UNconfirmed only to avoid boot loops!)
 
 	0 = restart device (coldstart)
-	1 = reset MAC counter to zero
-	2 = reset device to factory settings
+	1 = zeroize MAC counter
+	2 = reset device to factory settings and restart device
 	3 = flush send queues
 	4 = restart device (warmstart)
 	8 = reboot device to maintenance mode (local web server)
@@ -532,13 +533,13 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 	0 ... 255 device sleep cycle in seconds/2
 	e.g. 120 -> device sleeps 240 seconds after each send cycle [default = 0]
 
-0x20 store device configuration
-
-	Current device runtime configuration is stored in NVRAM, will be reloaded after restart
-
-0x21 load device configuration
+0x20 load device configuration
 
 	Current device runtime configuration will be loaded from NVRAM, replacing current settings immediately (use with care!)
+
+0x21 store device configuration
+
+	Current device runtime configuration is stored in NVRAM, will be reloaded after restart
 
 0x80 get device configuration
 
