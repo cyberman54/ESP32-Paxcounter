@@ -21,8 +21,8 @@
 
 using namespace std;
 
-const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
-// usage of bintray: see https://github.com/r0oland/bintray-secure-ota
+const BintrayClient paxexpress(PAXEXPRESS_USER, PAXEXPRESS_REPO, PAXEXPRESS_PACKAGE);
+// usage of paxexpress: see https://github.com/paxexpress/docs
 
 // Connection port (HTTPS)
 const int port = 443;
@@ -121,7 +121,7 @@ int do_ota_update() {
   if (WiFi.status() != WL_CONNECTED)
     return 1;
 
-  const String latest = bintray.getLatestVersion();
+  const String latest = paxexpress.getLatestVersion();
 
   if (latest.length() == 0) {
     ESP_LOGI(TAG, "Could not fetch info on latest firmware");
@@ -138,14 +138,14 @@ int do_ota_update() {
   ota_display(3, "**", "");
   if (WiFi.status() != WL_CONNECTED)
     return 1;
-  String firmwarePath = bintray.getBinaryPath(latest);
+  String firmwarePath = paxexpress.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format");
     ota_display(3, " E", "file type error");
     return -1;
   }
 
-  String currentHost = bintray.getStorageHost();
+  String currentHost = paxexpress.getStorageHost();
   String prevHost = currentHost;
 
   WiFiClientSecure client;

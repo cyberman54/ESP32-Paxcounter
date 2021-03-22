@@ -86,35 +86,35 @@ with open(otakeyfile) as myfile:
         key, value = line.partition("=")[::2]
         mykeys[key.strip()] = str(value).strip()
 
-# usage of bintray: see https://github.com/r0oland/bintray-secure-ota
+# usage of paxexpress: see https://github.com/paxexpress/docs
 
-# get bintray user credentials from ota key file
-user = mykeys["BINTRAY_USER"]
-repository = mykeys["BINTRAY_REPO"]
-apitoken = mykeys["BINTRAY_API_TOKEN"]
+# get paxexpress credentials from ota key file
+user = mykeys["PAXEXPRESS_USER"]
+repository = mykeys["PAXEXPRESS_REPO"]
+apitoken = mykeys["PAXEXPRESS_API_TOKEN"]
 
-# get bintray upload parameters from platformio environment
+# get paxexpress upload parameters from platformio environment
 version = config.get("common", "release_version")
 package, dummy = halconfig.partition(".")[::2]
 
-# put bintray user credentials to platformio environment
-env.Replace(BINTRAY_USER=user)
-env.Replace(BINTRAY_REPO=repository)
-env.Replace(BINTRAY_API_TOKEN=apitoken)
+# put paxexpress user credentials to platformio environment
+env.Replace(PAXEXPRESS_USER=user)
+env.Replace(PAXEXPRESS_REPO=repository)
+env.Replace(PAXEXPRESS_API_TOKEN=apitoken)
 
 # get runtime credentials and put them to compiler directive
 env.Append(BUILD_FLAGS=[
     u'-DWIFI_SSID=\\"' + mykeys["OTA_WIFI_SSID"] + '\\"', 
     u'-DWIFI_PASS=\\"' + mykeys["OTA_WIFI_PASS"] + '\\"', 
-    u'-DBINTRAY_USER=\\"' + mykeys["BINTRAY_USER"] + '\\"', 
-    u'-DBINTRAY_REPO=\\"' + mykeys["BINTRAY_REPO"] + '\\"', 
-    u'-DBINTRAY_PACKAGE=\\"' + package + '\\"',
+    u'-DPAXEXPRESS_USER=\\"' + mykeys["PAXEXPRESS_USER"] + '\\"', 
+    u'-DPAXEXPRESS_REPO=\\"' + mykeys["PAXEXPRESS_REPO"] + '\\"', 
+    u'-DPAXEXPRESS_PACKAGE=\\"' + package + '\\"',
     u'-DARDUINO_LMIC_PROJECT_CONFIG_H=' + lmicconfig,
     u'-I \"' + srcdir + '\"'
     ])
 
-# function for pushing new firmware to bintray storage using API
-def publish_bintray(source, target, env):
+# function for pushing new firmware to paxexpress storage using API
+def publish_paxexpress(source, target, env):
     firmware_path = str(source[0])
     firmware_name = basename(firmware_path)
     url = "/".join([
@@ -122,7 +122,7 @@ def publish_bintray(source, target, env):
         user, repository, package, version, firmware_name
     ])
 
-    print("Uploading {0} to Bintray. Version: {1}".format(
+    print("Uploading {0} to PAX.express. Version: {1}".format(
         firmware_name, version))
     print(url)
 
@@ -145,9 +145,9 @@ def publish_bintray(source, target, env):
                          ("%s\n%s" % (r.status_code, r.text) if r else str(e)))
         env.Exit(1)
 
-    print("The firmware has been successfuly published at Bintray.com!")
+    print("Firmware has been successfully published at PAX.express!")
 
 # put build file name and upload command to platformio environment
 env.Replace(
     PROGNAME="firmware_" + package + "_v%s" % version,
-    UPLOADCMD=publish_bintray)
+    UPLOADCMD=publish_paxexpress)
