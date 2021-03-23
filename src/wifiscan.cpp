@@ -104,4 +104,4 @@ void switch_wifi_sniffer(uint8_t state) {
     esp_wifi_stop();
   }
 }
-#endif
+#endif // !(LIBPAX)

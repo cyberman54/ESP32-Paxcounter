@@ -107,7 +107,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   sendTimer.detach();
 
   // switch off radio and other power consuming hardware
-#if !(LIBPAX)   
+#if !(LIBPAX)
 #if (WIFICOUNTER)
   switch_wifi_sniffer(0);
 #endif
@@ -120,8 +120,10 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   sds011_sleep(void);
 #endif
 
+#if !(LIBPAX)
   // stop MAC processing
   vTaskDelete(macProcessTask);
+#endif
 
   // halt interrupts accessing i2c bus
   mask_user_IRQ();
