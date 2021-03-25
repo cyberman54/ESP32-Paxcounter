@@ -88,9 +88,6 @@ void do_after_reset(void) {
     RTC_restarts++;
     break;
   }
-
-  ESP_LOGI(TAG, "Starting Software v%s (runmode=%d / restarts=%d)", PROGVERSION,
-           RTC_runmode, RTC_restarts);
 }
 
 void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {

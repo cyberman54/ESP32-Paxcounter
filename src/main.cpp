@@ -91,6 +91,7 @@ configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 uint8_t batt_level = 0;                 // display value
 uint8_t volatile rf_load = 0;           // RF traffic indicator
+char clientId[20] = {0};                // unique ClientID
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 
@@ -136,6 +137,14 @@ void setup() {
 
   // load device configuration from NVRAM and set runmode
   do_after_reset();
+
+  // hash 6 byte device MAC to 4 byte clientID
+  uint8_t mac[6];
+  esp_eth_get_mac(mac);
+  const uint32_t hashedmac = myhash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
+  ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
+           PROGVERSION, RTC_runmode, RTC_restarts);
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
