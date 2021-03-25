@@ -305,16 +305,18 @@ void setup() {
 #if (defined WIFICOUNTER || defined BLECOUNTER)
   struct libpax_config_t configuration;
   libpax_default_config(&configuration);
-  ESP_LOGI(TAG, "BLESCAN: %d", cfg.blescan);
-  ESP_LOGI(TAG, "WIFISCAN: %d", cfg.wifiscan);
-  configuration.wificounter = cfg.wifiscan;
-  configuration.blecounter = cfg.blescan;
 
+  // configure WIFI sniffing
+  configuration.wificounter = cfg.wifiscan;
   configuration.wifi_channel_map = WIFI_CHANNEL_ALL;
   configuration.wifi_channel_switch_interval = cfg.wifichancycle;
   configuration.wifi_rssi_threshold = cfg.rssilimit;
+  ESP_LOGI(TAG, "WIFISCAN: %s", cfg.wifiscan ? "on" : "off");
 
+  // configure BLE sniffing
+  configuration.blecounter = cfg.blescan;
   configuration.blescantime = cfg.blescantime;
+  ESP_LOGI(TAG, "BLESCAN: %s", cfg.blescan ? "on" : "off");
 
   int config_update = libpax_update_config(&configuration);
   if (config_update != 0) {
