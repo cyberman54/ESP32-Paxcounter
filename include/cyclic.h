@@ -1,6 +1,7 @@
 #ifndef _CYCLIC_H
 #define _CYCLIC_H
 
+#include <libpax_api.h>
 #include "globals.h"
 #include "senddata.h"
 #include "rcommand.h"
@@ -10,11 +11,8 @@
 #include "display.h"
 #include "sds011read.h"
 #include "sdcard.h"
-#include "macsniff.h"
 #include "reset.h"
-#if LIBPAX
-#include <libpax_api.h>
-#endif
+#include "led.h"
 
 extern Ticker cyclicTimer;
 

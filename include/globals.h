@@ -15,7 +15,6 @@
 #include <set>
 #include <array>
 #include <algorithm>
-#include "mallocator.h"
 #include <bsec.h>
 
 #define _bit(b) (1U << (b))
@@ -100,13 +99,6 @@ typedef struct {
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
 
-// Struct for MAC processing queue
-typedef struct {
-  uint8_t mac[6];
-  int8_t rssi;
-  snifftype_t sniff_type;
-} MacBuffer_t;
-
 typedef struct {
   int32_t latitude;
   int32_t longitude;
@@ -131,7 +123,6 @@ typedef struct {
   float pm25;
 } sdsStatus_t;
 
-extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
@@ -140,15 +131,12 @@ extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 extern uint8_t volatile channel;               // wifi channel rotation counter
 extern uint8_t volatile rf_load;               // RF traffic indicator
 extern uint8_t batt_level;                     // display value
-extern uint16_t volatile macs_wifi, macs_ble;  // display values
-#if LIBPAX
 extern uint16_t volatile libpax_macs_ble, libpax_macs_wifi; // libpax values
-#endif
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
 extern SemaphoreHandle_t I2Caccess;
-extern TaskHandle_t irqHandlerTask, ClockTask, macProcessTask;
+extern TaskHandle_t irqHandlerTask, ClockTask;
 extern TimerHandle_t WifiChanTimer;
 extern Timezone myTZ;
 

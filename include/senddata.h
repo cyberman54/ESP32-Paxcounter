@@ -1,6 +1,7 @@
 #ifndef _SENDDATA_H
 #define _SENDDATA_H
 
+#include <libpax_api.h>
 #include "spislave.h"
 #include "mqttclient.h"
 #include "cyclic.h"
@@ -9,18 +10,11 @@
 #include "display.h"
 #include "sdcard.h"
 
-
 #if (COUNT_ENS)
 #include "corona.h"
 #endif
 
-#if LIBPAX
-#include <libpax_api.h>
-
 extern struct count_payload_t count_from_libpax;
-#endif
-
-
 extern Ticker sendTimer;
 
 void SendPayload(uint8_t port);
