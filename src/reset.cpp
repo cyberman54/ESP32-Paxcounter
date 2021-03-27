@@ -56,6 +56,7 @@ void do_after_reset(void) {
 
   case SW_CPU_RESET: // 0x0c Software reset CPU
     // keep previous set runmode (update / normal / maintenance)
+    RTC_restarts++;
     break;
 
   case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
@@ -84,10 +85,10 @@ void do_after_reset(void) {
   case RTCWDT_RTC_RESET: // 0x10 RTC Watch dog reset digital core and rtc mode
   default:
     RTC_runmode = RUNMODE_POWERCYCLE;
+    RTC_restarts++;
     break;
   }
 
-  RTC_restarts++;
   ESP_LOGI(TAG, "Starting Software v%s (runmode=%d / restarts=%d)", PROGVERSION,
            RTC_runmode, RTC_restarts);
 }
