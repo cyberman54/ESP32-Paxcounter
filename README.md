@@ -373,9 +373,9 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them, but must not exceed a maximum of 10 bytes per downlink.
 
-Note: settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command 0x20. 
+Note: settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command 0x21. 
 
-Send for example `8386` as Downlink on Port 2 to get battery status and time/date from the device.
+Send for example `83` `86` as Downlink on Port 2 to get battery status and time/date from the device.
 <img src="img/paxcounter_downlink_example.png">
 
 0x01 set scan RSSI limit
