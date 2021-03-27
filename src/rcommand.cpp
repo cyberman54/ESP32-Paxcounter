@@ -68,9 +68,11 @@ void set_sendcycle(uint8_t val[]) {
 }
 
 void set_sleepcycle(uint8_t val[]) {
-  cfg.sleepcycle = val[0];
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  uint16_t t = __builtin_bswap16(*(uint16_t *)(val));
+  cfg.sleepcycle = t;
   ESP_LOGI(TAG, "Remote command: set sleep cycle to %d seconds",
-           cfg.sleepcycle * 2);
+           cfg.sleepcycle * 10);
 }
 
 void set_wifichancycle(uint8_t val[]) {
@@ -435,7 +437,7 @@ static const cmd_t table[] = {
     {0x13, set_sensor, 2},        {0x14, set_payloadmask, 1},
     {0x15, set_bme, 1},           {0x16, set_batt, 1},
     {0x17, set_wifiscan, 1},      {0x18, set_enscount, 1},
-    {0x19, set_sleepcycle, 1},    {0x20, set_loadconfig, 0},
+    {0x19, set_sleepcycle, 2},    {0x20, set_loadconfig, 0},
     {0x21, set_saveconfig, 0},    {0x80, get_config, 0},
     {0x81, get_status, 0},        {0x83, get_batt, 0},
     {0x84, get_gps, 0},           {0x85, get_bme, 0},
