@@ -56,6 +56,12 @@ void set_reset(uint8_t val[]) {
 
 void set_rssi(uint8_t val[]) {
   cfg.rssilimit = val[0] * -1;
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.wifi_rssi_threshold = cfg.rssilimit;
+  libpax_update_config(&current_config);
+  init_libpax();
   ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
 }
 
@@ -77,12 +83,33 @@ void set_sleepcycle(uint8_t val[]) {
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
-  // TODO update libpax configuration
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+
+  if (cfg.wifichancycle == 0) {
+    ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
+    current_config.wifi_channel_map = WIFI_CHANNEL_1;
+  } else {
+    ESP_LOGI(
+        TAG,
+        "Remote command: set Wifi channel hopping interval to %.1f seconds",
+        cfg.wifichancycle / float(100));
+  }
+
+  current_config.wifi_channel_switch_interval = cfg.wifichancycle;
+  libpax_update_config(&current_config);
+  init_libpax();
 }
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
-  // TODO update libpax configuration
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.blescantime = cfg.blescantime;
+  libpax_update_config(&current_config);
+  init_libpax();
 }
 
 void set_countmode(uint8_t val[]) {
@@ -187,7 +214,7 @@ void set_beacon(uint8_t val[]) {
   memmove(val, val + 1, 6);      // strip off storage id
   beacons[id] = macConvert(val); // store beacon MAC in array
   ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
-  //printKey("MAC", val, 6, false); // show beacon MAC
+  // printKey("MAC", val, 6, false); // show beacon MAC
 }
 
 void set_monitor(uint8_t val[]) {
