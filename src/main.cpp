@@ -38,7 +38,6 @@ timesync_proc 1     3     processes realtime time sync requests
 irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
-macprocess    1     1     MAC analyzer loop
 rmcd_process  1     1     Remote command interpreter loop
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
@@ -91,13 +90,7 @@ triggers pps 1 sec impulse
 configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 uint8_t batt_level = 0;                 // display value
-#if !(LIBPAX)   
-uint8_t volatile channel = WIFI_CHANNEL_MIN;   // channel rotation counter
-#endif
-uint8_t volatile rf_load = 0;                  // RF traffic indicator
-#if !(LIBPAX)   
-uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
-#endif
+char clientId[20] = {0};                // unique ClientID
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 
@@ -106,10 +99,6 @@ SemaphoreHandle_t I2Caccess;
 bool volatile TimePulseTick = false;
 timesource_t timeSource = _unsynced;
 
-// container holding unique MAC address hashes with Memory Alloctor using PSRAM,
-// if present
-DRAM_ATTR std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
-
 // initialize payload encoder
 PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 
@@ -117,7 +106,6 @@ PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
 TimeChangeRule myDST = DAYLIGHT_TIME;
 TimeChangeRule mySTD = STANDARD_TIME;
 Timezone myTZ(myDST, mySTD);
-
 
 // local Tag for logging
 static const char TAG[] = __FILE__;
@@ -148,6 +136,14 @@ void setup() {
 
   // load device configuration from NVRAM and set runmode
   do_after_reset();
+
+  // hash 6 byte device MAC to 4 byte clientID
+  uint8_t mac[6];
+  esp_eth_get_mac(mac);
+  const uint32_t hashedmac = myhash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
+  ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
+           PROGVERSION, RTC_runmode, RTC_restarts);
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
@@ -304,60 +300,38 @@ void setup() {
   if (RTC_runmode == RUNMODE_MAINTENANCE)
     start_boot_menu();
 
-#if !(LIBPAX)   
-  // start mac processing task
-  ESP_LOGI(TAG, "Starting MAC processor...");
-  macQueueInit();
-#else
   ESP_LOGI(TAG, "Starting libpax...");
-#if (defined WIFICOUNTER || defined BLECOUNTER) 
+#if (defined WIFICOUNTER || defined BLECOUNTER)
   struct libpax_config_t configuration;
   libpax_default_config(&configuration);
-  ESP_LOGI(TAG, "BLESCAN: %d", cfg.blescan);
-  ESP_LOGI(TAG, "WIFISCAN: %d", cfg.wifiscan);
-  configuration.wificounter = cfg.wifiscan;
-  configuration.blecounter = cfg.blescan;
 
+  // configure WIFI sniffing
+  configuration.wificounter = cfg.wifiscan;
   configuration.wifi_channel_map = WIFI_CHANNEL_ALL;
   configuration.wifi_channel_switch_interval = cfg.wifichancycle;
   configuration.wifi_rssi_threshold = cfg.rssilimit;
+  ESP_LOGI(TAG, "WIFISCAN: %s", cfg.wifiscan ? "on" : "off");
 
+  // configure BLE sniffing
+  configuration.blecounter = cfg.blescan;
   configuration.blescantime = cfg.blescantime;
+  ESP_LOGI(TAG, "BLESCAN: %s", cfg.blescan ? "on" : "off");
 
   int config_update = libpax_update_config(&configuration);
-  if(config_update != 0) {
+  if (config_update != 0) {
     ESP_LOGE(TAG, "Error in libpax configuration.");
   } else {
     init_libpax();
   }
 #endif
+
+#if (BLECOUNTER)
+  strcat_P(features, " BLE");
 #endif
 
   // start rcommand processing task
   ESP_LOGI(TAG, "Starting rcommand interpreter...");
   rcmd_init();
-
-// start BLE scan callback if BLE function is enabled in NVRAM configuration
-// or remove bluetooth stack from RAM, if option bluetooth is not compiled
-#if (BLECOUNTER)
-  strcat_P(features, " BLE");
-#if !(LIBPAX)   
-  if (cfg.blescan) {
-    ESP_LOGI(TAG, "Starting Bluetooth...");
-    start_BLEscan();
-  } else
-    btStop();
-#endif
-#else
-  // remove bluetooth stack to gain more free memory
-#if !(LIBPAX)   
-  btStop();
-  esp_bt_mem_release(ESP_BT_MODE_BTDM);
-  esp_coex_preference_set(
-      ESP_COEX_PREFER_WIFI); // configure Wifi/BT coexist lib
-#endif
-
-#endif
 
 // initialize gps
 #if (HAS_GPS)
@@ -463,27 +437,9 @@ void setup() {
 
 #if (WIFICOUNTER)
   strcat_P(features, " WIFI");
-#if !(LIBPAX)   
-  // install wifi driver in RAM and start channel hopping
-  wifi_sniffer_init();
-  // start wifi sniffing, if enabled
-  if (cfg.wifiscan) {
-    ESP_LOGI(TAG, "Starting Wifi...");
-    switch_wifi_sniffer(1);
-  } else
-    switch_wifi_sniffer(0);
-#endif
-
 #else
   // remove wifi driver from RAM, if option wifi not compiled
   esp_wifi_deinit();
-#endif
-
-  // initialize salt value using esp_random() called by random() in
-  // arduino-esp32 core. Note: do this *after* wifi has started, since
-  // function gets it's seed from RF noise
-#if !(LIBPAX)   
-  reset_counters();
 #endif
 
   // start state machine

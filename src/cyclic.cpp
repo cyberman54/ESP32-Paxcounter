@@ -29,11 +29,6 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(irqHandlerTask),
            eTaskGetState(irqHandlerTask));
-#if !(LIBPAX)
-  ESP_LOGD(TAG, "MACprocessor %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(macProcessTask),
-           eTaskGetState(macProcessTask));
-#endif
   ESP_LOGD(TAG, "Rcommand interpreter %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
 #if (HAS_LORA)
@@ -138,12 +133,6 @@ uint32_t getFreeRAM() {
 void reset_counters() {
 
 #if ((WIFICOUNTER) || (BLECOUNTER))
-#if !(LIBPAX)
-  macs.clear(); // clear all macs container
-  macs_wifi = 0;
-  macs_ble = 0;
-  renew_salt(); // get new salt
-#endif
 #ifdef HAS_DISPLAY
   dp_plotCurve(0, true);
 #endif

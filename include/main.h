@@ -8,8 +8,6 @@
 #include "globals.h"
 #include "reset.h"
 #include "i2c.h"
-#include "blescan.h"
-#include "wifiscan.h"
 #include "configmanager.h"
 #include "cyclic.h"
 #include "beacon_array.h"

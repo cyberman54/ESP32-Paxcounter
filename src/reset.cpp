@@ -88,9 +88,6 @@ void do_after_reset(void) {
     RTC_restarts++;
     break;
   }
-
-  ESP_LOGI(TAG, "Starting Software v%s (runmode=%d / restarts=%d)", PROGVERSION,
-           RTC_runmode, RTC_restarts);
 }
 
 void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
@@ -108,22 +105,8 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   sendTimer.detach();
 
   // switch off radio and other power consuming hardware
-#if !(LIBPAX)
-#if (WIFICOUNTER)
-  switch_wifi_sniffer(0);
-#endif
-#if (BLECOUNTER)
-  stop_BLEscan();
-  btStop();
-#endif
-#endif
 #if (HAS_SDS011)
   sds011_sleep(void);
-#endif
-
-#if !(LIBPAX)
-  // stop MAC processing
-  vTaskDelete(macProcessTask);
 #endif
 
   // halt interrupts accessing i2c bus
