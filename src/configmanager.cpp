@@ -42,7 +42,7 @@ static void defaultConfig(configData_t *myconfig) {
       COUNTERMODE;                 // 0=cyclic, 1=cumulative, 2=cyclic confirmed
   myconfig->rssilimit = 0;         // threshold for rssilimiter, negative value!
   myconfig->sendcycle = SENDCYCLE; // payload send cycle [seconds/2]
-  myconfig->sleepcycle = SLEEPCYCLE; // sleep cycle [seconds/2]
+  myconfig->sleepcycle = SLEEPCYCLE; // sleep cycle [seconds/10]
   myconfig->wifichancycle =
       WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
   myconfig->blescantime =

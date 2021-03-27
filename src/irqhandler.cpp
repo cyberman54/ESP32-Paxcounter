@@ -90,9 +90,9 @@ void irqHandler(void *pvParameters) {
       // goto sleep if we have a sleep cycle
       if (cfg.sleepcycle)
 #ifdef HAS_BUTTON
-        enter_deepsleep(cfg.sleepcycle * 2, (gpio_num_t)HAS_BUTTON);
+        enter_deepsleep(cfg.sleepcycle * 10, (gpio_num_t)HAS_BUTTON);
 #else
-        enter_deepsleep(cfg.sleepcycle * 2);
+        enter_deepsleep(cfg.sleepcycle * 10);
 #endif
     }
   } // for

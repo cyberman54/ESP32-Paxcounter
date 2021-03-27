@@ -74,7 +74,7 @@ typedef struct __attribute__((packed)) {
   uint8_t countermode; // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
   int16_t rssilimit;   // threshold for rssilimiter, negative value!
   uint8_t sendcycle;   // payload send cycle [seconds/2]
-  uint8_t sleepcycle;  // sleep cycle [seconds/2]
+  uint16_t sleepcycle; // sleep cycle [seconds/10]
   uint8_t wifichancycle; // wifi channel switch cycle [seconds/100]
   uint8_t blescantime;   // BLE scan cycle duration [seconds]
   uint8_t blescan;       // 0=disabled, 1=enabled
