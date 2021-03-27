@@ -21,7 +21,8 @@ void set_reset(uint8_t val[]) {
     reset_counters(); // clear macs
     break;
   case 2: // reset device to factory settings
-    ESP_LOGI(TAG, "Remote command: reset device to factory settings and restart");
+    ESP_LOGI(TAG,
+             "Remote command: reset device to factory settings and restart");
     eraseConfig();
     do_reset(false);
     break;
@@ -74,7 +75,7 @@ void set_sleepcycle(uint8_t val[]) {
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
-  #ifndef LIBAPX
+#ifndef LIBAPX
   // update Wifi channel rotation timer period
   if (cfg.wifichancycle > 0) {
     if (xTimerIsTimerActive(WifiChanTimer) == pdFALSE)
@@ -91,14 +92,14 @@ void set_wifichancycle(uint8_t val[]) {
     channel = WIFI_CHANNEL_MIN;
     ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
   }
-  #else
-  // TODO update libpax configuration
-  #endif
+#else
+// TODO update libpax configuration
+#endif
 }
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
-  #if !(LIBPAX)   
+#if !(LIBPAX)
   ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds",
            cfg.blescantime / float(100));
   // stop & restart BLE scan task to apply new parameter
@@ -106,9 +107,9 @@ void set_blescantime(uint8_t val[]) {
     stop_BLEscan();
     start_BLEscan();
   }
-  #else
-    // TODO update libpax configuration
-  #endif
+#else
+  // TODO update libpax configuration
+#endif
 }
 
 void set_countmode(uint8_t val[]) {
@@ -251,37 +252,37 @@ void set_loraadr(uint8_t val[]) {
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
   cfg.blescan = val[0] ? 1 : 0;
-  #if !(LIBPAX)   
+#if !(LIBPAX)
   macs_ble = 0; // clear BLE counter
   if (cfg.blescan)
     start_BLEscan();
   else
     stop_BLEscan();
-  #else
+#else
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
   current_config.blecounter = cfg.blescan;
   libpax_update_config(&current_config);
   init_libpax();
-  #endif 
+#endif
 }
 
 void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
   cfg.wifiscan = val[0] ? 1 : 0;
-  #if !(LIBPAX)   
+#if !(LIBPAX)
   macs_wifi = 0; // clear WIFI counter
   switch_wifi_sniffer(cfg.wifiscan);
-  #else
+#else
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
   current_config.wificounter = cfg.wifiscan;
   libpax_update_config(&current_config);
   init_libpax();
-  #endif 
+#endif
 }
 
 void set_wifiant(uint8_t val[]) {
@@ -381,9 +382,16 @@ void get_time(uint8_t val[]) {
   SendPayload(TIMEPORT);
 };
 
-void set_time(uint8_t val[]) {
+void set_timesync(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: timesync requested");
   setTimeSyncIRQ();
+};
+
+void set_time(uint8_t val[]) {
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  uint32_t t = __builtin_bswap32(*(uint32_t *)(val));
+  ESP_LOGI(TAG, "Remote command: set time to %d", t);
+  setMyTime(t, 0, _unsynced);
 };
 
 void set_flush(uint8_t val[]) {
@@ -431,8 +439,8 @@ static const cmd_t table[] = {
     {0x21, set_saveconfig, 0},    {0x80, get_config, 0},
     {0x81, get_status, 0},        {0x83, get_batt, 0},
     {0x84, get_gps, 0},           {0x85, get_bme, 0},
-    {0x86, get_time, 0},          {0x87, set_time, 0},
-    {0x99, set_flush, 0}};
+    {0x86, get_time, 0},          {0x87, set_timesync, 0},
+    {0x88, set_time, 4},          {0x99, set_flush, 0}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table

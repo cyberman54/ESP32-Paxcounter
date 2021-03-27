@@ -579,10 +579,13 @@ Send for example `8386` as Downlink on Port 2 to get battery status and time/dat
 			0x01 = timeNeedsSync (last sync failed)
 			0x02 = timeSet (synched)
 
-0x87 set time/date
+0x87 sync time/date
 
 	Device synchronizes it's time/date by calling the preconfigured time source.
 
+0x88 set time/date
+
+	bytes 1..4 = time/date to set in UTC epoch seconds (LSB, e.g. https://www.epochconverter.com/hex)
 	
 # License
 
