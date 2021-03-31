@@ -357,7 +357,7 @@ void set_time(uint8_t val[]) {
   // swap byte order from msb to lsb, note: this is a platform dependent hack
   uint32_t t = __builtin_bswap32(*(uint32_t *)(val));
   ESP_LOGI(TAG, "Remote command: set time to %d", t);
-  setMyTime(t, 0, _unsynced);
+  setMyTime(t, 0, _set);
 };
 
 void set_flush(uint8_t val[]) {

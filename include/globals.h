@@ -50,7 +50,7 @@
 
 #define _seconds() millis() / 1000.0
 
-enum timesource_t { _gps, _rtc, _lora, _unsynced };
+enum timesource_t { _gps, _rtc, _lora, _set, _unsynced };
 enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 enum runmode_t {
   RUNMODE_POWERCYCLE,

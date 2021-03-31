@@ -12,7 +12,7 @@
 static const char TAG[] = __FILE__;
 
 // symbol to display current time source
-const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
+const char timeSetSymbols[] = {'G', 'R', 'L', 'S', '?'};
 
 #ifdef HAS_IF482
 #if (HAS_SDS011)
