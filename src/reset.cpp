@@ -106,7 +106,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
 
   // switch off radio and other power consuming hardware
 #if (HAS_SDS011)
-  sds011_sleep(void);
+  sds011_sleep();
 #endif
 
   // halt interrupts accessing i2c bus
