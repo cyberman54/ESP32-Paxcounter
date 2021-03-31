@@ -5,6 +5,8 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+SemaphoreHandle_t I2Caccess;
+
 void i2c_init(void) { Wire.begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL, 100000); }
 
 void i2c_deinit(void) { Wire.~TwoWire(); }

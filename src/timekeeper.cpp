@@ -14,6 +14,17 @@ static const char TAG[] = __FILE__;
 // symbol to display current time source
 const char timeSetSymbols[] = {'G', 'R', 'L', 'S', '?'};
 
+// set Time Zone for user setting from paxcounter.conf
+TimeChangeRule myDST = DAYLIGHT_TIME;
+TimeChangeRule mySTD = STANDARD_TIME;
+Timezone myTZ(myDST, mySTD);
+
+bool volatile TimePulseTick = false;
+timesource_t timeSource = _unsynced;
+
+TaskHandle_t ClockTask = NULL;
+hw_timer_t *ppsIRQ = NULL;
+
 #ifdef HAS_IF482
 #if (HAS_SDS011)
 #error cannot use IF482 together with SDS011 (both use UART#2)

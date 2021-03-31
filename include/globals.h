@@ -127,7 +127,6 @@ extern std::array<uint64_t, 0xff> beacons;
 
 extern configData_t cfg;                       // current device configuration
 extern char clientId[20];                      // unique clientID
-extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 extern uint8_t batt_level;                     // display value
 extern uint16_t volatile libpax_macs_ble, libpax_macs_wifi; // libpax values
 extern uint8_t volatile channel;    // wifi channel rotation counter

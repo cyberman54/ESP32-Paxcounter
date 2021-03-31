@@ -47,6 +47,8 @@ uint8_t displaybuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static uint8_t plotbuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static int dp_row = 0, dp_col = 0, dp_font = 0;
 
+hw_timer_t *displayIRQ = NULL;
+
 QRCode qrcode;
 
 #ifdef HAS_DISPLAY

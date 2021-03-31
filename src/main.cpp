@@ -85,30 +85,13 @@ triggers pps 1 sec impulse
 
 // Basic Config
 #include "main.h"
-#include "libpax_helpers.h"
-
-configData_t cfg; // struct holds current device configuration
-char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
-uint8_t batt_level = 0;                 // display value
-char clientId[20] = {0};                // unique ClientID
-
-hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
-
-TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
-SemaphoreHandle_t I2Caccess;
-bool volatile TimePulseTick = false;
-timesource_t timeSource = _unsynced;
-
-// initialize payload encoder
-PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
-
-// set Time Zone for user setting from paxcounter.conf
-TimeChangeRule myDST = DAYLIGHT_TIME;
-TimeChangeRule mySTD = STANDARD_TIME;
-Timezone myTZ(myDST, mySTD);
 
 // local Tag for logging
 static const char TAG[] = __FILE__;
+
+configData_t cfg; // struct holds current device configuration
+uint8_t batt_level = 0;                 // display value
+char clientId[20] = {0};                // unique ClientID
 
 void setup() {
 

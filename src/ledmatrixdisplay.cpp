@@ -14,6 +14,8 @@ static uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8] = {0};
 static unsigned long ulLastNumMacs = 0;
 static time_t ulLastTime = myTZ.toLocal(now());
 
+hw_timer_t *matrixDisplayIRQ = NULL;
+
 LEDMatrix matrix(LED_MATRIX_LA_74138, LED_MATRIX_LB_74138, LED_MATRIX_LC_74138,
                  LED_MATRIX_LD_74138, LED_MATRIX_EN_74138, LED_MATRIX_DATA_R1,
                  LED_MATRIX_LATCHPIN, LED_MATRIX_CLOCKPIN);

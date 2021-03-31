@@ -3,6 +3,8 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+TaskHandle_t irqHandlerTask = NULL;
+
 // irq handler task, handles all our application level interrupts
 void irqHandler(void *pvParameters) {
 

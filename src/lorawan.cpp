@@ -21,6 +21,7 @@ RTC_DATA_ATTR lmic_t RTC_LMIC;
 
 static QueueHandle_t LoraSendQueue;
 TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
+char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 

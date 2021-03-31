@@ -1,6 +1,9 @@
 #include "globals.h"
 #include "payload.h"
 
+// initialize payload encoder
+PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
+
 PayloadConvert::PayloadConvert(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
   cursor = 0;
