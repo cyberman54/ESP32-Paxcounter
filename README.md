@@ -224,7 +224,7 @@ Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure
 	#define MACFILTER		0	// disable MAC filter
 	#define BLECOUNTER		1	// enable bluetooth sniffing
 	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
-	#define HAS_SENSOR_1		1	// optional: transmit ENS counter data to server
+	#define HAS_SENSOR_1		1	// optional, in board's hal file: transmit ENS counter data to server
 
 # SD-card
 
