@@ -3,6 +3,7 @@
 
 #include "sensor.h"
 #include "sds011read.h"
+#include "gpsread.h"
 
 // MyDevices CayenneLPP 1.0 channels for Synamic sensor payload format
 // all payload goes out on LoRa FPort 1
@@ -100,5 +101,6 @@ private:
 };
 
 extern PayloadConvert payload;
+extern uint8_t batt_level;
 
 #endif // _PAYLOAD_H_

@@ -10,8 +10,15 @@
 #include "if482.h"
 #include "dcf77.h"
 
+enum timesource_t { _gps, _rtc, _lora, _set, _unsynced };
+
 extern const char timeSetSymbols[];
 extern Ticker timesyncer;
+extern timesource_t timeSource;
+extern TaskHandle_t ClockTask;
+extern Timezone myTZ;
+extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
+extern hw_timer_t *ppsIRQ;
 
 void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);

@@ -26,6 +26,8 @@ void mask_user_IRQ();
 void unmask_user_IRQ();
 void doIRQ(int irq);
 
+extern TaskHandle_t irqHandlerTask;
+
 #ifdef HAS_DISPLAY
 void IRAM_ATTR DisplayIRQ();
 #endif

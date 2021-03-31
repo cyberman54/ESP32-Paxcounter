@@ -4,6 +4,7 @@
 #include <libpax_api.h>
 #include "cyclic.h"
 #include "qrcode.h"
+#include "power.h"
 
 #if (COUNT_ENS)
 #include "corona.h"
@@ -77,7 +78,10 @@
 #define QR_VERSION 3 // 29 x 29px
 
 const uint8_t QR_SCALEFACTOR = (MY_DISPLAY_HEIGHT - 4) / 29; // 4px borderlines
+
 extern uint8_t DisplayIsOn, displaybuf[];
+extern hw_timer_t *displayIRQ;
+extern uint8_t volatile channel;    // wifi channel rotation counter
 
 void dp_setup(int contrast = 0);
 void dp_refresh(bool nextPage = false);

@@ -13,6 +13,7 @@
 #include "sdcard.h"
 #include "reset.h"
 #include "led.h"
+#include "power.h"
 
 extern Ticker cyclicTimer;
 

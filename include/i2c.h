@@ -21,6 +21,8 @@
 #define MY_DISPLAY_SCL SCL
 #endif
 
+extern SemaphoreHandle_t I2Caccess;
+
 void i2c_init(void);
 void i2c_deinit(void);
 void i2c_scan(void);

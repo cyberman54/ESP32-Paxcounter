@@ -17,6 +17,8 @@ static const char TAG[] = __FILE__;
 
 Preferences nvram;
 
+configData_t cfg; // struct holds current device configuration
+
 static const uint8_t cfgMagicBytes[] = {0x21, 0x76, 0x87, 0x32, 0xf4};
 static const size_t cfgLen = sizeof(cfg), cfgLen2 = sizeof(cfgMagicBytes);
 static uint8_t buffer[cfgLen + cfgLen2];

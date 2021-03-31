@@ -2,6 +2,7 @@
 #define _SENDDATA_H
 
 #include <libpax_api.h>
+#include "libpax_helpers.h"
 #include "spislave.h"
 #include "mqttclient.h"
 #include "cyclic.h"

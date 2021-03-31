@@ -7,4 +7,6 @@
 
 void init_libpax();
 
+extern uint16_t volatile libpax_macs_ble, libpax_macs_wifi; // libpax values
+
 #endif

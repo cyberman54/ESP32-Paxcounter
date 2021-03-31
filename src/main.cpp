@@ -89,8 +89,6 @@ triggers pps 1 sec impulse
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-configData_t cfg; // struct holds current device configuration
-uint8_t batt_level = 0;                 // display value
 char clientId[20] = {0};                // unique ClientID
 
 void setup() {

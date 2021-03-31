@@ -6,8 +6,8 @@
 #include "ledmatrixdisplay.h"
 
 extern uint8_t MatrixDisplayIsOn;
-
 extern LEDMatrix matrix;
+extern hw_timer_t *matrixDisplayIRQ;
 
 void init_matrix_display(bool reverse = false);
 void refreshTheMatrixDisplay(bool nextPage = false);

@@ -50,16 +50,7 @@
 
 #define _seconds() millis() / 1000.0
 
-enum timesource_t { _gps, _rtc, _lora, _set, _unsynced };
 enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
-enum runmode_t {
-  RUNMODE_POWERCYCLE,
-  RUNMODE_NORMAL,
-  RUNMODE_WAKEUP,
-  RUNMODE_UPDATE,
-  RUNMODE_SLEEP,
-  RUNMODE_MAINTENANCE
-};
 
 // Struct holding devices's runtime configuration
 // using packed to avoid compiler padding, because struct will be memcpy'd to
@@ -125,16 +116,6 @@ typedef struct {
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 
-extern configData_t cfg;                       // current device configuration
-extern char clientId[20];                      // unique clientID
-extern uint8_t batt_level;                     // display value
-extern uint16_t volatile libpax_macs_ble, libpax_macs_wifi; // libpax values
-extern uint8_t volatile channel;    // wifi channel rotation counter
-extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
-extern timesource_t timeSource;
-extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
-extern SemaphoreHandle_t I2Caccess;
-extern TaskHandle_t irqHandlerTask, ClockTask;
-extern Timezone myTZ;
+extern char clientId[20]; // unique clientID
 
 #endif

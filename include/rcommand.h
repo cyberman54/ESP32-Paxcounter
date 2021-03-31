@@ -11,6 +11,7 @@
 #include "cyclic.h"
 #include "timekeeper.h"
 #include "timesync.h"
+#include "power.h"
 
 // maximum number of elements in rcommand interpreter queue
 #define RCMD_QUEUE_SIZE 5

@@ -5,6 +5,8 @@
 #include "reset.h"
 #include <Preferences.h>
 
+extern configData_t cfg;
+
 void saveConfig(bool erase = false);
 bool loadConfig(void);
 void eraseConfig(void);
