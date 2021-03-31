@@ -130,6 +130,7 @@ extern char clientId[20];                      // unique clientID
 extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 extern uint8_t batt_level;                     // display value
 extern uint16_t volatile libpax_macs_ble, libpax_macs_wifi; // libpax values
+extern uint8_t volatile channel;    // wifi channel rotation counter
 extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern timesource_t timeSource;
 extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
