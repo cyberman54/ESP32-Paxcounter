@@ -399,10 +399,6 @@ void setup() {
     strcat_P(features, " SDS");
 #endif
 
-#if (MACFILTER)
-  strcat_P(features, " FILTER");
-#endif
-
 // initialize matrix display
 #ifdef HAS_MATRIX_DISPLAY
   strcat_P(features, " LED_MATRIX");

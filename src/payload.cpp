@@ -49,7 +49,7 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.blescantime;
   buffer[cursor++] = value.blescan;
   buffer[cursor++] = value.wifiant;
-  buffer[cursor++] = value.macfilter;
+  buffer[cursor++] = 0; // reserved
   buffer[cursor++] = value.rgblum;
   buffer[cursor++] = value.payloadmask;
   buffer[cursor++] = value.monitormode;
@@ -58,7 +58,8 @@ void PayloadConvert::addConfig(configData_t value) {
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
-                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
+                               uint32_t mem, uint8_t reset0,
+                               uint32_t restarts) {
 
   buffer[cursor++] = highByte(voltage);
   buffer[cursor++] = lowByte(voltage);
@@ -181,14 +182,15 @@ void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.rgblum);
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
-              value.blescan ? true : false, value.wifiant ? true : false,
-              value.macfilter ? true : false, value.monitormode ? true : false);
+              value.blescan ? true : false, value.wifiant ? true : false, 0,
+              value.monitormode ? true : false);
   writeUint8(value.payloadmask);
   writeVersion(value.version);
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
-                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
+                               uint32_t mem, uint8_t reset0,
+                               uint32_t restarts) {
   writeUint16(voltage);
   writeUptime(uptime);
   writeUint8((byte)cputemp);
@@ -400,7 +402,8 @@ void PayloadConvert::addConfig(configData_t value) {
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
-                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
+                               uint32_t mem, uint8_t reset0,
+                               uint32_t restarts) {
   uint16_t temp = celsius * 10;
   uint16_t volt = voltage / 10;
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)

@@ -263,7 +263,7 @@ var bitmap1 = function (byte) {
     }
     var i = bytesToInt(byte);
     var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
-    return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'filter', 'alarm']
+    return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'reserved', 'alarm']
         .reduce(function (obj, pos, index) {
             obj[pos] = +bm[index];
             return obj;
