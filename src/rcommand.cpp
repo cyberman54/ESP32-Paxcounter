@@ -16,9 +16,8 @@ void set_reset(uint8_t val[]) {
     ESP_LOGI(TAG, "Remote command: restart device cold");
     do_reset(false);
     break;
-  case 1: // reset MAC counter
-    ESP_LOGI(TAG, "Remote command: reset MAC counter");
-    reset_counters(); // clear macs
+  case 1: // reserved
+    // reset MAC counter deprecated by libpax integration
     break;
   case 2: // reset device to factory settings
     ESP_LOGI(TAG,
@@ -105,7 +104,6 @@ void set_countmode(uint8_t val[]) {
         "Remote command: set counter mode called with invalid parameter(s)");
     return;
   }
-  reset_counters(); // clear macs
 }
 
 void set_screensaver(uint8_t val[]) {
@@ -187,7 +185,7 @@ void set_beacon(uint8_t val[]) {
   memmove(val, val + 1, 6);      // strip off storage id
   beacons[id] = macConvert(val); // store beacon MAC in array
   ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
-  //printKey("MAC", val, 6, false); // show beacon MAC
+  // printKey("MAC", val, 6, false); // show beacon MAC
 }
 
 void set_monitor(uint8_t val[]) {

@@ -76,9 +76,12 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
     if (cfg.countermode == 1)
 
+      // update counter values from libpax
+      libpax_counter_count(&count_from_libpax);
+
     { // cumulative counter mode -> display total number of pax
-      if (ulLastNumMacs != macs.size()) {
-        ulLastNumMacs = macs.size();
+      if (ulLastNumMacs != count_from_libpax.pax) {
+        ulLastNumMacs = count_from_libpax.pax;
         matrix.clear();
         DrawNumber(String(ulLastNumMacs));
       }
@@ -86,10 +89,10 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
     else { // cyclic counter mode -> plot a line diagram
 
-      if (ulLastNumMacs != macs.size()) {
+      if (ulLastNumMacs != count_from_libpax.pax) {
 
         // next count cycle?
-        if (macs.size() == 0) {
+        if (count_from_libpax.pax == 0) {
 
           // matrix full? then scroll left 1 dot, else increment column
           if (col < (LED_MATRIX_WIDTH - 1))
@@ -101,7 +104,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
           matrix.drawPoint(col, row, 0); // clear current dot
 
         // scale and set new dot
-        ulLastNumMacs = macs.size();
+        ulLastNumMacs = count_from_libpax.pax;
         level = ulLastNumMacs / LINE_DIAGRAM_DIVIDER;
         row = level <= LED_MATRIX_HEIGHT
                   ? LED_MATRIX_HEIGHT - 1 - level % LED_MATRIX_HEIGHT

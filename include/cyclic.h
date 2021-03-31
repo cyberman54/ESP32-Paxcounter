@@ -18,7 +18,6 @@ extern Ticker cyclicTimer;
 
 void setCyclicIRQ(void);
 void doHousekeeping(void);
-void reset_counters(void);
 uint32_t getFreeRAM();
 
 #endif

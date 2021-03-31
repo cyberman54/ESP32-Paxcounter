@@ -1,6 +1,7 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
+#include <libpax_api.h>
 #include "cyclic.h"
 #include "qrcode.h"
 
