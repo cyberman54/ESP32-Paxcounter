@@ -223,7 +223,7 @@ Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure
 	#define COUNT_ENS		1	// enable ENS monitoring function
 	#define BLECOUNTER		1	// enable bluetooth sniffing
 	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
-	#define HAS_SENSOR_1		1	// optional: transmit ENS counter data to server
+	#define HAS_SENSOR_1		1	// optional, in board's hal file: transmit ENS counter data to server
 
 # SD-card
 
@@ -372,9 +372,9 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them, but must not exceed a maximum of 10 bytes per downlink.
 
-Note: settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command 0x20. 
+Note: settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command 0x21. 
 
-Send for example `8386` as Downlink on Port 2 to get battery status and time/date from the device.
+Send for example `83` `86` as Downlink on Port 2 to get battery status and time/date from the device.
 <img src="img/paxcounter_downlink_example.png">
 
 0x01 set scan RSSI limit
