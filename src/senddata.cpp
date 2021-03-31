@@ -88,7 +88,8 @@ void sendData() {
       ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
       payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
+        ESP_LOGI(TAG, "Sending libpax ble count: %d",
+                 libpax_macs_ble);
         payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
       }
 #endif
@@ -114,14 +115,8 @@ void sendData() {
         payload.addSDS(sds_status);
 #endif
         SendPayload(COUNTERPORT);
-        // clear counter if not in cumulative counter mode
-        if (cfg.countermode != 1) {
-          reset_counters(); // clear macs container and reset all counters
-          ESP_LOGI(TAG, "Counter cleared");
-        }
 #ifdef HAS_DISPLAY
-        else
-          dp_plotCurve(macs.size(), true);
+        dp_plotCurve(libpax_macs_ble + libpax_macs_wifi, true);
 #endif
         break;
 #endif

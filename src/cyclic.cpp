@@ -89,24 +89,18 @@ void doHousekeeping() {
 
   // check free heap memory
   if (ESP.getMinFreeHeap() <= MEM_LOW) {
-    ESP_LOGI(TAG,
+    ESP_LOGW(TAG,
              "Memory full, counter cleared (heap low water mark = %d Bytes / "
              "free heap = %d bytes)",
              ESP.getMinFreeHeap(), ESP.getFreeHeap());
-    reset_counters(); // clear macs container and reset all counters
-
-    if (ESP.getMinFreeHeap() <= MEM_LOW) // check again
-      do_reset(true);                    // memory leak, reset device
+    do_reset(true); // memory leak, reset device
   }
 
 // check free PSRAM memory
 #ifdef BOARD_HAS_PSRAM
   if (ESP.getMinFreePsram() <= MEM_LOW) {
-    ESP_LOGI(TAG, "PSRAM full, counter cleared");
-    reset_counters(); // clear macs container and reset all counters
-
-    if (ESP.getMinFreePsram() <= MEM_LOW) // check again
-      do_reset(true);                     // memory leak, reset device
+    ESP_LOGW(TAG, "PSRAM full, counter cleared");
+    do_reset(true); // memory leak, reset device
   }
 #endif
 
@@ -127,15 +121,5 @@ uint32_t getFreeRAM() {
   return ESP.getFreeHeap();
 #else
   return ESP.getFreePsram();
-#endif
-}
-
-void reset_counters() {
-
-#if ((WIFICOUNTER) || (BLECOUNTER))
-#ifdef HAS_DISPLAY
-  dp_plotCurve(0, true);
-#endif
-
 #endif
 }

@@ -16,9 +16,8 @@ void set_reset(uint8_t val[]) {
     ESP_LOGI(TAG, "Remote command: restart device cold");
     do_reset(false);
     break;
-  case 1: // reset MAC counter
-    ESP_LOGI(TAG, "Remote command: reset MAC counter");
-    reset_counters(); // clear macs
+  case 1: // reserved
+    // reset MAC counter deprecated by libpax integration
     break;
   case 2: // reset device to factory settings
     ESP_LOGI(TAG,
@@ -132,7 +131,6 @@ void set_countmode(uint8_t val[]) {
         "Remote command: set counter mode called with invalid parameter(s)");
     return;
   }
-  reset_counters(); // clear macs
 }
 
 void set_screensaver(uint8_t val[]) {
@@ -378,7 +376,7 @@ void set_time(uint8_t val[]) {
   // swap byte order from msb to lsb, note: this is a platform dependent hack
   uint32_t t = __builtin_bswap32(*(uint32_t *)(val));
   ESP_LOGI(TAG, "Remote command: set time to %d", t);
-  setMyTime(t, 0, _unsynced);
+  setMyTime(t, 0, _set);
 };
 
 void set_flush(uint8_t val[]) {

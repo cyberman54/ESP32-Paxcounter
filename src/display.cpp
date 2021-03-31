@@ -159,7 +159,7 @@ void dp_init(bool verbose) {
 #if !(BOOTMENU)
       delay(8000);
 #endif
-     
+
 #endif // HAS_LORA
 
     } // verbose
@@ -175,12 +175,15 @@ void dp_init(bool verbose) {
 
 void dp_refresh(bool nextPage) {
 
+  // update counter values from libpax
+  libpax_counter_count(&count_from_libpax);
+
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
 #endif
 
   // update histogram
-  dp_plotCurve(macs.size(), false);
+  dp_plotCurve(count_from_libpax.pax, false);
 
   // if display is switched off we don't refresh it to relax cpu
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
@@ -238,7 +241,7 @@ void dp_drawPage(time_t t, bool nextpage) {
   // display number of unique macs total Wifi + BLE
   if (DisplayPage < 5) {
     dp_setFont(MY_FONT_STRETCHED);
-    dp_printf("%-5d", macs.size());
+    dp_printf("%-5d", count_from_libpax.pax);
   }
 
   switch (DisplayPage) {
@@ -262,7 +265,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 
 #if ((WIFICOUNTER) && (BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", libpax_macs_wifi);
+      dp_printf("WIFI:%-5d", count_from_libpax.wifi_count);
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
@@ -271,17 +274,17 @@ void dp_drawPage(time_t t, bool nextpage) {
         dp_printf(" CWA:%-5d", cwa_report());
       else
 #endif
-      dp_printf("BLTH:%-5d", libpax_macs_ble);
+        dp_printf("BLTH:%-5d", count_from_libpax.ble_count);
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", libpax_macs_wifi);
+      dp_printf("WIFI:%-5d", count_from_libpax.wifi_count);
     else
       dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan)
-      dp_printf("BLTH:%-5d", libpax_macs_ble);
+      dp_printf("BLTH:%-5d", count_from_libpax.ble_count);
 #if (COUNT_ENS)
     if (cfg.enscount)
       dp_printf("(CWA:%d)", cwa_report());
@@ -719,6 +722,7 @@ void dp_plotCurve(uint16_t count, bool reset) {
   static uint16_t last_count = 0, col = 0, row = 0;
   uint16_t v_scroll = 0;
 
+  // nothing new to plot? -> then exit early
   if ((last_count == count) && !reset)
     return;
 
