@@ -67,9 +67,10 @@ void set_rssi(uint8_t val[]) {
 void set_sendcycle(uint8_t val[]) {
   cfg.sendcycle = val[0];
   // update send cycle interrupt [seconds / 2]
-  sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
+  libpax_counter_stop();
+  init_libpax();
 }
 
 void set_sleepcycle(uint8_t val[]) {

@@ -1,8 +1,6 @@
 // Basic Config
 #include "senddata.h"
 
-Ticker sendTimer;
-
 void setSendIRQ() { xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits); }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI

@@ -65,11 +65,11 @@ MatrixDisplayIRQ-> esp32 timer 3
 ButtonIRQ       -> external GPIO
 PMUIRQ          -> PMU chip GPIO
 
-fired by software (Ticker.h)
-TIMESYNC_IRQ    -> setTimeSyncIRQ()
-CYCLIC_IRQ      -> setCyclicIRQ()
-SENDCYCLE_IRQ   -> setSendIRQ()
-BME_IRQ         -> setBMEIRQ()
+fired by software
+TIMESYNC_IRQ    -> setTimeSyncIRQ() -> Ticker.h
+CYCLIC_IRQ      -> setCyclicIRQ() -> Ticker.h
+SENDCYCLE_IRQ   -> setSendIRQ() -> xTimer
+BME_IRQ         -> setBMEIRQ() -> Ticker.h
 
 ClockTask (Core 1), see timekeeper.cpp
 
@@ -89,7 +89,7 @@ triggers pps 1 sec impulse
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-char clientId[20] = {0};                // unique ClientID
+char clientId[20] = {0}; // unique ClientID
 
 void setup() {
 
@@ -484,7 +484,6 @@ void setup() {
 #endif // HAS_BUTTON
 
   // cyclic function interrupts
-  sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
 // only if we have a timesource we do timesync

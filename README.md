@@ -443,7 +443,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	8 = reboot device to maintenance mode (local web server)
 	9 = reboot device to OTA update via Wifi mode
 
-0x0A set LoRaWAN payload send cycle
+0x0A set payload send cycle
 
 	0 ... 255 payload send cycle in seconds/2
 	e.g. 120 -> payload is transmitted each 240 seconds [default]

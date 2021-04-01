@@ -102,7 +102,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
     wakeup_gpio = GPIO_NUM_MAX;
 
   // stop further enqueuing of senddata and MAC processing
-  sendTimer.detach();
+  libpax_counter_stop();
 
   // switch off radio and other power consuming hardware
 #if (HAS_SDS011)
