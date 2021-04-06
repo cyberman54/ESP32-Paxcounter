@@ -109,9 +109,6 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   sds011_sleep();
 #endif
 
-  // halt interrupts accessing i2c bus
-  mask_user_IRQ();
-
   // wait a while (max 100 sec) to clear send queues
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
   for (i = 100; i > 0; i--) {
@@ -158,6 +155,9 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
 #elif EXT_POWER_SW
   digitalWrite(EXT_POWER_SW, EXT_POWER_OFF);
 #endif
+
+  // halt interrupts accessing i2c bus
+  mask_user_IRQ();
 
   // shutdown i2c bus
   i2c_deinit();
