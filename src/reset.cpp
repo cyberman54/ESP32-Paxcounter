@@ -97,6 +97,11 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   RTC_runmode = RUNMODE_SLEEP;
   int i;
 
+  // show message on display
+#ifdef HAS_DISPLAY
+  dp_message("-GOING TO SLEEP-", 7, true);
+#endif
+
   // validate wake up pin, if we have
   if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
     wakeup_gpio = GPIO_NUM_MAX;
@@ -117,7 +122,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 
-  // shutdown LMIC safely, waiting max 100 sec
+/// wait until LMIC is idle
 #if (HAS_LORA)
   ESP_LOGI(TAG, "Waiting until LMIC is idle...");
   for (i = 100; i > 0; i--) {

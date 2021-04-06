@@ -345,7 +345,7 @@ void dp_drawPage(time_t t, bool nextpage) {
     dp_println();
 #endif // TIME_SYNC_INTERVAL
 
-    // line 7: LORA network status
+    // line 7: LMIC status
     // yyyyyyyyyyyyy xx SFab
 
 #if (HAS_LORA)
@@ -355,7 +355,6 @@ void dp_drawPage(time_t t, bool nextpage) {
     dp_setFont(MY_FONT_SMALL, !cfg.adrmode);
     dp_printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
     dp_setFont(MY_FONT_SMALL, 0);
-    dp_println();
 #endif // HAS_LORA
     break;
 
@@ -616,6 +615,14 @@ void dp_shutdown(void) {
   // to come
 #endif
 }
+
+// print static message on display
+void dp_message(const char *msg, int line, bool invers) {
+  dp_setTextCursor(0, line);
+  dp_setFont(MY_FONT_NORMAL, invers ? 1 : 0);
+  dp_printf("%-16s", msg);
+  dp_dump(displaybuf);
+} // dp_message
 
 // ------------- QR code plotter -----------------
 

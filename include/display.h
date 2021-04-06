@@ -81,12 +81,13 @@ const uint8_t QR_SCALEFACTOR = (MY_DISPLAY_HEIGHT - 4) / 29; // 4px borderlines
 
 extern uint8_t DisplayIsOn, displaybuf[];
 extern hw_timer_t *displayIRQ;
-extern uint8_t volatile channel;    // wifi channel rotation counter
+extern uint8_t volatile channel; // wifi channel rotation counter
 
 void dp_setup(int contrast = 0);
 void dp_refresh(bool nextPage = false);
 void dp_init(bool verbose = false);
 void dp_shutdown(void);
+void dp_message(const char *msg, int line, bool invers);
 void dp_drawPage(time_t t, bool nextpage);
 void dp_println(int lines = 1);
 void dp_printf(const char *format, ...);
