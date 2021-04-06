@@ -12,6 +12,7 @@
 static const char TAG[] = __FILE__;
 
 // symbol to display current time source
+// G = GPS / R = RTC / L = LORA / S = external Source / ? = unsynced
 const char timeSetSymbols[] = {'G', 'R', 'L', 'S', '?'};
 
 // set Time Zone for user setting from paxcounter.conf
