@@ -1,6 +1,5 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
-#endif
 
 // The mother of all embedded development...
 #include <Arduino.h>
@@ -47,6 +46,7 @@
     for (;;)                                                                   \
       ;                                                                        \
   }
+#endif
 
 #define _seconds() millis() / 1000.0
 
