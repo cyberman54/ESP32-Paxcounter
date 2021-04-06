@@ -34,10 +34,6 @@ void IRAM_ATTR DisplayIRQ();
 void IRAM_ATTR MatrixDisplayIRQ();
 #endif
 
-#ifdef HAS_E_PAPER_DISPLAY
-#include "e_paper_display.h"
-#endif
-
 #ifdef HAS_BUTTON
 void IRAM_ATTR ButtonIRQ();
 #endif
