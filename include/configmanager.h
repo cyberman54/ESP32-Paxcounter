@@ -2,6 +2,7 @@
 #define _CONFIGMANAGER_H
 
 #include "globals.h"
+#include "reset.h"
 #include <Preferences.h>
 
 void saveConfig(bool erase = false);

@@ -16,7 +16,7 @@
     "include": "bintray-secure-ota/lib/BintrayClient"
   },
   "dependencies": {
-    "ArduinoJson": "^5.13.1"
+    "ArduinoJson": "^6"
   },
   "version": "1.0.0",
   "frameworks": "arduino",

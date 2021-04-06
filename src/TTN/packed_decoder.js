@@ -38,8 +38,8 @@ function Decoder(bytes, port) {
 
     if (port === 2) {
         // device status data
-        if (bytes.length === 17) {
-            return decode(bytes, [uint16, uptime, uint8, uint32, uint8, uint8], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'reset1']);
+        if (bytes.length === 20) {
+            return decode(bytes, [uint16, uptime, uint8, uint32, uint8, uint32], ['voltage', 'uptime', 'cputemp', 'memory', 'reset0', 'restarts']);
         }
     }
 
