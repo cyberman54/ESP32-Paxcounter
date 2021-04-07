@@ -197,7 +197,7 @@ void updateState(void) {
     memcpy(cfg.bsecstate, bsecstate_buffer, BSEC_MAX_STATE_BLOB_SIZE);
     cfg.bsecstate[BSEC_MAX_STATE_BLOB_SIZE] = BSEC_MAX_STATE_BLOB_SIZE;
     ESP_LOGI(TAG, "saving BSEC state to NVRAM");
-    saveConfig();
+    saveConfig(false);
   }
 }
 #endif
