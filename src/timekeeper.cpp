@@ -12,8 +12,8 @@
 static const char TAG[] = __FILE__;
 
 // symbol to display current time source
-// G = GPS / R = RTC / L = LORA / S = external Source / ? = unsynced
-const char timeSetSymbols[] = {'G', 'R', 'L', '?', 'S'};
+// G = GPS / R = RTC / L = LORA / ? = unsynced / <blank> = sync unknown
+const char timeSetSymbols[] = {'G', 'R', 'L', '?', ' '};
 
 // set Time Zone for user setting from paxcounter.conf
 TimeChangeRule myDST = DAYLIGHT_TIME;
