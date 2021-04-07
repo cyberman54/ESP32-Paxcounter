@@ -164,7 +164,7 @@ void gps_loop(void *pvParameters) {
       // (only) while device time is not set or unsynched, and we have a valid
       // GPS time, we trigger a device time update to poll time from GPS
       if ((timeSource == _unsynced || timeSource == _set) &&
-          gpstime.isUpdated()) {
+          (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000)) {
         now();
         calibrateTime();
       }
