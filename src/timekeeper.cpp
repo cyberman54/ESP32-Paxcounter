@@ -97,8 +97,8 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", _seconds(),
-             time_to_set, t_msec % 1000);
+    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", _seconds(), time_to_set,
+             t_msec % 1000);
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
 // to top of second
@@ -107,11 +107,11 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       set_rtctime(time_to_set);
 #endif
 
-// if we have a software pps timer, shift it to top of second
-#if (!defined GPS_INT && !defined RTC_INT)
-    timerWrite(ppsIRQ, 0); // reset pps timer
-    CLOCKIRQ();            // fire clock pps, this advances time 1 sec
-#endif
+    // if we have a software pps timer, shift it to top of second
+    if (ppsIRQ != NULL) {
+      timerWrite(ppsIRQ, 0); // reset pps timer
+      CLOCKIRQ();            // fire clock pps, this advances time 1 sec
+    }
 
     setTime(time_to_set); // set the time on top of second
 
@@ -122,8 +122,11 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
     time_t unix_sec_at_compilation = compiledUTC();
-    ESP_LOGD(TAG, "[%0.3f] Failed to synchronise time from source %c | unix sec obtained from source: %d | unix sec at program compilation: %d",
-             _seconds(), timeSetSymbols[mytimesource], time_to_set, unix_sec_at_compilation);
+    ESP_LOGD(TAG,
+             "[%0.3f] Failed to synchronise time from source %c | unix sec "
+             "obtained from source: %d | unix sec at program compilation: %d",
+             _seconds(), timeSetSymbols[mytimesource], time_to_set,
+             unix_sec_at_compilation);
   }
 }
 
