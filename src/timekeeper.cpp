@@ -117,8 +117,8 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
-    ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
-             _seconds(), timeSetSymbols[mytimesource]);
+    ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | timesource=%d",
+             _seconds(), mytimesource);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
     time_t unix_sec_at_compilation = compiledUTC();
