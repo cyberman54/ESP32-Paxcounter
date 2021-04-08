@@ -141,6 +141,20 @@ void PayloadConvert::addSDS(sdsStatus_t sds) {
 #endif // HAS_SDS011
 }
 
+void PayloadConvert::addSCD30(scd30Status_t scd30) {
+#if (HAS_SCD30)
+  char tempBuffer[15 + 1];
+  sprintf(tempBuffer, ",%5.1f", scd30.temp);
+  addChars(tempBuffer, strlen(tempBuffer));
+  sprintf(tempBuffer, ",%5.1f", scd30.humi);
+  addChars(tempBuffer, strlen(tempBuffer));
+  sprintf(tempBuffer, ",%d", scd30.c02);
+  addChars(tempBuffer, strlen(tempBuffer));
+  
+#endif // HAS_SCD30
+}
+
+
 void PayloadConvert::addButton(uint8_t value) {
 #ifdef HAS_BUTTON
   buffer[cursor++] = value;
@@ -237,6 +251,14 @@ void PayloadConvert::addSDS(sdsStatus_t sds) {
 #endif // HAS_SDS011
 }
 
+void PayloadConvert::addSCD30(scd30Status_t scd30) {
+#if (HAS_SCD30)
+ writeUint16(scd30.co2);
+ writeUint16((uint16_t)(scd30.temp * 100));
+ writeUint16((uint16_t)(scd30.humi * 100));
+
+#endif // HAS_SCD30
+}
 void PayloadConvert::addButton(uint8_t value) {
 #ifdef HAS_BUTTON
   writeUint8(value);

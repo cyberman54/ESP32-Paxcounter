@@ -380,6 +380,13 @@ void setup() {
     strcat_P(features, " SDS");
 #endif
 
+#if (HAS_SCD30)
+  ESP_LOGI(TAG, "init scd30 sensor");
+  if (scd30_init())
+    strcat_P(features, " SCD30");
+  else ESP_LOGE(TAG, "init scd30 sensor fail");  
+#endif
+
 // initialize matrix display
 #ifdef HAS_MATRIX_DISPLAY
   strcat_P(features, " LED_MATRIX");

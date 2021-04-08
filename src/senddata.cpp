@@ -6,7 +6,7 @@ void setSendIRQ() { xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits); }
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port) {
 
-  ESP_LOGD(TAG, "sending Payload for Port %d", port);
+  ESP_LOGD(TAG, "sending Payload for Port %d, lenght: %d", port, payload.getSize());
 
   MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
 
@@ -75,6 +75,9 @@ void sendData() {
 #if (HAS_SDS011)
   sdsStatus_t sds_status;
 #endif
+#if (HAS_SCD30)
+  scd30Status_t scd30_status;
+#endif
 
   while (bitmask) {
     switch (bitmask & mask) {
@@ -112,7 +115,18 @@ void sendData() {
         sds011_store(&sds_status);
         payload.addSDS(sds_status);
 #endif
-        SendPayload(COUNTERPORT);
+      SendPayload(COUNTERPORT);
+
+#if (HAS_SCD30)
+        payload.reset();
+        scd30_store(&scd30_status);
+        payload.addSCD30(scd30_status);
+        SendPayload(SENSOR2PORT);
+        break;
+#endif
+
+       
+		
 #ifdef HAS_DISPLAY
         dp_plotCurve(libpax_macs_ble + libpax_macs_wifi, true);
 #endif
