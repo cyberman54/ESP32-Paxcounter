@@ -38,4 +38,21 @@
 #define LORA_IO1  (33)
 #define LORA_IO2  (32)
 
+
+// additional sensor
+#define HAS_SENSOR_1                    1
+#define HAS_SENSOR_2                    0       // set to 1 to enable data transfer of user sensor #2 [default=0]
+#define HAS_SENSOR_3                    0
+
+
+// SCD30 SCD30 - Sensor Module for HVAC and Indoor Air Quality Applications  // CO2 and RH/T 
+#define HAS_SCD30 1 // use SCD30
+
+
+// NeoPixel "trafic light" for SCD30 Sensor
+#define HAS_TRAFFIC_LIGHT_LED 1 // use NEO PIXEL
+#define TRAFFIC_LIGHT_PIN (12)
+#define TRAFFIC_LIGHT_FORMAT (NEO_RGB + NEO_KHZ800)
+
+
 #endif
