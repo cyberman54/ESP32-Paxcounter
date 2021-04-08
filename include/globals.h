@@ -113,6 +113,12 @@ typedef struct {
   float pm25;
 } sdsStatus_t;
 
+typedef struct {
+  float temp;
+  float humi;
+  uint16_t co2;
+} scd30Status_t;
+
 extern std::array<uint64_t, 0xff>::iterator it;
 extern std::array<uint64_t, 0xff> beacons;
 

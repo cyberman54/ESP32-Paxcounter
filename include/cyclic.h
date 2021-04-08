@@ -10,6 +10,7 @@
 #include "bmesensor.h"
 #include "display.h"
 #include "sds011read.h"
+#include "scd30read.h"
 #include "sdcard.h"
 #include "reset.h"
 #include "led.h"
