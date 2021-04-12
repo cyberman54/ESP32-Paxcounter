@@ -16,7 +16,7 @@ void process_count(void) {
 }
 
 void init_libpax(void) {
-  libpax_counter_init(process_count, &count_from_libpax, cfg.sendcycle * 2 * 1000,
-                      1);
+  libpax_counter_init(process_count, &count_from_libpax,
+                      cfg.sendcycle * 2 * 1000, cfg.countermode);
   libpax_counter_start();
 }
