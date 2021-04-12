@@ -22,6 +22,7 @@ esp_err_t mqtt_init(void) {
 
   // setup network connection and MQTT client
   ETH.begin();
+  ETH.setHostname(clientId);
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
   mqttClient.setKeepAlive(MQTT_KEEPALIVE);
   mqttClient.onMessageAdvanced(mqtt_callback);
