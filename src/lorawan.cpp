@@ -439,18 +439,6 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
 
   switch (port) {
 
-// decode mac messages if we want to print those
-#if (VERBOSE)
-  case MACPORT:
-    // decode downlink MAC commands
-    if (LMIC.dataBeg)
-      mac_decode(LMIC.frame, LMIC.dataBeg, true);
-    // decode uplink MAC commands
-    if (LMIC.pendMacLen)
-      mac_decode(LMIC.pendMacData, LMIC.pendMacLen, false);
-    break; // do not fallthrough to default, we are done
-#endif
-
   // rcommand received -> call interpreter
   case RCMDPORT:
     rcommand(pMsg, nMsg);
@@ -482,52 +470,6 @@ const char *getCrName(rps_t rps) {
   const char *const t[] = {"CR 4/5", "CR 4/6", "CR 4/7", "CR 4/8"};
   return t[getCr(rps)];
 }
-
-#if (VERBOSE)
-// decode LORAWAN MAC message
-// see
-// https://github.com/mcci-catena/arduino-lmic/blob/master/doc/LoRaWAN-at-a-glance.pdf
-void mac_decode(const uint8_t cmd[], const uint8_t cmdlen, bool is_down) {
-
-  if (!cmdlen)
-    return;
-
-  uint8_t foundcmd[cmdlen], cursor = 0;
-
-  // select CID resolve table
-  const mac_t *p;
-  p = is_down ? MACdn_table : MACup_table;
-  const int tablesize = is_down ? MACdn_tSize : MACup_tSize;
-  const String MACdir = is_down ? "-->" : "<--";
-
-  while (cursor < cmdlen) {
-
-    // get number of commands in CID table
-    int i = tablesize;
-
-    // lookup cmd in CID table
-    while (i--) {
-      if (cmd[cursor] == (p + i)->cid) { // lookup command in CID table
-        cursor++;                        // strip 1 byte CID
-        if ((cursor + (p + i)->params) <= cmdlen) {
-          memmove(foundcmd, cmd + cursor,
-                  (p + i)->params); // strip opcode from cmd array
-          cursor += (p + i)->params;
-          ESP_LOGD(TAG, "%s %s", MACdir, (p + i)->cmdname);
-        } else
-          ESP_LOGD(TAG, "%s MAC command 0x%02X with missing parameter(s)",
-                   MACdir, (p + i)->cid);
-        break;   // command found -> exit table lookup loop
-      }          // end of command validation
-    }            // end of command table lookup loop
-    if (i < 0) { // command not found -> skip it
-      ESP_LOGD(TAG, "%s Unknown MAC command 0x%02X", MACdir, cmd[cursor]);
-      cursor++;
-    }
-  } // command parsing loop
-
-} // mac_decode()
-#endif // VERBOSE
 
 // following code snippet was taken from
 // https://github.com/JackGruber/ESP32-LMIC-DeepSleep-example/blob/master/src/main.cpp
