@@ -33,7 +33,7 @@ void do_reset(bool warmstart) {
       LMIC_shutdown();
     }
 #endif
-    RTC_runmode = RUNMODE_POWERCYCLE;
+    reset_rtc_vars(void);
     ESP_LOGI(TAG, "restarting device (coldstart)");
   }
   esp_restart();
