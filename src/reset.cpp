@@ -33,7 +33,7 @@ void do_reset(bool warmstart) {
       LMIC_shutdown();
     }
 #endif
-    reset_rtc_vars(void);
+    reset_rtc_vars();
     ESP_LOGI(TAG, "restarting device (coldstart)");
   }
   esp_restart();
