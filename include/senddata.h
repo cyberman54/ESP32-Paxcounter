@@ -22,6 +22,7 @@ void sendData(void);
 void checkSendQueues(void);
 void flushQueues(void);
 bool allQueuesEmtpy(void);
-void setSendIRQ(void);
+void setSendIRQ(TimerHandle_t xTimer = NULL);
+void initSendDataTimer(uint8_t sendcycle);
 
 #endif // _SENDDATA_H_

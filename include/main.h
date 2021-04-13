@@ -5,6 +5,7 @@
 #include <esp_event_loop.h>  // needed for Wifi event handler
 #include <esp32-hal-timer.h> // needed for timers
 #include <esp_coexist.h>     // needed for coex version display
+#include <esp_wifi.h>        // needed for wifi init / deinit
 
 #include "globals.h"
 #include "reset.h"

@@ -281,8 +281,9 @@ void setup() {
   if (RTC_runmode == RUNMODE_MAINTENANCE)
     start_boot_menu();
 
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  // use libpax timer to trigger cyclic senddata
   ESP_LOGI(TAG, "Starting libpax...");
-#if (defined WIFICOUNTER || defined BLECOUNTER)
   struct libpax_config_t configuration;
   libpax_default_config(&configuration);
 
@@ -304,6 +305,9 @@ void setup() {
   } else {
     init_libpax();
   }
+#else
+  // use stand alone timer to trigger cyclic senddata
+  initSendDataTimer(cfg.sendcycle * 2);
 #endif
 
 #if (BLECOUNTER)

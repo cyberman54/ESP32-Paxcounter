@@ -445,14 +445,14 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 0x0A set payload send cycle
 
-	0 ... 255 payload send cycle in seconds/2
+	5 ... 255 payload send cycle in seconds/2
 	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
 0x0B set Wifi channel hopping interval timer
 
 	0 ... 255 duration for scanning a wifi channel in seconds/100
 	e.g. 50 -> each channel is scanned for 500 milliseconds [default]
-	0 means no hopping, scanning on  channel WIFI_CHANNEL_MIN only
+	0 means no hopping, scanning on fixed single channel WIFI_CHANNEL_1
 
 0x0C set Bluetooth channel switch interval timer
 
@@ -524,7 +524,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 0x19 set sleep cycle
 
-	bytes 1..2 = device sleep cycle in seconds/10 (MSB)
+	bytes 1..2 = device sleep cycle in seconds/10 (MSB), 1 ... 255
 	e.g. {0x04, 0xB0} -> device sleeps 20 minutes after each send cycle [default = 0]
 
 0x20 load device configuration

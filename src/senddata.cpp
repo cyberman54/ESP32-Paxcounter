@@ -1,7 +1,22 @@
 // Basic Config
 #include "senddata.h"
 
-void setSendIRQ() { xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits); }
+void setSendIRQ(TimerHandle_t xTimer) {
+  xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
+}
+
+void initSendDataTimer(uint8_t sendcycle) {
+  static TimerHandle_t SendDataTimer = NULL;
+
+  if (SendDataTimer == NULL) {
+    SendDataTimer =
+        xTimerCreate("SendDataTimer", pdMS_TO_TICKS(sendcycle * 1000), pdTRUE,
+                     (void *)0, setSendIRQ);
+    xTimerStart(SendDataTimer, 0);
+  } else {
+    xTimerChangePeriod(SendDataTimer, pdMS_TO_TICKS(sendcycle * 1000), 0);
+  }
+}
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port) {
@@ -86,8 +101,7 @@ void sendData() {
       ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
       payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        ESP_LOGI(TAG, "Sending libpax ble count: %d",
-                 libpax_macs_ble);
+        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
         payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
       }
 #endif
