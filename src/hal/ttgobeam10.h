@@ -21,8 +21,8 @@ Reset -> reset device
 */
 
 //#define HAS_DISPLAY 1
-#define MY_DISPLAY_SDA SDA
-#define MY_DISPLAY_SCL SCL
+#define MY_DISPLAY_SDA (21) //SDA
+#define MY_DISPLAY_SCL (22) //SCL
 #define MY_DISPLAY_RST NOT_A_PIN
 //#define MY_DISPLAY_FLIP  1 // use if display is rotated
 
