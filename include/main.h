@@ -23,5 +23,6 @@
 #include "boot.h"
 #include "libpax_helpers.h"
 #include "power.h"
+#include "antenna.h"
 
 #endif
