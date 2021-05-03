@@ -20,7 +20,6 @@
 #include <ArduinoJson.h>
 
 #include "BintrayClient.h"
-#include "BintrayCertificates.h"
 
 BintrayClient::BintrayClient(const String &user, const String &repository, const String &package)
     : m_user(user), m_repo(repository), m_package(package),
