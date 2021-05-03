@@ -32,7 +32,7 @@ uint8_t rtc_init(void) {
     if (!Rtc.IsDateTimeValid() || !timeIsValid(t)) {
       ESP_LOGW(TAG, "RTC has no recent time, setting to compiled time");
       Rtc.SetDateTime(
-          RtcDateTime(compiledUTC() - SECS_YR_2000)); // epoch -> sec2000
+          RtcDateTime(_COMPILETIME - SECS_YR_2000)); // epoch -> sec2000
     }
 #endif
 

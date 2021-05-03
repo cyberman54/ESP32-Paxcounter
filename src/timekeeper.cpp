@@ -8,6 +8,8 @@
 #endif
 #endif
 
+#define _COMPILETIME myTZ.toUTC(RtcDateTime(__DATE__, __TIME__).Epoch32Time())
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -121,12 +123,11 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
              _seconds(), mytimesource);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
-    time_t unix_sec_at_compilation = compiledUTC();
     ESP_LOGD(TAG,
              "[%0.3f] Failed to synchronise time from source %c | unix sec "
              "obtained from source: %d | unix sec at program compilation: %d",
              _seconds(), timeSetSymbols[mytimesource], time_to_set,
-             unix_sec_at_compilation);
+             _COMPILETIME);
   }
 }
 
@@ -215,13 +216,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 // helper function to check plausibility of a time
 time_t timeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
-  return (t >= compiledUTC() ? t : 0);
-}
-
-// helper function to convert compile time to UTC time
-time_t compiledUTC(void) {
-  static time_t t = myTZ.toUTC(RtcDateTime(__DATE__, __TIME__).Epoch32Time());
-  return t;
+  return (t >= _COMPILETIME ? t : 0);
 }
 
 // helper function to calculate serial transmit time
