@@ -381,8 +381,9 @@ void get_batt(uint8_t val[]) {
 
 void get_time(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get time");
+  time_t t = now();
   payload.reset();
-  payload.addTime(now());
+  payload.addTime(t);
   payload.addByte(timeStatus() << 4 | timeSource);
   SendPayload(TIMEPORT);
 };
