@@ -3,6 +3,7 @@
 
 #include "sensor.h"
 #include "sds011read.h"
+#include "scd30read.h"
 #include "gpsread.h"
 
 // MyDevices CayenneLPP 1.0 channels for Synamic sensor payload format
@@ -60,6 +61,8 @@ public:
   void addSensor(uint8_t[]);
   void addTime(time_t value);
   void addSDS(sdsStatus_t value);
+  void addSCD30(scd30Status_t value);
+  
 private:
   void addChars( char* string, int len);
 

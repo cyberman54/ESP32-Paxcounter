@@ -13,6 +13,14 @@ Ticker cyclicTimer;
 extern boolean isSDS011Active;
 #endif
 
+#if (HAS_SCD30)
+extern boolean scd30_error;
+// not sure if we have the TASK time to do a read  here
+// how can give an answer to this.
+#endif
+
+
+
 void setCyclicIRQ() { xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits); }
 
 // do all housekeeping
@@ -113,6 +121,16 @@ void doHousekeeping() {
     sds011_wakeup();
   }
 #endif
+
+#if (HAS_SCD30)
+  if (scd30_error) {
+    ESP_LOGE(TAG, "SCD30 has reported an error");
+    
+  } else {
+    scd30_read();    
+	}
+#endif
+
 
 } // doHousekeeping()
 
