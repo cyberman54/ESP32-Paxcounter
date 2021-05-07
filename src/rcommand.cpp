@@ -147,6 +147,10 @@ void set_countmode(uint8_t val[]) {
         "Remote command: set counter mode called with invalid parameter(s)");
     return;
   }
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  libpax_counter_stop();
+  init_libpax(); // re-inits counter mode from cfg.countermode
+#endif
 }
 
 void set_screensaver(uint8_t val[]) {
