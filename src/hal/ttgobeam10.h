@@ -20,7 +20,7 @@ User, long press    -> send a button message
 Reset -> reset device
 */
 
-//#define HAS_DISPLAY 1
+#define HAS_DISPLAY 1
 #define MY_DISPLAY_SDA SDA
 #define MY_DISPLAY_SCL SCL
 #define MY_DISPLAY_RST NOT_A_PIN

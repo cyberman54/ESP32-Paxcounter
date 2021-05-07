@@ -8,9 +8,9 @@ static const char TAG[] = __FILE__;
 
 // default settings for device data to be sent
 #define PAYLOADMASK                                                            \
-  ((GPS_DATA | ALARM_DATA | MEMS_DATA | COUNT_DATA | SENSOR1_DATA |            \
-    SENSOR2_DATA | SENSOR3_DATA) &                                             \
-   (~BATT_DATA))
+  ((GPS_DATA | MEMS_DATA | COUNT_DATA | SENSOR1_DATA | SENSOR2_DATA |          \
+    SENSOR3_DATA) &                                                            \
+   (~BATT_DATA) & (~RESERVED_DATA))
 
 // namespace for device runtime preferences
 #define DEVCONFIG "paxcntcfg"
@@ -54,7 +54,6 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->wifiscan = WIFICOUNTER; // 0=disabled, 1=enabled
   myconfig->wifiant = 0;            // 0=internal, 1=external (for LoPy/LoPy4)
   myconfig->rgblum = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
-  myconfig->monitormode = 0;        // 0=disabled, 1=enabled
   myconfig->payloadmask = PAYLOADMASK; // payloads as defined in default
   myconfig->enscount = COUNT_ENS;      // 0=disabled, 1=enabled
 

@@ -12,7 +12,6 @@
 #include "i2c.h"
 #include "configmanager.h"
 #include "cyclic.h"
-#include "beacon_array.h"
 #include "ota.h"
 #include "irqhandler.h"
 #include "spislave.h"

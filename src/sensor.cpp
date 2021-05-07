@@ -37,7 +37,7 @@ uint8_t sensor_mask(uint8_t sensor_no) {
   case 6:
     return (uint8_t)MEMS_DATA;
   case 7:
-    return (uint8_t)ALARM_DATA;
+    return (uint8_t)RESERVED_DATA;
   default:
     return 0;
   }

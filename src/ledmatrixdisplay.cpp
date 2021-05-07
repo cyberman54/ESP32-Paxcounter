@@ -76,12 +76,11 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
   case 0:
 
-    if (cfg.countermode == 1)
+    // update counter values from libpax
+    libpax_counter_count(&count_from_libpax);
 
-      // update counter values from libpax
-      libpax_counter_count(&count_from_libpax);
-
-    { // cumulative counter mode -> display total number of pax
+    if (cfg.countermode == 1) {
+      // cumulative counter mode -> display total number of pax
       if (ulLastNumMacs != count_from_libpax.pax) {
         ulLastNumMacs = count_from_libpax.pax;
         matrix.clear();

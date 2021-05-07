@@ -21,7 +21,7 @@
 
 // bits in payloadmask for filtering payload data
 #define COUNT_DATA _bit(0)
-#define ALARM_DATA _bit(1)
+#define RESERVED_DATA _bit(1)
 #define MEMS_DATA _bit(2)
 #define GPS_DATA _bit(3)
 #define SENSOR1_DATA _bit(4)
@@ -72,7 +72,6 @@ typedef struct __attribute__((packed)) {
   uint8_t wifiscan;      // 0=disabled, 1=enabled
   uint8_t wifiant;       // 0=internal, 1=external (for LoPy/LoPy4)
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
-  uint8_t monitormode;   // 0=disabled, 1=enabled
   uint8_t payloadmask;   // bitswitches for payload data
   uint8_t enscount;      // 0=disabled 1= enabled
 
@@ -112,9 +111,6 @@ typedef struct {
   float pm10;
   float pm25;
 } sdsStatus_t;
-
-extern std::array<uint64_t, 0xff>::iterator it;
-extern std::array<uint64_t, 0xff> beacons;
 
 extern char clientId[20]; // unique clientID
 

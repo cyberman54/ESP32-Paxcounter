@@ -223,20 +223,6 @@ uint64_t macConvert(uint8_t *paddr) {
   return (__builtin_bswap64(*mac) >> 16);
 }
 
-void set_beacon(uint8_t val[]) {
-  uint8_t id = val[0];           // use first parameter as beacon storage id
-  memmove(val, val + 1, 6);      // strip off storage id
-  beacons[id] = macConvert(val); // store beacon MAC in array
-  ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
-  // printKey("MAC", val, 6, false); // show beacon MAC
-}
-
-void set_monitor(uint8_t val[]) {
-  ESP_LOGI(TAG, "Remote command: set beacon monitor mode to %s",
-           val ? "on" : "off");
-  cfg.monitormode = val[0] ? 1 : 0;
-}
-
 void set_loradr(uint8_t val[]) {
 #if (HAS_LORA)
   if (validDR(val[0])) {
@@ -436,8 +422,7 @@ static const cmd_t table[] = {
     {0x09, set_reset, 1},         {0x0a, set_sendcycle, 1},
     {0x0b, set_wifichancycle, 1}, {0x0c, set_blescantime, 1},
     {0x0e, set_blescan, 1},       {0x0f, set_wifiant, 1},
-    {0x10, set_rgblum, 1},        {0x11, set_monitor, 1},
-    {0x12, set_beacon, 7},        {0x13, set_sensor, 2},
+    {0x10, set_rgblum, 1},        {0x13, set_sensor, 2},
     {0x14, set_payloadmask, 1},   {0x15, set_bme, 1},
     {0x16, set_batt, 1},          {0x17, set_wifiscan, 1},
     {0x18, set_enscount, 1},      {0x19, set_sleepcycle, 2},

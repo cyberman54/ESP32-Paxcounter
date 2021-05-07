@@ -154,7 +154,6 @@ Paxcounter generates identifiers for sniffed Wifi or Bluetooth MAC adresses and 
 - Quick blink (20ms on each 1/5 second): joining LoRaWAN network in progress or pending
 - Small blink (10ms on each 1/2 second): LoRaWAN data transmit in progress or pending
 - Long blink (200ms on each 2 seconds): LoRaWAN stack error
-- Single long flash (2sec): Known beacon detected
 
 **RGB LED:**
 
@@ -164,7 +163,6 @@ Paxcounter generates identifiers for sniffed Wifi or Bluetooth MAC adresses and 
 - Pink: LORAWAN MAC transmit in progress
 - Blue: LoRaWAN data transmit in progress or pending
 - Red: LoRaWAN stack error
-- White: Known Beacon detected
 
 # Display
 
@@ -190,7 +188,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 | Bit | Sensordata    | Default
 | --- | ------------- | -------
 | 0   | Paxcounter    | on
-| 1   | Beacon alarm  | on
+| 1   | unused		  | off
 | 2   | BME280/680    | on
 | 3   | GPS*	      | on
 | 4   | User sensor 1 | on
@@ -320,7 +318,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 14:	count randomizated MACs only (0=disabled, 1=enabled) [default 1]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
 	byte 16:	0 (reserved)
-	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
+	byte 17:	0 (reserved)
 	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
@@ -336,10 +334,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1:		static value 0x01
 
-**Port #6:** Beacon proximity alarm
-
-	byte 1:		Beacon RSSI reception level
-	byte 2:		Beacon identifier (0..255)
+**Port #6:** (unused)
 
 **Port #7:** Environmental sensor data (only if device has feature BME)
 
@@ -474,16 +469,6 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
 
-0x11 set beacon proximity alarm mode on/off
-
-	0 = Beacon monitor mode off [default]
-	1 = Beacon monitor mode on, enables proximity alarm if test beacons are seen
-
-0x12 set or reset a beacon MAC for proximity alarm
-
-	byte 1 = beacon ID (0..255)
-	bytes 2..7 = beacon MAC with 6 digits (e.g. MAC 80:ab:00:01:02:03 -> 0x80ab00010203)
-
 0x13 set user sensor mode
 
 	byte 1 = user sensor number (1..3)
@@ -493,7 +478,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 	byte 1 = sensor data payload mask (0..255, meaning of bits see below)
         0x01 = COUNT_DATA
-        0x02 = ALARM_DATA
+        0x02 = RESERVED_DATA
         0x04 = MEMS_DATA
         0x08 = GPS_DATA
         0x10 = SENSOR_1_DATA (also ENS counter)

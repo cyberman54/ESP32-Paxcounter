@@ -28,11 +28,6 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   buffer[cursor++] = lowByte(value);
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
-  buffer[cursor++] = rssi;
-  buffer[cursor++] = msg;
-}
-
 void PayloadConvert::addVoltage(uint16_t value) {
   buffer[cursor++] = highByte(value);
   buffer[cursor++] = lowByte(value);
@@ -55,7 +50,7 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = 0; // reserved
   buffer[cursor++] = value.rgblum;
   buffer[cursor++] = value.payloadmask;
-  buffer[cursor++] = value.monitormode;
+  buffer[cursor++] = 0; // reserved
   memcpy(buffer + cursor, value.version, 10);
   cursor += 10;
 }
@@ -168,11 +163,6 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   writeUint16(value);
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
-  writeUint8(rssi);
-  writeUint8(msg);
-}
-
 void PayloadConvert::addVoltage(uint16_t value) { writeUint16(value); }
 
 void PayloadConvert::addConfig(configData_t value) {
@@ -185,8 +175,7 @@ void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.rgblum);
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
-              value.blescan ? true : false, value.wifiant ? true : false, 0,
-              value.monitormode ? true : false);
+              value.blescan ? true : false, value.wifiant ? true : false, 0, 0);
   writeUint8(value.payloadmask);
   writeVersion(value.version);
 }
@@ -371,19 +360,6 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
     buffer[cursor++] = lowByte(value);
     break;
   }
-}
-
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
-#if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_ALARM_CHANNEL;
-#endif
-  buffer[cursor++] = LPP_PRESENCE;
-  buffer[cursor++] = msg;
-#if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_MSG_CHANNEL;
-#endif
-  buffer[cursor++] = LPP_ANALOG_INPUT;
-  buffer[cursor++] = rssi;
 }
 
 void PayloadConvert::addVoltage(uint16_t value) {
