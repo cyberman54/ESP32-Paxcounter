@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <libpax_api.h>
-#include "globals.h"
 #include "senddata.h"
 #include "configmanager.h"
 
