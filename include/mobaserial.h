@@ -2,6 +2,7 @@
 #define _MOBALINE_H
 
 #include "globals.h"
+#include "timekeeper.h"
 #include "dcf77.h"
 
 #define MOBALINE_FRAME_SIZE (33)

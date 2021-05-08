@@ -97,8 +97,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
       // wait until a timestamp was received
       if (xTaskNotifyWait(0x00, ULONG_MAX, &rcv_seqNo,
                           pdMS_TO_TICKS(TIME_SYNC_TIMEOUT * 1000)) == pdFALSE) {
-        ESP_LOGW(TAG, "[d%0.3f] Timesync aborted: timed out",
-                 _seconds());
+        ESP_LOGW(TAG, "[d%0.3f] Timesync aborted: timed out", _seconds());
         goto Fail; // no timestamp received before timeout
       }
 
@@ -143,6 +142,9 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     time_offset_ms += TIME_SYNC_FIXUP;
     time_offset_ms %= 1000;
 
+    ESP_LOGD(TAG, "LORA date/time: %s",
+             myTZ.dateTime(time_offset_sec, "d.M Y H:i:s T").c_str());
+
     setMyTime(time_offset_sec, time_offset_ms, _lora);
 
     // send timesync end char to show timesync was successful
@@ -166,8 +168,8 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
 // store incoming timestamps
 void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
-  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", _seconds(),
-           time_sync_seqNo, sample_idx, timestamp_type, timestamp);
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", _seconds(), time_sync_seqNo,
+           sample_idx, timestamp_type, timestamp);
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
 
@@ -232,8 +234,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   lmic_time_reference_t lmicTime;
 
   if (flag != 1) {
-    ESP_LOGW(TAG, "[%0.3f] Network did not answer time request",
-             _seconds());
+    ESP_LOGW(TAG, "[%0.3f] Network did not answer time request", _seconds());
     goto Exit;
   }
 

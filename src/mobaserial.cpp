@@ -18,11 +18,10 @@ static const char TAG[] = __FILE__;
 void MOBALINE_Pulse(time_t t, uint8_t const *DCFpulse) {
 
   TickType_t startTime = xTaskGetTickCount();
-  uint8_t sec = second(t);
+  uint8_t sec = myTZ.second(t);
 
-  t = myTZ.toLocal(now());
-  ESP_LOGD(TAG, "[%02d:%02d:%02d.%03d] MOBALINE bit %d", hour(t), minute(t),
-           second(t), millisecond(), sec);
+  ESP_LOGD(TAG, "[%s] MOBALINE sec: %d", myTZ.dateTime("H:i:s.v").c_str(),
+           sec);
 
   // induce 3 pulses
   for (uint8_t pulse = 0; pulse <= 3; pulse++) {
@@ -68,13 +67,13 @@ uint8_t *IRAM_ATTR MOBALINE_Frame(time_t const tt) {
 
   static uint8_t DCFpulse[DCF77_FRAME_SIZE + 1];
 
-  time_t t = myTZ.toLocal(tt); // convert to local time
+  time_t t = myTZ.tzTime(tt); // convert to local time
 
   // ENCODE HEAD (bit 0))
   DCFpulse[0] = dcf_Z; // not yet implemented
 
   // ENCODE DAYLIGHTSAVING (bit 1)
-  DCFpulse[1] = myTZ.locIsDST(t) ? dcf_1 : dcf_0;
+  DCFpulse[1] = myTZ.isDST(t) ? dcf_1 : dcf_0;
 
   // ENCODE DATE (bits 2..20)
   dec2bcd(false, year(t) - 2000, 2, 9, DCFpulse);

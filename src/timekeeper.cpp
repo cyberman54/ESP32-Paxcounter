@@ -8,7 +8,7 @@
 #endif
 #endif
 
-#define _COMPILETIME myTZ.toUTC(RtcDateTime(__DATE__, __TIME__).Epoch32Time())
+#define _COMPILETIME compileTime()
 
 // Local logging tag
 static const char TAG[] = __FILE__;
@@ -17,10 +17,8 @@ static const char TAG[] = __FILE__;
 // G = GPS / R = RTC / L = LORA / ? = unsynced / <blank> = sync unknown
 const char timeSetSymbols[] = {'G', 'R', 'L', '?', ' '};
 
-// set Time Zone for user setting from paxcounter.conf
-TimeChangeRule myDST = DAYLIGHT_TIME;
-TimeChangeRule mySTD = STANDARD_TIME;
-Timezone myTZ(myDST, mySTD);
+// set Time Zone
+Timezone myTZ;
 
 bool volatile TimePulseTick = false;
 timesource_t timeSource = _unsynced;
@@ -115,7 +113,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       CLOCKIRQ();            // fire clock pps, this advances time 1 sec
     }
 
-    setTime(time_to_set); // set the time on top of second
+    UTC.setTime(time_to_set); // set the time on top of second
 
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
@@ -173,7 +171,6 @@ uint8_t timepulse_init() {
 } // timepulse_init
 
 void timepulse_start(void) {
-
 #ifdef GPS_INT // start external clock gps pps line
   attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
 #elif defined RTC_INT // start external clock rtc
@@ -193,7 +190,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-  SyncToPPS(); // advance systime, see microTime.h
+  // syncToPPS(); // currently not used
 
 // advance wall clock, if we have
 #if (defined HAS_IF482 || defined HAS_DCF77)
@@ -213,10 +210,10 @@ void IRAM_ATTR CLOCKIRQ(void) {
     portYIELD_FROM_ISR();
 }
 
-// helper function to check plausibility of a time
+// helper function to check plausibility of a given epoch time
 time_t timeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
-  return (t >= _COMPILETIME ? t : 0);
+  return (t < myTZ.tzTime(_COMPILETIME) ? 0 : t);
 }
 
 // helper function to calculate serial transmit time
@@ -301,7 +298,7 @@ void clock_loop(void *taskparameter) { // ClockTask
       t = time_t(printtime); // new adjusted UTC time seconds
 
     // send IF482 telegram
-    IF482.print(IF482_Frame(t + 1)); // note: telegram is for *next* second
+    IF482.print(IF482_Frame(t + 2)); // note: telegram is for *next* second
 
 #elif defined HAS_DCF77
 
@@ -310,7 +307,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 
     if (minute(nextmin(t)) ==       // do we still have a recent frame?
         DCFpulse[DCF77_FRAME_SIZE]) // (timepulses could be missed!)
-      DCF77_Pulse(t, DCFpulse);     // then output current second's pulse
+      DCF77_Pulse(t + 1, DCFpulse); // then output next second's pulse
 
       // else we have no recent frame, thus suppressing clock output
 

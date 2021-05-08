@@ -12,7 +12,7 @@ static const char TAG[] = __FILE__;
 uint8_t MatrixDisplayIsOn = 0;
 static uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8] = {0};
 static unsigned long ulLastNumMacs = 0;
-static time_t ulLastTime = myTZ.toLocal(now());
+static time_t ulLastTime = now();
 
 hw_timer_t *matrixDisplayIRQ = NULL;
 
@@ -47,7 +47,6 @@ void init_matrix_display(bool reverse) {
 void refreshTheMatrixDisplay(bool nextPage) {
   static uint8_t DisplayPage = 0, col = 0, row = 0;
   uint8_t level;
-  char buff[16];
 
   // if Matrixdisplay is switched off we don't refresh it to relax cpu
   if (!MatrixDisplayIsOn && (MatrixDisplayIsOn == cfg.screenon))
@@ -117,13 +116,11 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
   case 1:
 
-    const time_t t = myTZ.toLocal(now());
+    const time_t t = now();
     if (ulLastTime != t) {
       ulLastTime = t;
       matrix.clear();
-      snprintf(buff, sizeof(buff), "%02d:%02d:%02d", hour(t), minute(t),
-               second(t));
-      DrawNumber(String(buff));
+      DrawNumber(myTZ.dateTime("H:i:s").c_str());
     }
     break;
 

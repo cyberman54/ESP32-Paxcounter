@@ -39,9 +39,6 @@ MY_FONT_STRETCHED: 16x32px = 8 chars / line
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-// helper array for converting month values to text
-const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 uint8_t DisplayIsOn = 0;
 uint8_t displaybuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static uint8_t plotbuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
@@ -191,9 +188,6 @@ void dp_refresh(bool nextPage) {
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
     return;
 
-  const time_t t =
-      myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
-
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
     ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
@@ -212,7 +206,7 @@ void dp_refresh(bool nextPage) {
     }
 #endif
 
-    dp_drawPage(t, nextPage);
+    dp_drawPage(nextPage);
     dp_dump(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -220,7 +214,7 @@ void dp_refresh(bool nextPage) {
   } // mutex
 } // refreshDisplay()
 
-void dp_drawPage(time_t t, bool nextpage) {
+void dp_drawPage(bool nextpage) {
 
   // write display content to display buffer
   // nextpage = true -> flip 1 page
@@ -330,9 +324,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 #if (TIME_SYNC_INTERVAL)
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
-
-    dp_printf("%02d.%3s %4d", day(t), printmonth[month(t)], year(t));
-    dp_printf(" %02d:%02d:%02d", hour(t), minute(t), second(t));
+    dp_printf("%s", myTZ.dateTime("d.M Y H:i:s").c_str());
 
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
@@ -450,7 +442,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 
     dp_setFont(MY_FONT_LARGE);
     dp_setTextCursor(0, 4);
-    dp_printf("%02d:%02d:%02d", hour(t), minute(t), second(t));
+    dp_printf("%s", myTZ.dateTime("H:i:s").c_str());
     break;
 
   // ---------- page 5: pax graph ----------

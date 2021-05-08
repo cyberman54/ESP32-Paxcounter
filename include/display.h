@@ -88,7 +88,7 @@ void dp_refresh(bool nextPage = false);
 void dp_init(bool verbose = false);
 void dp_shutdown(void);
 void dp_message(const char *msg, int line, bool invers);
-void dp_drawPage(time_t t, bool nextpage);
+void dp_drawPage(bool nextpage);
 void dp_println(int lines = 1);
 void dp_printf(const char *format, ...);
 void dp_setFont(int font, int inv = 0);

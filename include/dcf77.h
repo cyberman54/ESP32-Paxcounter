@@ -2,6 +2,7 @@
 #define _DCF77_H
 
 #include "globals.h"
+#include "timekeeper.h"
 
 #define DCF77_FRAME_SIZE (60)
 #define DCF77_PULSE_LENGTH (100)
