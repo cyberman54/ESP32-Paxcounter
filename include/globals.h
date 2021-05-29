@@ -1,13 +1,11 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
-#endif
 
 // The mother of all embedded development...
 #include <Arduino.h>
 
 // Time functions
-#include "microTime.h"
-#include <Timezone.h>
+#include <ezTime.h>
 #include <RtcDateTime.h>
 #include <Ticker.h>
 
@@ -15,7 +13,6 @@
 #include <set>
 #include <array>
 #include <algorithm>
-#include "mallocator.h"
 #include <bsec.h>
 
 #define _bit(b) (1U << (b))
@@ -23,7 +20,7 @@
 
 // bits in payloadmask for filtering payload data
 #define COUNT_DATA _bit(0)
-#define ALARM_DATA _bit(1)
+#define RESERVED_DATA _bit(1)
 #define MEMS_DATA _bit(2)
 #define GPS_DATA _bit(3)
 #define SENSOR1_DATA _bit(4)
@@ -48,19 +45,11 @@
     for (;;)                                                                   \
       ;                                                                        \
   }
+#endif
 
 #define _seconds() millis() / 1000.0
 
-enum timesource_t { _gps, _rtc, _lora, _unsynced };
 enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
-enum runmode_t {
-  RUNMODE_POWERCYCLE,
-  RUNMODE_NORMAL,
-  RUNMODE_WAKEUP,
-  RUNMODE_UPDATE,
-  RUNMODE_SLEEP,
-  RUNMODE_MAINTENANCE
-};
 
 // Struct holding devices's runtime configuration
 // using packed to avoid compiler padding, because struct will be memcpy'd to
@@ -75,15 +64,13 @@ typedef struct __attribute__((packed)) {
   uint8_t countermode; // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
   int16_t rssilimit;   // threshold for rssilimiter, negative value!
   uint8_t sendcycle;   // payload send cycle [seconds/2]
-  uint8_t sleepcycle;  // sleep cycle [seconds/2]
+  uint16_t sleepcycle; // sleep cycle [seconds/10]
   uint8_t wifichancycle; // wifi channel switch cycle [seconds/100]
   uint8_t blescantime;   // BLE scan cycle duration [seconds]
   uint8_t blescan;       // 0=disabled, 1=enabled
   uint8_t wifiscan;      // 0=disabled, 1=enabled
   uint8_t wifiant;       // 0=internal, 1=external (for LoPy/LoPy4)
-  uint8_t macfilter;     // 0=disabled, 1=enabled
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
-  uint8_t monitormode;   // 0=disabled, 1=enabled
   uint8_t payloadmask;   // bitswitches for payload data
   uint8_t enscount;      // 0=disabled 1= enabled
 
@@ -99,13 +86,6 @@ typedef struct {
   uint8_t MessagePort;
   uint8_t Message[PAYLOAD_BUFFER_SIZE];
 } MessageBuffer_t;
-
-// Struct for MAC processing queue
-typedef struct {
-  uint8_t mac[6];
-  int8_t rssi;
-  snifftype_t sniff_type;
-} MacBuffer_t;
 
 typedef struct {
   int32_t latitude;
@@ -131,22 +111,6 @@ typedef struct {
   float pm25;
 } sdsStatus_t;
 
-extern std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
-extern std::array<uint64_t, 0xff>::iterator it;
-extern std::array<uint64_t, 0xff> beacons;
-
-extern configData_t cfg;                       // current device configuration
-extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
-extern uint8_t volatile channel;               // wifi channel rotation counter
-extern uint8_t volatile rf_load;               // RF traffic indicator
-extern uint8_t batt_level;                     // display value
-extern uint16_t volatile macs_wifi, macs_ble;  // display values
-extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
-extern timesource_t timeSource;
-extern hw_timer_t *displayIRQ, *matrixDisplayIRQ, *ppsIRQ;
-extern SemaphoreHandle_t I2Caccess;
-extern TaskHandle_t irqHandlerTask, ClockTask, macProcessTask;
-extern TimerHandle_t WifiChanTimer;
-extern Timezone myTZ;
+extern char clientId[20]; // unique clientID
 
 #endif

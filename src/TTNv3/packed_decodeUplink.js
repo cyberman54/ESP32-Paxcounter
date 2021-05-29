@@ -70,11 +70,6 @@ function decodeUplink(input) {
         data = decode(input.bytes, [uint8], ['button']);
     }
 
-    if (input.fPort === 6) {
-        // beacon proximity alarm      
-        data = decode(input.bytes, [int8, uint8], ['rssi', 'beacon']);
-    }
-
     if (input.fPort === 7) {
         // BME680 sensor data     
         data = decode(input.bytes, [float, pressure, ufloat, ufloat], ['temperature', 'pressure', 'humidity', 'air']);
@@ -263,7 +258,7 @@ var bitmap1 = function (byte) {
     }
     var i = bytesToInt(byte);
     var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
-    return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'filter', 'alarm']
+    return ['adr', 'screensaver', 'screen', 'countermode', 'blescan', 'antenna', 'reserved', 'reserved']
         .reduce(function (obj, pos, index) {
             obj[pos] = +bm[index];
             return obj;
@@ -277,7 +272,7 @@ var bitmap2 = function (byte) {
     }
     var i = bytesToInt(byte);
     var bm = ('00000000' + Number(i).toString(2)).substr(-8).split('').map(Number).map(Boolean);
-    return ['battery', 'sensor3', 'sensor2', 'sensor1', 'gps', 'bme', 'alarm', 'counter']
+    return ['battery', 'sensor3', 'sensor2', 'sensor1', 'gps', 'bme', 'reserved', 'counter']
         .reduce(function (obj, pos, index) {
             obj[pos] = +bm[index];
             return obj;

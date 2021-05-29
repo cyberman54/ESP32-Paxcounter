@@ -21,8 +21,9 @@
 
 using namespace std;
 
-const BintrayClient bintray(BINTRAY_USER, BINTRAY_REPO, BINTRAY_PACKAGE);
-// usage of bintray: see https://github.com/r0oland/bintray-secure-ota
+const BintrayClient paxexpress(PAXEXPRESS_USER, PAXEXPRESS_REPO,
+                               PAXEXPRESS_PACKAGE);
+// usage of paxexpress: see https://github.com/paxexpress/docs
 
 // Connection port (HTTPS)
 const int port = 443;
@@ -40,6 +41,8 @@ inline String getHeaderValue(String header, String headerName) {
 }
 
 void start_ota_update() {
+
+  const char *host = clientId;
 
   switch_LED(LED_ON);
 
@@ -65,8 +68,28 @@ void start_ota_update() {
   ESP_LOGI(TAG, "Starting Wifi OTA update");
   ota_display(1, "**", WIFI_SSID);
 
+  WiFi.disconnect(true);
+  WiFi.config(INADDR_NONE, INADDR_NONE,
+              INADDR_NONE); // call is only a workaround for bug in WiFi class
+  // see https://github.com/espressif/arduino-esp32/issues/806
+  WiFi.setHostname(host);
   WiFi.mode(WIFI_STA);
+  WiFi.begin();
+
+  // Connect to WiFi network
+  // workaround applied here to bypass WIFI_AUTH failure
+  // see https://github.com/espressif/arduino-esp32/issues/2501
+
+  // 1st try
   WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() == WL_DISCONNECTED) {
+    delay(500);
+  }
+  // 2nd try
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    delay(500);
+  }
 
   uint8_t i = WIFI_MAX_TRY;
   int ret = 1; // 0 = finished, 1 = retry, -1 = abort
@@ -74,7 +97,6 @@ void start_ota_update() {
   while (i--) {
     ESP_LOGI(TAG, "Trying to connect to %s, attempt %u of %u", WIFI_SSID,
              WIFI_MAX_TRY - i, WIFI_MAX_TRY);
-    delay(10000); // wait for stable connect
     if (WiFi.status() == WL_CONNECTED) {
       // we now have wifi connection and try to do an OTA over wifi update
       ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
@@ -89,6 +111,7 @@ void start_ota_update() {
       if (WiFi.status() == WL_CONNECTED)
         goto end; // OTA update finished or OTA max attemps reached
     }
+    delay(10000); // wait for stable connect
     WiFi.reconnect();
   }
 
@@ -121,7 +144,7 @@ int do_ota_update() {
   if (WiFi.status() != WL_CONNECTED)
     return 1;
 
-  const String latest = bintray.getLatestVersion();
+  const String latest = paxexpress.getLatestVersion();
 
   if (latest.length() == 0) {
     ESP_LOGI(TAG, "Could not fetch info on latest firmware");
@@ -138,21 +161,20 @@ int do_ota_update() {
   ota_display(3, "**", "");
   if (WiFi.status() != WL_CONNECTED)
     return 1;
-  String firmwarePath = bintray.getBinaryPath(latest);
+  String firmwarePath = paxexpress.getBinaryPath(latest);
   if (!firmwarePath.endsWith(".bin")) {
     ESP_LOGI(TAG, "Unsupported binary format");
     ota_display(3, " E", "file type error");
     return -1;
   }
 
-  String currentHost = bintray.getStorageHost();
+  String currentHost = paxexpress.getStorageHost();
   String prevHost = currentHost;
 
   WiFiClientSecure client;
 
-  client.setCACert(bintray.getCertificate(currentHost));
   client.setTimeout(RESPONSE_TIMEOUT_MS);
-
+  client.setInsecure();
   if (!client.connect(currentHost.c_str(), port)) {
     ESP_LOGI(TAG, "Cannot connect to %s", currentHost.c_str());
     ota_display(3, " E", "connection lost");
@@ -162,7 +184,6 @@ int do_ota_update() {
   while (redirect) {
     if (currentHost != prevHost) {
       client.stop();
-      client.setCACert(bintray.getCertificate(currentHost));
       if (!client.connect(currentHost.c_str(), port)) {
         ESP_LOGI(TAG, "Redirect detected, but cannot connect to %s",
                  currentHost.c_str());

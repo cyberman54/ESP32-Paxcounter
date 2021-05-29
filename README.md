@@ -110,7 +110,7 @@ To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP,
 The file `src/loraconf_sample.h` contains more information about the values to provide.
 
 ## src/ota.conf
-Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://bintray.com/JFrog">Bintray account</A>. Enter your Bintray user account data in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
+Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://github.com/paxexpress/docs">PAX.express repository</A>. Enter your PAX.express credentials in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
 # Building
 
@@ -125,7 +125,7 @@ The LoPy/LoPy4/FiPy board needs to be set manually. See these
 The original Pycom firmware is not needed, so there is no need to update it before flashing Paxcounter. Just flash the compiled paxcounter binary (.elf file) on your LoPy/LoPy4/FiPy. If you later want to go back to the Pycom firmware, download the firmware from Pycom and flash it over.
 	
 - **over the air (OTA), download via WiFi:**
-After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by OTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WiFi to a cloud service (JFrog Bintray), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for OTA are: 1. You own a Bintray repository, 2. you pushed the update binary to the Bintray repository, 3. internet access via encrypted (WPA2) WiFi is present at the board's site, 4. WiFi credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
+After the ESP32 board is initially flashed and has joined a LoRaWAN network, the firmware can update itself by OTA. This process is kicked off by sending a remote control command (see below) via LoRaWAN to the board. The board then tries to connect via WiFi to a cloud service (<A HREF="https://github.com/paxexpress">PAX.express</A>), checks for update, and if available downloads the binary and reboots with it. If something goes wrong during this process, the board reboots back to the current version. Prerequisites for OTA are: 1. You own a PAX.express repository, 2. you pushed the update binary to your PAX.express repository, 3. internet access via encrypted (WPA2) WiFi is present at the board's site, 4. WiFi credentials were set in ota.conf and initially flashed to the board. Step 2 runs automated, just enter the credentials in ota.conf and set `upload_protocol = custom` in platformio.ini. Then press build and lean back watching platformio doing build and upload.
 
 - **over the air (OTA), upload via WiFi:**
 If option *BOOTMENU* is defined in `paxcounter.conf`, the ESP32 board will try to connect to a known WiFi access point each time cold starting (after a power cycle or a reset), using the WiFi credentials given in `ota.conf`. Once connected to the WiFi it will fire up a simple webserver, providing a bootstrap menu waiting for a user interaction (pressing "START" button in menu). This process will time out after *BOOTDELAY* seconds, ensuring booting the device to runmode. Once a user interaction in bootstrap menu was detected, the timeout will be extended to *BOOTTIMEOUT* seconds. During this time a firmware upload can be performed manually by user, e.g. using a smartphone in tethering mode providing the firmware upload file.
@@ -138,13 +138,13 @@ If option *BOOTMENU* is defined in `paxcounter.conf`, the ESP32 board will try t
 
 (e.g. UK citizens may want to check [Data Protection Act 1998](https://ico.org.uk/media/1560691/wi-fi-location-analytics-guidance.pdf) and [GDPR 2018](https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/key-definitions/))
 
-(e.g. Citizens in the the Netherlands may want to read [this article](https://www.ivir.nl/publicaties/download/PrivacyInformatie_2016_6.pdf) and [this article](https://autoriteitpersoonsgegevens.nl/nl/nieuws/europese-privacytoezichthouders-publiceren-opinie-eprivacyverordening)) 
+(e.g. Citizens in the the Netherlands and EU may want to read [this article](https://www.ivir.nl/publicaties/download/PrivacyInformatie_2016_6.pdf) and [this article](https://autoriteitpersoonsgegevens.nl/nl/nieuws/europese-privacytoezichthouders-publiceren-opinie-eprivacyverordening)) and [this decision](https://edpb.europa.eu/news/national-news/2021/dutch-dpa-fines-municipality-wi-fi-tracking_en)
 
 Note: If you use this software you do this at your own risk. That means that you alone - not the authors of this software - are responsible for the legal compliance of an application using this or build from this software and/or usage of a device created using this software. You should take special care and get prior legal advice if you plan metering passengers in public areas and/or publish data drawn from doing so.
 
 # Privacy disclosure
 
-Paxcounter generates identifiers for sniffed MAC adresses and collects them temporary in the device's RAM for a configurable scan cycle time (default 60 seconds). After each scan cycle the collected identifiers are cleared. Identifiers are generated by salting and hashing MAC adresses. The random salt value changes after each scan cycle. Identifiers and MAC adresses are never transferred to the LoRaWAN network. No persistent storing of MAC adresses, identifiers or timestamps and no other kind of analytics than counting are implemented in this code. Wireless networks are not touched by this code, but MAC adresses from wireless devices as well within as not within wireless networks, regardless if encrypted or unencrypted, are sniffed and processed by this code. If the bluetooth option in the code is enabled, bluetooth MACs are scanned and processed by the included BLE stack, then hashed and counted by this code.
+Paxcounter generates identifiers for sniffed Wifi or Bluetooth MAC adresses and and collects them temporary in the device's RAM for a configurable scan cycle time (default 60 seconds). After each scan cycle the collected identifiers are cleared. Identifiers are generated by using the last 2 bytes of universal MAC adresses. Personal MAC adresses remain untouched and are not evaluated. Identifiers and MAC adresses are never transferred to the LoRaWAN network. No persistent storing of MAC adresses, identifiers or timestamps and no other kind of analytics than counting are implemented in this code. Wireless networks are not touched by this code, but MAC adresses from wireless devices as well within as not within wireless networks, regardless if encrypted or unencrypted, are sniffed and processed by this code.
 
 # LED blink pattern
 
@@ -154,7 +154,6 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Quick blink (20ms on each 1/5 second): joining LoRaWAN network in progress or pending
 - Small blink (10ms on each 1/2 second): LoRaWAN data transmit in progress or pending
 - Long blink (200ms on each 2 seconds): LoRaWAN stack error
-- Single long flash (2sec): Known beacon detected
 
 **RGB LED:**
 
@@ -164,7 +163,6 @@ Paxcounter generates identifiers for sniffed MAC adresses and collects them temp
 - Pink: LORAWAN MAC transmit in progress
 - Blue: LoRaWAN data transmit in progress or pending
 - Red: LoRaWAN stack error
-- White: Known Beacon detected
 
 # Display
 
@@ -181,7 +179,7 @@ by pressing the button of the device.
 
 # Sensors and Peripherals
 
-You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported, to activate configure BME in board's hal file before build. If you need Bosch's proprietary BSEC libraray (e.g. to get indoor air quality value from BME680) further enable *build_flags_sensors*, which comes on the price of reduced RAM and increased build size. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
+You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [*sensor.cpp*](src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported, to activate configure BME in board's hal file before build. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
 Output of user sensor data can be switched by user remote control command 0x14 sent to Port 2. 
 
@@ -190,7 +188,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 | Bit | Sensordata    | Default
 | --- | ------------- | -------
 | 0   | Paxcounter    | on
-| 1   | Beacon alarm  | on
+| 1   | unused		  | off
 | 2   | BME280/680    | on
 | 3   | GPS*	      | on
 | 4   | User sensor 1 | on
@@ -206,7 +204,7 @@ Paxcounter supports a battery friendly power saving mode. In this mode the devic
 
 # Time sync
 
-Paxcounter can keep it's time-of-day synced with an external time source. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. An on board DS3231 RTC is kept sycned as fallback time source. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](/src/Node-RED/Timeserver.json). Configure MQTT nodes in Node-Red for the LORAWAN application used by paxocunter device.
+Paxcounter can keep a time-of-day synced with external or on board time sources. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [**generic.h**](src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxocunter device. Time can also be set without precision liability, by simple remote command, see section remote control.
 
 # Wall clock controller
 
@@ -216,12 +214,11 @@ Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time tele
 
 This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
-# Covid-19 Exposure Notification System beacon detection
+# Covid-19 Exposure Notification System beacon detection (currently NOT working with v3.0.x, use v2.4.x for this feature)
 
 Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
 
 	#define COUNT_ENS		1	// enable ENS monitoring function
-	#define MACFILTER		0	// disable MAC filter
 	#define BLECOUNTER		1	// enable bluetooth sniffing
 	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
 	#define HAS_SENSOR_1		1	// optional, in board's hal file: transmit ENS counter data to server
@@ -320,8 +317,8 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
 	byte 14:	count randomizated MACs only (0=disabled, 1=enabled) [default 1]
 	byte 15:	RGB LED luminosity (0..100 %) [default 30]
-	byte 16:	Payload filter mask
-	byte 17:	Beacon proximity alarm mode (1=on, 0=off) [default 0]
+	byte 16:	0 (reserved)
+	byte 17:	0 (reserved)
 	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
@@ -337,10 +334,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 	byte 1:		static value 0x01
 
-**Port #6:** Beacon proximity alarm
-
-	byte 1:		Beacon RSSI reception level
-	byte 2:		Beacon identifier (0..255)
+**Port #6:** (unused)
 
 **Port #7:** Environmental sensor data (only if device has feature BME)
 
@@ -437,33 +431,28 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 0x09 reset functions (send this command UNconfirmed only to avoid boot loops!)
 
 	0 = restart device (coldstart)
-	1 = reset MAC counter to zero
-	2 = reset device to factory settings
+	1 = (reserved, currently does nothing)
+	2 = reset device to factory settings and restart device
 	3 = flush send queues
 	4 = restart device (warmstart)
 	8 = reboot device to maintenance mode (local web server)
 	9 = reboot device to OTA update via Wifi mode
 
-0x0A set LoRaWAN payload send cycle
+0x0A set payload send cycle
 
-	0 ... 255 payload send cycle in seconds/2
+	5 ... 255 payload send cycle in seconds/2
 	e.g. 120 -> payload is transmitted each 240 seconds [default]
 
 0x0B set Wifi channel hopping interval timer
 
 	0 ... 255 duration for scanning a wifi channel in seconds/100
 	e.g. 50 -> each channel is scanned for 500 milliseconds [default]
-	0 means no hopping, scanning on  channel WIFI_CHANNEL_MIN only
+	0 means no hopping, scanning on fixed single channel WIFI_CHANNEL_1
 
 0x0C set Bluetooth channel switch interval timer
 
 	0 ... 255 duration for scanning a bluetooth advertising channel in seconds/100
 	e.g. 8 -> each channel is scanned for 80 milliseconds [default]
-
-0x0D (NOT YET IMPLEMENTED) set BLE and WIFI MAC filter mode
-
-	0 = disabled (use to count devices, not people)
-	1 = enabled [default]
 
 0x0E set Bluetooth scanner
 
@@ -480,16 +469,6 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
 
-0x11 set beacon proximity alarm mode on/off
-
-	0 = Beacon monitor mode off [default]
-	1 = Beacon monitor mode on, enables proximity alarm if test beacons are seen
-
-0x12 set or reset a beacon MAC for proximity alarm
-
-	byte 1 = beacon ID (0..255)
-	bytes 2..7 = beacon MAC with 6 digits (e.g. MAC 80:ab:00:01:02:03 -> 0x80ab00010203)
-
 0x13 set user sensor mode
 
 	byte 1 = user sensor number (1..3)
@@ -499,7 +478,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 	byte 1 = sensor data payload mask (0..255, meaning of bits see below)
         0x01 = COUNT_DATA
-        0x02 = ALARM_DATA
+        0x02 = RESERVED_DATA
         0x04 = MEMS_DATA
         0x08 = GPS_DATA
         0x10 = SENSOR_1_DATA (also ENS counter)
@@ -530,8 +509,8 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 0x19 set sleep cycle
 
-	0 ... 255 device sleep cycle in seconds/2
-	e.g. 120 -> device sleeps 240 seconds after each send cycle [default = 0]
+	bytes 1..2 = device sleep cycle in seconds/10 (MSB), 1 ... 255
+	e.g. {0x04, 0xB0} -> device sleeps 20 minutes after each send cycle [default = 0]
 
 0x20 load device configuration
 
@@ -573,16 +552,20 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 			0x01 = RTC
 			0x02 = LORA
 			0x03 = unsynched (never synched)
+			0x04 = set (source unknown)
 	
 		bits 4..7 time status
 			0x00 = timeNotSet (never synched)
 			0x01 = timeNeedsSync (last sync failed)
 			0x02 = timeSet (synched)
 
-0x87 set time/date
+0x87 sync time/date
 
 	Device synchronizes it's time/date by calling the preconfigured time source.
 
+0x88 set time/date
+
+	bytes 1..4 = time/date to set in UTC epoch seconds (MSB, e.g. https://www.epochconverter.com/hex)
 	
 # License
 

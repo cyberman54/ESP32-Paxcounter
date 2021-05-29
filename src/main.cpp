@@ -38,7 +38,6 @@ timesync_proc 1     3     processes realtime time sync requests
 irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
 gpsloop       1     1     reads data from GPS via serial or i2c
 lorasendtask  1     1     feeds data from lora sendqueue to lmcic
-macprocess    1     1     MAC analyzer loop
 rmcd_process  1     1     Remote command interpreter loop
 IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
 
@@ -66,11 +65,11 @@ MatrixDisplayIRQ-> esp32 timer 3
 ButtonIRQ       -> external GPIO
 PMUIRQ          -> PMU chip GPIO
 
-fired by software (Ticker.h)
-TIMESYNC_IRQ    -> setTimeSyncIRQ()
-CYCLIC_IRQ      -> setCyclicIRQ()
-SENDCYCLE_IRQ   -> setSendIRQ()
-BME_IRQ         -> setBMEIRQ()
+fired by software
+TIMESYNC_IRQ    -> setTimeSyncIRQ() -> Ticker.h
+CYCLIC_IRQ      -> setCyclicIRQ() -> Ticker.h
+SENDCYCLE_IRQ   -> setSendIRQ() -> xTimer
+BME_IRQ         -> setBMEIRQ() -> Ticker.h
 
 ClockTask (Core 1), see timekeeper.cpp
 
@@ -87,34 +86,10 @@ triggers pps 1 sec impulse
 // Basic Config
 #include "main.h"
 
-configData_t cfg; // struct holds current device configuration
-char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
-uint8_t batt_level = 0;                 // display value
-uint8_t volatile channel = WIFI_CHANNEL_MIN;   // channel rotation counter
-uint8_t volatile rf_load = 0;                  // RF traffic indicator
-uint16_t volatile macs_wifi = 0, macs_ble = 0; // globals for display
-
-hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
-
-TaskHandle_t irqHandlerTask = NULL, ClockTask = NULL;
-SemaphoreHandle_t I2Caccess;
-bool volatile TimePulseTick = false;
-timesource_t timeSource = _unsynced;
-
-// container holding unique MAC address hashes with Memory Alloctor using PSRAM,
-// if present
-DRAM_ATTR std::set<uint16_t, std::less<uint16_t>, Mallocator<uint16_t>> macs;
-
-// initialize payload encoder
-PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
-
-// set Time Zone for user setting from paxcounter.conf
-TimeChangeRule myDST = DAYLIGHT_TIME;
-TimeChangeRule mySTD = STANDARD_TIME;
-Timezone myTZ(myDST, mySTD);
-
 // local Tag for logging
 static const char TAG[] = __FILE__;
+
+char clientId[20] = {0}; // unique ClientID
 
 void setup() {
 
@@ -142,6 +117,19 @@ void setup() {
 
   // load device configuration from NVRAM and set runmode
   do_after_reset();
+
+  // set time zone to user value from paxcounter.conf
+#ifdef TIME_SYNC_TIMEZONE
+  myTZ.setPosix(TIME_SYNC_TIMEZONE);
+#endif
+
+  // hash 6 byte device MAC to 4 byte clientID
+  uint8_t mac[6];
+  esp_eth_get_mac(mac);
+  const uint32_t hashedmac = myhash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
+  ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
+           PROGVERSION, RTC_runmode, RTC_restarts);
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
@@ -298,30 +286,42 @@ void setup() {
   if (RTC_runmode == RUNMODE_MAINTENANCE)
     start_boot_menu();
 
-  // start mac processing task
-  ESP_LOGI(TAG, "Starting MAC processor...");
-  macQueueInit();
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  // use libpax timer to trigger cyclic senddata
+  ESP_LOGI(TAG, "Starting libpax...");
+  struct libpax_config_t configuration;
+  libpax_default_config(&configuration);
+
+  // configure WIFI sniffing
+  configuration.wificounter = cfg.wifiscan;
+  configuration.wifi_channel_map = WIFI_CHANNEL_ALL;
+  configuration.wifi_channel_switch_interval = cfg.wifichancycle;
+  configuration.wifi_rssi_threshold = cfg.rssilimit;
+  ESP_LOGI(TAG, "WIFISCAN: %s", cfg.wifiscan ? "on" : "off");
+
+  // configure BLE sniffing
+  configuration.blecounter = cfg.blescan;
+  configuration.blescantime = cfg.blescantime;
+  ESP_LOGI(TAG, "BLESCAN: %s", cfg.blescan ? "on" : "off");
+
+  int config_update = libpax_update_config(&configuration);
+  if (config_update != 0) {
+    ESP_LOGE(TAG, "Error in libpax configuration.");
+  } else {
+    init_libpax();
+  }
+#else
+  // use stand alone timer to trigger cyclic senddata
+  initSendDataTimer(cfg.sendcycle * 2);
+#endif
+
+#if (BLECOUNTER)
+  strcat_P(features, " BLE");
+#endif
 
   // start rcommand processing task
   ESP_LOGI(TAG, "Starting rcommand interpreter...");
   rcmd_init();
-
-// start BLE scan callback if BLE function is enabled in NVRAM configuration
-// or remove bluetooth stack from RAM, if option bluetooth is not compiled
-#if (BLECOUNTER)
-  strcat_P(features, " BLE");
-  if (cfg.blescan) {
-    ESP_LOGI(TAG, "Starting Bluetooth...");
-    start_BLEscan();
-  } else
-    btStop();
-#else
-  // remove bluetooth stack to gain more free memory
-  btStop();
-  esp_bt_mem_release(ESP_BT_MODE_BTDM);
-  esp_coex_preference_set(
-      ESP_COEX_PREFER_WIFI); // configure Wifi/BT coexist lib
-#endif
 
 // initialize gps
 #if (HAS_GPS)
@@ -389,10 +389,6 @@ void setup() {
     strcat_P(features, " SDS");
 #endif
 
-#if (MACFILTER)
-  strcat_P(features, " FILTER");
-#endif
-
 // initialize matrix display
 #ifdef HAS_MATRIX_DISPLAY
   strcat_P(features, " LED_MATRIX");
@@ -427,23 +423,10 @@ void setup() {
 
 #if (WIFICOUNTER)
   strcat_P(features, " WIFI");
-  // install wifi driver in RAM and start channel hopping
-  wifi_sniffer_init();
-  // start wifi sniffing, if enabled
-  if (cfg.wifiscan) {
-    ESP_LOGI(TAG, "Starting Wifi...");
-    switch_wifi_sniffer(1);
-  } else
-    switch_wifi_sniffer(0);
 #else
   // remove wifi driver from RAM, if option wifi not compiled
   esp_wifi_deinit();
 #endif
-
-  // initialize salt value using esp_random() called by random() in
-  // arduino-esp32 core. Note: do this *after* wifi has started, since
-  // function gets it's seed from RF noise
-  reset_counters();
 
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
@@ -510,7 +493,6 @@ void setup() {
 #endif // HAS_BUTTON
 
   // cyclic function interrupts
-  sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
 // only if we have a timesource we do timesync

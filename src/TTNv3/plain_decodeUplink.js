@@ -56,12 +56,6 @@ function decodeUplink(input) {
         data.button = input.bytes[i++];
     }
 
-    if (input.fPort === 6) {
-        var i = 0;
-        data.rssi = input.bytes[i++];
-        data.beacon = input.bytes[i++];
-    }
-
     if (input.fPort === 7) {
         var i = 0;
         data.temperature = ((input.bytes[i++] << 8) | input.bytes[i++]);

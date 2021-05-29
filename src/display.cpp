@@ -39,13 +39,12 @@ MY_FONT_STRETCHED: 16x32px = 8 chars / line
 // local Tag for logging
 static const char TAG[] = __FILE__;
 
-// helper array for converting month values to text
-const char *printmonth[] = {"xxx", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 uint8_t DisplayIsOn = 0;
 uint8_t displaybuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static uint8_t plotbuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static int dp_row = 0, dp_col = 0, dp_font = 0;
+
+hw_timer_t *displayIRQ = NULL;
 
 QRCode qrcode;
 
@@ -159,7 +158,7 @@ void dp_init(bool verbose) {
 #if !(BOOTMENU)
       delay(8000);
 #endif
-     
+
 #endif // HAS_LORA
 
     } // verbose
@@ -175,19 +174,19 @@ void dp_init(bool verbose) {
 
 void dp_refresh(bool nextPage) {
 
+  // update counter values from libpax
+  libpax_counter_count(&count_from_libpax);
+
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
 #endif
 
   // update histogram
-  dp_plotCurve(macs.size(), false);
+  dp_plotCurve(count_from_libpax.pax, false);
 
   // if display is switched off we don't refresh it to relax cpu
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
     return;
-
-  const time_t t =
-      myTZ.toLocal(now()); // note: call now() here *before* locking mutex!
 
   // block i2c bus access
   if (!I2C_MUTEX_LOCK())
@@ -207,7 +206,7 @@ void dp_refresh(bool nextPage) {
     }
 #endif
 
-    dp_drawPage(t, nextPage);
+    dp_drawPage(nextPage);
     dp_dump(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
@@ -215,7 +214,7 @@ void dp_refresh(bool nextPage) {
   } // mutex
 } // refreshDisplay()
 
-void dp_drawPage(time_t t, bool nextpage) {
+void dp_drawPage(bool nextpage) {
 
   // write display content to display buffer
   // nextpage = true -> flip 1 page
@@ -238,7 +237,7 @@ void dp_drawPage(time_t t, bool nextpage) {
   // display number of unique macs total Wifi + BLE
   if (DisplayPage < 5) {
     dp_setFont(MY_FONT_STRETCHED);
-    dp_printf("%-5d", macs.size());
+    dp_printf("%-5d", count_from_libpax.pax);
   }
 
   switch (DisplayPage) {
@@ -262,7 +261,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 
 #if ((WIFICOUNTER) && (BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", macs_wifi);
+      dp_printf("WIFI:%-5d", count_from_libpax.wifi_count);
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
@@ -271,17 +270,17 @@ void dp_drawPage(time_t t, bool nextpage) {
         dp_printf(" CWA:%-5d", cwa_report());
       else
 #endif
-        dp_printf("BLTH:%-5d", macs_ble);
+        dp_printf("BLTH:%-5d", count_from_libpax.ble_count);
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", macs_wifi);
+      dp_printf("WIFI:%-5d", count_from_libpax.wifi_count);
     else
       dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan)
-      dp_printf("BLTH:%-5d", macs_ble);
+      dp_printf("BLTH:%-5d", count_from_libpax.ble_count);
 #if (COUNT_ENS)
     if (cfg.enscount)
       dp_printf("(CWA:%d)", cwa_report());
@@ -312,7 +311,6 @@ void dp_drawPage(time_t t, bool nextpage) {
     dp_printf("       ");
 #endif
     dp_printf(" ch:%02d", channel);
-    // dp_printf(" due:%02d", rf_load);
     dp_println();
 
     // line 5: RSSI limiter + free memory
@@ -326,9 +324,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 #if (TIME_SYNC_INTERVAL)
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
-
-    dp_printf("%02d.%3s %4d", day(t), printmonth[month(t)], year(t));
-    dp_printf(" %02d:%02d:%02d", hour(t), minute(t), second(t));
+    dp_printf("%s", myTZ.dateTime("d.M Y H:i:s").c_str());
 
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
@@ -341,7 +337,7 @@ void dp_drawPage(time_t t, bool nextpage) {
     dp_println();
 #endif // TIME_SYNC_INTERVAL
 
-    // line 7: LORA network status
+    // line 7: LMIC status
     // yyyyyyyyyyyyy xx SFab
 
 #if (HAS_LORA)
@@ -351,7 +347,6 @@ void dp_drawPage(time_t t, bool nextpage) {
     dp_setFont(MY_FONT_SMALL, !cfg.adrmode);
     dp_printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
     dp_setFont(MY_FONT_SMALL, 0);
-    dp_println();
 #endif // HAS_LORA
     break;
 
@@ -447,7 +442,7 @@ void dp_drawPage(time_t t, bool nextpage) {
 
     dp_setFont(MY_FONT_LARGE);
     dp_setTextCursor(0, 4);
-    dp_printf("%02d:%02d:%02d", hour(t), minute(t), second(t));
+    dp_printf("%s", myTZ.dateTime("H:i:s").c_str());
     break;
 
   // ---------- page 5: pax graph ----------
@@ -613,6 +608,14 @@ void dp_shutdown(void) {
 #endif
 }
 
+// print static message on display
+void dp_message(const char *msg, int line, bool invers) {
+  dp_setTextCursor(0, line);
+  dp_setFont(MY_FONT_NORMAL, invers ? 1 : 0);
+  dp_printf("%-16s", msg);
+  dp_dump(displaybuf);
+} // dp_message
+
 // ------------- QR code plotter -----------------
 
 void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
@@ -720,6 +723,7 @@ void dp_plotCurve(uint16_t count, bool reset) {
   static uint16_t last_count = 0, col = 0, row = 0;
   uint16_t v_scroll = 0;
 
+  // nothing new to plot? -> then exit early
   if ((last_count == count) && !reset)
     return;
 

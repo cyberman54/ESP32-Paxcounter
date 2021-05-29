@@ -14,7 +14,7 @@ IF482.cpp depends on code in RTCTIME.cpp.
 
 /*
 IF482 Generator to control clocks with IF482 telegram input (e.g. BÜRK BU190)
-   
+
 
 Example IF482 telegram: "OAL160806F170400"
 
@@ -84,9 +84,8 @@ not evaluated by model BU-190, use "F" instead for this model
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-String IRAM_ATTR IF482_Frame(time_t printTime) {
+String IRAM_ATTR IF482_Frame(time_t t) {
 
-  time_t t = myTZ.toLocal(printTime);
   char mon, out[IF482_FRAME_SIZE + 1];
 
   switch (timeStatus()) { // indicates if time has been set and recently synced
@@ -102,13 +101,11 @@ String IRAM_ATTR IF482_Frame(time_t printTime) {
   } // switch
 
   // generate IF482 telegram
-  snprintf(out, sizeof(out), "O%cL%02u%02u%02u%1u%02u%02u%02u\r", mon,
-           year(t) - 2000, month(t), day(t), weekday(t), hour(t), minute(t),
-           second(t));
+  snprintf(out, sizeof(out), "O%cL%s\r", mon, myTZ.dateTime(t, UTC_TIME, "ymdwHis").c_str());
 
-  t = myTZ.toLocal(now());
-  ESP_LOGD(TAG, "[%02d:%02d:%02d.%03d] IF482 = %s", hour(t), minute(t),
-           second(t), millisecond(), out);
+  ESP_LOGD(TAG, "[%s] IF482 date/time: %s", myTZ.dateTime("H:i:s.v").c_str(),
+           out);
+
   return out;
 }
 

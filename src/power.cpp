@@ -5,6 +5,8 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
+uint8_t batt_level = 0; // display value
+
 #ifdef BAT_MEASURE_ADC
 esp_adc_cal_characteristics_t *adc_characs =
     (esp_adc_cal_characteristics_t *)calloc(

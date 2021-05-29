@@ -8,12 +8,11 @@
 #include "configmanager.h"
 #include "lorawan.h"
 #include "sensor.h"
-#include "macsniff.h"
-#include "wifiscan.h"
 #include "cyclic.h"
 #include "timekeeper.h"
 #include "timesync.h"
-#include "blescan.h"
+#include "power.h"
+#include "antenna.h"
 
 // maximum number of elements in rcommand interpreter queue
 #define RCMD_QUEUE_SIZE 5

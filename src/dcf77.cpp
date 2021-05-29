@@ -20,11 +20,9 @@ static const char TAG[] = __FILE__;
 void DCF77_Pulse(time_t t, uint8_t const *DCFpulse) {
 
   TickType_t startTime = xTaskGetTickCount();
-  uint8_t sec = second(t);
+  uint8_t sec = myTZ.second(t);
 
-  t = myTZ.toLocal(now());
-  ESP_LOGD(TAG, "[%02d:%02d:%02d.%03d] DCF second %d", hour(t), minute(t),
-           second(t), millisecond(), sec);
+  ESP_LOGD(TAG, "[%s] DCF second: %d", myTZ.dateTime("H:i:s.v").c_str(), sec);
 
   // induce a DCF Pulse
   for (uint8_t pulse = 0; pulse <= 2; pulse++) {
@@ -53,7 +51,7 @@ void DCF77_Pulse(time_t t, uint8_t const *DCFpulse) {
   } // for
 } // DCF77_Pulse()
 
-uint8_t *IRAM_ATTR DCF77_Frame(time_t const tt) {
+uint8_t *IRAM_ATTR DCF77_Frame(time_t const t) {
 
   // array of dcf pulses for one minute, secs 0..16 and 20 are never touched, so
   // we keep them statically to avoid same recalculation every minute
@@ -64,35 +62,35 @@ uint8_t *IRAM_ATTR DCF77_Frame(time_t const tt) {
       dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_1};
 
   uint8_t Parity;
-  time_t t = myTZ.toLocal(tt); // convert to local time
 
   // ENCODE DST CHANGE ANNOUNCEMENT (Sec 16)
   DCFpulse[16] = dcf_0; // not yet implemented
 
   // ENCODE DAYLIGHTSAVING (secs 17..18)
-  DCFpulse[17] = myTZ.locIsDST(t) ? dcf_1 : dcf_0;
-  DCFpulse[18] = myTZ.locIsDST(t) ? dcf_0 : dcf_1;
+  DCFpulse[17] = myTZ.isDST(t) ? dcf_1 : dcf_0;
+  DCFpulse[18] = myTZ.isDST(t) ? dcf_0 : dcf_1;
 
   // ENCODE MINUTE (secs 21..28)
-  Parity = dec2bcd(minute(t), 21, 27, DCFpulse);
+  Parity = dec2bcd(myTZ.minute(t), 21, 27, DCFpulse);
   DCFpulse[28] = setParityBit(Parity);
 
   // ENCODE HOUR (secs 29..35)
-  Parity = dec2bcd(hour(t), 29, 34, DCFpulse);
+  Parity = dec2bcd(myTZ.hour(t), 29, 34, DCFpulse);
   DCFpulse[35] = setParityBit(Parity);
 
   // ENCODE DATE (secs 36..58)
-  Parity = dec2bcd(day(t), 36, 41, DCFpulse);
-  Parity += dec2bcd((weekday(t) - 1) ? (weekday(t) - 1) : 7, 42, 44, DCFpulse);
-  Parity += dec2bcd(month(t), 45, 49, DCFpulse);
-  Parity += dec2bcd(year(t) - 2000, 50, 57, DCFpulse);
+  Parity = dec2bcd(myTZ.day(t), 36, 41, DCFpulse);
+  Parity += dec2bcd((myTZ.weekday(t) - 1) ? (myTZ.weekday(t) - 1) : 7, 42, 44,
+                    DCFpulse);
+  Parity += dec2bcd(myTZ.month(t), 45, 49, DCFpulse);
+  Parity += dec2bcd(myTZ.year(t) - 2000, 50, 57, DCFpulse);
   DCFpulse[58] = setParityBit(Parity);
 
   // ENCODE MARK (sec 59)
   DCFpulse[59] = dcf_Z; // !! missing code here for leap second !!
 
   // timestamp this frame with it's minute
-  DCFpulse[60] = minute(t);
+  DCFpulse[60] = myTZ.minute(t);
 
   return DCFpulse;
 

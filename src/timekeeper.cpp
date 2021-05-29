@@ -8,11 +8,23 @@
 #endif
 #endif
 
+#define _COMPILETIME compileTime()
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
 // symbol to display current time source
-const char timeSetSymbols[] = {'G', 'R', 'L', '?'};
+// G = GPS / R = RTC / L = LORA / ? = unsynced / <blank> = sync unknown
+const char timeSetSymbols[] = {'G', 'R', 'L', '?', ' '};
+
+// set Time Zone
+Timezone myTZ;
+
+bool volatile TimePulseTick = false;
+timesource_t timeSource = _unsynced;
+
+TaskHandle_t ClockTask = NULL;
+hw_timer_t *ppsIRQ = NULL;
 
 #ifdef HAS_IF482
 #if (HAS_SDS011)
@@ -85,8 +97,8 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", _seconds(),
-             time_to_set, t_msec % 1000);
+    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", _seconds(), time_to_set,
+             t_msec % 1000);
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
 // to top of second
@@ -95,23 +107,25 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       set_rtctime(time_to_set);
 #endif
 
-// if we have a software pps timer, shift it to top of second
-#if (!defined GPS_INT && !defined RTC_INT)
-    timerWrite(ppsIRQ, 0); // reset pps timer
-    CLOCKIRQ();            // fire clock pps, this advances time 1 sec
-#endif
+    // if we have a software pps timer, shift it to top of second
+    if (ppsIRQ != NULL) {
+      timerWrite(ppsIRQ, 0); // reset pps timer
+      CLOCKIRQ();            // fire clock pps, this advances time 1 sec
+    }
 
-    setTime(time_to_set); // set the time on top of second
+    UTC.setTime(time_to_set); // set the time on top of second
 
     timeSource = mytimesource; // set global variable
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
-    ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | source: %c",
-             _seconds(), timeSetSymbols[mytimesource]);
+    ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | timesource=%d",
+             _seconds(), mytimesource);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
-    time_t unix_sec_at_compilation = compiledUTC();
-    ESP_LOGD(TAG, "[%0.3f] Failed to synchronise time from source %c | unix sec obtained from source: %d | unix sec at program compilation: %d",
-             _seconds(), timeSetSymbols[mytimesource], time_to_set, unix_sec_at_compilation);
+    ESP_LOGD(TAG,
+             "[%0.3f] Failed to synchronise time from source %c | unix sec "
+             "obtained from source: %d | unix sec at program compilation: %d",
+             _seconds(), timeSetSymbols[mytimesource], time_to_set,
+             _COMPILETIME);
   }
 }
 
@@ -157,7 +171,6 @@ uint8_t timepulse_init() {
 } // timepulse_init
 
 void timepulse_start(void) {
-
 #ifdef GPS_INT // start external clock gps pps line
   attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
 #elif defined RTC_INT // start external clock rtc
@@ -177,7 +190,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-  SyncToPPS(); // advance systime, see microTime.h
+  // syncToPPS(); // currently not used
 
 // advance wall clock, if we have
 #if (defined HAS_IF482 || defined HAS_DCF77)
@@ -197,16 +210,10 @@ void IRAM_ATTR CLOCKIRQ(void) {
     portYIELD_FROM_ISR();
 }
 
-// helper function to check plausibility of a time
+// helper function to check plausibility of a given epoch time
 time_t timeIsValid(time_t const t) {
   // is it a time in the past? we use compile date to guess
-  return (t >= compiledUTC() ? t : 0);
-}
-
-// helper function to convert compile time to UTC time
-time_t compiledUTC(void) {
-  static time_t t = myTZ.toUTC(RtcDateTime(__DATE__, __TIME__).Epoch32Time());
-  return t;
+  return (t < myTZ.tzTime(_COMPILETIME) ? 0 : t);
 }
 
 // helper function to calculate serial transmit time
@@ -291,7 +298,7 @@ void clock_loop(void *taskparameter) { // ClockTask
       t = time_t(printtime); // new adjusted UTC time seconds
 
     // send IF482 telegram
-    IF482.print(IF482_Frame(t + 1)); // note: telegram is for *next* second
+    IF482.print(IF482_Frame(t + 2)); // note: telegram is for *next* second
 
 #elif defined HAS_DCF77
 
@@ -300,7 +307,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 
     if (minute(nextmin(t)) ==       // do we still have a recent frame?
         DCFpulse[DCF77_FRAME_SIZE]) // (timepulses could be missed!)
-      DCF77_Pulse(t, DCFpulse);     // then output current second's pulse
+      DCF77_Pulse(t + 1, DCFpulse); // then output next second's pulse
 
       // else we have no recent frame, thus suppressing clock output
 

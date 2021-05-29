@@ -1,6 +1,7 @@
 // Basic Config
 #include "globals.h"
 #include "rcommand.h"
+#include "libpax_helpers.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;
@@ -15,13 +16,14 @@ void set_reset(uint8_t val[]) {
     ESP_LOGI(TAG, "Remote command: restart device cold");
     do_reset(false);
     break;
-  case 1: // reset MAC counter
-    ESP_LOGI(TAG, "Remote command: reset MAC counter");
-    reset_counters(); // clear macs
+  case 1: // reserved
+    // reset MAC counter deprecated by libpax integration
     break;
   case 2: // reset device to factory settings
-    ESP_LOGI(TAG, "Remote command: reset device to factory settings");
+    ESP_LOGI(TAG,
+             "Remote command: reset device to factory settings and restart");
     eraseConfig();
+    do_reset(false);
     break;
   case 3: // reset send queues
     ESP_LOGI(TAG, "Remote command: flush send queue");
@@ -53,52 +55,76 @@ void set_reset(uint8_t val[]) {
 
 void set_rssi(uint8_t val[]) {
   cfg.rssilimit = val[0] * -1;
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.wifi_rssi_threshold = cfg.rssilimit;
+  libpax_update_config(&current_config);
+  init_libpax();
+#endif
   ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
 }
 
 void set_sendcycle(uint8_t val[]) {
-  cfg.sendcycle = val[0];
+  if (val[0] < 5)
+    return;
   // update send cycle interrupt [seconds / 2]
-  sendTimer.attach(cfg.sendcycle * 2, setSendIRQ);
+  cfg.sendcycle = val[0];
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  libpax_counter_stop();
+  init_libpax();
+#else
+  // modify senddata timer
+  initSendDataTimer(cfg.sendcycle * 2);
+#endif
 }
 
 void set_sleepcycle(uint8_t val[]) {
-  cfg.sleepcycle = val[0];
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  uint16_t t = __builtin_bswap16(*(uint16_t *)(val));
+  if (t == 0)
+    return;
+  cfg.sleepcycle = t;
   ESP_LOGI(TAG, "Remote command: set sleep cycle to %d seconds",
-           cfg.sleepcycle * 2);
+           cfg.sleepcycle * 10);
 }
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
-  // update Wifi channel rotation timer period
-  if (cfg.wifichancycle > 0) {
-    if (xTimerIsTimerActive(WifiChanTimer) == pdFALSE)
-      xTimerStart(WifiChanTimer, (TickType_t)0);
-    xTimerChangePeriod(WifiChanTimer, pdMS_TO_TICKS(cfg.wifichancycle * 10),
-                       100);
+#if (WIFICOUNTER)
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+
+  if (cfg.wifichancycle == 0) {
+    ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
+    current_config.wifi_channel_map = WIFI_CHANNEL_1;
+  } else {
     ESP_LOGI(
         TAG,
         "Remote command: set Wifi channel hopping interval to %.1f seconds",
         cfg.wifichancycle / float(100));
-  } else {
-    xTimerStop(WifiChanTimer, (TickType_t)0);
-    esp_wifi_set_channel(WIFI_CHANNEL_MIN, WIFI_SECOND_CHAN_NONE);
-    channel = WIFI_CHANNEL_MIN;
-    ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
   }
+
+  current_config.wifi_channel_switch_interval = cfg.wifichancycle;
+  libpax_update_config(&current_config);
+  init_libpax();
+#endif
 }
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
-  ESP_LOGI(TAG, "Remote command: set BLE scan time to %.1f seconds",
-           cfg.blescantime / float(100));
-  // stop & restart BLE scan task to apply new parameter
-  if (cfg.blescan) {
-    stop_BLEscan();
-    start_BLEscan();
-  }
+#if (BLECOUNTER)
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.blescantime = cfg.blescantime;
+  libpax_update_config(&current_config);
+  init_libpax();
+#endif
 }
 
 void set_countmode(uint8_t val[]) {
@@ -121,7 +147,10 @@ void set_countmode(uint8_t val[]) {
         "Remote command: set counter mode called with invalid parameter(s)");
     return;
   }
-  reset_counters(); // clear macs
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  libpax_counter_stop();
+  init_libpax(); // re-inits counter mode from cfg.countermode
+#endif
 }
 
 void set_screensaver(uint8_t val[]) {
@@ -192,18 +221,10 @@ void set_sensor(uint8_t val[]) {
 #endif
 }
 
-void set_beacon(uint8_t val[]) {
-  uint8_t id = val[0];           // use first parameter as beacon storage id
-  memmove(val, val + 1, 6);      // strip off storage id
-  beacons[id] = macConvert(val); // store beacon MAC in array
-  ESP_LOGI(TAG, "Remote command: set beacon ID#%d", id);
-  printKey("MAC", val, 6, false); // show beacon MAC
-}
-
-void set_monitor(uint8_t val[]) {
-  ESP_LOGI(TAG, "Remote command: set beacon monitor mode to %s",
-           val ? "on" : "off");
-  cfg.monitormode = val[0] ? 1 : 0;
+uint64_t macConvert(uint8_t *paddr) {
+  uint64_t *mac;
+  mac = (uint64_t *)paddr;
+  return (__builtin_bswap64(*mac) >> 16);
 }
 
 void set_loradr(uint8_t val[]) {
@@ -240,20 +261,29 @@ void set_loraadr(uint8_t val[]) {
 
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
-  macs_ble = 0; // clear BLE counter
   cfg.blescan = val[0] ? 1 : 0;
-  if (cfg.blescan)
-    start_BLEscan();
-  else
-    stop_BLEscan();
+#if (BLECOUNTER)
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.blecounter = cfg.blescan;
+  libpax_update_config(&current_config);
+  init_libpax();
+#endif
 }
 
 void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
-  macs_wifi = 0; // clear WIFI counter
   cfg.wifiscan = val[0] ? 1 : 0;
-  switch_wifi_sniffer(cfg.wifiscan);
+#if (WIFICOUNTER)
+  libpax_counter_stop();
+  libpax_config_t current_config;
+  libpax_get_current_config(&current_config);
+  current_config.wificounter = cfg.wifiscan;
+  libpax_update_config(&current_config);
+  init_libpax();
+#endif
 }
 
 void set_wifiant(uint8_t val[]) {
@@ -263,12 +293,6 @@ void set_wifiant(uint8_t val[]) {
 #ifdef HAS_ANTENNA_SWITCH
   antenna_select(cfg.wifiant);
 #endif
-}
-
-void set_macfilter(uint8_t val[]) {
-  ESP_LOGI(TAG, "Remote command: set macfilter mode to %s",
-           val[0] ? "on" : "off");
-  cfg.macfilter = val[0] ? 1 : 0;
 }
 
 void set_rgblum(uint8_t val[]) {
@@ -347,15 +371,23 @@ void get_batt(uint8_t val[]) {
 
 void get_time(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get time");
+  time_t t = now();
   payload.reset();
-  payload.addTime(now());
+  payload.addTime(t);
   payload.addByte(timeStatus() << 4 | timeSource);
   SendPayload(TIMEPORT);
 };
 
-void set_time(uint8_t val[]) {
+void set_timesync(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: timesync requested");
   setTimeSyncIRQ();
+};
+
+void set_time(uint8_t val[]) {
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  uint32_t t = __builtin_bswap32(*(uint32_t *)(val));
+  ESP_LOGI(TAG, "Remote command: set time to %d", t);
+  setMyTime(t, 0, _set);
 };
 
 void set_flush(uint8_t val[]) {
@@ -393,17 +425,16 @@ static const cmd_t table[] = {
     {0x07, set_loraadr, 1},       {0x08, set_screensaver, 1},
     {0x09, set_reset, 1},         {0x0a, set_sendcycle, 1},
     {0x0b, set_wifichancycle, 1}, {0x0c, set_blescantime, 1},
-    {0x0d, set_macfilter, 1},     {0x0e, set_blescan, 1},
-    {0x0f, set_wifiant, 1},       {0x10, set_rgblum, 1},
-    {0x11, set_monitor, 1},       {0x12, set_beacon, 7},
-    {0x13, set_sensor, 2},        {0x14, set_payloadmask, 1},
-    {0x15, set_bme, 1},           {0x16, set_batt, 1},
-    {0x17, set_wifiscan, 1},      {0x18, set_enscount, 1},
-    {0x19, set_sleepcycle, 1},    {0x20, set_loadconfig, 0},
-    {0x21, set_saveconfig, 0},    {0x80, get_config, 0},
-    {0x81, get_status, 0},        {0x83, get_batt, 0},
-    {0x84, get_gps, 0},           {0x85, get_bme, 0},
-    {0x86, get_time, 0},          {0x87, set_time, 0},
+    {0x0e, set_blescan, 1},       {0x0f, set_wifiant, 1},
+    {0x10, set_rgblum, 1},        {0x13, set_sensor, 2},
+    {0x14, set_payloadmask, 1},   {0x15, set_bme, 1},
+    {0x16, set_batt, 1},          {0x17, set_wifiscan, 1},
+    {0x18, set_enscount, 1},      {0x19, set_sleepcycle, 2},
+    {0x20, set_loadconfig, 0},    {0x21, set_saveconfig, 0},
+    {0x80, get_config, 0},        {0x81, get_status, 0},
+    {0x83, get_batt, 0},          {0x84, get_gps, 0},
+    {0x85, get_bme, 0},           {0x86, get_time, 0},
+    {0x87, set_timesync, 0},      {0x88, set_time, 4},
     {0x99, set_flush, 0}};
 
 static const uint8_t cmdtablesize =

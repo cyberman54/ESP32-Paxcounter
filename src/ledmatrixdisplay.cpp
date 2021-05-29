@@ -12,7 +12,9 @@ static const char TAG[] = __FILE__;
 uint8_t MatrixDisplayIsOn = 0;
 static uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8] = {0};
 static unsigned long ulLastNumMacs = 0;
-static time_t ulLastTime = myTZ.toLocal(now());
+static time_t ulLastTime = now();
+
+hw_timer_t *matrixDisplayIRQ = NULL;
 
 LEDMatrix matrix(LED_MATRIX_LA_74138, LED_MATRIX_LB_74138, LED_MATRIX_LC_74138,
                  LED_MATRIX_LD_74138, LED_MATRIX_EN_74138, LED_MATRIX_DATA_R1,
@@ -45,7 +47,6 @@ void init_matrix_display(bool reverse) {
 void refreshTheMatrixDisplay(bool nextPage) {
   static uint8_t DisplayPage = 0, col = 0, row = 0;
   uint8_t level;
-  char buff[16];
 
   // if Matrixdisplay is switched off we don't refresh it to relax cpu
   if (!MatrixDisplayIsOn && (MatrixDisplayIsOn == cfg.screenon))
@@ -74,11 +75,13 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
   case 0:
 
-    if (cfg.countermode == 1)
+    // update counter values from libpax
+    libpax_counter_count(&count_from_libpax);
 
-    { // cumulative counter mode -> display total number of pax
-      if (ulLastNumMacs != macs.size()) {
-        ulLastNumMacs = macs.size();
+    if (cfg.countermode == 1) {
+      // cumulative counter mode -> display total number of pax
+      if (ulLastNumMacs != count_from_libpax.pax) {
+        ulLastNumMacs = count_from_libpax.pax;
         matrix.clear();
         DrawNumber(String(ulLastNumMacs));
       }
@@ -86,10 +89,10 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
     else { // cyclic counter mode -> plot a line diagram
 
-      if (ulLastNumMacs != macs.size()) {
+      if (ulLastNumMacs != count_from_libpax.pax) {
 
         // next count cycle?
-        if (macs.size() == 0) {
+        if (count_from_libpax.pax == 0) {
 
           // matrix full? then scroll left 1 dot, else increment column
           if (col < (LED_MATRIX_WIDTH - 1))
@@ -101,7 +104,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
           matrix.drawPoint(col, row, 0); // clear current dot
 
         // scale and set new dot
-        ulLastNumMacs = macs.size();
+        ulLastNumMacs = count_from_libpax.pax;
         level = ulLastNumMacs / LINE_DIAGRAM_DIVIDER;
         row = level <= LED_MATRIX_HEIGHT
                   ? LED_MATRIX_HEIGHT - 1 - level % LED_MATRIX_HEIGHT
@@ -113,13 +116,11 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
   case 1:
 
-    const time_t t = myTZ.toLocal(now());
+    const time_t t = now();
     if (ulLastTime != t) {
       ulLastTime = t;
       matrix.clear();
-      snprintf(buff, sizeof(buff), "%02d:%02d:%02d", hour(t), minute(t),
-               second(t));
-      DrawNumber(String(buff));
+      DrawNumber(myTZ.dateTime("H:i:s").c_str());
     }
     break;
 

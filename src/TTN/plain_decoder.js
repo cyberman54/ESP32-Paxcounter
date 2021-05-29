@@ -49,12 +49,6 @@ function Decoder(bytes, port) {
     decoded.button = bytes[i++];
   }
 
-  if (port === 6) {
-    var i = 0;
-    decoded.rssi = bytes[i++];
-    decoded.beacon = bytes[i++];
-  }
-
   if (port === 7) {
     var i = 0;
     decoded.temperature = ((bytes[i++] << 8) | bytes[i++]);

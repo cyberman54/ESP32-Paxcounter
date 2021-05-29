@@ -19,6 +19,7 @@
 #endif
 
 extern TaskHandle_t lmicTask, lorasendTask;
+extern char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer
 
 esp_err_t lmic_init(void);
 void lora_setupForNetwork(bool preJoin);

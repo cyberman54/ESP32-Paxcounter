@@ -25,7 +25,7 @@
                 "t": "set",
                 "p": "payload.schedule",
                 "pt": "msg",
-                "to": "replace",
+                "to": "first",
                 "tot": "str"
             },
             {

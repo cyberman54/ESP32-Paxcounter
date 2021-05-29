@@ -76,14 +76,6 @@ void IRAM_ATTR watchdog() { xTaskResumeFromISR(RestartHandle); }
 
 void start_boot_menu(void) {
 
-  uint8_t mac[6];
-  char clientId[20];
-
-  // hash 6 byte MAC to 4 byte hash
-  esp_eth_get_mac(mac);
-  const uint32_t hashedmac = myhash((const char *)mac, 6);
-  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
-
   const char *host = clientId;
   const char *ssid = WIFI_SSID;
   const char *password = WIFI_PASS;

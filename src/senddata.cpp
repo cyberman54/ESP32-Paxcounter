@@ -1,10 +1,21 @@
 // Basic Config
 #include "senddata.h"
 
-Ticker sendTimer;
-
-void setSendIRQ() {
+void setSendIRQ(TimerHandle_t xTimer) {
   xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
+}
+
+void initSendDataTimer(uint8_t sendcycle) {
+  static TimerHandle_t SendDataTimer = NULL;
+
+  if (SendDataTimer == NULL) {
+    SendDataTimer =
+        xTimerCreate("SendDataTimer", pdMS_TO_TICKS(sendcycle * 1000), pdTRUE,
+                     (void *)0, setSendIRQ);
+    xTimerStart(SendDataTimer, 0);
+  } else {
+    xTimerChangePeriod(SendDataTimer, pdMS_TO_TICKS(sendcycle * 1000), 0);
+  }
 }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
@@ -57,7 +68,7 @@ void SendPayload(uint8_t port) {
 // write data to sdcard, if present
 #if (HAS_SDCARD)
   if (port == COUNTERPORT) {
-    sdcardWriteData(macs_wifi, macs_ble
+    sdcardWriteData(libpax_macs_wifi, libpax_macs_ble
 #if (COUNT_ENS)
                     ,
                     cwa_report()
@@ -87,9 +98,12 @@ void sendData() {
     case COUNT_DATA:
       payload.reset();
 #if !(PAYLOAD_OPENSENSEBOX)
-      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
-      if (cfg.blescan)
-        payload.addCount(macs_ble, MAC_SNIFF_BLE);
+      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
+      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+      if (cfg.blescan) {
+        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
+        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
+      }
 #endif
 #if (HAS_GPS)
       if (GPSPORT == COUNTERPORT) {
@@ -102,115 +116,111 @@ void sendData() {
       }
 #endif
 #if (PAYLOAD_OPENSENSEBOX)
-      payload.addCount(macs_wifi, MAC_SNIFF_WIFI);
-      if (cfg.blescan)
-        payload.addCount(macs_ble, MAC_SNIFF_BLE);
+      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
+      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+      if (cfg.blescan) {
+        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
+        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
 #endif
 #if (HAS_SDS011)
-      sds011_store(&sds_status);
-      payload.addSDS(sds_status);
+        sds011_store(&sds_status);
+        payload.addSDS(sds_status);
 #endif
-      SendPayload(COUNTERPORT);
-      // clear counter if not in cumulative counter mode
-      if (cfg.countermode != 1) {
-        reset_counters(); // clear macs container and reset all counters
-        ESP_LOGI(TAG, "Counter cleared");
-      }
+        SendPayload(COUNTERPORT);
 #ifdef HAS_DISPLAY
-      else
-        dp_plotCurve(macs.size(), true);
+        dp_plotCurve(libpax_macs_ble + libpax_macs_wifi, true);
 #endif
-      break;
+        break;
 #endif
 
 #if (HAS_BME)
-    case MEMS_DATA:
-      payload.reset();
-      payload.addBME(bme_status);
-      SendPayload(BMEPORT);
-      break;
+      case MEMS_DATA:
+        payload.reset();
+        payload.addBME(bme_status);
+        SendPayload(BMEPORT);
+        break;
 #endif
 
 #if (HAS_GPS)
-    case GPS_DATA:
-      if (GPSPORT != COUNTERPORT) {
-        // send GPS position only if we have a fix
-        if (gps_hasfix()) {
-          gps_storelocation(&gps_status);
-          payload.reset();
-          payload.addGPS(gps_status);
-          SendPayload(GPSPORT);
-        } else
-          ESP_LOGD(TAG, "No valid GPS position");
-      }
-      break;
+      case GPS_DATA:
+        if (GPSPORT != COUNTERPORT) {
+          // send GPS position only if we have a fix
+          if (gps_hasfix()) {
+            gps_storelocation(&gps_status);
+            payload.reset();
+            payload.addGPS(gps_status);
+            SendPayload(GPSPORT);
+          } else
+            ESP_LOGD(TAG, "No valid GPS position");
+        }
+        break;
 #endif
 
 #if (HAS_SENSORS)
 #if (HAS_SENSOR_1)
-    case SENSOR1_DATA:
-      payload.reset();
-      payload.addSensor(sensor_read(1));
-      SendPayload(SENSOR1PORT);
+      case SENSOR1_DATA:
+        payload.reset();
+        payload.addSensor(sensor_read(1));
+        SendPayload(SENSOR1PORT);
 #if (COUNT_ENS)
-      if (cfg.countermode != 1)
-        cwa_clear();
+        if (cfg.countermode != 1)
+          cwa_clear();
 #endif
-      break;
+        break;
 #endif
 #if (HAS_SENSOR_2)
-    case SENSOR2_DATA:
-      payload.reset();
-      payload.addSensor(sensor_read(2));
-      SendPayload(SENSOR2PORT);
-      break;
+      case SENSOR2_DATA:
+        payload.reset();
+        payload.addSensor(sensor_read(2));
+        SendPayload(SENSOR2PORT);
+        break;
 #endif
 #if (HAS_SENSOR_3)
-    case SENSOR3_DATA:
-      payload.reset();
-      payload.addSensor(sensor_read(3));
-      SendPayload(SENSOR3PORT);
-      break;
+      case SENSOR3_DATA:
+        payload.reset();
+        payload.addSensor(sensor_read(3));
+        SendPayload(SENSOR3PORT);
+        break;
 #endif
 #endif
 
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
-    case BATT_DATA:
-      payload.reset();
-      payload.addVoltage(read_voltage());
-      SendPayload(BATTPORT);
-      break;
+      case BATT_DATA:
+        payload.reset();
+        payload.addVoltage(read_voltage());
+        SendPayload(BATTPORT);
+        break;
 #endif
 
-    } // switch
-    bitmask &= ~mask;
-    mask <<= 1;
-  } // while (bitmask)
-} // sendData()
+      } // switch
+      bitmask &= ~mask;
+      mask <<= 1;
+    } // while (bitmask)
+  }   // sendData()
 
-void flushQueues(void) {
-  rcmd_queuereset();
+  void flushQueues(void) {
+    rcmd_queuereset();
 #if (HAS_LORA)
-  lora_queuereset();
+    lora_queuereset();
 #endif
 #ifdef HAS_SPI
-  spi_queuereset();
+    spi_queuereset();
 #endif
 #ifdef HAS_MQTT
-  mqtt_queuereset();
+    mqtt_queuereset();
 #endif
-}
+  }
 
-bool allQueuesEmtpy(void) {
-  uint32_t rc = rcmd_queuewaiting();
+  bool allQueuesEmtpy(void) {
+    uint32_t rc = rcmd_queuewaiting();
 #if (HAS_LORA)
-  rc += lora_queuewaiting();
+    rc += lora_queuewaiting();
 #endif
 #ifdef HAS_SPI
-  rc += spi_queuewaiting();
+    rc += spi_queuewaiting();
 #endif
 #ifdef HAS_MQTT
-  rc += mqtt_queuewaiting();
+    rc += mqtt_queuewaiting();
 #endif
-  return (rc == 0) ? true : false;
-}
+    return (rc == 0) ? true : false;
+  }

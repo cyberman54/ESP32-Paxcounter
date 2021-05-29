@@ -1,6 +1,9 @@
 #include "globals.h"
 #include "payload.h"
 
+// initialize payload encoder
+PayloadConvert payload(PAYLOAD_BUFFER_SIZE);
+
 PayloadConvert::PayloadConvert(uint8_t size) {
   buffer = (uint8_t *)malloc(size);
   cursor = 0;
@@ -25,11 +28,6 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   buffer[cursor++] = lowByte(value);
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
-  buffer[cursor++] = rssi;
-  buffer[cursor++] = msg;
-}
-
 void PayloadConvert::addVoltage(uint16_t value) {
   buffer[cursor++] = highByte(value);
   buffer[cursor++] = lowByte(value);
@@ -49,16 +47,17 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.blescantime;
   buffer[cursor++] = value.blescan;
   buffer[cursor++] = value.wifiant;
-  buffer[cursor++] = value.macfilter;
+  buffer[cursor++] = 0; // reserved
   buffer[cursor++] = value.rgblum;
   buffer[cursor++] = value.payloadmask;
-  buffer[cursor++] = value.monitormode;
+  buffer[cursor++] = 0; // reserved
   memcpy(buffer + cursor, value.version, 10);
   cursor += 10;
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
-                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
+                               uint32_t mem, uint8_t reset0,
+                               uint32_t restarts) {
 
   buffer[cursor++] = highByte(voltage);
   buffer[cursor++] = lowByte(voltage);
@@ -164,11 +163,6 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   writeUint16(value);
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
-  writeUint8(rssi);
-  writeUint8(msg);
-}
-
 void PayloadConvert::addVoltage(uint16_t value) { writeUint16(value); }
 
 void PayloadConvert::addConfig(configData_t value) {
@@ -181,14 +175,14 @@ void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.rgblum);
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
-              value.blescan ? true : false, value.wifiant ? true : false,
-              value.macfilter ? true : false, value.monitormode ? true : false);
+              value.blescan ? true : false, value.wifiant ? true : false, 0, 0);
   writeUint8(value.payloadmask);
   writeVersion(value.version);
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
-                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
+                               uint32_t mem, uint8_t reset0,
+                               uint32_t restarts) {
   writeUint16(voltage);
   writeUptime(uptime);
   writeUint8((byte)cputemp);
@@ -368,19 +362,6 @@ void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   }
 }
 
-void PayloadConvert::addAlarm(int8_t rssi, uint8_t msg) {
-#if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_ALARM_CHANNEL;
-#endif
-  buffer[cursor++] = LPP_PRESENCE;
-  buffer[cursor++] = msg;
-#if (PAYLOAD_ENCODER == 3)
-  buffer[cursor++] = LPP_MSG_CHANNEL;
-#endif
-  buffer[cursor++] = LPP_ANALOG_INPUT;
-  buffer[cursor++] = rssi;
-}
-
 void PayloadConvert::addVoltage(uint16_t value) {
   uint16_t volt = value / 10;
 #if (PAYLOAD_ENCODER == 3)
@@ -400,7 +381,8 @@ void PayloadConvert::addConfig(configData_t value) {
 }
 
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
-                               uint32_t mem, uint8_t reset0, uint32_t restarts) {
+                               uint32_t mem, uint8_t reset0,
+                               uint32_t restarts) {
   uint16_t temp = celsius * 10;
   uint16_t volt = voltage / 10;
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)

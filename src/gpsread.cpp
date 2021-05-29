@@ -111,16 +111,16 @@ time_t get_gpstime(uint16_t *msec) {
     uint32_t zdatime = atof(gpstime.value());
 
     // convert time to maketime format and make time
-    tm.Second = zdatime % 100;                       // second
-    tm.Minute = (zdatime / 100) % 100;               // minute
-    tm.Hour = zdatime / 10000;                       // hour
-    tm.Day = atoi(gpsday.value());                   // day
-    tm.Month = atoi(gpsmonth.value());               // month
-    tm.Year = CalendarYrToTm(atoi(gpsyear.value())); // year offset from 1970
+    tm.Second = zdatime % 100;              // second
+    tm.Minute = (zdatime / 100) % 100;      // minute
+    tm.Hour = zdatime / 10000;              // hour
+    tm.Day = atoi(gpsday.value());          // day
+    tm.Month = atoi(gpsmonth.value());      // month
+    tm.Year = atoi(gpsyear.value()) - 1970; // year offset from 1970
     t = makeTime(tm);
 
-    ESP_LOGD(TAG, "GPS time/date = %02d:%02d:%02d / %02d.%02d.%2d", tm.Hour,
-            tm.Minute, tm.Second, tm.Day, tm.Month, tm.Year + 1970);
+    ESP_LOGD(TAG, "GPS date/time: %s",
+             UTC.dateTime(t, "d.M Y H:i:s T").c_str());
 
     // add protocol delay with millisecond precision
     t += delay_ms / 1000 - 1; // whole seconds
@@ -163,7 +163,8 @@ void gps_loop(void *pvParameters) {
 
       // (only) while device time is not set or unsynched, and we have a valid
       // GPS time, we trigger a device time update to poll time from GPS
-      if (timeSource == _unsynced && gpstime.isUpdated()) {
+      if ((timeSource == _unsynced || timeSource == _set) &&
+          (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000)) {
         now();
         calibrateTime();
       }

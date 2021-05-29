@@ -20,16 +20,12 @@
 #include <ArduinoJson.h>
 
 #include "BintrayClient.h"
-#include "BintrayCertificates.h"
 
 BintrayClient::BintrayClient(const String &user, const String &repository, const String &package)
     : m_user(user), m_repo(repository), m_package(package),
-      m_storage_host("dl.bintray.com"),
-      m_api_host("api.bintray.com")
+      m_storage_host("pax.express"),
+      m_api_host("pax.express")
 {
-    m_certificates.emplace_back("cloudfront.net", CLOUDFRONT_API_ROOT_CA);
-    m_certificates.emplace_back("akamai.bintray.com", BINTRAY_AKAMAI_ROOT_CA);
-    m_certificates.emplace_back("bintray.com", BINTRAY_API_ROOT_CA);
 }
 
 String BintrayClient::getUser() const
@@ -83,7 +79,7 @@ String BintrayClient::requestHTTPContent(const String &url) const
 {
     String payload;
     HTTPClient http;
-    http.begin(url, getCertificate(url));
+    http.begin(url);
     int httpCode = http.GET();
 
     if (httpCode > 0)
