@@ -214,7 +214,7 @@ Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time tele
 
 This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
-# Covid-19 Exposure Notification System beacon detection
+# Covid-19 Exposure Notification System beacon detection (currently NOT working with v3.0.x, use v2.4.x for this feature)
 
 Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
 
