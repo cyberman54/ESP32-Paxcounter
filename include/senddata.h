@@ -9,6 +9,7 @@
 #include "lorawan.h"
 #include "display.h"
 #include "sdcard.h"
+#include "softserial.h"
 
 #if (COUNT_ENS)
 #include "corona.h"

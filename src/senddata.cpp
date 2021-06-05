@@ -77,6 +77,17 @@ void SendPayload(uint8_t port) {
   }
 #endif
 
+#if (HAS_SERIAL)
+  if (port == COUNTERPORT) {
+    serialWriteData(libpax_macs_wifi, libpax_macs_ble
+#if (COUNT_ENS)
+                    ,
+                    cwa_report()
+#endif
+    );
+  }
+#endif
+
 } // SendPayload
 
 // interrupt triggered function to prepare payload to send
