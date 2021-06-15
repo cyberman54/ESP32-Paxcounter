@@ -1,0 +1,127 @@
+# Uplink decoder decodes binary data uplink into a JSON object (optional)
+# For documentation on writing encoders and decoders, see: https://thethingsstack.io/integrations/payload-formatters/javascript/
+uplinkDecoder:
+  fileName: esp32-paxcounter-packed_decodeUplink.js
+  examples:
+    - description: Paxcount data
+      input:
+        fPort: 1
+        bytes: [0x00, 0x07, 0x00, 0x03]
+      output:
+        data:
+          bytes: [0x00, 0x07, 0x00, 0x03]
+          port: 1
+          wifi: 7
+          ble: 3
+        errors: []
+        warnings: []
+    - description: Device status query result
+      input:
+        fPort: 2
+        bytes: [0x01, 0x2F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x4B, 0xC0, 0x2D, 0x00, 0x03, 0x4B, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00]
+      output:
+        data:
+          bytes: [0x01, 0x2F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x4B, 0xC0, 0x2D, 0x00, 0x03, 0x4B, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00]
+          port: 2
+          voltage: 303
+          uptime: 216000
+          cputemp: 45
+          memory: 216000
+          reset0: 0
+          restarts: 0
+        errors: []
+        warnings: []
+    - description: Device config data
+      input:
+        fPort: 3
+        bytes: [0x09, 0x0F, 0x00, 0x00, 0x78, 0x32, 0x0A, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+      output:
+        data:
+          bytes: [0x09, 0x0F, 0x00, 0x00, 0x78, 0x32, 0x0A, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+          port: 3
+          loradr: 9
+          txpower: 15
+          rssilimit: 0
+          sendcycle: 120
+          wifichancycle: 50
+          blescantime: 10
+          rgblum: 30
+          flags: 0
+          payloadmask: 0
+          version: 0
+        errors: []
+        warnings: []
+    - description: GPS data
+      input:
+        fPort: 4
+        bytes: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0xB4, 0x00, 0xCD]
+      output:
+        data:
+          bytes: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0xB4, 0x00, 0xCD]
+          port: 4
+          latitude: 0
+          longitude: 0
+          sats: 6
+          hdop: 1.80
+          altitude: 205
+        errors: []
+        warnings: []
+    - description: Button data
+      input:
+        fPort: 5
+        bytes: [0x01]
+      output:
+        data:
+          bytes: [0x00]
+          port: 5
+          button: 1
+        errors: []
+        warnings: []
+    - description: Environmental sensor data
+      input:
+        fPort: 7
+        bytes: [0x08, 0x34, 0x27, 0x10, 0x1F, 0x40, 0x27, 0x10]
+      output:
+        data:
+          bytes: [0x08, 0x34, 0x27, 0x10, 0x1F, 0x40, 0x27, 0x10]
+          port: 7
+          temperature: 21.00
+          pressure: 1000.0
+          humidity: 80.00
+          air: 100.00
+        errors: []
+        warnings: []
+    - description: Battery voltage data
+      input:
+        fPort: 8
+        bytes: [0x01, 0x2F]
+      output:
+        data:
+          bytes: [0x01, 0x2F]
+          port: 8
+          voltage: 303
+        errors: []
+        warnings: []
+    - description: Time/Date
+      input:
+        fPort: 9
+        bytes: [0x60, 0xC8, 0x86, 0x90, 0x00]
+      output:
+        data:
+          bytes: [0x60, 0xC8, 0x86, 0x90, 0x00]
+          port: 9
+          time: 1623754384
+          timestatus: 0
+        errors: []
+        warnings: []
+    - description: User sensor data
+      input:
+        fPort: 10
+        bytes: [0x00]
+      output:
+        data:
+          bytes: [0x00]
+          port: 10
+          ens: 0
+        errors: []
+        warnings: []
