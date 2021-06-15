@@ -5,9 +5,9 @@ To add bigger payload decoders than 4k (via web ui) we provide the metadata to t
 > /
 > - index.yaml (include the marked lines at the bottom of the original file)
 > 
-> /vendor
+> /vendor (existing folder in the repo)
 > 
-> - opensource (new folder with all the good stuff inside)
+> - /opensource (new folder with all the good stuff inside)
 > 
 > /vendor/opensource
 > 
