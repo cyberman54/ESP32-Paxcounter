@@ -1,0 +1,12 @@
+vendors:
+  - id: example
+    name: Example
+    vendorID: 0
+    draft: true
+
+#SNIP - a lot of other vendors, just attach the lower lines to the index.yaml
+#SNIP - could add a logo with "logo: filename"
+
+  - id: opensource
+    name: Open Source Community Projects
+    website: https://en.wikipedia.org/wiki/Open_source
