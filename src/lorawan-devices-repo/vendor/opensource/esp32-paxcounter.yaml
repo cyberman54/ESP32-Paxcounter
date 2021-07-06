@@ -43,20 +43,26 @@ firmwareVersions:
 # vibration, voltage, water potential, water, weight, wifi ssid, wind direction, wind speed.
 sensors:
   - battery
-  - ble
-  - wifi
-  - pax
+  #  - ble
+  #  - wifi
+  #  - pax
   - gps
   - altitude
-  - latitude
-  - longitude
-  - hdop
-  - sats
+  #  - latitude
+  #  - longitude
+  #  - hdop
+  #  - sats
   - temperature
   - humidity
   - barometer
   - pm2.5
   - pm10
+
+# Additional radios that this device has (optional)
+# Valid values are: ble, nfc, wifi, cellular.
+additionalRadios:
+  - ble
+  - wifi
 
 # Dimensions in mm (optional)
 # Use width, height, length and/or diameter
@@ -70,11 +76,11 @@ sensors:
 
 ## Operating conditions (optional)
 #operatingConditions:
-  # Temperature (Celsius)
+# Temperature (Celsius)
 #  temperature:
 #    min: -30
 #    max: 60
-  # Relative humidity (fraction of 1)
+# Relative humidity (fraction of 1)
 #  relativeHumidity:
 #    min: 0
 #    max: 0.9
