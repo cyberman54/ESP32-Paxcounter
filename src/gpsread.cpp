@@ -120,7 +120,7 @@ time_t get_gpstime(uint16_t *msec) {
     t = makeTime(tm);
 
     ESP_LOGD(TAG, "GPS date/time: %s",
-             UTC.dateTime(t, "d.M Y H:i:s T").c_str());
+             UTC.dateTime(t, "d.M Y H:i:s.v T").c_str());
 
     // add protocol delay with millisecond precision
     t += delay_ms / 1000 - 1; // whole seconds

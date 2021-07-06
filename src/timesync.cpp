@@ -143,7 +143,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
     time_offset_ms %= 1000;
 
     ESP_LOGD(TAG, "LORA date/time: %s",
-             myTZ.dateTime(time_offset_sec, "d.M Y H:i:s T").c_str());
+             myTZ.dateTime(time_offset_sec, "d.M Y H:i:s.v T").c_str());
 
     setMyTime(time_offset_sec, time_offset_ms, _lora);
 
@@ -168,7 +168,7 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
 // store incoming timestamps
 void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
-  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", _seconds(), time_sync_seqNo,
+  ESP_LOGD(TAG, "[%0.3f] seq#%d[%d]: t%d=%d", _seconds(), time_sync_seqNo - 1,
            sample_idx, timestamp_type, timestamp);
   timesync_timestamp[sample_idx][timestamp_type] = timestamp;
 }
@@ -239,14 +239,16 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   }
 
   // Populate lmic_time_reference
-  if ((LMIC_getNetworkTimeReference(&lmicTime)) != 1) {
+  flag = LMIC_getNetworkTimeReference(&lmicTime);
+  if (flag != 1) {
     ESP_LOGW(TAG, "[%0.3f] Network time request failed", _seconds());
     goto Exit;
   }
 
   // Calculate UTCTime, considering the difference between GPS and UTC time
   // epoch, and the leap seconds
-  timestamp_sec = lmicTime.tNetwork + GPS_UTC_DIFF;
+  timestamp_sec = lmicTime.tNetwork + GPS_UTC_DIFF - LEAP_SECS_SINCE_GPSEPOCH;
+  ESP_LOGD(TAG, "lmicTime.tNetwork = %d", timestamp_sec);
 
   // Add the delay between the instant the time was transmitted and
   // the current time
