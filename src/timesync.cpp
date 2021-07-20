@@ -230,7 +230,7 @@ void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
   // pUserData: contains pointer to SeqNo (not needed here)
   // flag: indicates if we got a recent time from the network
 
-  uint32_t delay_msec;
+  int32_t delay_msec;
   lmic_time_reference_t lmicTime;
 
   if (flag != 1) {
