@@ -303,6 +303,7 @@ void setup() {
   // configure BLE sniffing
   configuration.blecounter = cfg.blescan;
   configuration.blescantime = cfg.blescantime;
+  configuration.ble_rssi_threshold = cfg.rssilimit;
   ESP_LOGI(TAG, "BLESCAN: %s", cfg.blescan ? "on" : "off");
 
   int config_update = libpax_update_config(&configuration);
