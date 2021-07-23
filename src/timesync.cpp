@@ -130,17 +130,17 @@ void IRAM_ATTR timesync_processReq(void *taskparameter) {
 
     // calculate average time offset over the summed up difference
     time_offset_ms /= TIME_SYNC_SAMPLES;
+     
+    // add milliseconds from latest gateway time, and apply a compensation
+    // constant for processing times on node and gateway, strip full seconds
+    time_offset_ms += timesync_timestamp[sample_idx - 1][gwtime_msec];
+    time_offset_ms -= TIME_SYNC_FIXUP;
+    time_offset_ms %= 1000;
 
     // take latest timestamp received from gateway
     // and add time difference rounded to whole seconds
     time_offset_sec = timesync_timestamp[sample_idx - 1][gwtime_sec];
     time_offset_sec += time_offset_ms / 1000;
-
-    // add milliseconds from latest gateway time, and apply a compensation
-    // constant for processing times on node and gateway, strip full seconds
-    time_offset_ms += timesync_timestamp[sample_idx - 1][gwtime_msec];
-    time_offset_ms += TIME_SYNC_FIXUP;
-    time_offset_ms %= 1000;
 
     ESP_LOGD(TAG, "LORA date/time: %s",
              myTZ.dateTime(time_offset_sec, "d.M Y H:i:s.v T").c_str());
