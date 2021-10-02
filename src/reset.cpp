@@ -132,7 +132,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
 #if (HAS_LORA)
   ESP_LOGI(TAG, "Waiting until LMIC is idle...");
   for (i = 100; i > 0; i--) {
-    if ((LMIC.opmode & OP_TXRXPEND) ||
+    if ((LMIC.opmode & (OP_JOINING | OP_TXDATA | OP_POLL | OP_TXRXPEND)) ||
         os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
       vTaskDelay(pdMS_TO_TICKS(1000));
     else
