@@ -121,7 +121,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
              _seconds(), mytimesource);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
-    ESP_LOGD(TAG,
+    ESP_LOGV(TAG,
              "[%0.3f] Failed to synchronise time from source %c | unix sec "
              "obtained from source: %d | unix sec at program compilation: %d",
              _seconds(), timeSetSymbols[mytimesource], time_to_set,
