@@ -262,7 +262,6 @@ esp_err_t lmic_init(void) {
   LMIC_registerRxMessageCb(myRxCallback, NULL);
   LMIC_registerEventCb(myEventCallback, NULL);
   // to come with future LMIC version
-  // LMIC_registerBattLevelCb(myBattLevelCb, NULL);
 
   // Reset the MAC state. Session and pending data transfers will be
   // discarded.
@@ -407,34 +406,6 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   // print event
   ESP_LOGD(TAG, "%s", lmic_event_msg);
-}
-
-uint8_t myBattLevelCb(void *pUserData) {
-
-  // set the battery value to send by LMIC in MAC Command
-  // DevStatusAns. Available defines in lorabase.h:
-  //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
-  //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
-  //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
-  //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
-  // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
-  // MCMD_DEVS_BATT_MAX from bat_percent value
-
-  uint8_t const batt_percent = read_battlevel();
-
-  if (batt_percent == 0)
-    return MCMD_DEVS_BATT_NOINFO;
-  else
-
-#ifdef HAS_PMU
-      if (pmu.isVBUSPlug())
-    return MCMD_DEVS_EXT_POWER;
-#elif defined HAS_IP5306
-      if (IP5306_GetPowerSource())
-    return MCMD_DEVS_EXT_POWER;
-#endif // HAS_PMU
-
-  return (batt_percent / 100.0 * (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
 }
 
 // event EV_RXCOMPLETE message handler

@@ -36,7 +36,6 @@ void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
 uint32_t lora_queuewaiting(void);
-uint8_t myBattLevelCb(void *pUserData);
 void IRAM_ATTR myEventCallback(void *pUserData, ev_t ev);
 void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                             size_t nMsg);

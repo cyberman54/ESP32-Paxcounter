@@ -258,17 +258,48 @@ uint16_t read_voltage(void) {
 
 uint8_t read_battlevel(mapFn_t mapFunction) {
   // returns the estimated battery level in values 0 ... 100 [percent]
+  uint8_t batt_percent = 0;
 #ifdef HAS_IP5306
-  return IP5306_GetBatteryLevel();
+  batt_percent = IP5306_GetBatteryLevel();
 #else
   const uint16_t batt_voltage = read_voltage();
   if (batt_voltage <= BAT_MIN_VOLTAGE)
-    return 0;
+    batt_percent = 0;
   else if (batt_voltage >= BAT_MAX_VOLTAGE)
-    return 100;
+    batt_percent = 100;
   else
-    return (*mapFunction)(batt_voltage, BAT_MIN_VOLTAGE, BAT_MAX_VOLTAGE);
+    batt_percent =
+        (*mapFunction)(batt_voltage, BAT_MIN_VOLTAGE, BAT_MAX_VOLTAGE);
 #endif
+
+#if (HAS_LORA)
+  // set the battery status value to send by LMIC in MAC Command
+  // DevStatusAns. Available defines in lorabase.h:
+  //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+  // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
+  // MCMD_DEVS_BATT_MAX from batt_percent value
+
+  if (batt_percent == 0)
+    LMIC_setBatteryLevel(MCMD_DEVS_BATT_NOINFO);
+  else
+    LMIC_setBatteryLevel(batt_percent / 100.0 *
+                         (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
+
+// overwrite calculated value if we have external power
+#ifdef HAS_PMU
+  if (pmu.isVBUSPlug())
+    LMIC_setBatteryLevel(MCMD_DEVS_EXT_POWER);
+#elif defined HAS_IP5306
+  if (IP5306_GetPowerSource())
+    LMIC_setBatteryLevel(MCMD_DEVS_EXT_POWER);
+#endif // HAS_PMU
+
+#endif // HAS_LORA
+
+  return batt_percent;
 }
 
 bool batt_sufficient() {
