@@ -139,6 +139,8 @@ If option *BOOTMENU* is defined in `paxcounter.conf`, the ESP32 board will try t
 (e.g. UK citizens may want to check [Data Protection Act 1998](https://ico.org.uk/media/1560691/wi-fi-location-analytics-guidance.pdf) and [GDPR 2018](https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/key-definitions/))
 
 (e.g. Citizens in the the Netherlands and EU may want to read [this article](https://www.ivir.nl/publicaties/download/PrivacyInformatie_2016_6.pdf) and [this article](https://autoriteitpersoonsgegevens.nl/nl/nieuws/europese-privacytoezichthouders-publiceren-opinie-eprivacyverordening)) and [this decision](https://edpb.europa.eu/news/national-news/2021/dutch-dpa-fines-municipality-wi-fi-tracking_en)
+	
+(e.g. Citizens in Germany may want to read [this article of Wissenschaftliche Dienste des Deutschen Bundestages](https://www.bundestag.de/resource/blob/538890/3dfae197d2c930693aa16d1619204f58/WD-3-206-17-pdf-data.pdf)
 
 Note: If you use this software you do this at your own risk. That means that you alone - not the authors of this software - are responsible for the legal compliance of an application using this or build from this software and/or usage of a device created using this software. You should take special care and get prior legal advice if you plan metering passengers in public areas and/or publish data drawn from doing so.
 
