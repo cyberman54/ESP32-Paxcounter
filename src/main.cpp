@@ -126,7 +126,8 @@ void setup() {
 
   // hash 6 byte device MAC to 4 byte clientID
   uint8_t mac[6];
-  esp_eth_get_mac(mac);
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
   const uint32_t hashedmac = myhash((const char *)mac, 6);
   snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
