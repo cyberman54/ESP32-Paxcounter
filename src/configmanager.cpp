@@ -32,7 +32,9 @@ static uint8_t buffer[cfgLen + cfgLen2];
 // 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
 
 static void defaultConfig(configData_t *myconfig) {
-  memcpy(myconfig->version, &PROGVERSION, 10); // Firmware version
+
+  strncpy(myconfig->version, PROGVERSION,
+          sizeof(myconfig->version) - 1); // Firmware version
 
   // device factory settings
   myconfig->loradr = LORADRDEFAULT; // 0-15, lora datarate, see paxcounter.conf

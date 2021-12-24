@@ -55,12 +55,12 @@ enum snifftype_t { MAC_SNIFF_WIFI, MAC_SNIFF_BLE, MAC_SNIFF_BLE_ENS };
 // using packed to avoid compiler padding, because struct will be memcpy'd to
 // byte array
 typedef struct __attribute__((packed)) {
-  char version[10];    // Firmware version
-  uint8_t loradr;      // 0-15, lora datarate
-  uint8_t txpower;     // 2-15, lora tx power
-  uint8_t adrmode;     // 0=disabled, 1=enabled
-  uint8_t screensaver; // 0=disabled, 1=enabled
-  uint8_t screenon;    // 0=disabled, 1=enabled
+  char version[10] = ""; // Firmware version
+  uint8_t loradr;        // 0-15, lora datarate
+  uint8_t txpower;       // 2-15, lora tx power
+  uint8_t adrmode;       // 0=disabled, 1=enabled
+  uint8_t screensaver;   // 0=disabled, 1=enabled
+  uint8_t screenon;      // 0=disabled, 1=enabled
   uint8_t countermode; // 0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed
   int16_t rssilimit;   // threshold for rssilimiter, negative value!
   uint8_t sendcycle;   // payload send cycle [seconds/2]
