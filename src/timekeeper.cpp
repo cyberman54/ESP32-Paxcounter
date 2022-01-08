@@ -180,8 +180,10 @@ void timepulse_start(void) {
   timerAlarmEnable(ppsIRQ);
 #endif
 
+  // get time if we don't have one
+  if (timeSource != _set)
+    setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
   // start cyclic time sync
-  setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
 }
 
