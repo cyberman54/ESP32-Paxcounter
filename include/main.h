@@ -23,5 +23,6 @@
 #include "libpax_helpers.h"
 #include "power.h"
 #include "antenna.h"
+#include "ntp.h"
 
 #endif

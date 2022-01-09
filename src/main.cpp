@@ -278,6 +278,10 @@ void setup() {
     start_ota_update();
 #endif
 
+#if (TIME_SYNC_NTP)
+  set_network_time();
+#endif
+
 #if (BOOTMENU)
   // start local webserver after each coldstart
   if (RTC_runmode == RUNMODE_POWERCYCLE)
