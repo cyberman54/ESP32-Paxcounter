@@ -32,7 +32,9 @@ static uint8_t buffer[cfgLen + cfgLen2];
 // 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
 
 static void defaultConfig(configData_t *myconfig) {
-  memcpy(myconfig->version, &PROGVERSION, 10); // Firmware version
+
+  strncpy(myconfig->version, PROGVERSION,
+          sizeof(myconfig->version) - 1); // Firmware version
 
   // device factory settings
   myconfig->loradr = LORADRDEFAULT; // 0-15, lora datarate, see paxcounter.conf
@@ -96,30 +98,33 @@ void saveConfig(bool erase) {
 }
 
 // load configuration from NVRAM into RAM and make it current
-bool loadConfig() {
+void loadConfig(void) {
+
+  int readBytes = 0;
 
   ESP_LOGI(TAG, "Loading device configuration from NVRAM...");
 
-  if (!nvram.begin(DEVCONFIG, true)) {
+  if (nvram.begin(DEVCONFIG, true)) {
+    // load device runtime config from nvram and copy it to byte array
+    readBytes = nvram.getBytes(DEVCONFIG, buffer, cfgLen + cfgLen2);
+    nvram.end();
+
+    // check that runtime config data length matches
+    if (readBytes != cfgLen + cfgLen2) {
+      ESP_LOGE(TAG, "No valid configuration found");
+      migrateConfig();
+    }
+
+  } else {
     ESP_LOGI(TAG, "NVRAM initialized, device starts with factory settings");
     eraseConfig();
   }
 
-  // simple check that runtime config data matches
-  // if (nvram.getBytesLength(DEVCONFIG) != (cfgLen + cfgLen2)) {
-  //  ESP_LOGE(TAG, "Configuration invalid");
-  //  return false;
-  //}
-
-  // load device runtime config from nvram and copy it to byte array
-  nvram.getBytes(DEVCONFIG, buffer, cfgLen + cfgLen2);
-  nvram.end();
-
   // validate loaded configuration by checking magic bytes at end of array
-  // if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
-  //  ESP_LOGW(TAG, "No configuration found");
-  //  return false;
-  //}
+  if (memcmp(buffer + cfgLen, &cfgMagicBytes, cfgLen2) != 0) {
+    ESP_LOGE(TAG, "Configuration data corrupt");
+    eraseConfig();
+  }
 
   // copy loaded configuration into runtime cfg struct
   memcpy(&cfg, buffer, cfgLen);
@@ -130,13 +135,13 @@ bool loadConfig() {
   case -1: // device configuration belongs to newer than current firmware
     ESP_LOGE(TAG, "Incompatible device configuration");
     eraseConfig();
-    return true;
+    break;
   case 1: // device configuration belongs to older than current firmware
     ESP_LOGW(TAG, "Device was updated, attempt to migrate configuration");
     migrateConfig();
-    return true;
+    break;
   default: // device configuration version matches current firmware version
-    return true;
+    break; // nothing to do here
   }
 }
 

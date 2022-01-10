@@ -118,14 +118,10 @@ void setup() {
   // load device configuration from NVRAM and set runmode
   do_after_reset();
 
-  // set time zone to user value from paxcounter.conf
-#ifdef TIME_SYNC_TIMEZONE
-  myTZ.setPosix(TIME_SYNC_TIMEZONE);
-#endif
-
   // hash 6 byte device MAC to 4 byte clientID
   uint8_t mac[6];
-  esp_eth_get_mac(mac);
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
   const uint32_t hashedmac = myhash((const char *)mac, 6);
   snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
@@ -302,6 +298,7 @@ void setup() {
   // configure BLE sniffing
   configuration.blecounter = cfg.blescan;
   configuration.blescantime = cfg.blescantime;
+  configuration.ble_rssi_threshold = cfg.rssilimit;
   ESP_LOGI(TAG, "BLESCAN: %s", cfg.blescan ? "on" : "off");
 
   int config_update = libpax_update_config(&configuration);

@@ -60,6 +60,7 @@ void set_rssi(uint8_t val[]) {
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
   current_config.wifi_rssi_threshold = cfg.rssilimit;
+  current_config.ble_rssi_threshold = cfg.rssilimit;
   libpax_update_config(&current_config);
   init_libpax();
 #endif

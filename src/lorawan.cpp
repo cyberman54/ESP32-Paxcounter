@@ -6,9 +6,6 @@
 // Local logging Tag
 static const char TAG[] = "lora";
 
-// Saves the LMIC structure during deep sleep
-RTC_DATA_ATTR lmic_t RTC_LMIC;
-
 #if CLOCK_ERROR_PROCENTAGE > 7
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
 #endif
@@ -265,7 +262,6 @@ esp_err_t lmic_init(void) {
   LMIC_registerRxMessageCb(myRxCallback, NULL);
   LMIC_registerEventCb(myEventCallback, NULL);
   // to come with future LMIC version
-  // LMIC_registerBattLevelCb(myBattLevelCb, NULL);
 
   // Reset the MAC state. Session and pending data transfers will be
   // discarded.
@@ -412,34 +408,6 @@ void myEventCallback(void *pUserData, ev_t ev) {
   ESP_LOGD(TAG, "%s", lmic_event_msg);
 }
 
-uint8_t myBattLevelCb(void *pUserData) {
-
-  // set the battery value to send by LMIC in MAC Command
-  // DevStatusAns. Available defines in lorabase.h:
-  //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
-  //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
-  //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
-  //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
-  // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
-  // MCMD_DEVS_BATT_MAX from bat_percent value
-
-  uint8_t const batt_percent = read_battlevel();
-
-  if (batt_percent == 0)
-    return MCMD_DEVS_BATT_NOINFO;
-  else
-
-#ifdef HAS_PMU
-      if (pmu.isVBUSPlug())
-    return MCMD_DEVS_EXT_POWER;
-#elif defined HAS_IP5306
-      if (IP5306_GetPowerSource())
-    return MCMD_DEVS_EXT_POWER;
-#endif // HAS_PMU
-
-  return (batt_percent / 100.0 * (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
-}
-
 // event EV_RXCOMPLETE message handler
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                   size_t nMsg) {
@@ -484,14 +452,70 @@ const char *getCrName(rps_t rps) {
   return t[getCr(rps)];
 }
 
-// following code snippet was taken from
+/*******************************************************************************
+ *
+ * ttn-esp32 - The Things Network device library for ESP-IDF / SX127x
+ *
+ * Copyright (c) 2018-2021 Manuel Bleichenbacher
+ *
+ * Licensed under MIT License
+ * https://opensource.org/licenses/MIT
+ *
+ * Functions for storing and retrieving TTN communication state from RTC memory.
+ *******************************************************************************/
+
+#define LMIC_OFFSET(field) __builtin_offsetof(struct lmic_t, field)
+#define LMIC_DIST(field1, field2) (LMIC_OFFSET(field2) - LMIC_OFFSET(field1))
+#define TTN_RTC_MEM_SIZE                                                       \
+  (sizeof(struct lmic_t) - LMIC_OFFSET(radio) - MAX_LEN_PAYLOAD - MAX_LEN_FRAME)
+
+#define TTN_RTC_FLAG_VALUE 0xf8025b8a
+
+RTC_DATA_ATTR uint8_t ttn_rtc_mem_buf[TTN_RTC_MEM_SIZE];
+RTC_DATA_ATTR uint32_t ttn_rtc_flag;
+
+void ttn_rtc_save() {
+  // Copy LMIC struct except client, osjob, pendTxData and frame
+  size_t len1 = LMIC_DIST(radio, pendTxData);
+  memcpy(ttn_rtc_mem_buf, &LMIC.radio, len1);
+  size_t len2 = LMIC_DIST(pendTxData, frame) - MAX_LEN_PAYLOAD;
+  memcpy(ttn_rtc_mem_buf + len1, (u1_t *)&LMIC.pendTxData + MAX_LEN_PAYLOAD,
+         len2);
+  size_t len3 = sizeof(struct lmic_t) - LMIC_OFFSET(frame) - MAX_LEN_FRAME;
+  memcpy(ttn_rtc_mem_buf + len1 + len2, (u1_t *)&LMIC.frame + MAX_LEN_FRAME,
+         len3);
+
+  ttn_rtc_flag = TTN_RTC_FLAG_VALUE;
+}
+
+bool ttn_rtc_restore() {
+  if (ttn_rtc_flag != TTN_RTC_FLAG_VALUE)
+    return false;
+
+  // Restore data
+  size_t len1 = LMIC_DIST(radio, pendTxData);
+  memcpy(&LMIC.radio, ttn_rtc_mem_buf, len1);
+  memset(LMIC.pendTxData, 0, MAX_LEN_PAYLOAD);
+  size_t len2 = LMIC_DIST(pendTxData, frame) - MAX_LEN_PAYLOAD;
+  memcpy((u1_t *)&LMIC.pendTxData + MAX_LEN_PAYLOAD, ttn_rtc_mem_buf + len1,
+         len2);
+  memset(LMIC.frame, 0, MAX_LEN_FRAME);
+  size_t len3 = sizeof(struct lmic_t) - LMIC_OFFSET(frame) - MAX_LEN_FRAME;
+  memcpy((u1_t *)&LMIC.frame + MAX_LEN_FRAME, ttn_rtc_mem_buf + len1 + len2,
+         len3);
+
+  ttn_rtc_flag = 0xffffffff; // invalidate RTC data
+
+  return true;
+}
+
+// following code includes snippets taken from
 // https://github.com/JackGruber/ESP32-LMIC-DeepSleep-example/blob/master/src/main.cpp
 
 void SaveLMICToRTC(int deepsleep_sec) {
-  RTC_LMIC = LMIC;
 
   // ESP32 can't track millis during DeepSleep and no option to advance
-  // millis after DeepSleep. Therefore reset DutyCyles
+  // millis after DeepSleep. Therefore reset DutyCyles before saving LMIC struct
 
   unsigned long now = millis();
 
@@ -499,29 +523,34 @@ void SaveLMICToRTC(int deepsleep_sec) {
 #if CFG_LMIC_EU_like
   for (int i = 0; i < MAX_BANDS; i++) {
     ostime_t correctedAvail =
-        RTC_LMIC.bands[i].avail -
+        LMIC.bands[i].avail -
         ((now / 1000.0 + deepsleep_sec) * OSTICKS_PER_SEC);
     if (correctedAvail < 0) {
       correctedAvail = 0;
     }
-    RTC_LMIC.bands[i].avail = correctedAvail;
+    LMIC.bands[i].avail = correctedAvail;
   }
 
-  RTC_LMIC.globalDutyAvail = RTC_LMIC.globalDutyAvail -
-                             ((now / 1000.0 + deepsleep_sec) * OSTICKS_PER_SEC);
-  if (RTC_LMIC.globalDutyAvail < 0) {
-    RTC_LMIC.globalDutyAvail = 0;
+  LMIC.globalDutyAvail =
+      LMIC.globalDutyAvail - ((now / 1000.0 + deepsleep_sec) * OSTICKS_PER_SEC);
+  if (LMIC.globalDutyAvail < 0) {
+    LMIC.globalDutyAvail = 0;
   }
 #else
   ESP_LOGW(TAG, "No DutyCycle recalculation function!");
 #endif
 
+  ttn_rtc_save();
   ESP_LOGI(TAG, "LMIC state saved");
 }
 
 void LoadLMICFromRTC() {
-  LMIC = RTC_LMIC;
-  ESP_LOGI(TAG, "LMIC state loaded");
+  if (ttn_rtc_restore())
+    ESP_LOGI(TAG, "LMIC state loaded");
+  else {
+    ESP_LOGE(TAG, "LMIC state not found - resetting device");
+    do_reset(false); // coldstart
+  }
 }
 
 #endif // HAS_LORA

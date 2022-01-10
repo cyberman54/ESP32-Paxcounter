@@ -47,6 +47,12 @@ void do_after_reset(void) {
   // read (and initialize on first run) runtime settings from NVRAM
   loadConfig();
 
+  // set time zone to user value from paxcounter.conf
+#ifdef TIME_SYNC_TIMEZONE
+  myTZ.setPosix(TIME_SYNC_TIMEZONE);
+  ESP_LOGD(TAG, "Timezone set to %s", myTZ.getPosix().c_str());
+#endif
+
   switch (rtc_get_reset_reason(0)) {
 
   case POWERON_RESET:          // 0x01 Vbat power on reset
@@ -69,8 +75,8 @@ void do_after_reset(void) {
     RTC_millis += sleep_time_ms; // increment system monotonic time
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
 
-    // set time
-    setMyTime(RTC_time + sleep_time_ms / 1000, sleep_time_ms % 1000, _set);
+    // restore time
+    setMyTime(RTC_time, sleep_time_ms, _set);
 
     // set wakeup state, not if we have pending OTA update
     if (RTC_runmode == RUNMODE_SLEEP)
@@ -132,7 +138,7 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
 #if (HAS_LORA)
   ESP_LOGI(TAG, "Waiting until LMIC is idle...");
   for (i = 100; i > 0; i--) {
-    if ((LMIC.opmode & OP_TXRXPEND) ||
+    if ((LMIC.opmode & (OP_JOINING | OP_TXDATA | OP_POLL | OP_TXRXPEND)) ||
         os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
       vTaskDelay(pdMS_TO_TICKS(1000));
     else

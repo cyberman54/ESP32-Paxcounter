@@ -3,7 +3,8 @@
 
 #include <Arduino.h>
 #include <esp_adc_cal.h>
-//#include <esp32-hal-adc.h>
+//include <esp32-hal-adc.h>
+#include <soc/adc_channel.h>
 
 #include "i2c.h"
 #include "reset.h"

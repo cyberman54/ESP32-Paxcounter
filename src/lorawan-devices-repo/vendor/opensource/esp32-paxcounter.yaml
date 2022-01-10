@@ -1,0 +1,137 @@
+name: ESP32-Paxcounter
+description: Software providing a basis on the esp32 platform for multiple sensors, including pax (ble/wifi), gps, temperature, humidity, pressure, pm2.5, pm10 and more.
+
+# Hardware versions (optional, use when you have revisions)
+#hardwareVersions:
+#  - version: '1.0'
+#    numeric: 1
+
+# Firmware versions (at least one is mandatory)
+# LoRaWAN Device Profiles per region
+# Supported regions are EU863-870, US902-928, AU915-928, AS923, CN779-787, EU433, CN470-510, KR920-923, IN865-867, RU864-870
+firmwareVersions:
+  - version: '2.4.0'
+    numeric: 240
+    profiles:
+      EU863-870:
+        id: esp32-paxcounter-profile-eu868
+        #lorawanCertified: true
+        codec: esp32-paxcounter-codec
+      US902-928:
+        id: esp32-paxcounter-profile-us915
+        #lorawanCertified: true
+        codec: esp32-paxcounter-codec
+
+  - version: '3.0.0'
+    numeric: 300
+    profiles:
+      EU863-870:
+        id: esp32-paxcounter-profile-eu868
+        #lorawanCertified: true
+        codec: esp32-paxcounter-codec
+      US902-928:
+        id: esp32-paxcounter-profile-us915
+        #lorawanCertified: true
+        codec: esp32-paxcounter-codec
+
+# Sensors that this device features (optional)
+# 4-20 ma, accelerometer, altitude, analog input, auxiliary, barometer, battery, button, bvoc, co, co2, conductivity,
+# current, digital input, dissolved oxygen, distance, dust, energy, gps, gyroscope, h2s, humidity, iaq, level, light,
+# lightning, link, magnetometer, moisture, motion, no, no2, o3, particulate matter, ph, pir, pm2.5, pm10, potentiometer,
+# power, precipitation, pressure, proximity, pulse count, pulse frequency, radar, rainfall, rssi, smart valve, snr, so2,
+# solar radiation, sound, strain, surface temperature, temperature, tilt, time, tvoc, uv, vapor pressure, velocity,
+# vibration, voltage, water potential, water, weight, wifi ssid, wind direction, wind speed.
+sensors:
+  - battery
+  #  - ble
+  #  - wifi
+  #  - pax
+  - gps
+  - altitude
+  #  - latitude
+  #  - longitude
+  #  - hdop
+  #  - sats
+  - temperature
+  - humidity
+  - barometer
+  - pm2.5
+  - pm10
+
+# Additional radios that this device has (optional)
+# Valid values are: ble, nfc, wifi, cellular.
+additionalRadios:
+  - ble
+  - wifi
+
+# Dimensions in mm (optional)
+# Use width, height, length and/or diameter
+#dimensions:
+#  width: 22.5
+#  length: 119
+#  height: 101
+
+# Weight in grams (optional)
+#weight: 160
+
+## Operating conditions (optional)
+#operatingConditions:
+# Temperature (Celsius)
+#  temperature:
+#    min: -30
+#    max: 60
+# Relative humidity (fraction of 1)
+#  relativeHumidity:
+#    min: 0
+#    max: 0.9
+
+# IP rating (optional)
+#ipCode: IP20
+
+# Key provisioning (optional)
+# Valid values are: custom (user can configure keys), join server and manifest.
+keyProvisioning:
+  - custom
+  - join server
+
+# Key security (optional)
+# Valid values are: none, read protected and secure element.
+keySecurity: none
+
+# Product and data sheet URLs (optional)
+productURL: https://github.com/cyberman54/ESP32-Paxcounter
+dataSheetURL: https://github.com/cyberman54/ESP32-Paxcounter
+#resellerURLs:
+#  - name: 'Reseller 1'
+#    region:
+#      - European Union
+#    url: https://example.org/reseller1
+#  - name: 'Reseller 2'
+#    region:
+#      - United States
+#      - Canada
+#    url: https://example.org/reseller2
+
+# Photos
+#photos:
+#  main: Paxcounter-title.jpg
+#  other:
+#    - Paxcounter-title.jpg
+# Youtube or Vimeo Video (optional)
+###video: https://www.youtube.com/watch?v=JHzxcD2oEn8
+
+# Regulatory compliances (optional)
+#compliances:
+#  safety:
+#    - body: IEC
+#      norm: EN
+#      standard: 62368-1
+#  radioEquipment:
+#    - body: ETSI
+#      norm: EN
+#      standard: 301 489-1
+#      version: 2.2.0
+#    - body: ETSI
+#      norm: EN
+#      standard: 301 489-3
+#      version: 2.1.0

@@ -20,7 +20,7 @@ config = configparser.ConfigParser()
 config.read("platformio.ini")
 
 # get platformio source path
-srcdir = env.get("PROJECTSRC_DIR")
+srcdir = env.get("PROJECT_SRC_DIR")
 
 # get hal path
 haldir = os.path.join (srcdir, "hal")

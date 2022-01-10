@@ -1,0 +1,143 @@
+# Uplink decoder decodes binary data uplink into a JSON object (optional)
+# For documentation on writing encoders and decoders, see: https://thethingsstack.io/integrations/payload-formatters/javascript/
+uplinkDecoder:
+  fileName: esp32-paxcounter-packed.js
+  examples:
+    - description: Paxcount data
+      input:
+        fPort: 1
+        bytes: [0x07, 0x00, 0x03, 0x00]
+      output:
+        data:
+          bytes: [0x07, 0x00, 0x03, 0x00]
+          port: 1
+          wifi: 7
+          ble: 3
+          pax: 10
+        errors: []
+        warnings: []
+    - description: Device status query result
+      input:
+        fPort: 2
+        bytes: [0x2F, 0x01, 0x00, 0x00, 0x00, 0x00, 0xC0, 0x4B, 0x03, 0x00, 0x2D, 0xC0, 0x4B, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+      output:
+        data:
+          bytes: [0x2F, 0x01, 0x00, 0x00, 0x00, 0x00, 0xC0, 0x4B, 0x03, 0x00, 0x2D, 0xC0, 0x4B, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+          port: 2
+          voltage: 303
+          uptime: 216000
+          cputemp: 45
+          memory: 216000
+          reset0: 0
+          restarts: 0
+        errors: []
+        warnings: []
+    - description: Device config data
+      input:
+        fPort: 3
+        bytes: [0x09, 0x0F, 0x00, 0x00, 0x78, 0x32, 0x0A, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+      output:
+        data:
+          bytes: [0x09, 0x0F, 0x00, 0x00, 0x78, 0x32, 0x0A, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+          port: 3
+          loradr: 9
+          txpower: 15
+          rssilimit: 0
+          sendcycle: 120
+          wifichancycle: 50
+          blescantime: 10
+          rgblum: 30
+          flags:
+            adr: 0
+            antenna: 0
+            blescan: 0
+            countermode: 0
+            reserved: 0
+            screen: 0
+            screensaver: 0
+          payloadmask:
+            battery: 0
+            bme: 0
+            counter: 0
+            gps: 0
+            reserved: 0
+            sensor1: 0
+            sensor2: 0
+            sensor3: 0
+          version: ''
+        errors: []
+        warnings: []
+    - description: GPS data
+      input:
+        fPort: 4
+        bytes: [0x65, 0xCA, 0x06, 0x03, 0x05, 0x19, 0x6F, 0x00, 0x05, 0xC6, 0x00, 0x42, 0x00]
+      output:
+        data:
+          bytes: [0x65, 0xCA, 0x06, 0x03, 0x05, 0x19, 0x6F, 0x00, 0x05, 0xC6, 0x00, 0x42, 0x00]
+          port: 4
+          latitude: 50.776677
+          longitude: 7.280901
+          sats: 5
+          hdop: 1.98
+          altitude: 66
+        errors: []
+        warnings: []
+    - description: Button data
+      input:
+        fPort: 5
+        bytes: [0x01]
+      output:
+        data:
+          bytes: [0x01]
+          port: 5
+          button: 1
+        errors: []
+        warnings: []
+    - description: Environmental sensor data
+      input:
+        fPort: 7
+        bytes: [0x08, 0x34, 0x10, 0x27, 0x40, 0x1F, 0x10, 0x27]
+      output:
+        data:
+          bytes: [0x08, 0x34, 0x10, 0x27, 0x40, 0x1F, 0x10, 0x27]
+          port: 7
+          temperature: 21.00
+          pressure: 1000.0
+          humidity: 80.00
+          air: 100.00
+        errors: []
+        warnings: []
+    - description: Battery voltage data
+      input:
+        fPort: 8
+        bytes: [0x2F, 0x01]
+      output:
+        data:
+          bytes: [0x2F, 0x01]
+          port: 8
+          voltage: 303
+        errors: []
+        warnings: []
+    - description: Time/Date
+      input:
+        fPort: 9
+        bytes: [0x90, 0x86, 0xC8, 0x60, 0x00]
+      output:
+        data:
+          bytes: [0x90, 0x86, 0xC8, 0x60, 0x00]
+          port: 9
+          time: 1623754384
+          timestatus: 0
+        errors: []
+        warnings: []
+    - description: User sensor data
+      input:
+        fPort: 10
+        bytes: [0x00, 0x00]
+      output:
+        data:
+          bytes: [0x00, 0x00]
+          port: 10
+          ens: 0
+        errors: []
+        warnings: []

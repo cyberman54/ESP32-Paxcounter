@@ -12,7 +12,7 @@ Tutorial (in german language): https://www.heise.de/select/make/2019/1/155109923
 <img src="img/TTGO-case.jpg">
 <img src="img/TTGO-curves.jpg">
 <img src="img/Paxcounter-LEDmatrix.jpg">
-<img src="img/Paxcounter-Clock.png">
+<img src="img/Paxcounter-Clock2.png">
 <img src="img/Paxcounter-ttgo-twristband.jpg">
 
 
@@ -33,7 +33,7 @@ You can build this project battery powered using ESP32 deep sleep mode and reach
 *LoRa & SPI*:
 
 - Heltec: LoRa-32 v1 and v2
-- TTGO: T1*, T2*, T3*, T-Beam, T-Fox
+- TTGO: [Paxcounter-Board*](https://www.aliexpress.com/item/32915894264.html?spm=a2g0o.productlist.0.0.3d656325QrcfQc&algo_pvid=4a150199-63e7-4d21-bdb1-b48164537744&algo_exp_id=4a150199-63e7-4d21-bdb1-b48164537744-2&pdp_ext_f=%7B%22sku_id%22%3A%2212000023374441919%22%7D), T1*, T2*, T3*, T-Beam, T-Fox
 - Pycom: LoPy, LoPy4, FiPy
 - Radioshuttle.de: [ECO Power Board](https://www.radioshuttle.de/esp32-eco-power/esp32-eco-power-board/)
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora),
@@ -139,6 +139,8 @@ If option *BOOTMENU* is defined in `paxcounter.conf`, the ESP32 board will try t
 (e.g. UK citizens may want to check [Data Protection Act 1998](https://ico.org.uk/media/1560691/wi-fi-location-analytics-guidance.pdf) and [GDPR 2018](https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/key-definitions/))
 
 (e.g. Citizens in the the Netherlands and EU may want to read [this article](https://www.ivir.nl/publicaties/download/PrivacyInformatie_2016_6.pdf) and [this article](https://autoriteitpersoonsgegevens.nl/nl/nieuws/europese-privacytoezichthouders-publiceren-opinie-eprivacyverordening)) and [this decision](https://edpb.europa.eu/news/national-news/2021/dutch-dpa-fines-municipality-wi-fi-tracking_en)
+	
+(e.g. Citizens in Germany may want to read [this article of Wissenschaftliche Dienste des Deutschen Bundestages](https://www.bundestag.de/resource/blob/538890/3dfae197d2c930693aa16d1619204f58/WD-3-206-17-pdf-data.pdf)
 
 Note: If you use this software you do this at your own risk. That means that you alone - not the authors of this software - are responsible for the legal compliance of an application using this or build from this software and/or usage of a device created using this software. You should take special care and get prior legal advice if you plan metering passengers in public areas and/or publish data drawn from doing so.
 
@@ -263,6 +265,22 @@ Format of the data is CSV, which can easily imported into LibreOffice, Excel, ..
 
 If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
 
+# Integration into "The Things Stack Community Edition" aka "The Things Stack V3"
+
+To use the ESP32-Paxcounter in The Things Stack Community Edition you need an account to reach the console. Go to:
+- [The Things Stack Community Edition Console](https://console.cloud.thethings.network/)
+- choose your region and go to applications
+- create an application by clicking "**+ Add application**" and give it a id, name, etc.
+- create a device by clicking "**+ Add end device**"
+- Select the end device:  choose the Brand "**Open Source Community Projects**" and the Model "**ESP32-Paxcounter**", leave Hardware Version to "**Unknown**" and select your **Firmware Version** and **Profile (Region)**
+- Enter registration data: choose the **frequency plan** (for EU choose the recommended), set the **AppEUI** (Fill with zeros), set the **DeviceEUI** (generate), set the **AppKey** (generate), choose a **device ID** and hit "Register end device"
+- got to Applications -> "your App ID" -> Payload formatters -> Uplink, choose "**Repository**" and hit "Save changes"
+
+The "Repository" payload decoder uses the packed format, explained below. If you want to use MyDevices from Cayenne you should use the Cayenne payload decoder instead.
+
+# TTN Mapper
+
+If you want your devices to be feeding the [TTN Mapper](https://ttnmapper.org/), just follow this manual: https://docs.ttnmapper.org/integration/tts-integration-v3.html - different than indicated in the manual you can leave the payload decoder to "Repository" for the ESP32-Paxcounter and you are fine.
 
 # Payload format
 
@@ -274,11 +292,15 @@ You can select different payload formats in `paxcounter.conf`:
 
 - [***CayenneLPP***](https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
 
+**Decrepated information from the things network v2 >>**
+
 If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. This way your MQTT application can parse the fields `pax`, `ble` and `wifi`.
 
 To add your device to myDevices Cayenne platform select "Cayenne-LPP" from Lora device list and use the CayenneLPP payload encoder. 
 
 To track a paxcounter device with on board GPS and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Both formats *plain* and *packed* generate the fields `latitude`, `longitude` and `hdop` required by ttnmapper. Important: set TTN mapper port filter to '4' (paxcounter GPS Port).
+
+**<< Decrepated information from the things network v2**
 
 Hereafter described is the default *plain* format, which uses MSB bit numbering. Under /TTN in this repository you find some ready-to-go decoders which you may copy to your TTN console:
 

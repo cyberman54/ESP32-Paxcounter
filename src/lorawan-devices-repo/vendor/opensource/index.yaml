@@ -1,0 +1,3 @@
+endDevices:
+  # Unique identifier of the end device (lowercase, alphanumeric with dashes, max 36 characters)
+  - esp32-paxcounter # look in esp32-paxcounter.yaml for the end device definition

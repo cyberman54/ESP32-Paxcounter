@@ -19,7 +19,7 @@
 #define HAS_BUTTON KEY_BUILTIN
 
 // enable only if you want to store a local paxcount table on the device
-#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+// #define HAS_SDCARD  1      // this board has an SD-card-reader/writer
 // Pins for SD-card
 #define SDCARD_CS    (13)
 #define SDCARD_MOSI  (15)

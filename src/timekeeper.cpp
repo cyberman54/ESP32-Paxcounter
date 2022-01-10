@@ -121,7 +121,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
              _seconds(), mytimesource);
   } else {
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
-    ESP_LOGD(TAG,
+    ESP_LOGV(TAG,
              "[%0.3f] Failed to synchronise time from source %c | unix sec "
              "obtained from source: %d | unix sec at program compilation: %d",
              _seconds(), timeSetSymbols[mytimesource], time_to_set,
@@ -180,8 +180,10 @@ void timepulse_start(void) {
   timerAlarmEnable(ppsIRQ);
 #endif
 
+  // get time if we don't have one
+  if (timeSource != _set)
+    setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
   // start cyclic time sync
-  setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
 }
 
