@@ -118,12 +118,6 @@ void setup() {
   // load device configuration from NVRAM and set runmode
   do_after_reset();
 
-  // set time zone to user value from paxcounter.conf
-#ifdef TIME_SYNC_TIMEZONE
-  myTZ.setPosix(TIME_SYNC_TIMEZONE);
-  ESP_LOGD(TAG, "Timezone set to %s", myTZ.getPosix().c_str());
-#endif
-
   // hash 6 byte device MAC to 4 byte clientID
   uint8_t mac[6];
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
