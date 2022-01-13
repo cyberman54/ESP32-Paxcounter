@@ -88,11 +88,12 @@ String IRAM_ATTR IF482_Frame(time_t t) {
 
   char mon, out[IF482_FRAME_SIZE + 1];
 
-  switch (timeStatus()) { // indicates if time has been set and recently synced
-  case timeSet:           // time is set and is synced
+  switch (sntp_get_sync_status()) { // indicates if time has been set and recently synced
+  case SNTP_SYNC_STATUS_COMPLETED:           // time is set and is synced
     mon = 'A';
     break;
-  case timeNeedsSync: // time had been set but sync attempt did not succeed
+  case SNTP_SYNC_STATUS_IN_PROGRESS: // time had been set but sync attempt did not succeed
+  case SNTP_SYNC_STATUS_RESET:
     mon = 'M';
     break;
   default: // unknown time status (should never be reached)
@@ -101,10 +102,10 @@ String IRAM_ATTR IF482_Frame(time_t t) {
   } // switch
 
   // generate IF482 telegram
-  snprintf(out, sizeof(out), "O%cL%s\r", mon, myTZ.dateTime(t, UTC_TIME, "ymdwHis").c_str());
+  // snprintf(out, sizeof(out), "O%cL%s\r", mon, myTZ.dateTime(t, UTC_TIME,
+  // "ymdwHis").c_str());
 
-  ESP_LOGD(TAG, "[%s] IF482 date/time: %s", myTZ.dateTime("H:i:s.v").c_str(),
-           out);
+  //ESP_LOGD(TAG, "[%s] IF482 date/time: %s", ctime(time(NULL), out);
 
   return out;
 }

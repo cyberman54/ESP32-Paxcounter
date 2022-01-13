@@ -569,17 +569,17 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	bytes 1..4 = time/date in UTC epoch seconds (LSB)
 	byte 5 = time source & status, see below
 	
-		bits 0..3 last seen time source
+		bits 0..3 time source
 			0x00 = GPS
 			0x01 = RTC
 			0x02 = LORA
-			0x03 = unsynched (never synched)
+			0x03 = unsynched
 			0x04 = set (source unknown)
 	
 		bits 4..7 time status
-			0x00 = timeNotSet (never synched)
-			0x01 = timeNeedsSync (last sync failed)
-			0x02 = timeSet (synched)
+			0x00 = unknown
+			0x01 = time needs sync
+			0x02 = time synched
 
 0x87 sync time/date
 

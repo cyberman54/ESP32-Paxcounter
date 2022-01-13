@@ -10,7 +10,7 @@
 #define MOBALINE_HEAD_PULSE_LENGTH (1500)
 
 void MOBALINE_Pulse(time_t t, uint8_t const *DCFpulse);
-uint8_t *IRAM_ATTR MOBALINE_Frame(time_t const t);
+uint8_t *IRAM_ATTR MOBALINE_Frame(time_t const tt);
 void IRAM_ATTR dec2bcd(uint8_t const dec, uint8_t const startpos,
                        uint8_t const endpos, uint8_t *DCFpulse);
 

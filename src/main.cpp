@@ -126,6 +126,7 @@ void setup() {
   snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
            PROGVERSION, RTC_runmode, RTC_restarts);
+  ESP_LOGI(TAG, "code build date: %d", _COMPILETIME);
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)

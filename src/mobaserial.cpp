@@ -18,10 +18,9 @@ static const char TAG[] = __FILE__;
 void MOBALINE_Pulse(time_t t, uint8_t const *DCFpulse) {
 
   TickType_t startTime = xTaskGetTickCount();
-  uint8_t sec = myTZ.second(t);
+  uint8_t sec = t % 60;
 
-  ESP_LOGD(TAG, "[%s] MOBALINE sec: %d", myTZ.dateTime("H:i:s.v").c_str(),
-           sec);
+  ESP_LOGD(TAG, "[%0.3f] MOBALINE sec: %d", _seconds(), sec);
 
   // induce 3 pulses
   for (uint8_t pulse = 0; pulse <= 3; pulse++) {
@@ -65,29 +64,30 @@ uint8_t *IRAM_ATTR MOBALINE_Frame(time_t const tt) {
   // array of dcf pulses for one minute, secs 0..16 and 20 are never touched, so
   // we keep them statically to avoid same recalculation every minute
 
-  static uint8_t DCFpulse[DCF77_FRAME_SIZE + 1];
+  static uint8_t DCFpulse[61];
 
-  time_t t = myTZ.tzTime(tt); // convert to local time
+  struct tm t = {0};
+  localtime_r(&tt, &t); // convert to local time
 
   // ENCODE HEAD (bit 0))
   DCFpulse[0] = dcf_Z; // not yet implemented
 
   // ENCODE DAYLIGHTSAVING (bit 1)
-  DCFpulse[1] = myTZ.isDST(t) ? dcf_1 : dcf_0;
+  DCFpulse[1] = (t.tm_isdst > 0) ? dcf_1 : dcf_0;
 
   // ENCODE DATE (bits 2..20)
-  dec2bcd(false, year(t) - 2000, 2, 9, DCFpulse);
-  dec2bcd(false, month(t), 10, 14, DCFpulse);
-  dec2bcd(false, day(t), 15, 20, DCFpulse);
+  dec2bcd(false, t.tm_year + 1900 - 2000, 2, 9, DCFpulse);
+  dec2bcd(false, t.tm_mon + 1, 10, 14, DCFpulse);
+  dec2bcd(false, t.tm_mday, 15, 20, DCFpulse);
 
   // ENCODE HOUR (bits 21..26)
-  dec2bcd2(false, hour(t), 21, 26, DCFpulse);
+  dec2bcd2(false, t.tm_hour, 21, 26, DCFpulse);
 
   // ENCODE MINUTE (bits 27..33)
-  dec2bcd2(false, minute(t), 27, 33, DCFpulse);
+  dec2bcd2(false, t.tm_min, 27, 33, DCFpulse);
 
   // timestamp this frame with it's minute
-  DCFpulse[34] = minute(t);
+  DCFpulse[34] = t.tm_min;
 
   return DCFpulse;
 

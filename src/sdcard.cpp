@@ -43,7 +43,7 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
                      __attribute__((unused)) uint16_t noBleCWA) {
   static int counterWrites = 0;
   char tempBuffer[12 + 1];
-  time_t t = now();
+  time_t t = time(NULL);
 #if (HAS_SDS011)
   sdsStatus_t sds;
 #endif

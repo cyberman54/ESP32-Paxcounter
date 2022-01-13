@@ -8,20 +8,16 @@
 #endif
 #endif
 
-#define _COMPILETIME compileTime()
-
 // Local logging tag
 static const char TAG[] = __FILE__;
 
 // symbol to display current time source
-// G = GPS / R = RTC / L = LORA / ? = unsynced / <blank> = sync unknown
-const char timeSetSymbols[] = {'G', 'R', 'L', '?', ' '};
-
-// set Time Zone
-Timezone myTZ;
+// G = GPS / R = RTC / L = LORA / * = no sync / ? = never synced
+const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 
 bool volatile TimePulseTick = false;
 timesource_t timeSource = _unsynced;
+time_t _COMPILETIME = compileTime(__DATE__);
 
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
@@ -76,15 +72,17 @@ void calibrateTime(void) {
 
 } // calibrateTime()
 
-// adjust system time, calibrate RTC and RTC_INT pps
+// set system time (UTC), calibrate RTC and RTC_INT pps
 void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
                          timesource_t mytimesource) {
+
+  struct timeval tv = {0};
 
   // called with invalid timesource?
   if (mytimesource == _unsynced)
     return;
 
-  // increment t_sec only if t_msec > 1000
+  // increment t_sec if t_msec > 1000
   time_t time_to_set = (time_t)(t_sec + t_msec / 1000);
 
   // do we have a valid time?
@@ -97,8 +95,18 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
-    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.%03d sec", _seconds(), time_to_set,
-             t_msec % 1000);
+    tv.tv_sec = time_to_set;
+    tv.tv_usec = 0;
+    settimeofday(&tv, NULL);
+
+    ESP_LOGI(TAG, "[%0.3f] UTC time: %d.000 sec", _seconds(), time_to_set);
+
+    // if we have a software pps timer, shift it to top of second
+    if (ppsIRQ != NULL) {
+
+      timerWrite(ppsIRQ, 0); // reset pps timer
+      CLOCKIRQ();            // fire clock pps, this advances time 1 sec
+    }
 
 // if we have got an external timesource, set RTC time and shift RTC_INT pulse
 // to top of second
@@ -107,15 +115,9 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       set_rtctime(time_to_set);
 #endif
 
-    // if we have a software pps timer, shift it to top of second
-    if (ppsIRQ != NULL) {
-      timerWrite(ppsIRQ, 0); // reset pps timer
-      CLOCKIRQ();            // fire clock pps, this advances time 1 sec
-    }
-
-    UTC.setTime(time_to_set); // set the time on top of second
-
     timeSource = mytimesource; // set global variable
+    sntp_set_sync_status(SNTP_SYNC_STATUS_COMPLETED);
+
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
     ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | timesource=%d",
              _seconds(), mytimesource);
@@ -196,7 +198,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
 // advance wall clock, if we have
 #if (defined HAS_IF482 || defined HAS_DCF77)
-  xTaskNotifyFromISR(ClockTask, uint32_t(now()), eSetBits,
+  xTaskNotifyFromISR(ClockTask, uint32_t(time(NULL)), eSetBits,
                      &xHigherPriorityTaskWoken);
 #endif
 
@@ -213,9 +215,9 @@ void IRAM_ATTR CLOCKIRQ(void) {
 }
 
 // helper function to check plausibility of a given epoch time
-time_t timeIsValid(time_t const t) {
-  // is it a time in the past? we use compile date to guess
-  return (t < myTZ.tzTime(_COMPILETIME) ? 0 : t);
+bool timeIsValid(time_t const t) {
+  // is t a time in the past? we use compile time to guess
+  return (t > _COMPILETIME);
 }
 
 // helper function to calculate serial transmit time
@@ -245,7 +247,7 @@ void clock_init(void) {
   pinMode(HAS_DCF77, OUTPUT);
 #endif
 
-  time_t userUTCTime = now();
+  time_t userUTCTime = time(NULL);
 
   xTaskCreatePinnedToCore(clock_loop,           // task function
                           "clockloop",          // name of task
@@ -263,17 +265,16 @@ void clock_loop(void *taskparameter) { // ClockTask
   // caveat: don't use now() in this task, it will cause a race condition
   // due to concurrent access to i2c bus when reading/writing from/to rtc chip!
 
-#define nextmin(t) (t + DCF77_FRAME_SIZE + 1) // next minute
-
 #ifdef HAS_TWO_LED
   static bool led1_state = false;
 #endif
   uint32_t printtime;
-  time_t t = *((time_t *)taskparameter), last_printtime = 0; // UTC time seconds
+  time_t t = *((time_t *)taskparameter); // UTC time seconds
+  time_t last_printtime = 0;
 
 #ifdef HAS_DCF77
-  uint8_t *DCFpulse;                  // pointer on array with DCF pulse bits
-  DCFpulse = DCF77_Frame(nextmin(t)); // load first DCF frame before start
+  uint8_t *DCFpulse;              // pointer on array with DCF pulse bits
+  DCFpulse = DCF77_Frame(t + 61); // load first DCF frame before start
 #elif defined HAS_IF482
   static TickType_t txDelay = pdMS_TO_TICKS(1000 - IF482_SYNC_FIXUP) -
                               tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
@@ -286,9 +287,15 @@ void clock_loop(void *taskparameter) { // ClockTask
     xTaskNotifyWait(0x00, ULONG_MAX, &printtime, portMAX_DELAY);
     t = time_t(printtime);
 
+    /*
+        // no confident or no recent time -> suppress clock output
+        if ((sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED) ||
+            !(timeIsValid(t)) || (t == last_printtime))
+          continue;
+    */
+
     // no confident or no recent time -> suppress clock output
-    if ((timeStatus() == timeNotSet) || !(timeIsValid(t)) ||
-        (t == last_printtime))
+    if (!(timeIsValid(t)) || (t == last_printtime))
       continue;
 
 #if defined HAS_IF482
@@ -304,11 +311,11 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #elif defined HAS_DCF77
 
-    if (second(t) == DCF77_FRAME_SIZE - 1) // is it time to load new frame?
-      DCFpulse = DCF77_Frame(nextmin(t));  // generate frame for next minute
+    if ((t % 60) == 59)               // is it time to load new frame?
+      DCFpulse = DCF77_Frame(t + 61); // generate frame for next minute
 
-    if (minute(nextmin(t)) ==       // do we still have a recent frame?
-        DCFpulse[DCF77_FRAME_SIZE]) // (timepulses could be missed!)
+    if ((((t + 61) / 60) % 60) ==   // do we still have a recent frame?
+        DCFpulse[60])               // (timepulses could be missed!)
       DCF77_Pulse(t + 1, DCFpulse); // then output next second's pulse
 
       // else we have no recent frame, thus suppressing clock output
@@ -330,3 +337,63 @@ void clock_loop(void *taskparameter) { // ClockTask
 } // clock_loop()
 
 #endif // HAS_IF482 || defined HAS_DCF77
+
+// Convert compile date to reference time "in the past"
+time_t compileTime(const String compile_date) {
+
+  char s_month[5];
+  int year;
+  struct tm t = {0};
+  static const char month_names[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+
+  // store compile time once it's calculated
+  static time_t secs = -1;
+
+  if (secs == -1) {
+
+    // determine month
+    sscanf(compile_date.c_str(), "%s %d %d", s_month, &t.tm_mday, &year);
+    t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
+    t.tm_year = year - 1900;
+
+    // convert to secs
+    secs = mkgmtime(&t);
+  }
+
+  return secs;
+}
+
+static bool IsLeapYear(short year) {
+  if (year % 4 != 0)
+    return false;
+  if (year % 100 != 0)
+    return true;
+  return (year % 400) == 0;
+}
+
+// convert UTC tm time to time_t epoch time
+time_t mkgmtime(const struct tm *ptm) {
+
+  const int SecondsPerMinute = 60;
+  const int SecondsPerHour = 3600;
+  const int SecondsPerDay = 86400;
+  const int DaysOfMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+  time_t secs = 0;
+  // tm_year is years since 1900
+  int year = ptm->tm_year + 1900;
+  for (int y = 1970; y < year; ++y) {
+    secs += (IsLeapYear(y) ? 366 : 365) * SecondsPerDay;
+  }
+  // tm_mon is month from 0..11
+  for (int m = 0; m < ptm->tm_mon; ++m) {
+    secs += DaysOfMonth[m] * SecondsPerDay;
+    if (m == 1 && IsLeapYear(year))
+      secs += SecondsPerDay;
+  }
+  secs += (ptm->tm_mday - 1) * SecondsPerDay;
+  secs += ptm->tm_hour * SecondsPerHour;
+  secs += ptm->tm_min * SecondsPerMinute;
+  secs += ptm->tm_sec;
+  return secs;
+}

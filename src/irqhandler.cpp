@@ -51,7 +51,6 @@ void irqHandler(void *pvParameters) {
 #if (TIME_SYNC_INTERVAL)
     // is time to be synced?
     if (irqSource & TIMESYNC_IRQ) {
-      now(); // ensure sysTime is recent
       calibrateTime();
     }
 #endif
