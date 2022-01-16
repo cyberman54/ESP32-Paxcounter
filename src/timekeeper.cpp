@@ -18,16 +18,22 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 bool volatile TimePulseTick = false;
 timesource_t timeSource = _unsynced;
 time_t _COMPILETIME = compileTime(__DATE__);
-
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
 
+#if (defined HAS_IF482 || defined HAS_DCF77)
+#if (defined HAS_DCF77 && defined HAS_IF482)
+#error You must define at most one of IF482 or DCF77!
+#endif
+
 #ifdef HAS_IF482
+HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
+static TickType_t txDelay = pdMS_TO_TICKS(1000 - IF482_SYNC_FIXUP) -
+                            tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
 #if (HAS_SDS011)
 #error cannot use IF482 together with SDS011 (both use UART#2)
 #endif
-HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
-#endif
+#endif // HAS_IF482
 
 Ticker timesyncer;
 
@@ -194,8 +200,6 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-  // syncToPPS(); // currently not used
-
 // advance wall clock, if we have
 #if (defined HAS_IF482 || defined HAS_DCF77)
   xTaskNotifyFromISR(ClockTask, uint32_t(time(NULL)), eSetBits,
@@ -232,12 +236,6 @@ TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
   return round(txTime);
 }
 
-#if (defined HAS_IF482 || defined HAS_DCF77)
-
-#if (defined HAS_DCF77 && defined HAS_IF482)
-#error You must define at most one of IF482 or DCF77!
-#endif
-
 void clock_init(void) {
 
 // setup clock output interface
@@ -247,78 +245,81 @@ void clock_init(void) {
   pinMode(HAS_DCF77, OUTPUT);
 #endif
 
-  time_t userUTCTime = time(NULL);
-
-  xTaskCreatePinnedToCore(clock_loop,           // task function
-                          "clockloop",          // name of task
-                          2048,                 // stack size of task
-                          (void *)&userUTCTime, // start time as task parameter
-                          4,                    // priority of the task
-                          &ClockTask,           // task handle
-                          1);                   // CPU core
+  xTaskCreatePinnedToCore(clock_loop,  // task function
+                          "clockloop", // name of task
+                          2048,        // stack size of task
+                          (void *)1,   // task parameter
+                          4,           // priority of the task
+                          &ClockTask,  // task handle
+                          1);          // CPU core
 
   _ASSERT(ClockTask != NULL); // has clock task started?
 } // clock_init
 
 void clock_loop(void *taskparameter) { // ClockTask
 
-  // caveat: don't use now() in this task, it will cause a race condition
-  // due to concurrent access to i2c bus when reading/writing from/to rtc chip!
-
+  uint8_t ClockPulse[61] = {0};
+  uint32_t current_time = 0, previous_time = 0;
+  time_t tt;
+  struct tm t = {0};
 #ifdef HAS_TWO_LED
   static bool led1_state = false;
-#endif
-  uint32_t printtime;
-  time_t t = *((time_t *)taskparameter); // UTC time seconds
-  time_t last_printtime = 0;
-
-#ifdef HAS_DCF77
-  uint8_t *DCFpulse;              // pointer on array with DCF pulse bits
-  DCFpulse = DCF77_Frame(t + 61); // load first DCF frame before start
-#elif defined HAS_IF482
-  static TickType_t txDelay = pdMS_TO_TICKS(1000 - IF482_SYNC_FIXUP) -
-                              tx_Ticks(IF482_FRAME_SIZE, HAS_IF482);
 #endif
 
   // output the next second's pulse/telegram after pps arrived
   for (;;) {
 
-    // wait for timepulse and store UTC time in seconds got
-    xTaskNotifyWait(0x00, ULONG_MAX, &printtime, portMAX_DELAY);
-    t = time_t(printtime);
+    // wait for timepulse and store UTC time
+    xTaskNotifyWait(0x00, ULONG_MAX, &current_time, portMAX_DELAY);
 
     /*
         // no confident or no recent time -> suppress clock output
         if ((sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED) ||
-            !(timeIsValid(t)) || (t == last_printtime))
+            !(timeIsValid(current_time)) || (current_time == previous_time))
           continue;
     */
 
     // no confident or no recent time -> suppress clock output
-    if (!(timeIsValid(t)) || (t == last_printtime))
+    if (!(timeIsValid(current_time)) || (current_time == previous_time))
       continue;
+
+    // initialize calendar time for next second of clock output
+    tt = (time_t)(current_time + 1);
+    localtime_r(&tt, &t);
+    mktime(&t);
 
 #if defined HAS_IF482
 
     // wait until moment to fire. Normally we won't get notified during this
     // timespan, except when next pps pulse arrives while waiting, because pps
-    // was adjusted by recent time sync
-    if (xTaskNotifyWait(0x00, ULONG_MAX, &printtime, txDelay) == pdTRUE)
-      t = time_t(printtime); // new adjusted UTC time seconds
+    // was adjusted by recent time sync, then advance next_time one second
+    if (xTaskNotifyWait(0x00, ULONG_MAX, &current_time, txDelay) == pdTRUE) {
+      tt = (time_t)(current_time + 1);
+      localtime_r(&tt, &t);
+      mktime(&t);
+    }
 
     // send IF482 telegram
-    IF482.print(IF482_Frame(t + 2)); // note: telegram is for *next* second
+    IF482.print(IF482_Frame(t)); // note: telegram is for *next* second
+
+    ESP_LOGD(TAG, "[%0.3f] IF482: %s", _seconds(), IF482_Frame(t));
 
 #elif defined HAS_DCF77
 
-    if ((t % 60) == 59)               // is it time to load new frame?
-      DCFpulse = DCF77_Frame(t + 61); // generate frame for next minute
+    if (t.tm_min ==                      // do we still have a recent frame?
+        ClockPulse[60]) {                // (timepulses could be missed!)
+      DCF77_Pulse(ClockPulse[t.tm_sec]); // then output next second's pulse
+      ESP_LOGD(TAG, "[%0.3f] DCF77: %02d:%02d:%02d", _seconds(), t.tm_hour,
+               t.tm_min, t.tm_sec);
+    }
 
-    if ((((t + 61) / 60) % 60) ==   // do we still have a recent frame?
-        DCFpulse[60])               // (timepulses could be missed!)
-      DCF77_Pulse(t + 1, DCFpulse); // then output next second's pulse
-
-      // else we have no recent frame, thus suppressing clock output
+    if (t.tm_sec == 59) { // is it time to load new frame?
+      t.tm_min++;
+      mktime(&t);                 // normalize calendar time
+      DCF77_Frame(t, ClockPulse); // generate frame for next minute
+      ESP_LOGD(TAG, "[%0.3f] DCF77: new frame for min %d", _seconds(),
+               t.tm_min);
+    }
 
 #endif
 
@@ -331,14 +332,14 @@ void clock_loop(void *taskparameter) { // ClockTask
     led1_state = !led1_state;
 #endif
 
-    last_printtime = t;
+    previous_time = current_time;
 
   } // for
 } // clock_loop()
 
 #endif // HAS_IF482 || defined HAS_DCF77
 
-// Convert compile date to reference time "in the past"
+// we use compile date to create a time_t reference "in the past"
 time_t compileTime(const String compile_date) {
 
   char s_month[5];
@@ -356,7 +357,7 @@ time_t compileTime(const String compile_date) {
     t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
     t.tm_year = year - 1900;
 
-    // convert to secs
+    // convert to secs UTC
     secs = mkgmtime(&t);
   }
 
