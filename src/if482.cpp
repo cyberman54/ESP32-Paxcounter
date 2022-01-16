@@ -84,7 +84,7 @@ not evaluated by model BU-190, use "F" instead for this model
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-String IRAM_ATTR IF482_Frame(time_t t) {
+String IF482_Frame(time_t t) {
 
   char mon, out[IF482_FRAME_SIZE + 1];
 
