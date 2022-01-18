@@ -258,8 +258,9 @@ void clock_init(void) {
 
 void clock_loop(void *taskparameter) { // ClockTask
 
-  uint8_t ClockPulse[61] = {0};
+  uint64_t ClockPulse = 0;
   uint32_t current_time = 0, previous_time = 0;
+  uint8_t ClockMinute = 0;
   time_t tt;
   struct tm t = {0};
 #ifdef HAS_TWO_LED
@@ -283,7 +284,7 @@ void clock_loop(void *taskparameter) { // ClockTask
     if (!(timeIsValid(current_time)) || (current_time == previous_time))
       continue;
 
-    // initialize calendar time for next second of clock output
+    // set calendar time for next second of clock output
     tt = (time_t)(current_time + 1);
     localtime_r(&tt, &t);
     mktime(&t);
@@ -306,19 +307,24 @@ void clock_loop(void *taskparameter) { // ClockTask
 
 #elif defined HAS_DCF77
 
-    if (t.tm_min ==                      // do we still have a recent frame?
-        ClockPulse[60]) {                // (timepulses could be missed!)
-      DCF77_Pulse(ClockPulse[t.tm_sec]); // then output next second's pulse
-      ESP_LOGD(TAG, "[%0.3f] DCF77: %02d:%02d:%02d", _seconds(), t.tm_hour,
-               t.tm_min, t.tm_sec);
-    }
+    // load new frame if second 59 is reached
+    if (t.tm_sec == 0) {
+      ClockMinute = t.tm_min;
+      t.tm_min++;                  // follow-up minute
+      mktime(&t);                  // normalize calendar time
+      ClockPulse = DCF77_Frame(t); // generate pulse frame
 
-    if (t.tm_sec == 59) { // is it time to load new frame?
-      t.tm_min++;
-      mktime(&t);                 // normalize calendar time
-      DCF77_Frame(t, ClockPulse); // generate frame for next minute
+      /* to do here: leap second handling in second 59 */
+
       ESP_LOGD(TAG, "[%0.3f] DCF77: new frame for min %d", _seconds(),
                t.tm_min);
+    } else {
+
+      // generate impulse
+      if (t.tm_min == ClockMinute) { // ensure frame is recent
+        DCF77_Pulse(ClockPulse & 1); // output next second
+        ClockPulse >>= 1;
+      }
     }
 
 #endif
