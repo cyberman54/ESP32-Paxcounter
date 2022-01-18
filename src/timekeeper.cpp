@@ -359,7 +359,7 @@ time_t compileTime(const String compile_date) {
   if (secs == -1) {
 
     // determine month
-    sscanf(compile_date.c_str(), "%s %d %d", s_month, &t.tm_mday, &year);
+    sscanf(compile_date.c_str(), "%s %d %d", s_month, &t.tm_mday - 1, &year);
     t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
     t.tm_year = year - 1900;
 
