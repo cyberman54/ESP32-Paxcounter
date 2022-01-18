@@ -247,7 +247,7 @@ void clock_init(void) {
 
   xTaskCreatePinnedToCore(clock_loop,  // task function
                           "clockloop", // name of task
-                          2048,        // stack size of task
+                          3072,        // stack size of task
                           (void *)1,   // task parameter
                           4,           // priority of the task
                           &ClockTask,  // task handle
