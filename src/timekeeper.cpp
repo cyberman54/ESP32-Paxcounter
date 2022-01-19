@@ -8,6 +8,10 @@
 #endif
 #endif
 
+#if (defined HAS_DCF77 && defined HAS_IF482)
+#error You must define at most one of IF482 or DCF77!
+#endif
+
 // Local logging tag
 static const char TAG[] = __FILE__;
 
@@ -20,12 +24,6 @@ timesource_t timeSource = _unsynced;
 time_t _COMPILETIME = compileTime(__DATE__);
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
-
-#if (defined HAS_IF482 || defined HAS_DCF77)
-
-#if (defined HAS_DCF77 && defined HAS_IF482)
-#error You must define at most one of IF482 or DCF77!
-#endif
 
 #ifdef HAS_IF482
 HardwareSerial IF482(2); // use UART #2 (#1 may be in use for serial GPS)
@@ -345,8 +343,6 @@ void clock_loop(void *taskparameter) { // ClockTask
   } // for
 } // clock_loop()
 
-#endif // HAS_IF482 || defined HAS_DCF77
-
 // we use compile date to create a time_t reference "in the past"
 time_t compileTime(const String compile_date) {
 
@@ -360,49 +356,15 @@ time_t compileTime(const String compile_date) {
 
   if (secs == -1) {
 
-    // determine month
+    // determine date
+    // we go one day back to bypass unknown timezone of local time
     sscanf(compile_date.c_str(), "%s %d %d", s_month, &t.tm_mday - 1, &year);
     t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
     t.tm_year = year - 1900;
 
-    // convert to secs UTC
-    secs = mkgmtime(&t);
+    // convert to secs local time
+    secs = mktime(&t);
   }
 
-  return secs;
-}
-
-static bool IsLeapYear(short year) {
-  if (year % 4 != 0)
-    return false;
-  if (year % 100 != 0)
-    return true;
-  return (year % 400) == 0;
-}
-
-// convert UTC tm time to time_t epoch time
-time_t mkgmtime(const struct tm *ptm) {
-
-  const int SecondsPerMinute = 60;
-  const int SecondsPerHour = 3600;
-  const int SecondsPerDay = 86400;
-  const int DaysOfMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-  time_t secs = 0;
-  // tm_year is years since 1900
-  int year = ptm->tm_year + 1900;
-  for (int y = 1970; y < year; ++y) {
-    secs += (IsLeapYear(y) ? 366 : 365) * SecondsPerDay;
-  }
-  // tm_mon is month from 0..11
-  for (int m = 0; m < ptm->tm_mon; ++m) {
-    secs += DaysOfMonth[m] * SecondsPerDay;
-    if (m == 1 && IsLeapYear(year))
-      secs += SecondsPerDay;
-  }
-  secs += (ptm->tm_mday - 1) * SecondsPerDay;
-  secs += ptm->tm_hour * SecondsPerHour;
-  secs += ptm->tm_min * SecondsPerMinute;
-  secs += ptm->tm_sec;
   return secs;
 }
