@@ -22,6 +22,7 @@ TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
+
 #if (defined HAS_DCF77 && defined HAS_IF482)
 #error You must define at most one of IF482 or DCF77!
 #endif
@@ -33,6 +34,7 @@ static TickType_t txDelay = pdMS_TO_TICKS(1000 - IF482_SYNC_FIXUP) -
 #if (HAS_SDS011)
 #error cannot use IF482 together with SDS011 (both use UART#2)
 #endif
+
 #endif // HAS_IF482
 
 Ticker timesyncer;
@@ -260,7 +262,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 
   uint64_t ClockPulse = 0;
   uint32_t current_time = 0, previous_time = 0;
-  uint8_t ClockMinute = 0;
+  int8_t ClockMinute = -1;
   time_t tt;
   struct tm t = {0};
 #ifdef HAS_TWO_LED
