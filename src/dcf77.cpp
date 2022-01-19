@@ -19,29 +19,31 @@ static const char TAG[] = __FILE__;
 // triggered by second timepulse to ticker out DCF signal
 void DCF77_Pulse(uint8_t bit) {
 
-  TickType_t startTime = xTaskGetTickCount();
+  TickType_t startTime;
 
   // induce a DCF Pulse
-  for (uint8_t pulse = 0; pulse <= 2; pulse++) {
+  for (uint8_t pulseLength = 0; pulseLength <= 2; pulseLength++) {
 
-    switch (pulse) {
+    startTime = xTaskGetTickCount(); // reference time pulse start
 
-    case 0: // start of second -> start of timeframe for logic signal
+    switch (pulseLength) {
+
+    case 0: // 0ms = start of pulse
       digitalWrite(HAS_DCF77, dcf_low);
       break;
 
-    case 1: // 100ms after start of second -> end of timeframe for logic 0
+    case 1: // 100ms = logic 0
       if (bit == 0)
         digitalWrite(HAS_DCF77, dcf_high);
       break;
 
-    case 2: // 200ms after start of second -> end of timeframe for logic 1
+    case 2: // 200ms = logic 1
       digitalWrite(HAS_DCF77, dcf_high);
       break;
 
     } // switch
 
-    // pulse pause
+    // delay to genrate pulseLength
     vTaskDelayUntil(&startTime, pdMS_TO_TICKS(100));
 
   } // for
