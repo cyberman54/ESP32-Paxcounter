@@ -146,12 +146,14 @@ void gps_loop(void *pvParameters) {
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available()) {
         gps.encode(GPS_Serial.read());
+        yield();
       }
 #elif defined GPS_I2C
       Wire.requestFrom(GPS_ADDR, 32); // caution: this is a blocking call
       while (Wire.available()) {
         gps.encode(Wire.read());
         delay(2); // 2ms delay according L76 datasheet
+        yield();
       }
 #endif
 
@@ -170,7 +172,7 @@ void gps_loop(void *pvParameters) {
     //         gps.passedChecksum(), gps.failedChecksum(),
     //         gps.sentencesWithFix());
 
-    delay(2); // yield to CPU
+    yield(); // yield to CPU
 
   } // end of infinite loop
 
