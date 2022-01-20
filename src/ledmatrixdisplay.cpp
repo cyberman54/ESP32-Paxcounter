@@ -75,9 +75,6 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
   case 0:
 
-    // update counter values from libpax
-    libpax_counter_count(&count_from_libpax);
-
     if (cfg.countermode == 1) {
       // cumulative counter mode -> display total number of pax
       if (ulLastNumMacs != count_from_libpax.pax) {

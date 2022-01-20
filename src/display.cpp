@@ -174,9 +174,6 @@ void dp_init(bool verbose) {
 
 void dp_refresh(bool nextPage) {
 
-  // update counter values from libpax
-  libpax_counter_count(&count_from_libpax);
-
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
 #endif
