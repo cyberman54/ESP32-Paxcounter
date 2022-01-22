@@ -15,7 +15,6 @@ RTC_NOINIT_ATTR uint32_t RTC_restarts;
 // RTC_DATA_ATTR -> keep values after a wakeup from sleep
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
-RTC_DATA_ATTR time_t RTC_time = 0;
 
 timeval sleep_stop_time;
 
@@ -197,7 +196,6 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   // time stamp sleep start time and save system monotonic time. Deep sleep.
   gettimeofday(&RTC_sleep_start_time, NULL);
   RTC_millis += millis();
-  time(&RTC_time);
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 }
