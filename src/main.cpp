@@ -449,7 +449,7 @@ void setup() {
     ESP_LOGI(TAG, "BME sensor initialized");
   else {
     ESP_LOGE(TAG, "BME sensor could not be initialized");
-    cfg.payloadmask &= ~MEMS_DATA; // switch off transmit of BME data
+    cfg.payloadmask &= (uint8_t)~MEMS_DATA; // switch off transmit of BME data
   }
 #endif
 

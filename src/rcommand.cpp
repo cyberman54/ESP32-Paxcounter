@@ -401,9 +401,9 @@ void set_enscount(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set ENS_COUNT to %s", val[0] ? "on" : "off");
   cfg.enscount = val[0] ? 1 : 0;
   if (val[0])
-    cfg.payloadmask |= SENSOR1_DATA;
+    cfg.payloadmask |= (uint8_t)SENSOR1_DATA;
   else
-    cfg.payloadmask &= ~SENSOR1_DATA;
+    cfg.payloadmask &= (uint8_t)~SENSOR1_DATA;
 }
 
 void set_loadconfig(uint8_t val[]) {
