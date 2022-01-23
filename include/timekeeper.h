@@ -8,6 +8,7 @@
 #include "gpsread.h"
 #include "if482.h"
 #include "dcf77.h"
+#include "esp_sntp.h"
 
 #define SECS_YR_2000  (946684800UL) // the time at the start of y2k
 #define GPS_UTC_DIFF 315964800UL // seconds diff between gps and utc epoch

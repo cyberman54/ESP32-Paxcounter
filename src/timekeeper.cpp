@@ -103,7 +103,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 
     tv.tv_sec = time_to_set;
     tv.tv_usec = 0;
-    settimeofday(&tv, NULL);
+    sntp_sync_time(&tv);
 
     ESP_LOGI(TAG, "[%0.3f] UTC time: %d.000 sec", _seconds(), time_to_set);
 
@@ -122,7 +122,6 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 #endif
 
     timeSource = mytimesource; // set global variable
-    sntp_set_sync_status(SNTP_SYNC_STATUS_COMPLETED);
 
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
     ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | timesource=%d",
@@ -139,6 +138,10 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 
 // helper function to setup a pulse per second for time synchronisation
 uint8_t timepulse_init() {
+
+  // set esp-idf API sntp sync mode
+  //sntp_init();
+  sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
 
 // use time pulse from GPS as time base with fixed 1Hz frequency
 #ifdef GPS_INT
@@ -273,15 +276,8 @@ void clock_loop(void *taskparameter) { // ClockTask
     // wait for timepulse and store UTC time
     xTaskNotifyWait(0x00, ULONG_MAX, &current_time, portMAX_DELAY);
 
-    /*
-        // no confident or no recent time -> suppress clock output
-        if ((sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED) ||
-            !(timeIsValid(current_time)) || (current_time == previous_time))
-          continue;
-    */
-
-    // no confident or no recent time -> suppress clock output
-    if (!(timeIsValid(current_time)) || (current_time == previous_time))
+    if ((sntp_get_sync_status() == SNTP_SYNC_STATUS_IN_PROGRESS) ||
+        !(timeIsValid(current_time)) || (current_time == previous_time))
       continue;
 
     // set calendar time for next second of clock output

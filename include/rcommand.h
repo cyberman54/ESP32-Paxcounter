@@ -10,6 +10,7 @@
 #include "sensor.h"
 #include "cyclic.h"
 #include "timekeeper.h"
+#include "esp_sntp.h"
 #include "timesync.h"
 #include "power.h"
 #include "antenna.h"
