@@ -15,7 +15,6 @@ RTC_NOINIT_ATTR uint32_t RTC_restarts;
 // RTC_DATA_ATTR -> keep values after a wakeup from sleep
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
-RTC_DATA_ATTR time_t RTC_time = 0;
 
 timeval sleep_stop_time;
 
@@ -49,8 +48,9 @@ void do_after_reset(void) {
 
   // set time zone to user value from paxcounter.conf
 #ifdef TIME_SYNC_TIMEZONE
-  myTZ.setPosix(TIME_SYNC_TIMEZONE);
-  ESP_LOGD(TAG, "Timezone set to %s", myTZ.getPosix().c_str());
+  setenv("TZ", TIME_SYNC_TIMEZONE, 1);
+  tzset();
+  ESP_LOGD(TAG, "Timezone set to %s", TIME_SYNC_TIMEZONE);
 #endif
 
   switch (rtc_get_reset_reason(0)) {
@@ -75,8 +75,8 @@ void do_after_reset(void) {
     RTC_millis += sleep_time_ms; // increment system monotonic time
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
 
-    // restore time
-    setMyTime(RTC_time, sleep_time_ms, _set);
+    // do we have a valid time? -> set global variable
+    timeSource = timeIsValid(sleep_stop_time.tv_sec) ? _set : _unsynced;
 
     // set wakeup state, not if we have pending OTA update
     if (RTC_runmode == RUNMODE_SLEEP)
@@ -196,7 +196,6 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   // time stamp sleep start time and save system monotonic time. Deep sleep.
   gettimeofday(&RTC_sleep_start_time, NULL);
   RTC_millis += millis();
-  RTC_time = now();
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 }

@@ -89,7 +89,7 @@ bool gps_hasfix() {
           gps.altitude.age() < 4000);
 }
 
-// function to poll current time from GPS data; note: this is costly
+// function to poll UTC time from GPS NMEA data; note: this is costly
 time_t get_gpstime(uint16_t *msec) {
 
   // poll NMEA ZDA sentence
@@ -104,27 +104,26 @@ time_t get_gpstime(uint16_t *msec) {
   // did we get a current date & time?
   if (gpstime.isValid()) {
 
-    time_t t = 0;
-    tmElements_t tm;
     uint32_t delay_ms =
         gpstime.age() + nmea_txDelay_ms + NMEA_COMPENSATION_FACTOR;
     uint32_t zdatime = atof(gpstime.value());
 
-    // convert time to maketime format and make time
-    tm.Second = zdatime % 100;              // second
-    tm.Minute = (zdatime / 100) % 100;      // minute
-    tm.Hour = zdatime / 10000;              // hour
-    tm.Day = atoi(gpsday.value());          // day
-    tm.Month = atoi(gpsmonth.value());      // month
-    tm.Year = atoi(gpsyear.value()) - 1970; // year offset from 1970
-    t = makeTime(tm);
-
-    ESP_LOGD(TAG, "GPS date/time: %s",
-             UTC.dateTime(t, "d.M Y H:i:s.v T").c_str());
+    // convert UTC time from gps NMEA ZDA sentence to tm format
+    struct tm gps_tm = {0};
+    gps_tm.tm_sec = zdatime % 100;                 // second (UTC)
+    gps_tm.tm_min = (zdatime / 100) % 100;         // minute (UTC)
+    gps_tm.tm_hour = zdatime / 10000;              // hour (UTC)
+    gps_tm.tm_mday = atoi(gpsday.value());         // day, 01 to 31
+    gps_tm.tm_mon = atoi(gpsmonth.value()) - 1;    // month, 01 to 12
+    gps_tm.tm_year = atoi(gpsyear.value()) - 1900; // year, YYYY
+    
+    // convert UTC tm to time_t epoch
+    gps_tm.tm_isdst = 0; // UTC has no DST 
+    time_t t = mkgmtime(&gps_tm);
 
     // add protocol delay with millisecond precision
-    t += delay_ms / 1000 - 1; // whole seconds
-    *msec = delay_ms % 1000;  // fractional seconds
+    t += (time_t)(delay_ms / 1000);
+    *msec = delay_ms % 1000; // fractional seconds
 
     return t;
   }
@@ -134,11 +133,6 @@ time_t get_gpstime(uint16_t *msec) {
   return 0;
 
 } // get_gpstime()
-
-time_t get_gpstime(void) {
-  uint16_t msec;
-  return get_gpstime(&msec);
-}
 
 // GPS serial feed FreeRTos Task
 void gps_loop(void *pvParameters) {
@@ -152,12 +146,14 @@ void gps_loop(void *pvParameters) {
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available()) {
         gps.encode(GPS_Serial.read());
+        yield();
       }
 #elif defined GPS_I2C
       Wire.requestFrom(GPS_ADDR, 32); // caution: this is a blocking call
       while (Wire.available()) {
         gps.encode(Wire.read());
         delay(2); // 2ms delay according L76 datasheet
+        yield();
       }
 #endif
 
@@ -165,18 +161,18 @@ void gps_loop(void *pvParameters) {
       // GPS time, we trigger a device time update to poll time from GPS
       if ((timeSource == _unsynced || timeSource == _set) &&
           (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000)) {
-        now();
         calibrateTime();
       }
 
     } // if
 
-    // show NMEA data in verbose mode, useful only for debugging GPS, very noisy
-    // ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix: %u",
+    // show NMEA data in verbose mode, useful only for debugging GPS, very
+    // noisy ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix:
+    // %u",
     //         gps.passedChecksum(), gps.failedChecksum(),
     //         gps.sentencesWithFix());
 
-    delay(2); // yield to CPU
+    yield(); // yield to CPU
 
   } // end of infinite loop
 

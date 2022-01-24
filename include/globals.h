@@ -5,7 +5,6 @@
 #include <Arduino.h>
 
 // Time functions
-#include <ezTime.h>
 #include <RtcDateTime.h>
 #include <Ticker.h>
 
@@ -111,6 +110,7 @@ typedef struct {
   float pm25;
 } sdsStatus_t;
 
-extern char clientId[20]; // unique clientID
+extern char clientId[20];   // unique clientID
+extern time_t _COMPILETIME; // epoch build time
 
 #endif

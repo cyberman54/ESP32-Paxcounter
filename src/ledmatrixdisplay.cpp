@@ -12,7 +12,7 @@ static const char TAG[] = __FILE__;
 uint8_t MatrixDisplayIsOn = 0;
 static uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8] = {0};
 static unsigned long ulLastNumMacs = 0;
-static time_t ulLastTime = now();
+static time_t ulLastTime = time(NULL);
 
 hw_timer_t *matrixDisplayIRQ = NULL;
 
@@ -116,11 +116,11 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
   case 1:
 
-    const time_t t = now();
+    const time_t t = time(NULL);
     if (ulLastTime != t) {
       ulLastTime = t;
       matrix.clear();
-      DrawNumber(myTZ.dateTime("H:i:s").c_str());
+      //DrawNumber(myTZ.dateTime("H:i:s").c_str());
     }
     break;
 

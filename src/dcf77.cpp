@@ -17,104 +17,96 @@ https://github.com/udoklein/dcf77
 static const char TAG[] = __FILE__;
 
 // triggered by second timepulse to ticker out DCF signal
-void DCF77_Pulse(time_t t, uint8_t const *DCFpulse) {
+void DCF77_Pulse(uint8_t bit) {
 
-  TickType_t startTime = xTaskGetTickCount();
-  uint8_t sec = myTZ.second(t);
-
-  ESP_LOGD(TAG, "[%s] DCF second: %d", myTZ.dateTime("H:i:s.v").c_str(), sec);
+  TickType_t startTime;
 
   // induce a DCF Pulse
-  for (uint8_t pulse = 0; pulse <= 2; pulse++) {
+  for (uint8_t pulseLength = 0; pulseLength <= 2; pulseLength++) {
 
-    switch (pulse) {
+    startTime = xTaskGetTickCount(); // reference time pulse start
 
-    case 0: // start of second -> start of timeframe for logic signal
-      if (DCFpulse[sec] != dcf_Z)
-        digitalWrite(HAS_DCF77, dcf_low);
+    switch (pulseLength) {
+
+    case 0: // 0ms = start of pulse
+      digitalWrite(HAS_DCF77, dcf_low);
       break;
 
-    case 1: // 100ms after start of second -> end of timeframe for logic 0
-      if (DCFpulse[sec] == dcf_0)
+    case 1: // 100ms = logic 0
+      if (bit == 0)
         digitalWrite(HAS_DCF77, dcf_high);
       break;
 
-    case 2: // 200ms after start of second -> end of timeframe for logic 1
+    case 2: // 200ms = logic 1
       digitalWrite(HAS_DCF77, dcf_high);
       break;
 
     } // switch
 
-    // pulse pause
-    vTaskDelayUntil(&startTime, pdMS_TO_TICKS(DCF77_PULSE_LENGTH));
+    // delay to genrate pulseLength
+    vTaskDelayUntil(&startTime, pdMS_TO_TICKS(100));
 
   } // for
 } // DCF77_Pulse()
 
-uint8_t *IRAM_ATTR DCF77_Frame(time_t const t) {
-
-  // array of dcf pulses for one minute, secs 0..16 and 20 are never touched, so
-  // we keep them statically to avoid same recalculation every minute
-
-  static uint8_t DCFpulse[DCF77_FRAME_SIZE + 1] = {
-      dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_0,
-      dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_0,
-      dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_0, dcf_1};
-
-  uint8_t Parity;
-
-  // ENCODE DST CHANGE ANNOUNCEMENT (Sec 16)
-  DCFpulse[16] = dcf_0; // not yet implemented
-
-  // ENCODE DAYLIGHTSAVING (secs 17..18)
-  DCFpulse[17] = myTZ.isDST(t) ? dcf_1 : dcf_0;
-  DCFpulse[18] = myTZ.isDST(t) ? dcf_0 : dcf_1;
-
-  // ENCODE MINUTE (secs 21..28)
-  Parity = dec2bcd(myTZ.minute(t), 21, 27, DCFpulse);
-  DCFpulse[28] = setParityBit(Parity);
-
-  // ENCODE HOUR (secs 29..35)
-  Parity = dec2bcd(myTZ.hour(t), 29, 34, DCFpulse);
-  DCFpulse[35] = setParityBit(Parity);
-
-  // ENCODE DATE (secs 36..58)
-  Parity = dec2bcd(myTZ.day(t), 36, 41, DCFpulse);
-  Parity += dec2bcd((myTZ.weekday(t) - 1) ? (myTZ.weekday(t) - 1) : 7, 42, 44,
-                    DCFpulse);
-  Parity += dec2bcd(myTZ.month(t), 45, 49, DCFpulse);
-  Parity += dec2bcd(myTZ.year(t) - 2000, 50, 57, DCFpulse);
-  DCFpulse[58] = setParityBit(Parity);
-
-  // ENCODE MARK (sec 59)
-  DCFpulse[59] = dcf_Z; // !! missing code here for leap second !!
-
-  // timestamp this frame with it's minute
-  DCFpulse[60] = myTZ.minute(t);
-
-  return DCFpulse;
-
-} // DCF77_Frame()
-
 // helper function to convert decimal to bcd digit
-uint8_t IRAM_ATTR dec2bcd(uint8_t const dec, uint8_t const startpos,
-                          uint8_t const endpos, uint8_t *DCFpulse) {
+uint64_t dec2bcd(uint8_t const dec, uint8_t const startpos,
+                 uint8_t const endpos, uint8_t *odd_parity) {
 
   uint8_t data = (dec < 10) ? dec : ((dec / 10) << 4) + (dec % 10);
-  uint8_t parity = 0;
+  uint64_t bcd = 0;
 
+  *odd_parity = 0;
   for (uint8_t i = startpos; i <= endpos; i++) {
-    DCFpulse[i] = (data & 1) ? dcf_1 : dcf_0;
-    parity += (data & 1);
+    bcd += (data & 1) ? set_dcfbit(i) : 0;
+    *odd_parity += (data & 1);
     data >>= 1;
   }
+  *odd_parity %= 2;
 
-  return parity;
+  return bcd;
 }
 
-// helper function to encode parity
-uint8_t IRAM_ATTR setParityBit(uint8_t const p) {
-  return ((p & 1) ? dcf_1 : dcf_0);
-}
+// generates a 1 minute dcf pulse frame for calendar time t
+uint64_t DCF77_Frame(const struct tm t) {
+
+  uint8_t parity = 0, parity_sum = 0;
+  uint64_t frame = 0; // start with all bits 0
+
+  // DST CHANGE ANNOUNCEMENT (16)
+  // -- not implemented --
+
+  // DAYLIGHTSAVING  (17, 18)
+  // "01" = MEZ / "10" = MESZ
+  frame += t.tm_isdst > 0 ? set_dcfbit(17) : set_dcfbit(18);
+
+  // LEAP SECOND (19)
+  // -- not implemented --
+
+  // BEGIN OF TIME INFORMATION (20)
+  frame += set_dcfbit(20);
+
+  // MINUTE (21..28)
+  frame += dec2bcd(t.tm_min, 21, 27, &parity);
+  frame += parity ? set_dcfbit(28) : 0;
+
+  // HOUR (29..35)
+  frame += dec2bcd(t.tm_hour, 29, 34, &parity);
+  frame += parity ? set_dcfbit(35) : 0;
+
+  // DATE (36..58)
+  frame += dec2bcd(t.tm_mday, 36, 41, &parity);
+  parity_sum += parity;
+  frame += dec2bcd((t.tm_wday == 0) ? 7 : t.tm_wday, 42, 44, &parity);
+  parity_sum += parity;
+  frame += dec2bcd(t.tm_mon + 1, 45, 49, &parity);
+  parity_sum += parity;
+  frame += dec2bcd(t.tm_year + 1900 - 2000, 50, 57, &parity);
+  parity_sum += parity;
+  frame += parity_sum % 2 ? set_dcfbit(58) : 0;
+
+  return frame;
+
+} // DCF77_Frame()
 
 #endif // HAS_DCF77

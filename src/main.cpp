@@ -126,6 +126,7 @@ void setup() {
   snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
            PROGVERSION, RTC_runmode, RTC_restarts);
+  ESP_LOGI(TAG, "code build date: %d", _COMPILETIME);
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
@@ -448,7 +449,7 @@ void setup() {
     ESP_LOGI(TAG, "BME sensor initialized");
   else {
     ESP_LOGE(TAG, "BME sensor could not be initialized");
-    cfg.payloadmask &= ~MEMS_DATA; // switch off transmit of BME data
+    cfg.payloadmask &= (uint8_t)~MEMS_DATA; // switch off transmit of BME data
   }
 #endif
 

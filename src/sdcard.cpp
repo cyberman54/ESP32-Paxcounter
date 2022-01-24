@@ -43,7 +43,11 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
                      __attribute__((unused)) uint16_t noBleCWA) {
   static int counterWrites = 0;
   char tempBuffer[12 + 1];
-  time_t t = now();
+  time_t t = time(NULL);
+  struct tm tt;
+  localtime_r(&t, &tt);
+  mktime(&tt);
+
 #if (HAS_SDS011)
   sdsStatus_t sds;
 #endif
@@ -52,9 +56,9 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
     return;
 
   ESP_LOGD(TAG, "writing to SD-card");
-  sprintf(tempBuffer, "%02d.%02d.%4d,", day(t), month(t), year(t));
+  strftime(tempBuffer, sizeof(tempBuffer), "%d.%m.%Y", &tt);
   fileSDCard.print(tempBuffer);
-  sprintf(tempBuffer, "%02d:%02d:%02d,", hour(t), minute(t), second(t));
+  strftime(tempBuffer, sizeof(tempBuffer), "%H.%M.%S", &tt);
   fileSDCard.print(tempBuffer);
   sprintf(tempBuffer, "%d,%d", noWifi, noBle);
   fileSDCard.print(tempBuffer);

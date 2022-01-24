@@ -9,8 +9,6 @@
 #define TIME_SYNC_FIXUP 25 // compensation for processing time [milliseconds]
 #define TIME_SYNC_MAX_SEQNO 0xfe // threshold for wrap around time_sync_seqNo
 #define TIME_SYNC_END_FLAG (TIME_SYNC_MAX_SEQNO + 1) // end of handshake marker
-#define GPS_UTC_DIFF 315964800UL // seconds diff between gps and utc epoch
-#define LEAP_SECS_SINCE_GPSEPOCH 18UL // state of 2021
 
 enum timesync_t {
   timesync_tx,

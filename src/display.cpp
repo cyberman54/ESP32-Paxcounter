@@ -220,7 +220,10 @@ void dp_drawPage(bool nextpage) {
   // nextpage = true -> flip 1 page
 
   static uint8_t DisplayPage = 0;
-  char timeState;
+  char timeState, strftime_buf[64];
+  time_t now;
+  struct tm timeinfo = {0};
+
 #if (HAS_GPS)
   static bool wasnofix = true;
 #endif
@@ -320,11 +323,15 @@ void dp_drawPage(bool nextpage) {
     dp_println();
 
     // line 6: time + date
-    // 27.Feb 2019 20:27:00*
+    // Wed Jan 12 21:49:08 *
+
 #if (TIME_SYNC_INTERVAL)
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
     TimePulseTick = false;
-    dp_printf("%s", myTZ.dateTime("d.M Y H:i:s").c_str());
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    dp_printf("%.20s", strftime_buf);
 
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
@@ -442,7 +449,10 @@ void dp_drawPage(bool nextpage) {
 
     dp_setFont(MY_FONT_LARGE);
     dp_setTextCursor(0, 4);
-    dp_printf("%s", myTZ.dateTime("H:i:s").c_str());
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%T", &timeinfo);
+    dp_printf("%.8s", strftime_buf);
     break;
 
   // ---------- page 5: pax graph ----------
