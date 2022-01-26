@@ -111,6 +111,5 @@ typedef struct {
 } sdsStatus_t;
 
 extern char clientId[20];   // unique clientID
-extern time_t _COMPILETIME; // epoch build time
 
 #endif

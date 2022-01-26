@@ -21,7 +21,6 @@ const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 
 bool volatile TimePulseTick = false;
 timesource_t timeSource = _unsynced;
-time_t _COMPILETIME = compileTime(__DATE__);
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
 
@@ -40,8 +39,7 @@ Ticker timesyncer;
 void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 void calibrateTime(void) {
-  ESP_LOGD(TAG, "[%0.3f] calibrateTime, timeSource == %d", _seconds(),
-           timeSource);
+
   time_t t = 0;
   uint16_t t_msec = 0;
 
@@ -57,7 +55,7 @@ void calibrateTime(void) {
 
 // has RTC -> fallback to RTC time
 #ifdef HAS_RTC
-    t = get_rtctime();
+    t = get_rtctime(&t_msec);
     // set time from RTC - method will check if time is valid
     setMyTime((uint32_t)t, t_msec, _rtc);
 #endif
@@ -101,25 +99,26 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
+    // from here on we are on top of next second
+
     tv.tv_sec = time_to_set;
     tv.tv_usec = 0;
     sntp_sync_time(&tv);
 
     ESP_LOGI(TAG, "[%0.3f] UTC time: %d.000 sec", _seconds(), time_to_set);
 
-    // if we have a software pps timer, shift it to top of second
-    if (ppsIRQ != NULL) {
-
-      timerWrite(ppsIRQ, 0); // reset pps timer
-      CLOCKIRQ();            // fire clock pps, this advances time 1 sec
-    }
-
-// if we have got an external timesource, set RTC time and shift RTC_INT pulse
-// to top of second
+    // if we have a precise time timesource, set RTC time and shift RTC_INT
+    // pulse to top of second
 #ifdef HAS_RTC
     if ((mytimesource == _gps) || (mytimesource == _lora))
       set_rtctime(time_to_set);
 #endif
+
+    // if we have a software pps timer, shift it to top of second
+    if (ppsIRQ != NULL) {
+      timerWrite(ppsIRQ, 0); // reset pps timer
+      CLOCKIRQ();            // fire clock pps to advance wall clock by 1 sec
+    }
 
     timeSource = mytimesource; // set global variable
 
@@ -132,7 +131,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
              "[%0.3f] Failed to synchronise time from source %c | unix sec "
              "obtained from source: %d | unix sec at program compilation: %d",
              _seconds(), timeSetSymbols[mytimesource], time_to_set,
-             _COMPILETIME);
+             compileTime());
   }
 }
 
@@ -140,7 +139,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 uint8_t timepulse_init() {
 
   // set esp-idf API sntp sync mode
-  //sntp_init();
+  // sntp_init();
   sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
 
 // use time pulse from GPS as time base with fixed 1Hz frequency
@@ -224,7 +223,9 @@ void IRAM_ATTR CLOCKIRQ(void) {
 // helper function to check plausibility of a given epoch time
 bool timeIsValid(time_t const t) {
   // is t a time in the past? we use compile time to guess
-  return (t > _COMPILETIME);
+  // compile time is some local time, but we do not know it's time zone
+  // thus, we go 1 full day back to be sure to catch a time in the past
+  return (t > (compileTime() - 86400));
 }
 
 // helper function to calculate serial transmit time
@@ -283,7 +284,7 @@ void clock_loop(void *taskparameter) { // ClockTask
     // set calendar time for next second of clock output
     tt = (time_t)(current_time + 1);
     localtime_r(&tt, &t);
-    mktime(&t);
+    tt = mktime(&t);
 
 #if defined HAS_IF482
 
@@ -293,13 +294,13 @@ void clock_loop(void *taskparameter) { // ClockTask
     if (xTaskNotifyWait(0x00, ULONG_MAX, &current_time, txDelay) == pdTRUE) {
       tt = (time_t)(current_time + 1);
       localtime_r(&tt, &t);
-      mktime(&t);
+      tt = mktime(&t);
     }
 
     // send IF482 telegram
-    IF482.print(IF482_Frame(t)); // note: telegram is for *next* second
+    IF482.print(IF482_Frame(tt)); // note: telegram is for *next* second
 
-    ESP_LOGD(TAG, "[%0.3f] IF482: %s", _seconds(), IF482_Frame(t));
+    ESP_LOGD(TAG, "[%0.3f] IF482: %s", _seconds(), IF482_Frame(tt).c_str());
 
 #elif defined HAS_DCF77
 
@@ -340,7 +341,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 } // clock_loop()
 
 // we use compile date to create a time_t reference "in the past"
-time_t compileTime(const String compile_date) {
+time_t compileTime(void) {
 
   char s_month[5];
   int year;
@@ -353,10 +354,11 @@ time_t compileTime(const String compile_date) {
   if (secs == -1) {
 
     // determine date
-    // we go one day back to bypass unknown timezone of local time
-    sscanf(compile_date.c_str(), "%s %d %d", s_month, &t.tm_mday - 1, &year);
+    sscanf(__DATE__, "%s %d %d", s_month, &t.tm_mday, &year);
     t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
     t.tm_year = year - 1900;
+    // determine time
+    sscanf(__TIME__, "%d:%d:%d", &t.tm_hour, &t.tm_min, &t.tm_sec);
 
     // convert to secs local time
     secs = mktime(&t);

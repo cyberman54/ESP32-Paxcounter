@@ -25,26 +25,24 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 // Tasks and timers:
 
-Task          Core  Prio  Purpose
+Task          	Core  Prio  Purpose
 -------------------------------------------------------------------------------
-ledloop       0     3     blinks LEDs
-spiloop       0     2     reads/writes data on spi interface
-IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
+ledloop*      	0     3     blinks LEDs
+spiloop#      	0     2     reads/writes data on spi interface
+lmictask*     	1     2     MCCI LMiC LORAWAN stack
+clockloop#    	1     4     generates realtime telegrams for external clock
+mqttloop#     	1     2     reads/writes data on ETH interface
+timesync_proc#	1     3     processes realtime time sync requests
+irqhandler#   	1     2     cyclic tasks (i.e. displayrefresh) triggered by
+timers gpsloop*      	1     1     reads data from GPS via serial or i2c
+lorasendtask# 	1     1     feeds data from lora sendqueue to lmcic
+rmcd_process# 	1     1     Remote command interpreter loop
 
-lmictask      1     2     MCCI LMiC LORAWAN stack
-clockloop     1     4     generates realtime telegrams for external clock
-mqttloop      1     2     reads/writes data on ETH interface
-timesync_proc 1     3     processes realtime time sync requests
-irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
-gpsloop       1     1     reads data from GPS via serial or i2c
-lorasendtask  1     1     feeds data from lora sendqueue to lmcic
-rmcd_process  1     1     Remote command interpreter loop
-IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
+* spinning task
+# blocked/waiting task
 
 Low priority numbers denote low priority tasks.
-
-NOTE: Changing any timings will have impact on time accuracy of whole code.
-So don't do it if you do not own a digital oscilloscope.
+-------------------------------------------------------------------------------
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
@@ -126,7 +124,7 @@ void setup() {
   snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
            PROGVERSION, RTC_runmode, RTC_restarts);
-  ESP_LOGI(TAG, "code build date: %d", _COMPILETIME);
+  ESP_LOGI(TAG, "code build date: %d", compileTime());
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
@@ -494,8 +492,7 @@ void setup() {
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
 // only if we have a timesource we do timesync
-#if ((TIME_SYNC_LORAWAN) || (TIME_SYNC_LORASERVER) || (HAS_GPS) ||             \
-     defined HAS_RTC)
+#if ((TIME_SYNC_LORAWAN) || (TIME_SYNC_LORASERVER) || (HAS_GPS) || (HAS_RTC))
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting Clock Controller...");

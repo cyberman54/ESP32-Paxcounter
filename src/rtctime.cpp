@@ -25,14 +25,14 @@ uint8_t rtc_init(void) {
     }
 
 #if (TIME_SYNC_COMPILEDATE)
-    // initialize a blank RTC without battery backup with compiled time
+    // initialize a blank RTC without battery backup with build time
     RtcDateTime tt = Rtc.GetDateTime();
     time_t t = tt.Epoch32Time(); // sec2000 -> epoch
 
     if (!Rtc.IsDateTimeValid() || !timeIsValid(t)) {
-      ESP_LOGW(TAG, "RTC has no recent time, setting to compiled time");
-      Rtc.SetDateTime(
-          RtcDateTime(_COMPILETIME - SECS_YR_2000)); // epoch -> sec2000
+      ESP_LOGW(TAG, "RTC has no recent time, setting to compiletime");
+      Rtc.SetDateTime(RtcDateTime(mkgmtime(compileTime()) -
+                                  SECS_YR_2000)); // epoch -> sec2000
     }
 #endif
 
@@ -62,15 +62,23 @@ uint8_t set_rtctime(time_t t) { // t is sec epoch time
   }
 } // set_rtctime()
 
-time_t get_rtctime(void) {
+time_t get_rtctime(uint16_t *msec) {
   time_t t = 0;
+  *msec = 0;
   if (I2C_MUTEX_LOCK()) {
     if (Rtc.IsDateTimeValid() && Rtc.GetIsRunning()) {
       RtcDateTime tt = Rtc.GetDateTime();
       t = tt.Epoch32Time(); // sec2000 -> epoch
     }
     I2C_MUTEX_UNLOCK();
-    return timeIsValid(t);
+#ifdef RTC_INT
+    // adjust time to top of next second by waiting TimePulseTick to flip
+    bool lastTick = TimePulseTick;
+    while (TimePulseTick == lastTick) {
+    };
+    t++;
+#endif
+    return t;
   } else {
     ESP_LOGE(TAG, "RTC get time failure");
     return 0; // failure
