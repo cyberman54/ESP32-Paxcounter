@@ -141,40 +141,35 @@ void gps_loop(void *pvParameters) {
 
   while (1) {
 
-    if (cfg.payloadmask & GPS_DATA) {
+    while (cfg.payloadmask & GPS_DATA) {
 #ifdef GPS_SERIAL
       // feed GPS decoder with serial NMEA data from GPS device
-      while (GPS_Serial.available()) {
-        gps.encode(GPS_Serial.read());
-        yield();
-      }
+      while (GPS_Serial.available())
+        if (gps.encode(GPS_Serial.read()))
+          break; // NMEA sentence complete
 #elif defined GPS_I2C
       Wire.requestFrom(GPS_ADDR, 32); // caution: this is a blocking call
-      while (Wire.available()) {
-        gps.encode(Wire.read());
-        delay(2); // 2ms delay according L76 datasheet
-        yield();
-      }
+      while (Wire.available())
+        if (gps.encode(Wire.read()))
+          break; // NMEA sentence complete
 #endif
 
       // (only) while device time is not set or unsynched, and we have a valid
-      // GPS time, we trigger a device time update to poll time from GPS
+      // GPS time, we call calibrateTime to poll time immeditately from GPS
       if ((timeSource == _unsynced || timeSource == _set) &&
-          (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000)) {
+          (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000))
         calibrateTime();
-      }
 
-    } // if
+      // show NMEA data, very noisy,  useful only for debugging GPS
+      // ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix:
+      //                  %u", gps.passedChecksum(), gps.failedChecksum(), gps
+      //                       .sentencesWithFix());
 
-    // show NMEA data in verbose mode, useful only for debugging GPS, very
-    // noisy ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix:
-    // %u",
-    //         gps.passedChecksum(), gps.failedChecksum(),
-    //         gps.sentencesWithFix());
+      delay(2);
+    } // inner while loop
 
-    delay(50);
-
-  } // end of infinite loop
+    delay(1000);
+  } // outer while loop
 
 } // gps_loop()
 
