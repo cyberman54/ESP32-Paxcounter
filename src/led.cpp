@@ -212,7 +212,7 @@ void ledLoop(void *parameter) {
       previousLEDState = LEDState;
     }
     // give yield to CPU
-    delay(2);
+    delay(5);
   } // while(1)
 };  // ledloop()
 
