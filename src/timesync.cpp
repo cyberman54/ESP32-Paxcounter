@@ -34,7 +34,7 @@ void timesync_init(void) {
                           "timesync_proc",     // name of task
                           4096,                // stack size of task
                           (void *)1,           // task parameter
-                          3,                   // priority of the task
+                          7,                   // priority of the task
                           &timeSyncProcTask,   // task handle
                           1);                  // CPU core
 }

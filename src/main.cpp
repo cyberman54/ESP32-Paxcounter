@@ -27,16 +27,16 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 Task          	Core  Prio  Purpose
 -------------------------------------------------------------------------------
-ledloop*      	0     3     blinks LEDs
-spiloop#      	0     2     reads/writes data on spi interface
-lmictask*     	1     2     MCCI LMiC LORAWAN stack
-clockloop#    	1     4     generates realtime telegrams for external clock
-mqttloop#     	1     2     reads/writes data on ETH interface
-timesync_proc#	1     3     processes realtime time sync requests
-irqhandler#   	1     2     cyclic tasks (i.e. displayrefresh) triggered by
-timers gpsloop*      	1     1     reads data from GPS via serial or i2c
-lorasendtask# 	1     1     feeds data from lora sendqueue to lmcic
-rmcd_process# 	1     1     Remote command interpreter loop
+ledloop*      	0     1    blinks LEDs
+spiloop#      	0     2    reads/writes data on spi interface
+lmictask*     	1     8    MCCI LMiC LORAWAN stack
+clockloop#    	1     6    generates realtime telegrams for external clock
+mqttloop#     	1     5    reads/writes data on ETH interface
+timesync_proc#	1     7    processes realtime time sync requests
+irqhandler#   	1     4    cyclic tasks (i.e. displayrefresh) triggered by
+gpsloop*      	1     3    reads data from GPS via serial or i2c
+lorasendtask# 	1     2    feeds data from lora sendqueue to lmcic
+rmcd_process# 	1     1    Remote command interpreter loop
 
 * spinning task
 # blocked/waiting task
@@ -242,7 +242,7 @@ void setup() {
                           "ledloop",    // name of task
                           1024,         // stack size of task
                           (void *)1,    // parameter of the task
-                          3,            // priority of the task
+                          1,            // priority of the task
                           &ledLoopTask, // task handle
                           0);           // CPU core
 #endif
@@ -328,7 +328,7 @@ void setup() {
                             "gpsloop", // name of task
                             4096,      // stack size of task
                             (void *)1, // parameter of the task
-                            1,         // priority of the task
+                            3,         // priority of the task
                             &GpsTask,  // task handle
                             1);        // CPU core
   }
@@ -430,7 +430,7 @@ void setup() {
                           "irqhandler",    // name of task
                           4096,            // stack size of task
                           (void *)1,       // parameter of the task
-                          2,               // priority of the task
+                          4,               // priority of the task
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
