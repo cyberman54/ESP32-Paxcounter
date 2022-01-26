@@ -116,9 +116,9 @@ time_t get_gpstime(uint16_t *msec) {
     gps_tm.tm_mday = atoi(gpsday.value());         // day, 01 to 31
     gps_tm.tm_mon = atoi(gpsmonth.value()) - 1;    // month, 01 to 12
     gps_tm.tm_year = atoi(gpsyear.value()) - 1900; // year, YYYY
-    
+
     // convert UTC tm to time_t epoch
-    gps_tm.tm_isdst = 0; // UTC has no DST 
+    gps_tm.tm_isdst = 0; // UTC has no DST
     time_t t = mkgmtime(&gps_tm);
 
     // add protocol delay with millisecond precision
@@ -172,7 +172,7 @@ void gps_loop(void *pvParameters) {
     //         gps.passedChecksum(), gps.failedChecksum(),
     //         gps.sentencesWithFix());
 
-    yield(); // yield to CPU
+    delay(50);
 
   } // end of infinite loop
 
