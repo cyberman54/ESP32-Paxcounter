@@ -51,18 +51,17 @@ void DCF77_Pulse(uint8_t bit) {
 
 // helper function to convert decimal to bcd digit
 uint64_t dec2bcd(uint8_t const dec, uint8_t const startpos,
-                 uint8_t const endpos, uint8_t *odd_parity) {
+                 uint8_t const endpos, uint8_t *parity) {
 
-  uint8_t data = (dec < 10) ? dec : ((dec / 10) << 4) + (dec % 10);
+  uint8_t data = dec < 10 ? dec : ((dec / 10) << 4) + dec % 10;
   uint64_t bcd = 0;
 
-  *odd_parity = 0;
+  *parity = 0;
   for (uint8_t i = startpos; i <= endpos; i++) {
-    bcd += (data & 1) ? set_dcfbit(i) : 0;
-    *odd_parity += (data & 1);
+    bcd += data & 1 ? set_dcfbit(i) : 0;
+    *parity ^= data & 1;
     data >>= 1;
   }
-  *odd_parity %= 2;
 
   return bcd;
 }
@@ -96,14 +95,14 @@ uint64_t DCF77_Frame(const struct tm t) {
 
   // DATE (36..58)
   frame += dec2bcd(t.tm_mday, 36, 41, &parity);
-  parity_sum += parity;
+  parity_sum ^= parity;
   frame += dec2bcd((t.tm_wday == 0) ? 7 : t.tm_wday, 42, 44, &parity);
-  parity_sum += parity;
+  parity_sum ^= parity;
   frame += dec2bcd(t.tm_mon + 1, 45, 49, &parity);
-  parity_sum += parity;
+  parity_sum ^= parity;
   frame += dec2bcd(t.tm_year + 1900 - 2000, 50, 57, &parity);
-  parity_sum += parity;
-  frame += parity_sum % 2 ? set_dcfbit(58) : 0;
+  parity_sum ^= parity;
+  frame += parity_sum ? set_dcfbit(58) : 0;
 
   return frame;
 
