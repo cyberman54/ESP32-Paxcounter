@@ -19,7 +19,7 @@ static const char TAG[] = __FILE__;
 // G = GPS / R = RTC / L = LORA / * = no sync / ? = never synced
 const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 
-bool volatile TimePulseTick = false;
+DRAM_ATTR bool volatile TimePulseTick = false;
 timesource_t timeSource = _unsynced;
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
