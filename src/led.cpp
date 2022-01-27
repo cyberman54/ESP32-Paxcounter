@@ -141,9 +141,7 @@ void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
 void ledLoop(void *parameter) {
-  esp_task_wdt_add(NULL);
   while (1) {
-    esp_task_wdt_reset(); // feed task watchdog
     // Custom blink running always have priority other LoRaWAN led
     // management
     if (LEDBlinkStarted && LEDBlinkDuration) {
