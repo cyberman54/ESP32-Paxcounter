@@ -104,6 +104,10 @@ void setup() {
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
 #endif
 
+  // task watchdog configuration
+  //esp_task_wdt_init(1, true);
+  esp_task_wdt_deinit();
+
   // setup debug output or silence device
 #if (VERBOSE)
   Serial.begin(115200);

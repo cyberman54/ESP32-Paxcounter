@@ -138,10 +138,12 @@ time_t get_gpstime(uint16_t *msec) {
 void gps_loop(void *pvParameters) {
 
   _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
+  esp_task_wdt_add(NULL);
 
   while (1) {
-
+    esp_task_wdt_reset(); // feed task watchdog
     while (cfg.payloadmask & GPS_DATA) {
+      esp_task_wdt_reset(); // feed task watchdog
 #ifdef GPS_SERIAL
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available())

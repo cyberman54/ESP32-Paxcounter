@@ -343,9 +343,11 @@ uint32_t lora_queuewaiting(void) {
 // LMIC loop task
 void lmictask(void *pvParameters) {
   _ASSERT((uint32_t)pvParameters == 1);
+    esp_task_wdt_add(NULL);
   while (1) {
-    os_runloop_once(); // execute lmic scheduled jobs and events
-    delay(2);          // yield to CPU
+    esp_task_wdt_reset(); // feed task watchdog
+    os_runloop_once();    // execute lmic scheduled jobs and events
+    delay(2);             // yield to CPU
   }
 }
 

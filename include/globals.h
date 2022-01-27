@@ -8,6 +8,9 @@
 #include <RtcDateTime.h>
 #include <Ticker.h>
 
+// task watchdog functions
+#include <esp_task_wdt.h>
+
 // std::set for unified array functions
 #include <set>
 #include <array>
