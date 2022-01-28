@@ -6,10 +6,6 @@
 #include "qrcode.h"
 #include "power.h"
 
-#if (COUNT_ENS)
-#include "corona.h"
-#endif
-
 #if (HAS_DISPLAY) == 1
 #include <OneBitDisplay.h>
 #elif (HAS_DISPLAY) == 2

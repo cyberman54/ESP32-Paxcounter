@@ -18,7 +18,6 @@
 #include "sensor.h"
 #include "lorawan.h"
 #include "timekeeper.h"
-#include "corona.h"
 #include "boot.h"
 #include "libpax_helpers.h"
 #include "power.h"

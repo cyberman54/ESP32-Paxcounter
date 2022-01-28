@@ -90,11 +90,6 @@ function decodeUplink(input) {
             data = decode(input.bytes, [uint32, uint8], ['time', 'timestatus']);
         }
     }
-
-    if (input.fPort === 10) {
-        // ENS count      
-        data = decode(input.bytes, [uint16], ['ens']);
-    }
     
     data.bytes = input.bytes; // comment out if you do not want to include the original payload
     data.port = input.fPort; // comment out if you do not want to inlude the port

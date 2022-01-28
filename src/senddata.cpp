@@ -159,10 +159,6 @@ void sendData() {
         payload.reset();
         payload.addSensor(sensor_read(1));
         SendPayload(SENSOR1PORT);
-#if (COUNT_ENS)
-        if (cfg.countermode != 1)
-          cwa_clear();
-#endif
         break;
 #endif
 #if (HAS_SENSOR_2)

@@ -337,14 +337,8 @@ void setup() {
 // initialize sensors
 #if (HAS_SENSORS)
 #if (HAS_SENSOR_1)
-#if (COUNT_ENS)
-  ESP_LOGI(TAG, "init CWA-counter");
-  if (cwa_init())
-    strcat_P(features, " CWA");
-#else
   strcat_P(features, " SENS(1)");
   sensor_init();
-#endif
 #endif
 #if (HAS_SENSOR_2)
   strcat_P(features, " SENS(2)");

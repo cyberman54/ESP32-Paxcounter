@@ -216,15 +216,6 @@ Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time tele
 
 This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
-# Covid-19 Exposure Notification System beacon detection (currently NOT working with v3.0.x, use v2.4.x for this feature)
-
-Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
-
-	#define COUNT_ENS		1	// enable ENS monitoring function
-	#define BLECOUNTER		1	// enable bluetooth sniffing
-	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
-	#define HAS_SENSOR_1		1	// optional, in board's hal file: transmit ENS counter data to server
-
 # SD-card
 
 Data can be stored on an SD-card if one is availabe. Simply choose the file in src/hal and add the following lines to your hal-file:
@@ -384,7 +375,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Ports #10, #11, #12:** User sensor data
 
-	Format is specified by user in function `sensor_read(uint8_t sensor)`, see `src/sensor.cpp`. Port #10 is also used for ENS counter (2 bytes = 16 bit), if ENS is compiled AND ENS data transfer is enabled
+	Format is specified by user in function `sensor_read(uint8_t sensor)`, see `src/sensor.cpp`.
 
 # Remote control
 
@@ -504,7 +495,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
         0x02 = RESERVED_DATA
         0x04 = MEMS_DATA
         0x08 = GPS_DATA
-        0x10 = SENSOR_1_DATA (also ENS counter)
+        0x10 = SENSOR_1_DATA
         0x20 = SENSOR_2_DATA
         0x40 = SENSOR_3_DATA
         0x80 = BATT_DATA
@@ -525,10 +516,9 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	0 = disabled
 	1 = enabled [default]
     
-0x18 set ENS counter on/off
+0x18 reserved
 
-    0 = disabled [default]
-    1 = enabled
+    unused, does nothing
 
 0x19 set sleep cycle
 
@@ -622,4 +612,4 @@ Thanks to
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
-- [August Quint](https://github.com/AugustQu) for adding SD card data logger, SDS011 and ENS support
+- [August Quint](https://github.com/AugustQu) for adding SD card data logger and SDS011 support
