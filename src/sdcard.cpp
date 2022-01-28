@@ -40,7 +40,7 @@ bool sdcard_init() {
 }
 
 void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
-                     __attribute__((unused)) uint16_t noBleCWA) {
+                     __attribute__((unused)) uint16_t voltage) {
   static int counterWrites = 0;
   char tempBuffer[20 + 1];
   time_t t = time(NULL);
@@ -59,8 +59,8 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
   fileSDCard.print(tempBuffer);
   snprintf(tempBuffer, sizeof(tempBuffer), ",%d,%d", noWifi, noBle);
   fileSDCard.print(tempBuffer);
-#if (COUNT_ENS)
-  snprintf(tempBuffer, sizeof(tempBuffer), ",%d", noBleCWA);
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+  snprintf(tempBuffer, sizeof(tempBuffer), ",%d", voltage);
   fileSDCard.print(tempBuffer);
 #endif
 #if (HAS_SDS011)
@@ -105,8 +105,8 @@ void createFile(void) {
       if (fileSDCard) {
         ESP_LOGD(TAG, "SD: file opened: <%s>", bufferFilename);
         fileSDCard.print(SDCARD_FILE_HEADER);
-#if (COUNT_ENS)
-        fileSDCard.print(SDCARD_FILE_HEADER_CWA); // for Corona-data (CWA)
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+        fileSDCard.print(SDCARD_FILE_HEADER_VOLTAGE); // for battery level data
 #endif
 #if (HAS_SDS011)
         fileSDCard.print(SDCARD_FILE_HEADER_SDS011);

@@ -252,16 +252,17 @@ These cheap devices often handle SD-cards up to 32GB, not bigger ones. They can 
 
 The software included here writes data in a file named PAXCOUNT.xx, where xx can range from 00 to 99. The software starts with 00, checks to see if such a file already exists and if yes it will continue with the next number (up to 99 - in this case it will return no sd-card). So an existing file will not be overwritten.
 
-The data is written to the card and after 3 write-operations the data is flushed to the disk. So maybe the last 3 minutes of data get lost when you disconnect the PAXCOUNTER from power.
+The data is written to the card and after 3 write-operations the data is flushed to the disk. Thus, up to the last 3 records of data will get lost when the PAXCOUNTER looses power.
 
 And finally: this is the data written to the disk:
 
-	timestamp, wifi, ble
+	timestamp,wifi,ble[,voltage]
 	2022-01-28T19:36:35Z,17,48
 	2022-01-28T19:37:35Z,21,52
 	2022-01-28T19:38:35Z,14,49
 	
 Format of the data is CSV, timestamp is ISO8601, which can easily imported into LibreOffice, Excel, Influx, etc.
+Voltage is logged, if the device has a battery voltage sensor (to be configure in board hal file).
 
 If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
 

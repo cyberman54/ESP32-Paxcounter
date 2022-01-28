@@ -120,9 +120,9 @@ void sendData() {
 #endif
 #if (HAS_SDCARD)
         sdcardWriteData(libpax_macs_wifi, libpax_macs_ble
-#if (COUNT_ENS)
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
                         ,
-                        cwa_report()
+                        read_voltage()
 #endif
         );
 #endif // HAS_SDCARD
