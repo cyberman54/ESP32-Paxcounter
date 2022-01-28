@@ -15,7 +15,7 @@
 
 #define HAS_DISPLAY 1 // OLED-Display on board
 //#define MY_DISPLAY_FLIP  1 // uncomment this for rotated display
-#define HAS_LED       22  // ESP32 GPIO12 (pin22) On Board LED
+#define HAS_LED       22  // ESP32 GPIO12 (pin22) On Board LED (set to NOT_A_PIN to disable)
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_RGB_LED SmartLed rgb_led(LED_WS2812, 1, GPIO_NUM_13) // ESP32 GPIO13 (pin13) On Board Shield WS2812B RGB LED
 #define HAS_BUTTON    15  // ESP32 GPIO15 (pin15) Button is on the LoraNode32 shield
