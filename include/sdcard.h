@@ -55,10 +55,10 @@
 #endif
 
 #define SDCARD_FILE_NAME "/paxcount.%02d"
-#define SDCARD_FILE_HEADER "timestamp, wifi, ble"
+#define SDCARD_FILE_HEADER "timestamp,wifi,ble"
 
-#if (COUNT_ENS)
-#define SDCARD_FILE_HEADER_CWA ",cwa"
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+#define SDCARD_FILE_HEADER_VOLTAGE ",voltage"
 #endif
 
 bool sdcard_init(void);
