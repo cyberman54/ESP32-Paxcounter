@@ -65,18 +65,6 @@ void SendPayload(uint8_t port) {
   mqtt_enqueuedata(&SendBuffer);
 #endif
 
-// write data to sdcard, if present
-#if (HAS_SDCARD)
-  if (port == COUNTERPORT) {
-    sdcardWriteData(libpax_macs_wifi, libpax_macs_ble
-#if (COUNT_ENS)
-                    ,
-                    cwa_report()
-#endif
-    );
-  }
-#endif
-
 } // SendPayload
 
 // interrupt triggered function to prepare payload to send
@@ -130,7 +118,16 @@ void sendData() {
 #ifdef HAS_DISPLAY
         dp_plotCurve(libpax_macs_ble + libpax_macs_wifi, true);
 #endif
-        break;
+#if (HAS_SDCARD)
+        sdcardWriteData(libpax_macs_wifi, libpax_macs_ble
+#if (COUNT_ENS)
+                        ,
+                        cwa_report()
+#endif
+        );
+#endif // HAS_SDCARD
+
+        break; // case COUNTDATA
 #endif
 
 #if (HAS_BME)

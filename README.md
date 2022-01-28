@@ -256,12 +256,12 @@ The data is written to the card and after 3 write-operations the data is flushed
 
 And finally: this is the data written to the disk:
 
-    date, time, wifi, bluet
-    00.00.1970,00:01:09,2,0
-    00.00.1970,00:02:09,1,0
-    00.00.1970,00:03:09,2,0
-
-Format of the data is CSV, which can easily imported into LibreOffice, Excel, .....
+	timestamp, wifi, ble
+	2022-01-28T19:36:35Z,17,48
+	2022-01-28T19:37:35Z,21,52
+	2022-01-28T19:38:35Z,14,49
+	
+Format of the data is CSV, timestamp is ISO8601, which can easily imported into LibreOffice, Excel, Influx, etc.
 
 If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
 
