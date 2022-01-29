@@ -126,6 +126,11 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   sds011_sleep();
 #endif
 
+// flush & close sd card, if we have
+#if (HAS_SDCARD)
+  sdcard_close();
+#endif
+
   // wait a while (max 100 sec) to clear send queues
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
   for (i = 100; i > 0; i--) {

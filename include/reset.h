@@ -8,6 +8,7 @@
 #include "lorawan.h"
 #include "display.h"
 #include "power.h"
+#include "sdcard.h"
 
 void reset_rtc_vars(void);
 void do_reset(bool warmstart);

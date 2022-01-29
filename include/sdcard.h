@@ -61,7 +61,8 @@
 #define SDCARD_FILE_HEADER_VOLTAGE ",voltage"
 #endif
 
-bool sdcard_init(void);
+bool sdcard_init(bool create = true);
+bool sdcard_close(void);
 void sdcardWriteData(uint16_t, uint16_t, uint16_t = 0);
 
 #endif // _SDCARD_H
