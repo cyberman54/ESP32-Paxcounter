@@ -18,8 +18,10 @@
 // enable only if you want to store a local paxcount table on the device
 #define HAS_SDCARD  2      // this board has a SDMMC card-reader/writer
 
-#define HAS_DISPLAY 1
-#define HAS_LED (25) // green on board LED (set to NOT_A_PIN to disable)
+//#define HAS_DISPLAY 1
+//#define HAS_LED (25) // green on board LED
+#define HAS_LED NOT_A_PIN
+
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
