@@ -84,13 +84,6 @@ function decodeUplink(input) {
         }
     }
 
-    if (input.fPort === 10) {
-        var i = 0;
-        if (input.bytes.length >= 2) {
-            data.ens = (input.bytes[i++] << 8) | input.bytes[i++];
-        }
-    }
-
     if (data.hdop) {
         data.hdop /= 100;
         data.latitude /= 1000000;

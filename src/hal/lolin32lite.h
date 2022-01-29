@@ -10,7 +10,7 @@
 // Hardware related definitions for lolin32lite (without LoRa shield)
 
 #define HAS_LED LED_BUILTIN // on board LED on GPIO5
-#define LED_ACTIVE_LOW 1    // Onboard LED is active when pin is LOW
+#define LED_ACTIVE_LOW 1    // Onboard LED is active when pin is LOW (set to NOT_A_PIN to disable)
 
 #define MY_SDA SDA
 #define MY_SCL SCL

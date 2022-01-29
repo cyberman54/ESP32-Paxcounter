@@ -13,7 +13,13 @@ static void createFile(void);
 
 File fileSDCard;
 
-bool sdcard_init() {
+bool sdcard_close(void) {
+  ESP_LOGD(TAG, "unmounting SD-card");
+  fileSDCard.flush();
+  fileSDCard.end();
+}
+
+bool sdcard_init(bool create) {
   ESP_LOGI(TAG, "looking for SD-card...");
 
   // for usage of SD drivers on ESP32 platform see

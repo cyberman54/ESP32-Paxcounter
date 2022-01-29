@@ -57,7 +57,6 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->wifiant = 0;            // 0=internal, 1=external (for LoPy/LoPy4)
   myconfig->rgblum = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
   myconfig->payloadmask = PAYLOADMASK; // payloads as defined in default
-  myconfig->enscount = COUNT_ENS;      // 0=disabled, 1=enabled
 
 #ifdef HAS_BME680
   // initial BSEC state for BME680 sensor
