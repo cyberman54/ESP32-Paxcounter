@@ -16,7 +16,8 @@ File fileSDCard;
 bool sdcard_close(void) {
   ESP_LOGD(TAG, "unmounting SD-card");
   fileSDCard.flush();
-  fileSDCard.end();
+  fileSDCard.close();
+return true;
 }
 
 bool sdcard_init(bool create) {
