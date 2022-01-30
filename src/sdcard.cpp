@@ -17,15 +17,11 @@ File fileSDCard;
 
 bool sdcard_init(bool create) {
 
-  uint8_t cardType;
-  uint64_t cardSize;
-
-  ESP_LOGI(TAG, "looking for SD-card...");
-
   // for usage of SD drivers on ESP32 platform see
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdspi_host.html
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
 
+  ESP_LOGI(TAG, "looking for SD-card...");
 #if HAS_SDCARD == 1 // use SD SPI host driver
   useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
 #elif HAS_SDCARD == 2 // use SD MMC host driver
@@ -39,37 +35,12 @@ bool sdcard_init(bool create) {
 
   if (useSDCard) {
     ESP_LOGI(TAG, "SD-card found");
-#if HAS_SDCARD == 1
-    cardType = SD.cardType();
-    cardSize = SD.cardSize() / (1024 * 1024);
-#elif HAS_SDCARD == 2
-    cardType = SD_MMC.cardType();
-    cardSize = SD_MMC.cardSize() / (1024 * 1024);
-#endif
+    openFile();
+    return true;
   } else {
     ESP_LOGI(TAG, "SD-card not found");
     return false;
   }
-
-  if (cardType == CARD_NONE) {
-    ESP_LOGI(TAG, "No SD card attached");
-    return false;
-  }
-
-  if (cardType == CARD_MMC) {
-    ESP_LOGI(TAG, "SD Card type: MMC");
-  } else if (cardType == CARD_SD) {
-    ESP_LOGI(TAG, "SD Card type: SDSC");
-  } else if (cardType == CARD_SDHC) {
-    ESP_LOGI(TAG, "SD Card type: SDHC");
-  } else {
-    ESP_LOGI(TAG, "SD Card type: UNKNOWN");
-  }
-  ESP_LOGI(TAG, "SD Card Size: %lluMB", cardSize);
-
-  openFile();
-
-  return true;
 }
 
 void sdcard_close(void) {
