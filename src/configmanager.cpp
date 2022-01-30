@@ -6,12 +6,6 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// default settings for device data to be sent
-#define PAYLOADMASK                                                            \
-  ((GPS_DATA | MEMS_DATA | COUNT_DATA | SENSOR1_DATA | SENSOR2_DATA |          \
-    SENSOR3_DATA) &                                                            \
-   (~BATT_DATA) & (~RESERVED_DATA))
-
 // namespace for device runtime preferences
 #define DEVCONFIG "paxcntcfg"
 
