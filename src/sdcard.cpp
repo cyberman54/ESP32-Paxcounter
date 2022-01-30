@@ -10,62 +10,37 @@ static const char TAG[] = __FILE__;
 
 #ifdef HAS_SDCARD
 
-static bool useSDCard = false;
+static bool useSDCard;
 static void openFile(void);
 
 File fileSDCard;
 
 bool sdcard_init(bool create) {
 
-  uint8_t cardType;
-  uint64_t cardSize;
-
-  ESP_LOGI(TAG, "looking for SD-card...");
-
   // for usage of SD drivers on ESP32 platform see
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdspi_host.html
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
 
+  ESP_LOGI(TAG, "looking for SD-card...");
 #if HAS_SDCARD == 1 // use SD SPI host driver
-  useSDCard = MYSD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
+  useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
 #elif HAS_SDCARD == 2 // use SD MMC host driver
   // enable internal pullups of sd-data lines
   gpio_set_pull_mode(gpio_num_t(SDCARD_DATA0), GPIO_PULLUP_ONLY);
   gpio_set_pull_mode(gpio_num_t(SDCARD_DATA1), GPIO_PULLUP_ONLY);
   gpio_set_pull_mode(gpio_num_t(SDCARD_DATA2), GPIO_PULLUP_ONLY);
   gpio_set_pull_mode(gpio_num_t(SDCARD_DATA3), GPIO_PULLUP_ONLY);
-  useSDCard = MYSD.begin();
+  useSDCard = SD_MMC.begin();
 #endif
 
   if (useSDCard) {
     ESP_LOGI(TAG, "SD-card found");
-    cardType = MYSD.cardType();
-    cardSize = MYSD.cardSize() / (1024 * 1024);
+    openFile();
+    return true;
   } else {
     ESP_LOGI(TAG, "SD-card not found");
     return false;
   }
-
-  if (cardType == CARD_NONE) {
-    ESP_LOGI(TAG, "No SD card attached");
-    return false;
-  }
-
-  if (cardType == CARD_MMC) {
-    ESP_LOGI(TAG, "SD Card type: MMC");
-  } else if (cardType == CARD_SD) {
-    ESP_LOGI(TAG, "SD Card type: SDSC");
-  } else if (cardType == CARD_SDHC) {
-    ESP_LOGI(TAG, "SD Card type: SDHC");
-  } else {
-    ESP_LOGI(TAG, "SD Card type: UNKNOWN");
-  }
-
-  ESP_LOGI(TAG, "SD Card Size: %lluMB\n", cardSize);
-
-  openFile();
-
-  return true;
 }
 
 void sdcard_close(void) {
@@ -121,35 +96,50 @@ void openFile(void) {
   snprintf(bufferFilename, sizeof(bufferFilename), "/%s.csv", SDCARD_FILE_NAME);
   ESP_LOGI(TAG, "SD: looking for file <%s>", bufferFilename);
 
-  /*
-    if (MYSD.exists(bufferFilename)) {
-      if (MYSD.open(bufferFilename, FILE_APPEND))
-        useSDCard = true;
-    } else {
-      ESP_LOGI(TAG, "SD: file does not exist, creating it");
-      if (MYSD.open(bufferFilename, FILE_WRITE))
-        useSDCard = true;
-    }
-    */
+#if HAS_SDCARD == 1
+  bool fileExists = SD.exists(bufferFilename);
+#elif HAS_SDCARD == 2
+  bool fileExists = SD_MMC.exists(bufferFilename);
+#endif
 
-  if (!MYSD.exists(bufferFilename))
-    ESP_LOGI(TAG, "SD: file does not exist, creating it");
+  // file not exists, create it
+  if (!fileExists) {
+    ESP_LOGD(TAG, "SD: file not found, creating...");
 
-  if (MYSD.open(bufferFilename, FILE_WRITE))
-    useSDCard = true;
+#if HAS_SDCARD == 1
+    fileSDCard = SD.open(bufferFilename, FILE_WRITE);
+#elif HAS_SDCARD == 2
+    fileSDCard = SD_MMC.open(bufferFilename, FILE_WRITE);
+#endif
 
-  if (useSDCard) {
-    ESP_LOGI(TAG, "SD: file opened: <%s>", bufferFilename);
-    fileSDCard.print(SDCARD_FILE_HEADER);
+    if (fileSDCard) {
+      ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
+      fileSDCard.print(SDCARD_FILE_HEADER);
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
-    fileSDCard.print(SDCARD_FILE_HEADER_VOLTAGE); // for battery level data
+      fileSDCard.print(SDCARD_FILE_HEADER_VOLTAGE); // for battery level data
 #endif
 #if (HAS_SDS011)
-    fileSDCard.print(SDCARD_FILE_HEADER_SDS011);
+      fileSDCard.print(SDCARD_FILE_HEADER_SDS011);
 #endif
-    fileSDCard.println();
-  } else {
-    ESP_LOGE(TAG, "SD: file not opened error");
+      fileSDCard.println();
+      useSDCard = true;
+    }
+  }
+
+  // file exists, append data
+  else {
+    ESP_LOGD(TAG, "SD: file found, opening...");
+
+#if HAS_SDCARD == 1
+    fileSDCard = SD.open(bufferFilename, FILE_APPEND);
+#elif HAS_SDCARD == 2
+    fileSDCard = SD_MMC.open(bufferFilename, FILE_APPEND);
+#endif
+
+    if (fileSDCard) {
+      ESP_LOGD(TAG, "SD: name opened: <%s>", bufferFilename);
+      useSDCard = true;
+    }
   }
 
   return;
