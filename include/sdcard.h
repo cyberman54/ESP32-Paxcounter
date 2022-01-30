@@ -1,15 +1,17 @@
 #ifndef _SDCARD_H
 #define _SDCARD_H
 
-#include <globals.h>
+#include "globals.h"
 #include <stdio.h>
 #include <SPI.h>
 
 #if (HAS_SDCARD)
 #if HAS_SDCARD == 1
 #include <mySD.h>
+#define MYSD SD
 #elif HAS_SDCARD == 2
 #include <SD_MMC.h>
+#define MYSD SD_MMC
 #else
 #error HAS_SDCARD unknown card reader value, must be either 1 or 2
 #endif
@@ -54,7 +56,7 @@
 #define SDCARD_DATA3 13
 #endif
 
-#define SDCARD_FILE_NAME "/paxcount.%02d"
+#define SDCARD_FILE_NAME clientId
 #define SDCARD_FILE_HEADER "timestamp,wifi,ble"
 
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
@@ -62,7 +64,7 @@
 #endif
 
 bool sdcard_init(bool create = true);
-bool sdcard_close(void);
+void sdcard_close(void);
 void sdcardWriteData(uint16_t, uint16_t, uint16_t = 0);
 
 #endif // _SDCARD_H
