@@ -15,6 +15,10 @@ static void openFile(void);
 
 File fileSDCard;
 
+#if HAS_SDCARD == 1
+SPIClass sd_spi;
+#endif
+
 bool sdcard_init(bool create) {
 
   // for usage of SD drivers on ESP32 platform see
@@ -23,7 +27,10 @@ bool sdcard_init(bool create) {
 
   ESP_LOGI(TAG, "looking for SD-card...");
 #if HAS_SDCARD == 1 // use SD SPI host driver
-  useSDCard = SD.begin(SDCARD_CS, SDCARD_MOSI, SDCARD_MISO, SDCARD_SCLK);
+  digitalWrite(SDCARD_CS, HIGH);
+  sd_spi.begin(SDCARD_SCLK, SDCARD_MISO, SDCARD_MOSI, SDCARD_CS);
+  digitalWrite(SDCARD_CS, LOW);
+  useSDCard = SD.begin(SDCARD_CS, sd_spi);
 #elif HAS_SDCARD == 2 // use SD MMC host driver
   // enable internal pullups of sd-data lines
   gpio_set_pull_mode(gpio_num_t(SDCARD_DATA0), GPIO_PULLUP_ONLY);
