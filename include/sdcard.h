@@ -8,10 +8,8 @@
 #if (HAS_SDCARD)
 #if HAS_SDCARD == 1
 #include <mySD.h>
-#define MYSD SD
 #elif HAS_SDCARD == 2
 #include <SD_MMC.h>
-#define MYSD SD_MMC
 #else
 #error HAS_SDCARD unknown card reader value, must be either 1 or 2
 #endif
