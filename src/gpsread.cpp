@@ -27,17 +27,176 @@ static uint16_t nmea_txDelay_ms =
 static uint16_t nmea_txDelay_ms = 0;
 #endif
 
+// helper functions to send UBX commands to ublox gps chip
+
+// Send the packet specified to the receiver.
+void sendPacket(byte *packet, byte len) {
+
+  uint8_t CK_A = 0;
+  uint8_t CK_B = 0;
+
+  for (int i = 0; i < len; i++) {
+#ifdef GPS_SERIAL
+    GPS_Serial.write(packet[i]);
+#elif defined GPS_I2C
+    Wire.write(packet[i]);
+#endif
+  }
+
+  // calculate Fletcher checksum
+  for (int i = 2; i < len; i++) {
+    CK_A += packet[i];
+    CK_B += CK_A;
+  }
+
+// send checksum
+#ifdef GPS_SERIAL
+  GPS_Serial.write(CK_A);
+  GPS_Serial.write(CK_B);
+#elif defined GPS_I2C
+  Wire.write(CK_A);
+  Wire.write(CK_B);
+#endif
+}
+
+// Send a packet to the receiver to restore default configuration.
+void restoreDefaults() {
+  // CFG-CFG packet.
+  byte packet[] = {
+      0xB5,       // sync char 1
+      0x62,       // sync char 2
+      0x06,       // class
+      0x09,       // id
+      0x0D,       // length
+      0x00,       // length
+      0b00011111, // clearmask
+      0b00000110, // clearmask
+      0x00,       // clearmask
+      0x00,       // clearmask
+      0x00,       // savemask
+      0x00,       // savemask
+      0x00,       // savemask
+      0x00,       // savemask
+      0b00011111, // loadmask
+      0b00000110, // loadmask
+      0x00,       // loadmask
+      0x00,       // loadmask
+      0b00010001  // devicemask
+  };
+
+  sendPacket(packet, sizeof(packet));
+}
+
+// Send a set of packets to the receiver to disable NMEA messages.
+void disableNmea() {
+
+  // for tinygps++ we need only $GPGGA and $GPRMC
+  // for time we use $GPZDA
+  // we disable all others
+
+  // Array of two bytes for CFG-MSG packets payload.
+  byte messages[][2] = {{0xF0, 0x01}, {0xF0, 0x02}, {0xF0, 0x03}, {0xF0, 0x05},
+                        {0xF0, 0x06}, {0xF0, 0x07}, {0xF0, 0x09}, {0xF0, 0x0A},
+                        {0xF0, 0x0E}, {0xF1, 0x00}, {0xF1, 0x03}, {0xF1, 0x04},
+                        {0xF1, 0x05}, {0xF1, 0x06}};
+
+  // CFG-MSG packet buffer.
+  byte packet[] = {
+      0xB5, // sync char 1
+      0x62, // sync char 2
+      0x06, // class
+      0x01, // id
+      0x03, // length
+      0x00, // length
+      0x00, // payload (first byte from messages array element)
+      0x00, // payload (second byte from messages array element)
+      0x00  // payload (zero to disable message)
+  };
+
+  byte packetSize = sizeof(packet);
+
+  // Offset to the place where payload starts.
+  byte payloadOffset = 6;
+
+  // Iterate over the messages array.
+  for (byte i = 0; i < sizeof(messages) / sizeof(*messages); i++) {
+    // Copy two bytes of payload to the packet buffer.
+    for (byte j = 0; j < sizeof(*messages); j++) {
+      packet[payloadOffset + j] = messages[i][j];
+    }
+    sendPacket(packet, packetSize);
+  }
+}
+
+// Send a packet to the receiver to change baudrate to 115200.
+void changeBaudrate(uint32_t baudRate) {
+  // CFG-PRT packet.
+  byte packet[] = {
+      0xB5,                   // sync char 1
+      0x62,                   // sync char 2
+      0x06,                   // class
+      0x00,                   // id
+      0x14,                   // length
+      0x00,                   // length
+      0x01,                   // portID (UART 1)
+      0x00,                   // reserved
+      0x00,                   // reserved
+      0x00,                   // reserved
+      0b11010000,             // UART mode: 8bit
+      0b00001000,             // UART mode: No Parity, 1 Stopbit
+      0x00,                   // UART mode
+      0x00,                   // UART mode
+      (byte)baudRate,         // baudrate (4 bytes)
+      (byte)(baudRate >> 4),  // .
+      (byte)(baudRate >> 8),  // .
+      (byte)(baudRate >> 12), // .
+      0b00000011,             // input protocols: NMEA + UBX
+      0b00000000,             // input protocols
+      0b00000010,             // output protocols: NMEA
+      0x00000000,             // output protocols
+      0x00,                   // reserved
+      0x00,                   // reserved
+      0x00,                   // reserved
+      0x00                    // reserved
+  };
+
+  sendPacket(packet, sizeof(packet));
+}
+
+// Send a packet to the receiver to change frequency to 100 ms.
+void changeFrequency() {
+  // CFG-RATE packet.
+  byte packet[] = {
+      0xB5, // sync char 1
+      0x62, // sync char 2
+      0x06, // class
+      0x08, // id
+      0x06, // length
+      0x00, // length
+      0x64, // Measurement rate 100ms
+      0x00, // Measurement rate
+      0x01, // Measurement cycles
+      0x00, // Measurement cycles
+      0x01, // Alignment to reference time: GPS time
+      0x00  // payload
+  };
+
+  sendPacket(packet, sizeof(packet));
+}
+
 // initialize and configure GPS
 int gps_init(void) {
 
-  if (!gps_config()) {
-    ESP_LOGE(TAG, "GPS chip initializiation error");
-    return 0;
-  }
+  restoreDefaults();
 
 #ifdef GPS_SERIAL
   ESP_LOGI(TAG, "Opening serial GPS");
   GPS_Serial.begin(GPS_SERIAL);
+  changeBaudrate(GPS_BAUDRATE);
+  delay(100);
+  GPS_Serial.flush();
+  GPS_Serial.updateBaudRate(GPS_BAUDRATE);
+
 #elif defined GPS_I2C
   ESP_LOGI(TAG, "Opening I2C GPS");
   Wire.begin(GPS_I2C, 400000); // I2C connect to GPS device with 400 KHz
@@ -50,23 +209,13 @@ int gps_init(void) {
     ESP_LOGI(TAG, "Quectel L76 GPS chip found");
 #endif
 
+  disableNmea();
+  changeFrequency();
+  // enableNavTimeUTC();
+
   return 1;
+
 } // gps_init()
-
-// detect gps chipset type and configure it with device specific settings
-int gps_config() {
-  int rslt = 1; // success
-#if defined GPS_SERIAL
-
-  /* insert user configuration here, if needed */
-
-#elif defined GPS_I2C
-
-  /* insert user configuration here, if needed */
-
-#endif
-  return rslt;
-}
 
 // store current GPS location data in struct
 void gps_storelocation(gpsStatus_t *gps_store) {
