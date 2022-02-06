@@ -25,6 +25,18 @@ static uint16_t nmea_txDelay_ms =
 
 // helper functions to send UBX commands to ublox gps chip
 
+/*
+// Print the UBX packet for debugging
+void printPacket(byte *packet, byte len) {
+  char temp[3];
+
+  for (byte i = 0; i < len; i++) {
+    sprintf(temp, "%.2X", packet[i]);
+    ESP_LOGD(TAG, "%s", temp);
+  }
+}
+*/
+
 // Send the packet specified to the receiver.
 void sendPacket(byte *packet, byte len) {
 
@@ -75,8 +87,8 @@ void restoreDefaults() {
 void disableNmea() {
 
   // for tinygps++ we need only $GPGGA and $GPRMC
-  // for time we use $GPZDA
-  // we disable all others
+  // for getting time we use $GPZDA
+  // we disable all other NMEA messages
 
   // Array of two bytes for CFG-MSG packets payload.
   byte messages[][2] = {{0xF0, 0x01}, {0xF0, 0x02}, {0xF0, 0x03}, {0xF0, 0x05},
@@ -124,20 +136,20 @@ void changeBaudrate(uint32_t baudRate) {
       0x00,                   // length
       0x01,                   // portID (UART 1)
       0x00,                   // reserved
-      0x00,                   // reserved
-      0x00,                   // reserved
+      0x00,                   // txReady
+      0x00,                   // .
       0b11010000,             // UART mode: 8bit
       0b00001000,             // UART mode: No Parity, 1 Stopbit
-      0x00,                   // UART mode
-      0x00,                   // UART mode
+      0x00,                   // .
+      0x00,                   // .
       (byte)baudRate,         // baudrate (4 bytes)
-      (byte)(baudRate >> 4),  // .
       (byte)(baudRate >> 8),  // .
-      (byte)(baudRate >> 12), // .
+      (byte)(baudRate >> 16), // .
+      (byte)(baudRate >> 24), // .
       0b00000011,             // input protocols: NMEA + UBX
-      0b00000000,             // input protocols
+      0b00000000,             // .
       0b00000010,             // output protocols: NMEA
-      0x00000000,             // output protocols
+      0x00000000,             // .
       0x00,                   // reserved
       0x00,                   // reserved
       0x00,                   // reserved
@@ -161,7 +173,7 @@ void changeFrequency() {
       0x00, // Measurement rate
       0x01, // Measurement cycles
       0x00, // Measurement cycles
-      0x01, // Alignment to reference time: GPS time
+      0x00, // Alignment to reference time: UTC time
       0x00  // payload
   };
 
@@ -171,10 +183,10 @@ void changeFrequency() {
 // initialize and configure GPS
 int gps_init(void) {
 
-  restoreDefaults();
-
   ESP_LOGI(TAG, "Opening serial GPS");
   GPS_Serial.begin(GPS_SERIAL);
+  restoreDefaults();
+
   changeBaudrate(GPS_BAUDRATE);
   delay(100);
   GPS_Serial.flush();
