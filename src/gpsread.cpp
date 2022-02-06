@@ -19,13 +19,9 @@ TinyGPSCustom gpsyear(gps, "GPZDA", 4);  // field 4 = year (4-digit)
 static const String ZDA_Request = "$EIGPQ,ZDA*39\r\n";
 TaskHandle_t GpsTask;
 
-#ifdef GPS_SERIAL
 HardwareSerial GPS_Serial(1); // use UART #1
 static uint16_t nmea_txDelay_ms =
     (tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL) / portTICK_PERIOD_MS);
-#else
-static uint16_t nmea_txDelay_ms = 0;
-#endif
 
 // helper functions to send UBX commands to ublox gps chip
 
@@ -35,28 +31,16 @@ void sendPacket(byte *packet, byte len) {
   uint8_t CK_A = 0;
   uint8_t CK_B = 0;
 
-  for (int i = 0; i < len; i++) {
-#ifdef GPS_SERIAL
+  for (int i = 0; i < len; i++)
     GPS_Serial.write(packet[i]);
-#elif defined GPS_I2C
-    Wire.write(packet[i]);
-#endif
-  }
 
-  // calculate Fletcher checksum
+  // calculate and send Fletcher checksum
   for (int i = 2; i < len; i++) {
     CK_A += packet[i];
     CK_B += CK_A;
   }
-
-// send checksum
-#ifdef GPS_SERIAL
   GPS_Serial.write(CK_A);
   GPS_Serial.write(CK_B);
-#elif defined GPS_I2C
-  Wire.write(CK_A);
-  Wire.write(CK_B);
-#endif
 }
 
 // Send a packet to the receiver to restore default configuration.
@@ -189,25 +173,12 @@ int gps_init(void) {
 
   restoreDefaults();
 
-#ifdef GPS_SERIAL
   ESP_LOGI(TAG, "Opening serial GPS");
   GPS_Serial.begin(GPS_SERIAL);
   changeBaudrate(GPS_BAUDRATE);
   delay(100);
   GPS_Serial.flush();
   GPS_Serial.updateBaudRate(GPS_BAUDRATE);
-
-#elif defined GPS_I2C
-  ESP_LOGI(TAG, "Opening I2C GPS");
-  Wire.begin(GPS_I2C, 400000); // I2C connect to GPS device with 400 KHz
-  Wire.beginTransmission(GPS_ADDR);
-  Wire.write(0x00); // dummy write
-  if (Wire.endTransmission()) {
-    ESP_LOGE(TAG, "Quectel L76 GPS chip not found");
-    return 0;
-  } else
-    ESP_LOGI(TAG, "Quectel L76 GPS chip found");
-#endif
 
   disableNmea();
   changeFrequency();
@@ -242,13 +213,9 @@ bool gps_hasfix() {
 time_t get_gpstime(uint16_t *msec) {
 
   // poll NMEA ZDA sentence
-#ifdef GPS_SERIAL
   GPS_Serial.print(ZDA_Request);
   // wait for gps NMEA answer
   // vTaskDelay(tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL));
-#elif defined GPS_I2C
-  Wire.print(ZDA_Request);
-#endif
 
   // did we get a current date & time?
   if (gpstime.isValid()) {
@@ -291,17 +258,10 @@ void gps_loop(void *pvParameters) {
   while (1) {
 
     while (cfg.payloadmask & GPS_DATA) {
-#ifdef GPS_SERIAL
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available())
         if (gps.encode(GPS_Serial.read()))
           break; // NMEA sentence complete
-#elif defined GPS_I2C
-      Wire.requestFrom(GPS_ADDR, 32); // caution: this is a blocking call
-      while (Wire.available())
-        if (gps.encode(Wire.read()))
-          break; // NMEA sentence complete
-#endif
 
       // (only) while device time is not set or unsynched, and we have a valid
       // GPS time, we call calibrateTime to poll time immeditately from GPS
