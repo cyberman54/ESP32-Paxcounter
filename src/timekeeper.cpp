@@ -19,7 +19,9 @@ static const char TAG[] = __FILE__;
 // G = GPS / R = RTC / L = LORA / * = no sync / ? = never synced
 const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 
-DRAM_ATTR bool volatile TimePulseTick = false;
+portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+
+DRAM_ATTR bool TimePulseTick = false;
 timesource_t timeSource = _unsynced;
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
@@ -211,7 +213,9 @@ void IRAM_ATTR CLOCKIRQ(void) {
 // flip time pulse ticker, if needed
 #ifdef HAS_DISPLAY
 #if (defined GPS_INT || defined RTC_INT)
-  TimePulseTick = !TimePulseTick; // flip pulse ticker
+  portENTER_CRITICAL(&mux);
+  TimePulseTick = !TimePulseTick; // flip global variable pulse ticker
+  portEXIT_CRITICAL(&mux);
 #endif
 #endif
 

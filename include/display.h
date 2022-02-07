@@ -5,6 +5,7 @@
 #include "cyclic.h"
 #include "qrcode.h"
 #include "power.h"
+#include "timekeeper.h"
 
 #if (HAS_DISPLAY) == 1
 #include <OneBitDisplay.h>

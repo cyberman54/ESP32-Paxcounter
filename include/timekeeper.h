@@ -20,8 +20,9 @@ extern const char timeSetSymbols[];
 extern Ticker timesyncer;
 extern timesource_t timeSource;
 extern TaskHandle_t ClockTask;
-extern bool volatile TimePulseTick; // 1sec pps flag set by GPS or RTC
+extern DRAM_ATTR bool TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern hw_timer_t *ppsIRQ;
+extern portMUX_TYPE mux;
 
 void IRAM_ATTR CLOCKIRQ(void);
 void clock_init(void);

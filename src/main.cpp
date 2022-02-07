@@ -48,36 +48,30 @@ Low priority numbers denote low priority tasks.
 -------------------------------------------------------------------------------
 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
 1 ppsIRQ -> pps clock irq -> 1sec
+2 (unused)
 3	MatrixDisplayIRQ -> matrix mux cycle -> 0,5ms (MATRIX_DISPLAY_SCAN_US)
-
-
-// Interrupt routines
--------------------------------------------------------------------------------
-
-irqHandlerTask (Core 1), see irqhandler.cpp
-
-fired by hardware
-DisplayIRQ      -> esp32 timer 0
-CLOCKIRQ        -> esp32 timer 1 or external GPIO (RTC_INT or GPS_INT)
-MatrixDisplayIRQ-> esp32 timer 3
-ButtonIRQ       -> external GPIO
-PMUIRQ          -> PMU chip GPIO
-
-fired by software
-TIMESYNC_IRQ    -> setTimeSyncIRQ() -> Ticker.h
-CYCLIC_IRQ      -> setCyclicIRQ() -> Ticker.h
-SENDCYCLE_IRQ   -> setSendIRQ() -> xTimer
-BME_IRQ         -> setBMEIRQ() -> Ticker.h
-
-ClockTask (Core 1), see timekeeper.cpp
-
-fired by hardware
-CLOCKIRQ        -> esp32 timer 1
 
 
 // External RTC timer (if present)
 -------------------------------------------------------------------------------
 triggers pps 1 sec impulse
+
+
+// Interrupt routines
+-------------------------------------------------------------------------------
+
+ISRs fired by CPU or GPIO:
+DisplayIRQ      <- esp32 timer 0
+CLOCKIRQ        <- esp32 timer 1 or GPIO (RTC_INT or GPS_INT)
+MatrixDisplayIRQ<- esp32 timer 3
+ButtonIRQ       <- GPIO <- Button
+PMUIRQ          <- GPIO <- PMU chip
+
+Application IRQs fired by software:
+TIMESYNC_IRQ    <- setTimeSyncIRQ() <- Ticker.h
+CYCLIC_IRQ      <- setCyclicIRQ() <- Ticker.h
+SENDCYCLE_IRQ   <- setSendIRQ() <- xTimer
+BME_IRQ         <- setBMEIRQ() <- Ticker.h
 
 */
 
