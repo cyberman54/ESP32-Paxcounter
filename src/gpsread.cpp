@@ -289,7 +289,7 @@ void gps_loop(void *pvParameters) {
       delay(2);
     } // inner while loop
 
-    delay(1000);
+    delay(2);
   } // outer while loop
 
 } // gps_loop()
