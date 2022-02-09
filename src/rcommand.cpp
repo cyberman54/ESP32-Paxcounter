@@ -484,7 +484,7 @@ void rcmd_process(void *pvParameters) {
     rcmd_execute(RcmdBuffer.cmd, RcmdBuffer.cmdLen);
   }
 
-  delay(2); // yield to CPU
+  delay(5); // yield to CPU
 } // rcmd_process()
 
 // enqueue remote command

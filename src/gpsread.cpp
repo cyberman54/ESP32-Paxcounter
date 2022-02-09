@@ -273,23 +273,17 @@ void gps_loop(void *pvParameters) {
       // feed GPS decoder with serial NMEA data from GPS device
       while (GPS_Serial.available())
         if (gps.encode(GPS_Serial.read()))
-          break; // NMEA sentence complete
-
-      // (only) while device time is not set or unsynched, and we have a valid
-      // GPS time, we call calibrateTime to poll time immeditately from GPS
-      if ((timeSource == _unsynced || timeSource == _set) &&
-          (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000))
-        calibrateTime();
+          break; // leave encode loop after each NMEA complete sentence
 
       // show NMEA data, very noisy,  useful only for debugging GPS
       // ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix:
       //                  %u", gps.passedChecksum(), gps.failedChecksum(), gps
       //                       .sentencesWithFix());
 
-      delay(2);
+      delay(5);
     } // inner while loop
 
-    delay(2);
+    delay(1000);
   } // outer while loop
 
 } // gps_loop()

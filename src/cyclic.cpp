@@ -34,6 +34,7 @@ void doHousekeeping() {
   if (rcmdTask != NULL)
     ESP_LOGD(TAG, "Rcommand interpreter %d bytes left | Taskstate = %d",
              uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
+
 #if (HAS_LORA)
   if (lmicTask != NULL)
     ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
@@ -43,11 +44,18 @@ void doHousekeeping() {
              uxTaskGetStackHighWaterMark(lorasendTask),
              eTaskGetState(lorasendTask));
 #endif
+
 #if (HAS_GPS)
   if (GpsTask != NULL)
     ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
              uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
+  // (only) while device time is not set or unsynched, and we have a valid
+  // GPS time, we call calibrateTime to poll time immeditately from GPS
+  if ((timeSource == _unsynced || timeSource == _set) &&
+      (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000))
+    calibrateTime();
 #endif
+
 #ifdef HAS_SPI
   if (spiTask != NULL)
     ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",

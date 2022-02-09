@@ -29,16 +29,16 @@ Task          	Core  Prio  Purpose
 -------------------------------------------------------------------------------
 ledloop*      	0     1    blinks LEDs
 spiloop#      	0     2    reads/writes data on spi interface
-lmictask*     	1     8    MCCI LMiC LORAWAN stack
+lmictask*     	1     1    MCCI LMiC LORAWAN stack
 clockloop#    	1     6    generates realtime telegrams for external clock
 mqttloop#     	1     5    reads/writes data on ETH interface
 timesync_proc#	1     7    processes realtime time sync requests
-irqhandler#   	1     4    cyclic tasks (i.e. displayrefresh) triggered by
-gpsloop*      	1     3    reads data from GPS via serial or i2c
+irqhandler#   	1     4    application IRQ (i.e. displayrefresh)
+gpsloop*      	1     1    reads data from GPS via serial or i2c
 lorasendtask# 	1     2    feeds data from lora sendqueue to lmcic
 rmcd_process# 	1     1    Remote command interpreter loop
 
-* spinning task
+* spinning task, always ready
 # blocked/waiting task
 
 Low priority numbers denote low priority tasks.
@@ -322,7 +322,7 @@ void setup() {
                             "gpsloop", // name of task
                             8192,      // stack size of task
                             (void *)1, // parameter of the task
-                            3,         // priority of the task
+                            1,         // priority of the task
                             &GpsTask,  // task handle
                             1);        // CPU core
   }
