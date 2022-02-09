@@ -22,6 +22,10 @@ void doHousekeeping() {
   if ((RTC_runmode == RUNMODE_UPDATE) || (RTC_runmode == RUNMODE_MAINTENANCE))
     do_reset(true); // warmstart
 
+  // try to get time if we don't yet have a recent timesource
+  if (timeSource == _unsynced || timeSource == _set)
+    calibrateTime();
+
   // print heap and task storage information
   ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
            ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
@@ -49,11 +53,6 @@ void doHousekeeping() {
   if (GpsTask != NULL)
     ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
              uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
-  // (only) while device time is not set or unsynched, and we have a valid
-  // GPS time, we call calibrateTime to poll time immeditately from GPS
-  if ((timeSource == _unsynced || timeSource == _set) &&
-      (gpstime.isUpdated() && gpstime.isValid() && gpstime.age() < 1000))
-    calibrateTime();
 #endif
 
 #ifdef HAS_SPI
