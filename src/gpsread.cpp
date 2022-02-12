@@ -91,7 +91,7 @@ void setTimePulse() {
 
 void disableNmea() {
 
-  // for tinygps++ we need only $GPGGA and $GPRMC
+  // tinygps++ processes only $GPGGA/$GNGGA and $GPRMC/$GNRMC
   // thus, we disable all other NMEA messages
 
   // Array of two bytes for CFG-MSG packets payload.
@@ -234,6 +234,9 @@ time_t get_gpstime(uint16_t *msec) {
       ESP_LOGD(TAG, "no PPS from GPS");
       return 0;
     }
+#else
+    // best guess top of second
+    *msec = gps.time.age() + gps.time.centisecond() * 10;
 #endif
 
     return t;
@@ -249,26 +252,15 @@ void gps_loop(void *pvParameters) {
 
   _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
+  // feed GPS decoder with serial NMEA data from GPS device
   while (1) {
-
     while (cfg.payloadmask & GPS_DATA) {
-      // feed GPS decoder with serial NMEA data from GPS device
-      while (GPS_Serial.available()) {
-        if (gps.encode(GPS_Serial.read())) {
 
-          // show NMEA data, very noisy, for debugging GPS
-          // ESP_LOGV(
-          //    TAG,
-          //    "GPS NMEA data: chars %u / passed %u / failed: %u / with fix:
-          //    %u", gps.charsProcessed(), gps.passedChecksum(),
-          //    gps.failedChecksum(), gps.sentencesWithFix());
+      while (GPS_Serial.available())
+        gps.encode(GPS_Serial.read());
 
-          delay(5); // yield after each sentence to crack NMEA burst
-        }
-      } // read from serial buffer loop
       delay(5);
     }
-
     delay(1000);
   } // infinite while loop
 
