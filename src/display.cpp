@@ -317,9 +317,6 @@ void dp_drawPage(bool nextpage) {
 
 #if (TIME_SYNC_INTERVAL)
     timeState = TimePulseTick ? ' ' : timeSetSymbols[timeSource];
-    portENTER_CRITICAL(&mux);
-    TimePulseTick = false; // flip global variable pulse ticker
-    portEXIT_CRITICAL(&mux);
     time(&now);
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);

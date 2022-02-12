@@ -5,16 +5,9 @@
 #include <RtcDateTime.h>
 #include "timekeeper.h"
 
-#ifdef GPS_I2C // Needed for reading from I2C Bus
-#include <Wire.h>
-#endif
-
 #ifndef GPS_BAUDRATE
-#define GPS_BAUDRATE 115200
+#define GPS_BAUDRATE 115200UL
 #endif
-
-#define NMEA_FRAME_SIZE 82           // NEMA has a maxium of 82 bytes per record
-#define NMEA_COMPENSATION_FACTOR 480 // empiric for Ublox Neo 6M
 
 extern TinyGPSPlus gps; // Make TinyGPS++ instance globally availabe
 extern TaskHandle_t GpsTask;

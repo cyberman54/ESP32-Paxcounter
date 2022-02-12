@@ -19,9 +19,8 @@ static const char TAG[] = __FILE__;
 // G = GPS / R = RTC / L = LORA / * = no sync / ? = never synced
 const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 
-portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-
 DRAM_ATTR bool TimePulseTick = false;
+DRAM_ATTR unsigned long lastPPS = millis();
 timesource_t timeSource = _unsynced;
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
@@ -144,26 +143,23 @@ uint8_t timepulse_init() {
   // sntp_init();
   sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
 
-// use time pulse from GPS as time base with fixed 1Hz frequency
+// if we have, use PPS time pulse from GPS for syncing time on top of second
 #ifdef GPS_INT
-
-  // setup external interupt pin for rising edge GPS INT
+  // setup external interupt pin for rising edge of GPS PPS
   pinMode(GPS_INT, INPUT_PULLDOWN);
-  // setup external rtc 1Hz clock as pulse per second clock
-  ESP_LOGI(TAG, "Timepulse: external (GPS)");
-  return 1; // success
+  attachInterrupt(digitalPinToInterrupt(GPS_INT), GPSIRQ, RISING);
+#endif
 
-// use pulse from on board RTC chip as time base with fixed frequency
-#elif defined RTC_INT
+// if we have, use pulse from on board RTC chip as time base for calendar time
+#if defined RTC_INT
 
-  // setup external interupt pin for falling edge RTC INT
-  pinMode(RTC_INT, INPUT_PULLUP);
-
-  // setup external rtc 1Hz clock as pulse per second clock
+  // setup external rtc 1Hz clock pulse
   if (I2C_MUTEX_LOCK()) {
     Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
     I2C_MUTEX_UNLOCK();
+    pinMode(RTC_INT, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
     ESP_LOGI(TAG, "Timepulse: external (RTC)");
     return 1; // success
   } else {
@@ -173,33 +169,39 @@ uint8_t timepulse_init() {
   return 1; // success
 
 #else
-  // use ESP32 hardware timer as time base with adjustable frequency
+  // use ESP32 hardware timer as time base for calendar time
   ppsIRQ = timerBegin(1, 8000, true);   // set 80 MHz prescaler to 1/10000 sec
   timerAlarmWrite(ppsIRQ, 10000, true); // 1000ms
+  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
+  timerAlarmEnable(ppsIRQ);
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
   return 1; // success
 
 #endif
-} // timepulse_init
 
-void timepulse_start(void) {
-#ifdef GPS_INT // start external clock gps pps line
-  attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
-#elif defined RTC_INT // start external clock rtc
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
-#else                 // start internal clock esp32 hardware timer
-  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
-  timerAlarmEnable(ppsIRQ);
-#endif
+  // start cyclic time sync
+  timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
 
   // get time if we don't have one
   if (timeSource != _set)
     setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
-  // start cyclic time sync
-  timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
+
+} // timepulse_init
+
+// interrupt service routine triggered by GPS PPS
+void IRAM_ATTR GPSIRQ(void) {
+
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  // take timestamp
+  lastPPS = millis(); // last time of pps
+
+  // yield only if we should
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
 }
 
-// interrupt service routine triggered by either pps or esp32 hardware timer
+// interrupt service routine triggered by esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -212,11 +214,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
 // flip time pulse ticker, if needed
 #ifdef HAS_DISPLAY
-#if (defined GPS_INT || defined RTC_INT)
-  portENTER_CRITICAL(&mux);
   TimePulseTick = !TimePulseTick; // flip global variable pulse ticker
-  portEXIT_CRITICAL(&mux);
-#endif
 #endif
 
   // yield only if we should

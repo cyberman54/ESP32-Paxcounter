@@ -6,38 +6,12 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-// we use NMEA ZDA sentence field 1 for time synchronization
-// ZDA gives time for preceding pps pulse
-// downsight is that it does not have a constant offset
-// thus precision is only +/- 1 second
-
 TinyGPSPlus gps;
-TinyGPSCustom gpstime(gps, "GPZDA", 1);  // field 1 = UTC time (hhmmss.ss)
-TinyGPSCustom gpsday(gps, "GPZDA", 2);   // field 2 = day (01..31)
-TinyGPSCustom gpsmonth(gps, "GPZDA", 3); // field 3 = month (01..12)
-TinyGPSCustom gpsyear(gps, "GPZDA", 4);  // field 4 = year (4-digit)
-static const String ZDA_Request = "$EIGPQ,ZDA*39\r\n";
 TaskHandle_t GpsTask;
-
 HardwareSerial GPS_Serial(1); // use UART #1
-static uint16_t nmea_txDelay_ms =
-    (tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL) / portTICK_PERIOD_MS);
 
 // helper functions to send UBX commands to ublox gps chip
 
-/*
-// Print the UBX packet for debugging
-void printPacket(byte *packet, byte len) {
-  char temp[3];
-
-  for (byte i = 0; i < len; i++) {
-    sprintf(temp, "%.2X", packet[i]);
-    ESP_LOGD(TAG, "%s", temp);
-  }
-}
-*/
-
-// Send the packet specified to the receiver.
 void sendPacket(byte *packet, byte len) {
 
   uint8_t CK_A = 0;
@@ -55,55 +29,85 @@ void sendPacket(byte *packet, byte len) {
   GPS_Serial.write(CK_B);
 }
 
-// Send a packet to the receiver to restore default configuration.
 void restoreDefaults() {
-  // CFG-CFG packet.
+  // UBX CFG-CFG packet
   byte packet[] = {
       0xB5,       // sync char 1
       0x62,       // sync char 2
       0x06,       // class
       0x09,       // id
       0x0D,       // length
-      0x00,       // length
+      0x00,       // .
       0b00011111, // clearmask
-      0b00000110, // clearmask
-      0x00,       // clearmask
-      0x00,       // clearmask
+      0b00000110, // .
+      0x00,       // .
+      0x00,       // .
       0x00,       // savemask
-      0x00,       // savemask
-      0x00,       // savemask
-      0x00,       // savemask
+      0x00,       // .
+      0x00,       // .
+      0x00,       // .
       0b00011111, // loadmask
-      0b00000110, // loadmask
-      0x00,       // loadmask
-      0x00,       // loadmask
+      0b00000110, // .
+      0x00,       // .
+      0x00,       // .
       0b00010001  // devicemask
   };
 
   sendPacket(packet, sizeof(packet));
 }
 
-// Send a set of packets to the receiver to disable NMEA messages.
+void setTimePulse() {
+  // UBX TIM-TP packet
+  byte packet[] = {
+      0xB5,       // sync char 1
+      0x62,       // sync char 2
+      0x06,       // class
+      0x07,       // id
+      0x14,       // length
+      0x40,       // time interval for time pulse [us]
+      0x42,       // -> 1 sec = 1000000us
+      0x0F,       // .
+      0x00,       // .
+      0xE8,       // length of time pulse [us]
+      0x03,       // -> 1000us
+      0x00,       // .
+      0x00,       // .
+      0x01,       // status -> positive edge
+      0x00,       // timeRef -> UTC
+      0b00000001, // syncMode asynchronized
+      0x00,       // reserved
+      0x00,       // antenna cable delay [ns]
+      0x00,       // .
+      0x00,       // receiver rf group delay [ns]
+      0x00,       // .
+      0x00,       // user time function delay [ns]
+      0x00,       // .
+      0x00,       // .
+      0x00        // .
+  };
+
+  sendPacket(packet, sizeof(packet));
+}
+
 void disableNmea() {
 
   // for tinygps++ we need only $GPGGA and $GPRMC
-  // for getting time we use $GPZDA
-  // we disable all other NMEA messages
+  // thus, we disable all other NMEA messages
 
   // Array of two bytes for CFG-MSG packets payload.
   byte messages[][2] = {{0xF0, 0x01}, {0xF0, 0x02}, {0xF0, 0x03}, {0xF0, 0x05},
-                        {0xF0, 0x06}, {0xF0, 0x07}, {0xF0, 0x09}, {0xF0, 0x0A},
-                        {0xF0, 0x0E}, {0xF1, 0x00}, {0xF1, 0x03}, {0xF1, 0x04},
-                        {0xF1, 0x05}, {0xF1, 0x06}};
+                        {0xF0, 0x06}, {0xF0, 0x07}, {0xF0, 0x08}, {0xF0, 0x09},
+                        {0xF0, 0x0A}, {0xF0, 0x0E}, {0xF1, 0x00}, {0xF1, 0x03},
+                        {0xF1, 0x04}, {0xF1, 0x05}, {0xF1, 0x06}};
 
-  // CFG-MSG packet buffer.
+  // UBX CFG-MSG packet
   byte packet[] = {
       0xB5, // sync char 1
       0x62, // sync char 2
       0x06, // class
       0x01, // id
       0x03, // length
-      0x00, // length
+      0x00, // .
       0x00, // payload (first byte from messages array element)
       0x00, // payload (second byte from messages array element)
       0x00  // payload (zero to disable message)
@@ -124,25 +128,24 @@ void disableNmea() {
   }
 }
 
-// Send a packet to the receiver to change baudrate to 115200.
 void changeBaudrate(uint32_t baudRate) {
-  // CFG-PRT packet.
+  // UBX CFG-PRT packet
   byte packet[] = {
       0xB5,                   // sync char 1
       0x62,                   // sync char 2
       0x06,                   // class
       0x00,                   // id
       0x14,                   // length
-      0x00,                   // length
+      0x00,                   // .
       0x01,                   // portID (UART 1)
       0x00,                   // reserved
       0x00,                   // txReady
       0x00,                   // .
-      0b11010000,             // UART mode: 8bit
-      0b00001000,             // UART mode: No Parity, 1 Stopbit
+      0b11010000,             // UART mode: 8N1
+      0b00001000,             // .
       0x00,                   // .
       0x00,                   // .
-      (byte)baudRate,         // baudrate (4 bytes)
+      (byte)baudRate,         // baudrate
       (byte)(baudRate >> 8),  // .
       (byte)(baudRate >> 16), // .
       (byte)(baudRate >> 24), // .
@@ -151,30 +154,9 @@ void changeBaudrate(uint32_t baudRate) {
       0b00000010,             // output protocols: NMEA
       0x00000000,             // .
       0x00,                   // reserved
-      0x00,                   // reserved
-      0x00,                   // reserved
-      0x00                    // reserved
-  };
-
-  sendPacket(packet, sizeof(packet));
-}
-
-// Send a packet to the receiver to change frequency to 100 ms.
-void changeFrequency() {
-  // CFG-RATE packet.
-  byte packet[] = {
-      0xB5, // sync char 1
-      0x62, // sync char 2
-      0x06, // class
-      0x08, // id
-      0x06, // length
-      0x00, // length
-      0x64, // Measurement rate 100ms
-      0x00, // Measurement rate
-      0x01, // Measurement cycles
-      0x00, // Measurement cycles
-      0x00, // Alignment to reference time: UTC time
-      0x00  // payload
+      0x00,                   // .
+      0x00,                   // .
+      0x00                    // .
   };
 
   sendPacket(packet, sizeof(packet));
@@ -184,8 +166,11 @@ void changeFrequency() {
 int gps_init(void) {
 
   ESP_LOGI(TAG, "Opening serial GPS");
+
   GPS_Serial.begin(GPS_SERIAL);
+
   restoreDefaults();
+  delay(100);
 
   changeBaudrate(GPS_BAUDRATE);
   delay(100);
@@ -193,8 +178,7 @@ int gps_init(void) {
   GPS_Serial.updateBaudRate(GPS_BAUDRATE);
 
   disableNmea();
-  changeFrequency();
-  // enableNavTimeUTC();
+  setTimePulse();
 
   return 1;
 
@@ -224,40 +208,38 @@ bool gps_hasfix() {
 // function to poll UTC time from GPS NMEA data; note: this is costly
 time_t get_gpstime(uint16_t *msec) {
 
-  // poll NMEA ZDA sentence
-  GPS_Serial.print(ZDA_Request);
-  // wait for gps NMEA answer
-  // vTaskDelay(tx_Ticks(NMEA_FRAME_SIZE, GPS_SERIAL));
+  *msec = 0;
 
   // did we get a current date & time?
-  if (gpstime.isValid()) {
+  if (gps.time.isValid() && gps.date.isValid() && gps.time.age() < 1000) {
 
-    uint32_t delay_ms =
-        gpstime.age() + nmea_txDelay_ms + NMEA_COMPENSATION_FACTOR;
-    uint32_t zdatime = atof(gpstime.value());
-
-    // convert UTC time from gps NMEA ZDA sentence to tm format
+    // convert tinygps time format to struct tm format
     struct tm gps_tm = {0};
-    gps_tm.tm_sec = zdatime % 100;                 // second (UTC)
-    gps_tm.tm_min = (zdatime / 100) % 100;         // minute (UTC)
-    gps_tm.tm_hour = zdatime / 10000;              // hour (UTC)
-    gps_tm.tm_mday = atoi(gpsday.value());         // day, 01 to 31
-    gps_tm.tm_mon = atoi(gpsmonth.value()) - 1;    // month, 01 to 12
-    gps_tm.tm_year = atoi(gpsyear.value()) - 1900; // year, YYYY
+    gps_tm.tm_sec = gps.time.second();
+    gps_tm.tm_min = gps.time.minute();
+    gps_tm.tm_hour = gps.time.hour();
+    gps_tm.tm_mday = gps.date.day();
+    gps_tm.tm_mon = gps.date.month() - 1;    // 1-12 -> 0-11
+    gps_tm.tm_year = gps.date.year() - 1900; // 2000+ -> years since 1900
 
     // convert UTC tm to time_t epoch
     gps_tm.tm_isdst = 0; // UTC has no DST
     time_t t = mkgmtime(&gps_tm);
 
-    // add protocol delay with millisecond precision
-    t += (time_t)(delay_ms / 1000);
-    *msec = delay_ms % 1000; // fractional seconds
+#ifdef GPS_INT
+    // if we have a recent GPS PPS pulse, sync on top of next second
+    if (millis() - lastPPS < 1000)
+      *msec = (uint16_t)(millis() - lastPPS);
+    else {
+      ESP_LOGD(TAG, "no PPS from GPS");
+      return 0;
+    }
+#endif
 
     return t;
   }
 
   ESP_LOGD(TAG, "no valid GPS time");
-
   return 0;
 
 } // get_gpstime()
@@ -271,20 +253,24 @@ void gps_loop(void *pvParameters) {
 
     while (cfg.payloadmask & GPS_DATA) {
       // feed GPS decoder with serial NMEA data from GPS device
-      while (GPS_Serial.available())
-        if (gps.encode(GPS_Serial.read()))
-          break; // leave encode loop after each NMEA complete sentence
+      while (GPS_Serial.available()) {
+        if (gps.encode(GPS_Serial.read())) {
 
-      // show NMEA data, very noisy,  useful only for debugging GPS
-      // ESP_LOGV(TAG, "GPS NMEA data: passed %u / failed: %u / with fix:
-      //                  %u", gps.passedChecksum(), gps.failedChecksum(), gps
-      //                       .sentencesWithFix());
+          // show NMEA data, very noisy, for debugging GPS
+          // ESP_LOGV(
+          //    TAG,
+          //    "GPS NMEA data: chars %u / passed %u / failed: %u / with fix:
+          //    %u", gps.charsProcessed(), gps.passedChecksum(),
+          //    gps.failedChecksum(), gps.sentencesWithFix());
 
+          delay(5); // yield after each sentence to crack NMEA burst
+        }
+      } // read from serial buffer loop
       delay(5);
-    } // inner while loop
+    }
 
     delay(1000);
-  } // outer while loop
+  } // infinite while loop
 
 } // gps_loop()
 

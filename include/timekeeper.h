@@ -21,13 +21,13 @@ extern Ticker timesyncer;
 extern timesource_t timeSource;
 extern TaskHandle_t ClockTask;
 extern DRAM_ATTR bool TimePulseTick; // 1sec pps flag set by GPS or RTC
+extern DRAM_ATTR unsigned long lastPPS;
 extern hw_timer_t *ppsIRQ;
-extern portMUX_TYPE mux;
 
 void IRAM_ATTR CLOCKIRQ(void);
+void IRAM_ATTR GPSIRQ(void);
 void clock_init(void);
 void clock_loop(void *pvParameters);
-void timepulse_start(void);
 void setTimeSyncIRQ(void);
 uint8_t timepulse_init(void);
 bool timeIsValid(time_t const t);
@@ -38,5 +38,4 @@ time_t compileTime(void);
 time_t mkgmtime(const struct tm *ptm);
 TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
                     int8_t rxPin, int8_t txPins);
-
 #endif // _timekeeper_H

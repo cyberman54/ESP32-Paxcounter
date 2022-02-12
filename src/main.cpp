@@ -62,7 +62,7 @@ triggers pps 1 sec impulse
 
 ISRs fired by CPU or GPIO:
 DisplayIRQ      <- esp32 timer 0
-CLOCKIRQ        <- esp32 timer 1 or GPIO (RTC_INT or GPS_INT)
+CLOCKIRQ        <- esp32 timer 1 or GPIO (RTC_INT)
 MatrixDisplayIRQ<- esp32 timer 3
 ButtonIRQ       <- GPIO <- Button
 PMUIRQ          <- GPIO <- PMU chip
@@ -492,8 +492,7 @@ void setup() {
 #endif
 
   ESP_LOGI(TAG, "Starting Timekeeper...");
-  _ASSERT(timepulse_init()); // setup pps timepulse
-  timepulse_start();         // starts pps and cyclic time sync
+  _ASSERT(timepulse_init()); // starts pps and cyclic time sync
   strcat_P(features, " TIME");
 
 #endif // timesync
