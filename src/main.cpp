@@ -27,7 +27,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 Task          	Core  Prio  Purpose
 -------------------------------------------------------------------------------
-ledloop*      	0     1    blinks LEDs
+ledloop*      	1     1    blinks LEDs
 spiloop#      	0     2    reads/writes data on spi interface
 lmictask*     	1     1    MCCI LMiC LORAWAN stack
 clockloop#    	1     6    generates realtime telegrams for external clock
@@ -238,7 +238,7 @@ void setup() {
                           (void *)1,    // parameter of the task
                           1,            // priority of the task
                           &ledLoopTask, // task handle
-                          0);           // CPU core
+                          1);           // CPU core
 #endif
 
 // initialize wifi antenna
