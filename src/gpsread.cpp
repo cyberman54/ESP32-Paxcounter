@@ -10,6 +10,121 @@ TinyGPSPlus gps;
 TaskHandle_t GpsTask;
 HardwareSerial GPS_Serial(1); // use UART #1
 
+// Ublox UBX packet data
+
+// UBX CFG-PRT packet
+byte CFG_PRT[] = {
+    0xB5,                       // sync char 1
+    0x62,                       // sync char 2
+    0x06,                       // class
+    0x00,                       // id
+    0x14,                       // length
+    0x00,                       // .
+    0x01,                       // portID (UART 1)
+    0x00,                       // reserved
+    0x00,                       // txReady
+    0x00,                       // .
+    0b11010000,                 // UART mode: 8N1
+    0b00001000,                 // .
+    0x00,                       // .
+    0x00,                       // .
+    (byte)GPS_BAUDRATE,         // baudrate
+    (byte)(GPS_BAUDRATE >> 8),  // .
+    (byte)(GPS_BAUDRATE >> 16), // .
+    (byte)(GPS_BAUDRATE >> 24), // .
+    0b00000011,                 // input protocols: NMEA + UBX
+    0b00000000,                 // .
+    0b00000010,                 // output protocols: NMEA
+    0x00000000,                 // .
+    0x00,                       // reserved
+    0x00,                       // .
+    0x00,                       // .
+    0x00                        // .
+};
+
+// Array of two bytes for CFG-MSG packets payload.
+byte CFG_MSG_CID[][2] = {
+    {0xF0, 0x01}, {0xF0, 0x02}, {0xF0, 0x03}, {0xF0, 0x05}, {0xF0, 0x06},
+    {0xF0, 0x07}, {0xF0, 0x08}, {0xF0, 0x09}, {0xF0, 0x0A}, {0xF0, 0x0E},
+    {0xF1, 0x00}, {0xF1, 0x03}, {0xF1, 0x04}, {0xF1, 0x05}, {0xF1, 0x06}};
+
+// UBX CFG-MSG packet
+byte CFG_MSG[] = {
+    0xB5, // sync char 1
+    0x62, // sync char 2
+    0x06, // class
+    0x01, // id
+    0x03, // length
+    0x00, // .
+    0x00, // payload (first byte from messages array element)
+    0x00, // payload (second byte from messages array element)
+    0x00  // payload (zero to disable message)
+};
+
+// UBX TIM-TP5 packet
+byte TIM_TP5[] = {
+    0xB5,       // sync char 1
+    0x62,       // sync char 2
+    0x06,       // class
+    0x31,       // id
+    0x20,       // length
+    0x00,       // time pulse index
+    0x00,       // reserved
+    0x00,       // reserved
+    0x00,       // .
+    0x00,       // antenna cable delay [ns]
+    0x00,       // .
+    0x00,       // receiver rf group delay [ns]
+    0x00,       // .
+    0x00,       // frequency unlocked
+    0x00,       // -> no signal
+    0x00,       // .
+    0x00,       // .
+    0x01,       // frequency locked
+    0x00,       // -> 1Hz
+    0x00,       // .
+    0x00,       // .
+    0x00,       // pulse length unlocked
+    0x00,       // -> no pulse
+    0x00,       // .
+    0x00,       // .
+    0xE8,       // pulse length locked
+    0x03,       // -> 1000us = 1ms
+    0x00,       // .
+    0x00,       // .
+    0x00,       // user delay
+    0x00,       // .
+    0x00,       // .
+    0x00,       // .
+    0b01111111, // flags
+    0b00000000, // -> UTC time grid
+    0b00000000, // .
+    0b00000000  // .
+};
+
+// UBX CFG-CFG packet
+byte CFG_CFG[] = {
+    0xB5,       // sync char 1
+    0x62,       // sync char 2
+    0x06,       // class
+    0x09,       // id
+    0x0D,       // length
+    0x00,       // .
+    0b00011111, // clearmask
+    0b00000110, // .
+    0x00,       // .
+    0x00,       // .
+    0x00,       // savemask
+    0x00,       // .
+    0x00,       // .
+    0x00,       // .
+    0b00011111, // loadmask
+    0b00000110, // .
+    0x00,       // .
+    0x00,       // .
+    0b00010001  // devicemask
+};
+
 // helper functions to send UBX commands to ublox gps chip
 
 void sendPacket(byte *packet, byte len) {
@@ -29,137 +144,28 @@ void sendPacket(byte *packet, byte len) {
   GPS_Serial.write(CK_B);
 }
 
-void restoreDefaults() {
-  // UBX CFG-CFG packet
-  byte packet[] = {
-      0xB5,       // sync char 1
-      0x62,       // sync char 2
-      0x06,       // class
-      0x09,       // id
-      0x0D,       // length
-      0x00,       // .
-      0b00011111, // clearmask
-      0b00000110, // .
-      0x00,       // .
-      0x00,       // .
-      0x00,       // savemask
-      0x00,       // .
-      0x00,       // .
-      0x00,       // .
-      0b00011111, // loadmask
-      0b00000110, // .
-      0x00,       // .
-      0x00,       // .
-      0b00010001  // devicemask
-  };
-
-  sendPacket(packet, sizeof(packet));
-}
-
-void setTimePulse() {
-  // UBX TIM-TP packet
-  byte packet[] = {
-      0xB5,       // sync char 1
-      0x62,       // sync char 2
-      0x06,       // class
-      0x07,       // id
-      0x14,       // length
-      0x40,       // time interval for time pulse [us]
-      0x42,       // -> 1 sec = 1000000us
-      0x0F,       // .
-      0x00,       // .
-      0xE8,       // length of time pulse [us]
-      0x03,       // -> 1000us
-      0x00,       // .
-      0x00,       // .
-      0x01,       // status -> positive edge
-      0x00,       // timeRef -> UTC
-      0b00000001, // syncMode asynchronized
-      0x00,       // reserved
-      0x00,       // antenna cable delay [ns]
-      0x00,       // .
-      0x00,       // receiver rf group delay [ns]
-      0x00,       // .
-      0x00,       // user time function delay [ns]
-      0x00,       // .
-      0x00,       // .
-      0x00        // .
-  };
-
-  sendPacket(packet, sizeof(packet));
-}
+void restoreDefaults() { sendPacket(CFG_CFG, sizeof(CFG_CFG)); }
+void changeBaudrate() { sendPacket(CFG_PRT, sizeof(CFG_PRT)); }
+void setTimePulse() { sendPacket(TIM_TP5, sizeof(TIM_TP5)); }
 
 void disableNmea() {
 
   // tinygps++ processes only $GPGGA/$GNGGA and $GPRMC/$GNRMC
   // thus, we disable all other NMEA messages
 
-  // Array of two bytes for CFG-MSG packets payload.
-  byte messages[][2] = {{0xF0, 0x01}, {0xF0, 0x02}, {0xF0, 0x03}, {0xF0, 0x05},
-                        {0xF0, 0x06}, {0xF0, 0x07}, {0xF0, 0x08}, {0xF0, 0x09},
-                        {0xF0, 0x0A}, {0xF0, 0x0E}, {0xF1, 0x00}, {0xF1, 0x03},
-                        {0xF1, 0x04}, {0xF1, 0x05}, {0xF1, 0x06}};
-
-  // UBX CFG-MSG packet
-  byte packet[] = {
-      0xB5, // sync char 1
-      0x62, // sync char 2
-      0x06, // class
-      0x01, // id
-      0x03, // length
-      0x00, // .
-      0x00, // payload (first byte from messages array element)
-      0x00, // payload (second byte from messages array element)
-      0x00  // payload (zero to disable message)
-  };
-
-  byte packetSize = sizeof(packet);
+  byte packetSize = sizeof(CFG_MSG);
 
   // Offset to the place where payload starts.
   byte payloadOffset = 6;
 
   // Iterate over the messages array.
-  for (byte i = 0; i < sizeof(messages) / sizeof(*messages); i++) {
+  for (byte i = 0; i < sizeof(CFG_MSG_CID) / sizeof(*CFG_MSG_CID); i++) {
     // Copy two bytes of payload to the packet buffer.
-    for (byte j = 0; j < sizeof(*messages); j++) {
-      packet[payloadOffset + j] = messages[i][j];
+    for (byte j = 0; j < sizeof(*CFG_MSG_CID); j++) {
+      CFG_MSG[payloadOffset + j] = CFG_MSG_CID[i][j];
     }
-    sendPacket(packet, packetSize);
+    sendPacket(CFG_MSG, packetSize);
   }
-}
-
-void changeBaudrate(uint32_t baudRate) {
-  // UBX CFG-PRT packet
-  byte packet[] = {
-      0xB5,                   // sync char 1
-      0x62,                   // sync char 2
-      0x06,                   // class
-      0x00,                   // id
-      0x14,                   // length
-      0x00,                   // .
-      0x01,                   // portID (UART 1)
-      0x00,                   // reserved
-      0x00,                   // txReady
-      0x00,                   // .
-      0b11010000,             // UART mode: 8N1
-      0b00001000,             // .
-      0x00,                   // .
-      0x00,                   // .
-      (byte)baudRate,         // baudrate
-      (byte)(baudRate >> 8),  // .
-      (byte)(baudRate >> 16), // .
-      (byte)(baudRate >> 24), // .
-      0b00000011,             // input protocols: NMEA + UBX
-      0b00000000,             // .
-      0b00000010,             // output protocols: NMEA
-      0x00000000,             // .
-      0x00,                   // reserved
-      0x00,                   // .
-      0x00,                   // .
-      0x00                    // .
-  };
-
-  sendPacket(packet, sizeof(packet));
 }
 
 // initialize and configure GPS
@@ -172,7 +178,7 @@ int gps_init(void) {
   restoreDefaults();
   delay(100);
 
-  changeBaudrate(GPS_BAUDRATE);
+  changeBaudrate();
   delay(100);
   GPS_Serial.flush();
   GPS_Serial.updateBaudRate(GPS_BAUDRATE);
@@ -206,12 +212,13 @@ bool gps_hasfix() {
 }
 
 // function to poll UTC time from GPS NMEA data; note: this is costly
-time_t get_gpstime(uint16_t *msec) {
+time_t get_gpstime(uint16_t *msec = 0) {
 
-  *msec = 0;
+  const uint16_t txDelay =
+      70 * 1000 / (GPS_BAUDRATE / 9); // serial tx of 70 NMEA chars
 
   // did we get a current date & time?
-  if (gps.time.isValid() && gps.date.isValid() && gps.time.age() < 1000) {
+  if (gps.time.age() < 1000) {
 
     // convert tinygps time format to struct tm format
     struct tm gps_tm = {0};
@@ -236,7 +243,7 @@ time_t get_gpstime(uint16_t *msec) {
     }
 #else
     // best guess top of second
-    *msec = gps.time.age() + gps.time.centisecond() * 10;
+    *msec = gps.time.centisecond() * 10 + txDelay;
 #endif
 
     return t;
