@@ -3,6 +3,7 @@
 
 #include <rom/rtc.h>
 
+#include "libpax_helpers.h"
 #include "senddata.h"
 #include "cyclic.h"
 #include "configmanager.h"

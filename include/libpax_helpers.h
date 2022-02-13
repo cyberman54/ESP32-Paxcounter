@@ -8,6 +8,6 @@
 
 void init_libpax(void);
 
-extern uint16_t volatile libpax_macs_ble, libpax_macs_wifi; // libpax values
+extern struct count_payload_t count_from_libpax; // libpax count storage
 
 #endif

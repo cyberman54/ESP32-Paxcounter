@@ -1,7 +1,6 @@
 // Basic Config
 #include "globals.h"
 #include "rcommand.h"
-#include "libpax_helpers.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;

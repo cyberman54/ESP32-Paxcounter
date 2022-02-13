@@ -1,7 +1,6 @@
 #ifndef _SENDDATA_H
 #define _SENDDATA_H
 
-#include "libpax_helpers.h"
 #include "spislave.h"
 #include "mqttclient.h"
 #include "cyclic.h"
@@ -18,6 +17,7 @@ void checkSendQueues(void);
 void flushQueues(void);
 bool allQueuesEmtpy(void);
 void setSendIRQ(TimerHandle_t xTimer = NULL);
+void setSendIRQ(void);
 void initSendDataTimer(uint8_t sendcycle);
 
 #endif // _SENDDATA_H_

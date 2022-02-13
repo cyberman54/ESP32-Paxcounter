@@ -5,6 +5,10 @@ void setSendIRQ(TimerHandle_t xTimer) {
   xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 }
 
+#if ((WIFICOUNTER) || (BLECOUNTER))
+void setSendIRQ(void) { setSendIRQ(NULL); }
+#endif
+
 void initSendDataTimer(uint8_t sendcycle) {
   static TimerHandle_t SendDataTimer = NULL;
 
@@ -79,6 +83,10 @@ void sendData() {
   sdsStatus_t sds_status;
 #endif
 
+  ESP_LOGD(TAG, "Sending count results: pax=%d / wifi=%d / ble=%d",
+           count_from_libpax.pax, count_from_libpax.wifi_count,
+           count_from_libpax.ble_count);
+
   while (bitmask) {
     switch (bitmask & mask) {
 
@@ -86,11 +94,9 @@ void sendData() {
     case COUNT_DATA:
       payload.reset();
 #if !(PAYLOAD_OPENSENSEBOX)
-      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
-      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+      payload.addCount(count_from_libpax.wifi_count, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
-        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
+        payload.addCount(count_from_libpax.ble_count, MAC_SNIFF_BLE);
       }
 #endif
 #if (HAS_GPS)
@@ -104,11 +110,9 @@ void sendData() {
       }
 #endif
 #if (PAYLOAD_OPENSENSEBOX)
-      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
-      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+      payload.addCount(count_from_libpax.wifi_count, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
-        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
+        payload.addCount(count_from_libpax.ble_count, MAC_SNIFF_BLE);
 #endif
 #if (HAS_SDS011)
         sds011_store(&sds_status);
@@ -116,10 +120,11 @@ void sendData() {
 #endif
         SendPayload(COUNTERPORT);
 #ifdef HAS_DISPLAY
-        dp_plotCurve(libpax_macs_ble + libpax_macs_wifi, true);
+        dp_plotCurve(count_from_libpax.pax, true);
 #endif
 #if (HAS_SDCARD)
-        sdcardWriteData(libpax_macs_wifi, libpax_macs_ble
+        sdcardWriteData(count_from_libpax.wifi_count,
+                        count_from_libpax.ble_count
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
                         ,
                         read_voltage()
