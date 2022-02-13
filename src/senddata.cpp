@@ -5,9 +5,7 @@ void setSendIRQ(TimerHandle_t xTimer) {
   xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 }
 
-#if ((WIFICOUNTER) || (BLECOUNTER))
 void setSendIRQ(void) { setSendIRQ(NULL); }
-#endif
 
 void initSendDataTimer(uint8_t sendcycle) {
   static TimerHandle_t SendDataTimer = NULL;
@@ -71,7 +69,7 @@ void SendPayload(uint8_t port) {
 
 } // SendPayload
 
-// interrupt triggered function to prepare payload to send
+// timer triggered function to prepare payload to send
 void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
