@@ -43,10 +43,10 @@ byte CFG_PRT[] = {
 };
 
 // Array of two bytes for CFG-MSG packets payload.
-byte CFG_MSG_CID[][2] = {
-    {0xF0, 0x01}, {0xF0, 0x02}, {0xF0, 0x03}, {0xF0, 0x05}, {0xF0, 0x06},
-    {0xF0, 0x07}, {0xF0, 0x08}, {0xF0, 0x09}, {0xF0, 0x0A}, {0xF0, 0x0E},
-    {0xF1, 0x00}, {0xF1, 0x03}, {0xF1, 0x04}, {0xF1, 0x05}, {0xF1, 0x06}};
+byte CFG_MSG_CID[][2] = {{0xF0, 0x01}, {0xF0, 0x02}, {0xF0, 0x03}, {0xF0, 0x05},
+                         {0xF0, 0x06}, {0xF0, 0x07}, {0xF0, 0x08}, {0xF0, 0x09},
+                         {0xF0, 0x0A}, {0xF0, 0x0E}, {0xF1, 0x00}, {0xF1, 0x03},
+                         {0xF1, 0x04}, {0xF1, 0x05}, {0xF1, 0x06}};
 
 // UBX CFG-MSG packet
 byte CFG_MSG[] = {
@@ -59,47 +59,6 @@ byte CFG_MSG[] = {
     0x00, // payload (first byte from messages array element)
     0x00, // payload (second byte from messages array element)
     0x00  // payload (zero to disable message)
-};
-
-// UBX TIM-TP5 packet
-byte TIM_TP5[] = {
-    0xB5,       // sync char 1
-    0x62,       // sync char 2
-    0x06,       // class
-    0x31,       // id
-    0x20,       // length
-    0x00,       // time pulse index
-    0x00,       // reserved
-    0x00,       // reserved
-    0x00,       // .
-    0x00,       // antenna cable delay [ns]
-    0x00,       // .
-    0x00,       // receiver rf group delay [ns]
-    0x00,       // .
-    0x00,       // frequency unlocked
-    0x00,       // -> no signal
-    0x00,       // .
-    0x00,       // .
-    0x01,       // frequency locked
-    0x00,       // -> 1Hz
-    0x00,       // .
-    0x00,       // .
-    0x00,       // pulse length unlocked
-    0x00,       // -> no pulse
-    0x00,       // .
-    0x00,       // .
-    0xE8,       // pulse length locked
-    0x03,       // -> 1000us = 1ms
-    0x00,       // .
-    0x00,       // .
-    0x00,       // user delay
-    0x00,       // .
-    0x00,       // .
-    0x00,       // .
-    0b01111111, // flags
-    0b00000000, // -> UTC time grid
-    0b00000000, // .
-    0b00000000  // .
 };
 
 // UBX CFG-CFG packet
@@ -184,7 +143,6 @@ int gps_init(void) {
   GPS_Serial.updateBaudRate(GPS_BAUDRATE);
 
   disableNmea();
-  setTimePulse();
 
   return 1;
 
@@ -215,7 +173,7 @@ bool gps_hasfix() {
 time_t get_gpstime(uint16_t *msec = 0) {
 
   const uint16_t txDelay =
-      70 * 1000 / (GPS_BAUDRATE / 9); // serial tx of 70 NMEA chars
+      70U * 1000 / (GPS_BAUDRATE / 9); // serial tx of 70 NMEA chars
 
   // did we get a current date & time?
   if (gps.time.age() < 1000) {
@@ -235,15 +193,16 @@ time_t get_gpstime(uint16_t *msec = 0) {
 
 #ifdef GPS_INT
     // if we have a recent GPS PPS pulse, sync on top of next second
-    if (millis() - lastPPS < 1000)
-      *msec = (uint16_t)(millis() - lastPPS);
+    uint16_t ppsDiff = millis() - lastPPS;
+    if (ppsDiff < 1000)
+      *msec = ppsDiff;
     else {
       ESP_LOGD(TAG, "no PPS from GPS");
       return 0;
     }
 #else
-    // best guess top of second
-    *msec = gps.time.centisecond() * 10 + txDelay;
+    // best guess for sync on top of next second
+    *msec = gps.time.centisecond() * 10U + txDelay;
 #endif
 
     return t;
