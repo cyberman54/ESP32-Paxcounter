@@ -29,7 +29,7 @@ Task          	Core  Prio  Purpose
 -------------------------------------------------------------------------------
 ledloop*      	1     1    blinks LEDs
 spiloop#      	0     2    reads/writes data on spi interface
-lmictask*     	1     1    MCCI LMiC LORAWAN stack
+lmictask*     	1     2    MCCI LMiC LORAWAN stack
 clockloop#    	1     6    generates realtime telegrams for external clock
 mqttloop#     	1     5    reads/writes data on ETH interface
 timesync_proc#	1     7    processes realtime time sync requests
