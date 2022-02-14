@@ -105,7 +105,6 @@ void sendPacket(byte *packet, byte len) {
 
 void restoreDefaults() { sendPacket(CFG_CFG, sizeof(CFG_CFG)); }
 void changeBaudrate() { sendPacket(CFG_PRT, sizeof(CFG_PRT)); }
-void setTimePulse() { sendPacket(TIM_TP5, sizeof(TIM_TP5)); }
 
 void disableNmea() {
 
