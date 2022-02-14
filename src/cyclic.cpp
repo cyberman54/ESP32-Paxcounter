@@ -9,10 +9,6 @@ static const char TAG[] = __FILE__;
 
 Ticker cyclicTimer;
 
-#if (HAS_SDS011)
-extern boolean isSDS011Active;
-#endif
-
 void setCyclicIRQ() { xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits); }
 
 // do all housekeeping

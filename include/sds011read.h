@@ -1,10 +1,12 @@
 #ifndef _SDS011READ_H
 #define _SDS011READ_H
 
-#include <SDS011.h>
+#include <SdsDustSensor.h>
 #include "globals.h"
 
 #define SDCARD_FILE_HEADER_SDS011     ", PM10,PM25"
+
+extern bool isSDS011Active;
 
 bool sds011_init();
 void sds011_loop();

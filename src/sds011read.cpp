@@ -10,35 +10,41 @@ static const char TAG[] = __FILE__;
 #if (HAS_IF482)
 #error cannot use IF482 together with SDS011 (both use UART#2)
 #endif
-// UART(2) is unused in this project
-static HardwareSerial sdsSerial(2); // so we use it here
-static SDS011 sdsSensor;            // fine dust sensor
+
+// sds011 connected to UART(2)
+static SdsDustSensor sdsSensor(Serial2);
 
 // the results of the sensor:
 static float pm10, pm25;
-boolean isSDS011Active;
+bool isSDS011Active = false;
 
 // init
 bool sds011_init() {
   pm25 = pm10 = 0.0;
-  sdsSensor.begin(&sdsSerial, SDS_RX, SDS_TX);
+  sdsSensor.begin();
+
+  String version = sdsSensor.queryFirmwareVersion().toString();
+  ESP_LOGI(TAG, "SDS011 firmware version %s", version);
+  sdsSensor.setQueryReportingMode();
   sds011_sleep(); // we do sleep/wakup by ourselves
+
   return true;
 }
 
 // reading data:
 void sds011_loop() {
   if (isSDS011Active) {
-    int sdsErrorCode = sdsSensor.read(&pm25, &pm10);
-    if (sdsErrorCode) {
+    PmResult pm = sdsSensor.queryPm();
+    if (!pm.isOk()) {
       pm25 = pm10 = 0.0;
-      ESP_LOGI(TAG, "SDS011 error: %d", sdsErrorCode);
+      ESP_LOGE(TAG, "SDS011 query error");
     } else {
+      pm25 = pm.pm25;
+      pm10 = pm.pm10;
       ESP_LOGI(TAG, "fine-dust-values: %5.1f,%4.1f", pm10, pm25);
     }
     sds011_sleep();
   }
-  return;
 }
 
 // retrieving stored data:
@@ -49,17 +55,15 @@ void sds011_store(sdsStatus_t *sds_store) {
 
 // putting the SDS-sensor to sleep
 void sds011_sleep(void) {
-  sdsSensor.sleep();
-  isSDS011Active = false;
+  WorkingStateResult state = sdsSensor.sleep();
+  isSDS011Active = state.isWorking();
 }
 
 // start the SDS-sensor
 // needs 30 seconds for warming up
 void sds011_wakeup() {
-  if (!isSDS011Active) {
-    sdsSensor.wakeup();
-    isSDS011Active = true;
-  }
+  WorkingStateResult state = sdsSensor.wakeup();
+  isSDS011Active = state.isWorking();
 }
 
 #endif // HAS_SDS011
