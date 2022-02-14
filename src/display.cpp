@@ -43,6 +43,7 @@ uint8_t DisplayIsOn = 0;
 uint8_t displaybuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static uint8_t plotbuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static int dp_row = 0, dp_col = 0, dp_font = 0;
+static struct count_payload_t count; // libpax count storage
 
 hw_timer_t *displayIRQ = NULL;
 
@@ -175,14 +176,14 @@ void dp_init(bool verbose) {
 void dp_refresh(bool nextPage) {
 
   // update counter values from libpax
-  libpax_counter_count(&count_from_libpax);
+  libpax_counter_count(&count);
 
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
 #endif
 
   // update histogram
-  dp_plotCurve(count_from_libpax.pax, false);
+  dp_plotCurve(count.pax, false);
 
   // if display is switched off we don't refresh it to relax cpu
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
@@ -240,7 +241,7 @@ void dp_drawPage(bool nextpage) {
   // display number of unique macs total Wifi + BLE
   if (DisplayPage < 5) {
     dp_setFont(MY_FONT_STRETCHED);
-    dp_printf("%-5d", count_from_libpax.pax);
+    dp_printf("%-5d", count.pax);
   }
 
   switch (DisplayPage) {
@@ -264,21 +265,21 @@ void dp_drawPage(bool nextpage) {
 
 #if ((WIFICOUNTER) && (BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", count_from_libpax.wifi_count);
+      dp_printf("WIFI:%-5d", count.wifi_count);
     else
       dp_printf("WIFI:off");
     if (cfg.blescan)
-      dp_printf("BLTH:%-5d", count_from_libpax.ble_count);
+      dp_printf("BLTH:%-5d", count.ble_count);
     else
       dp_printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", count_from_libpax.wifi_count);
+      dp_printf("WIFI:%-5d", count.wifi_count);
     else
       dp_printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan)
-      dp_printf("BLTH:%-5d", count_from_libpax.ble_count);
+      dp_printf("BLTH:%-5d", count.ble_count);
     dp_printf("BLTH:off");
 #else
     dp_printf("Sniffer disabled");

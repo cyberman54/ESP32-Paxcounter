@@ -9,8 +9,6 @@
 #include "display.h"
 #include "sdcard.h"
 
-extern struct count_payload_t count_from_libpax;
-
 void SendPayload(uint8_t port);
 void sendData(void);
 void checkSendQueues(void);

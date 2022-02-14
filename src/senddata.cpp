@@ -74,16 +74,19 @@ void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
+
 #if (HAS_GPS)
   gpsStatus_t gps_status;
 #endif
 #if (HAS_SDS011)
   sdsStatus_t sds_status;
 #endif
-
-  ESP_LOGD(TAG, "Sending count results: pax=%d / wifi=%d / ble=%d",
-           count_from_libpax.pax, count_from_libpax.wifi_count,
-           count_from_libpax.ble_count);
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  struct count_payload_t count =
+      count_from_libpax; // copy values from global libpax var
+  ESP_LOGD(TAG, "Sending count results: pax=%d / wifi=%d / ble=%d", count.pax,
+           count.wifi_count, count.ble_count);
+#endif
 
   while (bitmask) {
     switch (bitmask & mask) {
@@ -91,12 +94,14 @@ void sendData() {
 #if ((WIFICOUNTER) || (BLECOUNTER))
     case COUNT_DATA:
       payload.reset();
+
 #if !(PAYLOAD_OPENSENSEBOX)
-      payload.addCount(count_from_libpax.wifi_count, MAC_SNIFF_WIFI);
+      payload.addCount(count.wifi_count, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        payload.addCount(count_from_libpax.ble_count, MAC_SNIFF_BLE);
+        payload.addCount(count.ble_count, MAC_SNIFF_BLE);
       }
 #endif
+
 #if (HAS_GPS)
       if (GPSPORT == COUNTERPORT) {
         // send GPS position only if we have a fix
@@ -107,22 +112,24 @@ void sendData() {
           ESP_LOGD(TAG, "No valid GPS position");
       }
 #endif
+
 #if (PAYLOAD_OPENSENSEBOX)
-      payload.addCount(count_from_libpax.wifi_count, MAC_SNIFF_WIFI);
+      payload.addCount(count.wifi_count, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        payload.addCount(count_from_libpax.ble_count, MAC_SNIFF_BLE);
+        payload.addCount(count.ble_count, MAC_SNIFF_BLE);
 #endif
+
 #if (HAS_SDS011)
         sds011_store(&sds_status);
         payload.addSDS(sds_status);
 #endif
-        SendPayload(COUNTERPORT);
+
 #ifdef HAS_DISPLAY
-        dp_plotCurve(count_from_libpax.pax, true);
+        dp_plotCurve(count.pax, true);
 #endif
+
 #if (HAS_SDCARD)
-        sdcardWriteData(count_from_libpax.wifi_count,
-                        count_from_libpax.ble_count
+        sdcardWriteData(count.wifi_count, count.ble_count
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
                         ,
                         read_voltage()
@@ -130,8 +137,10 @@ void sendData() {
         );
 #endif // HAS_SDCARD
 
+        SendPayload(COUNTERPORT);
         break; // case COUNTDATA
-#endif
+
+#endif // ((WIFICOUNTER) || (BLECOUNTER))
 
 #if (HAS_BME)
       case MEMS_DATA:

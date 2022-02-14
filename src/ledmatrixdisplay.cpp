@@ -13,6 +13,7 @@ uint8_t MatrixDisplayIsOn = 0;
 static uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8] = {0};
 static unsigned long ulLastNumMacs = 0;
 static time_t ulLastTime = time(NULL);
+static struct count_payload_t count; // libpax count storage
 
 hw_timer_t *matrixDisplayIRQ = NULL;
 
@@ -76,12 +77,12 @@ void refreshTheMatrixDisplay(bool nextPage) {
   case 0:
 
     // update counter values from libpax
-    libpax_counter_count(&count_from_libpax);
+    libpax_counter_count(&count);
 
     if (cfg.countermode == 1) {
       // cumulative counter mode -> display total number of pax
-      if (ulLastNumMacs != count_from_libpax.pax) {
-        ulLastNumMacs = count_from_libpax.pax;
+      if (ulLastNumMacs != count.pax) {
+        ulLastNumMacs = count.pax;
         matrix.clear();
         DrawNumber(String(ulLastNumMacs));
       }
@@ -89,10 +90,10 @@ void refreshTheMatrixDisplay(bool nextPage) {
 
     else { // cyclic counter mode -> plot a line diagram
 
-      if (ulLastNumMacs != count_from_libpax.pax) {
+      if (ulLastNumMacs != count.pax) {
 
         // next count cycle?
-        if (count_from_libpax.pax == 0) {
+        if (count.pax == 0) {
 
           // matrix full? then scroll left 1 dot, else increment column
           if (col < (LED_MATRIX_WIDTH - 1))
@@ -104,7 +105,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
           matrix.drawPoint(col, row, 0); // clear current dot
 
         // scale and set new dot
-        ulLastNumMacs = count_from_libpax.pax;
+        ulLastNumMacs = count.pax;
         level = ulLastNumMacs / LINE_DIAGRAM_DIVIDER;
         row = level <= LED_MATRIX_HEIGHT
                   ? LED_MATRIX_HEIGHT - 1 - level % LED_MATRIX_HEIGHT
@@ -120,7 +121,7 @@ void refreshTheMatrixDisplay(bool nextPage) {
     if (ulLastTime != t) {
       ulLastTime = t;
       matrix.clear();
-      //DrawNumber(myTZ.dateTime("H:i:s").c_str());
+      // DrawNumber(myTZ.dateTime("H:i:s").c_str());
     }
     break;
 
