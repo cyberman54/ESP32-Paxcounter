@@ -13,16 +13,12 @@ static const char TAG[] = __FILE__;
 
 SdsDustSensor sds(Serial2);
 
-// the results of the sensor:
-static float pm10, pm25;
 bool isSDS011Active = false;
+static float pm10 = 0.0, pm25 = 0.0;
 
 // init
 bool sds011_init() {
-  pm25 = pm10 = 0.0;
-
-  sds.begin(9600, SERIAL_8N1, 12, 35);
-
+  sds.begin(9600, SERIAL_8N1, SDS_RX, SDS_TX);
   String version = sds.queryFirmwareVersion().toString();
   ESP_LOGI(TAG, "SDS011 firmware version %s", version);
   sds.setQueryReportingMode();
@@ -36,12 +32,12 @@ void sds011_loop() {
   if (isSDS011Active) {
     PmResult pm = sds.queryPm();
     if (!pm.isOk()) {
-      pm25 = pm10 = 0.0;
-      ESP_LOGE(TAG, "SDS011 query error");
+      ESP_LOGE(TAG, "SDS011 query error %s", pm.statusToString());
+      pm10 = pm25 = 0.0;
     } else {
-      pm25 = pm.pm25;
+      ESP_LOGI(TAG, "SDS011: %s", pm.toString());
       pm10 = pm.pm10;
-      ESP_LOGI(TAG, "fine-dust-values: %5.1f,%4.1f", pm10, pm25);
+      pm25 = pm.pm25;
     }
     sds011_sleep();
   }
