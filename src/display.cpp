@@ -43,7 +43,6 @@ uint8_t DisplayIsOn = 0;
 uint8_t displaybuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static uint8_t plotbuf[MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8] = {0};
 static int dp_row = 0, dp_col = 0, dp_font = 0;
-static struct count_payload_t count; // libpax count storage
 
 hw_timer_t *displayIRQ = NULL;
 
@@ -175,15 +174,9 @@ void dp_init(bool verbose) {
 
 void dp_refresh(bool nextPage) {
 
-  // update counter values from libpax
-  libpax_counter_count(&count);
-
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
 #endif
-
-  // update histogram
-  dp_plotCurve(count.pax, false);
 
   // if display is switched off we don't refresh it to relax cpu
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
@@ -208,7 +201,6 @@ void dp_refresh(bool nextPage) {
 #endif
 
     dp_drawPage(nextPage);
-    dp_dump(displaybuf);
 
     I2C_MUTEX_UNLOCK(); // release i2c bus access
 
@@ -220,6 +212,7 @@ void dp_drawPage(bool nextpage) {
   // write display content to display buffer
   // nextpage = true -> flip 1 page
 
+  struct count_payload_t count; // libpax count storage
   static uint8_t DisplayPage = 0;
   char timeState, strftime_buf[64];
   time_t now;
@@ -233,6 +226,9 @@ void dp_drawPage(bool nextpage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
     dp_clear();
   }
+
+  // update counter values from libpax
+  libpax_counter_count(&count);
 
   // cursor home
   dp_setTextCursor(0, 0);
@@ -345,6 +341,8 @@ void dp_drawPage(bool nextpage) {
     dp_printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
     dp_setFont(MY_FONT_SMALL, 0);
 #endif // HAS_LORA
+
+    dp_dump(displaybuf);
     break;
 
   // ---------- page 1: lorawan parameters ----------
@@ -370,6 +368,8 @@ void dp_drawPage(bool nextpage) {
               LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
     dp_println();
     dp_printf("SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4, LMIC.rssi);
+
+    dp_dump(displaybuf);
     break;
 #else  // flip page if we are unattended
     DisplayPage++;
@@ -402,6 +402,8 @@ void dp_drawPage(bool nextpage) {
       dp_printf("No fix");
       wasnofix = true;
     }
+
+    dp_dump(displaybuf);
     break;
 #else // flip page if we are unattended
     DisplayPage++;
@@ -425,10 +427,12 @@ void dp_drawPage(bool nextpage) {
 #ifdef HAS_BME680
     // line 6-7: IAQ
     dp_printf("IAQ:%-3.0f", bme_status.iaq);
-#else      // is BME280 or BMP180
+#else  // is BME280 or BMP180
     // line 6-7: Pre
     dp_printf("PRE:%-2.1f", bme_status.pressure);
-#endif     // HAS_BME680
+#endif // HAS_BME680
+
+    dp_dump(displaybuf);
     break; // page 3
 #else      // flip page if we are unattended
     DisplayPage++;
@@ -443,14 +447,15 @@ void dp_drawPage(bool nextpage) {
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%T", &timeinfo);
     dp_printf("%.8s", strftime_buf);
+
+    dp_dump(displaybuf);
     break;
 
   // ---------- page 5: pax graph ----------
   case 5:
 
-    dp_setFont(MY_FONT_NORMAL);
-    dp_setTextCursor(0, 0);
-    dp_printf("Pax graph");
+    // update histogram
+    dp_plotCurve(count.pax, false);
     dp_dump(plotbuf);
     break;
 
