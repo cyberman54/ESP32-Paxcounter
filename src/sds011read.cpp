@@ -11,8 +11,7 @@ static const char TAG[] = __FILE__;
 #error cannot use IF482 together with SDS011 (both use UART#2)
 #endif
 
-// sds011 connected to UART(2)
-static SdsDustSensor sdsSensor(Serial2);
+SdsDustSensor sds(Serial2);
 
 // the results of the sensor:
 static float pm10, pm25;
@@ -21,11 +20,12 @@ bool isSDS011Active = false;
 // init
 bool sds011_init() {
   pm25 = pm10 = 0.0;
-  sdsSensor.begin();
 
-  String version = sdsSensor.queryFirmwareVersion().toString();
+  sds.begin(9600, SERIAL_8N1, 12, 35);
+
+  String version = sds.queryFirmwareVersion().toString();
   ESP_LOGI(TAG, "SDS011 firmware version %s", version);
-  sdsSensor.setQueryReportingMode();
+  sds.setQueryReportingMode();
   sds011_sleep(); // we do sleep/wakup by ourselves
 
   return true;
@@ -34,7 +34,7 @@ bool sds011_init() {
 // reading data:
 void sds011_loop() {
   if (isSDS011Active) {
-    PmResult pm = sdsSensor.queryPm();
+    PmResult pm = sds.queryPm();
     if (!pm.isOk()) {
       pm25 = pm10 = 0.0;
       ESP_LOGE(TAG, "SDS011 query error");
@@ -55,14 +55,14 @@ void sds011_store(sdsStatus_t *sds_store) {
 
 // putting the SDS-sensor to sleep
 void sds011_sleep(void) {
-  WorkingStateResult state = sdsSensor.sleep();
+  WorkingStateResult state = sds.sleep();
   isSDS011Active = state.isWorking();
 }
 
 // start the SDS-sensor
 // needs 30 seconds for warming up
 void sds011_wakeup() {
-  WorkingStateResult state = sdsSensor.wakeup();
+  WorkingStateResult state = sds.wakeup();
   isSDS011Active = state.isWorking();
 }
 
