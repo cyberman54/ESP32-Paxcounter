@@ -19,10 +19,9 @@ static float pm10 = 0.0, pm25 = 0.0;
 // init
 bool sds011_init() {
   sds.begin(9600, SERIAL_8N1, SDS_RX, SDS_TX);
-  String version = sds.queryFirmwareVersion().toString();
-  ESP_LOGI(TAG, "SDS011 firmware version %s", version);
+  sds011_wakeup();
+  ESP_LOGI(TAG, "SDS011: %s", sds.queryFirmwareVersion().toString().c_str());
   sds.setQueryReportingMode();
-  sds011_sleep(); // we do sleep/wakup by ourselves
 
   return true;
 }
@@ -32,13 +31,14 @@ void sds011_loop() {
   if (isSDS011Active) {
     PmResult pm = sds.queryPm();
     if (!pm.isOk()) {
-      ESP_LOGE(TAG, "SDS011 query error %s", pm.statusToString());
+      ESP_LOGE(TAG, "SDS011: query error %s", pm.statusToString().c_str());
       pm10 = pm25 = 0.0;
     } else {
-      ESP_LOGI(TAG, "SDS011: %s", pm.toString());
+      ESP_LOGI(TAG, "SDS011: %s", pm.toString().c_str());
       pm10 = pm.pm10;
       pm25 = pm.pm25;
     }
+    ESP_LOGD(TAG, "SDS011: go to sleep");
     sds011_sleep();
   }
 }
@@ -60,6 +60,7 @@ void sds011_sleep(void) {
 void sds011_wakeup() {
   WorkingStateResult state = sds.wakeup();
   isSDS011Active = state.isWorking();
+  ESP_LOGD(TAG, "SDS011: %s", state.toString().c_str());
 }
 
 #endif // HAS_SDS011

@@ -120,10 +120,8 @@ void doHousekeeping() {
 
 #if (HAS_SDS011)
   if (isSDS011Active) {
-    ESP_LOGD(TAG, "SDS011: go to sleep");
     sds011_loop();
   } else {
-    ESP_LOGD(TAG, "SDS011: wakeup");
     sds011_wakeup();
   }
 #endif

@@ -82,7 +82,8 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
 #endif
 #if (HAS_SDS011)
   sds011_store(&sds);
-  snprintf(tempBuffer, sizeof(tempBuffer), ",%5.1f,%4.1f", sds.pm10, sds.pm25);
+  snprintf(tempBuffer, sizeof(tempBuffer), ",%5.1f,%4.1f", sds.pm10 / 10,
+           sds.pm25 / 10);
   fileSDCard.print(tempBuffer);
 #endif
   fileSDCard.println();
