@@ -1,13 +1,13 @@
 #ifndef _SDCARD_H
 #define _SDCARD_H
 
-#include <globals.h>
+#include "globals.h"
 #include <stdio.h>
 #include <SPI.h>
 
 #if (HAS_SDCARD)
 #if HAS_SDCARD == 1
-#include <mySD.h>
+#include <SD.h>
 #elif HAS_SDCARD == 2
 #include <SD_MMC.h>
 #else
@@ -54,14 +54,15 @@
 #define SDCARD_DATA3 13
 #endif
 
-#define SDCARD_FILE_NAME "/paxcount.%02d"
-#define SDCARD_FILE_HEADER "date, time, wifi, bluet"
+#define SDCARD_FILE_NAME clientId
+#define SDCARD_FILE_HEADER "timestamp,wifi,ble"
 
-#if (COUNT_ENS)
-#define SDCARD_FILE_HEADER_CWA ",cwa"
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+#define SDCARD_FILE_HEADER_VOLTAGE ",voltage"
 #endif
 
-bool sdcard_init(void);
+bool sdcard_init(bool create = true);
+void sdcard_close(void);
 void sdcardWriteData(uint16_t, uint16_t, uint16_t = 0);
 
 #endif // _SDCARD_H

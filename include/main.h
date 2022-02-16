@@ -7,6 +7,8 @@
 #include <esp_coexist.h>     // needed for coex version display
 #include <esp_wifi.h>        // needed for wifi init / deinit
 
+#include <libpax_helpers.h>
+
 #include "globals.h"
 #include "reset.h"
 #include "i2c.h"
@@ -18,9 +20,7 @@
 #include "sensor.h"
 #include "lorawan.h"
 #include "timekeeper.h"
-#include "corona.h"
 #include "boot.h"
-#include "libpax_helpers.h"
 #include "power.h"
 #include "antenna.h"
 

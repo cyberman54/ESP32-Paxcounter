@@ -25,61 +25,53 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 // Tasks and timers:
 
-Task          Core  Prio  Purpose
+Task          	Core  Prio  Purpose
 -------------------------------------------------------------------------------
-ledloop       0     3     blinks LEDs
-spiloop       0     2     reads/writes data on spi interface
-IDLE          0     0     ESP32 arduino scheduler -> runs wifi sniffer
+ledloop*      	1     1    blinks LEDs
+spiloop#      	0     2    reads/writes data on spi interface
+lmictask*     	1     2    MCCI LMiC LORAWAN stack
+clockloop#    	1     6    generates realtime telegrams for external clock
+mqttloop#     	1     5    reads/writes data on ETH interface
+timesync_proc#	1     7    processes realtime time sync requests
+irqhandler#   	1     4    application IRQ (i.e. displayrefresh)
+gpsloop*      	1     1    reads data from GPS via serial or i2c
+lorasendtask# 	1     2    feeds data from lora sendqueue to lmcic
+rmcd_process# 	1     1    Remote command interpreter loop
 
-lmictask      1     2     MCCI LMiC LORAWAN stack
-clockloop     1     4     generates realtime telegrams for external clock
-mqttloop      1     2     reads/writes data on ETH interface
-timesync_proc 1     3     processes realtime time sync requests
-irqhandler    1     2     cyclic tasks (i.e. displayrefresh) triggered by timers
-gpsloop       1     1     reads data from GPS via serial or i2c
-lorasendtask  1     1     feeds data from lora sendqueue to lmcic
-rmcd_process  1     1     Remote command interpreter loop
-IDLE          1     0     ESP32 arduino scheduler -> runs wifi channel rotator
+* spinning task, always ready
+# blocked/waiting task
 
 Low priority numbers denote low priority tasks.
-
-NOTE: Changing any timings will have impact on time accuracy of whole code.
-So don't do it if you do not own a digital oscilloscope.
+-------------------------------------------------------------------------------
 
 // ESP32 hardware timers
 -------------------------------------------------------------------------------
 0	displayIRQ -> display refresh -> 40ms (DISPLAYREFRESH_MS)
 1 ppsIRQ -> pps clock irq -> 1sec
+2 (unused)
 3	MatrixDisplayIRQ -> matrix mux cycle -> 0,5ms (MATRIX_DISPLAY_SCAN_US)
-
-
-// Interrupt routines
--------------------------------------------------------------------------------
-
-irqHandlerTask (Core 1), see irqhandler.cpp
-
-fired by hardware
-DisplayIRQ      -> esp32 timer 0
-CLOCKIRQ        -> esp32 timer 1 or external GPIO (RTC_INT or GPS_INT)
-MatrixDisplayIRQ-> esp32 timer 3
-ButtonIRQ       -> external GPIO
-PMUIRQ          -> PMU chip GPIO
-
-fired by software
-TIMESYNC_IRQ    -> setTimeSyncIRQ() -> Ticker.h
-CYCLIC_IRQ      -> setCyclicIRQ() -> Ticker.h
-SENDCYCLE_IRQ   -> setSendIRQ() -> xTimer
-BME_IRQ         -> setBMEIRQ() -> Ticker.h
-
-ClockTask (Core 1), see timekeeper.cpp
-
-fired by hardware
-CLOCKIRQ        -> esp32 timer 1
 
 
 // External RTC timer (if present)
 -------------------------------------------------------------------------------
 triggers pps 1 sec impulse
+
+
+// Interrupt routines
+-------------------------------------------------------------------------------
+
+ISRs fired by CPU or GPIO:
+DisplayIRQ      <- esp32 timer 0
+CLOCKIRQ        <- esp32 timer 1 or GPIO (RTC_INT)
+MatrixDisplayIRQ<- esp32 timer 3
+ButtonIRQ       <- GPIO <- Button
+PMUIRQ          <- GPIO <- PMU chip
+
+Application IRQs fired by software:
+TIMESYNC_IRQ    <- setTimeSyncIRQ() <- Ticker.h
+CYCLIC_IRQ      <- setCyclicIRQ() <- Ticker.h
+SENDCYCLE_IRQ   <- setSendIRQ() <- xTimer or libpax callback
+BME_IRQ         <- setBMEIRQ() <- Ticker.h
 
 */
 
@@ -126,7 +118,7 @@ void setup() {
   snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
            PROGVERSION, RTC_runmode, RTC_restarts);
-  ESP_LOGI(TAG, "code build date: %d", _COMPILETIME);
+  ESP_LOGI(TAG, "code build date: %d", compileTime());
 
   // print chip information on startup if in verbose mode after coldstart
 #if (VERBOSE)
@@ -244,9 +236,9 @@ void setup() {
                           "ledloop",    // name of task
                           1024,         // stack size of task
                           (void *)1,    // parameter of the task
-                          3,            // priority of the task
+                          1,            // priority of the task
                           &ledLoopTask, // task handle
-                          0);           // CPU core
+                          1);           // CPU core
 #endif
 
 // initialize wifi antenna
@@ -328,7 +320,7 @@ void setup() {
     ESP_LOGI(TAG, "Starting GPS Feed...");
     xTaskCreatePinnedToCore(gps_loop,  // task function
                             "gpsloop", // name of task
-                            4096,      // stack size of task
+                            8192,      // stack size of task
                             (void *)1, // parameter of the task
                             1,         // priority of the task
                             &GpsTask,  // task handle
@@ -339,14 +331,8 @@ void setup() {
 // initialize sensors
 #if (HAS_SENSORS)
 #if (HAS_SENSOR_1)
-#if (COUNT_ENS)
-  ESP_LOGI(TAG, "init CWA-counter");
-  if (cwa_init())
-    strcat_P(features, " CWA");
-#else
   strcat_P(features, " SENS(1)");
   sensor_init();
-#endif
 #endif
 #if (HAS_SENSOR_2)
   strcat_P(features, " SENS(2)");
@@ -432,7 +418,7 @@ void setup() {
                           "irqhandler",    // name of task
                           4096,            // stack size of task
                           (void *)1,       // parameter of the task
-                          2,               // priority of the task
+                          4,               // priority of the task
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
@@ -494,8 +480,7 @@ void setup() {
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
 // only if we have a timesource we do timesync
-#if ((TIME_SYNC_LORAWAN) || (TIME_SYNC_LORASERVER) || (HAS_GPS) ||             \
-     defined HAS_RTC)
+#if ((TIME_SYNC_LORAWAN) || (TIME_SYNC_LORASERVER) || (HAS_GPS) || (HAS_RTC))
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting Clock Controller...");
@@ -507,8 +492,7 @@ void setup() {
 #endif
 
   ESP_LOGI(TAG, "Starting Timekeeper...");
-  _ASSERT(timepulse_init()); // setup pps timepulse
-  timepulse_start();         // starts pps and cyclic time sync
+  _ASSERT(timepulse_init()); // starts pps and cyclic time sync
   strcat_P(features, " TIME");
 
 #endif // timesync

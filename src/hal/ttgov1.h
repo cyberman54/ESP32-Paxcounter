@@ -14,7 +14,7 @@
 
 #define HAS_DISPLAY 1 // OLED-Display on board
 //#define MY_DISPLAY_FLIP  1 // uncomment this for rotated display
-#define HAS_LED LED_BUILTIN
+#define HAS_LED LED_BUILTIN // set to NOT_A_PIN to disable
 #define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW
 #define HAS_BUTTON KEY_BUILTIN
 

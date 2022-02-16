@@ -19,9 +19,9 @@ static const char TAG[] = __FILE__;
 // G = GPS / R = RTC / L = LORA / * = no sync / ? = never synced
 const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 
-bool volatile TimePulseTick = false;
+DRAM_ATTR bool TimePulseTick = false;
+DRAM_ATTR unsigned long lastPPS = millis();
 timesource_t timeSource = _unsynced;
-time_t _COMPILETIME = compileTime(__DATE__);
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
 
@@ -40,8 +40,7 @@ Ticker timesyncer;
 void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 void calibrateTime(void) {
-  ESP_LOGD(TAG, "[%0.3f] calibrateTime, timeSource == %d", _seconds(),
-           timeSource);
+
   time_t t = 0;
   uint16_t t_msec = 0;
 
@@ -57,7 +56,7 @@ void calibrateTime(void) {
 
 // has RTC -> fallback to RTC time
 #ifdef HAS_RTC
-    t = get_rtctime();
+    t = get_rtctime(&t_msec);
     // set time from RTC - method will check if time is valid
     setMyTime((uint32_t)t, t_msec, _rtc);
 #endif
@@ -101,25 +100,26 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
       vTaskDelay(pdMS_TO_TICKS(1000 - t_msec % 1000));
     }
 
+    // from here on we are on top of next second
+
     tv.tv_sec = time_to_set;
     tv.tv_usec = 0;
     sntp_sync_time(&tv);
 
     ESP_LOGI(TAG, "[%0.3f] UTC time: %d.000 sec", _seconds(), time_to_set);
 
-    // if we have a software pps timer, shift it to top of second
-    if (ppsIRQ != NULL) {
-
-      timerWrite(ppsIRQ, 0); // reset pps timer
-      CLOCKIRQ();            // fire clock pps, this advances time 1 sec
-    }
-
-// if we have got an external timesource, set RTC time and shift RTC_INT pulse
-// to top of second
+    // if we have a precise time timesource, set RTC time and shift RTC_INT
+    // pulse to top of second
 #ifdef HAS_RTC
     if ((mytimesource == _gps) || (mytimesource == _lora))
       set_rtctime(time_to_set);
 #endif
+
+    // if we have a software pps timer, shift it to top of second
+    if (ppsIRQ != NULL) {
+      timerWrite(ppsIRQ, 0); // reset pps timer
+      CLOCKIRQ();            // fire clock pps to advance wall clock by 1 sec
+    }
 
     timeSource = mytimesource; // set global variable
 
@@ -132,7 +132,7 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
              "[%0.3f] Failed to synchronise time from source %c | unix sec "
              "obtained from source: %d | unix sec at program compilation: %d",
              _seconds(), timeSetSymbols[mytimesource], time_to_set,
-             _COMPILETIME);
+             compileTime());
   }
 }
 
@@ -140,29 +140,26 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
 uint8_t timepulse_init() {
 
   // set esp-idf API sntp sync mode
-  //sntp_init();
+  // sntp_init();
   sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
 
-// use time pulse from GPS as time base with fixed 1Hz frequency
+// if we have, use PPS time pulse from GPS for syncing time on top of second
 #ifdef GPS_INT
-
-  // setup external interupt pin for rising edge GPS INT
+  // setup external interupt pin for rising edge of GPS PPS
   pinMode(GPS_INT, INPUT_PULLDOWN);
-  // setup external rtc 1Hz clock as pulse per second clock
-  ESP_LOGI(TAG, "Timepulse: external (GPS)");
-  return 1; // success
+  attachInterrupt(digitalPinToInterrupt(GPS_INT), GPSIRQ, RISING);
+#endif
 
-// use pulse from on board RTC chip as time base with fixed frequency
-#elif defined RTC_INT
+// if we have, use pulse from on board RTC chip as time base for calendar time
+#if defined RTC_INT
 
-  // setup external interupt pin for falling edge RTC INT
-  pinMode(RTC_INT, INPUT_PULLUP);
-
-  // setup external rtc 1Hz clock as pulse per second clock
+  // setup external rtc 1Hz clock pulse
   if (I2C_MUTEX_LOCK()) {
     Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
     Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
     I2C_MUTEX_UNLOCK();
+    pinMode(RTC_INT, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
     ESP_LOGI(TAG, "Timepulse: external (RTC)");
     return 1; // success
   } else {
@@ -172,33 +169,39 @@ uint8_t timepulse_init() {
   return 1; // success
 
 #else
-  // use ESP32 hardware timer as time base with adjustable frequency
+  // use ESP32 hardware timer as time base for calendar time
   ppsIRQ = timerBegin(1, 8000, true);   // set 80 MHz prescaler to 1/10000 sec
   timerAlarmWrite(ppsIRQ, 10000, true); // 1000ms
+  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
+  timerAlarmEnable(ppsIRQ);
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
   return 1; // success
 
 #endif
-} // timepulse_init
 
-void timepulse_start(void) {
-#ifdef GPS_INT // start external clock gps pps line
-  attachInterrupt(digitalPinToInterrupt(GPS_INT), CLOCKIRQ, RISING);
-#elif defined RTC_INT // start external clock rtc
-  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
-#else                 // start internal clock esp32 hardware timer
-  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
-  timerAlarmEnable(ppsIRQ);
-#endif
+  // start cyclic time sync
+  timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
 
   // get time if we don't have one
   if (timeSource != _set)
     setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
-  // start cyclic time sync
-  timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
+
+} // timepulse_init
+
+// interrupt service routine triggered by GPS PPS
+void IRAM_ATTR GPSIRQ(void) {
+
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  // take timestamp
+  lastPPS = millis(); // last time of pps
+
+  // yield only if we should
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
 }
 
-// interrupt service routine triggered by either pps or esp32 hardware timer
+// interrupt service routine triggered by esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
 
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -211,9 +214,7 @@ void IRAM_ATTR CLOCKIRQ(void) {
 
 // flip time pulse ticker, if needed
 #ifdef HAS_DISPLAY
-#if (defined GPS_INT || defined RTC_INT)
-  TimePulseTick = !TimePulseTick; // flip pulse ticker
-#endif
+  TimePulseTick = !TimePulseTick; // flip global variable pulse ticker
 #endif
 
   // yield only if we should
@@ -224,7 +225,9 @@ void IRAM_ATTR CLOCKIRQ(void) {
 // helper function to check plausibility of a given epoch time
 bool timeIsValid(time_t const t) {
   // is t a time in the past? we use compile time to guess
-  return (t > _COMPILETIME);
+  // compile time is some local time, but we do not know it's time zone
+  // thus, we go 1 full day back to be sure to catch a time in the past
+  return (t > (compileTime() - 86400));
 }
 
 // helper function to calculate serial transmit time
@@ -252,7 +255,7 @@ void clock_init(void) {
                           "clockloop", // name of task
                           3072,        // stack size of task
                           (void *)1,   // task parameter
-                          4,           // priority of the task
+                          6,           // priority of the task
                           &ClockTask,  // task handle
                           1);          // CPU core
 
@@ -283,7 +286,7 @@ void clock_loop(void *taskparameter) { // ClockTask
     // set calendar time for next second of clock output
     tt = (time_t)(current_time + 1);
     localtime_r(&tt, &t);
-    mktime(&t);
+    tt = mktime(&t);
 
 #if defined HAS_IF482
 
@@ -293,13 +296,13 @@ void clock_loop(void *taskparameter) { // ClockTask
     if (xTaskNotifyWait(0x00, ULONG_MAX, &current_time, txDelay) == pdTRUE) {
       tt = (time_t)(current_time + 1);
       localtime_r(&tt, &t);
-      mktime(&t);
+      tt = mktime(&t);
     }
 
     // send IF482 telegram
-    IF482.print(IF482_Frame(t)); // note: telegram is for *next* second
+    IF482.print(IF482_Frame(tt)); // note: telegram is for *next* second
 
-    ESP_LOGD(TAG, "[%0.3f] IF482: %s", _seconds(), IF482_Frame(t));
+    ESP_LOGD(TAG, "[%0.3f] IF482: %s", _seconds(), IF482_Frame(tt).c_str());
 
 #elif defined HAS_DCF77
 
@@ -340,7 +343,7 @@ void clock_loop(void *taskparameter) { // ClockTask
 } // clock_loop()
 
 // we use compile date to create a time_t reference "in the past"
-time_t compileTime(const String compile_date) {
+time_t compileTime(void) {
 
   char s_month[5];
   int year;
@@ -353,10 +356,11 @@ time_t compileTime(const String compile_date) {
   if (secs == -1) {
 
     // determine date
-    // we go one day back to bypass unknown timezone of local time
-    sscanf(compile_date.c_str(), "%s %d %d", s_month, &t.tm_mday - 1, &year);
+    sscanf(__DATE__, "%s %d %d", s_month, &t.tm_mday, &year);
     t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
     t.tm_year = year - 1900;
+    // determine time
+    sscanf(__TIME__, "%d:%d:%d", &t.tm_hour, &t.tm_min, &t.tm_sec);
 
     // convert to secs local time
     secs = mktime(&t);

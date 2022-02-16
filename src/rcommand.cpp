@@ -1,7 +1,6 @@
 // Basic Config
 #include "globals.h"
 #include "rcommand.h"
-#include "libpax_helpers.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;
@@ -397,15 +396,6 @@ void set_flush(uint8_t val[]) {
   // used to open receive window on LoRaWAN class a nodes
 };
 
-void set_enscount(uint8_t val[]) {
-  ESP_LOGI(TAG, "Remote command: set ENS_COUNT to %s", val[0] ? "on" : "off");
-  cfg.enscount = val[0] ? 1 : 0;
-  if (val[0])
-    cfg.payloadmask |= (uint8_t)SENSOR1_DATA;
-  else
-    cfg.payloadmask &= (uint8_t)~SENSOR1_DATA;
-}
-
 void set_loadconfig(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: load config from NVRAM");
   loadConfig();
@@ -430,7 +420,7 @@ static const cmd_t table[] = {
     {0x10, set_rgblum, 1},        {0x13, set_sensor, 2},
     {0x14, set_payloadmask, 1},   {0x15, set_bme, 1},
     {0x16, set_batt, 1},          {0x17, set_wifiscan, 1},
-    {0x18, set_enscount, 1},      {0x19, set_sleepcycle, 2},
+    {0x18, set_flush, 0},         {0x19, set_sleepcycle, 2},
     {0x20, set_loadconfig, 0},    {0x21, set_saveconfig, 0},
     {0x80, get_config, 0},        {0x81, get_status, 0},
     {0x83, get_batt, 0},          {0x84, get_gps, 0},
@@ -493,7 +483,7 @@ void rcmd_process(void *pvParameters) {
     rcmd_execute(RcmdBuffer.cmd, RcmdBuffer.cmdLen);
   }
 
-  delay(2); // yield to CPU
+  delay(5); // yield to CPU
 } // rcmd_process()
 
 // enqueue remote command

@@ -30,11 +30,6 @@
 #define HAS_ANTENNA_SWITCH  (21) // pin for switching wifi antenna (P12)
 #define WIFI_ANTENNA 0    // 0 = internal, 1 = external
 
-// uncomment defines in this section ONLY if your LoPy lives  on a PYTRACK BOARD
-//#define HAS_GPS 1
-//#define GPS_I2C GPIO_NUM_25, GPIO_NUM_26 // SDA (P22), SCL (P21)
-//#define GPS_ADDR 0x10
-
 // uncomment defines in this section ONLY if your LoPy lives on a EXPANSION BOARD
 //#define HAS_LED (12) // use if LoPy is on Expansion Board, this has a user LED
 //#define LED_ACTIVE_LOW 1 // use if LoPy is on Expansion Board, this has a user LED

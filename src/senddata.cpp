@@ -5,6 +5,8 @@ void setSendIRQ(TimerHandle_t xTimer) {
   xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 }
 
+void setSendIRQ(void) { setSendIRQ(NULL); }
+
 void initSendDataTimer(uint8_t sendcycle) {
   static TimerHandle_t SendDataTimer = NULL;
 
@@ -65,30 +67,25 @@ void SendPayload(uint8_t port) {
   mqtt_enqueuedata(&SendBuffer);
 #endif
 
-// write data to sdcard, if present
-#if (HAS_SDCARD)
-  if (port == COUNTERPORT) {
-    sdcardWriteData(libpax_macs_wifi, libpax_macs_ble
-#if (COUNT_ENS)
-                    ,
-                    cwa_report()
-#endif
-    );
-  }
-#endif
-
 } // SendPayload
 
-// interrupt triggered function to prepare payload to send
+// timer triggered function to prepare payload to send
 void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
+
 #if (HAS_GPS)
   gpsStatus_t gps_status;
 #endif
 #if (HAS_SDS011)
   sdsStatus_t sds_status;
+#endif
+#if ((WIFICOUNTER) || (BLECOUNTER))
+  struct count_payload_t count =
+      count_from_libpax; // copy values from global libpax var
+  ESP_LOGD(TAG, "Sending count results: pax=%d / wifi=%d / ble=%d", count.pax,
+           count.wifi_count, count.ble_count);
 #endif
 
   while (bitmask) {
@@ -97,14 +94,14 @@ void sendData() {
 #if ((WIFICOUNTER) || (BLECOUNTER))
     case COUNT_DATA:
       payload.reset();
+
 #if !(PAYLOAD_OPENSENSEBOX)
-      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
-      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+      payload.addCount(count.wifi_count, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
-        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
+        payload.addCount(count.ble_count, MAC_SNIFF_BLE);
       }
 #endif
+
 #if (HAS_GPS)
       if (GPSPORT == COUNTERPORT) {
         // send GPS position only if we have a fix
@@ -115,23 +112,35 @@ void sendData() {
           ESP_LOGD(TAG, "No valid GPS position");
       }
 #endif
+
 #if (PAYLOAD_OPENSENSEBOX)
-      ESP_LOGI(TAG, "Sending libpax wifi count: %d", libpax_macs_wifi);
-      payload.addCount(libpax_macs_wifi, MAC_SNIFF_WIFI);
+      payload.addCount(count.wifi_count, MAC_SNIFF_WIFI);
       if (cfg.blescan) {
-        ESP_LOGI(TAG, "Sending libpax ble count: %d", libpax_macs_ble);
-        payload.addCount(libpax_macs_ble, MAC_SNIFF_BLE);
+        payload.addCount(count.ble_count, MAC_SNIFF_BLE);
 #endif
+
 #if (HAS_SDS011)
         sds011_store(&sds_status);
         payload.addSDS(sds_status);
 #endif
-        SendPayload(COUNTERPORT);
+
 #ifdef HAS_DISPLAY
-        dp_plotCurve(libpax_macs_ble + libpax_macs_wifi, true);
+        dp_plotCurve(count.pax, true);
 #endif
-        break;
+
+#if (HAS_SDCARD)
+        sdcardWriteData(count.wifi_count, count.ble_count
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+                        ,
+                        read_voltage()
 #endif
+        );
+#endif // HAS_SDCARD
+
+        SendPayload(COUNTERPORT);
+        break; // case COUNTDATA
+
+#endif // ((WIFICOUNTER) || (BLECOUNTER))
 
 #if (HAS_BME)
       case MEMS_DATA:
@@ -162,10 +171,6 @@ void sendData() {
         payload.reset();
         payload.addSensor(sensor_read(1));
         SendPayload(SENSOR1PORT);
-#if (COUNT_ENS)
-        if (cfg.countermode != 1)
-          cwa_clear();
-#endif
         break;
 #endif
 #if (HAS_SENSOR_2)

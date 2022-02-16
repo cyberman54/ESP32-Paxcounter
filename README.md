@@ -202,7 +202,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 # Power saving mode
 
-Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT). Set *#define SLEEPCYCLE* in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle. Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by  MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See *power.cpp* for power management, and *reset.cpp* for sleep and wakeup logic.
+Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT / SD-Card). Set *#define SLEEPCYCLE* in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle. Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See *power.cpp* for power management, and *reset.cpp* for sleep and wakeup logic.
 
 # Time sync
 
@@ -216,22 +216,13 @@ Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time tele
 
 This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set PAYLOAD_OPENSENSEBOX to 1. Register a new sensebox on https://opensensemap.org/. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]` 
 
-# Covid-19 Exposure Notification System beacon detection (currently NOT working with v3.0.x, use v2.4.x for this feature)
-
-Bluetooth low energy service UUID 0xFD6F, used by Google/Apple COVID-19 Exposure Notification System, can be monitored and counted. By comparing with the total number of observed devices this <A HREF="https://linux-fuer-wi.blogspot.com/2020/10/suche-die-zahl-64879.html">gives an indication</A> how many people staying in proximity are using Apps for tracing COVID-19 exposures, e.g. in Germany the "Corona Warn App". To achive best results with this funcion, use following settings in `paxcounter.conf`:
-
-	#define COUNT_ENS		1	// enable ENS monitoring function
-	#define BLECOUNTER		1	// enable bluetooth sniffing
-	#define WIFICOUNTER		0	// disable wifi sniffing (improves BLE scan speed)
-	#define HAS_SENSOR_1		1	// optional, in board's hal file: transmit ENS counter data to server
-
 # SD-card
 
-Data can be stored on an SD-card if one is availabe. Simply choose the file in src/hal and add the following lines to your hal-file:
+Data can be stored on SD-card if the board provides an SD card interface, either with SPI or MMC mode. To enable this feature, specify interface mode and hardware pins in board's hal file (src/hal/<board.h>):
 
-    #define HAS_SDCARD 1     // SD-card-reader/writer, using SPI interface
+    #define HAS_SDCARD 1     // SD-card interface, using SPI mode
 	OR
-	#define HAS_SDCARD 2     // SD-card-reader/writer, using SDMMC interface
+	#define HAS_SDCARD 2     // SD-card interface, using MMC mode
 
     // Pins for SPI interface
     #define SDCARD_CS   (13) // fill in the correct numbers for your board
@@ -239,31 +230,24 @@ Data can be stored on an SD-card if one is availabe. Simply choose the file in s
     #define SDCARD_MISO (2)
     #define SDCARD_SCLK (14)
 
-Please choose the correct number for the connection of the reader/writer.
-
-This is an example of a board with SD-card: https://www.aliexpress.com/item/32990008126.html
-In this case you take the file src/hal/ttgov21new.h and add the lines given above (numbers given are for this board).
+This is an example of a board with MMC SD-card interface: https://www.aliexpress.com/item/32915894264.html. For this board use file src/hal/ttgov21new.h and add the lines given above.
 
 Another approach would be this tiny board: https://www.aliexpress.com/item/32424558182.html (needs 5V).
-In this case you choose the correct file for your ESP32-board in the src/hal-directory and add the lines given above to the correct h-file. Please correct the numbers given in the example to the numbers used corresponding to your wiring.
+In this case you choose the correct file for your ESP32-board in the src/hal-directory and add the lines given above. Edit the pin numbers given in the example, according to your wiring.
 
-Some hints:
-These cheap devices often handle SD-cards up to 32GB, not bigger ones. They can handle files in the old DOS-way, to say the filenames are in the 8.3-format. And they often cannot handle subdirectories.
+Data is written on SD-card to a single file. After 3 write operations the data is flushed to the disk to minimize flash write cycles. Thus, up to the last 3 records of data will get lost when the PAXCOUNTER looses power during operation.
 
-The software included here writes data in a file named PAXCOUNT.xx, where xx can range from 00 to 99. The software starts with 00, checks to see if such a file already exists and if yes it will continue with the next number (up to 99 - in this case it will return no sd-card). So an existing file will not be overwritten.
+Format of the resulting file is CSV, thus easy import in LibreOffice, Excel, Influx, etc. Each record contains timestamp (in ISO8601 format), paxcount (wifi and ble) and battery voltage (optional). Voltage is logged if the device has a battery voltage sensor (to be configured in board hal file).
 
-The data is written to the card and after 3 write-operations the data is flushed to the disk. So maybe the last 3 minutes of data get lost when you disconnect the PAXCOUNTER from power.
+File contents example:
 
-And finally: this is the data written to the disk:
-
-    date, time, wifi, bluet
-    00.00.1970,00:01:09,2,0
-    00.00.1970,00:02:09,1,0
-    00.00.1970,00:03:09,2,0
-
-Format of the data is CSV, which can easily imported into LibreOffice, Excel, .....
-
-If you want to change this please look into src/sdcard.cpp and include/sdcard.h.
+	timestamp,wifi,ble[,voltage]
+	2022-01-30T21:12:41Z,11,25[,4100]
+	2022-01-30T21:14:24Z,10,21[,4070]
+	2022-01-30T21:16:08Z,12,26[,4102]
+	2022-01-30T21:17:52Z,11,26[,4076]
+	
+If you want to change this, modify src/sdcard.cpp and include/sdcard.h.
 
 # Integration into "The Things Stack Community Edition" aka "The Things Stack V3"
 
@@ -383,7 +367,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Ports #10, #11, #12:** User sensor data
 
-	Format is specified by user in function `sensor_read(uint8_t sensor)`, see `src/sensor.cpp`. Port #10 is also used for ENS counter (2 bytes = 16 bit), if ENS is compiled AND ENS data transfer is enabled
+	Format is specified by user in function `sensor_read(uint8_t sensor)`, see `src/sensor.cpp`.
 
 # Remote control
 
@@ -503,7 +487,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
         0x02 = RESERVED_DATA
         0x04 = MEMS_DATA
         0x08 = GPS_DATA
-        0x10 = SENSOR_1_DATA (also ENS counter)
+        0x10 = SENSOR_1_DATA
         0x20 = SENSOR_2_DATA
         0x40 = SENSOR_3_DATA
         0x80 = BATT_DATA
@@ -524,10 +508,9 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	0 = disabled
 	1 = enabled [default]
     
-0x18 set ENS counter on/off
+0x18 reserved
 
-    0 = disabled [default]
-    1 = enabled
+    unused, does nothing
 
 0x19 set sleep cycle
 
@@ -621,4 +604,4 @@ Thanks to
 - [terrillmoore](https://github.com/mcci-catena) for maintaining the LMIC for arduino LoRaWAN stack
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
-- [August Quint](https://github.com/AugustQu) for adding SD card data logger, SDS011 and ENS support
+- [August Quint](https://github.com/AugustQu) for adding SD card data logger and SDS011 support

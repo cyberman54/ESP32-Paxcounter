@@ -5,10 +5,7 @@
 #include "cyclic.h"
 #include "qrcode.h"
 #include "power.h"
-
-#if (COUNT_ENS)
-#include "corona.h"
-#endif
+#include "timekeeper.h"
 
 #if (HAS_DISPLAY) == 1
 #include <OneBitDisplay.h>

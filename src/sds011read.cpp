@@ -10,35 +10,37 @@ static const char TAG[] = __FILE__;
 #if (HAS_IF482)
 #error cannot use IF482 together with SDS011 (both use UART#2)
 #endif
-// UART(2) is unused in this project
-static HardwareSerial sdsSerial(2); // so we use it here
-static SDS011 sdsSensor;            // fine dust sensor
 
-// the results of the sensor:
-static float pm10, pm25;
-boolean isSDS011Active;
+SdsDustSensor sds(Serial2);
+
+bool isSDS011Active = false;
+static float pm10 = 0.0, pm25 = 0.0;
 
 // init
 bool sds011_init() {
-  pm25 = pm10 = 0.0;
-  sdsSensor.begin(&sdsSerial, SDS_RX, SDS_TX);
-  sds011_sleep(); // we do sleep/wakup by ourselves
+  sds.begin(9600, SERIAL_8N1, SDS_RX, SDS_TX);
+  sds011_wakeup();
+  ESP_LOGI(TAG, "SDS011: %s", sds.queryFirmwareVersion().toString().c_str());
+  sds.setQueryReportingMode();
+
   return true;
 }
 
 // reading data:
 void sds011_loop() {
   if (isSDS011Active) {
-    int sdsErrorCode = sdsSensor.read(&pm25, &pm10);
-    if (sdsErrorCode) {
-      pm25 = pm10 = 0.0;
-      ESP_LOGI(TAG, "SDS011 error: %d", sdsErrorCode);
+    PmResult pm = sds.queryPm();
+    if (!pm.isOk()) {
+      ESP_LOGE(TAG, "SDS011: query error %s", pm.statusToString().c_str());
+      pm10 = pm25 = 0.0;
     } else {
-      ESP_LOGI(TAG, "fine-dust-values: %5.1f,%4.1f", pm10, pm25);
+      ESP_LOGI(TAG, "SDS011: %s", pm.toString().c_str());
+      pm10 = pm.pm10;
+      pm25 = pm.pm25;
     }
+    ESP_LOGD(TAG, "SDS011: go to sleep");
     sds011_sleep();
   }
-  return;
 }
 
 // retrieving stored data:
@@ -49,17 +51,16 @@ void sds011_store(sdsStatus_t *sds_store) {
 
 // putting the SDS-sensor to sleep
 void sds011_sleep(void) {
-  sdsSensor.sleep();
-  isSDS011Active = false;
+  WorkingStateResult state = sds.sleep();
+  isSDS011Active = state.isWorking();
 }
 
 // start the SDS-sensor
 // needs 30 seconds for warming up
 void sds011_wakeup() {
-  if (!isSDS011Active) {
-    sdsSensor.wakeup();
-    isSDS011Active = true;
-  }
+  WorkingStateResult state = sds.wakeup();
+  isSDS011Active = state.isWorking();
+  ESP_LOGD(TAG, "SDS011: %s", state.toString().c_str());
 }
 
 #endif // HAS_SDS011

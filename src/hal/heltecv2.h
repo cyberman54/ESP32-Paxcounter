@@ -20,7 +20,7 @@
 #define CFG_sx1276_radio 1
 
 #define HAS_DISPLAY 1 // OLED-Display on board
-#define HAS_LED LED_BUILTIN                           // white LED on board
+#define HAS_LED LED_BUILTIN                           // white LED on board (set to NOT_A_PIN to disable)
 #define HAS_BUTTON KEY_BUILTIN                        // button "PROG" on board
 
 #define BAT_MEASURE_ADC ADC2_GPIO13_CHANNEL  // battery probe GPIO pin

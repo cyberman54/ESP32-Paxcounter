@@ -9,10 +9,6 @@ static const char TAG[] = __FILE__;
 
 Ticker cyclicTimer;
 
-#if (HAS_SDS011)
-extern boolean isSDS011Active;
-#endif
-
 void setCyclicIRQ() { xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits); }
 
 // do all housekeeping
@@ -22,44 +18,62 @@ void doHousekeeping() {
   if ((RTC_runmode == RUNMODE_UPDATE) || (RTC_runmode == RUNMODE_MAINTENANCE))
     do_reset(true); // warmstart
 
-  // heap and task storage debugging
+  // try to get time if we don't yet have a recent timesource
+  if (timeSource == _unsynced || timeSource == _set)
+    calibrateTime();
+
+  // print heap and task storage information
   ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
            ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
            ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
-  ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(irqHandlerTask),
-           eTaskGetState(irqHandlerTask));
-  ESP_LOGD(TAG, "Rcommand interpreter %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
+
+  if (irqHandlerTask != NULL)
+    ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(irqHandlerTask),
+             eTaskGetState(irqHandlerTask));
+  if (rcmdTask != NULL)
+    ESP_LOGD(TAG, "Rcommand interpreter %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
+
 #if (HAS_LORA)
-  ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));
-  ESP_LOGD(TAG, "Lorasendtask %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(lorasendTask),
-           eTaskGetState(lorasendTask));
+  if (lmicTask != NULL)
+    ESP_LOGD(TAG, "LMiCtask %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(lmicTask), eTaskGetState(lmicTask));
+  if (lorasendTask != NULL)
+    ESP_LOGD(TAG, "Lorasendtask %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(lorasendTask),
+             eTaskGetState(lorasendTask));
 #endif
+
 #if (HAS_GPS)
-  ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
+  if (GpsTask != NULL)
+    ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
+
 #ifdef HAS_SPI
-  ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(spiTask), eTaskGetState(spiTask));
+  if (spiTask != NULL)
+    ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(spiTask), eTaskGetState(spiTask));
 #endif
+
 #ifdef HAS_MQTT
-  ESP_LOGD(TAG, "MQTTloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(mqttTask), eTaskGetState(mqttTask));
+  if (mqttTask != NULL)
+    ESP_LOGD(TAG, "MQTTloop %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(mqttTask), eTaskGetState(mqttTask));
 #endif
 
 #if (defined HAS_DCF77 || defined HAS_IF482)
-  ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(ClockTask), eTaskGetState(ClockTask));
+  if (ClockTask != NULL)
+    ESP_LOGD(TAG, "Clockloop %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(ClockTask), eTaskGetState(ClockTask));
 #endif
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-  ESP_LOGD(TAG, "LEDloop %d bytes left | Taskstate = %d",
-           uxTaskGetStackHighWaterMark(ledLoopTask),
-           eTaskGetState(ledLoopTask));
+  if (ledLoopTask != NULL)
+    ESP_LOGD(TAG, "LEDloop %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(ledLoopTask),
+             eTaskGetState(ledLoopTask));
 #endif
 
 // read battery voltage into global variable
@@ -106,10 +120,8 @@ void doHousekeeping() {
 
 #if (HAS_SDS011)
   if (isSDS011Active) {
-    ESP_LOGD(TAG, "SDS011: go to sleep");
     sds011_loop();
   } else {
-    ESP_LOGD(TAG, "SDS011: wakeup");
     sds011_wakeup();
   }
 #endif

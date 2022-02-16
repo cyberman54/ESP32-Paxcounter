@@ -86,18 +86,19 @@ static const char TAG[] = __FILE__;
 
 String IF482_Frame(time_t t) {
 
-  char mon, out[IF482_FRAME_SIZE + 1];
+  char mon, out[IF482_FRAME_SIZE + 1], buf[IF482_FRAME_SIZE - 3];
 
   if (sntp_get_sync_status() == SNTP_SYNC_STATUS_IN_PROGRESS)
     mon = 'M'; // time had been set but sync not completed
   else
     mon = 'A'; // time has been set and was recently synced
 
-  // generate IF482 telegram
-  // snprintf(out, sizeof(out), "O%cL%s\r", mon, myTZ.dateTime(t, UTC_TIME,
-  // "ymdwHis").c_str());
-
-  // ESP_LOGD(TAG, "[%s] IF482 date/time: %s", ctime(time(NULL), out);
+  // generate IF482 telegram for local time
+  struct tm tt;
+  localtime_r(&t, &tt);
+  mktime(&tt);
+  strftime(buf, sizeof(buf), "%y%m%d%u%H%M%S", &tt);
+  snprintf(out, sizeof(out), "O%cL%s\r", mon, buf);
 
   return out;
 }

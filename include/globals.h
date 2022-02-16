@@ -71,7 +71,6 @@ typedef struct __attribute__((packed)) {
   uint8_t wifiant;       // 0=internal, 1=external (for LoPy/LoPy4)
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t payloadmask;   // bitswitches for payload data
-  uint8_t enscount;      // 0=disabled 1= enabled
 
 #ifdef HAS_BME680
   uint8_t
@@ -111,6 +110,5 @@ typedef struct {
 } sdsStatus_t;
 
 extern char clientId[20];   // unique clientID
-extern time_t _COMPILETIME; // epoch build time
 
 #endif
