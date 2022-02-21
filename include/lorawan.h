@@ -1,3 +1,5 @@
+#if (HAS_LORA)
+
 #ifndef _LORAWAN_H
 #define _LORAWAN_H
 
@@ -49,3 +51,5 @@ void showLoraKeys(void);
 #endif // VERBOSE
 
 #endif
+
+#endif // HAS_LORA

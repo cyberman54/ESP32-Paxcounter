@@ -1,13 +1,5 @@
 #include "timekeeper.h"
 
-#if !(HAS_LORA)
-#if (TIME_SYNC_LORASERVER)
-#error TIME_SYNC_LORASERVER defined, but device has no LORA configured
-#elif (TIME_SYNC_LORAWAN)
-#error TIME_SYNC_LORAWAN defined, but device has no LORA configured
-#endif
-#endif
-
 #if (defined HAS_DCF77 && defined HAS_IF482)
 #error You must define at most one of IF482 or DCF77!
 #endif
@@ -44,48 +36,38 @@ void calibrateTime(void) {
   time_t t = 0;
   uint16_t t_msec = 0;
 
-  // kick off asychronous lora timesync if we have
-#if (HAS_LORA) && ((TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN))
+  // kick off asynchronous lora timesync if we have
+#if (HAS_LORA_TIME)
   timesync_request();
-#endif
-
-  // if no LORA timesource is available, or if we lost time, then fallback to
-  // local time source RTS or GPS
-  if (((!TIME_SYNC_LORASERVER) && (!TIME_SYNC_LORAWAN)) ||
-      (timeSource == _unsynced)) {
-
-// has RTC -> fallback to RTC time
-#ifdef HAS_RTC
-    t = get_rtctime(&t_msec);
-    // set time from RTC - method will check if time is valid
-    setMyTime((uint32_t)t, t_msec, _rtc);
-#endif
-
-// no RTC -> fallback to GPS time
-#if (HAS_GPS)
-    t = get_gpstime(&t_msec);
-    // set time from GPS - method will check if time is valid
-    setMyTime((uint32_t)t, t_msec, _gps);
-#endif
-
-  } // fallback
-
-  else
-
-    // no fallback time source available -> we can't set time
+  if (timeSource == _lora) // did have lora time before?
     return;
+#endif
+
+// get GPS time, if we have
+#if (HAS_GPS)
+  t = get_gpstime(&t_msec);
+  if (setMyTime((uint32_t)t, t_msec, _gps))
+    return;
+#endif
+
+// fallback to RTC time, if we have
+#ifdef HAS_RTC
+  t = get_rtctime(&t_msec);
+  if (setMyTime((uint32_t)t, t_msec, _rtc))
+    return;
+#endif
 
 } // calibrateTime()
 
 // set system time (UTC), calibrate RTC and RTC_INT pps
-void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
+bool IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
                          timesource_t mytimesource) {
 
   struct timeval tv = {0};
 
   // called with invalid timesource?
   if (mytimesource == _unsynced)
-    return;
+    return false;
 
   // increment t_sec if t_msec > 1000
   time_t time_to_set = (time_t)(t_sec + t_msec / 1000);
@@ -126,13 +108,17 @@ void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
     timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
     ESP_LOGD(TAG, "[%0.3f] Timesync finished, time was set | timesource=%d",
              _seconds(), mytimesource);
+    return true;
+
   } else {
+
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
     ESP_LOGV(TAG,
              "[%0.3f] Failed to synchronise time from source %c | unix sec "
              "obtained from source: %d | unix sec at program compilation: %d",
              _seconds(), timeSetSymbols[mytimesource], time_to_set,
              compileTime());
+    return false;
   }
 }
 
@@ -172,7 +158,7 @@ uint8_t timepulse_init() {
   // use ESP32 hardware timer as time base for calendar time
   ppsIRQ = timerBegin(1, 8000, true);   // set 80 MHz prescaler to 1/10000 sec
   timerAlarmWrite(ppsIRQ, 10000, true); // 1000ms
-  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, true);
+  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, false);
   timerAlarmEnable(ppsIRQ);
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
   return 1; // success
