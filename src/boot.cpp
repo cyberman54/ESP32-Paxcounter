@@ -95,7 +95,7 @@ void start_boot_menu(void) {
 
   // setup watchdog, based on esp32 timer2 interrupt
   wdTimer = timerBegin(0, 80, true);              // timer 0, div 80, countup
-  timerAttachInterrupt(wdTimer, &watchdog, true); // callback for device reset
+  timerAttachInterrupt(wdTimer, &watchdog, false); // callback for device reset
   timerAlarmWrite(wdTimer, BOOTDELAY * 1000000, false); // set time in us
   timerAlarmEnable(wdTimer);                            // enable watchdog
 
