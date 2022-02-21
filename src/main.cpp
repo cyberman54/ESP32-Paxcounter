@@ -450,7 +450,7 @@ void setup() {
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
   displayIRQ = timerBegin(0, 80, true);
-  timerAttachInterrupt(displayIRQ, &DisplayIRQ, true);
+  timerAttachInterrupt(displayIRQ, &DisplayIRQ, false);
   timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
   timerAlarmEnable(displayIRQ);
 #endif
@@ -460,7 +460,7 @@ void setup() {
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
   matrixDisplayIRQ = timerBegin(3, 80, true);
-  timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ, true);
+  timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ, false);
   timerAlarmWrite(matrixDisplayIRQ, MATRIX_DISPLAY_SCAN_US, true);
   timerAlarmEnable(matrixDisplayIRQ);
 #endif
@@ -480,14 +480,14 @@ void setup() {
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
 // only if we have a timesource we do timesync
-#if ((TIME_SYNC_LORAWAN) || (TIME_SYNC_LORASERVER) || (HAS_GPS) || (HAS_RTC))
+#if ((HAS_LORA_TIME) || (HAS_GPS) || (HAS_RTC))
 
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting Clock Controller...");
   clock_init();
 #endif
 
-#if (TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)
+#if (HAS_LORA_TIME)
   timesync_init(); // create loraserver time sync task
 #endif
 

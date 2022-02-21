@@ -10,6 +10,8 @@
 #include "dcf77.h"
 #include "esp_sntp.h"
 
+#define HAS_LORA_TIME ((HAS_LORA) && ((TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)))
+
 #define SECS_YR_2000 (946684800UL)    // the time at the start of y2k
 #define GPS_UTC_DIFF 315964800UL      // seconds diff between gps and utc epoch
 #define LEAP_SECS_SINCE_GPSEPOCH 18UL // state of 2021
@@ -32,7 +34,7 @@ void setTimeSyncIRQ(void);
 uint8_t timepulse_init(void);
 bool timeIsValid(time_t const t);
 void calibrateTime(void);
-void IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
+bool IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
                          timesource_t mytimesource);
 time_t compileTime(void);
 time_t mkgmtime(const struct tm *ptm);

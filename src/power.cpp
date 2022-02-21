@@ -43,8 +43,14 @@ void AXP192_powerevent_IRQ(void) {
     ESP_LOGI(TAG, "Battery was removed.");
   if (pmu.isChargingIRQ())
     ESP_LOGI(TAG, "Battery charging.");
-  if (pmu.isChargingDoneIRQ())
+  if (pmu.isChargingDoneIRQ()) {
     ESP_LOGI(TAG, "Battery charging done.");
+#ifdef PMU_LED_RUN_MODE
+    pmu.setChgLEDMode(PMU_LED_RUN_MODE);
+#else
+    pmu.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+#endif
+  }
   if (pmu.isBattTempLowIRQ())
     ESP_LOGI(TAG, "Battery high temperature.");
   if (pmu.isBattTempHighIRQ())
