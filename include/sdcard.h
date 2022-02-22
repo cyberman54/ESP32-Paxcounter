@@ -1,18 +1,18 @@
 #ifndef _SDCARD_H
 #define _SDCARD_H
 
+#if (HAS_SDCARD)
+
 #include "globals.h"
 #include <stdio.h>
 #include <SPI.h>
 
-#if (HAS_SDCARD)
 #if HAS_SDCARD == 1
 #include <SD.h>
 #elif HAS_SDCARD == 2
 #include <SD_MMC.h>
 #else
 #error HAS_SDCARD unknown card reader value, must be either 1 or 2
-#endif
 #endif
 
 #ifdef HAS_SDS011
@@ -64,5 +64,7 @@
 bool sdcard_init(bool create = true);
 void sdcard_close(void);
 void sdcardWriteData(uint16_t, uint16_t, uint16_t = 0);
+
+#endif
 
 #endif // _SDCARD_H

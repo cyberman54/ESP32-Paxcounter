@@ -1,9 +1,9 @@
+#ifdef HAS_RTC // we have hardware RTC
+
 #include "rtctime.h"
 
 // Local logging tag
 static const char TAG[] = __FILE__;
-
-#ifdef HAS_RTC // we have hardware RTC
 
 RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 

@@ -1,6 +1,8 @@
 #ifndef _BMESENSOR_H
 #define _BMESENSOR_H
 
+#if (HAS_BME)
+
 #include <Wire.h>
 
 #include "globals.h"
@@ -52,5 +54,7 @@ void bme_storedata(bmeStatus_t *bme_store);
 int checkIaqSensorStatus(void);
 void loadState(void);
 void updateState(void);
+
+#endif
 
 #endif

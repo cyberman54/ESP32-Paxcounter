@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <esp_adc_cal.h>
-//include <esp32-hal-adc.h>
 #include <soc/adc_channel.h>
 
 #include "i2c.h"
@@ -56,7 +55,6 @@ void calibrate_voltage(void);
 bool batt_sufficient(void);
 
 #ifdef HAS_PMU
-
 #include <axp20x.h>
 extern AXP20X_Class pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
@@ -64,7 +62,6 @@ void AXP192_powerevent_IRQ(void);
 void AXP192_power(pmu_power_t powerlevel);
 void AXP192_init(void);
 void AXP192_showstatus(void);
-
 #endif // HAS_PMU
 
 #ifdef HAS_IP5306
