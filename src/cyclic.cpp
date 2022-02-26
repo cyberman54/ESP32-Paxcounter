@@ -126,6 +126,10 @@ void doHousekeeping() {
   }
 #endif
 
+#if (HAS_SDCARD)
+  sdcard_flush();
+#endif
+
 } // doHousekeeping()
 
 uint32_t getFreeRAM() {
