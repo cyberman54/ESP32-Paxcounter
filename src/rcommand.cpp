@@ -487,7 +487,7 @@ void rcmd_process(void *pvParameters) {
 } // rcmd_process()
 
 // enqueue remote command
-void IRAM_ATTR rcommand(const uint8_t *cmd, const size_t cmdlength) {
+void rcommand(const uint8_t *cmd, const size_t cmdlength) {
 
   RcmdBuffer_t rcmd = {0};
 

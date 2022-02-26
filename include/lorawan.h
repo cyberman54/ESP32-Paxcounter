@@ -38,10 +38,10 @@ void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
 uint32_t lora_queuewaiting(void);
-void IRAM_ATTR myEventCallback(void *pUserData, ev_t ev);
-void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
+void myEventCallback(void *pUserData, ev_t ev);
+void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                             size_t nMsg);
-void IRAM_ATTR myTxCallback(void *pUserData, int fSuccess);
+void myTxCallback(void *pUserData, int fSuccess);
 const char *getSfName(rps_t rps);
 const char *getBwName(rps_t rps);
 const char *getCrName(rps_t rps);

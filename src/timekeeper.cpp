@@ -60,7 +60,7 @@ void calibrateTime(void) {
 } // calibrateTime()
 
 // set system time (UTC), calibrate RTC and RTC_INT pps
-bool IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
+bool setMyTime(uint32_t t_sec, uint16_t t_msec,
                          timesource_t mytimesource) {
 
   struct timeval tv = {0};

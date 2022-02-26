@@ -34,7 +34,7 @@ void setTimeSyncIRQ(void);
 uint8_t timepulse_init(void);
 bool timeIsValid(time_t const t);
 void calibrateTime(void);
-bool IRAM_ATTR setMyTime(uint32_t t_sec, uint16_t t_msec,
+bool setMyTime(uint32_t t_sec, uint16_t t_msec,
                          timesource_t mytimesource);
 time_t compileTime(void);
 time_t mkgmtime(const struct tm *ptm);
