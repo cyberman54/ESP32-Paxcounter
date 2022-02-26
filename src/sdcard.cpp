@@ -244,17 +244,19 @@ void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
   if (!useSDCard)
     return;
 
-  char tempBuffer[20 + 1];
+  char timeBuffer[20 + 1];
   time_t t = time(NULL);
   struct tm tt;
   gmtime_r(&t, &tt); // make UTC timestamp
+  strftime(timeBuffer, sizeof(timeBuffer), "%FT%TZ", &tt);
 
 #if (HAS_SDS011)
   sdsStatus_t sds;
 #endif
 
   ESP_LOGI(TAG, "writing data to SD-card");
-  fprintf(data_file, "%FT%TZ", &tt);
+
+  fprintf(data_file, "%s", timeBuffer);
   fprintf(data_file, ",%d,%d", noWifi, noBle);
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
   fprintf(data_file, ",%d", voltage);
