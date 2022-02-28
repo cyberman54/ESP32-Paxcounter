@@ -4,7 +4,7 @@
 #include "lorawan.h"
 
 // Local logging Tag
-static const char TAG[] = "lora";
+static const char TAG[] = __FILE__;
 
 #if CLOCK_ERROR_PROCENTAGE > 7
 #warning CLOCK_ERROR_PROCENTAGE value in lmic_config.h is too high; values > 7 will cause side effects
