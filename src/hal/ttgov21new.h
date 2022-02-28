@@ -9,14 +9,15 @@
 
 /*  Hardware related definitions for TTGO V2.1 Board
 // ATTENTION: check your board version!
-// This settings are for boards labeled v1.6 on pcb, NOT for v1.5 or older
+// This settings are for boards labeled v1.6 or v1.6.1 on pcb, NOT for v1.5 or older
 */
 
 #define HAS_LORA         1 // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
 
 // enable only if you want to store a local paxcount table on the device
-#define HAS_SDCARD  2      // this board has a SDMMC card-reader/writer
+#define HAS_SDCARD  2      // this board has a SD MMC card-reader/writer
+#define SDCARD_SLOTWIDTH 4 // 4-line interface
 
 #define HAS_DISPLAY 1
 #define HAS_LED (25) // green on board LED

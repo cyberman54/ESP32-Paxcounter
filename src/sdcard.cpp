@@ -140,13 +140,13 @@ bool sdcard_init(bool create) {
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
   sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
 
-  // To use 4-line SD mode, change this to 4:
-  slot_config.width = 1;
+  // Set 1-line or 4-line SD mode (default is 1-line)
+  slot_config.width = SDCARD_SLOTWIDTH;
 
   // Enable internal pullups on enabled pins. The internal pullups
   // are insufficient however, please make sure 10k external pullups are
   // connected on the bus. This is for debug / example purpose only.
-  slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+  slot_config.flags |= SDCARD_PULLUP;
 
   // Use settings defined above to initialize SD card and mount FAT filesystem.
   esp_err_t ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config,
@@ -180,7 +180,7 @@ bool sdcard_init(bool create) {
     fgetpos(data_file, &position);
 
     // empty file? then we write a header line
-    if (position = 0) {
+    if (position == 0) {
       fprintf(data_file, "%s", SDCARD_FILE_HEADER);
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU)
       fprintf(data_file, "%s", SDCARD_FILE_HEADER_VOLTAGE);
@@ -188,8 +188,8 @@ bool sdcard_init(bool create) {
 #if (HAS_SDS011)
       fprintf(data_file, "%s", SDCARD_FILE_HEADER_SDS011);
 #endif
-      fprintf(data_file, "\n");
     }
+    fprintf(data_file, "\n");
 
   } else {
     useSDCard = false;

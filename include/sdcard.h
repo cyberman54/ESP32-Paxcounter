@@ -11,17 +11,8 @@
 
 #define MOUNT_POINT "/sdcard"
 
-#if HAS_SDCARD == 1
+#if HAS_SDCARD == 1 // SPI interface
 #include "driver/sdspi_host.h"
-#elif HAS_SDCARD == 2
-#include "driver/sdmmc_host.h"
-#else
-#error HAS_SDCARD unknown card reader value, must be either 1 or 2
-#endif
-
-#ifdef HAS_SDS011
-#include "sds011read.h"
-#endif
 
 #ifndef SDCARD_CS
 #define SDCARD_CS SS
@@ -37,6 +28,25 @@
 
 #ifndef SDCARD_SCLK
 #define SDCARD_SCLK SCK
+#endif
+
+#elif HAS_SDCARD == 2 // MMC interface
+#include "driver/sdmmc_host.h"
+
+#ifndef SDCARD_SLOTWIDTH
+#define SDCARD_SLOTWIDTH 1
+#endif
+
+#ifndef SDCARD_PULLUP
+#define SDCARD_PULLUP SDMMC_SLOT_FLAG_INTERNAL_PULLUP
+#endif
+
+#else
+#error HAS_SDCARD unknown card reader value, must be either 1 or 2
+#endif
+
+#ifdef HAS_SDS011
+#include "sds011read.h"
 #endif
 
 #define SDCARD_FILE_NAME clientId
