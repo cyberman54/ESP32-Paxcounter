@@ -52,7 +52,7 @@ void i2c_scan(void) {
   if (I2C_MUTEX_LOCK()) {
 
     memset(&bbi2c, 0, sizeof(bbi2c));
-    bbi2c.bWire = 1; // use wire library, no bitbanging
+    bbi2c.bWire = 0;
     bbi2c.iSDA = MY_DISPLAY_SDA;
     bbi2c.iSCL = MY_DISPLAY_SCL;
     I2CInit(&bbi2c, 100000L); // Scan at 100KHz low speed
