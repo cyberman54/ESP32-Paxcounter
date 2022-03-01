@@ -82,6 +82,8 @@ bool openFile(FILE **fd, const char *filename) {
 
 bool sdcard_init(bool create) {
 
+  esp_err_t ret;
+
   // for usage of SD drivers on ESP32 platform see
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdspi_host.html
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
@@ -96,38 +98,32 @@ bool sdcard_init(bool create) {
 
 #if (HAS_SDCARD == 1) // use SD interface in SPI host mode
 
-  sdspi_host_t host = SDSPI_HOST_DEFAULT();
-
-  // This initializes the slot without card detect (CD) and write protect (WP)
-  // signals. Modify slot_config.gpio_cd and slot_config.gpio_wp if you want
-  // to use these signals (if your board has them)
-  sdspi_slot_config_t slot_config = SDSPI_SLOT_CONFIG_DEFAULT();
+  sdmmc_host_t host = SDSPI_HOST_DEFAULT();
 
   spi_bus_config_t bus_cfg = {
-      .mosi_io_num = SDCARD_MOSI,
-      .miso_io_num = SDCARD_MISO,
-      .sclk_io_num = SDCARD_SCLK,
+      .mosi_io_num = (gpio_num_t)SDCARD_MOSI,
+      .miso_io_num = (gpio_num_t)SDCARD_MISO,
+      .sclk_io_num = (gpio_num_t)SDCARD_SCLK,
       .quadwp_io_num = -1,
       .quadhd_io_num = -1,
       .max_transfer_sz = 4000,
   };
 
-  ret = spi_bus_initialize(host.slot, &bus_cfg, SPI_DMA_CHAN);
+  // This initializes the slot without card detect (CD) and write protect (WP)
+  // signals. Modify slot_config.gpio_cd and slot_config.gpio_wp if you want
+  // to use these signals (if your board has them)
+  sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+  slot_config.gpio_cs = (gpio_num_t)SDCARD_CS;
+
+  ret = spi_bus_initialize(SPI_HOST, &bus_cfg, 1);
   if (ret != ESP_OK) {
     ESP_LOGE(TAG, "failed to initialize SPI bus");
-    return;
+    return false;
   }
 
-  // This initializes the slot without card detect (CD) and write protect (WP)
-  // signals. Modify slot_config.gpio_cd and slot_config.gpio_wp if your board
-  // has these signals.
-  sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
-  slot_config.gpio_cs = SDCARD_CS;
-  slot_config.host_id = host.slot;
-
   // Use settings defined above to initialize SD card and mount FAT filesystem.
-  esp_err_t ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config,
-                                          &mount_config, &card);
+  ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config,
+                                &card);
 
 #elif (HAS_SDCARD == 2) // use SD interface in MMC host mode
 
@@ -149,8 +145,8 @@ bool sdcard_init(bool create) {
   slot_config.flags |= SDCARD_PULLUP;
 
   // Use settings defined above to initialize SD card and mount FAT filesystem.
-  esp_err_t ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config,
-                                          &mount_config, &card);
+  ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config,
+                                &card);
 
 #endif
 
