@@ -33,15 +33,16 @@ void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
 void calibrateTime(void) {
 
-  time_t t = 0;
-  uint16_t t_msec = 0;
-
   // kick off asynchronous lora timesync if we have
 #if (HAS_LORA_TIME)
   timesync_request();
   if (timeSource == _lora) // did have lora time before?
     return;
 #endif
+
+#if ((HAS_GPS) || (HAS_RTC))
+  time_t t = 0;
+  uint16_t t_msec = 0;
 
 // get GPS time, if we have
 #if (HAS_GPS)
@@ -55,6 +56,8 @@ void calibrateTime(void) {
   t = get_rtctime(&t_msec);
   if (setMyTime((uint32_t)t, t_msec, _rtc))
     return;
+#endif
+
 #endif
 
 } // calibrateTime()
@@ -250,9 +253,7 @@ void clock_init(void) {
 
 void clock_loop(void *taskparameter) { // ClockTask
 
-  uint64_t ClockPulse = 0;
   uint32_t current_time = 0, previous_time = 0;
-  int8_t ClockMinute = -1;
   time_t tt;
   struct tm t = {0};
 #ifdef HAS_TWO_LED
@@ -291,6 +292,9 @@ void clock_loop(void *taskparameter) { // ClockTask
     ESP_LOGD(TAG, "[%0.3f] IF482: %s", _seconds(), IF482_Frame(tt).c_str());
 
 #elif defined HAS_DCF77
+
+    uint64_t ClockPulse = 0;
+    int8_t ClockMinute = -1;
 
     // load new frame if second 59 is reached
     if (t.tm_sec == 0) {
