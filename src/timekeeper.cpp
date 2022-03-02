@@ -259,6 +259,10 @@ void clock_loop(void *taskparameter) { // ClockTask
 #ifdef HAS_TWO_LED
   static bool led1_state = false;
 #endif
+#ifdef HAS_DCF77
+  uint64_t ClockPulse = 0;
+  int8_t ClockMinute = -1;
+#endif
 
   // output the next second's pulse/telegram after pps arrived
   for (;;) {
@@ -292,9 +296,6 @@ void clock_loop(void *taskparameter) { // ClockTask
     ESP_LOGD(TAG, "[%0.3f] IF482: %s", _seconds(), IF482_Frame(tt).c_str());
 
 #elif defined HAS_DCF77
-
-    uint64_t ClockPulse = 0;
-    int8_t ClockMinute = -1;
 
     // load new frame if second 59 is reached
     if (t.tm_sec == 0) {
