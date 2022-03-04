@@ -1,10 +1,12 @@
 #ifndef _SDS011READ_H
 #define _SDS011READ_H
 
+#if (HAS_SDS011)
+
 #include <SdsDustSensor.h>
 #include "globals.h"
 
-#define SDCARD_FILE_HEADER_SDS011     ", PM10,PM25"
+#define SDCARD_FILE_HEADER_SDS011 ", PM10,PM25"
 
 // use original pins from HardwareSerial if none defined
 #ifndef SDS_TX
@@ -21,4 +23,7 @@ void sds011_loop();
 void sds011_sleep(void);
 void sds011_wakeup(void);
 void sds011_store(sdsStatus_t *sds_store);
+
+#endif
+
 #endif // _SDS011READ_H

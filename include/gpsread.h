@@ -1,6 +1,8 @@
 #ifndef _GPSREAD_H
 #define _GPSREAD_H
 
+#if (HAS_GPS)
+
 #include <TinyGPS++.h> // library for parsing NMEA data
 #include <RtcDateTime.h>
 #include "timekeeper.h"
@@ -18,5 +20,7 @@ bool gps_hasfix();
 void gps_storelocation(gpsStatus_t *gps_store);
 void gps_loop(void *pvParameters);
 time_t get_gpstime(uint16_t *msec);
+
+#endif
 
 #endif

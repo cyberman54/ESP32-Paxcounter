@@ -34,7 +34,7 @@ typedef struct {
   uint8_t cmdLen;
 } RcmdBuffer_t;
 
-void IRAM_ATTR rcommand(const uint8_t *cmd, const size_t cmdlength);
+void rcommand(const uint8_t *cmd, const size_t cmdlength);
 void rcmd_queuereset(void);
 uint32_t rcmd_queuewaiting(void);
 void rcmd_deinit(void);

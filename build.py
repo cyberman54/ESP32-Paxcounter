@@ -74,12 +74,6 @@ board = env.BoardConfig(myboard)
 board.manifest['build']['partitions'] = mypartitiontable
 print('\033[94m' + "Partition table: " + mypartitiontable + '\033[0m')
 
-# set display library
-if "display_library" in mykeys:
-    mydisplay = mykeys["display_library"]
-    env.Append(display_library=mydisplay)
-    print('\033[94m' + "Display library: " + mydisplay + '\033[0m')
-
 # parse ota key file
 with open(otakeyfile) as myfile:
     for line in myfile:

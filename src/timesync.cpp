@@ -55,7 +55,7 @@ void timesync_request(void) {
 }
 
 // task for processing time sync request
-void IRAM_ATTR timesync_processReq(void *taskparameter) {
+void timesync_processReq(void *taskparameter) {
 
   uint32_t rcv_seqNo = TIME_SYNC_END_FLAG;
   uint32_t time_offset_sec = 0, time_offset_ms = 0;
@@ -173,7 +173,7 @@ void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
 }
 
 // callback function to receive time answer from network or answer
-void IRAM_ATTR timesync_serverAnswer(void *pUserData, int flag) {
+void timesync_serverAnswer(void *pUserData, int flag) {
 
 #if (HAS_LORA_TIME)
 

@@ -40,6 +40,6 @@
 #undef ROKKIT_ENABLE_8BIT_OPTIMIZATIONS
 #endif
 
-uint32_t IRAM_ATTR myhash(const char *data, int len) {
+uint32_t myhash(const char *data, int len) {
   return rokkit(data, len);
 }
