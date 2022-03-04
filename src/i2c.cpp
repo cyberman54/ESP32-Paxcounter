@@ -12,7 +12,8 @@ void i2c_init(void) {
   Wire.begin();
 }
 
-void i2c_deinit(void) { Wire.end(); }
+//void i2c_deinit(void) { Wire.end(); }
+void i2c_deinit(void) { Wire.~TwoWire(); }
 
 void i2c_scan(void) {
 
