@@ -10,7 +10,8 @@
 #include "dcf77.h"
 #include "esp_sntp.h"
 
-#define HAS_LORA_TIME ((HAS_LORA) && ((TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)))
+#define HAS_LORA_TIME                                                          \
+  ((HAS_LORA) && ((TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)))
 
 #define SECS_YR_2000 (946684800UL)    // the time at the start of y2k
 #define GPS_UTC_DIFF 315964800UL      // seconds diff between gps and utc epoch
@@ -26,16 +27,14 @@ extern DRAM_ATTR bool TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern DRAM_ATTR unsigned long lastPPS;
 extern hw_timer_t *ppsIRQ;
 
-void IRAM_ATTR CLOCKIRQ(void);
-void IRAM_ATTR GPSIRQ(void);
-void clock_init(void);
-void clock_loop(void *pvParameters);
+//void IRAM_ATTR CLOCKIRQ(void);
+//void IRAM_ATTR GPSIRQ(void);
+//void clock_loop(void *pvParameters);
 void setTimeSyncIRQ(void);
-uint8_t timepulse_init(void);
+void time_init(void);
 bool timeIsValid(time_t const t);
 void calibrateTime(void);
-bool setMyTime(uint32_t t_sec, uint16_t t_msec,
-                         timesource_t mytimesource);
+bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource);
 time_t compileTime(void);
 time_t mkgmtime(const struct tm *ptm);
 TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
