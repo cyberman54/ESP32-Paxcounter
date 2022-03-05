@@ -203,8 +203,10 @@ void timepulse_init(void) {
 #endif
 
   // get time if we don't have one
-  if (timeSource != _set)
+  if (timeSource != _set) {
+    delay(1000);      // wait for first PPS time stamp to arrive
     setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
+  }
 
   // start cyclic time sync
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);

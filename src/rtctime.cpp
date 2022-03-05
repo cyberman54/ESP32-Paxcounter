@@ -65,7 +65,13 @@ time_t get_rtctime(uint16_t *msec) {
 
 // if we have a RTC pulse, we calculate msec
 #ifdef RTC_INT
-  *msec = lastRTCpulse % 1000;
+  uint16_t ppsDiff = millis() - lastRTCpulse;
+  if (ppsDiff < 1000)
+    *msec = ppsDiff;
+  else {
+    ESP_LOGD(TAG, "no pulse from RTC");
+    return 0;
+  }
 #endif
 
   return t;
