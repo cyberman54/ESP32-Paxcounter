@@ -381,13 +381,16 @@ time_t mkgmtime(const struct tm *ptm) {
 }
 
 void time_init(void) {
-#if (HAS_LORA_TIME)
-  timesync_init(); // create loraserver time sync task
-#endif
-  ESP_LOGI(TAG, "Starting time pulse...");
-  timepulse_init(); // starts pps and cyclic time sync
+
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting clock controller...");
   clock_init();
 #endif
+
+#if (HAS_LORA_TIME)
+  timesync_init(); // create loraserver time sync task
+#endif
+
+  ESP_LOGI(TAG, "Starting time pulse...");
+  timepulse_init(); // starts pps and cyclic time sync
 }
