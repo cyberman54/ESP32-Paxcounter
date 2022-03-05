@@ -90,85 +90,72 @@ void dp_setup(int contrast) {
 
 void dp_init(bool verbose) {
 
-#if (HAS_DISPLAY) == 1 // i2c
-  // block i2c bus access
-  if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
-  else {
-#endif
+  dp_setup(DISPLAYCONTRAST);
 
-    dp_setup(DISPLAYCONTRAST);
+  if (verbose) {
 
-    if (verbose) {
-
-      // show startup screen
-      // to come -> display .bmp file with logo
+    // show startup screen
+    // to come -> display .bmp file with logo
 
 // show chip information
 #if (VERBOSE)
-      esp_chip_info_t chip_info;
-      esp_chip_info(&chip_info);
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
 
-      dp_setFont(MY_FONT_NORMAL);
-      dp_printf("** PAXCOUNTER **");
-      dp_println();
-      dp_printf("Software v%s", PROGVERSION);
-      dp_println();
-      dp_printf("ESP32 %d cores", chip_info.cores);
-      dp_println();
-      dp_printf("Chip Rev.%d", chip_info.revision);
-      dp_println();
-      dp_printf("WiFi%s%s", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-                (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-      dp_println();
-      dp_printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
-                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int."
-                                                              : "ext.");
+    dp_setFont(MY_FONT_NORMAL);
+    dp_printf("** PAXCOUNTER **");
+    dp_println();
+    dp_printf("Software v%s", PROGVERSION);
+    dp_println();
+    dp_printf("ESP32 %d cores", chip_info.cores);
+    dp_println();
+    dp_printf("Chip Rev.%d", chip_info.revision);
+    dp_println();
+    dp_printf("WiFi%s%s", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+              (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+    dp_println();
+    dp_printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
+              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
 
-      // give user some time to read or take picture
-      dp_dump(displaybuf);
-      delay(2000);
-      dp_clear();
+    // give user some time to read or take picture
+    dp_dump(displaybuf);
+    delay(2000);
+    dp_clear();
 #endif // VERBOSE
 
 #if (HAS_LORA)
-      // generate DEVEUI as QR code and text
-      uint8_t buf[8], *p = buf;
-      char deveui[17];
-      os_getDevEui((u1_t *)buf);
-      snprintf(deveui, 17, "%016llX", (*(uint64_t *)(p)));
+    // generate DEVEUI as QR code and text
+    uint8_t buf[8], *p = buf;
+    char deveui[17];
+    os_getDevEui((u1_t *)buf);
+    snprintf(deveui, 17, "%016llX", (*(uint64_t *)(p)));
 
-      // display DEVEUI as QR code on the left
-      dp_contrast(30);
-      dp_printqr(3, 3, deveui);
+    // display DEVEUI as QR code on the left
+    dp_contrast(30);
+    dp_printqr(3, 3, deveui);
 
-      // display DEVEUI as plain text on the right
-      const int x_offset = QR_SCALEFACTOR * 29 + 14;
-      dp_setTextCursor(x_offset, 0);
-      dp_setFont(MY_FONT_NORMAL);
-      dp_printf("DEVEUI");
-      dp_println();
-      for (uint8_t i = 0; i <= 3; i++) {
-        dp_setTextCursor(x_offset, i + 3);
-        dp_printf("%4.4s", deveui + i * 4);
-      }
+    // display DEVEUI as plain text on the right
+    const int x_offset = QR_SCALEFACTOR * 29 + 14;
+    dp_setTextCursor(x_offset, 0);
+    dp_setFont(MY_FONT_NORMAL);
+    dp_printf("DEVEUI");
+    dp_println();
+    for (uint8_t i = 0; i <= 3; i++) {
+      dp_setTextCursor(x_offset, i + 3);
+      dp_printf("%4.4s", deveui + i * 4);
+    }
 
-      // give user some time to read or take picture
-      dp_dump(displaybuf);
+    // give user some time to read or take picture
+    dp_dump(displaybuf);
 #if !(BOOTMENU)
-      delay(8000);
+    delay(8000);
 #endif
 
 #endif // HAS_LORA
 
-    } // verbose
+  } // verbose
 
-    dp_power(cfg.screenon); // set display off if disabled
-
-#if (HAS_DISPLAY) == 1  // i2c
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }                     // mutex
-#endif
+  dp_power(cfg.screenon); // set display off if disabled
 
 } // dp_init
 
@@ -182,29 +169,22 @@ void dp_refresh(bool nextPage) {
   if (!DisplayIsOn && (DisplayIsOn == cfg.screenon))
     return;
 
-  // block i2c bus access
-  if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
-  else {
-    // set display on/off according to current device configuration
-    if (DisplayIsOn != cfg.screenon) {
-      DisplayIsOn = cfg.screenon;
-      dp_power(cfg.screenon);
-    }
+  // set display on/off according to current device configuration
+  if (DisplayIsOn != cfg.screenon) {
+    DisplayIsOn = cfg.screenon;
+    dp_power(cfg.screenon);
+  }
 
 #ifndef HAS_BUTTON
-    // auto flip page if we are in unattended mode
-    if ((++framecounter) > (DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS)) {
-      framecounter = 0;
-      nextPage = true;
-    }
+  // auto flip page if we are in unattended mode
+  if ((++framecounter) > (DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS)) {
+    framecounter = 0;
+    nextPage = true;
+  }
 #endif
 
-    dp_drawPage(nextPage);
+  dp_drawPage(nextPage);
 
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-
-  } // mutex
 } // refreshDisplay()
 
 void dp_drawPage(bool nextpage) {
@@ -600,14 +580,8 @@ void dp_power(uint8_t screenon) {
 
 void dp_shutdown(void) {
 #if (HAS_DISPLAY) == 1
-  // block i2c bus access
-  if (!I2C_MUTEX_LOCK())
-    ESP_LOGV(TAG, "[%0.3f] i2c mutex lock failed", _seconds());
-  else {
-    obdPower(&ssoled, false);
-    delay(DISPLAYREFRESH_MS / 1000 * 1.1);
-    I2C_MUTEX_UNLOCK(); // release i2c bus access
-  }
+  obdPower(&ssoled, false);
+  delay(DISPLAYREFRESH_MS / 1000 * 1.1);
 #elif (HAS_DISPLAY) == 2
   // to come
 #endif

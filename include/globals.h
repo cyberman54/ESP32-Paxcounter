@@ -30,11 +30,6 @@
 // length of display buffer for lmic event messages
 #define LMIC_EVENTMSG_LEN 17
 
-// I2C bus access control
-#define I2C_MUTEX_LOCK()                                                       \
-  (xSemaphoreTake(I2Caccess, pdMS_TO_TICKS(DISPLAYREFRESH_MS)) == pdTRUE)
-#define I2C_MUTEX_UNLOCK() (xSemaphoreGive(I2Caccess))
-
 // pseudo system halt function, useful to prevent writeloops to NVRAM
 #ifndef _ASSERT
 #define _ASSERT(cond)                                                          \

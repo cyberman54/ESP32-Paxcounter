@@ -63,8 +63,7 @@ void calibrateTime(void) {
 } // calibrateTime()
 
 // set system time (UTC), calibrate RTC and RTC_INT pps
-bool setMyTime(uint32_t t_sec, uint16_t t_msec,
-                         timesource_t mytimesource) {
+bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource) {
 
   struct timeval tv = {0};
 
@@ -141,22 +140,12 @@ uint8_t timepulse_init() {
 
 // if we have, use pulse from on board RTC chip as time base for calendar time
 #if defined RTC_INT
-
   // setup external rtc 1Hz clock pulse
-  if (I2C_MUTEX_LOCK()) {
-    Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
-    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
-    I2C_MUTEX_UNLOCK();
-    pinMode(RTC_INT, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
-    ESP_LOGI(TAG, "Timepulse: external (RTC)");
-    return 1; // success
-  } else {
-    ESP_LOGE(TAG, "RTC initialization error, I2C bus busy");
-    return 0; // failure
-  }
-  return 1; // success
-
+  Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
+  Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
+  pinMode(RTC_INT, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(RTC_INT), CLOCKIRQ, FALLING);
+  ESP_LOGI(TAG, "Timepulse: external (RTC)");
 #else
   // use ESP32 hardware timer as time base for calendar time
   ppsIRQ = timerBegin(1, 8000, true);   // set 80 MHz prescaler to 1/10000 sec
@@ -164,8 +153,6 @@ uint8_t timepulse_init() {
   timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, false);
   timerAlarmEnable(ppsIRQ);
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
-  return 1; // success
-
 #endif
 
   // start cyclic time sync

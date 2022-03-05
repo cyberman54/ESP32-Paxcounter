@@ -87,11 +87,6 @@ void setup() {
 
   char features[100] = "";
 
-  // create some semaphores for syncing / mutexing tasks
-  I2Caccess = xSemaphoreCreateMutex(); // for access management of i2c bus
-  _ASSERT(I2Caccess != NULL);
-  I2C_MUTEX_UNLOCK();
-
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
