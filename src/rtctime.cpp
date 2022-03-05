@@ -65,6 +65,7 @@ time_t get_rtctime(uint16_t *msec) {
     RtcDateTime tt = Rtc.GetDateTime();
     t = tt.Epoch32Time(); // sec2000 -> epoch
   }
+  /*
 #ifdef RTC_INT
   // adjust time to top of next second by waiting TimePulseTick to flip
   bool lastTick = TimePulseTick;
@@ -72,6 +73,7 @@ time_t get_rtctime(uint16_t *msec) {
   };
   t++;
 #endif
+*/
   return t;
 
 } // get_rtctime()

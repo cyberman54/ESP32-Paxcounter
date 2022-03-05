@@ -471,14 +471,14 @@ void setup() {
   button_init(HAS_BUTTON);
 #endif // HAS_BUTTON
 
-  // cyclic function interrupts
-  cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
-
 // only if we have a timesource we do timesync
 #if ((HAS_LORA_TIME) || (HAS_GPS) || (HAS_RTC))
   time_init();
   strcat_P(features, " TIME");
 #endif // timesync
+
+  // cyclic function interrupts
+  cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
 
   // show compiled features
   ESP_LOGI(TAG, "Features:%s", features);
