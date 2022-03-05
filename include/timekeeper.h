@@ -24,7 +24,12 @@ extern Ticker timesyncer;
 extern timesource_t timeSource;
 extern TaskHandle_t ClockTask;
 extern DRAM_ATTR bool TimePulseTick; // 1sec pps flag set by GPS or RTC
+#ifdef GPS_INT
 extern DRAM_ATTR unsigned long lastPPS;
+#endif
+#ifdef RTC_INT
+extern DRAM_ATTR unsigned long lastRTCpulse;
+#endif
 extern hw_timer_t *ppsIRQ;
 
 void setTimeSyncIRQ(void);

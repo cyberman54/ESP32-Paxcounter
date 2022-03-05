@@ -12,7 +12,13 @@ static const char TAG[] = __FILE__;
 const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
 
 DRAM_ATTR bool TimePulseTick = false;
+#ifdef GPS_INT
 DRAM_ATTR unsigned long lastPPS = millis();
+#endif
+#ifdef RTC_INT
+DRAM_ATTR unsigned long lastRTCpulse = millis();
+#endif
+
 timesource_t timeSource = _unsynced;
 TaskHandle_t ClockTask = NULL;
 hw_timer_t *ppsIRQ = NULL;
@@ -31,6 +37,7 @@ Ticker timesyncer;
 
 void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
+#ifdef GPS_INT
 // interrupt service routine triggered by GPS PPS
 void IRAM_ATTR GPSIRQ(void) {
 
@@ -43,6 +50,7 @@ void IRAM_ATTR GPSIRQ(void) {
   if (xHigherPriorityTaskWoken)
     portYIELD_FROM_ISR();
 }
+#endif
 
 // interrupt service routine triggered by esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
@@ -58,6 +66,11 @@ void IRAM_ATTR CLOCKIRQ(void) {
 // flip time pulse ticker, if needed
 #ifdef HAS_DISPLAY
   TimePulseTick = !TimePulseTick; // flip global variable pulse ticker
+#endif
+
+// take timestamp if we have RTC pulse
+#ifdef RTC_INT
+  lastRTCpulse = millis(); // last time of RTC pulse
 #endif
 
   // yield only if we should
