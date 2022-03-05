@@ -27,9 +27,6 @@ extern DRAM_ATTR bool TimePulseTick; // 1sec pps flag set by GPS or RTC
 extern DRAM_ATTR unsigned long lastPPS;
 extern hw_timer_t *ppsIRQ;
 
-//void IRAM_ATTR CLOCKIRQ(void);
-//void IRAM_ATTR GPSIRQ(void);
-//void clock_loop(void *pvParameters);
 void setTimeSyncIRQ(void);
 void time_init(void);
 bool timeIsValid(time_t const t);
