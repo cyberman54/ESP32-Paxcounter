@@ -476,20 +476,8 @@ void setup() {
 
 // only if we have a timesource we do timesync
 #if ((HAS_LORA_TIME) || (HAS_GPS) || (HAS_RTC))
-
-#if (defined HAS_IF482 || defined HAS_DCF77)
-  ESP_LOGI(TAG, "Starting Clock Controller...");
-  clock_init();
-#endif
-
-#if (HAS_LORA_TIME)
-  timesync_init(); // create loraserver time sync task
-#endif
-
-  ESP_LOGI(TAG, "Starting Timekeeper...");
-  _ASSERT(timepulse_init()); // starts pps and cyclic time sync
+  time_init();
   strcat_P(features, " TIME");
-
 #endif // timesync
 
   // show compiled features

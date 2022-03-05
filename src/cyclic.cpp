@@ -18,10 +18,6 @@ void doHousekeeping() {
   if ((RTC_runmode == RUNMODE_UPDATE) || (RTC_runmode == RUNMODE_MAINTENANCE))
     do_reset(true); // warmstart
 
-  // try to get time if we don't yet have a recent timesource
-  if (timeSource == _unsynced || timeSource == _set)
-    calibrateTime();
-
   // print heap and task storage information
   ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
            ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),

@@ -31,6 +31,40 @@ Ticker timesyncer;
 
 void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 
+// interrupt service routine triggered by GPS PPS
+void IRAM_ATTR GPSIRQ(void) {
+
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  // take timestamp
+  lastPPS = millis(); // last time of pps
+
+  // yield only if we should
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
+
+// interrupt service routine triggered by esp32 hardware timer
+void IRAM_ATTR CLOCKIRQ(void) {
+
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+// advance wall clock, if we have
+#if (defined HAS_IF482 || defined HAS_DCF77)
+  xTaskNotifyFromISR(ClockTask, uint32_t(time(NULL)), eSetBits,
+                     &xHigherPriorityTaskWoken);
+#endif
+
+// flip time pulse ticker, if needed
+#ifdef HAS_DISPLAY
+  TimePulseTick = !TimePulseTick; // flip global variable pulse ticker
+#endif
+
+  // yield only if we should
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
+
 void calibrateTime(void) {
 
   // kick off asynchronous lora timesync if we have
@@ -125,7 +159,7 @@ bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource) {
 }
 
 // helper function to setup a pulse per second for time synchronisation
-uint8_t timepulse_init() {
+void timepulse_init(void) {
 
   // set esp-idf API sntp sync mode
   // sntp_init();
@@ -155,48 +189,14 @@ uint8_t timepulse_init() {
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
 #endif
 
-  // start cyclic time sync
-  timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
-
   // get time if we don't have one
   if (timeSource != _set)
     setTimeSyncIRQ(); // init systime by RTC or GPS or LORA
 
+  // start cyclic time sync
+  timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
+
 } // timepulse_init
-
-// interrupt service routine triggered by GPS PPS
-void IRAM_ATTR GPSIRQ(void) {
-
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  // take timestamp
-  lastPPS = millis(); // last time of pps
-
-  // yield only if we should
-  if (xHigherPriorityTaskWoken)
-    portYIELD_FROM_ISR();
-}
-
-// interrupt service routine triggered by esp32 hardware timer
-void IRAM_ATTR CLOCKIRQ(void) {
-
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-// advance wall clock, if we have
-#if (defined HAS_IF482 || defined HAS_DCF77)
-  xTaskNotifyFromISR(ClockTask, uint32_t(time(NULL)), eSetBits,
-                     &xHigherPriorityTaskWoken);
-#endif
-
-// flip time pulse ticker, if needed
-#ifdef HAS_DISPLAY
-  TimePulseTick = !TimePulseTick; // flip global variable pulse ticker
-#endif
-
-  // yield only if we should
-  if (xHigherPriorityTaskWoken)
-    portYIELD_FROM_ISR();
-}
 
 // helper function to check plausibility of a given epoch time
 bool timeIsValid(time_t const t) {
@@ -217,26 +217,6 @@ TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
 
   return round(txTime);
 }
-
-void clock_init(void) {
-
-// setup clock output interface
-#ifdef HAS_IF482
-  IF482.begin(HAS_IF482);
-#elif defined HAS_DCF77
-  pinMode(HAS_DCF77, OUTPUT);
-#endif
-
-  xTaskCreatePinnedToCore(clock_loop,  // task function
-                          "clockloop", // name of task
-                          3072,        // stack size of task
-                          (void *)1,   // task parameter
-                          6,           // priority of the task
-                          &ClockTask,  // task handle
-                          1);          // CPU core
-
-  _ASSERT(ClockTask != NULL); // has clock task started?
-} // clock_init
 
 void clock_loop(void *taskparameter) { // ClockTask
 
@@ -320,6 +300,26 @@ void clock_loop(void *taskparameter) { // ClockTask
   } // for
 } // clock_loop()
 
+void clock_init(void) {
+
+// setup clock output interface
+#ifdef HAS_IF482
+  IF482.begin(HAS_IF482);
+#elif defined HAS_DCF77
+  pinMode(HAS_DCF77, OUTPUT);
+#endif
+
+  xTaskCreatePinnedToCore(clock_loop,  // task function
+                          "clockloop", // name of task
+                          3072,        // stack size of task
+                          (void *)1,   // task parameter
+                          6,           // priority of the task
+                          &ClockTask,  // task handle
+                          1);          // CPU core
+
+  _ASSERT(ClockTask != NULL); // has clock task started?
+} // clock_init
+
 // we use compile date to create a time_t reference "in the past"
 time_t compileTime(void) {
 
@@ -378,4 +378,16 @@ time_t mkgmtime(const struct tm *ptm) {
   secs += ptm->tm_min * SecondsPerMinute;
   secs += ptm->tm_sec;
   return secs;
+}
+
+void time_init(void) {
+#if (HAS_LORA_TIME)
+  timesync_init(); // create loraserver time sync task
+#endif
+  ESP_LOGI(TAG, "Starting time pulse...");
+  timepulse_init(); // starts pps and cyclic time sync
+#if (defined HAS_IF482 || defined HAS_DCF77)
+  ESP_LOGI(TAG, "Starting clock controller...");
+  clock_init();
+#endif
 }
