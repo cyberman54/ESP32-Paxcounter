@@ -52,9 +52,6 @@ uint8_t set_rtctime(time_t t) { // t is sec epoch time
   ESP_LOGI(TAG, "RTC time synced");
   return 1; // success
 
-  // failure
-  // return 0
-
 } // set_rtctime()
 
 time_t get_rtctime(uint16_t *msec) {
@@ -65,15 +62,18 @@ time_t get_rtctime(uint16_t *msec) {
     RtcDateTime tt = Rtc.GetDateTime();
     t = tt.Epoch32Time(); // sec2000 -> epoch
   }
-  /*
+
+// if we have a RTC pulse, we calculate msec
 #ifdef RTC_INT
-  // adjust time to top of next second by waiting TimePulseTick to flip
-  bool lastTick = TimePulseTick;
-  while (TimePulseTick == lastTick) {
-  };
-  t++;
+  uint16_t ppsDiff = millis() - lastRTCpulse;
+  if (ppsDiff < 1000)
+    *msec = ppsDiff;
+  else {
+    ESP_LOGD(TAG, "no pulse from RTC");
+    return 0;
+  }
 #endif
-*/
+
   return t;
 
 } // get_rtctime()
