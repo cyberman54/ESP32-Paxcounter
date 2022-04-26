@@ -49,7 +49,7 @@ void i2c_scan(void) {
   ESP_LOGI(TAG, "Starting I2C bus scan...");
 
   memset(&bbi2c, 0, sizeof(bbi2c));
-  bbi2c.bWire = 0;
+  bbi2c.bWire = 1;
   bbi2c.iSDA = MY_DISPLAY_SDA;
   bbi2c.iSCL = MY_DISPLAY_SCL;
   I2CInit(&bbi2c, 100000L); // Scan at 100KHz low speed
