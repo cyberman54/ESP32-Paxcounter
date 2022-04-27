@@ -66,7 +66,7 @@ void dp_setup(int contrast) {
                       MY_DISPLAY_INVERT, USE_HW_I2C, MY_DISPLAY_SDA,
                       MY_DISPLAY_SCL, MY_DISPLAY_RST,
                       OLED_FREQUENCY); // use standard I2C bus at 400Khz
-  _ASSERT(rc != OLED_NOT_FOUND);
+  //_ASSERT(rc != OLED_NOT_FOUND);
 
   // set display buffer
   obdSetBackBuffer(&ssoled, displaybuf);
