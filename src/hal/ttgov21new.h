@@ -24,6 +24,7 @@
 //#define HAS_LED NOT_A_PIN
 
 #define HAS_SDS011 0 //use dust sensor SDS011
+#ifdef  HAS_SDS011
 // used pins on the ESP-side:
   #define SDS_TX 12     // connect to RX on the SDS011
   #define SDS_RX 35     // connect to TX on the SDS011
