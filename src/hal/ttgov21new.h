@@ -23,8 +23,14 @@
 #define HAS_LED (25) // green on board LED
 //#define HAS_LED NOT_A_PIN
 
-#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
-#define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
+#define HAS_SDS011 0 //use dust sensor SDS011
+// used pins on the ESP-side:
+  #define SDS_TX 12     // connect to RX on the SDS011
+  #define SDS_RX 35     // connect to TX on the SDS011
+#elif //if SDS011 is in use, no battery probe
+  #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
+  #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
+#endif
 
 // Pins for I2C interface of OLED Display
 #define MY_DISPLAY_SDA (21)
