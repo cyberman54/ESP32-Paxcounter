@@ -38,14 +38,6 @@ void i2c_scan(void) {
 
   BBI2C bbi2c;
 
-  const char *szNames[] = {
-      "Unknown",    "SSD1306",  "SH1106",   "VL53L0X", "BMP180",  "BMP280",
-      "BME280",     "MPU-60x0", "MPU-9250", "MCP9808", "LSM6DS3", "ADXL345",
-      "ADS1115",    "MAX44009", "MAG3110",  "CCS811",  "HTS221",  "LPS25H",
-      "LSM9DS1",    "LM8330",   "DS3231",   "LIS3DH",  "LIS3DSH", "INA219",
-      "SHT3X",      "HDC1080",  "MPU6886",  "BME680",  "AXP202",  "AXP192",
-      "24AA02XEXX", "DS1307"};
-
   ESP_LOGI(TAG, "Starting I2C bus scan...");
 
   memset(&bbi2c, 0, sizeof(bbi2c));
@@ -58,6 +50,8 @@ void i2c_scan(void) {
   uint8_t map[16];
   uint8_t i;
   int iDevice, iCount;
+  uint32_t iDevCapab;
+  char szName[15];
 
   I2CScan(&bbi2c, map); // get bitmap of connected I2C devices
   if (map[0] == 0xfe)   // something is wrong with the I2C bus
@@ -72,9 +66,10 @@ void i2c_scan(void) {
       if (map[i >> 3] & (1 << (i & 7))) // device found
       {
         iCount++;
-        iDevice = I2CDiscoverDevice(&bbi2c, i);
+        iDevice = I2CDiscoverDevice(&bbi2c, i, &iDevCapab);
+        I2CGetDeviceName(iDevice, szName);
         ESP_LOGI(TAG, "Device found at 0x%X, type = %s", i,
-                 szNames[iDevice]); // show the device name as a string
+                 szName); // show the device name as a string
       }
     } // for i
     ESP_LOGI(TAG, "%u I2C device(s) found", iCount);
