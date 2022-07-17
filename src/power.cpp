@@ -64,10 +64,12 @@ void AXP192_powerevent_IRQ(void) {
     pmu.setChgLEDMode(AXP20X_LED_BLINK_1HZ);
   }
 
+#ifdef HAS_BUTTON
   // short press -> esp32 deep sleep mode, can be exited by pressing user button
   if (pmu.isPEKShortPressIRQ()) {
     enter_deepsleep(0, HAS_BUTTON);
   }
+#endif
 
   // long press -> shutdown power, can be exited by another longpress
   if (pmu.isPEKLongtPressIRQ()) {
