@@ -82,7 +82,7 @@ Some <b>3D printable cases</b> can be found (and, if wanted so, ordered) on Thin
 for example.<br>
 
 <b>Power consumption</b> was metered at around 450 - 1000mW, depending on board and user settings in paxcounter.conf.
-By default bluetooth sniffing not installed (#define *BLECOUNTER* 0 in paxcounter.conf). Installing and enabling bluetooth costs 30% more power + 30% flash storage for the software stack. If you enable bluetooth be aware that this goes on expense of wifi sniffing results, because then wifi and bt stack must share the 2,4 GHz RF ressources of ESP32. If you need to sniff wifi and bt in parallel and need best possible results, use two boards - one for wifi only and one for bt only - and add counted results.
+By default bluetooth sniffing not installed (#define *BLECOUNTER* 0 in paxcounter.conf). If you enable bluetooth be aware that this goes on expense of wifi sniffing results, because then wifi and bt stack must share the 2,4 GHz RF ressources of ESP32. If you need to sniff wifi and bt in parallel and need best possible results, use two boards - one for wifi only and one for bt only - and add counted results.
 
 # Preparing
 
