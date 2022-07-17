@@ -62,7 +62,7 @@ void start_ota_update() {
   dp_printf("Downloading   ..");
   dp_println();
   dp_printf("Rebooting     ..");
-  dp_dump(displaybuf);
+  dp_dump();
 #endif
 
   ESP_LOGI(TAG, "Starting Wifi OTA update");
@@ -331,14 +331,14 @@ void ota_display(const uint8_t row, const std::string status,
                  const std::string msg) {
 #ifdef HAS_DISPLAY
   dp_setFont(MY_FONT_SMALL);
-  dp_setTextCursor(14, row);
+  dp_setTextCursor(14, row * 8);
   dp_printf(status.substr(0, 2).c_str());
   if (!msg.empty()) {
     dp_printf("                ");
     dp_printf(msg.substr(0, 16).c_str());
     dp_println();
   }
-  dp_dump(displaybuf);
+  dp_dump();
 #endif
 }
 
