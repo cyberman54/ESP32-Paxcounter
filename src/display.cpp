@@ -538,10 +538,7 @@ void dp_contrast(uint8_t contrast) {
 
 void dp_power(uint8_t screenon) {
 #if (HAS_DISPLAY) == 1
-  //not yet in library, awaiting PR https://github.com/bitbank2/OneBitDisplay/pull/34
-  //oled.setPower(screenon);
-  //as workaround be blank the sreen
-  dp_clear();
+  oled.setPower(screenon);
 #elif (HAS_DISPLAY) == 2
   // to come
 #endif
@@ -549,10 +546,7 @@ void dp_power(uint8_t screenon) {
 
 void dp_shutdown(void) {
 #if (HAS_DISPLAY) == 1
-  //not yet in library, awaiting PR https://github.com/bitbank2/OneBitDisplay/pull/34
-  //oled.setPower(false);
-  //as workaround be blank the sreen
-  dp_clear();
+  oled.setPower(false);
   delay(DISPLAYREFRESH_MS / 1000 * 1.1);
 #elif (HAS_DISPLAY) == 2
   // to come
