@@ -22,7 +22,7 @@ Paxcounter is an [ESP32](https://www.espressif.com/en/products/socs/esp32) MCU b
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
-Data can either be be stored on a local SD-card, transferred to cloud using LoRaWAN network or MQTT over TCP/IP, or transmitted to a local host using serial (SPI) interface.
+Data can either be be stored on a local SD-card, transferred to cloud using LoRaWAN network (e.g. TheThingsNetwork or Helium) or MQTT over TCP/IP, or transmitted to a local host using serial (SPI) interface.
 
 You can build this project battery powered using ESP32 deep sleep mode and reach long uptimes with a single 18650 Li-Ion cell.
 
