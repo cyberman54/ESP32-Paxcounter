@@ -95,17 +95,12 @@ void dp_init(bool verbose) {
     esp_chip_info(&chip_info);
 
     dp_setFont(MY_FONT_NORMAL);
-    dp_printf("** PAXCOUNTER **");
-    dp_println();
-    dp_printf("Software v%s", PROGVERSION);
-    dp_println();
-    dp_printf("ESP32 %d cores", chip_info.cores);
-    dp_println();
-    dp_printf("Chip Rev.%d", chip_info.revision);
-    dp_println();
-    dp_printf("WiFi%s%s", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+    dp_printf("** PAXCOUNTER **\r\n");
+    dp_printf("Software v%s\r\n", PROGVERSION);
+    dp_printf("ESP32 %d cores\r\n", chip_info.cores);
+    dp_printf("Chip Rev.%d\r\n", chip_info.revision);
+    dp_printf("WiFi%s%s\r\n", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
               (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-    dp_println();
     dp_printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
               (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
 
@@ -130,8 +125,7 @@ void dp_init(bool verbose) {
     const int x_offset = QR_SCALEFACTOR * 29 + 14;
     dp_setFont(MY_FONT_NORMAL);
     dp_setTextCursor(x_offset, 0);
-    dp_printf("DEVEUI:");
-    dp_println();
+    dp_printf("DEVEUI:\r\n");
     for (uint8_t i = 0; i <= 3; i++) {
       dp_setTextCursor(x_offset, i * 8 + 20);
       dp_printf("%4.4s", deveui + i * 4);
@@ -248,7 +242,7 @@ void dp_drawPage(bool nextpage) {
 #else
     dp_printf("Sniffer disabled");
 #endif
-    dp_println();
+    dp_printf("\r\n");
 
     // line 4: Battery + GPS status + Wifi channel
     // B:a.bcV Sats:ab ch:ab
@@ -260,14 +254,12 @@ void dp_drawPage(bool nextpage) {
 #else
     dp_printf("          ");
 #endif
-    dp_printf("chan:%02u", channel);
-    dp_println();
+    dp_printf("chan:%02u\r\n", channel);
 
     // line 5: RSSI limiter + free memory
     // RLIM:abcd  Mem:abcdKB
     dp_printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-    dp_printf("  Mem:%4dKB", getFreeRAM() / 1024);
-    dp_println();
+    dp_printf("  Mem:%4dKB\r\n", getFreeRAM() / 1024);
 
     // line 6: time + date
     // Wed Jan 12 21:49:08 *
@@ -282,12 +274,11 @@ void dp_drawPage(bool nextpage) {
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
     dp_setFont(MY_FONT_SMALL, 1);
-    dp_printf("%c", timeState);
+    dp_printf("%c\r\n", timeState);
     dp_setFont(MY_FONT_SMALL, 0);
 #else
-    dp_printf("%c", timeState);
+    dp_printf("%c\r\n", timeState);
 #endif
-    dp_println();
 #endif // TIME_SYNC_INTERVAL
 
     // line 7: LMIC status
@@ -318,15 +309,11 @@ void dp_drawPage(bool nextpage) {
 
     dp_setFont(MY_FONT_SMALL);
     dp_setTextCursor();
-    dp_printf("Net:%06X   Pwr:%-2d", LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
-    dp_println();
-    dp_printf("Dev:%08X DR:%1d", LMIC.devaddr, LMIC.datarate);
-    dp_println();
-    dp_printf("ChMsk:%04X Nonce:%04X", LMIC.channelMap, LMIC.devNonce);
-    dp_println();
-    dp_printf("fUp:%-6d fDn:%-6d", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
+    dp_printf("Net:%06X   Pwr:%-2d\r\n", LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
+    dp_printf("Dev:%08X DR:%1d\r\n", LMIC.devaddr, LMIC.datarate);
+    dp_printf("ChMsk:%04X Nonce:%04X\r\n", LMIC.channelMap, LMIC.devNonce);
+    dp_printf("fUp:%-6d fDn:%-6d\r\n", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
               LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
-    dp_println();
     dp_printf("SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4, LMIC.rssi);
 
     dp_dump();
@@ -349,9 +336,8 @@ void dp_drawPage(bool nextpage) {
     // show latitude and longitude
     dp_setFont(MY_FONT_STRETCHED);
     dp_setTextCursor();
-    dp_printf("%c%09.6f", gps.location.rawLat().negative ? 'S' : 'N',
+    dp_printf("%c%09.6f\r\n", gps.location.rawLat().negative ? 'S' : 'N',
               gps.location.lat());
-    dp_println();
     dp_printf("%c%09.6f", gps.location.rawLng().negative ? 'W' : 'E',
               gps.location.lng());
     dp_dump();
@@ -366,13 +352,10 @@ void dp_drawPage(bool nextpage) {
 #if (HAS_BME)
     dp_setFont(MY_FONT_STRETCHED);
     dp_setTextCursor(0, 0);
-    dp_printf("TMP: %-6.1f", bme_status.temperature);
-    dp_println();
-    dp_printf("HUM: %-6.1f", bme_status.humidity);
-    dp_println();
-    dp_printf("PRE: %-6.1f", bme_status.pressure);
+    dp_printf("TMP: %-6.1f\r\n", bme_status.temperature);
+    dp_printf("HUM: %-6.1f\r\n", bme_status.humidity);
+    dp_printf("PRE: %-6.1f\r\n", bme_status.pressure);
 #ifdef HAS_BME680
-    dp_println();
     dp_printf("IAQ: %-6.0f", bme_status.iaq);
 #endif
     dp_dump();
@@ -393,8 +376,7 @@ void dp_drawPage(bool nextpage) {
     dp_printf("Timeofday:");
     dp_setTextCursor(0, 26);
     dp_setFont(MY_FONT_LARGE);
-    dp_printf("%.8s", strftime_buf);
-    dp_println();
+    dp_printf("%.8s\r\n", strftime_buf);
     dp_setFont(MY_FONT_SMALL);
     dp_printf("%21.1f", uptime() / 1000.0);
     dp_dump();
@@ -465,14 +447,6 @@ void dp_setFont(int font, int inv) {
   
 #endif
 }
-
-void dp_println(void) {
-#if (HAS_DISPLAY) == 1
-  oled.println();
-#elif (HAS_DISPLAY) == 2
-  tft.println();
-#endif
-};
 
 void dp_printf(const char *format, ...) {
   char loc_buf[64];
