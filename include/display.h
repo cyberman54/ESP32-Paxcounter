@@ -14,14 +14,17 @@
 #endif
 
 #define DISPLAY_PAGES (7) // number of paxcounter display pages
+#define PLOTBUFFERSIZE (MY_DISPLAY_WIDTH * MY_DISPLAY_HEIGHT / 8)
 
 // settings for OLED display library
 #if (HAS_DISPLAY) == 1
-#define MY_FONT_SMALL FONT_SMALL
-#define MY_FONT_NORMAL FONT_NORMAL
-#define MY_FONT_LARGE FONT_LARGE
-#define MY_FONT_STRETCHED FONT_STRETCHED
-#define USE_BACKBUFFER 1
+#define MY_FONT_SMALL FONT_6x8
+#define MY_FONT_NORMAL FONT_8x8
+#define MY_FONT_LARGE FONT_16x32
+#define MY_FONT_STRETCHED FONT_12x16
+
+#define MY_DISPLAY_FIRSTLINE 30
+
 #ifdef MY_DISPLAY_ADDR
 #define OLED_ADDR MY_DISPLAY_ADDR
 #else
@@ -33,6 +36,12 @@
 #ifndef OLED_FREQUENCY
 #define OLED_FREQUENCY 400000L
 #endif
+#ifndef MY_DISPLAY_FGCOLOR
+#define MY_DISPLAY_FGCOLOR OLED_WHITE
+#endif
+#ifndef MY_DISPLAY_BGCOLOR
+#define MY_DISPLAY_BGCOLOR OLED_BLACK
+#endif
 
 // settings for TFT display library
 #elif (HAS_DISPLAY == 2)
@@ -41,6 +50,8 @@
 #define MY_FONT_NORMAL 2
 #define MY_FONT_LARGE 4
 #define MY_FONT_STRETCHED 6
+
+#define MY_DISPLAY_FIRSTLINE 30
 
 #ifndef MY_DISPLAY_FGCOLOR
 #define MY_DISPLAY_FGCOLOR TFT_WHITE
@@ -76,7 +87,7 @@
 
 const uint8_t QR_SCALEFACTOR = (MY_DISPLAY_HEIGHT - 4) / 29; // 4px borderlines
 
-extern uint8_t DisplayIsOn, displaybuf[];
+extern uint8_t DisplayIsOn;
 extern hw_timer_t *displayIRQ;
 extern uint8_t volatile channel; // wifi channel rotation counter
 
@@ -86,11 +97,10 @@ void dp_init(bool verbose = false);
 void dp_shutdown(void);
 void dp_message(const char *msg, int line, bool invers);
 void dp_drawPage(bool nextpage);
-void dp_println(int lines = 1);
 void dp_printf(const char *format, ...);
 void dp_setFont(int font, int inv = 0);
-void dp_dump(uint8_t *pBuffer);
-void dp_setTextCursor(int col, int row);
+void dp_dump(uint8_t *pBuffer = NULL);
+void dp_setTextCursor(int col = 0, int row = MY_DISPLAY_FIRSTLINE);
 void dp_contrast(uint8_t contrast);
 void dp_clear(void);
 void dp_power(uint8_t screenon);

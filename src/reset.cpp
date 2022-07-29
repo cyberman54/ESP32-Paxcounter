@@ -200,9 +200,9 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
 
   // time stamp sleep start time and save system monotonic time. Deep sleep.
   gettimeofday(&RTC_sleep_start_time, NULL);
-  RTC_millis += millis();
+  RTC_millis += esp_timer_get_time() / 1000;
   ESP_LOGI(TAG, "Going to sleep, good bye.");
   esp_deep_sleep_start();
 }
 
-unsigned long long uptime() { return (RTC_millis + millis()); }
+unsigned long long uptime() { return (RTC_millis + esp_timer_get_time() / 1000); }
