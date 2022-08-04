@@ -11,10 +11,10 @@ static const char TAG[] = __FILE__;
 static Button *b = NULL;
 
 void button_init(int pin) {
-#ifdef BUTTON_PULLDOWN
-  b = new Button(pin);
-#else
+#ifdef BUTTON_PULLUP
   b = new ButtonPullup(pin);
+#else
+  b = new Button(pin, !BUTTON_ACTIVEHIGH);
 #endif
 
   // attach events to the button
