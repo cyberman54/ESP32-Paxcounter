@@ -60,6 +60,10 @@
 #define MY_DISPLAY_BGCOLOR TFT_BLACK
 #endif
 
+#ifndef TOUCH_CS
+#define TOUCH_CS NOT_A_PIN
+#endif
+
 #endif
 
 // setup display hardware type, default is OLED 128x64
