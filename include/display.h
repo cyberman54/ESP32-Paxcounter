@@ -25,17 +25,20 @@
 
 #define MY_DISPLAY_FIRSTLINE 30
 
+#ifndef MY_DISPLAY_RST
+#define MY_DISPLAY_RST NOT_A_PIN
+#endif
+
 #ifdef MY_DISPLAY_ADDR
 #define OLED_ADDR MY_DISPLAY_ADDR
 #else
 #define OLED_ADDR -1
 #endif
-#ifndef USE_HW_I2C
-#define USE_HW_I2C 1
-#endif
+
 #ifndef OLED_FREQUENCY
 #define OLED_FREQUENCY 400000L
 #endif
+
 #ifndef MY_DISPLAY_FGCOLOR
 #define MY_DISPLAY_FGCOLOR OLED_WHITE
 #endif

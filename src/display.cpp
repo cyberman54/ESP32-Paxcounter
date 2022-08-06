@@ -43,13 +43,13 @@ static const char TAG[] = __FILE__;
 static uint8_t plotbuf[PLOTBUFFERSIZE] = {0};
 uint8_t DisplayIsOn = 0;
 hw_timer_t *displayIRQ = NULL;
-QRCode qrcode;
+static QRCode qrcode;
 
 #ifdef HAS_DISPLAY
 #if (HAS_DISPLAY) == 1
-ONE_BIT_DISPLAY oled;
+static ONE_BIT_DISPLAY oled;
 #elif (HAS_DISPLAY) == 2
-TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
+static TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
 #else
 #error Unknown display type specified in hal file
 #endif
@@ -58,9 +58,10 @@ TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
 void dp_setup(int contrast) {
 
 #if (HAS_DISPLAY) == 1 // I2C OLED
-
+  oled.setI2CPins(MY_DISPLAY_SDA, MY_DISPLAY_SCL, MY_DISPLAY_RST);
+  oled.setBitBang(false);
   oled.I2Cbegin(OLED_TYPE, OLED_ADDR, OLED_FREQUENCY);
-  assert(oled.allocBuffer()); // render all outputs to lib internal backbuffer
+  oled.allocBuffer(); // render all outputs to lib internal backbuffer
   oled.setTextWrap(false);
   oled.setRotation(
       MY_DISPLAY_FLIP ? 2 : 0); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 280°
