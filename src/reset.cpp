@@ -61,7 +61,7 @@ void do_after_reset(void) {
     reset_rtc_vars();
     break;
 
-  case SW_CPU_RESET: // 0x0c Software reset CPU
+  case RTC_SW_CPU_RESET: // 0x0c Software reset CPU
     // keep previous set runmode (update / normal / maintenance)
     RTC_restarts++;
     break;
@@ -83,16 +83,16 @@ void do_after_reset(void) {
       RTC_runmode = RUNMODE_WAKEUP;
     break;
 
-  case SW_RESET:         // 0x03 Software reset digital core
-  case OWDT_RESET:       // 0x04 Legacy watch dog reset digital core
-  case SDIO_RESET:       // 0x06 Reset by SLC module, reset digital core
+  //case SW_RESET:         // 0x03 Software reset digital core
+  //case OWDT_RESET:       // 0x04 Legacy watch dog reset digital core
+  //case SDIO_RESET:       // 0x06 Reset by SLC module, reset digital core
   case TG0WDT_SYS_RESET: // 0x07 Timer Group0 Watch dog reset digital core
   case TG1WDT_SYS_RESET: // 0x08 Timer Group1 Watch dog reset digital core
   case RTCWDT_SYS_RESET: // 0x09 RTC Watch dog Reset digital core
   case INTRUSION_RESET:  // 0x0a Instrusion tested to reset CPU
-  case TGWDT_CPU_RESET:  // 0x0b Time Group reset CPU
+  //case TGWDT_CPU_RESET:  // 0x0b Time Group reset CPU
   case RTCWDT_CPU_RESET: // 0x0d RTC Watch dog Reset CPU
-  case EXT_CPU_RESET:    // 0x0e for APP CPU, reseted by PRO CPU
+  //case EXT_CPU_RESET:    // 0x0e for APP CPU, reseted by PRO CPU
   case RTCWDT_RTC_RESET: // 0x10 RTC Watch dog reset digital core and rtc mode
   default:
     RTC_runmode = RUNMODE_POWERCYCLE;
