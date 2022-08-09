@@ -13,7 +13,7 @@
 #define MY_DISPLAY_FLIP  1 // use if display is rotated
 
 #define HAS_LED NOT_A_PIN  // no on board LED (?)
-#define HAS_BUTTON (35)    // on board button A
+#define HAS_BUTTON (14)    // on board button A
 
 // power management settings
 //#define BAT_MEASURE_ADC ADC1_GPIO34_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_6
