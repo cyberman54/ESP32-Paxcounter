@@ -100,7 +100,8 @@ void dp_init(bool verbose) {
     dp_printf("Software v%s\r\n", PROGVERSION);
     dp_printf("ESP32 %d cores\r\n", chip_info.cores);
     dp_printf("Chip Rev.%d\r\n", chip_info.revision);
-    dp_printf("WiFi%s%s\r\n", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+    dp_printf("WiFi%s%s\r\n",
+              (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
               (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
     dp_printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
               (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
@@ -185,31 +186,29 @@ void dp_drawPage(bool nextpage) {
   time_t now;
   struct tm timeinfo = {0};
 
-  if (nextpage) {
-    DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
-    dp_clear();
-  }
-
   // update counter values from libpax
   libpax_counter_count(&count);
 
-  // cursor home
-  dp_setTextCursor(0, 0);
+  if (nextpage) {
+    DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
+    dp_clear();
+  } else
+    dp_setTextCursor(0, 0);
 
   // line 1/2: pax counter
   // display number of unique macs total Wifi + BLE
-  if (DisplayPage < 3) {
+  if (DisplayPage <= 2) {
     dp_setFont(MY_FONT_LARGE);
     dp_printf("%-8d", count.pax);
   }
 
   switch (DisplayPage) {
 
-    // page 0: parameters overview
-    // page 1: lorawan parameters
-    // page 2: GPS
-    // page 3: BME280/680
-    // page 4: time
+    // page 0: pax + parameters overview
+    // page 1: pax + lorawan parameters
+    // page 2: pax + GPS lat/lon
+    // page 3: BME280/680 values
+    // page 4: timeofday
     // page 5: pax graph
     // page 6: blank screen
 
@@ -217,7 +216,7 @@ void dp_drawPage(bool nextpage) {
   case 0:
 
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor();
+    dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
 
     // line 3: wifi + bluetooth counters
     // WIFI:abcde BLTH:abcde
@@ -309,8 +308,9 @@ void dp_drawPage(bool nextpage) {
     // 7|SNR:-0000  RSSI:-0000
 
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor();
-    dp_printf("Net:%06X   Pwr:%-2d\r\n", LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
+    dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
+    dp_printf("Net:%06X   Pwr:%-2d\r\n", LMIC.netid & 0x001FFFFF,
+              LMIC.radio_txpow);
     dp_printf("Dev:%08X DR:%1d\r\n", LMIC.devaddr, LMIC.datarate);
     dp_printf("ChMsk:%04X Nonce:%04X\r\n", LMIC.channelMap, LMIC.devNonce);
     dp_printf("fUp:%-6d fDn:%-6d\r\n", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
@@ -319,8 +319,9 @@ void dp_drawPage(bool nextpage) {
 
     dp_dump();
     break;
-#else  // flip page if we are unattended
+#else  // skip this page
     DisplayPage++;
+    break;
 #endif // HAS_LORA
 
   // ---------- page 2: GPS ----------
@@ -336,15 +337,16 @@ void dp_drawPage(bool nextpage) {
 
     // show latitude and longitude
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor();
+    dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
     dp_printf("%c%09.6f\r\n", gps.location.rawLat().negative ? 'S' : 'N',
               gps.location.lat());
     dp_printf("%c%09.6f", gps.location.rawLng().negative ? 'W' : 'E',
               gps.location.lng());
     dp_dump();
     break;
-#else // flip page if we are unattended
+#else // skip this page
     DisplayPage++;
+    break;
 #endif
 
   // ---------- page 3: BME280/680 ----------
@@ -360,23 +362,24 @@ void dp_drawPage(bool nextpage) {
     dp_printf("IAQ: %-6.0f", bme_status.iaq);
 #endif
     dp_dump();
-    break; // page 3
-#else      // flip page if we are unattended
+    break;
+#else  // skip this page
     DisplayPage++;
-#endif     // HAS_BME
+    break;
+#endif // HAS_BME
 
   // ---------- page 4: time ----------
   case 4:
 
     time(&now);
     localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%T", &timeinfo);
 
     dp_setFont(MY_FONT_STRETCHED);
     dp_setTextCursor(0, 0);
     dp_printf("Timeofday:");
     dp_setTextCursor(0, 26);
     dp_setFont(MY_FONT_LARGE);
+    strftime(strftime_buf, sizeof(strftime_buf), "%T", &timeinfo);
     dp_printf("%.8s\r\n", strftime_buf);
     dp_setFont(MY_FONT_SMALL);
     dp_printf("%21.1f", uptime() / 1000.0);
@@ -397,8 +400,9 @@ void dp_drawPage(bool nextpage) {
 #ifdef HAS_BUTTON
     dp_clear();
     break;
-#else // flip page if we are unattended
+#else // skip this page
     DisplayPage++;
+    break;
 #endif
 
   } // switch (page)
@@ -445,7 +449,7 @@ void dp_setFont(int font, int inv) {
     tft.setTextFont(2); // 16px
     break;
   }
-  
+
 #endif
 }
 

@@ -107,7 +107,7 @@ void dp_drawPage(bool nextpage);
 void dp_printf(const char *format, ...);
 void dp_setFont(int font, int inv = 0);
 void dp_dump(uint8_t *pBuffer = NULL);
-void dp_setTextCursor(int col = 0, int row = MY_DISPLAY_FIRSTLINE);
+void dp_setTextCursor(int col, int row);
 void dp_contrast(uint8_t contrast);
 void dp_clear(void);
 void dp_power(uint8_t screenon);
