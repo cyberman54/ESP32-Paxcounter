@@ -196,13 +196,6 @@ void dp_drawPage(bool nextpage) {
   } else
     dp_setTextCursor(0, 0);
 
-  // line 1/2: pax counter
-  // display number of unique macs total Wifi + BLE
-  if (DisplayPage <= 2) {
-    dp_setFont(MY_FONT_LARGE);
-    dp_printf("%-8d", count.pax);
-  }
-
   switch (DisplayPage) {
 
     // page 0: pax + parameters overview
@@ -216,6 +209,10 @@ void dp_drawPage(bool nextpage) {
     // ---------- page 0: parameters overview ----------
   case 0:
 
+    // show pax
+    dp_setFont(MY_FONT_LARGE);
+    dp_printf("%-8d", count.pax);
+    
     dp_setFont(MY_FONT_SMALL);
     dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
 
@@ -308,6 +305,10 @@ void dp_drawPage(bool nextpage) {
     // 6|fUp:000000 fDn:000000
     // 7|SNR:-0000  RSSI:-0000
 
+    // show pax
+    dp_setFont(MY_FONT_LARGE);
+    dp_printf("%-8d", count.pax);
+    
     dp_setFont(MY_FONT_SMALL);
     dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
     dp_printf("Net:%06X   Pwr:%-2d\r\n", LMIC.netid & 0x001FFFFF,
@@ -330,6 +331,10 @@ void dp_drawPage(bool nextpage) {
 
 #if (HAS_GPS)
 
+    // show pax
+    dp_setFont(MY_FONT_LARGE);
+    dp_printf("%-8d", count.pax);
+    
     // show satellite status at bottom line
     dp_setFont(MY_FONT_SMALL);
     dp_setTextCursor(0, 56);
