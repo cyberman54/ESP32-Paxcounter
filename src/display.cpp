@@ -128,10 +128,10 @@ void dp_init(bool verbose) {
     // display DEVEUI as plain text on the right
     const int x_offset = QR_SCALEFACTOR * 29 + 14;
     dp_setFont(MY_FONT_NORMAL);
-    dp_setTextCursor(x_offset, 0);
+    dp->setCursor(x_offset, 0);
     dp->printf("DEVEUI:\r\n");
     for (uint8_t i = 0; i <= 3; i++) {
-      dp_setTextCursor(x_offset, i * 8 + 20);
+      dp->setCursor(x_offset, i * 8 + 20);
       dp->printf("%4.4s", deveui + i * 4);
     }
 
@@ -189,14 +189,11 @@ void dp_drawPage(bool nextpage) {
   time_t now;
   struct tm timeinfo = {0};
 
-  // update counter values from libpax
-  libpax_counter_count(&count);
-
   if (nextpage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
     dp_clear();
   } else
-    dp_setTextCursor(0, 0);
+    dp->setCursor(0, 0);
 
   switch (DisplayPage) {
 
@@ -212,11 +209,12 @@ void dp_drawPage(bool nextpage) {
   case 0:
 
     // show pax
+    libpax_counter_count(&count);
     dp_setFont(MY_FONT_LARGE);
     dp->printf("%-8d", count.pax);
 
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
+    dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
 
     // line 3: wifi + bluetooth counters
     // WIFI:abcde BLTH:abcde
@@ -308,11 +306,12 @@ void dp_drawPage(bool nextpage) {
     // 7|SNR:-0000  RSSI:-0000
 
     // show pax
+    libpax_counter_count(&count);
     dp_setFont(MY_FONT_LARGE);
     dp->printf("%-8d", count.pax);
 
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
+    dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
     dp->printf("Net:%06X   Pwr:%-2d\r\n", LMIC.netid & 0x001FFFFF,
                LMIC.radio_txpow);
     dp->printf("Dev:%08X DR:%1d\r\n", LMIC.devaddr, LMIC.datarate);
@@ -334,18 +333,19 @@ void dp_drawPage(bool nextpage) {
 #if (HAS_GPS)
 
     // show pax
+    libpax_counter_count(&count);
     dp_setFont(MY_FONT_LARGE);
     dp->printf("%-8d", count.pax);
 
     // show satellite status at bottom line
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor(0, 56);
+    dp->setCursor(0, 56);
     dp->printf("%u Sats", gps.satellites.value());
     dp->printf(gps_hasfix() ? "         " : " - No fix");
 
     // show latitude and longitude
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor(0, MY_DISPLAY_FIRSTLINE);
+    dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
     dp->printf("%c%09.6f\r\n", gps.location.rawLat().negative ? 'S' : 'N',
                gps.location.lat());
     dp->printf("%c%09.6f", gps.location.rawLng().negative ? 'W' : 'E',
@@ -362,7 +362,7 @@ void dp_drawPage(bool nextpage) {
 
 #if (HAS_BME)
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor(0, 0);
+    dp->setCursor(0, 0);
     dp->printf("TMP: %-6.1f\r\n", bme_status.temperature);
     dp->printf("HUM: %-6.1f\r\n", bme_status.humidity);
     dp->printf("PRE: %-6.1f\r\n", bme_status.pressure);
@@ -383,9 +383,9 @@ void dp_drawPage(bool nextpage) {
     localtime_r(&now, &timeinfo);
 
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor(0, 0);
+    dp->setCursor(0, 0);
     dp->printf("Timeofday:");
-    dp_setTextCursor(0, 26);
+    dp->setCursor(0, 26);
     dp_setFont(MY_FONT_LARGE);
     strftime(strftime_buf, sizeof(strftime_buf), "%T", &timeinfo);
     dp->printf("%.8s\r\n", strftime_buf);
@@ -417,14 +417,6 @@ void dp_drawPage(bool nextpage) {
 } // dp_drawPage
 
 // ------------- display helper functions -----------------
-
-void dp_setTextCursor(int x, int y) {
-#if (HAS_DISPLAY) == 1
-  dp->setCursor(x, y);
-#elif (HAS_DISPLAY) == 2
-  dp->setCursor(x, y);
-#endif
-}
 
 void dp_setFont(int font, int inv) {
 
@@ -473,7 +465,7 @@ void dp_clear(void) {
 #elif (HAS_DISPLAY) == 2
   dp->fillScreen(MY_DISPLAY_BGCOLOR);
 #endif
-  dp_setTextCursor(0, 0);
+  dp->setCursor(0, 0);
 }
 
 void dp_contrast(uint8_t contrast) {
@@ -504,7 +496,7 @@ void dp_shutdown(void) {
 // print static message on display
 void dp_message(const char *msg, int line, bool invers) {
   dp_setFont(MY_FONT_SMALL, invers ? 1 : 0);
-  dp_setTextCursor(0, line * 8);
+  dp->setCursor(0, line * 8);
   dp->printf("%-16s", msg);
   dp_dump();
 } // dp_message

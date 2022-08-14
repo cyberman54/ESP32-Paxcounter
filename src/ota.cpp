@@ -325,7 +325,7 @@ retry:
 void ota_display(const uint8_t row, const std::string status,
                  const std::string msg) {
 #ifdef HAS_DISPLAY
-  dp_setTextCursor(14 * 8, row * 8);
+  dp->setCursor(14 * 8, row * 8);
   dp->printf(status.substr(0, 2).c_str());
   if (!msg.empty()) {
     dp->printf("                ");
