@@ -151,6 +151,7 @@ void dp_refresh(bool nextPage) {
 
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
+  const uint32_t flip_threshold = DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS;
 #endif
 
   // if display is switched off we don't refresh it to relax cpu
@@ -165,7 +166,7 @@ void dp_refresh(bool nextPage) {
 
 #ifndef HAS_BUTTON
   // auto flip page if we are in unattended mode
-  if ((++framecounter) > (DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS)) {
+  if (++framecounter > flip_threshold) {
     framecounter = 0;
     nextPage = true;
   }
