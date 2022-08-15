@@ -149,8 +149,15 @@ void dp_init(bool verbose) {
 
 } // dp_init
 
+// write display content to display buffer
+// nextpage = true -> flip 1 page
 void dp_refresh(bool nextPage) {
 
+  struct count_payload_t count; // libpax count storage
+  static uint8_t DisplayPage = 0;
+  char timeState, strftime_buf[64];
+  time_t now;
+  struct tm timeinfo = {0};
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
   const uint32_t flip_threshold = DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS;
@@ -174,22 +181,7 @@ void dp_refresh(bool nextPage) {
   }
 #endif
 
-  dp_drawPage(nextPage);
-
-} // refreshDisplay()
-
-void dp_drawPage(bool nextpage) {
-
-  // write display content to display buffer
-  // nextpage = true -> flip 1 page
-
-  struct count_payload_t count; // libpax count storage
-  static uint8_t DisplayPage = 0;
-  char timeState, strftime_buf[64];
-  time_t now;
-  struct tm timeinfo = {0};
-
-  if (nextpage) {
+  if (nextPage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
     dp_clear();
   } else
@@ -414,7 +406,7 @@ void dp_drawPage(bool nextpage) {
 #endif
 
   } // switch (page)
-} // dp_drawPage
+} // dp_refresh
 
 // ------------- display helper functions -----------------
 
