@@ -11,8 +11,8 @@
 #include <OneBitDisplay.h>
 extern ONE_BIT_DISPLAY *dp;
 #elif (HAS_DISPLAY) == 2
-#include <TFT_eSPI.h>
-extern TFT_eSPI *dp;
+#include <bb_spi_lcd.h>
+extern BB_SPI_LCD *dp;
 #endif
 
 #define DISPLAY_PAGES (7) // number of paxcounter display pages
@@ -61,14 +61,10 @@ extern TFT_eSPI *dp;
 #endif
 
 #ifndef MY_DISPLAY_FGCOLOR
-#define MY_DISPLAY_FGCOLOR 0xFFFF // TFT_WHITE
+#define MY_DISPLAY_FGCOLOR TFT_YELLOW
 #endif
 #ifndef MY_DISPLAY_BGCOLOR
-#define MY_DISPLAY_BGCOLOR 0x0000 // TFT_BLACK
-#endif
-
-#ifndef TOUCH_CS
-#define TOUCH_CS NOT_A_PIN
+#define MY_DISPLAY_BGCOLOR TFT_BLACK
 #endif
 
 #endif
