@@ -41,7 +41,6 @@ inline String getHeaderValue(String header, String headerName) {
 }
 
 void start_ota_update() {
-
   const char *host = clientId;
 
   switch_LED(LED_ON);
@@ -121,13 +120,11 @@ end:
   ota_display(5, "**", ""); // mark line rebooting
   delay(5000);
   do_reset(false);
-
 } // start_ota_update
 
 // Reads data vom wifi client and flashes it to ota partition
 // returns: 0 = finished, 1 = retry, -1 = abort
 int do_ota_update() {
-
   char buf[17];
   bool redirect = true;
   size_t written = 0;
@@ -319,7 +316,6 @@ abort:
 
 retry:
   return 1;
-
 } // do_ota_update
 
 void ota_display(const uint8_t row, const std::string status,
