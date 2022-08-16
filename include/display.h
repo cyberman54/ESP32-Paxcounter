@@ -9,8 +9,10 @@
 
 #if (HAS_DISPLAY) == 1
 #include <OneBitDisplay.h>
+extern ONE_BIT_DISPLAY *dp;
 #elif (HAS_DISPLAY) == 2
 #include <TFT_eSPI.h>
+extern TFT_eSPI *dp;
 #endif
 
 #define DISPLAY_PAGES (7) // number of paxcounter display pages
@@ -22,7 +24,6 @@
 #define MY_FONT_NORMAL FONT_8x8
 #define MY_FONT_LARGE FONT_16x32
 #define MY_FONT_STRETCHED FONT_12x16
-
 #define MY_DISPLAY_FIRSTLINE 30
 
 #ifndef MY_DISPLAY_RST
@@ -49,18 +50,21 @@
 // settings for TFT display library
 #elif (HAS_DISPLAY == 2)
 
-#define MY_FONT_SMALL 1
+#define MY_FONT_SMALL 2
 #define MY_FONT_NORMAL 2
-#define MY_FONT_LARGE 4
-#define MY_FONT_STRETCHED 6
-
+#define MY_FONT_LARGE 2
+#define MY_FONT_STRETCHED 2
 #define MY_DISPLAY_FIRSTLINE 30
 
+#ifndef TFT_FREQUENCY
+#define TFT_FREQUENCY 400000L
+#endif
+
 #ifndef MY_DISPLAY_FGCOLOR
-#define MY_DISPLAY_FGCOLOR TFT_WHITE
+#define MY_DISPLAY_FGCOLOR 0xFFFF // TFT_WHITE
 #endif
 #ifndef MY_DISPLAY_BGCOLOR
-#define MY_DISPLAY_BGCOLOR TFT_BLACK
+#define MY_DISPLAY_BGCOLOR 0x0000 // TFT_BLACK
 #endif
 
 #ifndef TOUCH_CS
