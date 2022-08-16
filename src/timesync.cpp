@@ -157,7 +157,6 @@ void timesync_processReq(void *taskparameter) {
     // end of time critical section: release app irq lock
     timeSyncPending = false;
     unmask_user_IRQ();
-
   } // infinite while(1)
 }
 

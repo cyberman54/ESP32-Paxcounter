@@ -38,7 +38,6 @@ uint8_t rtc_init(void) {
 
   // failure
   // return 0
-
 } // rtc_init()
 
 uint8_t set_rtctime(time_t t) { // t is sec epoch time
@@ -49,7 +48,6 @@ uint8_t set_rtctime(time_t t) { // t is sec epoch time
   Rtc.SetDateTime(RtcDateTime(t - SECS_YR_2000)); // epoch -> sec2000
   ESP_LOGI(TAG, "RTC time synced");
   return 1; // success
-
 } // set_rtctime()
 
 time_t get_rtctime(uint16_t *msec) {
@@ -72,7 +70,6 @@ time_t get_rtctime(uint16_t *msec) {
 #endif
 
   return t;
-
 } // get_rtctime()
 
 float get_rtctemp(void) {
