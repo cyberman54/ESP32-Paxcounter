@@ -72,7 +72,6 @@ void SendPayload(uint8_t port) {
 
 // timer triggered function to prepare payload to send
 void sendData() {
-
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
 
@@ -91,7 +90,6 @@ void sendData() {
 
   while (bitmask) {
     switch (bitmask & mask) {
-
 #if ((WIFICOUNTER) || (BLECOUNTER))
     case COUNT_DATA:
       payload.reset();
@@ -197,7 +195,6 @@ void sendData() {
         SendPayload(BATTPORT);
         break;
 #endif
-
       } // switch
       bitmask &= ~mask;
       mask <<= 1;

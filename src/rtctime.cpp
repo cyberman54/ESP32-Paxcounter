@@ -9,7 +9,6 @@ RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 
 // initialize RTC
 uint8_t rtc_init(void) {
-
   Wire.begin(HAS_RTC);
   Rtc.Begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL);
 
@@ -43,7 +42,6 @@ uint8_t rtc_init(void) {
 } // rtc_init()
 
 uint8_t set_rtctime(time_t t) { // t is sec epoch time
-
 #ifdef RTC_INT // sync rtc 1Hz pulse on top of second
   Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);  // off
   Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock); // start
@@ -55,7 +53,6 @@ uint8_t set_rtctime(time_t t) { // t is sec epoch time
 } // set_rtctime()
 
 time_t get_rtctime(uint16_t *msec) {
-
   time_t t = 0;
   *msec = 0;
   if (Rtc.IsDateTimeValid() && Rtc.GetIsRunning()) {

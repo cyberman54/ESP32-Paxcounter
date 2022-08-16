@@ -158,7 +158,6 @@ void ledLoop(void *parameter) {
       }
       // No custom blink, check LoRaWAN state
     } else {
-
 #if (HAS_LORA)
       // LED indicators for viusalizing LoRaWAN state
       if (LMIC.opmode & (OP_JOINING | OP_REJOIN)) {

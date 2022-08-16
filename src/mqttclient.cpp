@@ -19,7 +19,6 @@ void mqtt_deinit(void) {
 }
 
 esp_err_t mqtt_init(void) {
-
   // setup network connection and MQTT client
   ETH.begin();
   ETH.setHostname(clientId);
@@ -43,7 +42,6 @@ esp_err_t mqtt_init(void) {
 }
 
 int mqtt_connect(const char *my_host, const uint16_t my_port) {
-
   IPAddress mqtt_server_ip;
 
   ESP_LOGI(TAG, "MQTT name is %s", MQTT_CLIENTNAME);
@@ -75,13 +73,10 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
 }
 
 void mqtt_client_task(void *param) {
-
   MessageBuffer_t msg;
 
   while (1) {
-
     if (mqttClient.connected()) {
-
       // check for incoming messages
       mqttClient.loop();
 
@@ -124,11 +119,10 @@ void mqtt_client_task(void *param) {
 // process incoming MQTT messages
 void mqtt_callback(MQTTClient *client, char *topic, char *payload, int length) {
   if (strcmp(topic, MQTT_INTOPIC) == 0) {
-
     // get length of base64 encoded message
     size_t out_len = 0;
     mbedtls_base64_decode(NULL, 0, &out_len, (unsigned char *)payload, length);
-
+    
     // decode the base64 message
     unsigned char decoded[out_len];
     mbedtls_base64_decode(decoded, out_len, &out_len, (unsigned char *)payload,

@@ -75,7 +75,6 @@ void IRAM_ATTR watchdog() { xTaskResumeFromISR(RestartHandle); }
 // used for manually uploading a firmware file via wifi
 
 void start_boot_menu(void) {
-
   const char *host = clientId;
   const char *ssid = WIFI_SSID;
   const char *password = WIFI_PASS;
@@ -150,9 +149,7 @@ void start_boot_menu(void) {
 
         // did we get a file name?
         if (upload.filename != NULL) {
-
           switch (upload.status) {
-
           case UPLOAD_FILE_START:
             // start file transfer
             ESP_LOGI(TAG, "Uploading %s", upload.filename.c_str());
@@ -177,7 +174,6 @@ void start_boot_menu(void) {
           case UPLOAD_FILE_ABORTED:
           default:
             break;
-
           } // switch
 
           // don't boot to production if update failed

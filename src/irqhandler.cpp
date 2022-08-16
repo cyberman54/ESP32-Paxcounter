@@ -7,7 +7,6 @@ TaskHandle_t irqHandlerTask = NULL;
 
 // irq handler task, handles all our application level interrupts
 void irqHandler(void *pvParameters) {
-
   _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
   uint32_t irqSource;
