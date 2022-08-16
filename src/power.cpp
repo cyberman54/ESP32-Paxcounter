@@ -26,7 +26,6 @@ static const adc_unit_t unit = ADC_UNIT_1;
 AXP20X_Class pmu;
 
 void AXP192_powerevent_IRQ(void) {
-
   pmu.readIRQ();
 
   if (pmu.isVbusOverVoltageIRQ())
@@ -83,9 +82,7 @@ void AXP192_powerevent_IRQ(void) {
 }
 
 void AXP192_power(pmu_power_t powerlevel) {
-
   switch (powerlevel) {
-
   case pmu_power_off:
     pmu.shutdown();
     break;
@@ -119,7 +116,6 @@ void AXP192_power(pmu_power_t powerlevel) {
 }
 
 void AXP192_showstatus(void) {
-
   if (pmu.isBatteryConnect())
     if (pmu.isChargeing())
       ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
@@ -137,12 +133,10 @@ void AXP192_showstatus(void) {
 }
 
 void AXP192_init(void) {
-
   if (pmu.begin(i2c_readBytes, i2c_writeBytes, AXP192_PRIMARY_ADDRESS) ==
       AXP_FAIL)
     ESP_LOGI(TAG, "AXP192 PMU initialization failed");
   else {
-
     // configure voltages
     pmu.setDCDC1Voltage(3300); // for external OLED display
     pmu.setLDO2Voltage(3300);  // LORA VDD 3v3

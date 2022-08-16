@@ -21,18 +21,17 @@ TaskHandle_t lmicTask = NULL, lorasendTask = NULL;
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
-
 public:
   MyHalConfig_t(){};
 
   // set SPI pins to board configuration, pins may come from pins_arduino.h
-  virtual void begin(void) override {
+  void begin(void) override {
     SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
   }
 
-  // virtual void end(void) override
+  // void end(void) override
 
-  // virtual ostime_t setModuleActive(bool state) override
+  // ostime_t setModuleActive(bool state) override
 };
 
 static MyHalConfig_t myHalConfig{};
@@ -50,9 +49,7 @@ static const lmic_pinmap myPinmap = {
     .pConfig = &myHalConfig};
 
 void lora_setupForNetwork(bool preJoin) {
-
   if (preJoin) {
-
 #if CFG_LMIC_US_like
     // in the US, with TTN, it saves join time if we start on subband 1
     // (channels 8-15). This will get overridden after the join by
@@ -196,7 +193,6 @@ void lora_send(void *pvParameters) {
   MessageBuffer_t SendBuffer;
 
   while (1) {
-
     // postpone until we are joined if we are not
     while (!LMIC.devaddr) {
       vTaskDelay(pdMS_TO_TICKS(500));
@@ -213,7 +209,6 @@ void lora_send(void *pvParameters) {
     switch (LMIC_setTxData2_strict(SendBuffer.MessagePort, SendBuffer.Message,
                                    SendBuffer.MessageSize,
                                    (cfg.countermode & 0x02))) {
-
     case LMIC_ERROR_SUCCESS:
 #if (TIME_SYNC_LORASERVER)
       // if last packet sent was a timesync request, store TX timestamp
@@ -237,7 +232,6 @@ void lora_send(void *pvParameters) {
       break;
     default: // other LMIC return code
       ESP_LOGE(TAG, "LMIC error, message not sent and deleted");
-
     }         // switch
     delay(2); // yield to CPU
   }           // while(1)
@@ -351,7 +345,6 @@ void lmictask(void *pvParameters) {
 
 // lmic event handler
 void myEventCallback(void *pUserData, ev_t ev) {
-
   // using message descriptors from LMIC library
   static const char *const evNames[] = {LMIC_EVENT_NAME_TABLE__INIT};
   // get current length of lora send queue
@@ -366,7 +359,6 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   // process current event message
   switch (ev) {
-
   case EV_TXCOMPLETE:
     // -> processed in lora_send()
     break;
@@ -411,7 +403,6 @@ void myEventCallback(void *pUserData, ev_t ev) {
 // event EV_RXCOMPLETE message handler
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                   size_t nMsg) {
-
   // display amount of received data
   if (nMsg)
     ESP_LOGI(TAG, "Received %u byte(s) of payload on port %u", nMsg, port);
@@ -419,7 +410,6 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
     ESP_LOGI(TAG, "Received empty message on port %u", port);
 
   switch (port) {
-
   // rcommand received -> call interpreter
   case RCMDPORT:
     rcommand(pMsg, nMsg);
@@ -432,7 +422,6 @@ void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
     timesync_serverAnswer(const_cast<uint8_t *>(pMsg), nMsg);
     break;
 #endif
-
   } // switch
 }
 
@@ -513,7 +502,6 @@ bool ttn_rtc_restore() {
 // https://github.com/JackGruber/ESP32-LMIC-DeepSleep-example/blob/master/src/main.cpp
 
 void SaveLMICToRTC(int deepsleep_sec) {
-
   // ESP32 can't track millis during DeepSleep and no option to advance
   // millis after DeepSleep. Therefore reset DutyCyles before saving LMIC struct
 
