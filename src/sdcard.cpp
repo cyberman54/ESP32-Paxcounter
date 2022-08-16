@@ -67,7 +67,6 @@ int print_to_sd_card(const char *fmt, va_list args) {
 #endif
 
 bool openFile(FILE **fd, const char *filename) {
-
   char _filename[50];
   sprintf(_filename, "%s%s", MOUNT_POINT, filename);
 
@@ -81,7 +80,6 @@ bool openFile(FILE **fd, const char *filename) {
 } // openfile
 
 bool sdcard_init(bool create) {
-
   esp_err_t ret;
 
   // for usage of SD drivers on ESP32 platform see
@@ -171,7 +169,6 @@ bool sdcard_init(bool create) {
   snprintf(bufferFilename, sizeof(bufferFilename), "/%s.csv", SDCARD_FILE_NAME);
 
   if (openFile(&data_file, bufferFilename)) {
-
     fpos_t position;
     fgetpos(data_file, &position);
 
@@ -207,7 +204,6 @@ bool sdcard_init(bool create) {
 #endif
 
   return useSDCard;
-
 } // sdcard_init
 
 void sdcard_flush(void) {
@@ -236,7 +232,6 @@ void sdcard_close(void) {
 
 void sdcardWriteData(uint16_t noWifi, uint16_t noBle,
                      __attribute__((unused)) uint16_t voltage) {
-
   if (!useSDCard)
     return;
 

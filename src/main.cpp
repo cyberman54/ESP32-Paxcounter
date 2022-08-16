@@ -84,7 +84,6 @@ static const char TAG[] = __FILE__;
 char clientId[20] = {0}; // unique ClientID
 
 void setup() {
-
   char features[100] = "";
 
   // disable brownout detection
@@ -487,7 +486,6 @@ void setup() {
   RTC_runmode = RUNMODE_NORMAL;
 
   vTaskDelete(NULL);
-
 } // setup()
 
 void loop() { vTaskDelete(NULL); }

@@ -25,7 +25,6 @@ void initSendDataTimer(uint8_t sendcycle) {
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port) {
-
   ESP_LOGD(TAG, "sending Payload for Port %d", port);
 
   MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
@@ -69,7 +68,6 @@ void SendPayload(uint8_t port) {
 #ifdef HAS_MQTT
   mqtt_enqueuedata(&SendBuffer);
 #endif
-
 } // SendPayload
 
 // timer triggered function to prepare payload to send

@@ -138,7 +138,6 @@ void dp_init(bool verbose) {
 #endif
 
 #endif // HAS_LORA
-
   } // verbose
 
   dp_power(cfg.screenon); // set display off if disabled
@@ -182,7 +181,6 @@ void dp_refresh(bool nextPage) {
     dp->setCursor(0, 0);
 
   switch (DisplayPage) {
-
     // page 0: pax + parameters overview
     // page 1: pax + lorawan parameters
     // page 2: pax + GPS lat/lon
@@ -398,7 +396,6 @@ void dp_refresh(bool nextPage) {
     DisplayPage++;
     break;
 #endif
-
   } // switch (page)
 } // dp_refresh
 
