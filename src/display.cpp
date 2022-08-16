@@ -45,11 +45,12 @@ uint8_t DisplayIsOn = 0;
 hw_timer_t *displayIRQ = NULL;
 static QRCode qrcode;
 
+// select display driver
 #ifdef HAS_DISPLAY
 #if (HAS_DISPLAY) == 1
-static ONE_BIT_DISPLAY oled;
+ONE_BIT_DISPLAY *dp = NULL;
 #elif (HAS_DISPLAY) == 2
-static TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
+TFT_eSPI *dp = NULL;
 #else
 #error Unknown display type specified in hal file
 #endif
@@ -58,20 +59,21 @@ static TFT_eSPI tft = TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
 void dp_setup(int contrast) {
 
 #if (HAS_DISPLAY) == 1 // I2C OLED
-  oled.setI2CPins(MY_DISPLAY_SDA, MY_DISPLAY_SCL, MY_DISPLAY_RST);
-  oled.setBitBang(false);
-  oled.I2Cbegin(OLED_TYPE, OLED_ADDR, OLED_FREQUENCY);
-  oled.allocBuffer(); // render all outputs to lib internal backbuffer
-  oled.setTextWrap(false);
-  oled.setRotation(
+  dp = new ONE_BIT_DISPLAY;
+  dp->setI2CPins(MY_DISPLAY_SDA, MY_DISPLAY_SCL, MY_DISPLAY_RST);
+  dp->setBitBang(false);
+  dp->I2Cbegin(OLED_TYPE, OLED_ADDR, OLED_FREQUENCY);
+  dp->allocBuffer(); // render all outputs to lib internal backbuffer
+  dp->setTextWrap(false);
+  dp->setRotation(
       MY_DISPLAY_FLIP ? 2 : 0); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 280°
 
 #elif (HAS_DISPLAY) == 2 // SPI TFT
-
-  tft.init();
-  tft.setRotation(MY_DISPLAY_FLIP ? 3 : 1);
-  tft.invertDisplay(MY_DISPLAY_INVERT ? true : false);
-  tft.setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
+  dp = new TFT_eSPI(MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT);
+  dp->init();
+  dp->setRotation(MY_DISPLAY_FLIP ? 3 : 1);
+  dp->invertDisplay(MY_DISPLAY_INVERT ? true : false);
+  dp->setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
 
 #endif
 
@@ -96,14 +98,15 @@ void dp_init(bool verbose) {
     esp_chip_info(&chip_info);
 
     dp_setFont(MY_FONT_NORMAL);
-    dp_printf("** PAXCOUNTER **\r\n");
-    dp_printf("Software v%s\r\n", PROGVERSION);
-    dp_printf("ESP32 %d cores\r\n", chip_info.cores);
-    dp_printf("Chip Rev.%d\r\n", chip_info.revision);
-    dp_printf("WiFi%s%s\r\n", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-              (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-    dp_printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
-              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
+    dp->printf("** PAXCOUNTER **\r\n");
+    dp->printf("Software v%s\r\n", PROGVERSION);
+    dp->printf("ESP32 %d cores\r\n", chip_info.cores);
+    dp->printf("Chip Rev.%d\r\n", chip_info.revision);
+    dp->printf("WiFi%s%s\r\n",
+               (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
+               (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+    dp->printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
+               (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
 
     // give user some time to read or take picture
     dp_dump();
@@ -125,11 +128,11 @@ void dp_init(bool verbose) {
     // display DEVEUI as plain text on the right
     const int x_offset = QR_SCALEFACTOR * 29 + 14;
     dp_setFont(MY_FONT_NORMAL);
-    dp_setTextCursor(x_offset, 0);
-    dp_printf("DEVEUI:\r\n");
+    dp->setCursor(x_offset, 0);
+    dp->printf("DEVEUI:\r\n");
     for (uint8_t i = 0; i <= 3; i++) {
-      dp_setTextCursor(x_offset, i * 8 + 20);
-      dp_printf("%4.4s", deveui + i * 4);
+      dp->setCursor(x_offset, i * 8 + 20);
+      dp->printf("%4.4s", deveui + i * 4);
     }
 
     // give user some time to read or take picture
@@ -146,10 +149,18 @@ void dp_init(bool verbose) {
 
 } // dp_init
 
+// write display content to display buffer
+// nextpage = true -> flip 1 page
 void dp_refresh(bool nextPage) {
 
+  struct count_payload_t count; // libpax count storage
+  static uint8_t DisplayPage = 0;
+  char timeState, strftime_buf[64];
+  time_t now;
+  struct tm timeinfo = {0};
 #ifndef HAS_BUTTON
   static uint32_t framecounter = 0;
+  const uint32_t flip_threshold = DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS;
 #endif
 
   // if display is switched off we don't refresh it to relax cpu
@@ -164,103 +175,81 @@ void dp_refresh(bool nextPage) {
 
 #ifndef HAS_BUTTON
   // auto flip page if we are in unattended mode
-  if ((++framecounter) > (DISPLAYCYCLE * 1000 / DISPLAYREFRESH_MS)) {
+  if (++framecounter > flip_threshold) {
     framecounter = 0;
     nextPage = true;
   }
 #endif
 
-  dp_drawPage(nextPage);
-
-} // refreshDisplay()
-
-void dp_drawPage(bool nextpage) {
-
-  // write display content to display buffer
-  // nextpage = true -> flip 1 page
-
-  struct count_payload_t count; // libpax count storage
-  static uint8_t DisplayPage = 0;
-  char timeState, strftime_buf[64];
-  time_t now;
-  struct tm timeinfo = {0};
-
-  if (nextpage) {
+  if (nextPage) {
     DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
     dp_clear();
-  }
-
-  // update counter values from libpax
-  libpax_counter_count(&count);
-
-  // cursor home
-  dp_setTextCursor(0, 0);
-
-  // line 1/2: pax counter
-  // display number of unique macs total Wifi + BLE
-  if (DisplayPage < 3) {
-    dp_setFont(MY_FONT_LARGE);
-    dp_printf("%-8d", count.pax);
-  }
+  } else
+    dp->setCursor(0, 0);
 
   switch (DisplayPage) {
 
-    // page 0: parameters overview
-    // page 1: lorawan parameters
-    // page 2: GPS
-    // page 3: BME280/680
-    // page 4: time
+    // page 0: pax + parameters overview
+    // page 1: pax + lorawan parameters
+    // page 2: pax + GPS lat/lon
+    // page 3: BME280/680 values
+    // page 4: timeofday
     // page 5: pax graph
     // page 6: blank screen
 
     // ---------- page 0: parameters overview ----------
   case 0:
 
+    // show pax
+    libpax_counter_count(&count);
+    dp_setFont(MY_FONT_LARGE);
+    dp->printf("%-8d", count.pax);
+
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor();
+    dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
 
     // line 3: wifi + bluetooth counters
     // WIFI:abcde BLTH:abcde
 
 #if ((WIFICOUNTER) && (BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", count.wifi_count);
+      dp->printf("WIFI:%-5d", count.wifi_count);
     else
-      dp_printf("WIFI:off");
+      dp->printf("WIFI:off");
     if (cfg.blescan)
-      dp_printf("BLTH:%-5d", count.ble_count);
+      dp->printf("BLTH:%-5d", count.ble_count);
     else
-      dp_printf(" BLTH:off");
+      dp->printf(" BLTH:off");
 #elif ((WIFICOUNTER) && (!BLECOUNTER))
     if (cfg.wifiscan)
-      dp_printf("WIFI:%-5d", count.wifi_count);
+      dp->printf("WIFI:%-5d", count.wifi_count);
     else
-      dp_printf("WIFI:off");
+      dp->printf("WIFI:off");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan)
-      dp_printf("BLTH:%-5d", count.ble_count);
-    dp_printf("BLTH:off");
+      dp->printf("BLTH:%-5d", count.ble_count);
+    dp->printf("BLTH:off");
 #else
-    dp_printf("Sniffer disabled");
+    dp->printf("Sniffer disabled");
 #endif
-    dp_printf("\r\n");
+    dp->printf("\r\n");
 
     // line 4: Battery + GPS status + Wifi channel
     // B:a.bcV Sats:ab ch:ab
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
     if (batt_level == 0)
-      dp_printf("No batt   ");
+      dp->printf("No batt   ");
     else
-      dp_printf("Batt:%3u%% ", batt_level);
+      dp->printf("Batt:%3u%% ", batt_level);
 #else
-    dp_printf("          ");
+    dp->printf("          ");
 #endif
-    dp_printf("chan:%02u\r\n", channel);
+    dp->printf("chan:%02u\r\n", channel);
 
     // line 5: RSSI limiter + free memory
     // RLIM:abcd  Mem:abcdKB
-    dp_printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
-    dp_printf("  Mem:%4dKB\r\n", getFreeRAM() / 1024);
+    dp->printf(!cfg.rssilimit ? "RLIM:off " : "RLIM:%-4d", cfg.rssilimit);
+    dp->printf("  Mem:%4dKB\r\n", getFreeRAM() / 1024);
 
     // line 6: time + date
     // Wed Jan 12 21:49:08 *
@@ -270,15 +259,15 @@ void dp_drawPage(bool nextpage) {
     time(&now);
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    dp_printf("%.20s", strftime_buf);
+    dp->printf("%.20s", strftime_buf);
 
 // display inverse timeState if clock controller is enabled
 #if (defined HAS_DCF77) || (defined HAS_IF482)
     dp_setFont(MY_FONT_SMALL, 1);
-    dp_printf("%c\r\n", timeState);
+    dp->printf("%c\r\n", timeState);
     dp_setFont(MY_FONT_SMALL, 0);
 #else
-    dp_printf("%c\r\n", timeState);
+    dp->printf("%c\r\n", timeState);
 #endif
 #endif // TIME_SYNC_INTERVAL
 
@@ -287,10 +276,10 @@ void dp_drawPage(bool nextpage) {
 
 #if (HAS_LORA)
     // LMiC event display
-    dp_printf("%-16s ", lmic_event_msg);
+    dp->printf("%-16s ", lmic_event_msg);
     // LORA datarate, display inverse if ADR disabled
     dp_setFont(MY_FONT_SMALL, !cfg.adrmode);
-    dp_printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
+    dp->printf("%-4s", getSfName(updr2rps(LMIC.datarate)));
     dp_setFont(MY_FONT_SMALL, 0);
 #endif // HAS_LORA
 
@@ -308,19 +297,26 @@ void dp_drawPage(bool nextpage) {
     // 6|fUp:000000 fDn:000000
     // 7|SNR:-0000  RSSI:-0000
 
+    // show pax
+    libpax_counter_count(&count);
+    dp_setFont(MY_FONT_LARGE);
+    dp->printf("%-8d", count.pax);
+
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor();
-    dp_printf("Net:%06X   Pwr:%-2d\r\n", LMIC.netid & 0x001FFFFF, LMIC.radio_txpow);
-    dp_printf("Dev:%08X DR:%1d\r\n", LMIC.devaddr, LMIC.datarate);
-    dp_printf("ChMsk:%04X Nonce:%04X\r\n", LMIC.channelMap, LMIC.devNonce);
-    dp_printf("fUp:%-6d fDn:%-6d\r\n", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
-              LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
-    dp_printf("SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4, LMIC.rssi);
+    dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
+    dp->printf("Net:%06X   Pwr:%-2d\r\n", LMIC.netid & 0x001FFFFF,
+               LMIC.radio_txpow);
+    dp->printf("Dev:%08X DR:%1d\r\n", LMIC.devaddr, LMIC.datarate);
+    dp->printf("ChMsk:%04X Nonce:%04X\r\n", LMIC.channelMap, LMIC.devNonce);
+    dp->printf("fUp:%-6d fDn:%-6d\r\n", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
+               LMIC.seqnoDn ? LMIC.seqnoDn - 1 : 0);
+    dp->printf("SNR:%-5d  RSSI:%-5d", (LMIC.snr + 2) / 4, LMIC.rssi);
 
     dp_dump();
     break;
-#else  // flip page if we are unattended
+#else  // skip this page
     DisplayPage++;
+    break;
 #endif // HAS_LORA
 
   // ---------- page 2: GPS ----------
@@ -328,23 +324,29 @@ void dp_drawPage(bool nextpage) {
 
 #if (HAS_GPS)
 
+    // show pax
+    libpax_counter_count(&count);
+    dp_setFont(MY_FONT_LARGE);
+    dp->printf("%-8d", count.pax);
+
     // show satellite status at bottom line
     dp_setFont(MY_FONT_SMALL);
-    dp_setTextCursor(0, 56);
-    dp_printf("%u Sats", gps.satellites.value());
-    dp_printf(gps_hasfix() ? "         " : " - No fix");
+    dp->setCursor(0, 56);
+    dp->printf("%u Sats", gps.satellites.value());
+    dp->printf(gps_hasfix() ? "         " : " - No fix");
 
     // show latitude and longitude
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor();
-    dp_printf("%c%09.6f\r\n", gps.location.rawLat().negative ? 'S' : 'N',
-              gps.location.lat());
-    dp_printf("%c%09.6f", gps.location.rawLng().negative ? 'W' : 'E',
-              gps.location.lng());
+    dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
+    dp->printf("%c%09.6f\r\n", gps.location.rawLat().negative ? 'S' : 'N',
+               gps.location.lat());
+    dp->printf("%c%09.6f", gps.location.rawLng().negative ? 'W' : 'E',
+               gps.location.lng());
     dp_dump();
     break;
-#else // flip page if we are unattended
+#else // skip this page
     DisplayPage++;
+    break;
 #endif
 
   // ---------- page 3: BME280/680 ----------
@@ -352,34 +354,35 @@ void dp_drawPage(bool nextpage) {
 
 #if (HAS_BME)
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor(0, 0);
-    dp_printf("TMP: %-6.1f\r\n", bme_status.temperature);
-    dp_printf("HUM: %-6.1f\r\n", bme_status.humidity);
-    dp_printf("PRE: %-6.1f\r\n", bme_status.pressure);
+    dp->setCursor(0, 0);
+    dp->printf("TMP: %-6.1f\r\n", bme_status.temperature);
+    dp->printf("HUM: %-6.1f\r\n", bme_status.humidity);
+    dp->printf("PRE: %-6.1f\r\n", bme_status.pressure);
 #ifdef HAS_BME680
-    dp_printf("IAQ: %-6.0f", bme_status.iaq);
+    dp->printf("IAQ: %-6.0f", bme_status.iaq);
 #endif
     dp_dump();
-    break; // page 3
-#else      // flip page if we are unattended
+    break;
+#else  // skip this page
     DisplayPage++;
-#endif     // HAS_BME
+    break;
+#endif // HAS_BME
 
   // ---------- page 4: time ----------
   case 4:
 
     time(&now);
     localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%T", &timeinfo);
 
     dp_setFont(MY_FONT_STRETCHED);
-    dp_setTextCursor(0, 0);
-    dp_printf("Timeofday:");
-    dp_setTextCursor(0, 26);
+    dp->setCursor(0, 0);
+    dp->printf("Timeofday:");
+    dp->setCursor(0, 26);
     dp_setFont(MY_FONT_LARGE);
-    dp_printf("%.8s\r\n", strftime_buf);
+    strftime(strftime_buf, sizeof(strftime_buf), "%T", &timeinfo);
+    dp->printf("%.8s\r\n", strftime_buf);
     dp_setFont(MY_FONT_SMALL);
-    dp_printf("%21.1f", uptime() / 1000.0);
+    dp->printf("%21.1f", uptime() / 1000.0);
     dp_dump();
     break;
 
@@ -397,115 +400,69 @@ void dp_drawPage(bool nextpage) {
 #ifdef HAS_BUTTON
     dp_clear();
     break;
-#else // flip page if we are unattended
+#else // skip this page
     DisplayPage++;
+    break;
 #endif
 
   } // switch (page)
-} // dp_drawPage
+} // dp_refresh
 
 // ------------- display helper functions -----------------
 
-void dp_setTextCursor(int x, int y) {
-#if (HAS_DISPLAY) == 1
-  oled.setCursor(x, y);
-#elif (HAS_DISPLAY) == 2
-  tft.setCursor(x, y);
-#endif
-}
-
 void dp_setFont(int font, int inv) {
 
+  // handle invers printing
+  if (inv)
+    dp->setTextColor(MY_DISPLAY_BGCOLOR, MY_DISPLAY_FGCOLOR);
+  else
+    dp->setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
+
 #if (HAS_DISPLAY) == 1
-  // handle invers printing
-  if (inv)
-    oled.setTextColor(MY_DISPLAY_BGCOLOR, MY_DISPLAY_FGCOLOR);
-  else
-    oled.setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
-
   // set desired font
-  oled.setFont(font);
-
+  dp->setFont(font);
 #elif (HAS_DISPLAY) == 2
-  // handle invers printing
-  if (inv)
-    tft.setTextColor(MY_DISPLAY_BGCOLOR, MY_DISPLAY_FGCOLOR);
-  else
-    tft.setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
-
   // map desired oled font to tft font
   switch (font) {
   case MY_FONT_STRETCHED: // 16x16 on OLED
   case MY_FONT_LARGE:     // 16x32 on OLED
-    tft.setTextFont(4);   // 26px
+    dp->setTextFont(4);   // 26px
     break;
   case MY_FONT_SMALL:  // 6x8 on OLED
   case MY_FONT_NORMAL: // 8x8 on OLED
   default:
-    tft.setTextFont(2); // 16px
+    dp->setTextFont(2); // 16px
     break;
   }
-  
-#endif
-}
 
-void dp_printf(const char *format, ...) {
-  char loc_buf[64];
-  char *temp = loc_buf;
-  va_list arg;
-  va_list copy;
-  va_start(arg, format);
-  va_copy(copy, arg);
-  int len = vsnprintf(temp, sizeof(loc_buf), format, copy);
-  va_end(copy);
-  if (len < 0) {
-    va_end(arg);
-    return;
-  };
-  if (len >= sizeof(loc_buf)) {
-    temp = (char *)malloc(len + 1);
-    if (temp == NULL) {
-      va_end(arg);
-      return;
-    }
-    vsnprintf(temp, len + 1, format, arg);
-  }
-  va_end(arg);
-#if (HAS_DISPLAY) == 1
-  oled.write(temp);
-#elif (HAS_DISPLAY) == 2
-  tft.printf(temp);
 #endif
-  if (temp != loc_buf) {
-    free(temp);
-  }
 }
 
 void dp_dump(uint8_t *pBuffer) {
 #if (HAS_DISPLAY) == 1
   if (pBuffer)
-    memcpy(oled.getBuffer(), pBuffer, PLOTBUFFERSIZE);
-  oled.display();
+    memcpy(dp->getBuffer(), pBuffer, PLOTBUFFERSIZE);
+  dp->display();
 #elif (HAS_DISPLAY) == 2
   if (pBuffer)
-    tft.drawBitmap(0, 0, pBuffer, MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT,
+    dp->drawBitmap(0, 0, pBuffer, MY_DISPLAY_WIDTH, MY_DISPLAY_HEIGHT,
                    MY_DISPLAY_FGCOLOR);
 #endif
 }
 
 void dp_clear(void) {
 #if (HAS_DISPLAY) == 1
-  oled.fillScreen(MY_DISPLAY_BGCOLOR);
-  oled.display();
+  dp->fillScreen(MY_DISPLAY_BGCOLOR);
+  dp->display();
 #elif (HAS_DISPLAY) == 2
-  tft.fillScreen(MY_DISPLAY_BGCOLOR);
+  dp->fillScreen(MY_DISPLAY_BGCOLOR);
 #endif
-  dp_setTextCursor(0, 0);
+  dp->setCursor(0, 0);
 }
 
 void dp_contrast(uint8_t contrast) {
 #if (HAS_DISPLAY) == 1
-  oled.setContrast(contrast);
+  dp->setContrast(contrast);
 #elif (HAS_DISPLAY) == 2
   // to do: gamma correction for TFT
 #endif
@@ -513,7 +470,7 @@ void dp_contrast(uint8_t contrast) {
 
 void dp_power(uint8_t screenon) {
 #if (HAS_DISPLAY) == 1
-  oled.setPower(screenon);
+  dp->setPower(screenon);
 #elif (HAS_DISPLAY) == 2
   // to come
 #endif
@@ -521,7 +478,7 @@ void dp_power(uint8_t screenon) {
 
 void dp_shutdown(void) {
 #if (HAS_DISPLAY) == 1
-  oled.setPower(false);
+  dp->setPower(false);
   delay(DISPLAYREFRESH_MS / 1000 * 1.1);
 #elif (HAS_DISPLAY) == 2
   // to come
@@ -531,8 +488,8 @@ void dp_shutdown(void) {
 // print static message on display
 void dp_message(const char *msg, int line, bool invers) {
   dp_setFont(MY_FONT_SMALL, invers ? 1 : 0);
-  dp_setTextCursor(0, line * 8);
-  dp_printf("%-16s", msg);
+  dp->setCursor(0, line * 8);
+  dp->printf("%-16s", msg);
   dp_dump();
 } // dp_message
 
@@ -546,31 +503,23 @@ void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {
   for (uint8_t y = 0; y < qrcode.size; y++)
     for (uint8_t x = 0; x < qrcode.size; x++)
       if (!qrcode_getModule(&qrcode, x, y)) // "black"
-        dp_fillRect(x * QR_SCALEFACTOR + offset_x,
-                    y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
-                    QR_SCALEFACTOR, false);
+        dp->fillRect(x * QR_SCALEFACTOR + offset_x,
+                     y * QR_SCALEFACTOR + offset_y, QR_SCALEFACTOR,
+                     QR_SCALEFACTOR, MY_DISPLAY_FGCOLOR);
   // draw horizontal frame lines
-  dp_fillRect(0, 0, qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y,
-              false);
-  dp_fillRect(0, qrcode.size * QR_SCALEFACTOR + offset_y,
-              qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y, false);
+  dp->fillRect(0, 0, qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y,
+               MY_DISPLAY_FGCOLOR);
+  dp->fillRect(0, qrcode.size * QR_SCALEFACTOR + offset_y,
+               qrcode.size * QR_SCALEFACTOR + 2 * offset_x, offset_y,
+               MY_DISPLAY_FGCOLOR);
   // draw vertical frame lines
-  dp_fillRect(0, 0, offset_x, qrcode.size * QR_SCALEFACTOR + 2 * offset_y,
-              false);
-  dp_fillRect(qrcode.size * QR_SCALEFACTOR + offset_x, 0, offset_x,
-              qrcode.size * QR_SCALEFACTOR + 2 * offset_y, false);
+  dp->fillRect(0, 0, offset_x, qrcode.size * QR_SCALEFACTOR + 2 * offset_y,
+               MY_DISPLAY_FGCOLOR);
+  dp->fillRect(qrcode.size * QR_SCALEFACTOR + offset_x, 0, offset_x,
+               qrcode.size * QR_SCALEFACTOR + 2 * offset_y, MY_DISPLAY_FGCOLOR);
 }
 
 // ------------- graphics primitives -----------------
-
-void dp_fillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
-                 uint8_t bRender) {
-#if (HAS_DISPLAY) == 1
-  oled.fillRect(x, y, width, height, MY_DISPLAY_FGCOLOR);
-#elif (HAS_DISPLAY) == 2
-  tft.fillRect(x, y, width, height, MY_DISPLAY_FGCOLOR);
-#endif
-}
 
 int dp_drawPixel(uint8_t *buf, const uint16_t x, const uint16_t y,
                  const uint8_t dot) {

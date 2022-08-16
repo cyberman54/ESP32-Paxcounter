@@ -185,7 +185,7 @@ void setup() {
 
 // initialize display
 #ifdef HAS_DISPLAY
-  strcat_P(features, " OLED");
+  strcat_P(features, " DISP");
   DisplayIsOn = cfg.screenon;
   // display verbose info only after a coldstart (note: blocking call!)
   dp_init(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
@@ -213,7 +213,7 @@ void setup() {
 
 #ifdef HAS_TWO_LED
   pinMode(HAS_TWO_LED, OUTPUT);
-  strcat_P(features, " LED1");
+  strcat_P(features, " LED2");
 #endif
 
 // use LED for power display if we have additional RGB LED, else for status

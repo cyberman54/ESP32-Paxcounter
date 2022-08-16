@@ -234,7 +234,6 @@ void set_loradr(uint8_t val[]) {
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
              getCrName(updr2rps(LMIC.datarate)));
-
   } else
     ESP_LOGI(
         TAG,
@@ -430,14 +429,12 @@ static const uint8_t cmdtablesize =
 
 // check and execute remote command
 void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
-
   if (cmdlength == 0)
     return;
 
   uint8_t foundcmd[cmdlength], cursor = 0;
 
   while (cursor < cmdlength) {
-
     int i = cmdtablesize;
     while (i--) {
       if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
@@ -462,7 +459,6 @@ void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
       break;
     }
   } // command parsing loop
-
 } //  rcmd_execute()
 
 // remote command processing task
@@ -485,9 +481,7 @@ void rcmd_process(void *pvParameters) {
 
 // enqueue remote command
 void rcommand(const uint8_t *cmd, const size_t cmdlength) {
-
   RcmdBuffer_t rcmd = {0};
-
   rcmd.cmdLen = cmdlength;
   memcpy(rcmd.cmd, cmd, cmdlength);
 
@@ -505,7 +499,6 @@ void rcmd_deinit(void) {
 }
 
 esp_err_t rcmd_init(void) {
-
   _ASSERT(RCMD_QUEUE_SIZE > 0);
   RcmdQueue = xQueueCreate(RCMD_QUEUE_SIZE, sizeof(RcmdBuffer_t));
   if (RcmdQueue == 0) {
