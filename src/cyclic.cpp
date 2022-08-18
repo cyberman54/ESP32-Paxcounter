@@ -13,7 +13,6 @@ void setCyclicIRQ() { xTaskNotify(irqHandlerTask, CYCLIC_IRQ, eSetBits); }
 
 // do all housekeeping
 void doHousekeeping() {
-
   // check if update or maintenance mode trigger switch was set by rcommand
   if ((RTC_runmode == RUNMODE_UPDATE) || (RTC_runmode == RUNMODE_MAINTENANCE))
     do_reset(true); // warmstart
@@ -125,7 +124,6 @@ void doHousekeeping() {
 #if (HAS_SDCARD)
   sdcard_flush();
 #endif
-
 } // doHousekeeping()
 
 uint32_t getFreeRAM() {

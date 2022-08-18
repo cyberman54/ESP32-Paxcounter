@@ -34,19 +34,14 @@ Reset -> reset device
 
 // power management settings
 #define HAS_PMU 1 // has AXP192 chip
+#define XPOWERS_CHIP_AXP192 1
 #define PMU_INT GPIO_NUM_35 // battery interrupt
-#define PMU_CHG_CURRENT AXP1XX_CHARGE_CUR_1000MA // battery charge current
+#define PMU_CHG_CURRENT XPOWERS_CHG_CUR_1000MA // battery charge current
 // possible values (mA):
 // 100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
-#define PMU_CHG_CUTOFF AXP202_TARGET_VOL_4_2V // battery charge cutoff
+#define PMU_CHG_CUTOFF XPOWERS_CHG_VOL_4V2 // battery charge cutoff
 // possible values (V):
-// 4_1/4_15/4_2/4_36
-
-// blue onboard led settings
-// possible values: 
-// AXP20X_LED_OFF / AXP20X_LED_LOW_LEVEL (means LED ON) / AXP20X_LED_BLINK_1HZ / AXP20X_LED_BLINK_4HZ
-#define PMU_LED_RUN_MODE AXP20X_LED_LOW_LEVEL 
-#define PMU_LED_SLEEP_MODE AXP20X_LED_OFF
+// 4V1/4V15/4V2/4V36
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS

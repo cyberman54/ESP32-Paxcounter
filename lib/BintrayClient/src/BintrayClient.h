@@ -23,7 +23,6 @@
 #include <WString.h>
 
 class BintrayClient {
-
 public:
     BintrayClient(const String& user, const String& repository, const String& package);
     String getUser() const;

@@ -332,7 +332,7 @@ time_t compileTime(void) {
 
   if (secs == -1) {
     // determine date
-    sscanf(__DATE__, "%s %d %d", s_month, &t.tm_mday, &year);
+    sscanf(__DATE__, "%4s %d %d", s_month, &t.tm_mday, &year);
     t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
     t.tm_year = year - 1900;
     // determine time

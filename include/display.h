@@ -11,8 +11,8 @@
 #include <OneBitDisplay.h>
 extern ONE_BIT_DISPLAY *dp;
 #elif (HAS_DISPLAY) == 2
-#include <TFT_eSPI.h>
-extern TFT_eSPI *dp;
+#include <bb_spi_lcd.h>
+extern BB_SPI_LCD *dp;
 #endif
 
 #define DISPLAY_PAGES (7) // number of paxcounter display pages
@@ -24,7 +24,6 @@ extern TFT_eSPI *dp;
 #define MY_FONT_NORMAL FONT_8x8
 #define MY_FONT_LARGE FONT_16x32
 #define MY_FONT_STRETCHED FONT_12x16
-
 #define MY_DISPLAY_FIRSTLINE 30
 
 #ifndef MY_DISPLAY_RST
@@ -51,22 +50,21 @@ extern TFT_eSPI *dp;
 // settings for TFT display library
 #elif (HAS_DISPLAY == 2)
 
-#define MY_FONT_SMALL 1
+#define MY_FONT_SMALL 2
 #define MY_FONT_NORMAL 2
-#define MY_FONT_LARGE 4
-#define MY_FONT_STRETCHED 6
-
+#define MY_FONT_LARGE 2
+#define MY_FONT_STRETCHED 2
 #define MY_DISPLAY_FIRSTLINE 30
 
-#ifndef MY_DISPLAY_FGCOLOR
-#define MY_DISPLAY_FGCOLOR 0xFFFF // TFT_WHITE
-#endif
-#ifndef MY_DISPLAY_BGCOLOR
-#define MY_DISPLAY_BGCOLOR 0x0000 // TFT_BLACK
+#ifndef TFT_FREQUENCY
+#define TFT_FREQUENCY 400000L
 #endif
 
-#ifndef TOUCH_CS
-#define TOUCH_CS NOT_A_PIN
+#ifndef MY_DISPLAY_FGCOLOR
+#define MY_DISPLAY_FGCOLOR TFT_YELLOW
+#endif
+#ifndef MY_DISPLAY_BGCOLOR
+#define MY_DISPLAY_BGCOLOR TFT_BLACK
 #endif
 
 #endif
@@ -104,7 +102,6 @@ void dp_setup(int contrast = 0);
 void dp_refresh(bool nextPage = false);
 void dp_init(bool verbose = false);
 void dp_shutdown(void);
-void dp_message(const char *msg, int line, bool invers);
 void dp_setFont(int font, int inv = 0);
 void dp_dump(uint8_t *pBuffer = NULL);
 void dp_contrast(uint8_t contrast);

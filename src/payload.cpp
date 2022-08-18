@@ -58,7 +58,6 @@ void PayloadConvert::addConfig(configData_t value) {
 void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
                                uint32_t mem, uint8_t reset0,
                                uint32_t restarts) {
-
   buffer[cursor++] = highByte(voltage);
   buffer[cursor++] = lowByte(voltage);
   buffer[cursor++] = (byte)((uptime & 0xFF00000000000000) >> 56);

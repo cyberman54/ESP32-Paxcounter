@@ -20,7 +20,7 @@
 
 #ifndef PMU_CHG_CUTOFF
 #ifdef HAS_PMU
-#define PMU_CHG_CUTOFF AXP202_TARGET_VOL_4_2V
+#define PMU_CHG_CUTOFF XPOWERS_CHG_VOL_4V2
 #elif defined HAS_IP5306
 #define PMU_CHG_CUTOFF 0
 #endif
@@ -28,7 +28,7 @@
 
 #ifndef PMU_CHG_CURRENT
 #ifdef HAS_PMU
-#define PMU_CHG_CURRENT AXP1XX_CHARGE_CUR_450MA
+#define PMU_CHG_CURRENT XPOWERS_CHG_CUR_450MA
 #elif defined HAS_IP5306
 #define PMU_CHG_CURRENT 2
 #endif
@@ -55,8 +55,8 @@ void calibrate_voltage(void);
 bool batt_sufficient(void);
 
 #ifdef HAS_PMU
-#include <axp20x.h>
-extern AXP20X_Class pmu;
+#include <XPowersLib.h>
+extern XPowersPMU pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
 void AXP192_powerevent_IRQ(void);
 void AXP192_power(pmu_power_t powerlevel);

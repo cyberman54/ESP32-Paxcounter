@@ -39,7 +39,6 @@ void do_reset(bool warmstart) {
 }
 
 void do_after_reset(void) {
-
   struct timeval sleep_stop_time;
   uint64_t sleep_time_ms;
 
@@ -54,7 +53,6 @@ void do_after_reset(void) {
 #endif
 
   switch (rtc_get_reset_reason(0)) {
-
   case POWERON_RESET:          // 0x01 Vbat power on reset
   case RTCWDT_BROWN_OUT_RESET: // 0x0f Reset when the vdd voltage is not
                                // stable
@@ -102,26 +100,19 @@ void do_after_reset(void) {
 }
 
 void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
-
   ESP_LOGI(TAG, "Preparing to sleep...");
 
   RTC_runmode = RUNMODE_SLEEP;
   int i;
 
-  // show message on display
-#ifdef HAS_DISPLAY
-  dp_message("-GOING TO SLEEP-", 7, true);
-#endif
-
   // validate wake up pin, if we have
   if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
     wakeup_gpio = GPIO_NUM_MAX;
 
-    // stop further enqueuing of senddata and MAC processing
-    // -> skipped, because shutting down bluedroid stack tends to crash
-    // libpax_counter_stop();
+  // stop further enqueuing of senddata and MAC processing
+  libpax_counter_stop();
 
-    // switch off any power consuming hardware
+  // switch off any power consuming hardware
 #if (HAS_SDS011)
   sds011_sleep();
 #endif
@@ -205,4 +196,6 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   esp_deep_sleep_start();
 }
 
-unsigned long long uptime() { return (RTC_millis + esp_timer_get_time() / 1000); }
+unsigned long long uptime() {
+  return (RTC_millis + esp_timer_get_time() / 1000);
+}
