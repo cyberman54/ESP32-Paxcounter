@@ -102,7 +102,6 @@ void dp_setup(int contrast = 0);
 void dp_refresh(bool nextPage = false);
 void dp_init(bool verbose = false);
 void dp_shutdown(void);
-void dp_message(const char *msg, int line, bool invers);
 void dp_setFont(int font, int inv = 0);
 void dp_dump(uint8_t *pBuffer = NULL);
 void dp_contrast(uint8_t contrast);

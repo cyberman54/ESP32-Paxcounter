@@ -446,14 +446,6 @@ void dp_shutdown(void) {
 #endif
 }
 
-// print static message on display
-void dp_message(const char *msg, int line, bool invers) {
-  dp_setFont(MY_FONT_SMALL, invers ? 1 : 0);
-  dp->setCursor(0, line * 8);
-  dp->printf("%-16s", msg);
-  dp_dump();
-} // dp_message
-
 // ------------- QR code plotter -----------------
 
 void dp_printqr(uint16_t offset_x, uint16_t offset_y, const char *Message) {

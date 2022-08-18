@@ -55,7 +55,7 @@ void calibrate_voltage(void);
 bool batt_sufficient(void);
 
 #ifdef HAS_PMU
-#include "XPowersLib.h"
+#include <XPowersLib.h>
 extern XPowersPMU pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
 void AXP192_powerevent_IRQ(void);

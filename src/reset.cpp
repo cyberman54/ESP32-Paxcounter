@@ -105,20 +105,14 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   RTC_runmode = RUNMODE_SLEEP;
   int i;
 
-  // show message on display
-#ifdef HAS_DISPLAY
-  dp_message("-GOING TO SLEEP-", 7, true);
-#endif
-
   // validate wake up pin, if we have
   if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
     wakeup_gpio = GPIO_NUM_MAX;
 
-    // stop further enqueuing of senddata and MAC processing
-    // -> skipped, because shutting down bluedroid stack tends to crash
-    // libpax_counter_stop();
+  // stop further enqueuing of senddata and MAC processing
+  libpax_counter_stop();
 
-    // switch off any power consuming hardware
+  // switch off any power consuming hardware
 #if (HAS_SDS011)
   sds011_sleep();
 #endif

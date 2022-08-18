@@ -35,7 +35,6 @@ void AXP192_powerevent_IRQ(void) {
              pmu.getVbusCurrent());
   if (pmu.isVbusRemoveIrq())
     ESP_LOGI(TAG, "USB unplugged.");
-
   if (pmu.isBatInsertIrq())
     ESP_LOGI(TAG, "Battery is connected.");
   if (pmu.isBatRemoveIrq())
@@ -48,17 +47,16 @@ void AXP192_powerevent_IRQ(void) {
     ESP_LOGI(TAG, "Battery high temperature.");
   if (pmu.isBattTempHighIrq())
     ESP_LOGI(TAG, "Battery low temperature.");
-#ifdef HAS_BUTTON
-  // short press -> esp32 deep sleep mode, can be exited by pressing user button
-  if (pmu.isPekeyShortPressIrq()) {
-    enter_deepsleep(0, HAS_BUTTON);
-  }
-#endif
 
-  // long press -> shutdown power, can be exited by another longpress
-  if (pmu.isPekeyLongPressIrq()) {
+  // PEK button handling:
+  // long press -> shutdown power, must be exited by another longpress
+  if (pmu.isPekeyLongPressIrq())
     AXP192_power(pmu_power_off); // switch off Lora, GPS, display
-  }
+#ifdef HAS_BUTTON
+  // short press -> esp32 deep sleep mode, must be exited by user button
+  if (pmu.isPekeyShortPressIrq())
+    enter_deepsleep(0, HAS_BUTTON);
+#endif
 
   pmu.clearIrqStatus();
 
@@ -69,6 +67,8 @@ void AXP192_powerevent_IRQ(void) {
 void AXP192_power(pmu_power_t powerlevel) {
   switch (powerlevel) {
   case pmu_power_off:
+    pmu.setChargerLedFunction(XPOWER_CHGLED_CTRL_MANUAL);
+    pmu.setChargingLedFreq(XPOWERS_CHG_LED_DISABLE);
     pmu.shutdown();
     break;
   case pmu_power_sleep:
@@ -152,7 +152,7 @@ void AXP192_init(void) {
     );
 #endif // PMU_INT
 
-// set charging parameterss according to user settings if we have (see power.h)
+// set charging parameters according to user settings if we have (see power.h)
 #ifdef PMU_CHG_CURRENT
     pmu.setChargeCurrent(PMU_CHG_CURRENT);
     pmu.setChargerVoltageLimit(PMU_CHG_CUTOFF);
