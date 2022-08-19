@@ -7,9 +7,7 @@
 
 #include <stdint.h>
 
-#define DISABLE_BROWNOUT 1  // comment out if you want to keep brownout feature
-
-#define HAS_LED LED_BUILTIN
+#define HAS_LED NOT_A_PIN
 #define HAS_BUTTON 14       // on board button (right side)
 
 // power management settings
@@ -22,6 +20,5 @@
 #define MY_DISPLAY_FLIP  1  // use if display is rotated
 #define MY_DISPLAY_WIDTH 172
 #define MY_DISPLAY_HEIGHT 320
-
 
 #endif
