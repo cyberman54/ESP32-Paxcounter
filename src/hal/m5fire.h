@@ -53,8 +53,6 @@
 //#define MY_DISPLAY_FLIP  1 // use if display is rotated
 #define MY_DISPLAY_WIDTH 320
 #define MY_DISPLAY_HEIGHT 240
-#define MY_DISPLAY_INVERT 1
-#define TFT_TYPE LCD_ILI9341
 #define TFT_MOSI MOSI   // SPI
 #define TFT_MISO MISO   // SPI
 #define TFT_SCLK SCK    // SPI
@@ -63,5 +61,7 @@
 #define TFT_RST  GPIO_NUM_33    // Reset
 #define TFT_BL   GPIO_NUM_32    // LED back-light
 #define TFT_FREQUENCY 40000000
+#define TFT_TYPE LCD_ILI9341, FLAGS_NONE, TFT_FREQUENCY, TFT_CS, TFT_DC, TFT_RST, TFT_BL, TFT_MISO, TFT_MOSI, TFT_SCLK
+
 
 #endif
