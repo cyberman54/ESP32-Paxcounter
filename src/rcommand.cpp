@@ -324,9 +324,15 @@ void get_config(uint8_t val[]) {
 void get_status(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device status");
   payload.reset();
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+  payload.addStatus(read_voltage(), (uint64_t)(uptime() / 1000ULL), 0,
+                    // temperatureRead(),
+                    getFreeRAM(), rtc_get_reset_reason(0), RTC_restarts);
+#else
   payload.addStatus(read_voltage(), (uint64_t)(uptime() / 1000ULL),
                     temperatureRead(), getFreeRAM(), rtc_get_reset_reason(0),
                     RTC_restarts);
+#endif
   SendPayload(STATUSPORT);
 };
 

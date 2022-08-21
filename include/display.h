@@ -2,6 +2,7 @@
 #define _DISPLAY_H
 
 #include <libpax_api.h>
+#include <Wire.h>
 #include "cyclic.h"
 #include "qrcode.h"
 #include "power.h"
@@ -48,7 +49,7 @@ extern BB_SPI_LCD *dp;
 #endif
 
 // settings for TFT display library
-#elif (HAS_DISPLAY == 2)
+#elif (HAS_DISPLAY) == 2
 
 #define MY_FONT_SMALL 2
 #define MY_FONT_NORMAL 2
@@ -72,10 +73,6 @@ extern BB_SPI_LCD *dp;
 // setup display hardware type, default is OLED 128x64
 #ifndef OLED_TYPE
 #define OLED_TYPE OLED_128x64
-#endif
-
-#ifndef MY_DISPLAY_INVERT
-#define MY_DISPLAY_INVERT 0
 #endif
 
 #ifndef MY_DISPLAY_FLIP

@@ -2,6 +2,7 @@
 #define _I2C_H
 
 #include <Arduino.h>
+#include <Wire.h>
 #include <BitBang_I2C.h>
 
 #define SSD1306_PRIMARY_ADDRESS (0x3D)

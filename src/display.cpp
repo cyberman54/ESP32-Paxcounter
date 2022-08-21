@@ -68,16 +68,13 @@ void dp_setup(int contrast) {
   dp->setRotation(
       MY_DISPLAY_FLIP ? 2 : 0); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 280°
 
-#elif (HAS_DISPLAY) == 2        // SPI TFT
+#elif (HAS_DISPLAY) == 2 // TFT LCD
 
   dp = new BB_SPI_LCD;
-  dp->begin(TFT_TYPE, FLAGS_NONE, TFT_FREQUENCY, TFT_CS, TFT_DC, TFT_RST,
-            TFT_BL, TFT_MISO, TFT_MOSI, TFT_SCLK);
+  dp->begin(TFT_TYPE);
   dp->allocBuffer(); // render all outputs to lib internal backbuffer
   dp->setRotation(
       MY_DISPLAY_FLIP ? 1 : 3); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 280°
-  // dp->invertDisplay(MY_DISPLAY_INVERT ? true : false);
-  // dp->setTextWrap(false);
   dp->setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
 
 #endif
@@ -138,7 +135,7 @@ void dp_init(bool verbose) {
 #endif
 
 #endif // HAS_LORA
-  } // verbose
+  }    // verbose
 
   dp_power(cfg.screenon); // set display off if disabled
 } // dp_init

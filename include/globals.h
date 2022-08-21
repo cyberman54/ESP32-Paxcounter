@@ -12,7 +12,10 @@
 #include <set>
 #include <array>
 #include <algorithm>
+
+#ifdef HAS_BME680
 #include <bsec.h>
+#endif
 
 #define _bit(b) (1U << (b))
 #define _bitl(b) (1UL << (b))

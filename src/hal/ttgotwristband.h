@@ -21,8 +21,6 @@
 #define MY_DISPLAY_FLIP  1 // use if display is rotated
 #define MY_DISPLAY_WIDTH 80
 #define MY_DISPLAY_HEIGHT 160
-#define MY_DISPLAY_INVERT 1
-#define TFT_TYPE LCD_ST7735S
 #define TFT_MOSI GPIO_NUM_19 // SPI
 #define TFT_MISO NOT_A_PIN   // SPI
 #define TFT_SCLK GPIO_NUM_18 // SPI
@@ -31,6 +29,7 @@
 #define TFT_RST  GPIO_NUM_26 // Reset
 #define TFT_BL   GPIO_NUM_27 // LED back-light
 #define TFT_FREQUENCY 27000000
+#define TFT_TYPE LCD_ST7735S, FLAGS_NONE, TFT_FREQUENCY, TFT_CS, TFT_DC, TFT_RST, TFT_BL, TFT_MISO, TFT_MOSI, TFT_SCLK
 
 #endif
 
