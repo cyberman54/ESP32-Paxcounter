@@ -67,13 +67,13 @@ void AXP192_powerevent_IRQ(void) {
 void AXP192_power(pmu_power_t powerlevel) {
   switch (powerlevel) {
   case pmu_power_off:
-    pmu.setChargerLedFunction(XPOWER_CHGLED_CTRL_MANUAL);
-    pmu.setChargingLedFreq(XPOWERS_CHG_LED_DISABLE);
+    pmu.setChargerLedFunction(XPOWER_AXP192_CHGLED_CTRL_MANUAL);
+    pmu.setChargingLedFreq(XPOWERS_AXP192_CHG_LED_DISABLE);
     pmu.shutdown();
     break;
   case pmu_power_sleep:
-    pmu.setChargerLedFunction(XPOWER_CHGLED_CTRL_MANUAL);
-    pmu.setChargingLedFreq(XPOWERS_CHG_LED_FRE_1HZ);
+    pmu.setChargerLedFunction(XPOWER_AXP192_CHGLED_CTRL_MANUAL);
+    pmu.setChargingLedFreq(XPOWERS_AXP192_CHG_LED_FRE_1HZ);
     // we don't cut off DCDC1, because OLED display will then block i2c bus
     // pmu.disableDC1(); // OLED off
     pmu.disableLDO3(); // gps off
@@ -85,8 +85,8 @@ void AXP192_power(pmu_power_t powerlevel) {
     pmu.enableLDO2(); // Lora on T-Beam V1.0/1.1
     pmu.enableLDO3(); // Gps on T-Beam V1.0/1.1
     pmu.enableDC1();  // OLED on T-Beam v1.0/1.1
-    pmu.setChargerLedFunction(XPOWER_CHGLED_CTRL_MANUAL);
-    pmu.setChargingLedFreq(XPOWERS_CHG_LED_LEVEL_LOW);
+    pmu.setChargerLedFunction(XPOWER_AXP192_CHGLED_CTRL_MANUAL);
+    pmu.setChargingLedFreq(XPOWERS_AXP192_CHG_LED_LEVEL_LOW);
     break;
   }
 }
@@ -125,8 +125,8 @@ void AXP192_init(void) {
     pmu.setLDO3Voltage(3300); // GPS VDD 3v3
 
     // configure PEK button settings
-    pmu.setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
-    pmu.setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
+    pmu.setPowerKeyPressOffTime(XPOWERS_AXP192_POWEROFF_4S);
+    pmu.setPowerKeyPressOnTime(XPOWERS_AXP192_POWERON_128MS);
 
     // set battery temperature sensing pin off to save power
     pmu.disableTSPinMeasure();
