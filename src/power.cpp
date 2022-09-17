@@ -237,7 +237,8 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
 #ifdef HAS_IP5306
   batt_percent = IP5306_GetBatteryLevel();
 #elif defined HAS_PMU
-  batt_percent = pmu.getBatteryPercent();
+  int bp = pmu.getBatteryPercent();
+  batt_percent = bp < 0 ? 0 : bp;
 #else
   const uint16_t batt_voltage = read_voltage();
   if (batt_voltage <= BAT_MIN_VOLTAGE)
