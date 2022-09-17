@@ -67,13 +67,11 @@ void AXP192_powerevent_IRQ(void) {
 void AXP192_power(pmu_power_t powerlevel) {
   switch (powerlevel) {
   case pmu_power_off:
-    pmu.setChargerLedFunction(XPOWER_AXP192_CHGLED_CTRL_MANUAL);
-    pmu.setChargingLedFreq(XPOWERS_AXP192_CHG_LED_DISABLE);
+    pmu.setChargingLedMode(XPOWERS_CHG_LED_OFF);
     pmu.shutdown();
     break;
   case pmu_power_sleep:
-    pmu.setChargerLedFunction(XPOWER_AXP192_CHGLED_CTRL_MANUAL);
-    pmu.setChargingLedFreq(XPOWERS_AXP192_CHG_LED_FRE_1HZ);
+    pmu.setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
     // we don't cut off DCDC1, because OLED display will then block i2c bus
     // pmu.disableDC1(); // OLED off
     pmu.disableLDO3(); // gps off
@@ -85,8 +83,7 @@ void AXP192_power(pmu_power_t powerlevel) {
     pmu.enableLDO2(); // Lora on T-Beam V1.0/1.1
     pmu.enableLDO3(); // Gps on T-Beam V1.0/1.1
     pmu.enableDC1();  // OLED on T-Beam v1.0/1.1
-    pmu.setChargerLedFunction(XPOWER_AXP192_CHGLED_CTRL_MANUAL);
-    pmu.setChargingLedFreq(XPOWERS_AXP192_CHG_LED_LEVEL_LOW);
+    pmu.setChargingLedMode(XPOWERS_CHG_LED_ON);
     break;
   }
 }
@@ -115,9 +112,9 @@ void AXP192_init(void) {
     ESP_LOGD(TAG, "AXP192 ChipID:0x%x", pmu.getChipID());
 
     // set pmu operating voltages
-    pmu.setMinSystemVoltage(2700);
-    pmu.setVbusVoltageLimit(XPOWERS_VBUS_VOL_LIM_4V5);
-    pmu.disableVbusCurrLimit();
+    pmu.setSysPowerDownVoltage(2700);
+    pmu.setVbusVoltageLimit(XPOWERS_AXP192_VBUS_VOL_LIM_4V5);
+    pmu.setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
 
     // set device operating voltages
     pmu.setDC1Voltage(3300);  // for external OLED display
@@ -125,8 +122,8 @@ void AXP192_init(void) {
     pmu.setLDO3Voltage(3300); // GPS VDD 3v3
 
     // configure PEK button settings
-    pmu.setPowerKeyPressOffTime(XPOWERS_AXP192_POWEROFF_4S);
-    pmu.setPowerKeyPressOnTime(XPOWERS_AXP192_POWERON_128MS);
+    pmu.setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
+    pmu.setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
 
     // set battery temperature sensing pin off to save power
     pmu.disableTSPinMeasure();
@@ -141,21 +138,21 @@ void AXP192_init(void) {
     pinMode(PMU_INT, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
     // disable all interrupts
-    pmu.disableIRQ(XPOWERS_ALL_IRQ);
+    pmu.disableIRQ(XPOWERS_AXP192_ALL_IRQ);
     // clear all interrupt flags
     pmu.clearIrqStatus();
     // enable the required interrupt function
-    pmu.enableIRQ(XPOWERS_BAT_INSERT_IRQ | XPOWERS_BAT_REMOVE_IRQ |   // BATTERY
-                  XPOWERS_VBUS_INSERT_IRQ | XPOWERS_VBUS_REMOVE_IRQ | // VBUS
-                  XPOWERS_PKEY_SHORT_IRQ | XPOWERS_PKEY_LONG_IRQ | // POWER KEY
-                  XPOWERS_BAT_CHG_DONE_IRQ | XPOWERS_BAT_CHG_START_IRQ // CHARGE
+    pmu.enableIRQ(XPOWERS_AXP192_BAT_INSERT_IRQ | XPOWERS_AXP192_BAT_REMOVE_IRQ |   // BATTERY
+                  XPOWERS_AXP192_VBUS_INSERT_IRQ | XPOWERS_AXP192_VBUS_REMOVE_IRQ | // VBUS
+                  XPOWERS_AXP192_PKEY_SHORT_IRQ | XPOWERS_AXP192_PKEY_LONG_IRQ | // POWER KEY
+                  XPOWERS_AXP192_BAT_CHG_DONE_IRQ | XPOWERS_AXP192_BAT_CHG_START_IRQ // CHARGE
     );
 #endif // PMU_INT
 
 // set charging parameters according to user settings if we have (see power.h)
 #ifdef PMU_CHG_CURRENT
-    pmu.setChargeCurrent(PMU_CHG_CURRENT);
-    pmu.setChargerVoltageLimit(PMU_CHG_CUTOFF);
+    pmu.setChargerConstantCurr(PMU_CHG_CURRENT);
+    pmu.setChargeTargetVoltage(PMU_CHG_CUTOFF);
     pmu.enableCharge();
 #endif
 
