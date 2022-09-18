@@ -131,6 +131,6 @@ static inline uint8_t linear(uint16_t voltage, uint16_t minVoltage,
          (maxVoltage - minVoltage);
 }
 
-uint8_t read_battlevel(mapFn_t mapFunction = &sigmoidal);
+int8_t read_battlevel(mapFn_t mapFunction = &sigmoidal);
 
 #endif
