@@ -5,7 +5,7 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-uint8_t batt_level = 0; // display value
+int8_t batt_level = -1; // percent batt level, global variable, -1 means no batt
 
 #ifdef BAT_MEASURE_ADC
 esp_adc_cal_characteristics_t *adc_characs =
@@ -92,11 +92,11 @@ void AXP192_showstatus(void) {
   if (pmu.isBatteryConnect())
     if (pmu.isCharging())
       ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
-               pmu.getBattVoltage() / 1000, pmu.getBatteryChargeCurrent());
+               pmu.getBattVoltage() / 1000.0, pmu.getBatteryChargeCurrent());
     else
       ESP_LOGI(TAG, "Battery not charging");
   else
-    ESP_LOGI(TAG, "No Battery");
+    ESP_LOGI(TAG, "Battery not present");
 
   if (pmu.isVbusIn())
     ESP_LOGI(TAG, "USB powered, %.0fmW",
@@ -142,10 +142,14 @@ void AXP192_init(void) {
     // clear all interrupt flags
     pmu.clearIrqStatus();
     // enable the required interrupt function
-    pmu.enableIRQ(XPOWERS_AXP192_BAT_INSERT_IRQ | XPOWERS_AXP192_BAT_REMOVE_IRQ |   // BATTERY
-                  XPOWERS_AXP192_VBUS_INSERT_IRQ | XPOWERS_AXP192_VBUS_REMOVE_IRQ | // VBUS
-                  XPOWERS_AXP192_PKEY_SHORT_IRQ | XPOWERS_AXP192_PKEY_LONG_IRQ | // POWER KEY
-                  XPOWERS_AXP192_BAT_CHG_DONE_IRQ | XPOWERS_AXP192_BAT_CHG_START_IRQ // CHARGE
+    pmu.enableIRQ(XPOWERS_AXP192_BAT_INSERT_IRQ |
+                  XPOWERS_AXP192_BAT_REMOVE_IRQ | // BATTERY
+                  XPOWERS_AXP192_VBUS_INSERT_IRQ |
+                  XPOWERS_AXP192_VBUS_REMOVE_IRQ | // VBUS
+                  XPOWERS_AXP192_PKEY_SHORT_IRQ |
+                  XPOWERS_AXP192_PKEY_LONG_IRQ | // POWER KEY
+                  XPOWERS_AXP192_BAT_CHG_DONE_IRQ |
+                  XPOWERS_AXP192_BAT_CHG_START_IRQ // CHARGE
     );
 #endif // PMU_INT
 
@@ -231,14 +235,13 @@ uint16_t read_voltage(void) {
   return voltage;
 }
 
-uint8_t read_battlevel(mapFn_t mapFunction) {
+int8_t read_battlevel(mapFn_t mapFunction) {
   // returns the estimated battery level in values 0 ... 100 [percent]
   uint8_t batt_percent = 0;
 #ifdef HAS_IP5306
   batt_percent = IP5306_GetBatteryLevel();
 #elif defined HAS_PMU
-  int bp = pmu.getBatteryPercent();
-  batt_percent = bp < 0 ? 0 : bp;
+  batt_percent = pmu.getBatteryPercent();
 #else
   const uint16_t batt_voltage = read_voltage();
   if (batt_voltage <= BAT_MIN_VOLTAGE)
@@ -260,7 +263,7 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
   // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
   // MCMD_DEVS_BATT_MAX from batt_percent value
 
-  if (batt_percent == 0)
+  if (batt_percent == -1)
     LMIC_setBatteryLevel(MCMD_DEVS_BATT_NOINFO);
   else
     LMIC_setBatteryLevel(batt_percent / 100.0 *
@@ -282,7 +285,7 @@ uint8_t read_battlevel(mapFn_t mapFunction) {
 
 bool batt_sufficient() {
 #if (defined HAS_PMU || defined BAT_MEASURE_ADC || defined HAS_IP5306)
-  if (batt_level) // we have a battery voltage
+  if (batt_level > 0) // we have a battery percent value
     return (batt_level > OTA_MIN_BATT);
   else
 #endif

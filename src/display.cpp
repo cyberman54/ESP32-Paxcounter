@@ -226,10 +226,10 @@ void dp_refresh(bool nextPage) {
     // line 4: Battery + GPS status + Wifi channel
     // B:a.bcV Sats:ab ch:ab
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
-    if (batt_level == 0)
-      dp->printf("No batt   ");
-    else
+    if (batt_level > 0)
       dp->printf("Batt:%3u%% ", batt_level);
+    else
+      dp->printf("No batt   ");
 #else
     dp->printf("          ");
 #endif
