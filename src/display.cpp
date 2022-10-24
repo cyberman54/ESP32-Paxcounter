@@ -204,7 +204,7 @@ void dp_refresh(bool nextPage) {
     if (cfg.wifiscan)
       dp->printf("WIFI:%-5u", count.wifi_count);
     else
-      dp->printf("WIFI:off");
+      dp->printf("WIFI:off  ");
     if (cfg.blescan)
       dp->printf("BLTH:%-5u", count.ble_count);
     else
@@ -213,7 +213,7 @@ void dp_refresh(bool nextPage) {
     if (cfg.wifiscan)
       dp->printf("WIFI:%-5u", count.wifi_count);
     else
-      dp->printf("WIFI:off");
+      dp->printf("WIFI:off  ");
 #elif ((!WIFICOUNTER) && (BLECOUNTER))
     if (cfg.blescan)
       dp->printf("BLTH:%-5u", count.ble_count);
