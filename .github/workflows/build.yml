@@ -1,0 +1,45 @@
+name: PlatformIO CI
+
+on:
+  pull_request:
+  push:
+    # branches:
+    #     - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Cache PlatformIO
+        uses: actions/cache@v2
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9.15"
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+      - run: ls
+      - name: Copy of necessary files
+        run: |
+          cp platformio_orig.ini platformio.ini
+          cp src/loraconf_sample.h src/loraconf.h
+          cp src/ota_sample.conf src/ota.conf
+          cp src/paxcounter_orig.conf src/paxcounter.conf
+      - run: ls
+
+      - name: Run PlatformIO
+        run: pio run
