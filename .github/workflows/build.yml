@@ -31,7 +31,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9.15"
+          python-version: "3.9.13"
       - name: Install PlatformIO
         run: |
           python -m pip install --upgrade pip
