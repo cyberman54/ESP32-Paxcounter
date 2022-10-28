@@ -576,9 +576,9 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	
 # License
 
-Copyright  2018-2020 Oliver Brandmueller <ob@sysadm.in>
+Copyright  2018-2022 Oliver Brandmueller <ob@sysadm.in>
 
-Copyright  2018-2020 Klaus Wilting <verkehrsrot@arcor.de>
+Copyright  2018-2022 Klaus Wilting <verkehrsrot@arcor.de>
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
