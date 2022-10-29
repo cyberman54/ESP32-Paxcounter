@@ -56,7 +56,6 @@ void timesync_request(void) {
 
 // task for processing time sync request
 void timesync_processReq(void *taskparameter) {
-
   uint32_t rcv_seqNo = TIME_SYNC_END_FLAG;
   uint32_t time_offset_sec = 0, time_offset_ms = 0;
 
@@ -68,7 +67,6 @@ void timesync_processReq(void *taskparameter) {
   // --- asnychronous part: generate and collect timestamps from gateway ---
 
   while (1) {
-
     // wait for kickoff
     ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
 
@@ -85,7 +83,6 @@ void timesync_processReq(void *taskparameter) {
 
     // collect timestamp samples in timestamp array
     for (int8_t i = 0; i < TIME_SYNC_SAMPLES; i++) {
-
 // send timesync request
 #if (TIME_SYNC_LORASERVER) // ask user's timeserver (for LoRAWAN < 1.0.3)
       payload.reset();
@@ -122,7 +119,6 @@ void timesync_processReq(void *taskparameter) {
       // if we are not in last cycle, pause until next cycle
       if (i < TIME_SYNC_SAMPLES - 1)
         vTaskDelay(pdMS_TO_TICKS(TIME_SYNC_CYCLE * 1000));
-
     } // for i
 
     // --- time critial part: evaluate timestamps and calculate time ---
@@ -161,7 +157,6 @@ void timesync_processReq(void *taskparameter) {
     // end of time critical section: release app irq lock
     timeSyncPending = false;
     unmask_user_IRQ();
-
   } // infinite while(1)
 }
 
@@ -174,7 +169,6 @@ void timesync_store(uint32_t timestamp, timesync_t timestamp_type) {
 
 // callback function to receive time answer from network or answer
 void timesync_serverAnswer(void *pUserData, int flag) {
-
 #if (HAS_LORA_TIME)
 
   // if no timesync handshake is pending then exit

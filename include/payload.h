@@ -39,7 +39,6 @@
 #endif
 
 class PayloadConvert {
-
 public:
   PayloadConvert(uint8_t size);
   ~PayloadConvert();
@@ -59,6 +58,7 @@ public:
   void addSensor(uint8_t[]);
   void addTime(time_t value);
   void addSDS(sdsStatus_t value);
+
 private:
   void addChars( char* string, int len);
 
@@ -100,6 +100,6 @@ private:
 };
 
 extern PayloadConvert payload;
-extern uint8_t batt_level;
+extern int8_t batt_level;
 
 #endif // _PAYLOAD_H_

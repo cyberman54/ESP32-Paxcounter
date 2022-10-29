@@ -1,8 +1,12 @@
 #ifndef _LED_H
 #define _LED_H
 
-//#include <SmartLeds.h>
-//#include "lorawan.h"
+#ifdef RGB_LED_COUNT
+#include <SmartLeds.h>
+#endif
+#ifdef HAS_LORA
+#include "lorawan.h"
+#endif
 
 #ifndef RGB_LED_COUNT
 #define RGB_LED_COUNT 1

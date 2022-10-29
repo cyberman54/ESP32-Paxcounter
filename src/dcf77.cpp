@@ -18,41 +18,33 @@ static const char TAG[] = __FILE__;
 
 // triggered by second timepulse to ticker out DCF signal
 void DCF77_Pulse(uint8_t bit) {
-
   TickType_t startTime;
 
   // induce a DCF Pulse
   for (uint8_t pulseLength = 0; pulseLength <= 2; pulseLength++) {
-
     startTime = xTaskGetTickCount(); // reference time pulse start
 
     switch (pulseLength) {
-
     case 0: // 0ms = start of pulse
       digitalWrite(HAS_DCF77, dcf_low);
       break;
-
     case 1: // 100ms = logic 0
       if (bit == 0)
         digitalWrite(HAS_DCF77, dcf_high);
       break;
-
     case 2: // 200ms = logic 1
       digitalWrite(HAS_DCF77, dcf_high);
       break;
-
     } // switch
 
     // delay to genrate pulseLength
     vTaskDelayUntil(&startTime, pdMS_TO_TICKS(100));
-
   } // for
 } // DCF77_Pulse()
 
 // helper function to convert decimal to bcd digit
 uint64_t dec2bcd(uint8_t const dec, uint8_t const startpos,
                  uint8_t const endpos, uint8_t *parity) {
-
   uint8_t data = dec < 10 ? dec : ((dec / 10) << 4) + dec % 10;
   uint64_t bcd = 0;
 
@@ -68,7 +60,6 @@ uint64_t dec2bcd(uint8_t const dec, uint8_t const startpos,
 
 // generates a 1 minute dcf pulse frame for calendar time t
 uint64_t DCF77_Frame(const struct tm t) {
-
   uint8_t parity = 0, parity_sum = 0;
   uint64_t frame = 0; // start with all bits 0
 
@@ -105,7 +96,6 @@ uint64_t DCF77_Frame(const struct tm t) {
   frame += parity_sum ? set_dcfbit(58) : 0;
 
   return frame;
-
 } // DCF77_Frame()
 
 #endif // HAS_DCF77

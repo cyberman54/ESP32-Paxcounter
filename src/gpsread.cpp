@@ -87,7 +87,6 @@ byte CFG_CFG[] = {
 // helper functions to send UBX commands to ublox gps chip
 
 void sendPacket(byte *packet, byte len) {
-
   uint8_t CK_A = 0;
   uint8_t CK_B = 0;
 
@@ -107,7 +106,6 @@ void restoreDefaults() { sendPacket(CFG_CFG, sizeof(CFG_CFG)); }
 void changeBaudrate() { sendPacket(CFG_PRT, sizeof(CFG_PRT)); }
 
 void disableNmea() {
-
   // tinygps++ processes only $GPGGA/$GNGGA and $GPRMC/$GNRMC
   // thus, we disable all other NMEA messages
 
@@ -128,7 +126,6 @@ void disableNmea() {
 
 // initialize and configure GPS
 int gps_init(void) {
-
   ESP_LOGI(TAG, "Opening serial GPS");
 
   GPS_Serial.begin(GPS_SERIAL);
@@ -144,7 +141,6 @@ int gps_init(void) {
   disableNmea();
 
   return 1;
-
 } // gps_init()
 
 // store current GPS location data in struct
@@ -170,13 +166,11 @@ bool gps_hasfix() {
 
 // function to poll UTC time from GPS NMEA data; note: this is costly
 time_t get_gpstime(uint16_t *msec = 0) {
-
   const uint16_t txDelay =
       70U * 1000 / (GPS_BAUDRATE / 9); // serial tx of 70 NMEA chars
 
   // did we get a current date & time?
   if (gps.time.age() < 1000) {
-
     // convert tinygps time format to struct tm format
     struct tm gps_tm = {0};
     gps_tm.tm_sec = gps.time.second();
@@ -209,18 +203,15 @@ time_t get_gpstime(uint16_t *msec = 0) {
 
   ESP_LOGD(TAG, "no valid GPS time");
   return 0;
-
 } // get_gpstime()
 
 // GPS serial feed FreeRTos Task
 void gps_loop(void *pvParameters) {
-
   _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
 
   // feed GPS decoder with serial NMEA data from GPS device
   while (1) {
     while (cfg.payloadmask & GPS_DATA) {
-
       while (GPS_Serial.available())
         gps.encode(GPS_Serial.read());
 
@@ -228,7 +219,6 @@ void gps_loop(void *pvParameters) {
     }
     delay(1000);
   } // infinite while loop
-
 } // gps_loop()
 
 #endif // HAS_GPS

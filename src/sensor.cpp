@@ -9,7 +9,6 @@ static const char TAG[] = __FILE__;
   10 // max. size of user sensor data buffer in bytes [default=20]
 
 void sensor_init(void) {
-
   // this function is called during device startup
   // put your user sensor initialization routines here
 }
@@ -38,14 +37,11 @@ uint8_t sensor_mask(uint8_t sensor_no) {
 }
 
 uint8_t *sensor_read(uint8_t sensor) {
-
   static uint8_t buf[SENSORBUFFER] = {0};
   uint8_t length = 3;
 
   switch (sensor) {
-
   case 1:
-
     // insert user specific sensor data frames here
     buf[0] = length;
     buf[1] = 0x01;
@@ -53,15 +49,12 @@ uint8_t *sensor_read(uint8_t sensor) {
     buf[3] = 0x03;
     break;
   case 2:
-
     buf[0] = length;
     buf[1] = 0x01;
     buf[2] = 0x02;
     buf[3] = 0x03;
     break;
-
   case 3:
-
     buf[0] = length;
     buf[1] = 0x01;
     buf[2] = 0x02;

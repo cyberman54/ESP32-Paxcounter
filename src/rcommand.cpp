@@ -234,7 +234,6 @@ void set_loradr(uint8_t val[]) {
              getSfName(updr2rps(LMIC.datarate)),
              getBwName(updr2rps(LMIC.datarate)),
              getCrName(updr2rps(LMIC.datarate)));
-
   } else
     ESP_LOGI(
         TAG,
@@ -325,9 +324,15 @@ void get_config(uint8_t val[]) {
 void get_status(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device status");
   payload.reset();
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+  payload.addStatus(read_voltage(), (uint64_t)(uptime() / 1000ULL), 0,
+                    // temperatureRead(),
+                    getFreeRAM(), rtc_get_reset_reason(0), RTC_restarts);
+#else
   payload.addStatus(read_voltage(), (uint64_t)(uptime() / 1000ULL),
                     temperatureRead(), getFreeRAM(), rtc_get_reset_reason(0),
                     RTC_restarts);
+#endif
   SendPayload(STATUSPORT);
 };
 
@@ -430,14 +435,12 @@ static const uint8_t cmdtablesize =
 
 // check and execute remote command
 void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
-
   if (cmdlength == 0)
     return;
 
   uint8_t foundcmd[cmdlength], cursor = 0;
 
   while (cursor < cmdlength) {
-
     int i = cmdtablesize;
     while (i--) {
       if (cmd[cursor] == table[i].opcode) { // lookup command in opcode table
@@ -462,7 +465,6 @@ void rcmd_execute(const uint8_t cmd[], const uint8_t cmdlength) {
       break;
     }
   } // command parsing loop
-
 } //  rcmd_execute()
 
 // remote command processing task
@@ -485,9 +487,7 @@ void rcmd_process(void *pvParameters) {
 
 // enqueue remote command
 void rcommand(const uint8_t *cmd, const size_t cmdlength) {
-
   RcmdBuffer_t rcmd = {0};
-
   rcmd.cmdLen = cmdlength;
   memcpy(rcmd.cmd, cmd, cmdlength);
 
@@ -505,7 +505,6 @@ void rcmd_deinit(void) {
 }
 
 esp_err_t rcmd_init(void) {
-
   _ASSERT(RCMD_QUEUE_SIZE > 0);
   RcmdQueue = xQueueCreate(RCMD_QUEUE_SIZE, sizeof(RcmdBuffer_t));
   if (RcmdQueue == 0) {

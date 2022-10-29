@@ -26,7 +26,6 @@ static uint8_t buffer[cfgLen + cfgLen2];
 // 3. magicByte [cfgLen2 bytes, containing a fixed identifier]
 
 static void defaultConfig(configData_t *myconfig) {
-
   strncpy(myconfig->version, PROGVERSION,
           sizeof(myconfig->version) - 1); // Firmware version
 
@@ -92,7 +91,6 @@ void saveConfig(bool erase) {
 
 // load configuration from NVRAM into RAM and make it current
 void loadConfig(void) {
-
   int readBytes = 0;
 
   ESP_LOGI(TAG, "Loading device configuration from NVRAM...");
@@ -144,7 +142,6 @@ bool comp(char s1, char s2) { return (tolower(s1) < tolower(s2)); }
 // helper function to lexicographically compare two versions. Returns 1 if v2
 // is smaller, -1 if v1 is smaller, 0 if equal
 int version_compare(const String v1, const String v2) {
-
   if (v1 == v2)
     return 0;
 

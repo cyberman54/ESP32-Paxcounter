@@ -2,6 +2,7 @@
 #define _I2C_H
 
 #include <Arduino.h>
+#include <Wire.h>
 #include <BitBang_I2C.h>
 #include <Wire.h>
 

@@ -70,7 +70,6 @@ void refreshTheMatrixDisplay(bool nextPage) {
   }
 
   switch (DisplayPage % MATRIX_DISPLAY_PAGES) {
-
     // page 0: number of current pax OR footfall line diagram
     // page 1: time of day
 
@@ -89,18 +88,14 @@ void refreshTheMatrixDisplay(bool nextPage) {
     }
 
     else { // cyclic counter mode -> plot a line diagram
-
       if (ulLastNumMacs != count.pax) {
-
         // next count cycle?
         if (count.pax == 0) {
-
           // matrix full? then scroll left 1 dot, else increment column
           if (col < (LED_MATRIX_WIDTH - 1))
             col++;
           else
             ScrollMatrixLeft(displaybuf, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
-
         } else
           matrix.drawPoint(col, row, 0); // clear current dot
 
@@ -124,7 +119,6 @@ void refreshTheMatrixDisplay(bool nextPage) {
       // DrawNumber(myTZ.dateTime("H:i:s").c_str());
     }
     break;
-
   } // switch page
 
   matrix.scan();

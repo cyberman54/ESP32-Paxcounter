@@ -2,7 +2,7 @@
 #define _RESET_H
 
 #include <driver/rtc_io.h>
-#include <rom/rtc.h>
+#include <soc/reset_reasons.h>
 
 #include "i2c.h"
 #include "lorawan.h"

@@ -40,7 +40,6 @@ void setTimeSyncIRQ() { xTaskNotify(irqHandlerTask, TIMESYNC_IRQ, eSetBits); }
 #ifdef GPS_INT
 // interrupt service routine triggered by GPS PPS
 void IRAM_ATTR GPSIRQ(void) {
-
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
   // take timestamp
@@ -54,7 +53,6 @@ void IRAM_ATTR GPSIRQ(void) {
 
 // interrupt service routine triggered by esp32 hardware timer
 void IRAM_ATTR CLOCKIRQ(void) {
-
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 // advance wall clock, if we have
@@ -79,7 +77,6 @@ void IRAM_ATTR CLOCKIRQ(void) {
 }
 
 void calibrateTime(void) {
-
   // kick off asynchronous lora timesync if we have
 #if (HAS_LORA_TIME)
   timesync_request();
@@ -106,12 +103,10 @@ void calibrateTime(void) {
 #endif
 
 #endif
-
 } // calibrateTime()
 
 // set system time (UTC), calibrate RTC and RTC_INT pps
 bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource) {
-
   struct timeval tv = {0};
 
   // called with invalid timesource?
@@ -123,7 +118,6 @@ bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource) {
 
   // do we have a valid time?
   if (timeIsValid(time_to_set)) {
-
     // if we have msec fraction, then wait until top of second with
     // millisecond precision
     if (t_msec % 1000) {
@@ -160,7 +154,6 @@ bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource) {
     return true;
 
   } else {
-
     timesyncer.attach(TIME_SYNC_INTERVAL_RETRY * 60, setTimeSyncIRQ);
     ESP_LOGV(TAG,
              "[%0.3f] Failed to synchronise time from source %c | unix sec "
@@ -173,7 +166,6 @@ bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource) {
 
 // helper function to setup a pulse per second for time synchronisation
 void timepulse_init(void) {
-
   // set esp-idf API sntp sync mode
   // sntp_init();
   sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
@@ -210,7 +202,6 @@ void timepulse_init(void) {
 
   // start cyclic time sync
   timesyncer.attach(TIME_SYNC_INTERVAL * 60, setTimeSyncIRQ);
-
 } // timepulse_init
 
 // helper function to check plausibility of a given epoch time
@@ -224,7 +215,6 @@ bool timeIsValid(time_t const t) {
 // helper function to calculate serial transmit time
 TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
                     int8_t rxPin, int8_t txPins) {
-
   uint32_t databits = ((config & 0x0c) >> 2) + 5;
   uint32_t stopbits = ((config & 0x20) >> 5) + 1;
   uint32_t txTime = (databits + stopbits + 1) * framesize * 1000.0 / baud;
@@ -234,7 +224,6 @@ TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
 }
 
 void clock_loop(void *taskparameter) { // ClockTask
-
   uint32_t current_time = 0, previous_time = 0;
   time_t tt;
   struct tm t = {0};
@@ -248,7 +237,6 @@ void clock_loop(void *taskparameter) { // ClockTask
 
   // output the next second's pulse/telegram after pps arrived
   for (;;) {
-
     // wait for timepulse and store UTC time
     xTaskNotifyWait(0x00, ULONG_MAX, &current_time, portMAX_DELAY);
 
@@ -291,7 +279,6 @@ void clock_loop(void *taskparameter) { // ClockTask
       ESP_LOGD(TAG, "[%0.3f] DCF77: new frame for min %d", _seconds(),
                t.tm_min);
     } else {
-
       // generate impulse
       if (t.tm_min == ClockMinute) { // ensure frame is recent
         DCF77_Pulse(ClockPulse & 1); // output next second
@@ -311,12 +298,10 @@ void clock_loop(void *taskparameter) { // ClockTask
 #endif
 
     previous_time = current_time;
-
   } // for
 } // clock_loop()
 
 void clock_init(void) {
-
 // setup clock output interface
 #ifdef HAS_IF482
   IF482.begin(HAS_IF482);
@@ -337,7 +322,6 @@ void clock_init(void) {
 
 // we use compile date to create a time_t reference "in the past"
 time_t compileTime(void) {
-
   char s_month[5];
   int year;
   struct tm t = {0};
@@ -347,9 +331,8 @@ time_t compileTime(void) {
   static time_t secs = -1;
 
   if (secs == -1) {
-
     // determine date
-    sscanf(__DATE__, "%s %d %d", s_month, &t.tm_mday, &year);
+    sscanf(__DATE__, "%4s %d %d", s_month, &t.tm_mday, &year);
     t.tm_mon = (strstr(month_names, s_month) - month_names) / 3;
     t.tm_year = year - 1900;
     // determine time
@@ -396,7 +379,6 @@ time_t mkgmtime(const struct tm *ptm) {
 }
 
 void time_init(void) {
-
 #if (defined HAS_IF482 || defined HAS_DCF77)
   ESP_LOGI(TAG, "Starting clock controller...");
   clock_init();

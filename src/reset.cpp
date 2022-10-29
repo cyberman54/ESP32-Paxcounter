@@ -11,7 +11,6 @@ static const char TAG[] = __FILE__;
 // RTC_NOINIT_ATTR -> keep value after a software restart or system crash
 RTC_NOINIT_ATTR runmode_t RTC_runmode;
 RTC_NOINIT_ATTR uint32_t RTC_restarts;
-
 // RTC_DATA_ATTR -> keep values after a wakeup from sleep
 RTC_DATA_ATTR struct timeval RTC_sleep_start_time;
 RTC_DATA_ATTR unsigned long long RTC_millis = 0;
@@ -39,7 +38,6 @@ void do_reset(bool warmstart) {
 }
 
 void do_after_reset(void) {
-
   struct timeval sleep_stop_time;
   uint64_t sleep_time_ms;
 
@@ -54,19 +52,17 @@ void do_after_reset(void) {
 #endif
 
   switch (rtc_get_reset_reason(0)) {
-
-  case POWERON_RESET:          // 0x01 Vbat power on reset
-  case RTCWDT_BROWN_OUT_RESET: // 0x0f Reset when the vdd voltage is not
-                               // stable
+  case RESET_REASON_CHIP_POWER_ON:
+  case RESET_REASON_SYS_BROWN_OUT:
     reset_rtc_vars();
     break;
 
-  case RTC_SW_CPU_RESET: // 0x0c Software reset CPU
+  case RESET_REASON_CPU0_SW:
     // keep previous set runmode (update / normal / maintenance)
     RTC_restarts++;
     break;
 
-  case DEEPSLEEP_RESET: // 0x05 Deep Sleep reset digital core
+  case RESET_REASON_CORE_DEEP_SLEEP:
     // calculate time spent in deep sleep
     gettimeofday(&sleep_stop_time, NULL);
     sleep_time_ms =
@@ -74,26 +70,13 @@ void do_after_reset(void) {
         (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
     RTC_millis += sleep_time_ms; // increment system monotonic time
     ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
-
     // do we have a valid time? -> set global variable
     timeSource = timeIsValid(sleep_stop_time.tv_sec) ? _set : _unsynced;
-
     // set wakeup state, not if we have pending OTA update
     if (RTC_runmode == RUNMODE_SLEEP)
       RTC_runmode = RUNMODE_WAKEUP;
     break;
 
-  //case SW_RESET:         // 0x03 Software reset digital core
-  //case OWDT_RESET:       // 0x04 Legacy watch dog reset digital core
-  //case SDIO_RESET:       // 0x06 Reset by SLC module, reset digital core
-  case TG0WDT_SYS_RESET: // 0x07 Timer Group0 Watch dog reset digital core
-  case TG1WDT_SYS_RESET: // 0x08 Timer Group1 Watch dog reset digital core
-  case RTCWDT_SYS_RESET: // 0x09 RTC Watch dog Reset digital core
-  case INTRUSION_RESET:  // 0x0a Instrusion tested to reset CPU
-  //case TGWDT_CPU_RESET:  // 0x0b Time Group reset CPU
-  case RTCWDT_CPU_RESET: // 0x0d RTC Watch dog Reset CPU
-  //case EXT_CPU_RESET:    // 0x0e for APP CPU, reseted by PRO CPU
-  case RTCWDT_RTC_RESET: // 0x10 RTC Watch dog reset digital core and rtc mode
   default:
     RTC_runmode = RUNMODE_POWERCYCLE;
     RTC_restarts++;
@@ -102,26 +85,18 @@ void do_after_reset(void) {
 }
 
 void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
-
   ESP_LOGI(TAG, "Preparing to sleep...");
 
   RTC_runmode = RUNMODE_SLEEP;
   int i;
 
-  // show message on display
-#ifdef HAS_DISPLAY
-  dp_message("-GOING TO SLEEP-", 7, true);
-#endif
-
   // validate wake up pin, if we have
   if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
     wakeup_gpio = GPIO_NUM_MAX;
+  // stop further enqueuing of senddata and MAC processing
+  libpax_counter_stop();
 
-    // stop further enqueuing of senddata and MAC processing
-    // -> skipped, because shutting down bluedroid stack tends to crash
-    // libpax_counter_stop();
-
-    // switch off any power consuming hardware
+  // switch off any power consuming hardware
 #if (HAS_SDS011)
   sds011_sleep();
 #endif
@@ -205,4 +180,6 @@ void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
   esp_deep_sleep_start();
 }
 
-unsigned long long uptime() { return (RTC_millis + esp_timer_get_time() / 1000); }
+unsigned long long uptime() {
+  return (RTC_millis + esp_timer_get_time() / 1000);
+}
