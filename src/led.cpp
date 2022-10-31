@@ -3,8 +3,12 @@
 #include "led.h"
 
 static led_states LEDState = LED_OFF; // LED state global for state machine
+led_states previousLEDState =
+    LED_ON; // This will force LED to be off at boot since State is OFF
+
 TaskHandle_t ledLoopTask;
-static uint16_t LEDBlinkDuration = 0; // state machine variables
+
+uint32_t LEDColor = COLOR_NONE, LEDBlinkDuration = 0; // state machine variables
 static unsigned long LEDBlinkStarted =
     0; // When (in millis() led blink started)
 
@@ -12,18 +16,10 @@ static unsigned long LEDBlinkStarted =
 CRGB leds[RGB_LED_COUNT];
 #endif
 
-void led_setcolor(CRGB color) {
+void rgb_set_color(uint32_t color) {
 #ifdef HAS_RGB_LED
   for (int i = 0; i < RGB_LED_COUNT; i++)
-    leds[i] = color;
-  FastLED.show();
-#endif
-}
-
-void led_sethue(uint8_t hue) {
-#ifdef HAS_RGB_LED
-  for (int i = 0; i < RGB_LED_COUNT; i++)
-    leds[i] = CHSV(hue, 0XFF, 100);
+    leds[i] = CRGB(color);
   FastLED.show();
 #endif
 }
@@ -31,61 +27,50 @@ void led_sethue(uint8_t hue) {
 void rgb_led_init(void) {
 #ifdef HAS_RGB_LED
   HAS_RGB_LED;
-  led_setcolor(CRGB::Green);
+  rgb_set_color(COLOR_NONE);
 #endif
 }
 
 void switch_LED(led_states state) {
-  static led_states previousLEDState = LED_OFF;
-  // led need to change state? avoid digitalWrite() for nothing
-  if (state != previousLEDState) {
-    previousLEDState = state;
 #if (HAS_LED != NOT_A_PIN)
-    if (state == LED_ON) {
-      // switch LED on
+  if (state == LED_ON) {
+    // switch LED on
 #ifdef LED_ACTIVE_LOW
-      digitalWrite(HAS_LED, LOW);
+    digitalWrite(HAS_LED, LOW);
 #else
-      digitalWrite(HAS_LED, HIGH);
+    digitalWrite(HAS_LED, HIGH);
 #endif
-      led_setcolor(CRGB::White);
-    } else if (state == LED_OFF) {
-      // switch LED off
+  } else if (state == LED_OFF) {
+    // switch LED off
 #ifdef LED_ACTIVE_LOW
-      digitalWrite(HAS_LED, HIGH);
+    digitalWrite(HAS_LED, HIGH);
 #else
-      digitalWrite(HAS_LED, LOW);
-#endif
-      led_setcolor(CRGB::Black);
-    }
+    digitalWrite(HAS_LED, LOW);
 #endif
   }
+#endif
 }
 
 void switch_LED1(led_states state) {
-  static led_states previousLEDState = LED_OFF;
-  // led need to change state? avoid digitalWrite() for nothing
-  if (state != previousLEDState) {
-    previousLEDState = state;
-#if (HAS_LED != NOT_A_PIN)
-    if (state == LED_ON) {
-      // switch LED on
-#ifdef LED_ACTIVE_LOW
-      digitalWrite(HAS_TWO_LED, LOW);
+#ifdef HAS_TWO_LED
+  if (state == LED_ON) {
+    // switch LED on
+#ifdef LED1_ACTIVE_LOW
+    digitalWrite(HAS_TWO_LED, LOW);
 #else
-      digitalWrite(HAS_TWO_LED, HIGH);
+    digitalWrite(HAS_TWO_LED, HIGH);
 #endif
-    } else if (state == LED_OFF) {
-      // switch LED off
-#ifdef LED_ACTIVE_LOW
-      digitalWrite(HAS_TWO_LED, HIGH);
+  } else if (state == LED_OFF) {
+    // switch LED off
+#ifdef LED1_ACTIVE_LOW
+    digitalWrite(HAS_TWO_LED, HIGH);
 #else
-      digitalWrite(HAS_TWO_LED, LOW);
-#endif
-    }
+    digitalWrite(HAS_TWO_LED, LOW);
 #endif
   }
+#endif // HAS_TWO_LED
 }
+
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
@@ -100,7 +85,7 @@ void ledLoop(void *parameter) {
         LEDState = LED_OFF;
         LEDBlinkStarted = 0;
         LEDBlinkDuration = 0;
-        led_setcolor(CRGB::Black);
+        LEDColor = COLOR_NONE;
       } else {
         // In case of LoRaWAN led management blinked off
         LEDState = LED_ON;
@@ -110,7 +95,7 @@ void ledLoop(void *parameter) {
 #if (HAS_LORA)
       // LED indicators for viusalizing LoRaWAN state
       if (LMIC.opmode & (OP_JOINING | OP_REJOIN)) {
-        led_setcolor(CRGB::Yellow);
+        LEDColor = COLOR_YELLOW;
         // quick blink 20ms on each 1/5 second
         LEDState =
             ((millis() % 200) < 20) ? LED_ON : LED_OFF; // TX data pending
@@ -118,13 +103,13 @@ void ledLoop(void *parameter) {
         // select color to blink by message port
         switch (LMIC.pendTxPort) {
         case STATUSPORT:
-          led_setcolor(CRGB::Pink);
+          LEDColor = COLOR_PINK;
           break;
         case CONFIGPORT:
-          led_setcolor(CRGB::Cyan);
+          LEDColor = COLOR_CYAN;
           break;
         default:
-          led_setcolor(CRGB::Blue);
+          LEDColor = COLOR_BLUE;
           break;
         }
         // small blink 10ms on each 1/2sec (not when joining)
@@ -132,23 +117,33 @@ void ledLoop(void *parameter) {
         // This should not happen so indicate a problem
       } else if (LMIC.opmode &
                  ((OP_TXDATA | OP_TXRXPEND | OP_JOINING | OP_REJOIN) == 0)) {
-        led_setcolor(CRGB::Red);
+        LEDColor = COLOR_RED;
         // heartbeat long blink 200ms on each 2 seconds
         LEDState = ((millis() % 2000) < 200) ? LED_ON : LED_OFF;
       } else
-#elif (defined(HAS_RGB_LED) && ((WIFICOUNTER) || (BLECOUNTER)))
-      struct count_payload_t count;
-      libpax_counter_count(&count);
-      led_sethue(count.pax);
 #endif // HAS_LORA
       {
         // led off
+        LEDColor = COLOR_NONE;
         LEDState = LED_OFF;
       }
     }
-
-    switch_LED(LEDState);
-
+    // led need to change state? avoid digitalWrite() for nothing
+    if (LEDState != previousLEDState) {
+      if (LEDState == LED_ON) {
+        rgb_set_color(LEDColor);
+        // if we have only single LED we use it to blink for status
+#ifndef HAS_RGB_LED
+        switch_LED(LED_ON);
+#endif
+      } else {
+        rgb_set_color(COLOR_NONE);
+#ifndef HAS_RGB_LED
+        switch_LED(LED_OFF);
+#endif
+      }
+      previousLEDState = LEDState;
+    }
     // give yield to CPU
     delay(5);
   } // while(1)
