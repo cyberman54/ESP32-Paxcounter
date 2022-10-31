@@ -132,7 +132,7 @@ bool sdcard_init(bool create) {
   // has these signals.
   // Default config for SDMMC_HOST_DEFAULT (4-bit bus width, slot 1)
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
-  sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+  sdmmc_slot_config_t slot_config = SDCARD_SLOTCONFIG;
 
   // Set 1-line or 4-line SD mode (default is 1-line)
   slot_config.width = SDCARD_SLOTWIDTH;
