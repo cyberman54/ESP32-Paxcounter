@@ -37,7 +37,7 @@ jobs:
             ttgov1.h,
             ttgov2.h,
             ttgov21old,
-            httgov21new.h,
+            ttgov21new.h,
             ttgofox.h,
             ttgobeam.h,
             ttgobeam10.h,
