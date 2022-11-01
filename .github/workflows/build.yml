@@ -27,7 +27,6 @@ jobs:
           #   platformio-path: ~\AppData\Local\platformio\Cache
         board:
           [
-            generic.h,
             ebox.h,
             eboxtube.h,
             ecopower.h,
