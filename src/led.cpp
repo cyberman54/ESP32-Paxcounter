@@ -2,94 +2,36 @@
 #include "globals.h"
 #include "led.h"
 
-led_states LEDState = LED_OFF; // LED state global for state machine
+static led_states LEDState = LED_OFF; // LED state global for state machine
 led_states previousLEDState =
     LED_ON; // This will force LED to be off at boot since State is OFF
 
 TaskHandle_t ledLoopTask;
 
-uint16_t LEDColor = COLOR_NONE, LEDBlinkDuration = 0; // state machine variables
-unsigned long LEDBlinkStarted = 0; // When (in millis() led blink started)
+uint32_t LEDColor = COLOR_NONE, LEDBlinkDuration = 0; // state machine variables
+static unsigned long LEDBlinkStarted =
+    0; // When (in millis() led blink started)
 
 #ifdef HAS_RGB_LED
-
-// RGB Led instance
-HAS_RGB_LED;
-
-float rgb_CalcColor(float p, float q, float t) {
-  if (t < 0.0f)
-    t += 1.0f;
-  if (t > 1.0f)
-    t -= 1.0f;
-
-  if (t < 1.0f / 6.0f)
-    return p + (q - p) * 6.0f * t;
-
-  if (t < 0.5f)
-    return q;
-
-  if (t < 2.0f / 3.0f)
-    return p + ((q - p) * (2.0f / 3.0f - t) * 6.0f);
-
-  return p;
-}
-
-// ------------------------------------------------------------------------
-// Hue, Saturation, Lightness color members
-// HslColor using H, S, L values (0.0 - 1.0)
-// L should be limited to between (0.0 - 0.5)
-// ------------------------------------------------------------------------
-RGBColor rgb_hsl2rgb(float h, float s, float l) {
-  RGBColor RGB_color;
-  float r;
-  float g;
-  float b;
-
-  if (s == 0.0f || l == 0.0f) {
-    r = g = b = l; // achromatic or black
-  } else {
-    float q = l < 0.5f ? l * (1.0f + s) : l + s - (l * s);
-    float p = 2.0f * l - q;
-    r = rgb_CalcColor(p, q, h + 1.0f / 3.0f);
-    g = rgb_CalcColor(p, q, h);
-    b = rgb_CalcColor(p, q, h - 1.0f / 3.0f);
-  }
-
-  RGB_color.R = (uint8_t)(r * 255.0f);
-  RGB_color.G = (uint8_t)(g * 255.0f);
-  RGB_color.B = (uint8_t)(b * 255.0f);
-
-  return RGB_color;
-}
-
-void rgb_set_color(uint16_t hue) {
-  if (hue == COLOR_NONE) {
-    // set Off
-    for (int i = 0; i < RGB_LED_COUNT; i++)
-      rgb_led[i] = Rgb(0, 0, 0);
-  } else {
-    // see http://www.workwithcolor.com/blue-color-hue-range-01.htm
-    // H (is color from 0..360) should be between 0.0 and 1.0
-    // S is saturation keep it to 1
-    // L is brightness should be between 0.0 and 0.5
-    // cfg.rgblum is between 0 and 100 (percent)
-    RGBColor target = rgb_hsl2rgb(hue / 360.0f, 1.0f, 0.005f * cfg.rgblum);
-    // uint32_t color = target.R<<16 | target.G<<8 | target.B;
-    for (int i = 0; i < RGB_LED_COUNT; i++)
-      rgb_led[i] = Rgb(target.R, target.G, target.B);
-  }
-  // Show
-  rgb_led.show();
-}
-
-#else
-
-// No RGB LED empty functions
-void rgb_set_color(uint16_t hue) {}
-
+CRGB leds[RGB_LED_COUNT];
 #endif
 
-void switch_LED(uint8_t state) {
+void rgb_set_color(uint32_t color) {
+#ifdef HAS_RGB_LED
+  for (int i = 0; i < RGB_LED_COUNT; i++)
+    leds[i] = CRGB(color);
+  FastLED.show();
+#endif
+}
+
+void rgb_led_init(void) {
+#ifdef HAS_RGB_LED
+  HAS_RGB_LED;
+  rgb_set_color(COLOR_NONE);
+#endif
+}
+
+void switch_LED(led_states state) {
 #if (HAS_LED != NOT_A_PIN)
   if (state == LED_ON) {
     // switch LED on
@@ -109,7 +51,7 @@ void switch_LED(uint8_t state) {
 #endif
 }
 
-void switch_LED1(uint8_t state) {
+void switch_LED1(led_states state) {
 #ifdef HAS_TWO_LED
   if (state == LED_ON) {
     // switch LED on
@@ -129,14 +71,6 @@ void switch_LED1(uint8_t state) {
 #endif // HAS_TWO_LED
 }
 
-void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
-  LEDColor = set_color;                 // set color for RGB LED
-  LEDBlinkDuration = set_blinkduration; // duration
-  LEDBlinkStarted = millis();           // Time Start here
-  LEDState = LED_ON;                    // Let main set LED on
-#endif
-}
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
