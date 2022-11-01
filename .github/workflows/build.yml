@@ -36,7 +36,7 @@ jobs:
             heltecv21.h,
             ttgov1.h,
             ttgov2.h,
-            ttgov21old,
+            ttgov21old.h,
             ttgov21new.h,
             ttgofox.h,
             ttgobeam.h,
