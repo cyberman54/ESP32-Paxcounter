@@ -31,9 +31,7 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_LED NOT_A_PIN // no on board LED (?)
-#define RGB_LED_COUNT 10
-
-#define RGB_LED_COUNT 1 // we have 1 LED
+#define RGB_LED_COUNT 10 // M5fire has a stripe of 10 RGB Pixels
 #define HAS_RGB_LED FastLED.addLeds<SK6812, GPIO_NUM_15, GRB>(leds, RGB_LED_COUNT);
 #define HAS_BUTTON (39) // on board button A
 
