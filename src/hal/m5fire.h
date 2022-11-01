@@ -44,10 +44,10 @@
 #define PMU_CHG_CUTOFF 0 // battery charge cutoff
 // possible values: *0:4.2V, 1:4.3V, 2:4.35V, 3:4.4V
 
-// GPS settings
-#define HAS_GPS 0 // use on board GPS
-#define GPS_SERIAL 9600, SERIAL_8N1, RXD2, TXD2 // UBlox NEO 6M RX, TX
-// #define GPS_INT GPIO_NUM_35 // 30ns accurary timepulse, to be external wired on pcb: shorten R12!
+// Optional GPS Module settings
+//#define HAS_GPS 1 // use GPS
+//#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_5, GPIO_NUM_13 // to be external wired on pcb: open R1 & R4, and shorten R2 & R5
+//#define GPS_INT GPIO_NUM_36 // 30ns accurary timepulse, to be external wired on pcb: shorten R12!
 
 // Display Settings
 #define HAS_DISPLAY 2   // TFT-LCD
