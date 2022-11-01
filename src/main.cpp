@@ -201,26 +201,26 @@ void setup() {
 #endif
 
 // initialize leds
+#ifdef HAS_RGB_LED
+  rgb_led_init();
+  strcat_P(features, " RGB");
+#endif
+
 #if (HAS_LED != NOT_A_PIN)
   pinMode(HAS_LED, OUTPUT);
   strcat_P(features, " LED");
-
 #ifdef LED_POWER_SW
   pinMode(LED_POWER_SW, OUTPUT);
   digitalWrite(LED_POWER_SW, LED_POWER_ON);
 #endif
-
 #ifdef HAS_TWO_LED
   pinMode(HAS_TWO_LED, OUTPUT);
   strcat_P(features, " LED2");
 #endif
-
-// use LED for power display if we have additional RGB LED, else for status
+// use simple LED for power display if we have additional RGB LED, else for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
-  strcat_P(features, " RGB");
 #endif
-
 #endif // HAS_LED
 
 #if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)

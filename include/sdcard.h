@@ -33,6 +33,10 @@
 #elif HAS_SDCARD == 2 // MMC interface
 #include "driver/sdmmc_host.h"
 
+#ifndef SDCARD_SLOTCONFIG
+#define SDCARD_SLOTCONFIG SDMMC_SLOT_CONFIG_DEFAULT()
+#endif
+
 #ifndef SDCARD_SLOTWIDTH
 #define SDCARD_SLOTWIDTH 1
 #endif

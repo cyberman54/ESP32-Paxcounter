@@ -5,7 +5,9 @@
 #include <Arduino.h>
 
 // Time functions
+#ifdef HAS_RTC
 #include <RtcDateTime.h>
+#endif
 #include <Ticker.h>
 
 // std::set for unified array functions

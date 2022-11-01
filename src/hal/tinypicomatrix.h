@@ -12,7 +12,7 @@
 // for operating a 96x16 shift register LED matrix display
 
 #define HAS_LED NOT_A_PIN     // Green LED on board
-#define HAS_RGB_LED Apa102 rgb_led(1, GPIO_NUM_12, GPIO_NUM_2) // APA102 RGB LED on board
+#define HAS_RGB_LED FastLED.addLeds<APA102, GPIO_NUM_2, GPIO_NUM_12, BGR>(leds, RGB_LED_COUNT)
 
 //#define DISABLE_BROWNOUT 1      // comment out if you want to keep brownout feature
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
