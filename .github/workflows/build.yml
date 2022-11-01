@@ -5,7 +5,7 @@ on:
   push:
     branches:
         - master
-        - development
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,6 +23,7 @@ jobs:
         - os: windows-latest
           path: ~\AppData\Local\pip\Cache
           platformio-path: ~\AppData\Local\platformio\Cache
+        board: [heltecv2.h,heltecv21.h,ttgov21new.h]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -53,5 +54,9 @@ jobs:
           cp src/loraconf_sample.h src/loraconf.h
           cp src/ota_sample.conf src/ota.conf
           cp src/paxcounter_orig.conf src/paxcounter.conf
-      - name: Run PlatformIO
-        run: pio run
+      - name: Clean
+        run: pio run -t clean -e ci
+      - name: Run PlatformIO Test
+        env:
+          CI_HALFILE: ${{ matrix.board }}
+        run: pio run -e ci
