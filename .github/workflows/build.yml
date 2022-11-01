@@ -13,7 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
         include:
         - os: ubuntu-latest
           path: ~/.cache/pip
@@ -57,7 +58,7 @@ jobs:
           cp src/paxcounter_orig.conf src/paxcounter.conf
       - name: Clean
         run: pio run -t clean -e ci
-      - name: Run PlatformIO Test
+      - name: Run PlatformIO CI for ${{ matrix.board }}
         env:
           CI_HALFILE: ${{ matrix.board }}
         run: pio run -e ci

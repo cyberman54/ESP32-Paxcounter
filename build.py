@@ -28,13 +28,14 @@ haldir = os.path.join (srcdir, "hal")
 # check if hal file is present in source directory
 halconfig = config.get("board", "halfile")
 
-# check if hal file is not set by ENV CI_HALFILE
-if not os.getenv("CI_HALFILE"):
-    halconfigfile = os.path.join (haldir, halconfig)
-else:
+# check if hal file is set by ENV CI_HALFILE
+if os.getenv("CI_HALFILE"):
     # if set, use ENV CI_HALFILE
     print("CI_HALFILE ENV FOUND")
-    halconfigfile = os.path.join (haldir,os.getenv("CI_HALFILE"))
+    # override halconfig
+    halconfig = os.getenv("CI_HALFILE")
+
+halconfigfile = os.path.join (haldir, halconfig)
 
 if os.path.isfile(halconfigfile) and os.access(halconfigfile, os.R_OK):
     print("Parsing hardware configuration from " + halconfigfile)
