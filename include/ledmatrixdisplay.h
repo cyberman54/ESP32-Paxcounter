@@ -6,6 +6,8 @@
 #include "LEDMatrix.h"
 #include "ledmatrixfonts.h"
 #include "ledmatrixdisplay.h"
+#include "configmanager.h"
+#include <libpax_api.h>
 
 extern uint8_t MatrixDisplayIsOn;
 extern LEDMatrix matrix;
