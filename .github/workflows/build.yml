@@ -4,24 +4,59 @@ on:
   pull_request:
   push:
     branches:
-        - master
+      - master
+      - build-workflow
+  workflow_dispatch:
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
         include:
-        - os: ubuntu-latest
-          path: ~/.cache/pip
-          platformio-path: ~/.platformio
-        - os: macos-latest
-          path: ~/Library/Caches/pip
-          platformio-path: ~/Library/Caches/platformio
-        - os: windows-latest
-          path: ~\AppData\Local\pip\Cache
-          platformio-path: ~\AppData\Local\platformio\Cache
+          - os: ubuntu-latest
+            path: ~/.cache/pip
+            platformio-path: ~/.platformio
+          # - os: macos-latest
+          #   path: ~/Library/Caches/pip
+          #   platformio-path: ~/Library/Caches/platformio
+          # - os: windows-latest
+          #   path: ~\AppData\Local\pip\Cache
+          #   platformio-path: ~\AppData\Local\platformio\Cache
+        board:
+          [
+            generic.h,
+            ebox.h,
+            eboxtube.h,
+            ecopower.h,
+            heltec.h,
+            heltecv2.h,
+            heltecv21.h,
+            ttgov1.h,
+            ttgov2.h,
+            ttgov21old.httgov21new.h,
+            ttgofox.h,
+            ttgobeam.h,
+            ttgobeam10.h,
+            ttgotdisplay.h,
+            ttgotwristband.h,
+            fipy.h,
+            lopy.h,
+            lopy4.h,
+            lolin32litelora.h,
+            lolin32lora.h,
+            lolin32lite.h,
+            wemos32oled.h,
+            wemos32matrix.h,
+            octopus32.h,
+            tinypico.h,
+            tinypicomatrix.h,
+            m5core.h,
+            m5fire.h,
+            olimexpoeiso.h,
+          ]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -52,5 +87,9 @@ jobs:
           cp src/loraconf_sample.h src/loraconf.h
           cp src/ota_sample.conf src/ota.conf
           cp src/paxcounter_orig.conf src/paxcounter.conf
-      - name: Run PlatformIO
-        run: pio run
+      - name: Clean
+        run: pio run -t clean -e ci
+      - name: Run PlatformIO CI for ${{ matrix.board }}
+        env:
+          CI_HALFILE: ${{ matrix.board }}
+        run: pio run -e ci
