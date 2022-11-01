@@ -18,7 +18,8 @@ static float pm10 = 0.0, pm25 = 0.0;
 
 // init
 bool sds011_init() {
-  sds.begin(9600, SERIAL_8N1, SDS_RX, SDS_TX);
+  Serial2.begin(9600, SERIAL_8N1, SDS_RX, SDS_TX);
+  sds.begin();
   sds011_wakeup();
   ESP_LOGI(TAG, "SDS011: %s", sds.queryFirmwareVersion().toString().c_str());
   sds.setQueryReportingMode();
