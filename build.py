@@ -107,10 +107,10 @@ env.Replace(PAXEXPRESS_API_TOKEN=apitoken)
 
 # get runtime credentials and put them to compiler directive
 env.Append(BUILD_FLAGS=[
-    u'-DWIFI_SSID=\\"' + mykeys["OTA_WIFI_SSID"] + '\\"', 
-    u'-DWIFI_PASS=\\"' + mykeys["OTA_WIFI_PASS"] + '\\"', 
-    u'-DPAXEXPRESS_USER=\\"' + mykeys["PAXEXPRESS_USER"] + '\\"', 
-    u'-DPAXEXPRESS_REPO=\\"' + mykeys["PAXEXPRESS_REPO"] + '\\"', 
+    u'-DWIFI_SSID=\\"' + mykeys["OTA_WIFI_SSID"] + '\\"',
+    u'-DWIFI_PASS=\\"' + mykeys["OTA_WIFI_PASS"] + '\\"',
+    u'-DPAXEXPRESS_USER=\\"' + mykeys["PAXEXPRESS_USER"] + '\\"',
+    u'-DPAXEXPRESS_REPO=\\"' + mykeys["PAXEXPRESS_REPO"] + '\\"',
     u'-DPAXEXPRESS_PACKAGE=\\"' + package + '\\"',
     u'-DARDUINO_LMIC_PROJECT_CONFIG_H=' + lmicconfig,
     u'-I \"' + srcdir + '\"'
@@ -136,7 +136,7 @@ def publish_paxexpress(source, target, env):
     }
 
     r = None
-    
+
     try:
         r = requests.put(url,
                          data=open(firmware_path, "rb"),
