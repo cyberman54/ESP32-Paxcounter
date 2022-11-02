@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no M5 RA01 LoRa module
+//#define HAS_LORA 1 // comment out if device shall not send data via LoRa or has no M5 RA01 LoRa module
 #define LORA_SCK  SCK
 #define LORA_CS   SS
 #define LORA_MISO MISO
@@ -21,7 +21,7 @@
 #define LORA_IO2  LMIC_UNUSED_PIN
 
 // enable only if you want to store a local paxcount table on the device
-#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+//#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
 #define SDCARD_CS    GPIO_NUM_4
 #define SDCARD_MOSI  MOSI
 #define SDCARD_MISO  MISO
@@ -32,8 +32,8 @@
 
 #define HAS_LED NOT_A_PIN // no on board LED (?)
 #define RGB_LED_COUNT 10 // M5fire has a stripe of 10 RGB Pixels
-#define HAS_RGB_LED FastLED.addLeds<SK6812, GPIO_NUM_15, GRB>(leds, RGB_LED_COUNT);
-#define HAS_BUTTON (39) // on board button A
+//#define HAS_RGB_LED FastLED.addLeds<SK6812, GPIO_NUM_15, GRB>(leds, RGB_LED_COUNT);
+//#define HAS_BUTTON (39) // on board button A
 
 // power management settings
 #define HAS_IP5306 1 // has IP5306 chip
@@ -48,7 +48,7 @@
 //#define GPS_INT GPIO_NUM_36 // 30ns accurary timepulse, to be external wired on pcb: shorten R12!
 
 // Display Settings
-#define HAS_DISPLAY 2   // TFT-LCD
+//#define HAS_DISPLAY 2   // TFT-LCD
 //#define MY_DISPLAY_FLIP  1 // use if display is rotated
 #define MY_DISPLAY_WIDTH 320
 #define MY_DISPLAY_HEIGHT 240
