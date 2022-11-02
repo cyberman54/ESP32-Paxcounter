@@ -62,7 +62,7 @@
 
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
-#define BOARD_HAS_PSRAM // use if board has external PSRAM
+//#define BOARD_HAS_PSRAM // use if board has external SPIRAM, note: this will reduce IRAM0 by 64KB for SPIRAM cache
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 1
