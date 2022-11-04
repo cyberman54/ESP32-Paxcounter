@@ -16,7 +16,7 @@
 #define SDCARD_SLOTWIDTH 4 // 4-line interface
 
 #define HAS_DISPLAY 2       // TFT-LCD
-#define TFT_TYPE DISPLAY_TDONGLE_S3
+#define TFT_TYPE DISPLAY_T_DISPLAY_S3
 #define MY_DISPLAY_FLIP  1  // use if display is rotated
 #define MY_DISPLAY_WIDTH 80
 #define MY_DISPLAY_HEIGHT 160
