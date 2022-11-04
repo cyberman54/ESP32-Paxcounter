@@ -4,6 +4,15 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <BitBang_I2C.h>
+#include <Wire.h>
+
+#ifndef MY_DISPLAY_SDA
+#define MY_DISPLAY_SDA SDA
+#endif
+
+#ifndef MY_DISPLAY_SCL
+#define MY_DISPLAY_SCL SCL
+#endif
 
 #define SSD1306_PRIMARY_ADDRESS (0x3D)
 #define SSD1306_SECONDARY_ADDRESS (0x3C)
@@ -13,14 +22,6 @@
 #define IP5306_PRIMARY_ADDRESS (0x75)
 #define MCP_24AA02E64_PRIMARY_ADDRESS (0x50)
 #define QUECTEL_GPS_PRIMARY_ADDRESS (0x10)
-
-#ifndef MY_DISPLAY_SDA
-#define MY_DISPLAY_SDA SDA
-#endif
-
-#ifndef MY_DISPLAY_SCL
-#define MY_DISPLAY_SCL SCL
-#endif
 
 extern SemaphoreHandle_t I2Caccess;
 
