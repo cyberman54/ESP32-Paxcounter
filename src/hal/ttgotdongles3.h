@@ -1,6 +1,6 @@
 // clang-format off
 // upload_speed 1500000
-// board ESP32-S3-DevKitC-1
+// board esp32-s3-devkitc-1
 
 // for pinouts see https://github.com/Xinyuan-LilyGO/T-Dongle-S3
 
