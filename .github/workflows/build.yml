@@ -129,8 +129,8 @@ jobs:
           cp src/ota_sample.conf src/ota.conf
           cp src/paxcounter_orig.conf src/paxcounter.conf
       - name: Clean
-        run: pio run -t clean -e usb
+        run: pio run -t clean -e ci
       - name: Run PlatformIO CI for ${{ matrix.board }}
         env:
           CI_HALFILE: ${{ matrix.board }}
-        run: pio run -e usb
+        run: pio run -e ci
