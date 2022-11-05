@@ -86,6 +86,10 @@ extern BB_SPI_LCD *dp;
 #define MY_DISPLAY_HEIGHT 64 // Height in pixels of OLED-display, must be 64X
 #endif
 
+#ifndef MY_DISPLAY_FIRSTLINE
+#define MY_DISPLAY_FIRSTLINE 0
+#endif
+
 // settings for qr code generator
 #define QR_VERSION 3 // 29 x 29px
 

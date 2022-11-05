@@ -1,6 +1,6 @@
 // clang-format off
 // upload_speed 1500000
-// board ESP32-S3-DevKitC-1
+// board esp32-s3-devkitc-1
 
 #ifndef _TTGOTDISPLAYS3_H
 #define _TTGOTDISPLAYS3_H

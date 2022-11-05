@@ -31,7 +31,7 @@ You can build this project battery powered using ESP32 deep sleep mode and reach
 
 **Supported ESP32 based boards**:
 
-*LoRa & SPI*:
+*With LoRa radio data transfer*:
 
 - **LilyGo: [Paxcounter-Board*](https://www.aliexpress.com/item/32915894264.html?spm=a2g0o.productlist.0.0.3d656325QrcfQc&algo_pvid=4a150199-63e7-4d21-bdb1-b48164537744&algo_exp_id=4a150199-63e7-4d21-bdb1-b48164537744-2&pdp_ext_f=%7B%22sku_id%22%3A%2212000023374441919%22%7D)**
 - TTGO: T1*, T2*, T3*, T-Beam, T-Fox
@@ -43,16 +43,17 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - Adafruit ESP32 Feather + LoRa Wing + OLED Wing, #IoT Octopus32 (Octopus + ESP32 Feather)
 - M5Stack: [Basic Core IoT*](https://m5stack.com/collections/m5-core/products/basic-core-iot-development-kit) + [Lora Module RA-01H](https://m5stack.com/collections/m5-module/products/lora-module-868mhz), [Fire IoT*](https://m5stack.com/collections/m5-core/products/fire-iot-development-kit)
 
-*) supports microSD-card
+*Without LoRa*:
 
-*SPI only*:
-
+- LilyGo: [T-Dongle S3*](https://github.com/Xinyuan-LilyGO/T-Dongle-S3)
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
 - Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
 - TTGO: [T-Display](https://www.aliexpress.com/item/33048962331.html)
 - TTGO: [T-Wristband](https://www.aliexpress.com/item/4000527495064.html)
 - Generic ESP32
+
+*) supports microSD/TF-card for local logging of paxcounter data
 
 Depending on board hardware following features are supported:
 - LoRaWAN communication, supporting various payload formats (see enclosed .js converters)
@@ -95,7 +96,7 @@ Install <A HREF="https://platformio.org/">PlatformIO IDE for embedded developmen
 Compile time configuration is spread across several files. Before compiling the code, edit or create the following files:
 
 ## platformio.ini
-Edit `platformio_orig.ini` and select desired hardware target in section boards. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in sections board. Copy or rename to `platformio.ini` in the root directory of the project. Now start Platformio. Note: Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file.
+Edit `platformio_orig.ini` (for ESP32 CPU based boards) *or* `platformio_orig_s3.ini` (for ESP32-S3 CPU based boards) and select desired board in section **board**. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in section **board**. Copy or rename to `platformio.ini` in the root directory of the project. Now start Platformio. Note: Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file!
 
 ## paxcounter.conf
 Edit `src/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `src/paxcounter.conf`.
@@ -607,3 +608,4 @@ Thanks to
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
 - [August Quint](https://github.com/AugustQu) for adding SD card data logger and SDS011 support
+- [t-huyeng](https://github.com/t-huyeng) for adding a CI workflow to this project
