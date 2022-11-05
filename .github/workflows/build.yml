@@ -180,7 +180,7 @@ jobs:
           pip install --upgrade platformio
       - name: Copy of necessary files
         run: |
-          cp platformio_orig_s3-usb-stick.ini platformio.ini
+          cp platformio_orig_s3.ini platformio.ini
           cp src/loraconf_sample.h src/loraconf.h
           cp src/ota_sample.conf src/ota.conf
           cp src/paxcounter_orig.conf src/paxcounter.conf
