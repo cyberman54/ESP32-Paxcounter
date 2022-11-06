@@ -29,7 +29,7 @@ void longPressStart(void) {
 void buttonLoop(void *parameter) {
   while (1) {
     doIRQ(BUTTON_IRQ);
-    delay(20);
+    delay(50); // 50 is debounce time of OneButton lib, so doesn't hurt
   }
 }
 
