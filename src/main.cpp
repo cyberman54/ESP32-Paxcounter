@@ -28,6 +28,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 Task          	Core  Prio  Purpose
 -------------------------------------------------------------------------------
 ledloop*      	1     1    blinks LEDs
+buttonloop*     1     2    reads button
 spiloop#      	0     2    reads/writes data on spi interface
 lmictask*     	1     2    MCCI LMiC LORAWAN stack
 clockloop#    	1     6    generates realtime telegrams for external clock
@@ -468,7 +469,7 @@ void setup() {
 #else
   strcat_P(features, "PD");
 #endif // BUTTON_PULLUP
-  button_init(HAS_BUTTON);
+  button_init();
 #endif // HAS_BUTTON
 
 // only if we have a timesource we do timesync

@@ -13,10 +13,10 @@ void irqHandler(void *pvParameters) {
 
   // task remains in blocked state until it is notified by an irq
   for (;;) {
-    xTaskNotifyWait(0x00,             // Don't clear any bits on entry
-                    ULONG_MAX,        // Clear all bits on exit
-                    &irqSource, // Receives the notification value
-                    portMAX_DELAY);   // wait forever
+    xTaskNotifyWait(0x00,           // Don't clear any bits on entry
+                    ULONG_MAX,      // Clear all bits on exit
+                    &irqSource,     // Receives the notification value
+                    portMAX_DELAY); // wait forever
 
     if (irqSource & UNMASK_IRQ) // interrupt handler to be enabled?
       irqSource &= ~MASK_IRQ;   // then clear irq mask flag
@@ -100,14 +100,6 @@ void IRAM_ATTR DisplayIRQ() { doIRQ(DISPLAY_IRQ); }
 
 #ifdef HAS_MATRIX_DISPLAY
 void IRAM_ATTR MatrixDisplayIRQ() { doIRQ(MATRIX_DISPLAY_IRQ); }
-#endif
-
-#ifdef HAS_BUTTON
-void IRAM_ATTR ButtonIRQ() { doIRQ(BUTTON_IRQ); }
-#endif
-
-#ifdef HAS_PMU
-void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
 #endif
 
 void mask_user_IRQ() { xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits); }

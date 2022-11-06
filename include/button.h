@@ -1,7 +1,7 @@
 #ifndef _BUTTON_H
 #define _BUTTON_H
 
-#include <SimpleButton.h>
+#include <OneButton.h>
 #include "irqhandler.h"
 #include "senddata.h"
 #include "display.h"
@@ -11,7 +11,13 @@
 #define BUTTON_ACTIVEHIGH 0
 #endif
 
-void button_init(int pin);
-void readButton();
+#ifndef BUTTON_PULLUP
+#define BUTTON_PULLUP 0
+#endif
+
+extern TaskHandle_t buttonLoopTask;
+
+void button_init(void);
+void IRAM_ATTR readButton(void);
 
 #endif

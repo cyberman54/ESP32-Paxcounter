@@ -71,6 +71,13 @@ void doHousekeeping() {
              eTaskGetState(ledLoopTask));
 #endif
 
+#ifdef HAS_BUTTON
+  if (buttonLoopTask != NULL)
+    ESP_LOGD(TAG, "Buttonloop %d bytes left | Taskstate = %d",
+             uxTaskGetStackHighWaterMark(buttonLoopTask),
+             eTaskGetState(buttonLoopTask));
+#endif
+
 // read battery voltage into global variable
 #if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
   batt_level = read_battlevel();

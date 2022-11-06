@@ -13,6 +13,7 @@
 #include "reset.h"
 #include "led.h"
 #include "power.h"
+#include "button.h"
 
 extern Ticker cyclicTimer;
 

@@ -36,12 +36,4 @@ void IRAM_ATTR DisplayIRQ();
 void IRAM_ATTR MatrixDisplayIRQ();
 #endif
 
-#ifdef HAS_BUTTON
-void IRAM_ATTR ButtonIRQ();
-#endif
-
-#ifdef HAS_PMU
-void IRAM_ATTR PMUIRQ();
-#endif
-
 #endif
