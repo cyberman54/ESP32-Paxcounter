@@ -53,11 +53,13 @@ typedef uint8_t (*mapFn_t)(uint16_t, uint16_t, uint16_t);
 uint16_t read_voltage(void);
 void calibrate_voltage(void);
 bool batt_sufficient(void);
+extern int8_t batt_level;
 
 #ifdef HAS_PMU
 #include <XPowersLib.h>
 extern XPowersPMU pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
+void IRAM_ATTR PMUIRQ();
 void AXP192_powerevent_IRQ(void);
 void AXP192_power(pmu_power_t powerlevel);
 void AXP192_init(void);

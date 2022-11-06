@@ -23,5 +23,6 @@
 #include "boot.h"
 #include "power.h"
 #include "antenna.h"
+#include "button.h"
 
 #endif

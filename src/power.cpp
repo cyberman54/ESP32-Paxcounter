@@ -25,6 +25,8 @@ static const adc_unit_t unit = ADC_UNIT_1;
 #ifdef HAS_PMU
 XPowersPMU pmu;
 
+void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
+
 void AXP192_powerevent_IRQ(void) {
   pmu.getIrqStatus();
 

@@ -20,7 +20,6 @@
 
 #define CFG_sx1276_radio 1
 #define HAS_LED NOT_A_PIN // LoPy4 has no on board mono LED, we use on board RGB LED
-#define RGB_LED_COUNT 1 // we have 1 LEDs
 #define RGB_LED_COUNT 1 // we have 1 LED
 #define HAS_RGB_LED FastLED.addLeds<WS2812, GPIO_NUM_0, GRB>(leds, RGB_LED_COUNT);
 #define BOARD_HAS_PSRAM // use extra 4MB extern RAM

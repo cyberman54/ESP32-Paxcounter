@@ -8,6 +8,7 @@
 #include "lorawan.h"
 #include "display.h"
 #include "sdcard.h"
+#include "payload.h"
 
 void SendPayload(uint8_t port);
 void sendData(void);
