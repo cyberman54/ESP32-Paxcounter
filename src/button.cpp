@@ -46,6 +46,8 @@ void button_init(void) {
   button.setPressTicks(1000);
   button.attachClick(singleClick);
   button.attachLongPressStart(longPressStart);
+
+  attachInterrupt(digitalPinToInterrupt(HAS_BUTTON), readButton, CHANGE);
 };
 
 #endif
