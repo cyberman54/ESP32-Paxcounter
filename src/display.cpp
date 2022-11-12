@@ -66,7 +66,7 @@ void dp_setup(int contrast) {
   dp->allocBuffer(); // render all outputs to lib internal backbuffer
   dp->setTextWrap(false);
   dp->setRotation(
-      MY_DISPLAY_FLIP ? 2 : 0); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 280°
+      MY_DISPLAY_FLIP ? 2 : 0); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 270°
 
 #elif (HAS_DISPLAY) == 2 // TFT LCD
 
@@ -74,7 +74,7 @@ void dp_setup(int contrast) {
   dp->begin(TFT_TYPE);
   dp->allocBuffer(); // render all outputs to lib internal backbuffer
   dp->setRotation(
-      MY_DISPLAY_FLIP ? 1 : 3); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 280°
+      MY_DISPLAY_FLIP ? 1 : 3); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 270°
   dp->setTextColor(MY_DISPLAY_FGCOLOR, MY_DISPLAY_BGCOLOR);
 
 #endif
