@@ -49,7 +49,7 @@ static QRCode qrcode;
 #ifdef HAS_DISPLAY
 #if (HAS_DISPLAY) == 1
 ONE_BIT_DISPLAY *dp = NULL;
-#elif (HAS_DISPLAY) == 2
+#elif (HAS_DISPLAY) > 1
 BB_SPI_LCD *dp = NULL;
 #else
 #error Unknown display type specified in hal file
@@ -68,7 +68,7 @@ void dp_setup(int contrast) {
   dp->setRotation(
       MY_DISPLAY_FLIP ? 2 : 0); // 0 = no rotation, 1 = 90°, 2 = 180°, 3 = 270°
 
-#elif (HAS_DISPLAY) == 2 // TFT LCD
+#elif (HAS_DISPLAY) > 1 // TFT LCD
 
   dp = new BB_SPI_LCD;
   dp->begin(TFT_TYPE);
@@ -421,7 +421,7 @@ void dp_clear(void) {
 void dp_contrast(uint8_t contrast) {
 #if (HAS_DISPLAY) == 1
   dp->setContrast(contrast);
-#elif (HAS_DISPLAY) == 2
+#elif (HAS_DISPLAY) > 1
   // to do: gamma correction for TFT
 #endif
 }
@@ -429,7 +429,7 @@ void dp_contrast(uint8_t contrast) {
 void dp_power(uint8_t screenon) {
 #if (HAS_DISPLAY) == 1
   dp->setPower(screenon);
-#elif (HAS_DISPLAY) == 2
+#elif (HAS_DISPLAY) > 1
   // to come
 #endif
 }
@@ -438,7 +438,7 @@ void dp_shutdown(void) {
 #if (HAS_DISPLAY) == 1
   dp->setPower(false);
   delay(DISPLAYREFRESH_MS / 1000 * 1.1);
-#elif (HAS_DISPLAY) == 2
+#elif (HAS_DISPLAY) > 1
   // to come
 #endif
 }
