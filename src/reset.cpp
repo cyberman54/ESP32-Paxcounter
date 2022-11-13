@@ -84,7 +84,7 @@ void do_after_reset(void) {
   }
 }
 
-void enter_deepsleep(const uint64_t wakeup_sec, gpio_num_t wakeup_gpio) {
+void enter_deepsleep(const uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
   ESP_LOGI(TAG, "Preparing to sleep...");
 
   RTC_runmode = RUNMODE_SLEEP;

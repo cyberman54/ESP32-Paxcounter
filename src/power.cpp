@@ -57,7 +57,7 @@ void AXP192_powerevent_IRQ(void) {
 #ifdef HAS_BUTTON
   // short press -> esp32 deep sleep mode, must be exited by user button
   if (pmu.isPekeyShortPressIrq())
-    enter_deepsleep(0, HAS_BUTTON);
+    enter_deepsleep(0UL, HAS_BUTTON);
 #endif
 
   pmu.clearIrqStatus();

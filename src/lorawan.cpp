@@ -501,7 +501,7 @@ bool ttn_rtc_restore() {
 // following code includes snippets taken from
 // https://github.com/JackGruber/ESP32-LMIC-DeepSleep-example/blob/master/src/main.cpp
 
-void SaveLMICToRTC(int deepsleep_sec) {
+void SaveLMICToRTC(uint32_t deepsleep_sec) {
   // ESP32 can't track millis during DeepSleep and no option to advance
   // millis after DeepSleep. Therefore reset DutyCyles before saving LMIC struct
 
