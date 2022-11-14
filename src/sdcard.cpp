@@ -216,6 +216,8 @@ void sdcard_flush(void) {
 }
 
 void sdcard_close(void) {
+  if (!useSDCard)
+    return;
   ESP_LOGI(TAG, "closing SD-card");
   sdcard_flush();
 #ifdef SD_LOGGING
