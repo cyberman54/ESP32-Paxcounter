@@ -18,17 +18,10 @@
 #define SDCARD_SLOTWIDTH 4 // dongle has 4 line interface
 #define SDCARD_SLOTCONFIG { .clk = GPIO_NUM_12, .cmd = GPIO_NUM_16, .d0 = GPIO_NUM_14, .d1 = GPIO_NUM_17, .d2 = GPIO_NUM_21, .d3 = GPIO_NUM_18, .cd = SDMMC_SLOT_NO_CD, .wp = SDMMC_SLOT_NO_WP, .width = 4, .flags = 0, }
 
-#define HAS_DISPLAY 2       // TFT-LCD
-#define TFT_TYPE DISPLAY_T_DISPLAY_S3 // may currently not work, we are awaiting a PR for display lib
+#define HAS_DISPLAY 3       // TFT-LCD
+#define TFT_TYPE DISPLAY_T_DONGLE_S3
 #define MY_DISPLAY_FLIP  1  // use if display is rotated
 #define MY_DISPLAY_WIDTH 80
 #define MY_DISPLAY_HEIGHT 160
-
-#define TFT_CS_PIN     4
-#define TFT_SDA_PIN    3
-#define TFT_SCL_PIN    5
-#define TFT_DC_PIN     2
-#define TFT_RES_PIN    1
-#define TFT_LEDA_PIN   38
 
 #endif

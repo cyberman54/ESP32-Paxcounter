@@ -14,8 +14,7 @@
 void reset_rtc_vars(void);
 void do_reset(bool warmstart);
 void do_after_reset(void);
-void enter_deepsleep(const uint64_t wakeup_sec = 60,
-                     const gpio_num_t wakeup_gpio = GPIO_NUM_MAX);
+void enter_deepsleep(const uint32_t wakeup_sec, const gpio_num_t wakeup_gpio);
 unsigned long long uptime(void);
 
 enum runmode_t {
