@@ -54,6 +54,7 @@ public:
   void addVoltage(uint16_t value);
   void addGPS(gpsStatus_t value);
   void addBME(bmeStatus_t value);
+  void addTempHum(float temperature, float humidity);
   void addButton(uint8_t value);
   void addSensor(uint8_t[]);
   void addTime(time_t value);

@@ -125,6 +125,15 @@ void PayloadConvert::addBME(bmeStatus_t value) {
 #endif
 }
 
+void addTempHum(float temperature, float humidity) {
+  int16_t temperature = (int16_t)(temperature); // float -> int
+  uint16_t humidity = (uint16_t)(humidity);     // float -> int
+  buffer[cursor++] = highByte(temperature);
+  buffer[cursor++] = lowByte(temperature);
+  buffer[cursor++] = highByte(humidity);
+  buffer[cursor++] = lowByte(humidity);
+}
+
 void PayloadConvert::addSDS(sdsStatus_t sds) {
 #if (HAS_SDS011)
   char tempBuffer[10 + 1];
@@ -216,6 +225,11 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   writeUFloat(value.humidity);
   writeUFloat(value.iaq);
 #endif
+}
+
+void PayloadConvert::addTempHum(float temperature, float humidity) {
+  writeFloat(temperature);
+  writeFloat(humidity);
 }
 
 void PayloadConvert::addSDS(sdsStatus_t sds) {
@@ -469,6 +483,25 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   buffer[cursor++] = highByte(iaq);
   buffer[cursor++] = lowByte(iaq);
 #endif // HAS_BME
+}
+
+void addTempHum(float temperature, float humidity) {
+  // data value conversions to meet cayenne data type definition
+  // 0.1°C per bit => -3276,7 .. +3276,7 °C
+  int16_t temp = temperature * 10;
+  // 0.5% per bit => 0 .. 128 %C
+  uint16_t hum = humidity * 2;
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_TEMPERATURE_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_TEMPERATURE; // 2 bytes 0.1 °C Signed MSB
+  buffer[cursor++] = highByte(temperature);
+  buffer[cursor++] = lowByte(temperature);
+#if (PAYLOAD_ENCODER == 3)
+  buffer[cursor++] = LPP_HUMIDITY_CHANNEL;
+#endif
+  buffer[cursor++] = LPP_HUMIDITY; // 1 byte 0.5 % Unsigned
+  buffer[cursor++] = humidity;
 }
 
 void PayloadConvert::addButton(uint8_t value) {
