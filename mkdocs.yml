@@ -1,0 +1,28 @@
+site_name: ESP32-Paxcounter
+theme:
+  name: material
+  features:
+    - navigation.tracking
+nav:
+  - Intro: index.md
+  - Hardware: hardware.md
+  - Getting Started: installation.md
+  - Display: display.md
+  - LED: led.md
+  - legalnote: legalnote.md
+  - Additions: additions.md
+  - Integrations: integrations.md
+  - Payload Format: payloadformat.md
+  - Remote control: remotecontrol.md
+  - Licence and Credits: license-credits.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+
+repo_url: https://github.com/cyberman54/ESP32-Paxcounter
