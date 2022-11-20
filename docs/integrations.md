@@ -1,6 +1,7 @@
 # Integration into "The Things Stack Community Edition" aka "The Things Stack V3"
 
 To use the ESP32-Paxcounter in The Things Stack Community Edition you need an account to reach the console. Go to:
+
 - [The Things Stack Community Edition Console](https://console.cloud.thethings.network/)
 - choose your region and go to applications
 - create an application by clicking "**+ Add application**" and give it a id, name, etc.
@@ -13,4 +14,4 @@ The "Repository" payload decoder uses the packed format, explained below. If you
 
 # TTN Mapper
 
-If you want your devices to be feeding the [TTN Mapper](https://ttnmapper.org/), just follow this manual: https://docs.ttnmapper.org/integration/tts-integration-v3.html - different than indicated in the manual you can leave the payload decoder to "Repository" for the ESP32-Paxcounter and you are fine.
+If you want your devices to be feeding the [TTN Mapper](https://ttnmapper.org/), just follow this manual: [https://docs.ttnmapper.org/integration/tts-integration-v3.html](https://docs.ttnmapper.org/integration/tts-integration-v3.html) - different than indicated in the manual you can leave the payload decoder to "Repository" for the ESP32-Paxcounter and you are fine.

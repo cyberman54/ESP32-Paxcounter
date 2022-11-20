@@ -9,15 +9,14 @@ You can select different payload formats in `paxcounter.conf`:
 
 - [***CayenneLPP***](https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
 
-**Decrepated information from the things network v2 >>**
+!!! danger "Decrepated information from the things network v2"
 
-If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. This way your MQTT application can parse the fields `pax`, `ble` and `wifi`.
+	If you're using [TheThingsNetwork](https://www.thethingsnetwork.org/) (TTN) you may want to use a payload converter. Go to TTN Console - Application - Payload Formats and paste the code example below in tabs Decoder and Converter. This way your MQTT application can parse the fields `pax`, `ble` and `wifi`.
 
-To add your device to myDevices Cayenne platform select "Cayenne-LPP" from Lora device list and use the CayenneLPP payload encoder.
+	To add your device to myDevices Cayenne platform select "Cayenne-LPP" from Lora device list and use the CayenneLPP payload encoder.
 
-To track a paxcounter device with on board GPS and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Both formats *plain* and *packed* generate the fields `latitude`, `longitude` and `hdop` required by ttnmapper. Important: set TTN mapper port filter to '4' (paxcounter GPS Port).
+	To track a paxcounter device with on board GPS and at the same time contribute to TTN coverage mapping, you simply activate the [TTNmapper integration](https://www.thethingsnetwork.org/docs/applications/ttnmapper/) in TTN Console. Both formats *plain* and *packed* generate the fields `latitude`, `longitude` and `hdop` required by ttnmapper. Important: set TTN mapper port filter to '4' (paxcounter GPS Port).
 
-**<< Decrepated information from the things network v2**
 
 Hereafter described is the default *plain* format, which uses MSB bit numbering. Under /TTN in this repository you find some ready-to-go decoders which you may copy to your TTN console:
 
@@ -28,16 +27,16 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #1:** Paxcount data
 
-	byte 1-2:	Number of unique devices, seen on Wifi [00 00 if Wifi scan disabled]
-	byte 3-4:	Number of unique devices, seen on Bluetooth [ommited if BT scan disabled]
+	byte 1-2:		Number of unique devices, seen on Wifi [00 00 if Wifi scan disabled]
+	byte 3-4:		Number of unique devices, seen on Bluetooth [ommited if BT scan disabled]
 
 **Port #2:** Device status query result
 
-  	byte 1-2:	Battery or USB Voltage [mV], 0 if no battery probe
-	byte 3-10:	Uptime [seconds]
-	byte 11: 	CPU temperature [°C]
+  	byte 1-2:		Battery or USB Voltage [mV], 0 if no battery probe
+	byte 3-10:		Uptime [seconds]
+	byte 11: 		CPU temperature [°C]
 	bytes 12-15:	Free RAM [bytes]
-	byte 16:	Last CPU core 0 reset reason
+	byte 16:		Last CPU core 0 reset reason
 	bytes 17-20:	Number of restarts since last power cycle
 
 **Port #3:** Device configuration query result
@@ -63,9 +62,9 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #4:** GPS data (only if device has fature GPS, and GPS data is enabled and GPS has a fix)
 
-	bytes 1-4:	Latitude
-	bytes 5-8:	Longitude
-	byte 9:		Number of satellites
+	bytes 1-4:		Latitude
+	bytes 5-8:		Longitude
+	byte 9:			Number of satellites
 	bytes 10-11:	HDOP
 	bytes 12-13:	Altitude [meter]
 

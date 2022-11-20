@@ -3,18 +3,33 @@ theme:
   name: material
   features:
     - navigation.tracking
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+      primary: indigo
 nav:
   - Intro: index.md
   - Hardware: hardware.md
-  - Getting Started: installation.md
-  - Display: display.md
-  - LED: led.md
-  - legalnote: legalnote.md
+  - Getting Started: getting-started.md
+  - Display & LED: display-led.md
+  - Legalnote: legalnote.md
   - Additions: additions.md
   - Integrations: integrations.md
   - Payload Format: payloadformat.md
   - Remote control: remotecontrol.md
   - Licence and Credits: license-credits.md
+  - Releases: releases.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -24,5 +39,8 @@ markdown_extensions:
   - pymdownx.superfences
   - attr_list
   - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
 
 repo_url: https://github.com/cyberman54/ESP32-Paxcounter

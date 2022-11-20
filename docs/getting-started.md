@@ -2,12 +2,16 @@
 
 ## Install Platformio
 
-Install <A HREF="https://platformio.org/">PlatformIO IDE for embedded development</A> to make this project. Platformio integrates with your favorite IDE, choose eg. Visual Studio, Atom, Eclipse etc.
+Install <A HREF="https://platformio.org/">PlatformIO IDE for embedded development</A> to build this project. Platformio integrates with your favorite IDE, choose e.g. Visual Studio Code, Atom, Eclipse etc.
 
 Compile time configuration is spread across several files. Before compiling the code, edit or create the following files:
 
 ## platformio.ini
-Edit `platformio_orig.ini` (for ESP32 CPU based boards) *or* `platformio_orig_s3.ini` (for ESP32-S3 CPU based boards) and select desired board in section **board**. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in section **board**. Copy or rename to `platformio.ini` in the root directory of the project. Now start Platformio. Note: Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file!
+Edit `platformio_orig.ini` (for ESP32 CPU based boards) *or* `platformio_orig_s3.ini` (for ESP32-S3 CPU based boards) and select desired board in section **board**. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in section **board**. Copy or rename to `platformio.ini` in the root directory of the project. Now start Platformio.
+
+!!! info
+
+    Note: Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file!
 
 ## paxcounter.conf
 Edit `src/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `src/paxcounter.conf`.
@@ -24,7 +28,7 @@ To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP,
 The file `src/loraconf_sample.h` contains more information about the values to provide.
 
 ## src/ota.conf
-Create file `src/ota.conf` using the template [src/ota.sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota.sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://github.com/paxexpress/docs">PAX.express repository</A>. Enter your PAX.express credentials in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
+Create file `src/ota.conf` using the template [src/ota_sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota_sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://github.com/paxexpress/docs">PAX.express repository</A>. Enter your PAX.express credentials in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
 # Building
 
