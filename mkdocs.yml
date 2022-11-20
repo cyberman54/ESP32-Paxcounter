@@ -23,12 +23,12 @@ nav:
   - Hardware: hardware.md
   - Getting Started: getting-started.md
   - Display & LED: display-led.md
-  - Legalnote: legalnote.md
+  - Legal note: legalnote.md
   - Additions: additions.md
   - Integrations: integrations.md
   - Payload Format: payloadformat.md
   - Remote control: remotecontrol.md
-  - Licence and Credits: license-credits.md
+  - Licence & Credits: license-credits.md
   - Releases: releases.md
 
 markdown_extensions:

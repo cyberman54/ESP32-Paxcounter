@@ -9,12 +9,20 @@ Compile time configuration is spread across several files. Before compiling the 
 ## platformio.ini
 Edit `platformio_orig.ini` (for ESP32 CPU based boards) *or* `platformio_orig_s3.ini` (for ESP32-S3 CPU based boards) and select desired board in section **board**. To add a new board, create an appropriate hardware abstraction layer file in hal subdirectory, and add a pointer to this file in section **board**. Copy or rename to `platformio.ini` in the root directory of the project. Now start Platformio.
 
+``` bash title="Copy with terminal"
+cp platformio_orig.ini platformio.ini
+```
+
 !!! info
 
-    Note: Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file!
+    Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file!
 
 ## paxcounter.conf
 Edit `src/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `src/paxcounter.conf`.
+
+``` bash title="Copy with terminal"
+cp src/paxcounter_orig.conf src/paxcounter.conf
+```
 
 If your device has a **real time clock** it can be updated by either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in `paxcounter.conf`.
 
@@ -24,12 +32,19 @@ Edit `src/lmic_config.h` and tailor settings in this file according to your coun
 ## src/loraconf.h
 Create file `src/loraconf.h` using the template [src/loraconf_sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf_sample.h) and adjust settings to use your personal values. To join the network and activate your paxcounter, you must configure either OTAA or ABP join method. You should use OTAA, whenever possible. To understand the differences of the two methods, [this article](https://www.thethingsnetwork.org/docs/devices/registration.html) may be useful.
 
+``` bash title="Copy with terminal"
+cp src/loraconf_sample.h src/loraconf.h
+```
+
 To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP, activate (uncomment) `#define LORA_ABP` in the file `src/loraconf.h`.
 The file `src/loraconf_sample.h` contains more information about the values to provide.
 
 ## src/ota.conf
 Create file `src/ota.conf` using the template [src/ota_sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota_sample.conf) and enter your WIFI network&key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://github.com/paxexpress/docs">PAX.express repository</A>. Enter your PAX.express credentials in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
+``` bash title="Copy with terminal"
+cp src/ota_sample.conf src/ota.conf
+```
 # Building
 
 Use <A HREF="https://platformio.org/">PlatformIO</A> with your preferred IDE for development and building this code. Make sure you have latest PlatformIO version.

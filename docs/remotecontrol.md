@@ -2,7 +2,8 @@
 
 The device listenes for remote control commands on LoRaWAN Port 2. Multiple commands per downlink are possible by concatenating them, but must not exceed a maximum of 10 bytes per downlink.
 
-Note: settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command `0x21`.
+!!! info
+	Settings can be stored in NVRAM to make them persistant (reloaded during device startup / restart). To store settings, use command `0x21`.
 
 Send for example `83` `86` as Downlink on Port 2 to get battery status and time/date from the device.
 
@@ -35,17 +36,17 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 	Example for EU868:
 
-	DataRate	Configuration		Bit/s
-	0		LoRa: SF12 / 125 kHz	250
-	1		LoRa: SF11 / 125 kHz	440
-	2		LoRa: SF10 / 125 kHz	980
-	3		LoRa: SF9 / 125 kHz	1760
-	4		LoRa: SF8 / 125 kHz	3125
-	5		LoRa: SF7 / 125 kHz	5470
-	6*		LoRa: SF7 / 250 kHz	11000
-	7*		FSK: 50 kbps		50000
+	DataRate	Configuration			Bit/s
+	0			LoRa: SF12 / 125 kHz	250
+	1			LoRa: SF11 / 125 kHz	440
+	2			LoRa: SF10 / 125 kHz	980
+	3			LoRa: SF9 / 125 kHz		1760
+	4			LoRa: SF8 / 125 kHz		3125
+	5			LoRa: SF7 / 125 kHz		5470
+	6*			LoRa: SF7 / 250 kHz		11000
+	7*			FSK: 50 kbps			50000
 	8 .. 14		reserved for future use (RFU)
-	15		ignored (device keeps current setting)
+	15			ignored (device keeps current setting)
 
 	*) not supported by TheThingsNetwork
 
