@@ -1,6 +1,6 @@
 # Hardware
 
-**Supported ESP32 based boards**:
+### Supported ESP32 based boards:
 
 *With LoRa radio data transfer*:
 

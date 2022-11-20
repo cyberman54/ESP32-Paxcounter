@@ -1,4 +1,4 @@
-# Sensors and Peripherals
+## Sensors and Peripherals
 
 You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [*sensor.cpp*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp). Bosch BMP180 / BME280 / BME680 environment sensors are supported, to activate configure BME in board's hal file before build. Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file. See [*generic.h*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
@@ -19,23 +19,23 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 \*) GPS data can also be combined with paxcounter payload on port 1, *#define GPSPORT 1* in paxcounter.conf to enable
 
-# Power saving mode
+## Power saving mode
 
 Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT / SD-Card). Set *#define SLEEPCYCLE* in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle. Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See [*power.cpp*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/power.cpp) for power management, and [*reset.cpp*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/reset.cpp) for sleep and wakeup logic.
 
-# Time sync
+## Time sync
 
 Paxcounter can keep a time-of-day synced with external or on board time sources. Set *#define TIME_SYNC_INTERVAL* in paxcounter.conf to enable time sync. Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [*generic.h*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h). Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxocunter device. Time can also be set without precision liability, by simple remote command, see section remote control.
 
-# Wall clock controller
+## Wall clock controller
 
 Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set `#define HAS_IF482` or `#define HAS_DCF77` in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.
 
-# Mobile PaxCounter using <A HREF="https://opensensemap.org/">openSenseMap</A>
+## Mobile PaxCounter using <A HREF="https://opensensemap.org/">openSenseMap</A>
 
 This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set `PAYLOAD_OPENSENSEBOX` to `1`. Register a new sensebox on [https://opensensemap.org/](https://opensensemap.org). In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using `[{"decoder":"latLng"},{"decoder":"uint16",sensor_id":"yoursensorid"}]`.
 
-# SD-card
+## SD-card
 
 Data can be stored on SD-card if the board provides an SD card interface, either with SPI or MMC mode. To enable this feature, specify interface mode and hardware pins in board's hal file (src/hal/<board.h\>):
 
