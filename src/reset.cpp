@@ -88,7 +88,6 @@ void enter_deepsleep(const uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
   ESP_LOGI(TAG, "Preparing to sleep...");
 
   RTC_runmode = RUNMODE_SLEEP;
-  int i;
 
   // validate wake up pin, if we have
   if (!GPIO_IS_VALID_GPIO(wakeup_gpio))
@@ -108,22 +107,15 @@ void enter_deepsleep(const uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
 
   // wait a while (max 100 sec) to clear send queues
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
-  for (i = 100; i > 0; i--) {
+  for (int i = 100; i > 0; i--) {
     if (allQueuesEmtpy())
       break;
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 
-/// wait until LMIC is idle
+// wait up to 100secs until LMIC is idle
 #if (HAS_LORA)
-  ESP_LOGI(TAG, "Waiting until LMIC is idle...");
-  for (i = 100; i > 0; i--) {
-    if ((LMIC.opmode & (OP_JOINING | OP_TXDATA | OP_POLL | OP_TXRXPEND)) ||
-        os_queryTimeCriticalJobs(sec2osticks(wakeup_sec)))
-      vTaskDelay(pdMS_TO_TICKS(1000));
-    else
-      break;
-  }
+  lora_waitforidle(100);
 #endif // (HAS_LORA)
 
 // shutdown MQTT safely
