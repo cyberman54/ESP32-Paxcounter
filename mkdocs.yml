@@ -30,7 +30,7 @@ nav:
   - Legal note: legalnote.md
   - Configuration:
     - configuration/index.md
-    - Custom Sensors: modifications/custom-sensors.md
+    - Custom Sensors: configuration/custom-sensors.md
   - Integrations: integrations.md
   - Payload Format: payloadformat.md
   - Remote control: remotecontrol.md
