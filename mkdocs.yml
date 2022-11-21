@@ -5,6 +5,8 @@ theme:
   features:
     - navigation.instant
     - navigation.tracking
+    - navigation.indexes
+    - content.code.annotate
   palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
@@ -26,7 +28,9 @@ nav:
   - Getting Started: getting-started.md
   - Display & LED: display-led.md
   - Legal note: legalnote.md
-  - Additions: additions.md
+  - Configuration:
+    - configuration/index.md
+    - Custom Sensors: modifications/custom-sensors.md
   - Integrations: integrations.md
   - Payload Format: payloadformat.md
   - Remote control: remotecontrol.md

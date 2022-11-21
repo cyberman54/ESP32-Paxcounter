@@ -1,4 +1,6 @@
-# Integration into "The Things Stack Community Edition" aka "The Things Stack V3"
+# Integration LoRaWAN
+
+## "The Things Stack Community Edition" aka "The Things Stack V3"
 
 To use the ESP32-Paxcounter in The Things Stack Community Edition you need an account to reach the console. Go to:
 
@@ -12,6 +14,10 @@ To use the ESP32-Paxcounter in The Things Stack Community Edition you need an ac
 
 The "Repository" payload decoder uses the packed format, explained below. If you want to use MyDevices from Cayenne you should use the Cayenne payload decoder instead.
 
-# TTN Mapper
+## TTN Mapper
 
 If you want your devices to be feeding the [TTN Mapper](https://ttnmapper.org/), just follow this manual: [https://docs.ttnmapper.org/integration/tts-integration-v3.html](https://docs.ttnmapper.org/integration/tts-integration-v3.html) - different than indicated in the manual you can leave the payload decoder to "Repository" for the ESP32-Paxcounter and you are fine.
+
+## ChirpStack
+
+!!! todo

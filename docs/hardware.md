@@ -61,4 +61,15 @@ Some 3D printable cases can be found (and, if wanted so, ordered) on Thingiverse
 ### Power consumption
 
 <b>Power consumption</b> was metered at around 450 - 1000mW, depending on board and user settings in `paxcounter.conf`.
-By default, bluetooth sniffing not installed (`#define *BLECOUNTER* 0` in `paxcounter.conf`). If you enable bluetooth be aware that this goes on expense of wifi sniffing results, because then wifi and bt stack must share the 2,4 GHz RF ressources of ESP32. If you need to sniff wifi and bt in parallel and need best possible results, use two boards - one for wifi only and one for bt only - and add counted results.
+
+By default, bluetooth sniffing not installed. If you enable bluetooth be aware that this goes on expense of wifi sniffing results, because then wifi and bt stack must share the 2,4 GHz RF ressources of ESP32. If you need to sniff wifi and bt in parallel and need best possible results, use two boards - one for wifi only and one for bt only - and add counted results.
+
+<!-- TODO currently set to 1 here  https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/paxcounter_orig.conf-->
+=== "Deactivate BLE sniffing (Default)"
+    ``` c linenums="29" title="paxcounter.conf"
+    #define *BLECOUNTER* 0
+    ```
+=== "Activate BLE sniffing"
+    ``` c linenums="29" title="paxcounter.conf"
+    #define *BLECOUNTER* 1
+    ```

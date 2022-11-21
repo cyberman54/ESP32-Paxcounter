@@ -1,13 +1,19 @@
 
 # Payload format
 
-You can select different payload formats in `paxcounter.conf`:
+You can select different payload formats in [`paxcounter.conf`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/paxcounter_orig.conf):
 
 - ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 
 - ***Packed*** uses little endian format and generates json fields
 
 - [***CayenneLPP***](https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
+
+
+```c linenums="20" title="src/paxcounter_orig.conf"
+--8<-- "src/paxcounter_orig.conf:20:20"
+```
+
 
 !!! danger "Decrepated information from the things network v2"
 
@@ -41,22 +47,22 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #3:** Device configuration query result
 
-	byte 1:		Lora DR (0..15, see rcommand 0x05) [default 5]
-	byte 2:		Lora TXpower (2..15) [default 15]
-	byte 3:		Lora ADR (1=on, 0=off) [default 1]
-	byte 4:		Screensaver status (1=on, 0=off) [default 0]
-	byte 5:		Display status (1=on, 0=off) [default 0]
-	byte 6:		Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
-	bytes 7-8:	RSSI limiter threshold value (negative, MSB) [default 0]
-	byte 9:		Scan and send cycle in seconds/2 (0..255) [default 120]
-	byte 10:	Wifi channel hopping interval in seconds/100 (0..255), 0 means no hopping [default 50]
-	byte 11:	Bluetooth channel switch interval in seconds/100 (0..255) [default 10]
-	byte 12:	Bluetooth scanner status (1=on, 0=0ff) [default 1]
-	byte 13:	Wifi antenna switch (0=internal, 1=external) [default 0]
-	byte 14:	0 (reserved)
-	byte 15:	RGB LED luminosity (0..100 %) [default 30]
-	byte 16:	Payloadmask (Bitmask, 0..255, see rcommand 0x14)
-	byte 17:	0 (reserved)
+	byte 1:			Lora DR (0..15, see rcommand 0x05) [default 5]
+	byte 2:			Lora TXpower (2..15) [default 15]
+	byte 3:			Lora ADR (1=on, 0=off) [default 1]
+	byte 4:			Screensaver status (1=on, 0=off) [default 0]
+	byte 5:			Display status (1=on, 0=off) [default 0]
+	byte 6:			Counter mode (0=cyclic unconfirmed, 1=cumulative, 2=cyclic confirmed) [default 0]
+	bytes 7-8:		RSSI limiter threshold value (negative, MSB) [default 0]
+	byte 9:			Scan and send cycle in seconds/2 (0..255) [default 120]
+	byte 10:		Wifi channel hopping interval in seconds/100 (0..255), 0 means no hopping [default 50]
+	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255) [default 10]
+	byte 12:		Bluetooth scanner status (1=on, 0=0ff) [default 1]
+	byte 13:		Wifi antenna switch (0=internal, 1=external) [default 0]
+	byte 14:		0 (reserved)
+	byte 15:		RGB LED luminosity (0..100 %) [default 30]
+	byte 16:		Payloadmask (Bitmask, 0..255, see rcommand 0x14)
+	byte 17:		0 (reserved)
 	bytes 18-28:	Software version (ASCII format, terminating with zero)
 
 
@@ -70,7 +76,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 
 **Port #5:** Button pressed alarm
 
-	byte 1:		static value 0x01
+	byte 1:			static value 0x01
 
 **Port #6:** (unused)
 
