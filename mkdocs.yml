@@ -1,6 +1,7 @@
-site_name: ESP32-Paxcounter
+site_name: Docs
 theme:
   name: material
+  logo: assets/paxcounter_logo_white.svg
   features:
     - navigation.instant
     - navigation.tracking
