@@ -8,7 +8,7 @@ Copyright  2018-2022 Klaus Wilting <verkehrsrot@arcor.de>
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,9 @@ Copyright  2018-2022 Klaus Wilting <verkehrsrot@arcor.de>
    See the License for the specific language governing permissions and
    limitations under the License.
 
-NOTICE:
-Parts of the source files in this repository are made available under different licenses,
-see file <A HREF="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/LICENSE">LICENSE.txt</A> in this repository. Refer to each individual source file for more details.
+!!! info
+    Parts of the source files in this repository are made available under different licenses,
+    see file <A HREF="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/LICENSE">LICENSE.txt</A> in this repository. Refer to each individual source file for more details.
 
 # Credits
 
