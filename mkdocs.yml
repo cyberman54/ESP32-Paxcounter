@@ -2,6 +2,7 @@ site_name: ESP32-Paxcounter
 theme:
   name: material
   features:
+    - navigation.instant
     - navigation.tracking
   palette:
     # Palette toggle for light mode
