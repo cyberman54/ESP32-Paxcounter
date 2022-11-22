@@ -3,7 +3,7 @@
 You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [`sensor.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp).
 The following exampls show how to add a custom temperature and humidty sensor.
 
-1. Add variables or needed libaries
+1. Add variables or needed libraries
 2. Add sensor specific code to `sensor_init` in [`sensor.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp)
 3. Add sensor specific code to `sensor_read` function in [`sensor.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp)
 4. Add Payload functions to [`payload.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/include/payload.h) and [`payload.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/payload.cpp) (Optional)
@@ -11,16 +11,19 @@ The following exampls show how to add a custom temperature and humidty sensor.
 
 ## Example 1: Custom Temperature and Humidity Sensor *GY-21*
 
-To use an custom sensor you first have to enable the Sensor which you want to use. For this you have to edit or add the `HAS_SENSOR_1` defines in either the `paxcounter.conf` or the `hal` file of your board.
+To use a custom sensor you first have to enable the Sensor which you want to use. For this you have to edit or add `HAS_SENSOR_1` in either the `paxcounter.conf` or the `hal` file of your board.
 === "Activate Sensor 1"
+
     ```c linenums="132" title="src/paxcounter_orig.conf"
     #define HAS_SENSOR_1 1
     ```
 === "Activate Sensor 2"
+
     ```c linenums="132" title="src/paxcounter_orig.conf"
     #define HAS_SENSOR_2 1
     ```
 === "Activate Sensor 3"
+
     ```c linenums="132" title="src/paxcounter_orig.conf"
     #define HAS_SENSOR_3 1
     ```
@@ -32,8 +35,8 @@ You might also add a constant for your custom sensor in the `paxcounter.conf` fi
 ```
 
 1. See usage of this in the example below
-2.
-### 1. Add variables or needed libaries
+
+### 1. Add variables or needed libraries
 If you want to use any libary for you custom sensor you have to add it to the `platformio.ini` file.
 
 In this example we use the [`HTU2xD_SHT2x_Si70xx`](https://github.com/enjoyneering/HTU2xD_SHT2x_Si70xx.git) for the GY-21 sensor.
@@ -118,6 +121,7 @@ Then you have to add your payload function to the `payload.cpp` file. You can pr
 Example for a custom temperature / humidity payload function
 
 === "Plain payload format"
+
     ```c linenums="128" title="src/payload.cpp"
     void PayloadConvert::addTempHum(float temperature, float humidity) {
     int16_t temperature = (int16_t)(temperature); // float -> int
@@ -130,6 +134,7 @@ Example for a custom temperature / humidity payload function
     ```
 
 === "Packed payload format"
+
     ```c linenums="230" title="src/payload.cpp"
     void PayloadConvert::addTempHum(float temperature, float humidity) {
     writeFloat(temperature);
@@ -138,6 +143,7 @@ Example for a custom temperature / humidity payload function
     ```
 
 === "Cayenne payload format"
+
     ```c linenums="488" title="src/payload.cpp"
     void PayloadConvert::addTempHum(float temperature, float humidity) {
     // data value conversions to meet cayenne data type definition
