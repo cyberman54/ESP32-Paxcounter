@@ -183,4 +183,4 @@ After you have added your custom sensor code and payload function you can send t
 1. Add your custom payload function here.
 
 
-Now you can build and upload the code to your ESP. Do not forget to erease the flash before uploading since you probably changed the `paxcounter.conf` file.
+Now you can build and upload the code to your ESP. Do not forget to erase the flash before uploading since you probably changed the `paxcounter.conf` file.

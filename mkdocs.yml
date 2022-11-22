@@ -1,4 +1,5 @@
-site_name: Docs
+site_name: Documentation
+site_description: ESP32-Paxcounter Documentation
 theme:
   name: material
   logo: assets/paxcounter_logo_white.svg
