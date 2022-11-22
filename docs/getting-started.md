@@ -23,6 +23,17 @@ Edit `platformio_orig.ini` (for ESP32 CPU based boards) *or* `platformio_orig_s3
     mv platformio_orig.ini platformio.ini
     ```
 
+??? info "platformio_orig_s3.ini"
+    === "Copy"
+        ``` bash
+        cp platformio_orig_s3.ini platformio.ini
+        ```
+    === "Rename"
+        ``` bash
+        mv platformio_orig_s3.ini platformio.ini
+        ```
+
+
 !!! info
 
     Platformio is looking for `platformio.ini` in the root directory and won't start if it does not find this file!
@@ -40,6 +51,9 @@ Edit `src/paxcounter_orig.conf` and tailor settings in this file according to yo
     ``` bash
     mv src/paxcounter_orig.conf src/paxcounter.conf
     ```
+
+
+
 
 If your device has a **real time clock** it can be updated by either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in `paxcounter.conf`.
 

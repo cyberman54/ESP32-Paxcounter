@@ -66,10 +66,12 @@ By default, bluetooth sniffing not installed. If you enable bluetooth be aware t
 
 <!-- TODO currently set to 1 here  https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/paxcounter_orig.conf-->
 === "Deactivate BLE sniffing (Default)"
+
     ``` c linenums="29" title="paxcounter.conf"
-    #define *BLECOUNTER* 0
+    #define BLECOUNTER 0
     ```
 === "Activate BLE sniffing"
+
     ``` c linenums="29" title="paxcounter.conf"
-    #define *BLECOUNTER* 1
+    #define BLECOUNTER 1
     ```

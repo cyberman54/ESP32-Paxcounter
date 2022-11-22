@@ -2,7 +2,7 @@
 
 ## Sensors and Peripherals
 
-You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [*sensor.cpp*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp). More examples and a detailed description can be found in the [sensor documentation](custom-sensors.md).
+You can add up to 3 user defined sensors. Insert your sensor's payload scheme in [`sensor.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp). More examples and a detailed description can be found in the [sensor documentation](custom-sensors.md).
 
 ### Supported Peripherals
 
@@ -14,11 +14,7 @@ You can add up to 3 user defined sensors. Insert your sensor's payload scheme in
 
 For these peripherals no additional code is needed. To activate configure them in the board's hal file before building the code.
 
-
-<!-- Bosch BMP180 / BME280 / BME680 environment sensors are supported without any additional code needed. To activate configure BME in board's hal file before build. -->
-
-<!-- Furthermore, SDS011, RTC DS3231, generic serial NMEA GPS, I2C LoPy GPS are supported, and to be configured in board's hal file.  -->
-See [*generic.h*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
+See [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
 === "BME/ BMP Configuration"
 	```c linenums="37" title="src/hal/generic.h"
@@ -40,7 +36,7 @@ See [*generic.h*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src
 
 Output of user sensor data can be switched by user remote control command `0x14` sent to Port 2.
 
-Output of sensor and peripheral data is internally switched by a bitmask register. Default mask can be tailored by editing *cfg.payloadmask* initialization value in [*configmanager.cpp*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/configmanager.cpp) following this scheme:
+Output of sensor and peripheral data is internally switched by a bitmask register. Default mask can be tailored by editing *cfg.payloadmask* initialization value in [`configmanager.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/configmanager.cpp) following this scheme:
 
 | Bit | Sensordata    | Default |
 | --- | ------------- | ------- |
@@ -62,14 +58,14 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 
 ## Power saving mode
 
-Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT / SD-Card). Set *#define SLEEPCYCLE* in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle.
+Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT / SD-Card). Set `#define SLEEPCYCLE` in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle.
 
 ```c linenums="18" title="src/paxcounter_orig.conf"
 --8<-- "src/paxcounter_orig.conf:18:18"
 ```
 
 
- Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See [*power.cpp*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/power.cpp) for power management, and [*reset.cpp*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/reset.cpp) for sleep and wakeup logic.
+ Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See [`power.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/power.cpp) for power management, and [`reset.cpp`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/reset.cpp) for sleep and wakeup logic.
 
 
 
@@ -81,7 +77,7 @@ Paxcounter can keep a time-of-day synced with external or on board time sources.
 --8<-- "src/paxcounter_orig.conf:87:87"
 ```
 
-Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [*generic.h*](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h).
+Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h).
 
 ```c linenums="87" title="src/hal/generic.h"
 --8<-- "src/hal/generic.h:87:96"
@@ -90,7 +86,7 @@ Supported external time sources are GPS, LORAWAN network time and LORAWAN applic
 
 !!! tip
 
-	Bonus: If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxocunter device. Time can also be set without precision liability, by simple remote command, see section remote control.
+	If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxocunter device. Time can also be set without precision liability, by simple remote command, see section remote control.
 
 ## Wall clock controller
 
