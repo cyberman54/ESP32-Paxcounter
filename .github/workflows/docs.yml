@@ -4,6 +4,9 @@ on:
     branches:
       - master
       - mkdocs
+    paths:
+      - 'mkdocs.yml'
+      - 'docs/**'
 jobs:
   deploy:
     runs-on: ubuntu-latest
