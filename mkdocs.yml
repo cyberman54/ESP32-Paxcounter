@@ -2,6 +2,7 @@ site_name: Docs
 theme:
   name: material
   logo: assets/paxcounter_logo_white.svg
+  favicon: assets/favicon.png
   features:
     - navigation.instant
     - navigation.tracking
