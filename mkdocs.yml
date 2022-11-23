@@ -1,0 +1,55 @@
+site_name: Documentation
+site_description: ESP32-Paxcounter Documentation
+theme:
+  name: material
+  logo: assets/paxcounter_logo_white.svg
+  favicon: assets/favicon.png
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.indexes
+    - content.code.annotate
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+      primary: indigo
+nav:
+  - Intro: index.md
+  - Hardware: hardware.md
+  - Getting Started: getting-started.md
+  - Display & LED: display-led.md
+  - Legal note: legalnote.md
+  - Configuration:
+    - configuration/index.md
+    - Custom Sensors: configuration/custom-sensors.md
+  - Integrations: integrations.md
+  - Payload Format: payloadformat.md
+  - Remote control: remotecontrol.md
+  - Licence & Credits: license-credits.md
+  - Releases: releases.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+
+repo_url: https://github.com/cyberman54/ESP32-Paxcounter
