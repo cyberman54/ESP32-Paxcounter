@@ -32,4 +32,4 @@ Thanks to
 - [sbamueller](https://github.com/sbamueller) for writing the tutorial in Make Magazine
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
 - [August Quint](https://github.com/AugustQu) for adding SD card data logger and SDS011 support
-- [t-huyeng](https://github.com/t-huyeng) for adding a CI workflow to this project
+- [t-huyeng](https://github.com/t-huyeng) for adding a CI workflow and rework documentation
