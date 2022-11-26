@@ -218,7 +218,7 @@ void setup() {
   pinMode(HAS_TWO_LED, OUTPUT);
   strcat_P(features, " LED2");
 #endif
-// use simple LED for power display if we have additional RGB LED, else for status
+// use LED for power display if we have additional RGB LED, else for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
 #endif
@@ -270,8 +270,7 @@ void setup() {
   if (RTC_runmode == RUNMODE_MAINTENANCE)
     start_boot_menu();
 
-#if ((WIFICOUNTER) || (BLECOUNTER))
-  // use libpax timer to trigger cyclic senddata
+  // start libpax lib (includes timer to trigger cyclic senddata)
   ESP_LOGI(TAG, "Starting libpax...");
   struct libpax_config_t configuration;
   libpax_default_config(&configuration);
@@ -296,14 +295,6 @@ void setup() {
   } else {
     init_libpax();
   }
-#else
-  // use stand alone timer to trigger cyclic senddata
-  initSendDataTimer(cfg.sendcycle * 2);
-#endif
-
-#if (BLECOUNTER)
-  strcat_P(features, " BLE");
-#endif
 
   // start rcommand processing task
   ESP_LOGI(TAG, "Starting rcommand interpreter...");
@@ -399,13 +390,6 @@ void setup() {
 
 #if defined HAS_IF482
   strcat_P(features, " IF482");
-#endif
-
-#if (WIFICOUNTER)
-  strcat_P(features, " WIFI");
-#else
-  // remove wifi driver from RAM, if option wifi not compiled
-  esp_wifi_deinit();
 #endif
 
   // start state machine
