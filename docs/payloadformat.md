@@ -59,8 +59,7 @@ Hereafter described is the default *plain* format, which uses MSB bit numbering.
 	byte 11:		Bluetooth channel switch interval in seconds/100 (0..255) [default 10]
 	byte 12:		Bluetooth scanner status (1=on, 0=0ff) [default 1]
 	byte 13:		Wifi antenna switch (0=internal, 1=external) [default 0]
-	byte 14:		0 (reserved)
-	byte 15:		RGB LED luminosity (0..100 %) [default 30]
+	bytes 14-15:	Sleep cycle in seconds/10 (MSB) [default 0]
 	byte 16:		Payloadmask (Bitmask, 0..255, see rcommand 0x14)
 	byte 17:		0 (reserved)
 	bytes 18-28:	Software version (ASCII format, terminating with zero)

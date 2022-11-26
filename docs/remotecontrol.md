@@ -145,7 +145,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 #### 0x19 set sleep cycle
 
-	bytes 1..2 = device sleep cycle in seconds/10 (MSB), 1 ... 255
+	bytes 1..2 = device sleep cycle in seconds/10 (MSB), 0..65535 (0 = no sleep)
 	e.g. {0x04, 0xB0} -> device sleeps 200 minutes after each send cycle [default = 0]
 
 #### 0x20 load device configuration
