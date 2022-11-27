@@ -1,8 +1,6 @@
 // Basic Config
 #include "senddata.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 void setSendIRQ(TimerHandle_t xTimer) {
   xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);

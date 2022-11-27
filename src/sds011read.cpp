@@ -2,8 +2,6 @@
 
 #if (HAS_SDS011)
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 #include "sds011read.h"
 

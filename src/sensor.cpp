@@ -2,8 +2,6 @@
 #include "globals.h"
 #include "sensor.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 #define SENSORBUFFER                                                           \
   10 // max. size of user sensor data buffer in bytes [default=20]

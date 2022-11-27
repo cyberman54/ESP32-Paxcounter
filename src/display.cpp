@@ -37,8 +37,6 @@ MY_FONT_LARGE:     16x32px = 8 chars / line @ 2 lines
 #include "globals.h"
 #include "display.h"
 
-// local Tag for logging
-static const char TAG[] = __FILE__;
 
 static uint8_t plotbuf[PLOTBUFFERSIZE] = {0};
 uint8_t DisplayIsOn = 0;

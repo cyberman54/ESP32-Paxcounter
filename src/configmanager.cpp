@@ -3,8 +3,6 @@
 #include "globals.h"
 #include "configmanager.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 // namespace for device runtime preferences
 #define DEVCONFIG "paxcntcfg"

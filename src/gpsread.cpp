@@ -3,8 +3,6 @@
 #include "globals.h"
 #include "gpsread.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 TinyGPSPlus gps;
 TaskHandle_t GpsTask;

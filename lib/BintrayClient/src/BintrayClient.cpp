@@ -21,8 +21,6 @@
 
 #include "BintrayClient.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 BintrayClient::BintrayClient(const String &user, const String &repository, const String &package)
     : m_user(user), m_repo(repository), m_package(package),

@@ -2,8 +2,6 @@
 
 #include "bmesensor.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 bmeStatus_t bme_status = {0, 0, 0, 0, 0, 0, 0, 0};
 

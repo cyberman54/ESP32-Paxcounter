@@ -2,8 +2,6 @@
 #include "globals.h"
 #include "power.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 int8_t batt_level = -1; // percent batt level, global variable, -1 means no batt
 

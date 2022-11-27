@@ -1,7 +1,5 @@
 #include "irqhandler.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 TaskHandle_t irqHandlerTask = NULL;
 

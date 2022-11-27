@@ -4,8 +4,6 @@
 #error You must define at most one of IF482 or DCF77!
 #endif
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 // symbol to display current time source
 // G = GPS / R = RTC / L = LORA / * = no sync / ? = never synced

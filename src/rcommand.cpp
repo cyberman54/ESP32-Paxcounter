@@ -2,8 +2,6 @@
 #include "globals.h"
 #include "rcommand.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 static QueueHandle_t RcmdQueue;
 TaskHandle_t rcmdTask;

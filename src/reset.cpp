@@ -2,8 +2,6 @@
 #include "globals.h"
 #include "reset.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 // Conversion factor for micro seconds to seconds
 #define uS_TO_S_FACTOR 1000000ULL

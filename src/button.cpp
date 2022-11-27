@@ -3,8 +3,6 @@
 #include "globals.h"
 #include "button.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 OneButton button(HAS_BUTTON, !BUTTON_ACTIVEHIGH, !!BUTTON_PULLUP);
 TaskHandle_t buttonLoopTask;

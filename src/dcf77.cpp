@@ -13,8 +13,6 @@ https://github.com/udoklein/dcf77
 
 #include "dcf77.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 // triggered by second timepulse to ticker out DCF signal
 void DCF77_Pulse(uint8_t bit) {

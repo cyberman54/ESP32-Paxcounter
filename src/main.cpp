@@ -79,8 +79,6 @@ BME_IRQ         <- setBMEIRQ() <- Ticker.h
 // Basic Config
 #include "main.h"
 
-// local Tag for logging
-static const char TAG[] = __FILE__;
 
 char clientId[20] = {0}; // unique ClientID
 

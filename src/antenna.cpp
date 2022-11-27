@@ -4,8 +4,6 @@
 
 #include <Arduino.h>
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 typedef enum { ANTENNA_INT = 0, ANTENNA_EXT } antenna_type_t;
 
