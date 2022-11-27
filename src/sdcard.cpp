@@ -153,7 +153,7 @@ bool sdcard_init(bool create) {
     if (ret == ESP_FAIL) {
       ESP_LOGE(TAG, "failed to mount filesystem");
     } else {
-      ESP_LOGE(TAG, "SD-card not found (%d)", ret);
+      ESP_LOGI(TAG, "No SD-card found (%d)", ret);
     }
     return false;
   }
