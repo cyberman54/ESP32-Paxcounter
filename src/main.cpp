@@ -79,7 +79,6 @@ BME_IRQ         <- setBMEIRQ() <- Ticker.h
 // Basic Config
 #include "main.h"
 
-
 char clientId[20] = {0}; // unique ClientID
 
 void setup() {
@@ -91,6 +90,13 @@ void setup() {
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
 #endif
 
+  // hash 6 byte device MAC to 4 byte clientID
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
+  const uint32_t hashedmac = myhash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
+
   // setup debug output or silence device
 #if (VERBOSE)
   Serial.begin(115200);
@@ -100,15 +106,15 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
+// initialize SD interface and mount SD card, if present
+#if (HAS_SDCARD)
+  if (sdcard_init())
+    strcat_P(features, " SD");
+#endif
+
   // load device configuration from NVRAM and set runmode
   do_after_reset();
 
-  // hash 6 byte device MAC to 4 byte clientID
-  uint8_t mac[6];
-  esp_read_mac(mac, ESP_MAC_WIFI_STA);
-
-  const uint32_t hashedmac = myhash((const char *)mac, 6);
-  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
            PROGVERSION, RTC_runmode, RTC_restarts);
   ESP_LOGI(TAG, "code build date: %d", compileTime());
@@ -345,11 +351,6 @@ void setup() {
 #ifdef HAS_MQTT
   strcat_P(features, " MQTT");
   _ASSERT(mqtt_init() == ESP_OK);
-#endif
-
-#if (HAS_SDCARD)
-  if (sdcard_init())
-    strcat_P(features, " SD");
 #endif
 
 #if (HAS_SDS011)
