@@ -6,9 +6,9 @@
 // COUNTRY SETTINGS
 // --> please check with you local regulations for ISM band frequency use!
 
-#define CFG_eu868 1 // Europe (high band)
+//#define CFG_eu868 1 // Europe (high band)
 //#define CFG_eu433 1 // Europe (low band)
-//#define CFG_us915 1 // USA, Canada and South America
+#define CFG_us915 1 // USA, Canada and South America
 //#define CFG_in866 1 // India
 //#define CFG_au915 1 // Australia
 //#define CFG_as923 1 // Asia
