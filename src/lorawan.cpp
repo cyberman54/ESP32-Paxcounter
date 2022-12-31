@@ -332,6 +332,18 @@ uint32_t lora_queuewaiting(void) {
   return uxQueueMessagesWaiting(LoraSendQueue);
 }
 
+// blocking wait until LMIC is idle
+void lora_waitforidle(uint16_t timeout_sec) {
+  ESP_LOGI(TAG, "Waiting until LMIC is idle...");
+  for (int i = timeout_sec; i > 0; i--) {
+    if ((LMIC.opmode & (OP_JOINING | OP_TXDATA | OP_POLL | OP_TXRXPEND)) ||
+        os_queryTimeCriticalJobs(sec2osticks(timeout_sec)))
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    else
+      break;
+  }
+}
+
 // LMIC loop task
 void lmictask(void *pvParameters) {
   _ASSERT((uint32_t)pvParameters == 1);

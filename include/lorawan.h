@@ -37,6 +37,7 @@ void os_getDevEui(u1_t *buf);
 void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
+void lora_waitforidle(uint16_t timeout_sec);
 uint32_t lora_queuewaiting(void);
 void myEventCallback(void *pUserData, ev_t ev);
 void myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
