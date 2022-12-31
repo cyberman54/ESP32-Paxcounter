@@ -53,7 +53,7 @@ function decodeUplink(input) {
 
     if (input.fPort === 3) {
         // device config data      
-        data = decode(input.bytes, [uint8, uint8, int16, uint8, uint8, uint8, uint8, bitmap1, bitmap2, version], ['loradr', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'rgblum', 'flags', 'payloadmask', 'version']);
+        data = decode(input.bytes, [uint8, uint8, int16, uint8, uint8, uint8, uint16, bitmap1, bitmap2, version], ['loradr', 'txpower', 'rssilimit', 'sendcycle', 'wifichancycle', 'blescantime', 'sleepcycle', 'flags', 'payloadmask', 'version']);
     }
 
     if (input.fPort === 4) {

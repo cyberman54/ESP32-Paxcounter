@@ -81,8 +81,6 @@ not evaluated by model BU-190, use "F" instead for this model
 
 #include "if482.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 String IF482_Frame(time_t t) {
   char mon, out[IF482_FRAME_SIZE + 1], buf[IF482_FRAME_SIZE - 3];

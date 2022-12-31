@@ -2,8 +2,6 @@
 
 #include "mqttclient.h"
 
-static const char TAG[] = __FILE__;
-
 static QueueHandle_t MQTTSendQueue;
 TaskHandle_t mqttTask;
 

@@ -2,8 +2,6 @@
 
 #include "rtctime.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 

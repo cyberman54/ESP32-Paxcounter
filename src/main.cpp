@@ -79,9 +79,6 @@ BME_IRQ         <- setBMEIRQ() <- Ticker.h
 // Basic Config
 #include "main.h"
 
-// local Tag for logging
-static const char TAG[] = __FILE__;
-
 char clientId[20] = {0}; // unique ClientID
 
 void setup() {
@@ -93,6 +90,13 @@ void setup() {
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
 #endif
 
+  // hash 6 byte device MAC to 4 byte clientID
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
+  const uint32_t hashedmac = myhash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
+
   // setup debug output or silence device
 #if (VERBOSE)
   Serial.begin(115200);
@@ -102,15 +106,15 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_NONE);
 #endif
 
+// initialize SD interface and mount SD card, if present
+#if (HAS_SDCARD)
+  if (sdcard_init())
+    strcat_P(features, " SD");
+#endif
+
   // load device configuration from NVRAM and set runmode
   do_after_reset();
 
-  // hash 6 byte device MAC to 4 byte clientID
-  uint8_t mac[6];
-  esp_read_mac(mac, ESP_MAC_WIFI_STA);
-
-  const uint32_t hashedmac = myhash((const char *)mac, 6);
-  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
            PROGVERSION, RTC_runmode, RTC_restarts);
   ESP_LOGI(TAG, "code build date: %d", compileTime());
@@ -218,7 +222,7 @@ void setup() {
   pinMode(HAS_TWO_LED, OUTPUT);
   strcat_P(features, " LED2");
 #endif
-// use simple LED for power display if we have additional RGB LED, else for status
+// use LED for power display if we have additional RGB LED, else for status
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
 #endif
@@ -270,8 +274,7 @@ void setup() {
   if (RTC_runmode == RUNMODE_MAINTENANCE)
     start_boot_menu();
 
-#if ((WIFICOUNTER) || (BLECOUNTER))
-  // use libpax timer to trigger cyclic senddata
+  // start libpax lib (includes timer to trigger cyclic senddata)
   ESP_LOGI(TAG, "Starting libpax...");
   struct libpax_config_t configuration;
   libpax_default_config(&configuration);
@@ -296,14 +299,6 @@ void setup() {
   } else {
     init_libpax();
   }
-#else
-  // use stand alone timer to trigger cyclic senddata
-  initSendDataTimer(cfg.sendcycle * 2);
-#endif
-
-#if (BLECOUNTER)
-  strcat_P(features, " BLE");
-#endif
 
   // start rcommand processing task
   ESP_LOGI(TAG, "Starting rcommand interpreter...");
@@ -358,11 +353,6 @@ void setup() {
   _ASSERT(mqtt_init() == ESP_OK);
 #endif
 
-#if (HAS_SDCARD)
-  if (sdcard_init())
-    strcat_P(features, " SD");
-#endif
-
 #if (HAS_SDS011)
   ESP_LOGI(TAG, "init fine-dust-sensor");
   if (sds011_init())
@@ -399,13 +389,6 @@ void setup() {
 
 #if defined HAS_IF482
   strcat_P(features, " IF482");
-#endif
-
-#if (WIFICOUNTER)
-  strcat_P(features, " WIFI");
-#else
-  // remove wifi driver from RAM, if option wifi not compiled
-  esp_wifi_deinit();
 #endif
 
   // start state machine

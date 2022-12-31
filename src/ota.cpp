@@ -32,8 +32,6 @@ const int port = 443;
 int volatile contentLength = 0;
 bool volatile isValidContentType = false;
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 // helper function to extract header value from header
 inline String getHeaderValue(String header, String headerName) {

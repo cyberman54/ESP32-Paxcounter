@@ -47,8 +47,8 @@ void PayloadConvert::addConfig(configData_t value) {
   buffer[cursor++] = value.blescantime;
   buffer[cursor++] = value.blescan;
   buffer[cursor++] = value.wifiant;
-  buffer[cursor++] = 0; // reserved
-  buffer[cursor++] = value.rgblum;
+  buffer[cursor++] = highByte(value.sleepcycle);
+  buffer[cursor++] = lowByte(value.sleepcycle);
   buffer[cursor++] = value.payloadmask;
   buffer[cursor++] = 0; // reserved
   memcpy(buffer + cursor, value.version, 10);
@@ -171,7 +171,7 @@ void PayloadConvert::addConfig(configData_t value) {
   writeUint8(value.sendcycle);
   writeUint8(value.wifichancycle);
   writeUint8(value.blescantime);
-  writeUint8(value.rgblum);
+  writeUint16(value.sleepcycle);
   writeBitmap(value.adrmode ? true : false, value.screensaver ? true : false,
               value.screenon ? true : false, value.countermode ? true : false,
               value.blescan ? true : false, value.wifiant ? true : false, 0, 0);

@@ -6,8 +6,6 @@
 #define MATRIX_DISPLAY_PAGES (2) // number of display pages
 #define LINE_DIAGRAM_DIVIDER (2) // scales pax numbers to led rows
 
-// local Tag for logging
-static const char TAG[] = __FILE__;
 
 uint8_t MatrixDisplayIsOn = 0;
 static uint8_t displaybuf[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8] = {0};

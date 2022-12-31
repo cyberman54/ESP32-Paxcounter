@@ -1,8 +1,6 @@
 #include "boot.h"
 #include "reset.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 static hw_timer_t *wdTimer = NULL;
 static WebServer server(80);

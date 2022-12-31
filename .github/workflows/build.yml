@@ -2,11 +2,22 @@ name: PlatformIO CI
 
 on:
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'LICENSE'
+      - 'README.md'
   push:
     branches:
       - master
       - build-workflow
+    paths-ignore:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'LICENSE'
+      - 'README.md'
   workflow_dispatch:
+
 
 jobs:
   build:

@@ -2,8 +2,6 @@
 #include "globals.h"
 #include "i2c.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 SemaphoreHandle_t I2Caccess;
 

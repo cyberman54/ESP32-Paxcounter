@@ -1,27 +1,12 @@
 // Basic Config
 #include "senddata.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 void setSendIRQ(TimerHandle_t xTimer) {
   xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 }
 
 void setSendIRQ(void) { setSendIRQ(NULL); }
-
-void initSendDataTimer(uint8_t sendcycle) {
-  static TimerHandle_t SendDataTimer = NULL;
-
-  if (SendDataTimer == NULL) {
-    SendDataTimer =
-        xTimerCreate("SendDataTimer", pdMS_TO_TICKS(sendcycle * 1000), pdTRUE,
-                     (void *)0, setSendIRQ);
-    xTimerStart(SendDataTimer, 0);
-  } else {
-    xTimerChangePeriod(SendDataTimer, pdMS_TO_TICKS(sendcycle * 1000), 0);
-  }
-}
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port) {
@@ -81,16 +66,14 @@ void sendData() {
 #if (HAS_SDS011)
   sdsStatus_t sds_status;
 #endif
-#if ((WIFICOUNTER) || (BLECOUNTER))
   struct count_payload_t count =
       count_from_libpax; // copy values from global libpax var
   ESP_LOGD(TAG, "Sending count results: pax=%d / wifi=%d / ble=%d", count.pax,
            count.wifi_count, count.ble_count);
-#endif
 
   while (bitmask) {
     switch (bitmask & mask) {
-#if ((WIFICOUNTER) || (BLECOUNTER))
+
     case COUNT_DATA:
       payload.reset();
 
@@ -137,8 +120,6 @@ void sendData() {
 
       SendPayload(COUNTERPORT);
       break; // case COUNTDATA
-
-#endif // ((WIFICOUNTER) || (BLECOUNTER))
 
 #if (HAS_BME)
     case MEMS_DATA:

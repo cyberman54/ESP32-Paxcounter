@@ -30,8 +30,6 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 #include <sys/param.h>
 #include <rom/crc.h>
 
-static const char TAG[] = __FILE__;
-
 #define HEADER_SIZE 4
 // SPI transaction size needs to be at least 8 bytes and dividable by 4, see
 // https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html

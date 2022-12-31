@@ -2,8 +2,6 @@
 #include "globals.h"
 #include "rcommand.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 static QueueHandle_t RcmdQueue;
 TaskHandle_t rcmdTask;
@@ -54,7 +52,6 @@ void set_reset(uint8_t val[]) {
 
 void set_rssi(uint8_t val[]) {
   cfg.rssilimit = val[0] * -1;
-#if ((WIFICOUNTER) || (BLECOUNTER))
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
@@ -62,7 +59,6 @@ void set_rssi(uint8_t val[]) {
   current_config.ble_rssi_threshold = cfg.rssilimit;
   libpax_update_config(&current_config);
   init_libpax();
-#endif
   ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
 }
 
@@ -73,13 +69,8 @@ void set_sendcycle(uint8_t val[]) {
   cfg.sendcycle = val[0];
   ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
            cfg.sendcycle * 2);
-#if ((WIFICOUNTER) || (BLECOUNTER))
   libpax_counter_stop();
   init_libpax();
-#else
-  // modify senddata timer
-  initSendDataTimer(cfg.sendcycle * 2);
-#endif
 }
 
 void set_sleepcycle(uint8_t val[]) {
@@ -91,7 +82,6 @@ void set_sleepcycle(uint8_t val[]) {
 
 void set_wifichancycle(uint8_t val[]) {
   cfg.wifichancycle = val[0];
-#if (WIFICOUNTER)
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
@@ -109,19 +99,16 @@ void set_wifichancycle(uint8_t val[]) {
   current_config.wifi_channel_switch_interval = cfg.wifichancycle;
   libpax_update_config(&current_config);
   init_libpax();
-#endif
 }
 
 void set_blescantime(uint8_t val[]) {
   cfg.blescantime = val[0];
-#if (BLECOUNTER)
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
   current_config.blescantime = cfg.blescantime;
   libpax_update_config(&current_config);
   init_libpax();
-#endif
 }
 
 void set_countmode(uint8_t val[]) {
@@ -144,10 +131,8 @@ void set_countmode(uint8_t val[]) {
         "Remote command: set counter mode called with invalid parameter(s)");
     return;
   }
-#if ((WIFICOUNTER) || (BLECOUNTER))
   libpax_counter_stop();
   init_libpax(); // re-inits counter mode from cfg.countermode
-#endif
 }
 
 void set_screensaver(uint8_t val[]) {
@@ -258,28 +243,24 @@ void set_loraadr(uint8_t val[]) {
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
   cfg.blescan = val[0] ? 1 : 0;
-#if (BLECOUNTER)
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
   current_config.blecounter = cfg.blescan;
   libpax_update_config(&current_config);
   init_libpax();
-#endif
 }
 
 void set_wifiscan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set WIFI scanner to %s",
            val[0] ? "on" : "off");
   cfg.wifiscan = val[0] ? 1 : 0;
-#if (WIFICOUNTER)
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
   current_config.wificounter = cfg.wifiscan;
   libpax_update_config(&current_config);
   init_libpax();
-#endif
 }
 
 void set_wifiant(uint8_t val[]) {

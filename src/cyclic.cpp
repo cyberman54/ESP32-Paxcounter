@@ -4,8 +4,6 @@
 // Basic config
 #include "cyclic.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 Ticker cyclicTimer;
 

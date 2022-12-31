@@ -2,9 +2,6 @@
 #include "globals.h"
 #include "reset.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
-
 // Conversion factor for micro seconds to seconds
 #define uS_TO_S_FACTOR 1000000ULL
 
@@ -100,11 +97,6 @@ void enter_deepsleep(const uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
   sds011_sleep();
 #endif
 
-// flush & close sd card, if we have
-#if (HAS_SDCARD)
-  sdcard_close();
-#endif
-
   // wait a while (max 100 sec) to clear send queues
   ESP_LOGI(TAG, "Waiting until send queues are empty...");
   for (int i = 100; i > 0; i--) {
@@ -169,6 +161,12 @@ void enter_deepsleep(const uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
   gettimeofday(&RTC_sleep_start_time, NULL);
   RTC_millis += esp_timer_get_time() / 1000;
   ESP_LOGI(TAG, "Going to sleep, good bye.");
+
+// flush & close sd card, if we have
+#if (HAS_SDCARD)
+  sdcard_close();
+#endif
+
   esp_deep_sleep_start();
 }
 

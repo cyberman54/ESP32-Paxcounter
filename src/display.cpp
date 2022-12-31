@@ -37,8 +37,6 @@ MY_FONT_LARGE:     16x32px = 8 chars / line @ 2 lines
 #include "globals.h"
 #include "display.h"
 
-// local Tag for logging
-static const char TAG[] = __FILE__;
 
 static uint8_t plotbuf[PLOTBUFFERSIZE] = {0};
 uint8_t DisplayIsOn = 0;
@@ -200,7 +198,6 @@ void dp_refresh(bool nextPage) {
     // line 3: wifi + bluetooth counters
     // WIFI:abcde BLTH:abcde
 
-#if ((WIFICOUNTER) && (BLECOUNTER))
     if (cfg.wifiscan)
       dp->printf("WIFI:%-5u", count.wifi_count);
     else
@@ -209,18 +206,6 @@ void dp_refresh(bool nextPage) {
       dp->printf("BLTH:%-5u", count.ble_count);
     else
       dp->printf(" BLTH:off");
-#elif ((WIFICOUNTER) && (!BLECOUNTER))
-    if (cfg.wifiscan)
-      dp->printf("WIFI:%-5u", count.wifi_count);
-    else
-      dp->printf("WIFI:off  ");
-#elif ((!WIFICOUNTER) && (BLECOUNTER))
-    if (cfg.blescan)
-      dp->printf("BLTH:%-5u", count.ble_count);
-    dp->printf("BLTH:off");
-#else
-    dp->printf("Sniffer disabled");
-#endif
     dp->printf("\r\n");
 
     // line 4: Battery + GPS status + Wifi channel

@@ -21,8 +21,6 @@ accept this.
 
 #include "timesync.h"
 
-// Local logging tag
-static const char TAG[] = __FILE__;
 
 static bool timeSyncPending = false;
 static uint8_t time_sync_seqNo = (uint8_t)random(TIME_SYNC_MAX_SEQNO),

@@ -5,9 +5,6 @@
 // check whether your card reader supports SPI oder SDMMC and select appropriate
 // SD interface in board hal file
 
-// Local logging tag
-static const char TAG[] = __FILE__;
-
 #include "sdcard.h"
 
 sdmmc_card_t *card;
@@ -17,9 +14,9 @@ static bool useSDCard = false;
 
 // This file stream will be used for payload logging
 static FILE *data_file;
-// This file stream will be used for system logging
 
-#ifdef SD_LOGGING
+#if (SDLOGGING)
+// This file stream will be used for system logging
 static FILE *log_file;
 
 // Save UART stdout stream
@@ -30,7 +27,6 @@ static FILE *uart_stdout = stdout;
 //      @important Do NOT use the ESP_LOG* macro's in this function ELSE
 //      recursive loop and stack overflow! So use printf() instead for debug
 //      messages.
-// CURRENTLY NOT WORKING DUE TO AN ISSUE IN ARDUINO-ESP32
 int print_to_sd_card(const char *fmt, va_list args) {
   static bool static_fatal_error = false;
   static const uint32_t WRITE_CACHE_CYCLE = 5;
@@ -53,12 +49,8 @@ int print_to_sd_card(const char *fmt, va_list args) {
     }
 
     // #2 Smart commit after x writes
-    counter_write++;
-    if (counter_write % WRITE_CACHE_CYCLE == 0) {
-      printf("%s() fsync'ing log file (WRITE_CACHE_CYCLE=%u)\n",
-             WRITE_CACHE_CYCLE);
+    if (counter_write++ % WRITE_CACHE_CYCLE == 0)
       fsync(fileno(log_file));
-    }
   }
 
   // #3 ALWAYS Write to stdout!
@@ -119,7 +111,8 @@ bool sdcard_init(bool create) {
     return false;
   }
 
-  // Use settings defined above to initialize SD card and mount FAT filesystem.
+  // Use settings defined above to initialize SD card and mount FAT
+  // filesystem.
   ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config,
                                 &card);
 
@@ -153,7 +146,7 @@ bool sdcard_init(bool create) {
     if (ret == ESP_FAIL) {
       ESP_LOGE(TAG, "failed to mount filesystem");
     } else {
-      ESP_LOGE(TAG, "SD-card not found (%d)", ret);
+      ESP_LOGI(TAG, "No SD-card found (%d)", ret);
     }
     return false;
   }
@@ -188,16 +181,12 @@ bool sdcard_init(bool create) {
     useSDCard = false;
   }
 
-#ifdef SD_LOGGING
+#if (SDLOGGING)
   snprintf(bufferFilename, sizeof(bufferFilename), "/%s.log", SDCARD_FILE_NAME);
 
   if (openFile(&log_file, bufferFilename)) {
     ESP_LOGI(TAG, "redirecting serial output to SD-card");
     esp_log_set_vprintf(&print_to_sd_card);
-    // Change stdout for THIS TASK ONLY
-    // stdout = log_file;
-    // Change stdout for all new tasks which will be created
-    //_GLOBAL_REENT->_stdout = log_file;
   } else {
     useSDCard = false;
   }
@@ -209,7 +198,7 @@ bool sdcard_init(bool create) {
 void sdcard_flush(void) {
   if (data_file)
     fsync(fileno(data_file));
-#ifdef SD_LOGGING
+#if (SDLOGGING)
   if (log_file)
     fsync(fileno(log_file));
 #endif
@@ -220,11 +209,9 @@ void sdcard_close(void) {
     return;
   ESP_LOGI(TAG, "closing SD-card");
   sdcard_flush();
-#ifdef SD_LOGGING
-  // Reset logging output back to normal
+#if (SDLOGGING)
+  // Redirect logging output back to console
   ESP_LOGI(TAG, "redirect console back to serial output");
-  // stdout = uart_stdout;
-  //_GLOBAL_REENT->_stdout = uart_stdout;
   esp_log_set_vprintf(&vprintf);
 #endif
   fcloseall();
