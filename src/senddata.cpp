@@ -4,8 +4,6 @@
 // Local logging tag
 static const char TAG[] = __FILE__;
 
-TimerHandle_t SendDataTimer = NULL;
-
 void setSendIRQ(TimerHandle_t xTimer) {
   xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 }
@@ -13,6 +11,8 @@ void setSendIRQ(TimerHandle_t xTimer) {
 void setSendIRQ(void) { setSendIRQ(NULL); }
 
 void initSendDataTimer(uint8_t sendcycle) {
+  static TimerHandle_t SendDataTimer = NULL;
+
   if (SendDataTimer == NULL) {
     SendDataTimer =
         xTimerCreate("SendDataTimer", pdMS_TO_TICKS(sendcycle * 1000), pdTRUE,
