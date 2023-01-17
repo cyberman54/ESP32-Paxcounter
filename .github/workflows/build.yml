@@ -64,9 +64,9 @@ jobs:
             cp src/paxcounter_orig.conf src/paxcounter.conf
         - name: Clean
           #run: pio run -t clean -e cd
-          run: pio remote -a prenzlpi run -e cd -t clean -r
+          run: pio remote -a prenzlpi run -e cd -t clean -r -v
         - name: Build and deploy for ${{ matrix.board }}
           env:
             CI_HALFILE: ${{ matrix.board }}
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-          run: pio remote -a prenzlpi run -e cd -t upload -r
+          run: pio remote -a prenzlpi run -e cd -t upload -r -v
