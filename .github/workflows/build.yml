@@ -201,3 +201,53 @@ jobs:
         env:
           CI_HALFILE: ${{ matrix.board }}
         run: pio run -e ci
+
+  deploy:
+
+      strategy:
+        fail-fast: false
+        matrix:
+          os: [ubuntu-latest]
+          include:
+            - os: ubuntu-latest
+              path: ~/.cache/pip
+              platformio-path: ~/.platformio
+          board: [ttgov21new.h]
+    
+      runs-on: ${{ matrix.os }}
+
+      steps:
+        - uses: actions/checkout@v3
+        - name: Cache pip
+          uses: actions/cache@v3
+          with:
+            path: ${{ matrix.path }}
+            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
+        - name: Cache PlatformIO
+          uses: actions/cache@v3
+          with:
+            path: ${{ matrix.platformio-path }}
+            key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: "3.9.13"
+        - name: Install PlatformIO
+          run: |
+            python -m pip install --upgrade pip
+            pip install --upgrade platformio
+        - name: Copy of necessary files
+          run: |
+            cp platformio_orig_s3.ini platformio.ini
+            cp src/loraconf_sample.h src/loraconf.h
+            cp src/ota_sample.conf src/ota.conf
+            cp src/paxcounter_orig.conf src/paxcounter.conf
+        - name: Clean
+          run: pio run -t clean -e ci
+        - name: Build and deploy for ${{ matrix.board }}
+          env:
+            CI_HALFILE: ${{ matrix.board }}
+            PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+          run: pio remote upload -e cd -r -v
