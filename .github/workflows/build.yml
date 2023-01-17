@@ -63,10 +63,9 @@ jobs:
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
         - name: Clean
-          #run: pio run -t clean -e cd
-          run: pio remote -a prenzlpi run -e usb -t clean -r -v
-        - name: Build and deploy for ${{ matrix.board }}
+          run: pio run -t clean -e ci
+        - name: Bbuild and deploy for ${{ matrix.board }}
           env:
             CI_HALFILE: ${{ matrix.board }}
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-          run: pio remote -a prenzlpi run -e usb -t upload -r -v
+          run: pio remote -a prenzlpi run -e ci -t upload -v
