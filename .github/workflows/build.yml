@@ -58,12 +58,12 @@ jobs:
             pip install --upgrade platformio
         - name: Copy of necessary files
           run: |
-            cp platformio_orig_s3.ini platformio.ini
+            cp platformio_orig.ini platformio.ini
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
         - name: Clean
-          #run: pio run -t clean -e ci
+          run: pio run -t clean -e cd
           run: pio remote -a prenzpli run -t clean -r
         - name: Build and deploy for ${{ matrix.board }}
           env:
