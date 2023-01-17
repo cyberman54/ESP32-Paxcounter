@@ -64,7 +64,7 @@ jobs:
             cp src/paxcounter_orig.conf src/paxcounter.conf
         - name: Clean
           #run: pio run -t clean -e cd
-          run: pio remote -a prenzpli run -t clean -r
+          run: pio remote -a prenzlpi run -t clean -r
         - name: Build and deploy for ${{ matrix.board }}
           env:
             CI_HALFILE: ${{ matrix.board }}
