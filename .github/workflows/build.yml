@@ -250,4 +250,4 @@ jobs:
           env:
             CI_HALFILE: ${{ matrix.board }}
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-          run: pio remote upload -e cd -r -v
+          run: pio remote -a prenzlpi -e cd run -t upload -r
