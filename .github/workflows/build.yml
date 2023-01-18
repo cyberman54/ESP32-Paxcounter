@@ -62,9 +62,7 @@ jobs:
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
-        - name: Clean
-          run: pio run -t clean -r
-        - name: Bbuild and deploy for ${{ matrix.board }}
+        - name: Build and deploy for ${{ matrix.board }}
           env:
             CI_HALFILE: ${{ matrix.board }}
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
