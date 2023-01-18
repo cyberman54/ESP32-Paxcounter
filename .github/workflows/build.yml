@@ -16,6 +16,8 @@ on:
       - 'mkdocs.yml'
       - 'LICENSE'
       - 'README.md'
+  workflow_dispatch:
+
 
 jobs:
   
