@@ -25,16 +25,12 @@ jobs:
       strategy:
         fail-fast: false
         matrix:
-          os: [windows-latest, ubuntu-latest]
+          os: [windows-latest]
           include:
             - os: windows-latest
               path: ~\AppData\Local\pip\Cache
               platformio-path: ~\AppData\Local\platformio\Cache
-            - os: ubuntu-latest
-              path: ~/.cache/pip
-              platformio-path: ~/.platformio
           board: [ttgov21new.h]
-    
       runs-on: ${{ matrix.os }}
 
       steps:
