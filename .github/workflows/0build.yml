@@ -233,8 +233,7 @@ jobs:
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
-        - name: Build and deploy for ttgov21new.h
+        - name: Build and deploy for testboard
           env:
-            CI_HALFILE: ${{ 'ttgov21new.h' }}
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-          run: pio remote -a prenzlpi run -e ci -t upload -r
+          run: pio remote -a prenzlpi run -t upload -r
