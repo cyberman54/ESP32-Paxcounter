@@ -54,4 +54,4 @@ jobs:
           env:
             CI_HALFILE: ttgov21new.h
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-          run: pio remote -a prenzlpi run -t upload -r
+          run: pio remote -a prenzlpi run -e ci -t upload -r
