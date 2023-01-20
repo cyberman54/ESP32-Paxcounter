@@ -18,34 +18,23 @@ on:
       - 'README.md'
   workflow_dispatch:
 
-
 jobs:
-  
-  deploy:
-      strategy:
-        fail-fast: false
-        matrix:
-          os: [windows-latest]
-          include:
-            - os: windows-latest
-              path: ~\AppData\Local\pip\Cache
-              platformio-path: ~\AppData\Local\platformio\Cache
-          board: [ttgov21new.h]
-      runs-on: ${{ matrix.os }}
-
+  deploy-on-testboard:
+      name: Deploy code on ESP32 board TTGO v1.6.1
+      runs-on: windows-latest
       steps:
         - uses: actions/checkout@v3
         - name: Cache pip
           uses: actions/cache@v3
           with:
-            path: ${{ matrix.path }}
+            path: ~\AppData\Local\pip\Cache
             key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
               ${{ runner.os }}-pip-
         - name: Cache PlatformIO
           uses: actions/cache@v3
           with:
-            path: ${{ matrix.platformio-path }}
+            path: ~\AppData\Local\platformio\Cache
             key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         - name: Set up Python
           uses: actions/setup-python@v4
@@ -61,8 +50,8 @@ jobs:
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
-        - name: Build and deploy for ${{ matrix.board }}
+        - name: Build and deploy for ttgov21new.h
           env:
-            CI_HALFILE: ${{ matrix.board }}
+            CI_HALFILE: ttgov21new.h
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
           run: pio remote -a prenzlpi run -t upload -r
