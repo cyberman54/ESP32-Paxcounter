@@ -16,11 +16,14 @@ on:
       - 'mkdocs.yml'
       - 'LICENSE'
       - 'README.md'
+  schedule:
+    # do a build once a week at 06:07Z Sunday
+    - cron: '7 6 * * 0'
   workflow_dispatch:
 
-
 jobs:
-  build:
+  build-for-all-boards:
+    name: Build code for all ESP32 boards
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +103,7 @@ jobs:
         run: pio run -e ci
 
   build-windows-macos:
+    name: Build code on platforms Windows and MAC
     strategy:
       fail-fast: false
       matrix:
@@ -150,6 +154,7 @@ jobs:
         run: pio run -e ci
 
   build-s3-usb-stick:
+    name: Build code for ESP32-S3 boards
     strategy:
       fail-fast: false
       matrix:
@@ -203,7 +208,7 @@ jobs:
         run: pio run -e ci
 
   deploy-on-testboard:
-      name: Deploy code on ESP32 board TTGO v1.6.1
+      name: Deploy code on testboard
       runs-on: windows-latest
       steps:
         - uses: actions/checkout@v3
@@ -227,12 +232,21 @@ jobs:
           run: |
             python -m pip install --upgrade pip
             pip install --upgrade platformio
-        - name: Copy of necessary files
+        - name: Prepare config files for test
           run: |
             cp platformio_orig.ini platformio.ini
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
+            # apply test credentials to loraconf.h
+            sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
+            sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
+            # apply test credentials to ota.conf
+            sed -i "/OTA_WIFI_SSID/c OTA_WIFI_SSID = ${{ secrets.OTA_WIFI_SSID }}" "src/ota.conf"
+            sed -i "/OTA_WIFI_PASS/c OTA_WIFI_PASS = ${{ secrets.OTA_WIFI_PASS }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_USER/c PAXEXPRESS_USER = ${{ secrets.PAXEXPRESS_USER }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_REPO/c PAXEXPRESS_REPO = ${{ secrets.PAXEXPRESS_REPO }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_API_TOKEN/c PAXEXPRESS_API_TOKEN = ${{ secrets.PAXEXPRESS_API_TOKEN }}" "src/ota.conf"
         - name: Build and deploy for testboard
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
