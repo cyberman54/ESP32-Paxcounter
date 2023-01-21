@@ -45,20 +45,14 @@ jobs:
           run: |
             python -m pip install --upgrade pip
             pip install --upgrade platformio
-        - name: Prepare config files
+        - name: Prepare config files for test
           run: |
             cp platformio_orig.ini platformio.ini
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
-            #sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
-            #sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
-            sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/$APPEUI/" "src/loraconf.h"
-            sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/$APPKEY/" "src/loraconf.h"
-          env:
-              # using env vars here to prevent print the keys in log
-              APPKEY: ${{ secrets.APPKEY }}
-              APPEUI: ${{ secrets.APPEUI }}
+            sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
+            sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
         - name: Build and deploy for testboard
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
