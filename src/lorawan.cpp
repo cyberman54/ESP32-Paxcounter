@@ -174,12 +174,12 @@ void showLoraKeys(void) {
   // all EUI buffer so we do it here to a temp
   // buffer to be able to display them
   uint8_t buf[32];
-  os_getArtEui((u1_t *)buf);
-  printKey("AppEUI", buf, 8, true);
   os_getDevEui((u1_t *)buf);
   printKey("DevEUI", buf, 8, true);
-  os_getDevKey((u1_t *)buf);
-  printKey("AppKey", buf, 16, false);
+  //os_getArtEui((u1_t *)buf);
+  //printKey("AppEUI", buf, 8, true);
+  //os_getDevKey((u1_t *)buf);
+  //printKey("AppKey", buf, 16, false);
 }
 
 #endif // VERBOSE
