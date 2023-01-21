@@ -56,6 +56,7 @@ jobs:
             sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/$APPEUI/" "src/loraconf.h"
             sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/$APPKEY/" "src/loraconf.h"
           env:
+              # using env vars here to prevent print the keys in log
               APPKEY: ${{ secrets.APPKEY }}
               APPEUI: ${{ secrets.APPEUI }}
         - name: Build and deploy for testboard
