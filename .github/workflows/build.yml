@@ -56,7 +56,7 @@ jobs:
           env:
             APPEUI: ${{secrets.APPEUI}}
             APPKEY: ${{secrets.APPKEY}}
-        -name: test key
+        - name: test key
           run: 'echo "$APPEUI"'
           shell: bash
           env:
