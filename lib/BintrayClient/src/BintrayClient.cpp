@@ -117,7 +117,7 @@ String BintrayClient::getLatestVersion() const
     // Check for errors in parsing
     if (err)
     {
-        ESP_LOGE(TAG, "Error: Firmware version data not found.");
+        ESP_LOGE(TAG, "Error %s: Firmware version data not found.", err.c_str());
         return version;
     }
     return doc["name"].as<String>();
@@ -142,7 +142,7 @@ String BintrayClient::getBinaryPath(const String &version) const
     JsonObject firstItem = doc[0];
     if (err)
     { //Check for errors in parsing
-        ESP_LOGE(TAG, "Error: Firmware download path not found.");
+        ESP_LOGE(TAG, "Error %s: Firmware download path not found.", err.c_str());
         return path;
     }
     return "/" + getUser() + "/" + getRepository() + "/" + firstItem["path"].as<String>();
