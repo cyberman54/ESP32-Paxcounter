@@ -16,8 +16,10 @@ on:
       - 'mkdocs.yml'
       - 'LICENSE'
       - 'README.md'
+  schedule:
+    # do a build once a week at 06:07Z Sunday
+    - cron: '7 6 * * 0'
   workflow_dispatch:
-
 
 jobs:  
   deploy-on-testboard:
@@ -51,8 +53,15 @@ jobs:
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
+            # apply test credentials to loraconf.h
             sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
             sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
+            # apply test credentials to ota.conf
+            sed -i "/OTA_WIFI_SSID/c OTA_WIFI_SSID = ${{ secrets.OTA_WIFI_SSID }}" "src/ota.conf"
+            sed -i "/OTA_WIFI_PASS/c OTA_WIFI_PASS = ${{ secrets.OTA_WIFI_PASS }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_USER/c PAXEXPRESS_USER = ${{ secrets.PAXEXPRESS_USER }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_REPO/c PAXEXPRESS_REPO = ${{ secrets.PAXEXPRESS_REPO }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_API_TOKEN/c PAXEXPRESS_API_TOKEN = ${{ secrets.PAXEXPRESS_API_TOKEN }}" "src/ota.conf"
         - name: Build and deploy for testboard
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
