@@ -20,7 +20,8 @@ on:
 
 
 jobs:
-  build:
+  build-for-all-boards:
+    name: Build code for all ESP32 boards
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +101,7 @@ jobs:
         run: pio run -e ci
 
   build-windows-macos:
+    name: Build code on platforms Windows and MAC
     strategy:
       fail-fast: false
       matrix:
@@ -150,6 +152,7 @@ jobs:
         run: pio run -e ci
 
   build-s3-usb-stick:
+    name: Build code for ESP32-S3 boards
     strategy:
       fail-fast: false
       matrix:
@@ -203,7 +206,7 @@ jobs:
         run: pio run -e ci
 
   deploy-on-testboard:
-      name: Deploy code on ESP32 board TTGO v1.6.1
+      name: Deploy code on testboard
       runs-on: windows-latest
       steps:
         - uses: actions/checkout@v3
@@ -233,6 +236,8 @@ jobs:
             cp src/loraconf_sample.h src/loraconf.h
             cp src/ota_sample.conf src/ota.conf
             cp src/paxcounter_orig.conf src/paxcounter.conf
+            sed -i "s/APPEUI[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
+            sed -i "s/APPKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
         - name: Build and deploy for testboard
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
