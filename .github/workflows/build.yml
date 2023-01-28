@@ -26,46 +26,7 @@ jobs:
       name: Deploy code on testboard
       runs-on: windows-latest
       steps:
-        - uses: actions/checkout@v3
-        - name: Cache pip
-          uses: actions/cache@v3
-          with:
-            path: ~\AppData\Local\pip\Cache
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-            restore-keys: |
-              ${{ runner.os }}-pip-
-        - name: Cache PlatformIO
-          uses: actions/cache@v3
-          with:
-            path: ~\AppData\Local\platformio\Cache
-            key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
-        - name: Set up Python
-          uses: actions/setup-python@v4
-          with:
-            python-version: "3.9.13"
-        - name: Install PlatformIO
-          run: |
-            python -m pip install --upgrade pip
-            pip install --upgrade platformio
-        - name: Prepare config files for test
-          run: |
-            cp platformio_orig.ini platformio.ini
-            cp src/loraconf_sample.h src/loraconf.h
-            cp src/ota_sample.conf src/ota.conf
-            cp src/paxcounter_orig.conf src/paxcounter.conf
-            # apply test credentials to loraconf.h
-            sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
-            sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
-            # apply test credentials to ota.conf
-            sed -i "/OTA_WIFI_SSID/c OTA_WIFI_SSID = ${{ secrets.OTA_WIFI_SSID }}" "src/ota.conf"
-            sed -i "/OTA_WIFI_PASS/c OTA_WIFI_PASS = ${{ secrets.OTA_WIFI_PASS }}" "src/ota.conf"
-            sed -i "/PAXEXPRESS_USER/c PAXEXPRESS_USER = ${{ secrets.PAXEXPRESS_USER }}" "src/ota.conf"
-            sed -i "/PAXEXPRESS_REPO/c PAXEXPRESS_REPO = ${{ secrets.PAXEXPRESS_REPO }}" "src/ota.conf"
-            sed -i "/PAXEXPRESS_API_TOKEN/c PAXEXPRESS_API_TOKEN = ${{ secrets.PAXEXPRESS_API_TOKEN }}" "src/ota.conf"
-        - name: Build and deploy for testboard
-          env:
-            PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-          run: pio remote -a prenzlpi run -t upload -r
+        #- uses: actions/checkout@v3
         - name: Get testboard response
           id: myRequest
           uses: fjogeleit/http-request-action@v1
@@ -74,10 +35,10 @@ jobs:
             method: 'GET'
             bearerToken: ${{ secrets.BEARER_TOKEN }}
             #contentType: 'text/event-stream'
-            customHeaders: '{"Accept": "text/event-stream"}'
-            data: "after=${{ github.event.repository.updated_at }}"
+            #customHeaders: '{"Accept": "text/event-stream"}'
+            #data: "after=${{ github.event.repository.updated_at }}"
         - name: Show response
           run: |
             echo ${{ steps.myRequest.outputs.response }}
             echo ${{ steps.myRequest.outputs.headers }}
-            echo ${{ fromJson(steps.myRequest.outputs.response).pax }}
+            #echo ${{ fromJson(steps.myRequest.outputs.response).pax }}
