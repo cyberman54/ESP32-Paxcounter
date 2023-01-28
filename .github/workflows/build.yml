@@ -37,7 +37,7 @@ jobs:
             method: 'GET'
             bearerToken: ${{ secrets.BEARER_TOKEN }}
             customHeaders: '{"Accept": "text/event-stream"}'
-            data: "after=${{ steps.current-time.outputs.time }}"
+            data: 'after=${{ steps.current-time.outputs.time }}'
         - name: Show response
           run: |
             echo ${{ steps.myRequest.outputs.response }}
