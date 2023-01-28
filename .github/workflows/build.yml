@@ -75,7 +75,6 @@ jobs:
             bearerToken: ${{ secrets.BEARER_TOKEN }}
             #contentType: 'text/event-stream'
             customHeaders: '{"Accept": "text/event-stream"}'
-            data: "limit=10"
             data: "after=${{ github.event.repository.updated_at }}"
         - name: Show response
           run: |
