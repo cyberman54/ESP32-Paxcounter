@@ -34,10 +34,10 @@ jobs:
           id: myRequest
           with:
             url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
-            method: 'GET'
+            method: 'POST'
             bearerToken: ${{ secrets.BEARER_TOKEN }}
-            #customHeaders: '{"Accept": "text/event-stream"}'
-            customHeaders: '{"limit": "1"}'
+            customHeaders: '{"Accept": "text/event-stream"}'
+            data: '{"limit": "1"}'
             #data: '{"after": "${{ steps.current-time.outputs.time }}", "limit": "1"}'
         - name: Show response
           run: |
