@@ -208,7 +208,6 @@ jobs:
         run: pio run -e ci
 
   deploy-on-testboard:
-      strategy:
       name: Deploy code on testboard
       runs-on: windows-latest
       steps:
