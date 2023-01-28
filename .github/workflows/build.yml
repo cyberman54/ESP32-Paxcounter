@@ -208,6 +208,7 @@ jobs:
         run: pio run -e ci
 
   deploy-on-testboard:
+      strategy:
       name: Deploy code on testboard
       runs-on: windows-latest
       steps:
@@ -251,3 +252,17 @@ jobs:
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
           run: pio remote -a prenzlpi run -t upload -r
+        - name: Check Deployment
+          id: myRequest
+          uses: fjogeleit/http-request-action@v1
+          with:
+            url: 'https://thethings.example.com/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
+            method: 'GET'
+            bearerToken: ${{ secrets.BEARER_TOKEN }}
+            contentType: 'text/event-stream'
+            customHeaders: '{"Accept": "text/event-stream"}'
+        - name: Show Response
+          run: |
+            echo ${{ steps.myRequest.outputs.response }}
+            echo ${{ steps.myRequest.outputs.headers }}
+            echo ${{ fromJson(steps.myRequest.outputs.response).pax }}
