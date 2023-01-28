@@ -26,17 +26,18 @@ jobs:
       name: Deploy code on testboard
       runs-on: windows-latest
       steps:
+        - name: Get current time
+          uses: josStorer/get-current-time@v2.0.2
+          id: current-time
         - name: Get testboard response
-          id: myRequest
           uses: fjogeleit/http-request-action@v1
+          id: myRequest
           with:
             url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
             method: 'GET'
             bearerToken: ${{ secrets.BEARER_TOKEN }}
             customHeaders: '{"Accept": "text/event-stream"}'
-            data: "after=${{ github.event.repository.updated_at }}"
+            data: "after=${{ steps.current-time.outputs.time }}"
         - name: Show response
           run: |
             echo ${{ steps.myRequest.outputs.response }}
-            echo ${{ steps.myRequest.outputs.headers }}
-            echo ${{ fromJson(steps.myRequest.outputs.response).pax }}
