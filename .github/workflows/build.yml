@@ -36,8 +36,8 @@ jobs:
             url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
             method: 'GET'
             bearerToken: ${{ secrets.BEARER_TOKEN }}
-            customHeaders: '{"Accept": "text/event-stream"}'
-            data: 'after=${{ steps.current-time.outputs.time }}'
+            customHeaders: '{"Accept": "text/event-stream", }'
+            data: '{"after": ${{ steps.current-time.outputs.time }}}'
         - name: Show response
           run: |
             echo ${{ steps.myRequest.outputs.response }}
