@@ -26,17 +26,15 @@ jobs:
       name: Deploy code on testboard
       runs-on: windows-latest
       steps:
-        #- uses: actions/checkout@v3
         - name: Get testboard response
           id: myRequest
           uses: fjogeleit/http-request-action@v1
           with:
-            url: 'https://thethings.example.com/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
+            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
             method: 'GET'
             bearerToken: ${{ secrets.BEARER_TOKEN }}
-            #contentType: 'text/event-stream'
-            #customHeaders: '{"Accept": "text/event-stream"}'
-            #data: "after=${{ github.event.repository.updated_at }}"
+            customHeaders: '{"Accept": "text/event-stream"}'
+            data: "after=${{ github.event.repository.updated_at }}"
         - name: Show response
           run: |
             echo ${{ steps.myRequest.outputs.response }}
