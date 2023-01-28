@@ -37,6 +37,4 @@ jobs:
             data: "after=${{ github.event.repository.updated_at }}"
         - name: Show response
           run: |
-            #echo ${{ steps.myRequest.outputs.response }}
-            #echo ${{ steps.myRequest.outputs.headers }}
             echo ${{ fromJson(steps.myRequest.outputs.response).pax }}
