@@ -34,13 +34,13 @@ jobs:
         - name: Show time
           run: echo ${{ steps.current-time.outputs.time }}
         - name: Wait 120 secons
-          run: sleep 120s
+          run: sleep 6s
           shell: bash
         - name: Query testboard
           uses: indiesdev/curl@v1.1
           id: ttn
           with:
-            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?order=-received_at&field_mask=up.uplink_message.decoded_payload,up.uplink_message.frm_payload'
+            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?order=-received_at&limit=1&field_mask=up.uplink_message.decoded_payload'
             method: 'GET'
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
