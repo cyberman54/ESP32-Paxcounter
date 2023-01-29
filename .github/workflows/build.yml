@@ -22,14 +22,238 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-for-all-boards:
+    name: Build code for all ESP32 boards
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        include:
+          - os: ubuntu-latest
+            path: ~/.cache/pip
+            platformio-path: ~/.platformio
+        board:
+          [
+            generic.h,
+            ebox.h,
+            eboxtube.h,
+            ecopower.h,
+            heltec.h,
+            heltecv2.h,
+            heltecv21.h,
+            ttgov1.h,
+            ttgov2.h,
+            ttgov21old.h,
+            ttgov21new.h,
+            ttgofox.h,
+            ttgobeam.h,
+            ttgobeam10.h,
+            ttgotdisplay.h,
+            ttgotwristband.h,
+            fipy.h,
+            lopy.h,
+            lopy4.h,
+            lolin32litelora.h,
+            lolin32lora.h,
+            lolin32lite.h,
+            wemos32oled.h,
+            wemos32matrix.h,
+            octopus32.h,
+            tinypico.h,
+            tinypicomatrix.h,
+            m5core.h,
+            m5fire.h,
+            olimexpoeiso.h,
+          ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.path }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Cache PlatformIO
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.platformio-path }}
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9.13"
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+      - name: Copy of necessary files
+        run: |
+          cp platformio_orig.ini platformio.ini
+          cp src/loraconf_sample.h src/loraconf.h
+          cp src/ota_sample.conf src/ota.conf
+          cp src/paxcounter_orig.conf src/paxcounter.conf
+      - name: Clean
+        run: pio run -t clean -e ci
+      - name: Run PlatformIO CI for ${{ matrix.board }}
+        env:
+          CI_HALFILE: ${{ matrix.board }}
+        run: pio run -e ci
+
+  build-windows-macos:
+    name: Build code on platforms Windows and MAC
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: macos-latest
+            path: ~/Library/Caches/pip
+            platformio-path: ~/Library/Caches/platformio
+          - os: windows-latest
+            path: ~\AppData\Local\pip\Cache
+            platformio-path: ~\AppData\Local\platformio\Cache
+        board: [generic.h, ttgov21new.h]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.path }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Cache PlatformIO
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.platformio-path }}
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9.13"
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+      - name: Copy of necessary files
+        run: |
+          cp platformio_orig.ini platformio.ini
+          cp src/loraconf_sample.h src/loraconf.h
+          cp src/ota_sample.conf src/ota.conf
+          cp src/paxcounter_orig.conf src/paxcounter.conf
+      - name: Clean
+        run: pio run -t clean -e ci
+      - name: Run PlatformIO CI for ${{ matrix.board }}
+        env:
+          CI_HALFILE: ${{ matrix.board }}
+        run: pio run -e ci
+
+  build-s3-usb-stick:
+    name: Build code for ESP32-S3 boards
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            path: ~/.cache/pip
+            platformio-path: ~/.platformio
+          - os: macos-latest
+            path: ~/Library/Caches/pip
+            platformio-path: ~/Library/Caches/platformio
+          - os: windows-latest
+            path: ~\AppData\Local\pip\Cache
+            platformio-path: ~\AppData\Local\platformio\Cache
+        board: [ttgotdongles3.h, ttgotdongledisplays3.h]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.path }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Cache PlatformIO
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.platformio-path }}
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9.13"
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+      - name: Copy of necessary files
+        run: |
+          cp platformio_orig_s3.ini platformio.ini
+          cp src/loraconf_sample.h src/loraconf.h
+          cp src/ota_sample.conf src/ota.conf
+          cp src/paxcounter_orig.conf src/paxcounter.conf
+      - name: Clean
+        run: pio run -t clean -e ci
+      - name: Run PlatformIO CI for ${{ matrix.board }}
+        env:
+          CI_HALFILE: ${{ matrix.board }}
+        run: pio run -e ci
+
   deploy-on-testboard:
       name: Deploy code on testboard
-      runs-on: ubuntu-latest
+      runs-on: windows-latest
       steps:
-        - name: Get current time
+        - uses: actions/checkout@v3
+        - name: Cache pip
+          uses: actions/cache@v3
+          with:
+            path: ~\AppData\Local\pip\Cache
+            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
+        - name: Cache PlatformIO
+          uses: actions/cache@v3
+          with:
+            path: ~\AppData\Local\platformio\Cache
+            key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: "3.9.13"
+        - name: Install PlatformIO
+          run: |
+            python -m pip install --upgrade pip
+            pip install --upgrade platformio
+        - name: Prepare config files for test
+          run: |
+            cp platformio_orig.ini platformio.ini
+            cp src/loraconf_sample.h src/loraconf.h
+            cp src/ota_sample.conf src/ota.conf
+            cp src/paxcounter_orig.conf src/paxcounter.conf
+            # apply test credentials to loraconf.h
+            sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
+            sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
+            # apply test credentials to ota.conf
+            sed -i "/OTA_WIFI_SSID/c OTA_WIFI_SSID = ${{ secrets.OTA_WIFI_SSID }}" "src/ota.conf"
+            sed -i "/OTA_WIFI_PASS/c OTA_WIFI_PASS = ${{ secrets.OTA_WIFI_PASS }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_USER/c PAXEXPRESS_USER = ${{ secrets.PAXEXPRESS_USER }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_REPO/c PAXEXPRESS_REPO = ${{ secrets.PAXEXPRESS_REPO }}" "src/ota.conf"
+            sed -i "/PAXEXPRESS_API_TOKEN/c PAXEXPRESS_API_TOKEN = ${{ secrets.PAXEXPRESS_API_TOKEN }}" "src/ota.conf"
+        - name: Build and deploy for testboard
+          env:
+            PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+          run: pio remote -a prenzlpi run -t upload -r
+        - name: Wait 60 seconds
           uses: josStorer/get-current-time@v2.0.2
           id: current-time
-        - name: Wait 60 seconds
           run: sleep 60s
           shell: bash
         - name: Query testboard
