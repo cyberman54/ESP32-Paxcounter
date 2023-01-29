@@ -263,11 +263,12 @@ jobs:
           uses: indiesdev/curl@v1.1
           id: ttn
           with:
-            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
+            #url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
+            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/ApplicationUp'
             method: 'GET'
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
-            params: '{"after": "${{ steps.current-time.outputs.time }}", "limit": "1"}'
+            params: '{"after": "${{ steps.current-time.outputs.time }}"}'
             log-response: true
         - name: Check testboard response
           run: 
