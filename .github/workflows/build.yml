@@ -256,7 +256,7 @@ jobs:
           shell: bash
         - name: Query testboard
           #uses: indiesdev/curl@v1.1
-          uses: cyberman54/curl
+          uses: cyberman54/curl@v1.2
           id: ttn
           with:
             #Get latest decoded payload message seen last 120 seconds from testboard
