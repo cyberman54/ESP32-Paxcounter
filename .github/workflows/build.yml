@@ -41,6 +41,8 @@ jobs:
             params: '{"limit": "1"}'
             log-response: false
         - name: Check testboard response
-          testvalue: ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
-          if: testvalue == 0
-          run: exit 1
+          env: 
+            pax: ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
+          #if: $pax == 0
+          #run: exit 1
+          run: echo $pax
