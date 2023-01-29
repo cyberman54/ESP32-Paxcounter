@@ -254,8 +254,8 @@ jobs:
         - name: Get current time
           uses: josStorer/get-current-time@v2.0.2
           id: current-time
-        - name: Wait 60 secons
-          run: sleep 60s
+        - name: Wait 120 secons
+          run: sleep 120s
           shell: bash
         - name: Query testboard
           uses: indiesdev/curl@v1.1
@@ -266,7 +266,7 @@ jobs:
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
             params: '{"after": "${{ steps.current-time.outputs.time }}"}'
-            log-response: false
+            log-response: true
         - name: Check testboard response
           run: 
             echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
