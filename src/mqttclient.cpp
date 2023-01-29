@@ -18,8 +18,12 @@ void mqtt_deinit(void) {
 
 esp_err_t mqtt_init(void) {
   // setup network connection and MQTT client
-  ETH.begin();
-  ETH.setHostname(clientId);
+
+  //Check if MQTT_ETHERNET is set to PHY or Wifi -- return true if set to wifi 
+  if (MQTT_ETHERNET==1){
+    ETH.begin();
+    ETH.setHostname(clientId);
+  }
   mqttClient.begin(MQTT_SERVER, MQTT_PORT, netClient);
   mqttClient.setKeepAlive(MQTT_KEEPALIVE);
   mqttClient.onMessageAdvanced(mqtt_callback);
@@ -72,18 +76,27 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
 
 void mqtt_client_task(void *param) {
   MessageBuffer_t msg;
-
+  
+  if (!connectWifi()){
+    ESP_LOGW(TAG, "Cannot connect to wifi for sending MQTT messages.");
+    return;
+  }
+  
   while (1) {
     if (mqttClient.connected()) {
       // check for incoming messages
+        ESP_LOGD(TAG, "In loop");
       mqttClient.loop();
 
       // fetch next or wait for payload to send from queue
       // do not delete item from queue until it is transmitted
       // consider mqtt timeout while waiting
       if (xQueuePeek(MQTTSendQueue, &msg,
-                     MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE)
-        continue;
+                     MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE){
+
+                      log_i("No more message leaving.");
+                      break;//Why was it continue?
+                     }
 
       // prepare mqtt topic
       char topic[16];
@@ -112,6 +125,8 @@ void mqtt_client_task(void *param) {
       mqtt_connect(MQTT_SERVER, MQTT_PORT);
     }
   } // while (1)
+  startWifiScan();
+
 }
 
 // process incoming MQTT messages

@@ -41,4 +41,6 @@ uint32_t rcmd_queuewaiting(void);
 void rcmd_deinit(void);
 esp_err_t rcmd_init(void);
 
+void set_wifiscan(uint8_t val[]);
+
 #endif
