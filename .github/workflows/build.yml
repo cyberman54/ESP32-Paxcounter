@@ -41,7 +41,7 @@ jobs:
             params: '{"limit": "1"}'
             log-response: true
         - name: Show response
+          #echo contains(fromJSON('pax'), ${{ steps.ttn.outputs.response }})
           run: |
             echo ${{ steps.ttn.outputs.response }}
-            echo contains(fromJSON('pax'), ${{ steps.ttn.outputs.response }})
             echo ${{ fromJson(steps.ttn.outputs.response).pax }}
