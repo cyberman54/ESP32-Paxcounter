@@ -29,16 +29,17 @@ jobs:
         - name: Get current time
           uses: josStorer/get-current-time@v2.0.2
           id: current-time
-        - name: Get testboard response
-          uses: fjogeleit/http-request-action@v1
-          id: myRequest
+        - name Get testboard response
+          uses: indiesdev/curl@v1.1
+          id: ttn
           with:
             url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
-            method: 'POST'
+            method: 'GET'
+            #accept: 201
             bearerToken: ${{ secrets.BEARER_TOKEN }}
-            customHeaders: '{"Accept": "text/event-stream"}'
-            data: '{"limit": "1"}'
-            #data: '{"after": "${{ steps.current-time.outputs.time }}", "limit": "1"}'
+            headers: '{"Accept": "text/event-stream"}'
+            params: '{"after": "${{ steps.current-time.outputs.time }}", "limit": "1"}'
+            log-response: true
         - name: Show response
           run: |
-            echo ${{ steps.myRequest.outputs.response }}
+            echo ${{ steps.ttn.outputs.response }}
