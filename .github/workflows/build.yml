@@ -44,4 +44,4 @@ jobs:
           #echo contains(fromJSON('pax'), ${{ steps.ttn.outputs.response }})
           run: |
             echo ${{ steps.ttn.outputs.response }}
-            echo ${{ fromJson(steps.ttn.outputs.response).pax }}
+            echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
