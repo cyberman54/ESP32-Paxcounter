@@ -40,8 +40,7 @@ jobs:
           uses: indiesdev/curl@v1.1
           id: ttn
           with:
-            #url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
-            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/ApplicationUplink'
+            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?order=-received_at&field_mask=up.uplink_message.decoded_payload,up.uplink_message.frm_payload'
             method: 'GET'
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
