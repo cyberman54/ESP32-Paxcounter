@@ -254,6 +254,7 @@ jobs:
         - name: Get current time
           uses: josStorer/get-current-time@v2.0.2
           id: current-time
+          run: echo ${{ steps.current-time.outputs.time }}
         - name: Wait 120 secons
           run: sleep 120s
           shell: bash
