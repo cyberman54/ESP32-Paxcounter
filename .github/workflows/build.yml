@@ -43,7 +43,7 @@ jobs:
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
             #params: '{"after": "${{ steps.current-time.outputs.time }}"}'
-            params: '{"limit": "1"}'
+            #params: '{"limit": "1"}'
             log-response: true
         - name: Check testboard response
           run: 
