@@ -259,7 +259,7 @@ jobs:
           id: ttn
           with:
             #Get latest uplink message from testboard
-            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?f_port=1&order=-received_at&limit=1&field_mask=up.uplink_message.decoded_payload'
+            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?f_port=1&order=-received_at&last=120s&limit=1&type=uplink_message&field_mask=up.uplink_message.decoded_payload'
             method: 'GET'
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
