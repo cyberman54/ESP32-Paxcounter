@@ -47,7 +47,9 @@ void stopWifiScan() {
   set_wifiscan(val);
 }
 
-void startWifiScan() {
+void startWifiScan() { 
+  WiFi.disconnect();
+  delay(500);
   uint8_t val[] = {1};
   set_wifiscan(val);
 }
