@@ -31,8 +31,8 @@ jobs:
           id: current-time
         - name: Show time
           run: echo ${{ steps.current-time.outputs.time }}
-        - name: Wait 5 seconds
-          run: sleep 5s
+        - name: Wait 60 seconds
+          run: sleep 6s
           shell: bash
         - name: Query testboard
           uses: indiesdev/curl@v1.1
@@ -42,7 +42,7 @@ jobs:
             method: 'GET'
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
-            params: '{"after": "${{ steps.current-time.outputs.time }}"}'
+            #params: '{"after": "${{ steps.current-time.outputs.time }}"}'
             #params: '{"limit": "1"}'
             log-response: true
         - name: Check testboard response
