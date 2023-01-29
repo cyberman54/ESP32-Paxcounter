@@ -41,7 +41,7 @@ jobs:
             params: '{"limit": "1"}'
             log-response: false
         - name: Check testboard response
-          if: '20' == ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
+          if: 20 == ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
           run: |
             echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
             exit 1
