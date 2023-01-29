@@ -24,7 +24,7 @@ on:
 jobs:
   deploy-on-testboard:
       name: Deploy code on testboard
-      runs-on: windows-latest
+      runs-on: ubuntu-latest
       steps:
         - name: Get current time
           uses: josStorer/get-current-time@v2.0.2
@@ -35,7 +35,6 @@ jobs:
           with:
             url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message'
             method: 'GET'
-            accept: 201
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
             #params: '{"after": "${{ steps.current-time.outputs.time }}", "limit": "1"}'
