@@ -251,3 +251,19 @@ jobs:
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
           run: pio remote -a prenzlpi run -t upload -r
+        - name: Wait 120 seconds
+          run: sleep 120s
+          shell: bash
+        - name: Query testboard
+          uses: indiesdev/curl@v1.1
+          id: ttn
+          with:
+            #Get latest decoded payload message seen last 120 seconds from testboard
+            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?f_port=1&order=-received_at&last=120s&limit=1&type=uplink_message&field_mask=up.uplink_message.decoded_payload'
+            method: 'GET'
+            bearer-token: ${{ secrets.BEARER_TOKEN }}
+            headers: '{"Accept": "text/event-stream"}'
+            log-response: false
+        - name: Check testboard response
+          run: 
+            echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
