@@ -43,5 +43,5 @@ jobs:
         - name: Check testboard response
           env: 
             pax: ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
-          if: $pax == 20
+          if: ${{ env.pax }} == 20
           run: exit 1
