@@ -43,3 +43,5 @@ jobs:
         - name: Show response
           run: |
             echo ${{ steps.ttn.outputs.response }}
+            echo contains(fromJSON('pax'), ${{ steps.ttn.outputs.response }})
+            echo ${{ fromJson(steps.ttn.outputs.response).pax }}
