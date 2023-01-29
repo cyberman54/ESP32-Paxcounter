@@ -29,7 +29,7 @@ jobs:
         - name: Get current time
           uses: josStorer/get-current-time@v2.0.2
           id: current-time
-        - name: Get testboard response
+        - name: Query testboard
           uses: indiesdev/curl@v1.1
           id: ttn
           with:
@@ -39,10 +39,9 @@ jobs:
             headers: '{"Accept": "text/event-stream"}'
             #params: '{"after": "${{ steps.current-time.outputs.time }}", "limit": "1"}'
             params: '{"limit": "1"}'
-            log-response: true
-        - name: Show response
-          #echo contains(fromJSON('pax'), ${{ steps.ttn.outputs.response }})
+            log-response: false
+        - name: Check testboard response
+          if: 0 == ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
           run: |
-            echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
-            echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.ble }}
-            echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.wifi }}
+            echo "::error Testboard respose error"
+            exit 1
