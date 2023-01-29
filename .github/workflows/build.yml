@@ -251,9 +251,10 @@ jobs:
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
           run: pio remote -a prenzlpi run -t upload -r
-        - name: Wait 60 seconds
+        - name: Get current time
           uses: josStorer/get-current-time@v2.0.2
           id: current-time
+        - name: Wait 60 secons
           run: sleep 60s
           shell: bash
         - name: Query testboard
