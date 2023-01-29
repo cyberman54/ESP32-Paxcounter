@@ -28,11 +28,6 @@ jobs:
       name: Deploy code on testboard
       runs-on: windows-latest
       steps:
-        - name: Get current time
-          uses: josStorer/get-current-time@v2.0.2
-          id: current-time
-        - name: Show time
-          run: echo ${{ steps.current-time.outputs.time }}
         - name: Wait 120 secons
           run: sleep 6s
           shell: bash
@@ -40,11 +35,11 @@ jobs:
           uses: indiesdev/curl@v1.1
           id: ttn
           with:
-            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?order=-received_at&limit=1&field_mask=up.uplink_message.decoded_payload'
+            #Get latest uplink message from testboard
+            url: 'https://eu1.cloud.thethings.network/api/v3/as/applications/paxcounter-cicd/packages/storage/uplink_message?f_port=1&order=-received_at&limit=1&field_mask=up.uplink_message.decoded_payload'
             method: 'GET'
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
-            #params: '{"after": "${{ steps.current-time.outputs.time }}"}'
             log-response: true
         - name: Check testboard response
           run: 
