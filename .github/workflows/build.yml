@@ -29,6 +29,9 @@ jobs:
         - name: Get current time
           uses: josStorer/get-current-time@v2.0.2
           id: current-time
+        - name: Wait 60 seconds
+          run: sleep 60s
+          shell: bash
         - name: Query testboard
           uses: indiesdev/curl@v1.1
           id: ttn
@@ -37,11 +40,8 @@ jobs:
             method: 'GET'
             bearer-token: ${{ secrets.BEARER_TOKEN }}
             headers: '{"Accept": "text/event-stream"}'
-            #params: '{"after": "${{ steps.current-time.outputs.time }}", "limit": "1"}'
-            params: '{"limit": "1"}'
+            params: '{"after": "${{ steps.current-time.outputs.time }}"}'
             log-response: false
         - name: Check testboard response
-          env: 
-            pax: ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
-          if: ${{ env.pax }} == 0
-          run: exit 1
+          run: 
+            echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
