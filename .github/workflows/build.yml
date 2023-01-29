@@ -45,3 +45,5 @@ jobs:
           run: |
             echo ${{ steps.ttn.outputs.response }}
             echo ${{ fromJson(steps.ttn.outputs.response).data.result.uplink_message.decoded_payload.pax }}
+            echo ${{ fromJson(steps.ttn.outputs.response).result.uplink_message.decoded_payload.pax }}
+            echo ${{ fromJson(steps.ttn.outputs.response).uplink_message.decoded_payload.pax }}
