@@ -351,6 +351,7 @@ void setup() {
 #ifdef HAS_MQTT
   strcat_P(features, " MQTT");
   _ASSERT(mqtt_init() == ESP_OK);
+  log_i("mqtt initialized!");
 #endif
 
 #if (HAS_SDS011)

@@ -45,10 +45,20 @@ void disconnectWifi() {}
 void stopWifiScan() {
   uint8_t val[] = {0};
   set_wifiscan(val);
+    // print heap and task storage information
+  ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
+           ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
+           ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
 }
 
 void startWifiScan() { 
-  WiFi.disconnect();
+  // print heap and task storage information
+  ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
+           ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
+           ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
+           
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
   delay(500);
   uint8_t val[] = {1};
   set_wifiscan(val);
