@@ -19,8 +19,8 @@ void mqtt_deinit(void) {
 esp_err_t mqtt_init(void) {
   // setup network connection and MQTT client
 
-  //Check if MQTT_ETHERNET is set to PHY or Wifi -- return true if set to wifi 
-  if (MQTT_ETHERNET==1){
+  // Check if MQTT_ETHERNET is set to PHY or Wifi -- return true if set to wifi
+  if (MQTT_ETHERNET == 1) {
     ETH.begin();
     ETH.setHostname(clientId);
   }
@@ -40,6 +40,7 @@ esp_err_t mqtt_init(void) {
   ESP_LOGI(TAG, "Starting MQTTloop...");
   xTaskCreatePinnedToCore(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 5,
                           &mqttTask, 1);
+  ESP_LOGI(TAG, "MQTTloop started.");
   return ESP_OK;
 }
 
@@ -75,58 +76,54 @@ int mqtt_connect(const char *my_host, const uint16_t my_port) {
 }
 
 void mqtt_client_task(void *param) {
+
   MessageBuffer_t msg;
-  
-  if (!connectWifi()){
-    ESP_LOGW(TAG, "Cannot connect to wifi for sending MQTT messages.");
-    return;
-  }
-  
+
   while (1) {
-    if (mqttClient.connected()) {
-      // check for incoming messages
+    if (xQueuePeek(MQTTSendQueue, &msg, 1000 / portTICK_PERIOD_MS) == pdTRUE){//if there is a message to send
+      if (mqttClient.connected()) {
+        // check for incoming messages
         ESP_LOGD(TAG, "In loop");
-      mqttClient.loop();
+        mqttClient.loop();
 
-      // fetch next or wait for payload to send from queue
-      // do not delete item from queue until it is transmitted
-      // consider mqtt timeout while waiting
-      if (xQueuePeek(MQTTSendQueue, &msg,
-                     MQTT_KEEPALIVE * 1000 / portTICK_PERIOD_MS) != pdTRUE){
+        // fetch next or wait for payload to send from queue
+        // do not delete item from queue until it is transmitted
+        // consider mqtt timeout while waiting
 
-                      log_i("No more message leaving.");
-                      break;//Why was it continue?
-                     }
+        // prepare mqtt topic
+        char topic[16];
+        snprintf(topic, 16, "%s/%u", MQTT_OUTTOPIC, msg.MessagePort);
+        size_t out_len = 0;
 
-      // prepare mqtt topic
-      char topic[16];
-      snprintf(topic, 16, "%s/%u", MQTT_OUTTOPIC, msg.MessagePort);
-      size_t out_len = 0;
+        // get length of base64 encoded message
+        mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char *)msg.Message,
+                              msg.MessageSize);
 
-      // get length of base64 encoded message
-      mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char *)msg.Message,
-                            msg.MessageSize);
+        // base64 encode the message
+        unsigned char encoded[out_len];
+        mbedtls_base64_encode(encoded, out_len, &out_len,
+                              (unsigned char *)msg.Message, msg.MessageSize);
 
-      // base64 encode the message
-      unsigned char encoded[out_len];
-      mbedtls_base64_encode(encoded, out_len, &out_len,
-                            (unsigned char *)msg.Message, msg.MessageSize);
+        // send encoded message to mqtt server and delete it from queue
+        if (mqttClient.publish(topic, (const char *)encoded, out_len)) {
+          ESP_LOGD(TAG, "%u bytes sent to MQTT server", out_len);
+          xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
+          startWifiScan();
 
-      // send encoded message to mqtt server and delete it from queue
-      if (mqttClient.publish(topic, (const char *)encoded, out_len)) {
-        ESP_LOGD(TAG, "%u bytes sent to MQTT server", out_len);
-        xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
-      } else
-        ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
-    } else {
-      // attempt to reconnect to MQTT server
-      ESP_LOGD(TAG, "MQTT client reconnecting...");
-      delay(MQTT_RETRYSEC * 1000);
-      mqtt_connect(MQTT_SERVER, MQTT_PORT);
+        } else
+          ESP_LOGD(TAG, "Couldn't sent message to MQTT server");
+      } else {
+        // attempt to reconnect to MQTT server
+        if (!connectWifi()) {
+          ESP_LOGW(TAG, "Cannot connect to wifi for sending MQTT messages.");
+          continue;
+        }
+        ESP_LOGD(TAG, "MQTT client reconnecting...");
+        delay(MQTT_RETRYSEC * 1000);
+        mqtt_connect(MQTT_SERVER, MQTT_PORT);
+      }
     }
   } // while (1)
-  startWifiScan();
-
 }
 
 // process incoming MQTT messages
@@ -135,7 +132,7 @@ void mqtt_callback(MQTTClient *client, char *topic, char *payload, int length) {
     // get length of base64 encoded message
     size_t out_len = 0;
     mbedtls_base64_decode(NULL, 0, &out_len, (unsigned char *)payload, length);
-    
+
     // decode the base64 message
     unsigned char decoded[out_len];
     mbedtls_base64_decode(decoded, out_len, &out_len, (unsigned char *)payload,
