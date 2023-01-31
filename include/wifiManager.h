@@ -4,6 +4,7 @@
 #include <rcommand.h> // must be included here so that Arduino library object file references work
 #include "globals.h"
 #include "timekeeper.h"
+#include <WiFi.h>
 
 bool connectWifi();
 void startWifiScan();

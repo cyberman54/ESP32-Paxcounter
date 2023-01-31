@@ -39,7 +39,7 @@ esp_err_t mqtt_init(void) {
 
   ESP_LOGI(TAG, "Starting MQTTloop...");
   xTaskCreatePinnedToCore(mqtt_client_task, "mqttloop", 4096, (void *)NULL, 5,
-                          &mqttTask, 1);
+                          &mqttTask, 0);
   ESP_LOGI(TAG, "MQTTloop started.");
   return ESP_OK;
 }
@@ -93,20 +93,32 @@ void mqtt_client_task(void *param) {
         // prepare mqtt topic
         char topic[16];
         snprintf(topic, 16, "%s/%u", MQTT_OUTTOPIC, msg.MessagePort);
-        size_t out_len = 0;
-
-        // get length of base64 encoded message
-        mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char *)msg.Message,
-                              msg.MessageSize);
-
+        size_t out_len = 64;
         // base64 encode the message
-        unsigned char encoded[out_len];
-        mbedtls_base64_encode(encoded, out_len, &out_len,
-                              (unsigned char *)msg.Message, msg.MessageSize);
+        // unsigned char encoded[out_len];
+        unsigned char encoded[64];//Set as static limit.
+        switch (MQTT_ENCODER) {
+          case 0://base64
+          // get length of base64 encoded message
+          // mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char *)msg.Message,
+          //                       msg.MessageSize);
+
+          mbedtls_base64_encode(encoded, 64, &out_len,
+                                (unsigned char *)msg.Message, msg.MessageSize);
+
+          break;
+
+          case 1://json
+            int wifi= msg.Message[0] | msg.Message[1] << 8;
+            int ble = msg.MessageSize>=4 ? msg.Message[2] | msg.Message[3] << 8 : 0;
+            out_len=snprintf((char*) encoded, 64, "{'total':%d,'ble':%d,'wifi':%d}",wifi+ble,ble, wifi);
+          break;
+        }
+
 
         // send encoded message to mqtt server and delete it from queue
         if (mqttClient.publish(topic, (const char *)encoded, out_len)) {
-          ESP_LOGD(TAG, "%u bytes sent to MQTT server", out_len);
+          ESP_LOGD(TAG, "%u bytes sent to MQTT server: %s", out_len,msg.Message );
           xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
           startWifiScan();
 

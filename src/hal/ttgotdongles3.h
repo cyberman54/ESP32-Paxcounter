@@ -17,5 +17,7 @@
 #define HAS_SDCARD  2      // dongle has a SD MMC card-reader/writer
 #define SDCARD_SLOTWIDTH 4 // dongle has 4 line interface
 #define SDCARD_SLOTCONFIG { .clk = GPIO_NUM_12, .cmd = GPIO_NUM_16, .d0 = GPIO_NUM_14, .d1 = GPIO_NUM_17, .d2 = GPIO_NUM_21, .d3 = GPIO_NUM_18, .cd = SDMMC_SLOT_NO_CD, .wp = SDMMC_SLOT_NO_WP, .width = 4, .flags = 0, }
+#define HAS_MQTT 1
+
 
 #endif
