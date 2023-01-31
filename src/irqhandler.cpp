@@ -5,9 +5,10 @@ TaskHandle_t irqHandlerTask = NULL;
 
 // irq handler task, handles all our application level interrupts
 void irqHandler(void *pvParameters) {
+log_i("ok");
   _ASSERT((uint32_t)pvParameters == 1); // FreeRTOS check
-
   uint32_t irqSource;
+log_i("ok");
 
   // task remains in blocked state until it is notified by an irq
   for (;;) {
