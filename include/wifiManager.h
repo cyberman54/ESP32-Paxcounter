@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "timekeeper.h"
 #include <WiFi.h>
+#include <esp_wifi.h>
 
 bool connectWifi();
 void startWifiScan();
