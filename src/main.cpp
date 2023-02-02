@@ -351,6 +351,7 @@ void setup() {
 #ifdef HAS_MQTT
   strcat_P(features, " MQTT");
   _ASSERT(mqtt_init() == ESP_OK);
+  log_i("mqtt initialized!");
 #endif
 
 #if (HAS_SDS011)
@@ -392,6 +393,9 @@ void setup() {
 #endif
 
   // start state machine
+    ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
+           ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
+           ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
                           "irqhandler",    // name of task

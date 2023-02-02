@@ -32,7 +32,6 @@ const int port = 443;
 int volatile contentLength = 0;
 bool volatile isValidContentType = false;
 
-
 // helper function to extract header value from header
 inline String getHeaderValue(String header, String headerName) {
   return header.substring(strlen(headerName.c_str()));
@@ -60,59 +59,25 @@ void start_ota_update() {
   ESP_LOGI(TAG, "Starting Wifi OTA update");
   ota_display(1, "**", WIFI_SSID);
 
-  WiFi.disconnect(true);
-  WiFi.config(INADDR_NONE, INADDR_NONE,
-              INADDR_NONE); // call is only a workaround for bug in WiFi class
-  // see https://github.com/espressif/arduino-esp32/issues/806
-  WiFi.setHostname(host);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin();
-
-  // Connect to WiFi network
-  // workaround applied here to bypass WIFI_AUTH failure
-  // see https://github.com/espressif/arduino-esp32/issues/2501
-
-  // 1st try
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() == WL_DISCONNECTED) {
-    delay(500);
-  }
-  // 2nd try
-  if (WiFi.status() != WL_CONNECTED) {
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
-    delay(500);
-  }
-
-  uint8_t i = WIFI_MAX_TRY;
   int ret = 1; // 0 = finished, 1 = retry, -1 = abort
-
-  while (i--) {
-    ESP_LOGI(TAG, "Trying to connect to %s, attempt %u of %u", WIFI_SSID,
-             WIFI_MAX_TRY - i, WIFI_MAX_TRY);
-    if (WiFi.status() == WL_CONNECTED) {
-      // we now have wifi connection and try to do an OTA over wifi update
-      ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
-      ota_display(1, "OK", "WiFi connected");
-      // do a number of tries to update firmware limited by OTA_MAX_TRY
-      uint8_t j = OTA_MAX_TRY;
-      while ((j--) && (ret > 0)) {
-        ESP_LOGI(TAG, "Starting OTA update, attempt %u of %u", OTA_MAX_TRY - j,
-                 OTA_MAX_TRY);
-        ret = do_ota_update();
-      }
-      if (WiFi.status() == WL_CONNECTED)
-        goto end; // OTA update finished or OTA max attemps reached
+  if (connectWifi()) {
+    // we now have wifi connection and try to do an OTA over wifi update
+    ESP_LOGI(TAG, "Connected to %s", WIFI_SSID);
+    ota_display(1, "OK", "WiFi connected");
+    // do a number of tries to update firmware limited by OTA_MAX_TRY
+    uint8_t j = OTA_MAX_TRY;
+    while ((j--) && (ret > 0)) {
+      ESP_LOGI(TAG, "Starting OTA update, attempt %u of %u", OTA_MAX_TRY - j,
+               OTA_MAX_TRY);
+      ret = do_ota_update();
     }
-    delay(10000); // wait for stable connect
-    WiFi.reconnect();
+  } else {
+    ESP_LOGI(TAG, "Could not connect to %s", WIFI_SSID);
+    ota_display(1, " E", "no WiFi connect");
+    delay(5000);
   }
-
   // wifi did not connect
-  ESP_LOGI(TAG, "Could not connect to %s", WIFI_SSID);
-  ota_display(1, " E", "no WiFi connect");
-  delay(5000);
 
-end:
   switch_LED(LED_OFF);
   ESP_LOGI(TAG, "Rebooting to %s firmware", (ret == 0) ? "new" : "current");
   ota_display(5, "**", ""); // mark line rebooting

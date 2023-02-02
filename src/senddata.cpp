@@ -10,11 +10,12 @@ void setSendIRQ(void) { setSendIRQ(NULL); }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port) {
-  ESP_LOGD(TAG, "sending Payload for Port %d", port);
+  ESP_LOGD(TAG, "sending Payload for Port %d with Payload encoder: %d", port,PAYLOAD_ENCODER);
 
   MessageBuffer_t SendBuffer; // contains MessageSize, MessagePort, Message[]
 
   SendBuffer.MessageSize = payload.getSize();
+
 
   switch (PAYLOAD_ENCODER) {
   case 1: // plain -> no mapping
@@ -37,7 +38,6 @@ void SendPayload(uint8_t port) {
       SendBuffer.MessagePort = CAYENNE_DEVICECONFIG;
       break;
     }
-    break;
   default:
     SendBuffer.MessagePort = port;
   }

@@ -9,6 +9,7 @@
 #include <MQTT.h>
 #include <ETH.h>
 #include <mbedtls/base64.h>
+#include <wifiManager.h>
 
 #ifndef MQTT_CLIENTNAME
 #define MQTT_CLIENTNAME clientId

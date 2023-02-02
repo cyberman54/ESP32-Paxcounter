@@ -23,4 +23,6 @@
 #define MY_DISPLAY_WIDTH 135
 #define MY_DISPLAY_HEIGHT 240
 
+#define HAS_MQTT 1
+
 #endif
