@@ -52,7 +52,7 @@ void stopWifiScan() {
 }
 
 void startWifiScan() { 
-  disconnectWifi();
+  //disconnectWifi();
   delay(500);
   uint8_t val[] = {1};
   set_wifiscan(val);

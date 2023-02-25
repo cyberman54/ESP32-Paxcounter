@@ -80,7 +80,8 @@ void mqtt_client_task(void *param) {
   MessageBuffer_t msg;
 
   while (1) {
-    if (xQueuePeek(MQTTSendQueue, &msg, 1000 / portTICK_PERIOD_MS) == pdTRUE){//if there is a message to send
+    if (xQueuePeek(MQTTSendQueue, &msg, 1000 / portTICK_PERIOD_MS) ==
+        pdTRUE) { // if there is a message to send
       if (mqttClient.connected()) {
         // check for incoming messages
         ESP_LOGD(TAG, "In loop");
@@ -96,11 +97,12 @@ void mqtt_client_task(void *param) {
         size_t out_len = 64;
         // base64 encode the message
         // unsigned char encoded[out_len];
-        unsigned char encoded[64];//Set as static limit.
+        unsigned char encoded[64]; // Set as static limit.
         switch (MQTT_ENCODER) {
-          case 0://base64
+        case 0: // base64
           // get length of base64 encoded message
-          // mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char *)msg.Message,
+          // mbedtls_base64_encode(NULL, 0, &out_len, (unsigned char
+          // *)msg.Message,
           //                       msg.MessageSize);
 
           mbedtls_base64_encode(encoded, 64, &out_len,
@@ -108,17 +110,22 @@ void mqtt_client_task(void *param) {
 
           break;
 
-          case 1://json
-            int wifi= msg.Message[0] | msg.Message[1] << 8;
-            int ble = msg.MessageSize>=4 ? msg.Message[2] | msg.Message[3] << 8 : 0;
-            out_len=snprintf((char*) encoded, 64, "{'total':%d,'ble':%d,'wifi':%d}",wifi+ble,ble, wifi);
+        case 1: // json
+          if (msg.MessagePort == COUNTERPORT) {
+            int wifi = msg.Message[0] | msg.Message[1] << 8;
+            int ble =
+                msg.MessageSize >= 4 ? msg.Message[2] | msg.Message[3] << 8 : 0;
+            out_len =
+                snprintf((char *)encoded, 64, "{'total':%d,'ble':%d,'wifi':%d}",
+                         wifi + ble, ble, wifi);
+          }
           break;
         }
 
-
         // send encoded message to mqtt server and delete it from queue
         if (mqttClient.publish(topic, (const char *)encoded, out_len)) {
-          ESP_LOGD(TAG, "%u bytes sent to MQTT server: %s", out_len,msg.Message );
+          ESP_LOGD(TAG, "%u bytes sent to MQTT server: %s", out_len,
+                   msg.Message);
           xQueueReceive(MQTTSendQueue, &msg, (TickType_t)0);
           startWifiScan();
 
