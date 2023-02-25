@@ -20,6 +20,8 @@ User, long press    -> send a button message
 Reset -> reset device
 */
 
+#define HAS_MQTT 1  // use MQTT on ethernet interface
+
 #define HAS_DISPLAY 1
 #define MY_DISPLAY_SDA SDA
 #define MY_DISPLAY_SCL SCL
