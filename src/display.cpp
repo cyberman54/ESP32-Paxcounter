@@ -375,7 +375,7 @@ void dp_refresh(bool nextPage) {
     dp_clear();
     break;
 #else // skip this page
-    DisplayPage++;
+    DisplayPage = 0;
     break;
 #endif
   } // switch (page)
