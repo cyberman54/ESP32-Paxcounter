@@ -7,7 +7,7 @@ You can select different payload formats in [`paxcounter.conf`](https://github.c
 
 - ***Packed*** uses little endian format and generates json fields
 
-- [***CayenneLPP***](https://mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-reference-implementation) generates MyDevices Cayenne readable fields
+- [***CayenneLPP***](https://developers.mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload-data-types) generates MyDevices Cayenne readable fields
 
 
 ```c linenums="20" title="src/paxcounter_orig.conf"
