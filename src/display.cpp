@@ -37,7 +37,6 @@ MY_FONT_LARGE:     16x32px = 8 chars / line @ 2 lines
 #include "globals.h"
 #include "display.h"
 
-
 static uint8_t plotbuf[PLOTBUFFERSIZE] = {0};
 uint8_t DisplayIsOn = 0;
 hw_timer_t *displayIRQ = NULL;
@@ -374,8 +373,8 @@ void dp_refresh(bool nextPage) {
 #ifdef HAS_BUTTON
     dp_clear();
     break;
-#else // skip this page
-    DisplayPage++;
+#else // skip this page and start over
+    DisplayPage = 0;
     break;
 #endif
   } // switch (page)
