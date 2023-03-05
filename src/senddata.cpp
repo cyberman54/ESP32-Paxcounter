@@ -1,12 +1,13 @@
 // Basic Config
 #include "senddata.h"
 
+// void setSendIRQ(TimerHandle_t xTimer) {
+//  xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
+//}
 
-void setSendIRQ(TimerHandle_t xTimer) {
-  xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
-}
+// void setSendIRQ(void) { setSendIRQ(NULL); }
 
-void setSendIRQ(void) { setSendIRQ(NULL); }
+void setSendIRQ(void) { xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits); }
 
 // put data to send in RTos Queues used for transmit over channels Lora and SPI
 void SendPayload(uint8_t port) {

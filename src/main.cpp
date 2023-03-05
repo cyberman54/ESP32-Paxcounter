@@ -71,7 +71,7 @@ PMUIRQ          <- GPIO <- PMU chip
 Application IRQs fired by software:
 TIMESYNC_IRQ    <- setTimeSyncIRQ() <- Ticker.h
 CYCLIC_IRQ      <- setCyclicIRQ() <- Ticker.h
-SENDCYCLE_IRQ   <- setSendIRQ() <- xTimer or libpax callback
+SENDCYCLE_IRQ   <- setSendIRQ() <- libpax callback
 BME_IRQ         <- setBMEIRQ() <- Ticker.h
 
 */
