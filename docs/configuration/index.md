@@ -86,7 +86,7 @@ Supported external time sources are GPS, LORAWAN network time and LORAWAN applic
 
 !!! tip
 
-	If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxocunter device. Time can also be set without precision liability, by simple remote command, see section remote control.
+	If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxcounter device. Time can also be set without precision liability, by simple remote command, see section remote control.
 
 ## Wall clock controller
 
