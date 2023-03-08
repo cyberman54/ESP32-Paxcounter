@@ -81,7 +81,7 @@ void do_after_reset(void) {
   }
 }
 
-void enter_deepsleep(const uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
+void enter_deepsleep(uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
   ESP_LOGI(TAG, "Preparing to sleep...");
 
   RTC_runmode = RUNMODE_SLEEP;
@@ -145,6 +145,21 @@ void enter_deepsleep(const uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
 
   // configure wakeup sources
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
+
+#ifdef TIME_SYNC_INTERVAL
+#if (SYNCWAKEUP) && (SLEEPCYCLE)
+  time_t now;
+  uint16_t shift_sec;
+  time(&now);
+  shift_sec = 3600 - (now + wakeup_sec) %
+                         3600; // 1..3600 remaining seconds between planned
+                               // wakeup time and following top-of-hour
+  if (shift_sec <= SYNCWAKEUP) // delay wakeup to catch top-of-hour
+    wakeup_sec += shift_sec;
+  else if (shift_sec >= (3600 - SYNCWAKEUP))
+    wakeup_sec = 3600 - shift_sec; // shorten wake up to next top-of-hour
+#endif
+#endif
 
   // set up RTC wakeup timer, if we have
   if (wakeup_sec > 0) {
