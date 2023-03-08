@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 // Hardware related definitions for Heltec V2 LoRa-32 Board
-// see https://heltec-automation-docs.readthedocs.io/en/latest/esp32/wifi_lora_32/hardware_update_log.html#v2
+// see https://docs.heltec.org/en/node/esp32/dev-board/hardware_update_log.html#v2
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1
