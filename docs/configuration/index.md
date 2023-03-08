@@ -90,7 +90,7 @@ Supported external time sources are GPS, LORAWAN network time and LORAWAN applic
 
 ## Syncing multiple paxcounters 
 
-A fleet of paxcounters can be synchronized to keep all devices wake up and start scanning at the same time. Synchronization is based on top-of-hour as common time point of reference. This feature requires time-of-day to be present on each device. Thus, `TIME_SYNC_INTERVAL` option, as explained above, must be enabled. Wake up syncing is enabled by setting `SYNCWAKEUP` in `paxcounter.conf` to a value X, greater than zero, and smaller than `SLEEPCYCLE`. This defines a time window, centered at top-of-hour, sized +/- X seconds. If a device, returning from sleep, would wakeup within this time windows, the wakeup will be adjusted to top-of-hour.
+A fleet of paxcounters can be synchronized to keep all devices wake up and start scanning at the same time. Synchronization is based on top-of-hour as common time point of reference. This feature requires time-of-day to be present on each device. Thus, `TIME_SYNC_INTERVAL` option, as explained above, must be enabled. Wake up syncing is enabled by setting `SYNCWAKEUP` in `paxcounter.conf` to a value X, greater than zero, and smaller than `SLEEPCYCLE`. This defines a time window, centered at top-of-hour, sized +/- X seconds. If a device, returning from sleep, would wakeup within this time window, it's wakeup will be adjusted to top-of-hour.
 
 ## Wall clock controller
 
