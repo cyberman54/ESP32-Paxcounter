@@ -66,7 +66,7 @@ void do_after_reset(void) {
         (sleep_stop_time.tv_sec - RTC_sleep_start_time.tv_sec) * 1000 +
         (sleep_stop_time.tv_usec - RTC_sleep_start_time.tv_usec) / 1000;
     RTC_millis += sleep_time_ms; // increment system monotonic time
-    ESP_LOGI(TAG, "Time spent in deep sleep: %d ms", sleep_time_ms);
+    ESP_LOGI(TAG, "Time spent in deep sleep: %llu ms", sleep_time_ms);
     // do we have a valid time? -> set global variable
     timeSource = timeIsValid(sleep_stop_time.tv_sec) ? _set : _unsynced;
     // set wakeup state, not if we have pending OTA update
@@ -146,18 +146,25 @@ void enter_deepsleep(uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
   // configure wakeup sources
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
 
-#ifdef TIME_SYNC_INTERVAL
+#if (HAS_TIME)
 #if (SYNCWAKEUP) && (SLEEPCYCLE)
-  time_t now;
-  uint16_t shift_sec;
-  time(&now);
-  shift_sec = 3600 - (now + wakeup_sec) %
-                         3600; // 1..3600 remaining seconds between planned
-                               // wakeup time and following top-of-hour
-  if (shift_sec <= SYNCWAKEUP) // delay wakeup to catch top-of-hour
-    wakeup_sec += shift_sec;
-  else if (shift_sec >= (3600 - SYNCWAKEUP))
-    wakeup_sec = 3600 - shift_sec; // shorten wake up to next top-of-hour
+  if ((timeSource != _unsynced) &&
+      (sntp_get_sync_status() !=
+       SNTP_SYNC_STATUS_IN_PROGRESS)) { // only sync if we have a valid time
+    time_t now;
+    time(&now);
+
+    // 1..3600 seconds between next wakeup time and following top-of-hour
+    uint16_t shift_sec = 3600 - (now + wakeup_sec) % 3600;
+
+    if (shift_sec <= SYNCWAKEUP) {
+      wakeup_sec += shift_sec; // delay wakeup to catch top-of-hour
+      ESP_LOGI(TAG, "Syncwakeup: Wakeup %hu sec postponed", shift_sec);
+    } else if (shift_sec >= (3600 - SYNCWAKEUP)) {
+      wakeup_sec = 3600 - shift_sec; // shorten wake up to next top-of-hour
+      ESP_LOGI(TAG, "Syncwakeup: Wakeup %hu sec preponed", shift_sec);
+    }
+  }
 #endif
 #endif
 
