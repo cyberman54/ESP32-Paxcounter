@@ -15,7 +15,7 @@ void reset_rtc_vars(void);
 void do_reset(bool warmstart);
 void do_after_reset(void);
 void enter_deepsleep(uint32_t wakeup_sec, const gpio_num_t wakeup_gpio);
-unsigned long long uptime(void);
+uint64_t uptime(void);
 
 enum runmode_t {
   RUNMODE_POWERCYCLE,
