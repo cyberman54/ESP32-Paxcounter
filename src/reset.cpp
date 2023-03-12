@@ -19,6 +19,29 @@ void reset_rtc_vars(void) {
   RTC_restarts = 0;
 }
 
+#if (HAS_TIME)
+void adjust_wakeup(uint32_t *wakeuptime) {
+  // only adjust wakeup if we have a valid time
+  if ((timeSource == _unsynced) ||
+      (sntp_get_sync_status() == SNTP_SYNC_STATUS_IN_PROGRESS))
+    return;
+
+  time_t now;
+  time(&now);
+
+  // 1..3600 seconds between next wakeup time and following top-of-hour
+  uint16_t shift_sec = 3600 - (now + *wakeuptime) % 3600;
+
+  if (shift_sec <= SYNCWAKEUP) {
+    *wakeuptime += shift_sec; // delay wakeup to catch top-of-hour
+    ESP_LOGI(TAG, "Syncwakeup: Wakeup %hu sec postponed", shift_sec);
+  } else if (shift_sec >= (3600 - SYNCWAKEUP)) {
+    *wakeuptime = 3600 - shift_sec; // shorten wake up to next top-of-hour
+    ESP_LOGI(TAG, "Syncwakeup: Wakeup %hu sec preponed", shift_sec);
+  }
+}
+#endif
+
 void do_reset(bool warmstart) {
   if (warmstart) {
     ESP_LOGI(TAG, "restarting device (warmstart)");
@@ -145,30 +168,13 @@ void enter_deepsleep(uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
   // shutdown i2c bus
   i2c_deinit();
 
+#if (HAS_TIME)
+  if (cfg.wakesync && cfg.sleepcycle)
+    adjust_wakeup(&wakeup_sec);
+#endif
+
   // configure wakeup sources
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
-
-#if (HAS_TIME)
-#if (SYNCWAKEUP) && (SLEEPCYCLE)
-  if ((timeSource != _unsynced) &&
-      (sntp_get_sync_status() !=
-       SNTP_SYNC_STATUS_IN_PROGRESS)) { // only sync if we have a valid time
-    time_t now;
-    time(&now);
-
-    // 1..3600 seconds between next wakeup time and following top-of-hour
-    uint16_t shift_sec = 3600 - (now + wakeup_sec) % 3600;
-
-    if (shift_sec <= SYNCWAKEUP) {
-      wakeup_sec += shift_sec; // delay wakeup to catch top-of-hour
-      ESP_LOGI(TAG, "Syncwakeup: Wakeup %hu sec postponed", shift_sec);
-    } else if (shift_sec >= (3600 - SYNCWAKEUP)) {
-      wakeup_sec = 3600 - shift_sec; // shorten wake up to next top-of-hour
-      ESP_LOGI(TAG, "Syncwakeup: Wakeup %hu sec preponed", shift_sec);
-    }
-  }
-#endif
-#endif
 
   // set up RTC wakeup timer, if we have
   if (wakeup_sec > 0) {
