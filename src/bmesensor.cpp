@@ -82,20 +82,20 @@ int bme_init(void) {
 int checkIaqSensorStatus(void) {
   int rslt = 1; // true = 1 = no error, false = 0 = error
 
-  if (iaqSensor.status != BSEC_OK) {
+  if (iaqSensor.bsecStatus != BSEC_OK) {
     rslt = 0;
-    if (iaqSensor.status < BSEC_OK)
-      ESP_LOGE(TAG, "BSEC error %d", iaqSensor.status);
+    if (iaqSensor.bsecStatus < BSEC_OK)
+      ESP_LOGE(TAG, "BSEC error %d", iaqSensor.bsecStatus);
     else
-      ESP_LOGW(TAG, "BSEC warning %d", iaqSensor.status);
+      ESP_LOGW(TAG, "BSEC warning %d", iaqSensor.bsecStatus);
   }
 
-  if (iaqSensor.bme680Status != BME680_OK) {
+  if (iaqSensor.bme68xStatus != BME68X_OK) {
     rslt = 0;
-    if (iaqSensor.bme680Status < BME680_OK)
-      ESP_LOGE(TAG, "BME680 error %d", iaqSensor.bme680Status);
+    if (iaqSensor.bme68xStatus < BME68X_OK)
+      ESP_LOGE(TAG, "BME680 error %d", iaqSensor.bme68xStatus);
     else
-      ESP_LOGW(TAG, "BME680 warning %d", iaqSensor.bme680Status);
+      ESP_LOGW(TAG, "BME680 warning %d", iaqSensor.bme68xStatus);
   }
 
   return rslt;
