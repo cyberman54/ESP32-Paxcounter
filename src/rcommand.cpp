@@ -2,7 +2,6 @@
 #include "globals.h"
 #include "rcommand.h"
 
-
 static QueueHandle_t RcmdQueue;
 TaskHandle_t rcmdTask;
 
@@ -78,6 +77,12 @@ void set_sleepcycle(uint8_t val[]) {
   cfg.sleepcycle = __builtin_bswap16(*(uint16_t *)(val));
   ESP_LOGI(TAG, "Remote command: set sleep cycle to %d seconds",
            cfg.sleepcycle * 10);
+}
+
+void set_wakesync(uint8_t val[]) {
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  cfg.wakesync = __builtin_bswap16(*(uint16_t *)(val));
+  ESP_LOGI(TAG, "Remote command: set wakesync to %hu seconds", cfg.wakesync);
 }
 
 void set_wifichancycle(uint8_t val[]) {
@@ -369,7 +374,7 @@ void set_timesync(uint8_t val[]) {
 void set_time(uint8_t val[]) {
   // swap byte order from msb to lsb, note: this is a platform dependent hack
   uint32_t t = __builtin_bswap32(*(uint32_t *)(val));
-  ESP_LOGI(TAG, "Remote command: set time to %d", t);
+  ESP_LOGI(TAG, "Remote command: set time to %lu", t);
   setMyTime(t, 0, _set);
 };
 
@@ -399,17 +404,17 @@ static const cmd_t table[] = {
     {0x07, set_loraadr, 1},       {0x08, set_screensaver, 1},
     {0x09, set_reset, 1},         {0x0a, set_sendcycle, 1},
     {0x0b, set_wifichancycle, 1}, {0x0c, set_blescantime, 1},
-    {0x0e, set_blescan, 1},       {0x0f, set_wifiant, 1},
-    {0x10, set_rgblum, 1},        {0x13, set_sensor, 2},
-    {0x14, set_payloadmask, 1},   {0x15, set_bme, 1},
-    {0x16, set_batt, 1},          {0x17, set_wifiscan, 1},
-    {0x18, set_flush, 0},         {0x19, set_sleepcycle, 2},
-    {0x20, set_loadconfig, 0},    {0x21, set_saveconfig, 0},
-    {0x80, get_config, 0},        {0x81, get_status, 0},
-    {0x83, get_batt, 0},          {0x84, get_gps, 0},
-    {0x85, get_bme, 0},           {0x86, get_time, 0},
-    {0x87, set_timesync, 0},      {0x88, set_time, 4},
-    {0x99, set_flush, 0}};
+    {0x0d, set_wakesync, 2},      {0x0e, set_blescan, 1},
+    {0x0f, set_wifiant, 1},       {0x10, set_rgblum, 1},
+    {0x13, set_sensor, 2},        {0x14, set_payloadmask, 1},
+    {0x15, set_bme, 1},           {0x16, set_batt, 1},
+    {0x17, set_wifiscan, 1},      {0x18, set_flush, 0},
+    {0x19, set_sleepcycle, 2},    {0x20, set_loadconfig, 0},
+    {0x21, set_saveconfig, 0},    {0x80, get_config, 0},
+    {0x81, get_status, 0},        {0x83, get_batt, 0},
+    {0x84, get_gps, 0},           {0x85, get_bme, 0},
+    {0x86, get_time, 0},          {0x87, set_timesync, 0},
+    {0x88, set_time, 4},          {0x99, set_flush, 0}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table

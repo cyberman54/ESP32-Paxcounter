@@ -3,7 +3,6 @@
 #include "globals.h"
 #include "configmanager.h"
 
-
 // namespace for device runtime preferences
 #define DEVCONFIG "paxcntcfg"
 
@@ -38,6 +37,7 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->rssilimit = RSSILIMIT; // threshold for rssilimiter, negative value!
   myconfig->sendcycle = SENDCYCLE; // payload send cycle [seconds/2]
   myconfig->sleepcycle = SLEEPCYCLE; // sleep cycle [seconds/10]
+  myconfig->wakesync = SYNCWAKEUP;   // wakeup sync window [seconds]
   myconfig->wifichancycle =
       WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
   myconfig->blescantime =
