@@ -23,8 +23,10 @@ void reset_rtc_vars(void) {
 void adjust_wakeup(uint32_t *wakeuptime) {
   // only adjust wakeup if we have a valid time
   if ((timeSource == _unsynced) ||
-      (sntp_get_sync_status() == SNTP_SYNC_STATUS_IN_PROGRESS))
+      (sntp_get_sync_status() == SNTP_SYNC_STATUS_IN_PROGRESS)) {
+    ESP_LOGI(TAG, "Syncwakeup: No valid time for sync");
     return;
+  }
 
   time_t now;
   time(&now);
@@ -38,7 +40,8 @@ void adjust_wakeup(uint32_t *wakeuptime) {
   } else if (shift_sec >= (3600 - SYNCWAKEUP)) {
     *wakeuptime = 3600 - shift_sec; // shorten wake up to next top-of-hour
     ESP_LOGI(TAG, "Syncwakeup: Wakeup %hu sec preponed", shift_sec);
-  }
+  } else
+    ESP_LOGI(TAG, "Syncwakeup: Wakeup keeping unshifted");
 }
 #endif
 
