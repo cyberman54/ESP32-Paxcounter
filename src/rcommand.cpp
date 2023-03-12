@@ -2,7 +2,6 @@
 #include "globals.h"
 #include "rcommand.h"
 
-
 static QueueHandle_t RcmdQueue;
 TaskHandle_t rcmdTask;
 
@@ -59,7 +58,7 @@ void set_rssi(uint8_t val[]) {
   current_config.ble_rssi_threshold = cfg.rssilimit;
   libpax_update_config(&current_config);
   init_libpax();
-  ESP_LOGI(TAG, "Remote command: set RSSI limit to %d", cfg.rssilimit);
+  ESP_LOGI(TAG, "Remote command: set RSSI limit to %hd", cfg.rssilimit);
 }
 
 void set_sendcycle(uint8_t val[]) {
@@ -67,7 +66,7 @@ void set_sendcycle(uint8_t val[]) {
     return;
   // update send cycle interrupt [seconds / 2]
   cfg.sendcycle = val[0];
-  ESP_LOGI(TAG, "Remote command: set send cycle to %d seconds",
+  ESP_LOGI(TAG, "Remote command: set send cycle to %u seconds",
            cfg.sendcycle * 2);
   libpax_counter_stop();
   init_libpax();
@@ -76,8 +75,14 @@ void set_sendcycle(uint8_t val[]) {
 void set_sleepcycle(uint8_t val[]) {
   // swap byte order from msb to lsb, note: this is a platform dependent hack
   cfg.sleepcycle = __builtin_bswap16(*(uint16_t *)(val));
-  ESP_LOGI(TAG, "Remote command: set sleep cycle to %d seconds",
+  ESP_LOGI(TAG, "Remote command: set sleep cycle to %hu seconds",
            cfg.sleepcycle * 10);
+}
+
+void set_wakesync(uint8_t val[]) {
+  // swap byte order from msb to lsb, note: this is a platform dependent hack
+  cfg.wakesync = __builtin_bswap16(*(uint16_t *)(val));
+  ESP_LOGI(TAG, "Remote command: set wakesync to %hu seconds", cfg.wakesync);
 }
 
 void set_wifichancycle(uint8_t val[]) {
@@ -193,7 +198,7 @@ void set_sensor(uint8_t val[]) {
     return; // invalid sensor number -> exit
   }
 
-  ESP_LOGI(TAG, "Remote command: set sensor #%d mode to %s", val[0],
+  ESP_LOGI(TAG, "Remote command: set sensor #%u mode to %s", val[0],
            val[1] ? "on" : "off");
 
   if (val[1])
@@ -213,7 +218,7 @@ void set_loradr(uint8_t val[]) {
 #if (HAS_LORA)
   if (validDR(val[0])) {
     cfg.loradr = val[0];
-    ESP_LOGI(TAG, "Remote command: set LoRa Datarate to %d", cfg.loradr);
+    ESP_LOGI(TAG, "Remote command: set LoRa Datarate to %u", cfg.loradr);
     LMIC_setDrTxpow(assertDR(cfg.loradr), KEEP_TXPOW);
     ESP_LOGI(TAG, "Radio parameters now %s / %s / %s",
              getSfName(updr2rps(LMIC.datarate)),
@@ -222,7 +227,7 @@ void set_loradr(uint8_t val[]) {
   } else
     ESP_LOGI(
         TAG,
-        "Remote command: set LoRa Datarate called with illegal datarate %d",
+        "Remote command: set LoRa Datarate called with illegal datarate %u",
         val[0]);
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
@@ -275,15 +280,15 @@ void set_wifiant(uint8_t val[]) {
 void set_rgblum(uint8_t val[]) {
   // Avoid wrong parameters
   cfg.rgblum = (val[0] <= 100) ? (uint8_t)val[0] : RGBLUMINOSITY;
-  ESP_LOGI(TAG, "Remote command: set RGB Led luminosity %d", cfg.rgblum);
-};
+  ESP_LOGI(TAG, "Remote command: set RGB Led luminosity %u", cfg.rgblum);
+}
 
 void set_lorapower(uint8_t val[]) {
 #if (HAS_LORA)
   // set data rate and transmit power only if we have no ADR
   if (!cfg.adrmode) {
     cfg.txpower = val[0];
-    ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %d", cfg.txpower);
+    ESP_LOGI(TAG, "Remote command: set LoRa TXPOWER to %u", cfg.txpower);
     LMIC_setDrTxpow(assertDR(cfg.loradr), cfg.txpower);
   } else
     ESP_LOGI(
@@ -293,14 +298,14 @@ void set_lorapower(uint8_t val[]) {
 #else
   ESP_LOGW(TAG, "Remote command: LoRa not implemented");
 #endif // HAS_LORA
-};
+}
 
 void get_config(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device configuration");
   payload.reset();
   payload.addConfig(cfg);
   SendPayload(CONFIGPORT);
-};
+}
 
 void get_status(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get device status");
@@ -315,7 +320,7 @@ void get_status(uint8_t val[]) {
                     RTC_restarts);
 #endif
   SendPayload(STATUSPORT);
-};
+}
 
 void get_gps(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get gps status");
@@ -328,7 +333,7 @@ void get_gps(uint8_t val[]) {
 #else
   ESP_LOGW(TAG, "GPS function not supported");
 #endif
-};
+}
 
 void get_bme(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get bme680 sensor data");
@@ -339,7 +344,7 @@ void get_bme(uint8_t val[]) {
 #else
   ESP_LOGW(TAG, "BME sensor not supported");
 #endif
-};
+}
 
 void get_batt(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get battery voltage");
@@ -350,7 +355,7 @@ void get_batt(uint8_t val[]) {
 #else
   ESP_LOGW(TAG, "Battery voltage not supported");
 #endif
-};
+}
 
 void get_time(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: get time");
@@ -359,35 +364,35 @@ void get_time(uint8_t val[]) {
   payload.addTime(t);
   payload.addByte(sntp_get_sync_status() << 4 | timeSource);
   SendPayload(TIMEPORT);
-};
+}
 
 void set_timesync(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: timesync requested");
   setTimeSyncIRQ();
-};
+}
 
 void set_time(uint8_t val[]) {
   // swap byte order from msb to lsb, note: this is a platform dependent hack
   uint32_t t = __builtin_bswap32(*(uint32_t *)(val));
-  ESP_LOGI(TAG, "Remote command: set time to %d", t);
+  ESP_LOGI(TAG, "Remote command: set time to %lu", t);
   setMyTime(t, 0, _set);
-};
+}
 
 void set_flush(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: flush");
   // does nothing
   // used to open receive window on LoRaWAN class a nodes
-};
+}
 
 void set_loadconfig(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: load config from NVRAM");
   loadConfig();
-};
+}
 
 void set_saveconfig(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: save config to NVRAM");
   saveConfig(false);
-};
+}
 
 // assign previously defined functions to set of numeric remote commands
 // format: {opcode, function, number of function arguments}
@@ -399,17 +404,17 @@ static const cmd_t table[] = {
     {0x07, set_loraadr, 1},       {0x08, set_screensaver, 1},
     {0x09, set_reset, 1},         {0x0a, set_sendcycle, 1},
     {0x0b, set_wifichancycle, 1}, {0x0c, set_blescantime, 1},
-    {0x0e, set_blescan, 1},       {0x0f, set_wifiant, 1},
-    {0x10, set_rgblum, 1},        {0x13, set_sensor, 2},
-    {0x14, set_payloadmask, 1},   {0x15, set_bme, 1},
-    {0x16, set_batt, 1},          {0x17, set_wifiscan, 1},
-    {0x18, set_flush, 0},         {0x19, set_sleepcycle, 2},
-    {0x20, set_loadconfig, 0},    {0x21, set_saveconfig, 0},
-    {0x80, get_config, 0},        {0x81, get_status, 0},
-    {0x83, get_batt, 0},          {0x84, get_gps, 0},
-    {0x85, get_bme, 0},           {0x86, get_time, 0},
-    {0x87, set_timesync, 0},      {0x88, set_time, 4},
-    {0x99, set_flush, 0}};
+    {0x0d, set_wakesync, 2},      {0x0e, set_blescan, 1},
+    {0x0f, set_wifiant, 1},       {0x10, set_rgblum, 1},
+    {0x13, set_sensor, 2},        {0x14, set_payloadmask, 1},
+    {0x15, set_bme, 1},           {0x16, set_batt, 1},
+    {0x17, set_wifiscan, 1},      {0x18, set_flush, 0},
+    {0x19, set_sleepcycle, 2},    {0x20, set_loadconfig, 0},
+    {0x21, set_saveconfig, 0},    {0x80, get_config, 0},
+    {0x81, get_status, 0},        {0x83, get_batt, 0},
+    {0x84, get_gps, 0},           {0x85, get_bme, 0},
+    {0x86, get_time, 0},          {0x87, set_timesync, 0},
+    {0x88, set_time, 4},          {0x99, set_flush, 0}};
 
 static const uint8_t cmdtablesize =
     sizeof(table) / sizeof(table[0]); // number of commands in command table
@@ -492,7 +497,7 @@ esp_err_t rcmd_init(void) {
     ESP_LOGE(TAG, "Could not create rcommand send queue. Aborting.");
     return ESP_FAIL;
   }
-  ESP_LOGI(TAG, "Rcommand send queue created, size %d Bytes",
+  ESP_LOGI(TAG, "Rcommand send queue created, size %u Bytes",
            RCMD_QUEUE_SIZE * sizeof(RcmdBuffer_t));
 
   xTaskCreatePinnedToCore(rcmd_process, // task function

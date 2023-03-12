@@ -52,7 +52,7 @@ Reset -> reset device
 // BME680 sensor on I2C bus
 //#define HAS_BME 1 // Enable BME sensors in general
 //#define HAS_BME680 SDA, SCL
-//#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // !! connect SDIO of BME680 to GND !!
+//#define BME680_ADDR BME68X_I2C_ADDR_LOW // !! connect SDIO of BME680 to GND !!
 
 //#define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
