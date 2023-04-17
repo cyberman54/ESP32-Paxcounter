@@ -82,7 +82,7 @@ void calibrateTime(void) {
     return;
 #endif
 
-#if ((HAS_GPS) || (HAS_RTC))
+#if ((HAS_GPS) || defined HAS_RTC)
   time_t t = 0;
   uint16_t t_msec = 0;
 

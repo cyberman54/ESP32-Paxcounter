@@ -8,7 +8,7 @@ RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 // initialize RTC
 uint8_t rtc_init(void) {
   Wire.begin(HAS_RTC);
-  Rtc.Begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL);
+  Rtc.Begin(HAS_RTC);
 
   // configure RTC chip
   Rtc.Enable32kHzPin(false);
