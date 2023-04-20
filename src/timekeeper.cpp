@@ -134,7 +134,7 @@ bool setMyTime(uint32_t t_sec, uint16_t t_msec, timesource_t mytimesource) {
     // if we have a precise time timesource, set RTC time and shift RTC_INT
     // pulse to top of second
 #ifdef HAS_RTC
-    if ((mytimesource == _gps) || (mytimesource == _lora))
+    if ((mytimesource == _gps) || (mytimesource == _lora) || (mytimesource == _set))
       set_rtctime(time_to_set);
 #endif
 
