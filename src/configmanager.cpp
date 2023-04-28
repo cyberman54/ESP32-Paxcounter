@@ -40,6 +40,7 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->wakesync = SYNCWAKEUP;   // wakeup sync window [seconds]
   myconfig->wifichancycle =
       WIFI_CHANNEL_SWITCH_INTERVAL; // wifi channel switch cycle [seconds/100]
+  myconfig->wifichanmap = WIFI_CHANNEL_MAP; // wifi channel hopping scheme
   myconfig->blescantime =
       BLESCANINTERVAL /
       10; // BT channel scan cycle [seconds/100], default 1 (= 10ms)
