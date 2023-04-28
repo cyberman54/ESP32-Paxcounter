@@ -282,7 +282,7 @@ void setup() {
   // configure WIFI sniffing
   strcpy(configuration.wifi_my_country_str, WIFI_MY_COUNTRY);
   configuration.wificounter = cfg.wifiscan;
-  configuration.wifi_channel_map = WIFI_CHANNEL_ALL;
+  configuration.wifi_channel_map = cfg.wifichanmap;
   configuration.wifi_channel_switch_interval = cfg.wifichancycle;
   configuration.wifi_rssi_threshold = cfg.rssilimit;
   ESP_LOGI(TAG, "WIFISCAN: %s", cfg.wifiscan ? "on" : "off");

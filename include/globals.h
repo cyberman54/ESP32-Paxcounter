@@ -66,6 +66,7 @@ typedef struct __attribute__((packed)) {
   uint16_t sleepcycle; // sleep cycle [seconds/10]
   uint16_t wakesync;   // time window [seconds] to sync wakeup on top-of-hour
   uint8_t wifichancycle; // wifi channel switch cycle [seconds/100]
+  uint16_t wifichanmap;  // wifi channel hopping scheme
   uint8_t blescantime;   // BLE scan cycle duration [seconds]
   uint8_t blescan;       // 0=disabled, 1=enabled
   uint8_t wifiscan;      // 0=disabled, 1=enabled

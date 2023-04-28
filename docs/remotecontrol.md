@@ -111,6 +111,11 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
 
+#### 0x11 set Wifi scanner channel map bitmask
+
+	bytes 1..2 = wifi channel map bitmask (MSB), 0..8191
+	e.g. 0b1010000001001 sets channels 1, 4, 11, 13
+
 #### 0x13 set user sensor mode
 
 	byte 1 = user sensor number (1..3)
