@@ -6,8 +6,8 @@
 
 
 // symbol to display current time source
-// G = GPS / R = RTC / L = LORA / * = no sync / ? = never synced
-const char timeSetSymbols[] = {'G', 'R', 'L', '*', '?'};
+// G = GPS / R = RTC / L = LORA / ? = unsynced / * = set
+const char timeSetSymbols[] = {'G', 'R', 'L', '?', '*'};
 
 DRAM_ATTR bool TimePulseTick = false;
 #ifdef GPS_INT
@@ -82,7 +82,7 @@ void calibrateTime(void) {
     return;
 #endif
 
-#if ((HAS_GPS) || (HAS_RTC))
+#if ((HAS_GPS) || defined HAS_RTC)
   time_t t = 0;
   uint16_t t_msec = 0;
 

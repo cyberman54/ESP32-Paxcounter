@@ -174,8 +174,8 @@ bool sdcard_init(bool create) {
 #if (HAS_SDS011)
       fprintf(data_file, "%s", SDCARD_FILE_HEADER_SDS011);
 #endif
+      fprintf(data_file, "\n");
     }
-    fprintf(data_file, "\n");
 
   } else {
     useSDCard = false;

@@ -12,6 +12,7 @@
 
 #define HAS_LORA_TIME                                                          \
   ((HAS_LORA) && ((TIME_SYNC_LORASERVER) || (TIME_SYNC_LORAWAN)))
+#define HAS_TIME (TIME_SYNC_INTERVAL) && (HAS_LORA_TIME || HAS_GPS)
 
 #define SECS_YR_2000 (946684800UL)    // the time at the start of y2k
 #define GPS_UTC_DIFF 315964800UL      // seconds diff between gps and utc epoch

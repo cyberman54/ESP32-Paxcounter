@@ -86,7 +86,11 @@ Supported external time sources are GPS, LORAWAN network time and LORAWAN applic
 
 !!! tip
 
-	If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxocunter device. Time can also be set without precision liability, by simple remote command, see section remote control.
+	If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed [**Timeserver code**](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json). Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxcounter device. Time can also be set without precision liability, by simple remote command, see section remote control.
+
+## Syncing multiple paxcounters 
+
+A fleet of paxcounters can be synchronized to keep all devices wake up and start scanning at the same time. Synchronization is based on top-of-hour as common time point of reference. This feature requires time-of-day to be present on each device. Thus, `TIME_SYNC_INTERVAL` option, as explained above, must be enabled. Wake up syncing is enabled by setting `SYNCWAKEUP` in `paxcounter.conf` to a value X, in seconds, greater than zero, and smaller than `SLEEPCYCLE` (in seconds/10). This defines a time window, centered at top-of-hour, sized +/- X seconds. If a device, returning from sleep, would wakeup within this time window, it's wakeup will be adjusted to top-of-hour.
 
 ## Wall clock controller
 

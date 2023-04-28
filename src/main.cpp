@@ -71,7 +71,7 @@ PMUIRQ          <- GPIO <- PMU chip
 Application IRQs fired by software:
 TIMESYNC_IRQ    <- setTimeSyncIRQ() <- Ticker.h
 CYCLIC_IRQ      <- setCyclicIRQ() <- Ticker.h
-SENDCYCLE_IRQ   <- setSendIRQ() <- xTimer or libpax callback
+SENDCYCLE_IRQ   <- setSendIRQ() <- libpax callback
 BME_IRQ         <- setBMEIRQ() <- Ticker.h
 
 */
@@ -282,7 +282,7 @@ void setup() {
   // configure WIFI sniffing
   strcpy(configuration.wifi_my_country_str, WIFI_MY_COUNTRY);
   configuration.wificounter = cfg.wifiscan;
-  configuration.wifi_channel_map = WIFI_CHANNEL_ALL;
+  configuration.wifi_channel_map = cfg.wifichanmap;
   configuration.wifi_channel_switch_interval = cfg.wifichancycle;
   configuration.wifi_rssi_threshold = cfg.rssilimit;
   ESP_LOGI(TAG, "WIFISCAN: %s", cfg.wifiscan ? "on" : "off");
@@ -456,7 +456,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 // only if we have a timesource we do timesync
-#if ((HAS_LORA_TIME) || (HAS_GPS) || (HAS_RTC))
+#if ((HAS_LORA_TIME) || (HAS_GPS) || defined HAS_RTC)
   time_init();
   strcat_P(features, " TIME");
 #endif // timesync

@@ -8,7 +8,7 @@ RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 // initialize RTC
 uint8_t rtc_init(void) {
   Wire.begin(HAS_RTC);
-  Rtc.Begin(MY_DISPLAY_SDA, MY_DISPLAY_SCL);
+  Rtc.Begin(HAS_RTC);
 
   // configure RTC chip
   Rtc.Enable32kHzPin(false);
@@ -22,7 +22,7 @@ uint8_t rtc_init(void) {
 #if (TIME_SYNC_COMPILEDATE)
   // initialize a blank RTC without battery backup with build time
   RtcDateTime tt = Rtc.GetDateTime();
-  time_t t = tt.Epoch32Time(); // sec2000 -> epoch
+  time_t t = tt.Unix32Time(); // sec2000 -> epoch
 
   if (!Rtc.IsDateTimeValid() || !timeIsValid(t)) {
     ESP_LOGW(TAG, "RTC has no recent time, setting to compiletime");
@@ -53,7 +53,7 @@ time_t get_rtctime(uint16_t *msec) {
   *msec = 0;
   if (Rtc.IsDateTimeValid() && Rtc.GetIsRunning()) {
     RtcDateTime tt = Rtc.GetDateTime();
-    t = tt.Epoch32Time(); // sec2000 -> epoch
+    t = tt.Unix32Time(); // sec2000 -> epoch
   }
 
 // if we have a RTC pulse, we calculate msec

@@ -18,7 +18,7 @@
 // Octopus32 has a pre-populated BME680 on i2c addr 0x76
 #define HAS_BME 1 // Enable BME sensors in general
 #define HAS_BME680 GPIO_NUM_23, GPIO_NUM_22 // SDA, SCL
-#define BME680_ADDR BME680_I2C_ADDR_PRIMARY // connect SDIO of BME680 to GND
+#define BME680_ADDR BME68X_I2C_ADDR_LOW // connect SDIO of BME680 to GND
 
 #define HAS_LED        13  // ESP32 GPIO12 (pin22) On Board LED
 //#define LED_ACTIVE_LOW 1  // Onboard LED is active when pin is LOW

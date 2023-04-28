@@ -91,6 +91,11 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 	0 ... 255 duration for scanning a bluetooth advertising channel in seconds/100
 	e.g. 8 -> each channel is scanned for 80 milliseconds [default]
 
+#### 0x0D set wakeup sync window
+
+	bytes 1..2 = wakeup sync window size in seconds (MSB), 0..255 (0 = no wakuep sync)
+	e.g. {0x02, 0x58} -> device adjusts it's wakeup time when it is +/- 5 minutes from top-of-hour [default = 0]
+
 #### 0x0E set Bluetooth scanner
 
 	0 = disabled
@@ -105,6 +110,11 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 	0 ... 100 percentage of luminosity (100% = full light)
 	e.g. 50 -> 50% of luminosity [default]
+
+#### 0x11 set Wifi scanner channel map bitmask
+
+	bytes 1..2 = wifi channel map bitmask (MSB), 0..8191
+	e.g. 0b1010000001001 sets channels 1, 4, 11, 13
 
 #### 0x13 set user sensor mode
 
