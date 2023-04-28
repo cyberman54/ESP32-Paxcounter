@@ -456,7 +456,7 @@ void setup() {
 #endif // HAS_BUTTON
 
 // only if we have a timesource we do timesync
-#if ((HAS_LORA_TIME) || (HAS_GPS) || (HAS_RTC))
+#if ((HAS_LORA_TIME) || (HAS_GPS) || defined HAS_RTC)
   time_init();
   strcat_P(features, " TIME");
 #endif // timesync
