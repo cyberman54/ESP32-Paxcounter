@@ -255,7 +255,7 @@ jobs:
           run: sleep 120s
           shell: bash
         - name: Query testboard
-          uses: cyberman54/curl@v1.2
+          uses: cyberman54/curl
           id: ttn
           with:
             #Get latest decoded payload message seen last 120 seconds from testboard
