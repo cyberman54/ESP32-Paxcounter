@@ -219,7 +219,11 @@ void lora_send(void *pvParameters) {
       xQueueReceive(LoraSendQueue, &SendBuffer, (TickType_t)0);
       break;
     case LMIC_ERROR_TX_BUSY:   // LMIC already has a tx message pending
+      ESP_LOGV(TAG, "Message not sent, LMIC busy, will retry later");
+      vTaskDelay(pdMS_TO_TICKS(500 + random(400))); // wait a while
+      break;
     case LMIC_ERROR_TX_FAILED: // message was not sent
+      ESP_LOGV(TAG, "Message not sent, TX failed, will retry later");
       vTaskDelay(pdMS_TO_TICKS(500 + random(400))); // wait a while
       break;
     case LMIC_ERROR_TX_TOO_LARGE:    // message size exceeds LMIC buffer size

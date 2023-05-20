@@ -1,13 +1,14 @@
 // clang-format off
 // upload_speed 921600
-// board ttgo-lora32-v1
+// board ttgo-lora32-v2
+// https://github.com/LilyGO/TTGO-LORA32
 
 #ifndef _TTGOV2_H
 #define _TTGOV2_H
 
 #include <stdint.h>
 
-// Hardware related definitions for TTGO V2 Board
+// Hardware related definitions for LilyGO TTGO LORA32 V2 Board
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1276_radio 1 // HPD13A LoRa SoC
@@ -34,8 +35,10 @@
 
 // Pins for LORA chip SPI interface come from board file, we need some
 // additional definitions for LMIC
-#define LORA_RST  LMIC_UNUSED_PIN
+// ********************************************************************************************
+//! LORA_IO1 is not connected on LilyGO TTGO V2 - bodge wire from LORA_IO1 to GPIO33 necessary
 #define LORA_IO1  (33)
+// ********************************************************************************************
 #define LORA_IO2  LMIC_UNUSED_PIN
 
 #endif
