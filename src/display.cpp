@@ -142,7 +142,7 @@ void dp_init(bool verbose) {
 void dp_refresh(bool nextPage) {
   struct count_payload_t count; // libpax count storage
   static uint8_t DisplayPage = 0;
-  char timeState, strftime_buf[64];
+  char timeState, strftime_buf[45];
   time_t now;
   struct tm timeinfo = {0};
 #ifndef HAS_BUTTON

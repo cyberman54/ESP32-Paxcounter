@@ -1,7 +1,6 @@
 // clang-format off
 // upload_speed 921600
-// board m5stack-core-esp32
-// b0ard m5stack-fire -> does not compile due to IRAM0 shortage, because 64KB of 192KB used for caching external SPIRAM
+// board m5stack-fire
 
 // note use of GPIO16/17
 // https://www.bjoerns-techblog.de/2019/03/m5stack-fire-eine-uebersicht/
@@ -22,18 +21,18 @@
 #define LORA_IO2  LMIC_UNUSED_PIN
 
 // enable only if you want to store a local paxcount table on the device
-#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
-#define SDCARD_CS    GPIO_NUM_4
-#define SDCARD_MOSI  MOSI
-#define SDCARD_MISO  MISO
-#define SDCARD_SCLK  SCK
+//#define HAS_SDCARD  1      // this board has an SD-card-reader/writer
+//#define SDCARD_CS    GPIO_NUM_4
+//#define SDCARD_MOSI  MOSI
+//#define SDCARD_MISO  MISO
+//#define SDCARD_SCLK  SCK
 
 #define CFG_sx1276_radio 1 // select LoRa chip
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_LED NOT_A_PIN // no on board LED (?)
-#define RGB_LED_COUNT 10 // M5fire has a stripe of 10 RGB Pixels
-#define HAS_RGB_LED FastLED.addLeds<SK6812, GPIO_NUM_15, GRB>(leds, RGB_LED_COUNT);
+//#define RGB_LED_COUNT 10 // M5fire has a stripe of 10 RGB Pixels
+//#define HAS_RGB_LED FastLED.addLeds<SK6812, GPIO_NUM_15, GRB>(leds, RGB_LED_COUNT);
 #define HAS_BUTTON (39) // on board button A
 
 // power management settings
