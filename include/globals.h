@@ -6,6 +6,7 @@
 
 // Time functions
 #ifdef HAS_RTC
+#include <RtcUtility.h>
 #include <RtcDateTime.h>
 #endif
 #include <Ticker.h>
