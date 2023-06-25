@@ -4,7 +4,6 @@
 #if (HAS_GPS)
 
 #include <TinyGPS++.h> // library for parsing NMEA data
-#include <RtcDateTime.h>
 #include "timekeeper.h"
 
 #ifndef GPS_BAUDRATE
