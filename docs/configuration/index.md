@@ -112,7 +112,7 @@ This describes how to set up a mobile PaxCounter:<br> Follow all steps so far fo
 
 ## SD-card
 
-Data can be stored on SD-card if the board provides an SD card interface, either with SPI or MMC mode. To enable this feature, specify interface mode and hardware pins in board's hal file (`src/hal/<board.h\>`):
+Data can be stored on a FAT32 (pre-)formatted SD-card if the board provides an SD card interface, either with SPI or MMC mode. To enable this feature, specify interface mode and hardware pins in board's hal file (`src/hal/<board.h\>`):
 
 ```c
     #define HAS_SDCARD 1     // SD-card interface, using SPI mode
