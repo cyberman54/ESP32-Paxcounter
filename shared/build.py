@@ -26,7 +26,7 @@ prjdir = env.get("PROJECT_DIR")
 shareddir = os.path.join (prjdir, "shared")
 
 # get hal path
-haldir = os.path.join (prjdir, "shared\hal")
+haldir = os.path.join (prjdir, "shared/hal")
 
 # check if hal file is present in source directory
 halconfig = config.get("board", "halfile")
