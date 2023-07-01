@@ -1,7 +1,7 @@
 
 # Payload format
 
-You can select different payload formats in [`paxcounter.conf`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/paxcounter_orig.conf):
+You can select different payload formats in [`paxcounter.conf`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/paxcounter_orig.conf):
 
 - ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 
@@ -10,8 +10,8 @@ You can select different payload formats in [`paxcounter.conf`](https://github.c
 - [***CayenneLPP***](https://developers.mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload) generates MyDevices Cayenne readable fields
 
 
-```c linenums="20" title="src/paxcounter_orig.conf"
---8<-- "src/paxcounter_orig.conf:20:20"
+```c linenums="20" title="shared/paxcounter_orig.conf"
+--8<-- "shared/paxcounter_orig.conf:20:20"
 ```
 
 

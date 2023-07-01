@@ -266,7 +266,7 @@ esp_err_t lmic_init(void) {
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
 // so consuming more power. You may sharpen (reduce) CLOCK_ERROR_PERCENTAGE
-// in src/lmic_config.h if you are limited on battery.
+// in shared/lmic_config.h if you are limited on battery.
 #ifdef CLOCK_ERROR_PROCENTAGE
   LMIC_setClockError(CLOCK_ERROR_PROCENTAGE * MAX_CLOCK_ERROR / 1000);
 #endif

@@ -7,7 +7,7 @@
  * LMIC LoRaWAN configuration
  *
  * Read the values from TTN console (or whatever applies), insert them here,
- * and rename this file to src/loraconf.h
+ * and rename this file to shared/loraconf.h
  *
  * You can configure OTAA or ABP Activation. In order to use ABP, uncomment
  * (enable) the following line, but you should only do so, if you have good 
