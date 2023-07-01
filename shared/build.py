@@ -23,7 +23,8 @@ config.read("platformio.ini")
 srcdir = env.get("PROJECT_SRC_DIR")
 
 # get hal path
-haldir = os.path.join (srcdir, "hal")
+prjdir = env.get("PROJECT_DIR")
+haldir = os.path.join (prjdir, "shared/hal")
 
 # check if hal file is present in source directory
 halconfig = config.get("board", "halfile")

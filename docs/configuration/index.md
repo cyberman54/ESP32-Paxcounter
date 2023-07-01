@@ -14,24 +14,24 @@ You can add up to 3 user defined sensors. Insert your sensor's payload scheme in
 
 For these peripherals no additional code is needed. To activate configure them in the board's hal file before building the code.
 
-See [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h) for all options and for proper configuration of BME280/BME680.
+See [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/hal/generic.h) for all options and for proper configuration of BME280/BME680.
 
 === "BME/ BMP Configuration"
-	```c linenums="37" title="src/hal/generic.h"
-	--8<-- "src/hal/generic.h:37:49"
+	```c linenums="37" title="shared/hal/generic.h"
+	--8<-- "shared/hal/generic.h:37:49"
 	```
 === "SDS011 Configuration"
-	```c linenums="51" title="src/hal/generic.h"
-	--8<-- "src/hal/generic.h:51:56"
+	```c linenums="51" title="shared/hal/generic.h"
+	--8<-- "shared/hal/generic.h:51:56"
 	```
 === "Custom Sensors Configuration"
-	```c linenums="57" title="src/hal/generic.h"
-	--8<-- "src/hal/generic.h:57:60"
+	```c linenums="57" title="shared/hal/generic.h"
+	--8<-- "shared/hal/generic.h:57:60"
 	```
 
 === "Complete `generic.h`"
-	```c linenums="1" title="src/hal/generic.h"
-	--8<-- "src/hal/generic.h"
+	```c linenums="1" title="shared/hal/generic.h"
+	--8<-- "shared/hal/generic.h"
 	```
 
 Output of user sensor data can be switched by user remote control command `0x14` sent to Port 2.
@@ -77,10 +77,10 @@ Paxcounter can keep a time-of-day synced with external or on board time sources.
 --8<-- "src/paxcounter_orig.conf:88:88"
 ```
 
-Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/generic.h).
+Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/hal/generic.h).
 
-```c linenums="87" title="src/hal/generic.h"
---8<-- "src/hal/generic.h:87:96"
+```c linenums="87" title="shared/hal/generic.h"
+--8<-- "shared/hal/generic.h:87:96"
 ```
 
 
@@ -112,7 +112,7 @@ This describes how to set up a mobile PaxCounter:<br> Follow all steps so far fo
 
 ## SD-card
 
-Data can be stored on a FAT32 (pre-)formatted SD-card if the board provides an SD card interface, either with SPI or MMC mode. To enable this feature, specify interface mode and hardware pins in board's hal file (`src/hal/<board.h\>`):
+Data can be stored on a FAT32 (pre-)formatted SD-card if the board provides an SD card interface, either with SPI or MMC mode. To enable this feature, specify interface mode and hardware pins in board's hal file (`shared/hal/<board.h\>`):
 
 ```c
     #define HAS_SDCARD 1     // SD-card interface, using SPI mode
@@ -126,10 +126,10 @@ Data can be stored on a FAT32 (pre-)formatted SD-card if the board provides an S
     #define SDCARD_SCLK (14)
 ```
 
-This is an example of a board with MMC SD-card interface: [https://www.aliexpress.com/item/32915894264.html](https://www.aliexpress.com/item/32915894264.html). For this board use file [`src/hal/ttgov21new.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/hal/ttgov21new.h) and add the lines given above.
+This is an example of a board with MMC SD-card interface: [https://www.aliexpress.com/item/32915894264.html](https://www.aliexpress.com/item/32915894264.html). For this board use file [`shared/hal/ttgov21new.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/hal/ttgov21new.h) and add the lines given above.
 
 Another approach would be this tiny board: [https://www.aliexpress.com/item/32424558182.html](https://www.aliexpress.com/item/32424558182.html) (needs 5V).
-In this case you choose the correct file for your ESP32-board in the src/hal-directory and add the lines given above. Edit the pin numbers given in the example, according to your wiring.
+In this case you choose the correct file for your ESP32-board in the shared/hal-directory and add the lines given above. Edit the pin numbers given in the example, according to your wiring.
 
 Data is written on SD-card to a single file. After 3 write operations the data is flushed to the disk to minimize flash write cycles. Thus, up to the last 3 records of data will get lost when the Paxcounter looses power during operation.
 
