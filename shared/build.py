@@ -19,11 +19,14 @@ env = DefaultEnvironment()
 config = configparser.ConfigParser()
 config.read("platformio.ini")
 
-# get platformio source path
-srcdir = env.get("PROJECT_SRC_DIR")
+# get platformio project directory
+prjdir = env.get("PROJECT_DIR")
+
+# get platformio shared path
+shareddir = os.path.join (prjdir, "shared")
 
 # get hal path
-haldir = os.path.join (srcdir, "hal")
+haldir = os.path.join (shareddir, "hal")
 
 # check if hal file is present in source directory
 halconfig = config.get("board", "halfile")
@@ -42,23 +45,23 @@ if os.path.isfile(halconfigfile) and os.access(halconfigfile, os.R_OK):
 else:
     sys.exit("Missing file " + halconfigfile + ", please create it! Aborting.")
 
-# check if lmic config file is present in source directory
+# check if lmic config file is present in shared directory
 lmicconfig = config.get("common", "lmicconfigfile")
-lmicconfigfile = os.path.join (srcdir, lmicconfig)
+lmicconfigfile = os.path.join (shareddir, lmicconfig)
 if os.path.isfile(lmicconfigfile) and os.access(lmicconfigfile, os.R_OK):
     print("Parsing LMIC configuration from " + lmicconfigfile)
 else:
     sys.exit("Missing file " + lmicconfigfile + ", please create it! Aborting.")
 
-# check if lora key file is present in source directory
-lorakeyfile = os.path.join (srcdir, config.get("common", "lorakeyfile"))
+# check if lora key file is present in shared directory
+lorakeyfile = os.path.join (shareddir, config.get("common", "lorakeyfile"))
 if os.path.isfile(lorakeyfile) and os.access(lorakeyfile, os.R_OK):
     print("Parsing LORAWAN keys from " + lorakeyfile)
 else:
     sys.exit("Missing file " + lorakeyfile + ", please create it! Aborting.")
 
-# check if ota key file is present in source directory
-otakeyfile = os.path.join (srcdir, config.get("common", "otakeyfile"))
+# check if ota key file is present in shared directory
+otakeyfile = os.path.join (shareddir, config.get("common", "otakeyfile"))
 if os.path.isfile(otakeyfile) and os.access(otakeyfile, os.R_OK):
     print("Parsing OTA keys from " + otakeyfile)
 else:
@@ -113,7 +116,7 @@ env.Append(BUILD_FLAGS=[
     u'-DPAXEXPRESS_REPO=\\"' + mykeys["PAXEXPRESS_REPO"] + '\\"',
     u'-DPAXEXPRESS_PACKAGE=\\"' + package + '\\"',
     u'-DARDUINO_LMIC_PROJECT_CONFIG_H=' + lmicconfig,
-    u'-I \"' + srcdir + '\"'
+    u'-I \"' + shareddir + '\"'
     ])
 
 # function for pushing new firmware to paxexpress storage using API

@@ -24,7 +24,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 - TTGO: [T-Wristband](https://www.aliexpress.com/item/4000527495064.html)
 - Generic ESP32
 
-*) supports microSD/TF-card for local logging of paxcounter data
+*) supports microSD/TF-card for local logging of paxcounter data. SD/TF-card must be FAT32 formatted.
 
 Depending on board hardware following features are supported:
 
@@ -45,7 +45,7 @@ Depending on board hardware following features are supported:
 - SD-card (see section SD-card here) for logging pax data
 
 Target platform must be selected in `platformio.ini`.<br>
-Hardware dependent settings (pinout etc.) are stored in board files in [/hal](https://github.com/cyberman54/ESP32-Paxcounter/tree/master/src/hal) directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
+Hardware dependent settings (pinout etc.) are stored in board files in [/shared/hal](https://github.com/cyberman54/ESP32-Paxcounter/tree/master/shared/hal) directory. If you want to use a ESP32 board which is not yet supported, use hal file generic.h and tailor pin mappings to your needs. Pull requests for new boards welcome.<br>
 
 ### 3D printed cases
 Some 3D printable cases can be found (and, if wanted so, ordered) on Thingiverse, see

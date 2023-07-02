@@ -41,15 +41,15 @@ Edit `platformio_orig.ini` (for ESP32 CPU based boards) *or* `platformio_orig_s3
 
 
 ## paxcounter.conf
-Edit `src/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `src/paxcounter.conf`.
+Edit `shared/paxcounter_orig.conf` and tailor settings in this file according to your needs and use case. Please take care of the duty cycle regulations of the LoRaWAN network you're going to use. Copy or rename to `shared/paxcounter.conf`.
 
 === "Copy"
     ``` bash
-    cp src/paxcounter_orig.conf src/paxcounter.conf
+    cp shared/paxcounter_orig.conf shared/paxcounter.conf
     ```
 === "Rename"
     ``` bash
-    mv src/paxcounter_orig.conf src/paxcounter.conf
+    mv shared/paxcounter_orig.conf shared/paxcounter.conf
     ```
 
 
@@ -58,52 +58,52 @@ Edit `src/paxcounter_orig.conf` and tailor settings in this file according to yo
 If your device has a **real time clock** it can be updated by either LoRaWAN network or GPS time, according to settings *TIME_SYNC_INTERVAL* and *TIME_SYNC_LORAWAN* in `paxcounter.conf`.
 
 ```c linenums="85" title="paxcounter.conf"
---8<-- "src/paxcounter_orig.conf:85:85"
+--8<-- "shared/paxcounter_orig.conf:85:85"
 ```
 
-## src/lmic_config.h
-Edit `src/lmic_config.h` and tailor settings in this file according to your country and device hardware. Please take care of national regulations when selecting the frequency band for LoRaWAN.
+## shared/lmic_config.h
+Edit `shared/lmic_config.h` and tailor settings in this file according to your country and device hardware. Please take care of national regulations when selecting the frequency band for LoRaWAN.
 
-```c linenums="9" title="national regulations in src/lmic_config.h "
---8<-- "src/lmic_config.h:9:18"
+```c linenums="9" title="national regulations in shared/lmic_config.h "
+--8<-- "shared/lmic_config.h:9:18"
 ```
 
-## src/loraconf.h
-Create file `src/loraconf.h` using the template [src/loraconf_sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/loraconf_sample.h) and adjust settings to use your personal values. To join the network and activate your paxcounter, you must configure either OTAA or ABP join method. You should use OTAA, whenever possible. To understand the differences of the two methods, [this article](https://www.thethingsnetwork.org/docs/devices/registration.html) may be useful.
+## shared/loraconf.h
+Create file `shared/loraconf.h` using the template [shared/loraconf_sample.h](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/loraconf_sample.h) and adjust settings to use your personal values. To join the network and activate your paxcounter, you must configure either OTAA or ABP join method. You should use OTAA, whenever possible. To understand the differences of the two methods, [this article](https://www.thethingsnetwork.org/docs/devices/registration.html) may be useful.
 
 === "Copy"
     ``` bash
-    cp src/loraconf_sample.h src/loraconf.h
+    cp shared/loraconf_sample.h shared/loraconf.h
     ```
 === "Rename"
     ``` bash
-    mv src/loraconf_sample.h src/loraconf.h
+    mv shared/loraconf_sample.h shared/loraconf.h
     ```
 
 
-To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP, activate (uncomment) `#define LORA_ABP` in the file `src/loraconf.h`.
-The file `src/loraconf_sample.h` contains more information about the values to provide.
+To configure OTAA, leave `#define LORA_ABP` deactivated (commented). To use ABP, activate (uncomment) `#define LORA_ABP` in the file `shared/loraconf.h`.
+The file `shared/loraconf_sample.h` contains more information about the values to provide.
 
 === "Activate OTAA (Default), Deactivate ABP"
-    ``` c linenums="18" title="src/loraconf.h"
-    --8<-- "src/loraconf_sample.h:18:18"
+    ``` c linenums="18" title="shared/loraconf.h"
+    --8<-- "shared/loraconf_sample.h:18:18"
     ```
 === "Deactivate OTAA, Activate ABP"
-    ``` c linenums="18" title="src/loraconf.h"
+    ``` c linenums="18" title="shared/loraconf.h"
     #define LORA_ABP
     ```
 
 
-## src/ota.conf
-Create file `src/ota.conf` using the template [src/ota_sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/ota_sample.conf) and enter your WIFI network & key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://github.com/paxexpress/docs">PAX.express repository</A>. Enter your PAX.express credentials in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
+## shared/ota.conf
+Create file `shared/ota.conf` using the template [shared/ota_sample.conf](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/ota_sample.conf) and enter your WIFI network & key. These settings are used for downloading updates via WiFi, either from a remote https server, or locally via WebUI. If you want to use a remote server, you need a <A HREF="https://github.com/paxexpress/docs">PAX.express repository</A>. Enter your PAX.express credentials in ota.conf. If you don't need wireless firmware updates just rename ota.sample.conf to ota.conf.
 
 === "Copy"
     ``` bash
-    cp src/ota_sample.conf src/ota.conf
+    cp shared/ota_sample.conf shared/ota.conf
     ```
 === "Rename"
     ``` bash
-    mv src/ota_sample.conf src/ota.conf
+    mv shared/ota_sample.conf shared/ota.conf
     ```
 # Building
 

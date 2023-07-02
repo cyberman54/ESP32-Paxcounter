@@ -92,9 +92,9 @@ jobs:
       - name: Copy of necessary files
         run: |
           cp platformio_orig.ini platformio.ini
-          cp src/loraconf_sample.h src/loraconf.h
-          cp src/ota_sample.conf src/ota.conf
-          cp src/paxcounter_orig.conf src/paxcounter.conf
+          cp shared/loraconf_sample.h shared/loraconf.h
+          cp shared/ota_sample.conf shared/ota.conf
+          cp shared/paxcounter_orig.conf shared/paxcounter.conf
       - name: Clean
         run: pio run -t clean -e ci
       - name: Run PlatformIO CI for ${{ matrix.board }}
@@ -143,9 +143,9 @@ jobs:
       - name: Copy of necessary files
         run: |
           cp platformio_orig.ini platformio.ini
-          cp src/loraconf_sample.h src/loraconf.h
-          cp src/ota_sample.conf src/ota.conf
-          cp src/paxcounter_orig.conf src/paxcounter.conf
+          cp shared/loraconf_sample.h shared/loraconf.h
+          cp shared/ota_sample.conf shared/ota.conf
+          cp shared/paxcounter_orig.conf shared/paxcounter.conf
       - name: Clean
         run: pio run -t clean -e ci
       - name: Run PlatformIO CI for ${{ matrix.board }}
@@ -197,9 +197,9 @@ jobs:
       - name: Copy of necessary files
         run: |
           cp platformio_orig_s3.ini platformio.ini
-          cp src/loraconf_sample.h src/loraconf.h
-          cp src/ota_sample.conf src/ota.conf
-          cp src/paxcounter_orig.conf src/paxcounter.conf
+          cp shared/loraconf_sample.h shared/loraconf.h
+          cp shared/ota_sample.conf shared/ota.conf
+          cp shared/paxcounter_orig.conf shared/paxcounter.conf
       - name: Clean
         run: pio run -t clean -e ci
       - name: Run PlatformIO CI for ${{ matrix.board }}
@@ -235,22 +235,22 @@ jobs:
         - name: Prepare config files for test
           run: |
             cp platformio_orig.ini platformio.ini
-            cp src/loraconf_sample.h src/loraconf.h
-            cp src/ota_sample.conf src/ota.conf
-            cp src/paxcounter_orig.conf src/paxcounter.conf
+            cp shared/loraconf_sample.h shared/loraconf.h
+            cp shared/ota_sample.conf shared/ota.conf
+            cp shared/paxcounter_orig.conf shared/paxcounter.conf
             # apply test credentials to loraconf.h
-            sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "src/loraconf.h"
-            sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "src/loraconf.h"
+            sed -i "s/APPEUI\[8\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPEUI }}/" "shared/loraconf.h"
+            sed -i "s/APPKEY\[16\] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};/${{ secrets.APPKEY }}/" "shared/loraconf.h"
             # apply test credentials to ota.conf
-            sed -i "/OTA_WIFI_SSID/c OTA_WIFI_SSID = ${{ secrets.OTA_WIFI_SSID }}" "src/ota.conf"
-            sed -i "/OTA_WIFI_PASS/c OTA_WIFI_PASS = ${{ secrets.OTA_WIFI_PASS }}" "src/ota.conf"
-            sed -i "/PAXEXPRESS_USER/c PAXEXPRESS_USER = ${{ secrets.PAXEXPRESS_USER }}" "src/ota.conf"
-            sed -i "/PAXEXPRESS_REPO/c PAXEXPRESS_REPO = ${{ secrets.PAXEXPRESS_REPO }}" "src/ota.conf"
-            sed -i "/PAXEXPRESS_API_TOKEN/c PAXEXPRESS_API_TOKEN = ${{ secrets.PAXEXPRESS_API_TOKEN }}" "src/ota.conf"
+            sed -i "/OTA_WIFI_SSID/c OTA_WIFI_SSID = ${{ secrets.OTA_WIFI_SSID }}" "shared/ota.conf"
+            sed -i "/OTA_WIFI_PASS/c OTA_WIFI_PASS = ${{ secrets.OTA_WIFI_PASS }}" "shared/ota.conf"
+            sed -i "/PAXEXPRESS_USER/c PAXEXPRESS_USER = ${{ secrets.PAXEXPRESS_USER }}" "shared/ota.conf"
+            sed -i "/PAXEXPRESS_REPO/c PAXEXPRESS_REPO = ${{ secrets.PAXEXPRESS_REPO }}" "shared/ota.conf"
+            sed -i "/PAXEXPRESS_API_TOKEN/c PAXEXPRESS_API_TOKEN = ${{ secrets.PAXEXPRESS_API_TOKEN }}" "shared/ota.conf"
         - name: Build and deploy for testboard
           env:
             PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-          run: pio remote -a prenzlpi run -t upload -r
+          run: pio remote -a prenzlpi run -t upload
         - name: Wait 120 seconds
           run: sleep 120s
           shell: bash

@@ -14,23 +14,23 @@ The following exampls show how to add a custom temperature and humidty sensor.
 To use a custom sensor you first have to enable the Sensor which you want to use. For this you have to edit or add `HAS_SENSOR_1` in either the `paxcounter.conf` or the `hal` file of your board.
 === "Activate Sensor 1"
 
-    ```c linenums="132" title="src/paxcounter_orig.conf"
+    ```c linenums="132" title="shared/paxcounter_orig.conf"
     #define HAS_SENSOR_1 1
     ```
 === "Activate Sensor 2"
 
-    ```c linenums="132" title="src/paxcounter_orig.conf"
+    ```c linenums="132" title="shared/paxcounter_orig.conf"
     #define HAS_SENSOR_2 1
     ```
 === "Activate Sensor 3"
 
-    ```c linenums="132" title="src/paxcounter_orig.conf"
+    ```c linenums="132" title="shared/paxcounter_orig.conf"
     #define HAS_SENSOR_3 1
     ```
 
 You might also add a constant for your custom sensor in the `paxcounter.conf` file. This is optional but can be used to identify the sensor type.
 
-```c linenums="133" title="src/paxcounter_orig.conf"
+```c linenums="133" title="shared/paxcounter_orig.conf"
 #define HAS_GY21 1 // (1)
 ```
 
