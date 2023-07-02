@@ -2,7 +2,6 @@
 
 #include "rtctime.h"
 
-
 RtcDS3231<TwoWire> Rtc(Wire); // RTC hardware i2c interface
 
 // initialize RTC
