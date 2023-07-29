@@ -1,3 +1,6 @@
+// Note: Don't build & run this code with loglevel debug!
+// It would crash for some unknown reason with stack canary error.
+
 #if (USE_OTA)
 
 /*
@@ -61,12 +64,9 @@ void start_ota_update() {
   ota_display(1, "**", WIFI_SSID);
 
   WiFi.disconnect(true);
-  WiFi.config(INADDR_NONE, INADDR_NONE,
-              INADDR_NONE); // call is only a workaround for bug in WiFi class
-  // see https://github.com/espressif/arduino-esp32/issues/806
+  WiFi.mode(WIFI_MODE_NULL);
   WiFi.setHostname(host);
   WiFi.mode(WIFI_STA);
-  WiFi.begin();
 
   // Connect to WiFi network
   // workaround applied here to bypass WIFI_AUTH failure
@@ -75,12 +75,12 @@ void start_ota_update() {
   // 1st try
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() == WL_DISCONNECTED) {
-    delay(500);
+    delay(2000);
   }
   // 2nd try
   if (WiFi.status() != WL_CONNECTED) {
     WiFi.begin(WIFI_SSID, WIFI_PASS);
-    delay(500);
+    delay(2000);
   }
 
   uint8_t i = WIFI_MAX_TRY;
@@ -184,10 +184,11 @@ int do_ota_update() {
 
     ESP_LOGI(TAG, "Requesting %s", firmwarePath.c_str());
 
-    client.print(String("GET ") + firmwarePath + " HTTP/1.1\r\n");
-    client.print(String("Host: ") + currentHost + "\r\n");
-    client.print("Cache-Control: no-cache\r\n");
-    client.print("Connection: close\r\n\r\n");
+    client.println(String("GET " + firmwarePath + " HTTP/1.1"));
+    client.println(String("Host: " + currentHost));
+    client.println("Cache-Control: no-cache");
+    client.println("Connection: close");
+    client.println();
 
     unsigned long timeout = millis();
     while (client.available() == 0) {
@@ -322,9 +323,10 @@ void ota_display(const uint8_t row, const std::string status,
   dp->setCursor(14 * 8, row * 8);
   dp->printf(status.substr(0, 2).c_str());
   if (!msg.empty()) {
+    dp->setCursor(0, 7 * 8);
     dp->printf("                ");
+    dp->setCursor(0, 7 * 8);
     dp->printf(msg.substr(0, 16).c_str());
-    // dp->printf("\r\n");
   }
   dp_dump();
 #endif
@@ -334,7 +336,7 @@ void ota_display(const uint8_t row, const std::string status,
 void show_progress(unsigned long current, unsigned long size) {
 #ifdef HAS_DISPLAY
   char buf[17];
-  snprintf(buf, 17, "%-9lu (%3lu%%)", current, current * 100 / size);
+  snprintf(buf, 17, "%-9lu %3lu%%", current, current * 100 / size);
   ota_display(4, "**", buf);
 #endif
 }
