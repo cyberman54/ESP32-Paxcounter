@@ -10,6 +10,8 @@
 
 ---
 
+**Ready-to-go Hardware**: <a href="https://de.aliexpress.com/item/32915894264.html" target="_blank">LILYGO® Paxcounter LoRa</a>
+
 **Documentation**: <a href="https://cyberman54.github.io/ESP32-Paxcounter" target="_blank">https://cyberman54.github.io/ESP32-Paxcounter</a>
 
 **Source Code**: <a href="https://github.com/cyberman54/ESP32-Paxcounter" target="_blank">https://github.com/cyberman54/ESP32-Paxcounter</a>

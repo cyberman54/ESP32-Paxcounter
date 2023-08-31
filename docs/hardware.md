@@ -4,7 +4,7 @@
 
 *With LoRa radio data transfer*:
 
-- **LilyGo: [Paxcounter-Board*](https://www.aliexpress.com/item/32915894264.html?spm=a2g0o.productlist.0.0.3d656325QrcfQc&algo_pvid=4a150199-63e7-4d21-bdb1-b48164537744&algo_exp_id=4a150199-63e7-4d21-bdb1-b48164537744-2&pdp_ext_f=%7B%22sku_id%22%3A%2212000023374441919%22%7D)**
+- **LILYGO®: [Paxcounter LoRa V2.1*](https://de.aliexpress.com/item/32915894264.html)**
 - TTGO: T1*, T2*, T3*, T-Beam, T-Fox
 - Heltec: LoRa-32 v1 and v2
 - Pycom: LoPy, LoPy4, FiPy
@@ -16,7 +16,7 @@ LoLin32lite + [LoraNode32-Lite shield](https://github.com/hallard/LoLin32-Lite-L
 
 *Without LoRa*:
 
-- LilyGo: [T-Dongle S3*](https://github.com/Xinyuan-LilyGO/T-Dongle-S3)
+- LILYGO®: [T-Dongle S3*](https://github.com/Xinyuan-LilyGO/T-Dongle-S3)
 - Pyom: WiPy
 - WeMos: LoLin32, LoLin32 Lite, WeMos D32, [Wemos32 Oled](https://www.instructables.com/id/ESP32-With-Integrated-OLED-WEMOSLolin-Getting-Star/)
 - Crowdsupply: [TinyPICO](https://www.crowdsupply.com/unexpected-maker/tinypico)
