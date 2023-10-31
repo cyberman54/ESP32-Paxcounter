@@ -65,7 +65,7 @@ void irqHandler(void *pvParameters) {
 // do we have a power event?
 #ifdef HAS_PMU
     if (irqSource & PMU_IRQ)
-      AXP192_powerevent_IRQ();
+      AXP2101_powerevent_IRQ();
 #endif
 
     // is time to send the payload?

@@ -60,10 +60,10 @@ extern int8_t batt_level;
 extern XPowersPMU pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
 void IRAM_ATTR PMUIRQ();
-void AXP192_powerevent_IRQ(void);
-void AXP192_power(pmu_power_t powerlevel);
-void AXP192_init(void);
-void AXP192_showstatus(void);
+void AXP2101_powerevent_IRQ(void);
+void AXP2101_power(pmu_power_t powerlevel);
+void AXP2101_init(void);
+void AXP2101_showstatus(void);
 #endif // HAS_PMU
 
 #ifdef HAS_IP5306
