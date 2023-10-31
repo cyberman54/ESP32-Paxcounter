@@ -318,3 +318,12 @@ if (typeof module === 'object' && typeof module.exports !== 'undefined') {
         decode: decode
     };
 }
+
+function Decoder(bytes, port, uplink_info) {
+    var input = {
+        fPort: port,
+        bytes: bytes
+    };
+    var output = decodeUplink(input);
+    return output.data;
+}
