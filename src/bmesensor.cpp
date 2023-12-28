@@ -39,6 +39,10 @@ Adafruit_BME280 bme; // using I2C interface
 
 Adafruit_BMP085 bmp; // I2C
 
+#elif defined HAS_BMP280
+
+Adafruit_BMP280 bmp; // I2C
+
 #endif
 
 void setBMEIRQ() { xTaskNotify(irqHandlerTask, BME_IRQ, eSetBits); }
@@ -68,7 +72,9 @@ int bme_init(void) {
 #elif defined HAS_BMP180
   // Wire.begin(21, 22);
   rc = bmp.begin();
-
+#elif defined HAS_BMP280
+  // Wire.begin(21, 22);
+  rc = bmp.begin(BMP280_ADDR);
 #endif
 
   if (rc)
@@ -132,6 +138,12 @@ void bme_storedata(bmeStatus_t *bme_store) {
   bme_store->pressure = (bmp.readPressure() / 100.0); // conversion Pa -> hPa
   // bme.readAltitude(SEALEVELPRESSURE_HPA);
   bme_store->iaq = 0; // IAQ feature not present with BME280
+#elif defined HAS_BMP280
+    bme_store->temperature = bmp.readTemperature();
+  bme_store->pressure = (bmp.readPressure() / 100.0); // conversion Pa -> hPa
+  // bme.readAltitude(SEALEVELPRESSURE_HPA);
+  bme_store->iaq = 0; // IAQ feature not present with BMP280
+
 #endif
 } // bme_storedata()
 

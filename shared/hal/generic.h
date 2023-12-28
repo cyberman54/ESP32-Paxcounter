@@ -45,8 +45,14 @@
 //#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring
 
 // BMP180 sensor on I2C bus
+//#define HAS_BME 1 // Enable BME sensors in general
 //#define HAS_BMP180
 //#define BMP180_ADDR 0x77
+
+// BMP280 sensor on I2C bus
+//#define HAS_BME 1 // Enable BME sensors in general
+//#define HAS_BMP280
+//#define BMP280_ADDR 0x76
 
 // SDS011 dust sensor settings
 //#define HAS_SDS011 1 // use SDS011

@@ -37,7 +37,7 @@ Depending on board hardware following features are supported:
 - Button (short press: flip display page / long press: send alarm message)
 - Battery voltage monitoring (analog read / AXP192 / IP5306)
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
-- Environmental sensors (Bosch BMP180/BME280/BME680 I2C; SDS011 serial)
+- Environmental sensors (Bosch BMP180/BME280/BME680/BMP280 I2C; SDS011 serial)
 - Real Time Clock (Maxim DS3231 I2C)
 - IF482 (serial) and DCF77 (gpio) time telegram generator
 - Switch external power / battery

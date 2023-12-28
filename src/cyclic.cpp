@@ -98,6 +98,10 @@ void doHousekeeping() {
 #elif defined HAS_BMP180
   ESP_LOGI(TAG, "BMP180 Temp: %.2f°C | Pressure: %.0f", bme_status.temperature,
            bme_status.pressure);
+#elif defined HAS_BMP280
+  ESP_LOGI(TAG, "BMP280 Temp: %.2f°C | Pressure: %.0f", bme_status.temperature,
+           bme_status.pressure);
+
 #endif
 #endif
 
