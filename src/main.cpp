@@ -409,6 +409,8 @@ void setup() {
   strcat_P(features, " BME280");
 #elif defined HAS_BMP180
   strcat_P(features, " BMP180");
+#elif defined HAS_BMP280
+  strcat_P(features, " BMP280");
 #endif
   if (bme_init())
     ESP_LOGI(TAG, "BME sensor initialized");
