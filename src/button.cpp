@@ -41,7 +41,7 @@ void button_init(void) {
                           &buttonLoopTask, // task handle
                           1);              // CPU core
 
-  button.setPressTicks(1000);
+  button.setPressMs(1000);
   button.attachClick(singleClick);
   button.attachLongPressStart(longPressStart);
 
