@@ -182,7 +182,7 @@ Send for example `83` `86` as Downlink on Port 2 to get battery status and time/
 
 	Device answers with it's current status on Port 4.
 
-#### 0x85 get BME280 / BME680 sensor data
+#### 0x85 get BME sensor data
 
 	Device answers with BME sensor data set on Port 7.
 

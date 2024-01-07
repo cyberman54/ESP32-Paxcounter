@@ -6,7 +6,7 @@ You can add up to 3 user defined sensors. Insert your sensor's payload scheme in
 
 ### Supported Peripherals
 
-* Bosch BMP180 / BME280 / BME680
+* Bosch BMP180 / BME280 / BMP280 / BMP680
 * SDS011
 * RTC DS3231
 * generic serial NMEA GPS
@@ -18,15 +18,15 @@ See [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/sha
 
 === "BME/ BMP Configuration"
 	```c linenums="37" title="shared/hal/generic.h"
-	--8<-- "shared/hal/generic.h:37:49"
+	--8<-- "shared/hal/generic.h:37:55"
 	```
 === "SDS011 Configuration"
 	```c linenums="51" title="shared/hal/generic.h"
-	--8<-- "shared/hal/generic.h:51:56"
+	--8<-- "shared/hal/generic.h:57:61"
 	```
 === "Custom Sensors Configuration"
 	```c linenums="57" title="shared/hal/generic.h"
-	--8<-- "shared/hal/generic.h:57:60"
+	--8<-- "shared/hal/generic.h:63:66"
 	```
 
 === "Complete `generic.h`"
@@ -52,7 +52,7 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 \*) GPS data can also be combined with paxcounter payload on port 1, `#define GPSPORT 1` in paxcounter.conf to enable
 
 ```c linenums="102" title="shared/paxcounter_orig.conf"
---8<-- "shared/paxcounter_orig.conf:102:102"
+--8<-- "shared/paxcounter_orig.conf:104:104"
 ```
 
 
@@ -74,13 +74,13 @@ Paxcounter supports a battery friendly power saving mode. In this mode the devic
 Paxcounter can keep a time-of-day synced with external or on board time sources. Set `#define TIME_SYNC_INTERVAL` in `paxcounter.conf` to enable time sync.
 
 ```c linenums="88" title="shared/paxcounter_orig.conf"
---8<-- "shared/paxcounter_orig.conf:88:88"
+--8<-- "shared/paxcounter_orig.conf:90:90"
 ```
 
 Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in [`generic.h`](https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/hal/generic.h).
 
 ```c linenums="87" title="shared/hal/generic.h"
---8<-- "shared/hal/generic.h:87:96"
+--8<-- "shared/hal/generic.h:93:95"
 ```
 
 
@@ -101,7 +101,7 @@ Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time tele
 This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In `paxcounter.conf` set `PAYLOAD_OPENSENSEBOX` to `1`.
 
 ```c linenums="60" title="shared/paxcounter_orig.conf"
---8<-- "shared/paxcounter_orig.conf:60:60"
+--8<-- "shared/paxcounter_orig.conf:62:62"
 ```
 
  Register a new sensebox on [https://opensensemap.org/](https://opensensemap.org). In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using:
