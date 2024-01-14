@@ -5,7 +5,7 @@ You can select different payload formats in [`paxcounter.conf`](https://github.c
 
 - ***Plain*** uses big endian format and generates json fields, e.g. useful for TTN console
 
-- ***Packed*** uses little endian format and generates json fields
+- ***Packed*** uses little endian format and generates json fields (exception: floats are big endian encoded)
 
 - [***CayenneLPP***](https://developers.mydevices.com/cayenne/docs/lora/#lora-cayenne-low-power-payload) generates MyDevices Cayenne readable fields
 
