@@ -1,7 +1,7 @@
 # ESP32-Paxcounter
 ![logo](docs/assets/paxcounter_logo_white.png)
 
-**Wifi & Bluetooth driven, LoRaWAN enabled, battery powered mini Paxcounter built on cheap ESP32 LoRa IoT boards**
+**Wifi & Bluetooth driven, LoRaWAN enabled, Paxcounter and multi-sensor appliance, built on cheap ESP32 LoRa IoT boards**
 
 [Tutorial (in german language): heise.de](https://www.heise.de/select/make/2019/1/1551099236518668)
 
@@ -30,7 +30,7 @@
 
 # Use case
 
-Paxcounter is an [ESP32](https://www.espressif.com/en/products/socs/esp32) MCU based device for metering passenger flows in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by evaluating their MAC adresses.
+Paxcounter is an [ESP32](https://www.espressif.com/en/products/socs/esp32) MCU based device for metering passenger flows and multi-sensor data in realtime. It counts how many mobile devices are around. This gives an estimation how many people are around. Paxcounter detects Wifi and Bluetooth signals in the air, focusing on mobile devices by evaluating their MAC adresses. In parallel, it reads and stores data from multiple connected environment sensors.
 
 Intention of this project is to do this without intrusion in privacy: You don't need to track people owned devices, if you just want to count them. Therefore, Paxcounter does not persistenly store MAC adresses and does no kind of fingerprinting the scanned devices.
 
