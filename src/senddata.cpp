@@ -74,7 +74,6 @@ void sendData() {
 
   while (bitmask) {
     switch (bitmask & mask) {
-
     case COUNT_DATA:
       payload.reset();
 
