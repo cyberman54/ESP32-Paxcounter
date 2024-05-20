@@ -16,7 +16,7 @@ static const adc1_channel_t adc_channel = BAT_MEASURE_ADC;
 static const adc2_channel_t adc_channel = BAT_MEASURE_ADC;
 RTC_NOINIT_ATTR uint64_t RTC_reg_b;
 #endif
-static const adc_atten_t atten = ADC_ATTEN_DB_11;
+static const adc_atten_t atten = ADC_ATTEN_DB_12;
 static const adc_unit_t unit = ADC_UNIT_1;
 #endif // BAT_MEASURE_ADC
 
