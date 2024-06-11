@@ -311,6 +311,14 @@ void dp_refresh(bool nextPage) {
     // show latitude and longitude
     dp_setFont(MY_FONT_STRETCHED);
     dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
+    if (gps.location.isUpdated()) {
+      // When reading the GPS location, the updated flag is reset.
+      // However if we also need to send the GPS location data, 
+      // we must know whether there has been an update since the last time
+      // we sent the location.
+      gps_location_isupdated = true;
+    }
+
     dp->printf("%c%09.6f\r\n", gps.location.rawLat().negative ? 'S' : 'N',
                gps.location.lat());
     dp->printf("%c%09.6f", gps.location.rawLng().negative ? 'W' : 'E',

@@ -87,8 +87,9 @@ void sendData() {
       if (GPSPORT == COUNTERPORT) {
         // send GPS position only if we have a fix
         if (gps_hasfix()) {
-          gps_storelocation(&gps_status);
-          payload.addGPS(gps_status);
+          if (gps_storelocation(&gps_status)) {
+            payload.addGPS(gps_status);
+          }
         } else
           ESP_LOGD(TAG, "No valid GPS position");
       }
@@ -134,10 +135,11 @@ void sendData() {
       if (GPSPORT != COUNTERPORT) {
         // send GPS position only if we have a fix
         if (gps_hasfix()) {
-          gps_storelocation(&gps_status);
-          payload.reset();
-          payload.addGPS(gps_status);
-          SendPayload(GPSPORT);
+          if (gps_storelocation(&gps_status)) {
+            payload.reset();
+            payload.addGPS(gps_status);
+            SendPayload(GPSPORT);
+          }
         } else
           ESP_LOGD(TAG, "No valid GPS position");
       }
