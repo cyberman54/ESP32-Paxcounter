@@ -379,70 +379,90 @@ void dp_refresh(bool nextPage) {
   {
 #if defined(HAS_PMU) || defined(HAS_IP5306)
 
-    // 12x16px = 10 chars / line @ 4 lines
-    dp_setFont(MY_FONT_STRETCHED);
+    dp_setFont(MY_FONT_STRETCHED); // 12x16px = 10 chars / line @ 4 lines
   
   #ifdef HAS_PMU
 
     if (pmu.isBatteryConnect()) {
-      dp->printf("Bat %4umV\r\n",
-        pmu.getBattVoltage());
-
+      const float volt = static_cast<float>(pmu.getBattVoltage()) / 1000.0f;
       const bool charging = pmu.isCharging();
-      float current = charging 
+      const float current_mA = charging 
           ? pmu.getBatteryChargeCurrent()
           : pmu.getBattDischargeCurrent();
-      if (!charging && current > 1.0f) {
-        // Make sure we're not showing "-0mA" when USB connected but not charging.
-        current *= -1;
-      }
+
+      const float power_mw = volt * current_mA;
+
+      dp->printf("Bat %5.3fV\r\n",
+                 volt);
 
       if (pmu.isVbusIn()) {
+        dp_setFont(MY_FONT_NORMAL); // 8x8px = 16 chars / line @ 8 lines
+
         // When charging, no use of showing battery level
-        dp->printf("  @ %4.0fmA\r\n", 
-            current);
+        dp->printf("%4.0fmA @ %4.0fmW \r\n%16s\r\n%16s\r\n", 
+            current_mA,
+            power_mw,
+            charging ? "    charging    " : "",
+            "");
       } else {
-        // When USB is not connected, we have extra lines
-        dp->printf("%8.0fmA\r\n%8u%% \r\n",
-            current,
-            pmu.getBatteryPercent());
+        // We have a few extra lines
+        dp_setFont(MY_FONT_STRETCHED); // 12x16px = 10 chars / line @ 4 lines
+
+        dp->printf("%8.0fmA \r\n%8.0fmW \r\n", 
+            current_mA,
+            power_mw);
+      }
+
+      dp_setFont(MY_FONT_NORMAL); // 8x8px = 16 chars / line @ 8 lines
+
+      if (!charging) {
+        // Not charging with current_mA of 0mA is possible when the battery is nearly full
+        // Make sure we're not showing "-0mA" when USB connected but not charging.
+        dp->printf("%16s\r\n%3u%%%12s\r\n",
+            "",
+            pmu.getBatteryPercent(),
+            (current_mA > 1.0f) ? "discharging" : "full");
       }
     } else {
       dp->printf("%-10s\r\n%-10s\r\n", "", "No Battery");
     }
 
     // Do some averaging to make the displayed values less flipping around
-    static float filtered_volt      = -1.0f;
-    static float filtered_milli_amp = -1.0f;
-    static float filtered_m_watt    = -1.0f;
+    static float filtered_m_volt = -1.0f;
+    static float filtered_m_amp  = -1.0f;
+    static float filtered_m_watt = -1.0f;
     if (pmu.isVbusIn())
     {
-      if (filtered_volt < 0.0f)
-        filtered_volt = pmu.getVbusVoltage() / 1000.0f;
-      if (filtered_milli_amp < 0.0f)
-        filtered_milli_amp = pmu.getVbusCurrent();
+      if (filtered_m_volt < 0.0f)
+        filtered_m_volt = pmu.getVbusVoltage();
+      if (filtered_m_amp < 0.0f)
+        filtered_m_amp = pmu.getVbusCurrent();
       if (filtered_m_watt < 0.0f)  
-        filtered_m_watt = filtered_volt * filtered_milli_amp;
-      const float volt = pmu.getVbusVoltage() / 1000.0f;
-      const float milli_amp = pmu.getVbusCurrent();
-      filtered_volt = (3 * filtered_volt + volt) / 4;
-      filtered_milli_amp = (3 * filtered_milli_amp + milli_amp) / 4;
-      filtered_m_watt = (7 * filtered_m_watt + (filtered_volt * filtered_milli_amp)) / 8;
-      dp->printf("USB %4.0fmW\r\n%.1fV%4.0fmA",
-              filtered_m_watt,
-              filtered_volt,
-              filtered_milli_amp);
+        filtered_m_watt = filtered_m_volt * filtered_m_amp / 1000.0f;
+      const float m_volt = pmu.getVbusVoltage();
+      const float m_amp  = pmu.getVbusCurrent();
+      filtered_m_volt = (3 * filtered_m_volt + m_volt) / 4;
+      filtered_m_amp  = (3 * filtered_m_amp + m_amp) / 4;
+      const float m_watt = (filtered_m_volt * filtered_m_amp) / 1000.0f;
+      filtered_m_watt = (7 * filtered_m_watt + m_watt) / 8;
+
+      dp_setFont(MY_FONT_STRETCHED); // 12x16px = 10 chars / line @ 4 lines
+
+      dp->printf("USB %5.3fV \r\n",
+              filtered_m_volt / 1000.0f);
+
+      dp_setFont(MY_FONT_NORMAL); // 8x8px = 16 chars / line @ 8 lines
+      dp->printf("%4.0fmA @ %4.0fmW \r\n",
+              filtered_m_amp,
+              filtered_m_watt);
     } else {
       // Filtering adds some delayed response, so make sure to 
       // force a full refresh when USB is reconnected
-      filtered_volt      = -1.0f;
-      filtered_milli_amp = -1.0f;
-      filtered_m_watt    = -1.0f;
-      if (pmu.isBatteryConnect()) {
-        dp->printf("%-10s\r\n", "No USB");
-      } else {
-        dp->printf("%-10s\r\n%-10s\r\n", "", "No USB");
-      }
+      filtered_m_volt = -1.0f;
+      filtered_m_amp  = -1.0f;
+      filtered_m_watt = -1.0f;
+      dp_setFont(MY_FONT_STRETCHED); // 12x16px = 10 chars / line @ 4 lines
+      dp->printf("%11s\r\n%11s\r\n", "", "");
     }
 
   #else
