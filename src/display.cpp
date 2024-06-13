@@ -402,7 +402,7 @@ void dp_refresh(bool nextPage) {
         dp->printf("%4.0fmA @ %4.0fmW \r\n%16s\r\n%16s\r\n", 
             current_mA,
             power_mw,
-            charging ? "    charging    " : "",
+            charging ? "    charging    " : "      full      ",
             "");
       } else {
         // We have a few extra lines
@@ -411,17 +411,17 @@ void dp_refresh(bool nextPage) {
         dp->printf("%8.0fmA \r\n%8.0fmW \r\n", 
             current_mA,
             power_mw);
-      }
 
-      dp_setFont(MY_FONT_NORMAL); // 8x8px = 16 chars / line @ 8 lines
+        dp_setFont(MY_FONT_NORMAL); // 8x8px = 16 chars / line @ 8 lines
 
-      if (!charging) {
-        // Not charging with current_mA of 0mA is possible when the battery is nearly full
-        // Make sure we're not showing "-0mA" when USB connected but not charging.
-        dp->printf("%16s\r\n%3u%%%12s\r\n",
-            "",
-            pmu.getBatteryPercent(),
-            (current_mA > 1.0f) ? "discharging" : "full");
+        if (!charging) {
+          // Not charging with current_mA of 0mA is possible when the battery is nearly full
+          // Make sure we're not showing "-0mA" when USB connected but not charging.
+          dp->printf("%16s\r\n%3u%%%12s\r\n",
+              "",
+              pmu.getBatteryPercent(),
+              (current_mA > 1.0f) ? "discharging" : "full");
+        }
       }
     } else {
       dp->printf("%-10s\r\n%-10s\r\n", "", "No Battery");
