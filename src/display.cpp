@@ -53,6 +53,21 @@ BB_SPI_LCD *dp = NULL;
 #endif
 #endif
 
+
+#define DISPLAY_PAGE_PAX_PARAM_OVERVIEW 0
+#define DISPLAY_PAGE_PAX_LORAWAN_PARAM  1
+#define DISPLAY_PAGE_PAX_GPS_LAT_LONG   2
+#define DISPLAY_PAGE_BME280_680_VALUES  3
+#define DISPLAY_PAGE_TIME_OF_DAY        4
+#define DISPLAY_PAGE_POWER_OVERVIEW     5
+#define DISPLAY_PAGE_PAX_GRAPH          6
+#define DISPLAY_PAGE_BLANK_SCREEN       7
+
+
+
+
+
+
 void dp_setup(int contrast) {
 #if (HAS_DISPLAY) == 1 // I2C OLED
 
@@ -181,10 +196,11 @@ void dp_refresh(bool nextPage) {
     // page 3: BME280/680 values
     // page 4: timeofday
     // page 5: pax graph
-    // page 6: blank screen
+    // page 6: power overview
+    // page 7: blank screen
 
     // ---------- page 0: parameters overview ----------
-  case 0:
+  case DISPLAY_PAGE_PAX_PARAM_OVERVIEW:
 
     // show pax
     libpax_counter_count(&count);
@@ -260,7 +276,7 @@ void dp_refresh(bool nextPage) {
     break;
 
   // ---------- page 1: lorawan parameters ----------
-  case 1:
+  case DISPLAY_PAGE_PAX_LORAWAN_PARAM:
 
 #if (HAS_LORA)
 
@@ -293,7 +309,7 @@ void dp_refresh(bool nextPage) {
 #endif // HAS_LORA
 
   // ---------- page 2: GPS ----------
-  case 2:
+  case DISPLAY_PAGE_PAX_GPS_LAT_LONG:
 
 #if (HAS_GPS)
 
@@ -323,7 +339,7 @@ void dp_refresh(bool nextPage) {
 #endif
 
   // ---------- page 3: BME280/680 ----------
-  case 3:
+  case DISPLAY_PAGE_BME280_680_VALUES:
 
 #if (HAS_BME)
     dp_setFont(MY_FONT_STRETCHED);
@@ -335,14 +351,13 @@ void dp_refresh(bool nextPage) {
     dp->printf("IAQ %-6.0f", bme_status.iaq);
 #endif
     dp_dump();
-    break;
 #else  // skip this page
     DisplayPage++;
-    break;
 #endif // HAS_BME
+    break;
 
   // ---------- page 4: time ----------
-  case 4:
+  case DISPLAY_PAGE_TIME_OF_DAY:
 
     time(&now);
     localtime_r(&now, &timeinfo);
@@ -359,16 +374,105 @@ void dp_refresh(bool nextPage) {
     dp_dump();
     break;
 
-  // ---------- page 5: pax graph ----------
-  case 5:
+  // ---------- page 5: power overview ----------
+  case DISPLAY_PAGE_POWER_OVERVIEW:
+  {
+#if defined(HAS_PMU) || defined(HAS_IP5306)
+
+    // 12x16px = 10 chars / line @ 4 lines
+    dp_setFont(MY_FONT_STRETCHED);
+  
+  #ifdef HAS_PMU
+
+    if (pmu.isBatteryConnect()) {
+      dp->printf("Bat %4umV\r\n",
+        pmu.getBattVoltage());
+
+      const bool charging = pmu.isCharging();
+      float current = charging 
+          ? pmu.getBatteryChargeCurrent()
+          : pmu.getBattDischargeCurrent();
+      if (!charging && current > 1.0f) {
+        // Make sure we're not showing "-0mA" when USB connected but not charging.
+        current *= -1;
+      }
+
+      if (pmu.isVbusIn()) {
+        // When charging, no use of showing battery level
+        dp->printf("  @ %4.0fmA\r\n", 
+            current);
+      } else {
+        // When USB is not connected, we have extra lines
+        dp->printf("%8.0fmA\r\n%8u%% \r\n",
+            current,
+            pmu.getBatteryPercent());
+      }
+    } else {
+      dp->printf("%-10s\r\n%-10s\r\n", "", "No Battery");
+    }
+
+    // Do some averaging to make the displayed values less flipping around
+    static float filtered_volt      = -1.0f;
+    static float filtered_milli_amp = -1.0f;
+    static float filtered_m_watt    = -1.0f;
+    if (pmu.isVbusIn())
+    {
+      if (filtered_volt < 0.0f)
+        filtered_volt = pmu.getVbusVoltage() / 1000.0f;
+      if (filtered_milli_amp < 0.0f)
+        filtered_milli_amp = pmu.getVbusCurrent();
+      if (filtered_m_watt < 0.0f)  
+        filtered_m_watt = filtered_volt * filtered_milli_amp;
+      const float volt = pmu.getVbusVoltage() / 1000.0f;
+      const float milli_amp = pmu.getVbusCurrent();
+      filtered_volt = (3 * filtered_volt + volt) / 4;
+      filtered_milli_amp = (3 * filtered_milli_amp + milli_amp) / 4;
+      filtered_m_watt = (7 * filtered_m_watt + (filtered_volt * filtered_milli_amp)) / 8;
+      dp->printf("USB %4.0fmW\r\n%.1fV%4.0fmA",
+              filtered_m_watt,
+              filtered_volt,
+              filtered_milli_amp);
+    } else {
+      // Filtering adds some delayed response, so make sure to 
+      // force a full refresh when USB is reconnected
+      filtered_volt      = -1.0f;
+      filtered_milli_amp = -1.0f;
+      filtered_m_watt    = -1.0f;
+      if (pmu.isBatteryConnect()) {
+        dp->printf("%-10s\r\n", "No USB");
+      } else {
+        dp->printf("%-10s\r\n%-10s\r\n", "", "No USB");
+      }
+    }
+
+  #else
+
+    bool usb = IP5306_GetPowerSource();
+    bool full = IP5306_GetBatteryFull();
+    uint8_t level = IP5306_GetBatteryLevel();
+    dp->printf("%-10s\r\n%-10s\r\nLvl: %3u%%\r\n",
+            usb ? "USB" : "BATTERY", // Power source
+            full ? "CHARGED" : (usb ? "CHARGING" : "DISCHARGE"), // State
+            level); // Battery level
+
+  #endif
+    dp_dump();
+#else  // skip this page
+    DisplayPage++;
+#endif // HAS_PMU
+    break;
+  }
+
+  // ---------- page 6: pax graph ----------
+  case DISPLAY_PAGE_PAX_GRAPH:
 
     // update and show histogram
     dp_plotCurve(count.pax, false);
     dp_dump(plotbuf);
     break;
 
-  // ---------- page 6: blank screen ----------
-  case 6:
+  // ---------- page 7: blank screen ----------
+  case DISPLAY_PAGE_BLANK_SCREEN:
 
 #ifdef HAS_BUTTON
     dp_clear();
