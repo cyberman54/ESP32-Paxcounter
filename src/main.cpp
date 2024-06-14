@@ -86,7 +86,7 @@ void setup() {
 
   // Reduce power consumption (optional)
   // This reduces the power consumption with about 50 mWatt.
-  // Typically it uses 660 mWatt when the CPU frequency is set to 80 MHz.
+  // Typically a TTGO T-beam v1.0 uses 660 mWatt when the CPU frequency is set to 80 MHz.
   // When left running at 240 mHz, the power consumption is about 710 - 730 mWatt.
   // Higher CPU speed may be preferred for wifi & ble sniffing.
   //

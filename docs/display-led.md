@@ -37,7 +37,7 @@ As can be seen, GND and Vdd are swapped and thus the most commonly available dis
 
 In order to make the most commonly available version fit, you can strip of the plastics from the power pins and carefully bend both GND and Vdd pins in a Z-shape so they will fit in the adjacent pin hole.
 
-<img src="img/SSD1306_OLED_t-beam.jpg">
+![Display Image](img/SSD1306_OLED_t-beam.jpg)
 
 This way the display is still positioned correctly to fit in the many available 3D printable enclosure designs out there.
 
@@ -59,7 +59,7 @@ So the ESP32 may not be able to scan the I2C bus for any available I2C device an
 
 This catch-22 situation can be resolved by adding a simple diode from GPIO-0 to the "3.3V" pad. (the 'line' on the diode towards the "3.3V" pad)
 
-<img src="img/SSD1306_t-beam_diode_mod.jpg">
+![Display Image](img/SSD1306_t-beam_diode_mod.jpg)
 
 In this test setup, a basic 1N4001 is used, which has a voltage drop of about 0.5V.
 Another option is to use a germanium diode like the 1N4148, which does have a voltage drop of 0.3V.
