@@ -53,7 +53,6 @@ BB_SPI_LCD *dp = NULL;
 #endif
 #endif
 
-
 #define DISPLAY_PAGE_PAX_PARAM_OVERVIEW 0
 #define DISPLAY_PAGE_PAX_LORAWAN_PARAM  1
 #define DISPLAY_PAGE_PAX_GPS_LAT_LONG   2
@@ -62,11 +61,6 @@ BB_SPI_LCD *dp = NULL;
 #define DISPLAY_PAGE_POWER_OVERVIEW     5
 #define DISPLAY_PAGE_PAX_GRAPH          6
 #define DISPLAY_PAGE_BLANK_SCREEN       7
-
-
-
-
-
 
 void dp_setup(int contrast) {
 #if (HAS_DISPLAY) == 1 // I2C OLED

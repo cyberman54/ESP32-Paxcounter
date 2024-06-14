@@ -84,8 +84,13 @@ char clientId[20] = {0}; // unique ClientID
 void setup() {
   char features[100] = "";
 
-  // Reduce power consumption
-  setCpuFrequencyMhz(80);
+  // Reduce power consumption (optional)
+  // This reduces the power consumption with about 50 mWatt.
+  // Typically it uses 660 mWatt when the CPU frequency is set to 80 MHz.
+  // When left running at 240 mHz, the power consumption is about 710 - 730 mWatt.
+  // Higher CPU speed may be preferred for wifi & ble sniffing.
+  //
+  // setCpuFrequencyMhz(80);
 
   // disable brownout detection
 #ifdef DISABLE_BROWNOUT
