@@ -88,11 +88,11 @@ typedef struct {
 } MessageBuffer_t;
 
 typedef struct {
-  int32_t latitude;
-  int32_t longitude;
-  uint8_t satellites;
-  uint16_t hdop;
-  int16_t altitude;
+  int32_t latitude{};
+  int32_t longitude{};
+  uint8_t satellites{};
+  uint16_t hdop{};
+  int16_t altitude{};
 } gpsStatus_t;
 
 typedef struct {

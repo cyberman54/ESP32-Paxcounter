@@ -5,6 +5,7 @@
 
 
 TinyGPSPlus gps;
+bool gps_location_isupdated = false;
 TaskHandle_t GpsTask;
 HardwareSerial GPS_Serial(1); // use UART #1
 
@@ -142,15 +143,20 @@ int gps_init(void) {
 } // gps_init()
 
 // store current GPS location data in struct
-void gps_storelocation(gpsStatus_t *gps_store) {
-  if (gps.location.isUpdated() && gps.location.isValid() &&
-      (gps.location.age() < 1500)) {
-    gps_store->latitude = (int32_t)(gps.location.lat() * 1e6);
-    gps_store->longitude = (int32_t)(gps.location.lng() * 1e6);
-    gps_store->satellites = (uint8_t)gps.satellites.value();
-    gps_store->hdop = (uint16_t)gps.hdop.value();
-    gps_store->altitude = (int16_t)gps.altitude.meters();
+bool gps_storelocation(gpsStatus_t *gps_store) {
+  if (gps.location.isUpdated() || gps_location_isupdated) {
+    gps_location_isupdated = false;
+    if (gps.location.isValid() &&
+        (gps.location.age() < 1500)) {
+      gps_store->latitude = (int32_t)(gps.location.lat() * 1e6);
+      gps_store->longitude = (int32_t)(gps.location.lng() * 1e6);
+      gps_store->satellites = (uint8_t)gps.satellites.value();
+      gps_store->hdop = (uint16_t)gps.hdop.value();
+      gps_store->altitude = (int16_t)gps.altitude.meters();
+      return true;
+    }
   }
+  return false;
 }
 
 bool gps_hasfix() {

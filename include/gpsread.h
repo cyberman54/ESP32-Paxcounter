@@ -11,12 +11,13 @@
 #endif
 
 extern TinyGPSPlus gps; // Make TinyGPS++ instance globally availabe
+extern bool gps_location_isupdated; // Keep track of whether it was updated when showing on the display
 extern TaskHandle_t GpsTask;
 
 int gps_init(void);
 int gps_config();
 bool gps_hasfix();
-void gps_storelocation(gpsStatus_t *gps_store);
+bool gps_storelocation(gpsStatus_t *gps_store);
 void gps_loop(void *pvParameters);
 time_t get_gpstime(uint16_t *msec);
 
