@@ -33,3 +33,4 @@ Thanks to
 - [Stefan](https://github.com/nerdyscout) for paxcounter opensensebox integration
 - [August Quint](https://github.com/AugustQu) for adding SD card data logger and SDS011 support
 - [t-huyeng](https://github.com/t-huyeng) for adding a CI workflow and rework documentation
+- [TD-er](https://github.com/TD-er) for bugfixings and T-Beam documentation
