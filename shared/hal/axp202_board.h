@@ -2,17 +2,13 @@
 // upload_speed 921600
 // board ttgo-t-beam
 
-#ifndef _TTGOBEAM_1_0_H
-#define _TTGOBEAM_1_0_H
+#ifndef _AXP202_BOARD_H
+#define _AXP202_BOARD_H
 
 #include <stdint.h>
 
 /* 
-Hardware related definitions for TTGO T-Beam board
-for T-Beam version T22_V10 + T22_V11
-pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
-Due to archiving, older boards are removed from the main repositories.
-See archived: https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series/tree/v0.0.1/schematic
+Hardware related definitions for some unknown board with AXP202 power management chip
 
 /// Button functions: ///
 Power, short press -> set device on / while device is on: goto sleep
@@ -35,15 +31,17 @@ Reset -> reset device
 #define LED_ACTIVE_LOW 1
 
 // power management settings
-#define HAS_PMU 1 // has AXP192 chip
-#define XPOWERS_CHIP_AXP192 1
+#define HAS_PMU 1 // has AXP202 chip
+#define XPOWERS_CHIP_AXP202 1
 #define PMU_INT GPIO_NUM_35 // battery interrupt
-#define PMU_CHG_CURRENT XPOWERS_AXP192_CHG_CUR_1000MA // battery charge current
+#define PMU_CHG_CURRENT XPOWERS_AXP202_CHG_CUR_1000MA // battery charge current
+// See: xpowers_AXP202_chg_curr_t
 // possible values (mA):
-// 100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
-#define PMU_CHG_CUTOFF XPOWERS_AXP192_CHG_VOL_4V2 // battery charge cutoff
+// 0/100/125/150/175/200/300/400/500/600/700/800/900/1000
+#define PMU_CHG_CUTOFF XPOWERS_AXP202_CHG_VOL_4V2 // battery charge cutoff
+// See: xpowers_AXP202_chg_vol_t
 // possible values (V):
-// 4V1/4V15/4V2/4V36
+// 4V1/4V1/4V2/4V35/4V4
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
@@ -62,15 +60,20 @@ Reset -> reset device
 
 /*
 
-// T-Beam V10/V11 has on board power management by AXP192 PMU chip:
+// <Unknown board> has on board power management by AXP202 PMU chip:
 
-DC1         0.7V-3.5V /1.2A     -> OLED
-DC2         0.7-2.275V /1.6A
-DC3         0.7-3.5V /0.7A      -> ESP32 (keep this on!)
-LDO1(VRTC)  3.3V /30mA          -> GPS Backup
-LDO2        1.8V-3.3V /200mA    -> LORA
-LDO3        1.8-3.3V /200mA     -> GPS
-LDO5/IO0    1.8-3.3V /50mA
+
+DC2         0.7-2.275V /1.6A  
+DC3         0.7-3.5V /1.2A    
+LDO1(VRTC)  3.3V /30mA        
+LDO2        1.8V-3.3V /200mA  
+LDO3        0.7-3.5V /200mA   
+LDO4        1.8V-3.3V /200mA  
+LDO5/IO0    1.8-3.3V /50mA    
+
+// ??? -> GPS Backup
+// ??? -> LORA
+// ??? -> GPS
 
 // Wiring for I2C OLED display:
 //

@@ -57,13 +57,58 @@ extern int8_t batt_level;
 
 #ifdef HAS_PMU
 #include <XPowersLib.h>
-extern XPowersPMU pmu;
+extern XPowersLibInterface *pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
+
+bool AXPxxx_init();
+
+void AXPxxx_powerevent_IRQ(void);
+void AXPxxx_power(pmu_power_t powerlevel);
+void AXPxxx_showstatus(void);
+
+
+float AXPxxx_getBatteryChargeCurrent();
+float AXPxxx_getBattDischargeCurrent();
+float AXPxxx_getVbusCurrent();
+
 void IRAM_ATTR PMUIRQ();
+#if defined(XPOWERS_CHIP_AXP192)
 void AXP192_powerevent_IRQ(void);
 void AXP192_power(pmu_power_t powerlevel);
 void AXP192_init(void);
 void AXP192_showstatus(void);
+
+float AXP192_getBatteryChargeCurrent();
+float AXP192_getBattDischargeCurrent();
+float AXP192_getVbusCurrent();
+
+
+#endif
+
+#if defined(XPOWERS_CHIP_AXP202)
+void AXP202_powerevent_IRQ(void);
+void AXP202_power(pmu_power_t powerlevel);
+void AXP202_init(void);
+void AXP202_showstatus(void);
+
+float AXP202_getBatteryChargeCurrent();
+float AXP202_getBattDischargeCurrent();
+float AXP202_getVbusCurrent();
+#endif
+
+
+#if defined(XPOWERS_CHIP_AXP2101)
+void AXP2101_powerevent_IRQ(void);
+void AXP2101_power(pmu_power_t powerlevel);
+void AXP2101_init(void);
+void AXP2101_showstatus(void);
+
+float AXP2101_getBatteryChargeCurrent();
+float AXP2101_getBattDischargeCurrent();
+float AXP2101_getVbusCurrent();
+#endif
+
+
 #endif // HAS_PMU
 
 #ifdef HAS_IP5306
