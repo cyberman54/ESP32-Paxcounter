@@ -30,16 +30,30 @@ public:
   // void end(void) override
 
   // ostime_t setModuleActive(bool state) override
+
+  virtual u1_t queryBusyPin(void) override {
+  #ifdef PIN_SX1262_BUSY
+    return PIN_SX1262_BUSY;
+  #else
+    return LMIC_UNUSED_PIN;
+  #endif 
+  }
+
+  virtual bool queryUsingDcdc(void) override { return true; }
+  virtual bool queryUsingDIO2AsRfSwitch(void) override { return true; }
+  virtual bool queryUsingDIO3AsTCXOSwitch(void) override { return true; }
+
 };
 
 static MyHalConfig_t myHalConfig{};
 
-// LMIC pin mapping for Hope RFM95 / HPDtek HPD13A transceivers
+// LMIC pin mapping for Hope RFM95 / HPDtek HPD13A/HPD16A transceivers
 static const lmic_pinmap myPinmap = {
     .nss = LORA_CS,
     .rxtx = LMIC_UNUSED_PIN,
     .rst = LORA_RST == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_RST,
-    .dio = {LORA_IRQ, LORA_IO1,
+    .dio = {LORA_IRQ == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IRQ,
+            LORA_IO1 == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IO1,
             LORA_IO2 == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IO2},
     .rxtx_rx_active = LMIC_UNUSED_PIN,
     .rssi_cal = 10,

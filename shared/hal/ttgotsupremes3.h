@@ -40,8 +40,6 @@
 // button and led
 #define HAS_BUTTON GPIO_NUM_0       // SW3 button is on GPIO0
 #define HAS_LED NOT_A_PIN
-// SW2 -> CHIP_PU
-// SW3 -> PWR_KEY
 
 // GPS settings
 #define HAS_GPS 1 // use on board GPS
@@ -50,7 +48,7 @@
 #define GPS_WAKEUP GPIO_NUM_7 // currently unused in code
 
 // LORA settings
-#define HAS_LORA 0 // use on board LORA
+#define HAS_LORA 1 // use on board LORA
 #define CFG_sx1262_radio 1 // HPD16A
 // Pins for LORA chip SPI interface, reset line and interrupt lines
 #define LORA_RST  (5)
@@ -58,9 +56,10 @@
 #define LORA_CS   (10)
 #define LORA_MISO (13)
 #define LORA_MOSI (11)
-#define LORA_IRQ  NOT_A_PIN
-#define LORA_IO1  (1) // RADIO_DIO1
-#define LORA_IO2  (4) // RADIO_BUSY
+#define LORA_IRQ  (1)
+#define LORA_IO1  LMIC_UNUSED_PIN
+#define LORA_IO2  LMIC_UNUSED_PIN
+#define PIN_SX1262_BUSY (4)
 
 // BME280 sensor on I2C bus
 //#define HAS_BME 1 // Enable BME sensors in general
