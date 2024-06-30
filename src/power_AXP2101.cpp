@@ -49,42 +49,32 @@ void AXP2101_powerevent_IRQ(void) {
     if (pmu->getChipModel() == XPOWERS_AXP2101) {
         XPowersAXP2101* axp2101 = static_cast<XPowersAXP2101*>(pmu);
 
-        axp2101->getIrqStatus();
+        pmu->getIrqStatus();
 
-        if (axp2101->isBatfetOverCurrentIrq())
-            ESP_LOGI(TAG, "Battery current too high.");
-        if (axp2101->isVbusInsertIrq())
-            ESP_LOGI(TAG, "USB plugged, %.2fV", axp2101->getVbusVoltage() / 1000);
-        if (axp2101->isVbusRemoveIrq())
+        if (pmu->isVbusInsertIrq())
+            ESP_LOGI(TAG, "USB plugged, %.2fV", pmu->getVbusVoltage() / 1000);
+        if (pmu->isVbusRemoveIrq())
             ESP_LOGI(TAG, "USB unplugged.");
-        if (axp2101->isBatInsertIrq())
+        if (pmu->isBatInsertIrq())
             ESP_LOGI(TAG, "Battery is connected.");
-        if (axp2101->isBatRemoveIrq())
+        if (pmu->isBatRemoveIrq())
             ESP_LOGI(TAG, "Battery was removed.");
-        if (axp2101->isBatChagerStartIrq())
+        if (pmu->isBatChagerStartIrq())
             ESP_LOGI(TAG, "Battery charging started.");
-        if (axp2101->isBatChagerDoneIrq())
+        if (pmu->isBatChagerDoneIrq())
             ESP_LOGI(TAG, "Battery charging done.");
-        if (axp2101->isBatWorkUnderTemperatureIrq())
-            ESP_LOGI(TAG, "Battery low temperature.");
-        if (axp2101->isBatWorkOverTemperatureIrq())
-            ESP_LOGI(TAG, "Battery high temperature.");
-        if (axp2101->isBatChargerUnderTemperatureIrq())
-            ESP_LOGI(TAG, "Battery charge low temperature.");
-        if (axp2101->isBatChargerOverTemperatureIrq())
-            ESP_LOGI(TAG, "Battery charge hgh temperature.");
 
         // PEK button handling:
         // long press -> shutdown power, must be exited by another longpress
-        if (axp2101->isPekeyLongPressIrq())
+        if (pmu->isPekeyLongPressIrq())
             AXP2101_power(pmu_power_off); // switch off Lora, GPS, display
         #ifdef HAS_BUTTON
         // short press -> esp32 deep sleep mode, must be exited by user button
-        if (axp2101->isPekeyShortPressIrq())
+        if (pmu->isPekeyShortPressIrq())
             enter_deepsleep(0UL, HAS_BUTTON);
         #endif
 
-        axp2101->clearIrqStatus();
+        pmu->clearIrqStatus();
 
         // refresh stored voltage value
         read_battlevel();
@@ -99,23 +89,22 @@ void AXP2101_power(pmu_power_t powerlevel) {
 
         switch (powerlevel) {
         case pmu_power_off:
-            axp2101->setChargingLedMode(XPOWERS_CHG_LED_OFF);
-            axp2101->shutdown();
+            pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
+            pmu->shutdown();
             break;
         case pmu_power_sleep:
-            axp2101->setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
-            // we don't cut off DCDC1, because OLED display will then block i2c bus
-            // axp2101->disableDC3(); // OLED off
-            axp2101->disableALDO3(); // gps off
-            axp2101->disableALDO2(); // lora off
-            axp2101->enableSleep();
+            pmu->setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+            pmu->disablePowerOutput(XPOWERS_DCDC3); // oled off
+            pmu->disablePowerOutput(XPOWERS_ALDO4); // gps off
+            pmu->disablePowerOutput(XPOWERS_ALDO3); // lora off
+            pmu->enableSleep();
             break;
         case pmu_power_on:
         default:
-            axp2101->enableALDO2(); // Lora on T-Beam V1.2
-            axp2101->enableALDO3(); // Gps on T-Beam V1.2
-            axp2101->enableDC3();   // OLED on T-Beam v1.2
-            axp2101->setChargingLedMode(XPOWERS_CHG_LED_ON);
+            pmu->enablePowerOutput(XPOWERS_DCDC3); // oled on
+            pmu->enablePowerOutput(XPOWERS_ALDO4); // gps on
+            pmu->enablePowerOutput(XPOWERS_ALDO3); // lora on
+            pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
             break;
         }
     }
@@ -127,18 +116,18 @@ void AXP2101_showstatus(void) {
     if (pmu->getChipModel() == XPOWERS_AXP2101) {
         XPowersAXP2101* axp2101 = static_cast<XPowersAXP2101*>(pmu);
 
-        if (axp2101->isBatteryConnect())
-            if (axp2101->isCharging())
+        if (pmu->isBatteryConnect())
+            if (pmu->isCharging())
             ESP_LOGI(TAG, "Battery charging, %.2fV",
-                    axp2101->getBattVoltage() / 1000.0);
+                    pmu->getBattVoltage() / 1000.0);
             else
             ESP_LOGI(TAG, "Battery not charging");
         else
             ESP_LOGI(TAG, "Battery not present");
 
-        if (axp2101->isVbusIn())
+        if (pmu->isVbusIn())
             ESP_LOGI(TAG, "USB powered, %.0fmV",
-                    axp2101->getVbusVoltage());
+                    pmu->getVbusVoltage());
         else
             ESP_LOGI(TAG, "USB not present");
     }
@@ -150,40 +139,65 @@ void AXP2101_init(void) {
     if (pmu->getChipModel() == XPOWERS_AXP2101) {
         XPowersAXP2101* axp2101 = static_cast<XPowersAXP2101*>(pmu);
 
-        ESP_LOGD(TAG, "AXP2101 ChipID:0x%x", axp2101->getChipID());
+        ESP_LOGD(TAG, "AXP2101 ChipID:0x%x", pmu->getChipID());
+
+        // Setting for Lilygo T-Beam Supreme S3
+
+        // gnss
+        pmu->setPowerChannelVoltage(XPOWERS_ALDO4, 3300);
+        pmu->enablePowerOutput(XPOWERS_ALDO4);
+
+        // lora
+        pmu->setPowerChannelVoltage(XPOWERS_ALDO3, 3300);
+        pmu->enablePowerOutput(XPOWERS_ALDO3);
+
+        // oled
+        pmu->setPowerChannelVoltage(XPOWERS_DCDC3, 3300);
+        pmu->enablePowerOutput(XPOWERS_DCDC3);
+
+        /**
+         * ALDO2 cannot be turned off.
+         * It is a necessary condition for sensor communication.
+         * It must be turned on to properly access the sensor and screen
+         * It is also responsible for the power supply of PCF8563
+         */
+        pmu->setPowerChannelVoltage(XPOWERS_ALDO2, 3300);
+        pmu->enablePowerOutput(XPOWERS_ALDO2);
+
+        // 6-axis, magnetomete, bme280, oled screen power channel
+        pmu->setPowerChannelVoltage(XPOWERS_ALDO1, 3300);
+        pmu->enablePowerOutput(XPOWERS_ALDO1);
+
+        // sdcard power channel
+        pmu->setPowerChannelVoltage(XPOWERS_BLDO1, 3300);
+        pmu->enablePowerOutput(XPOWERS_BLDO1);
 
         // set pmu operating voltages
-        axp2101->setSysPowerDownVoltage(2700);
-        axp2101->setVbusVoltageLimit(XPOWERS_AXP2101_VBUS_VOL_LIM_4V44);
-        axp2101->setVbusCurrentLimit(XPOWERS_AXP2101_VBUS_CUR_LIM_1000MA);
-
-        // set device operating voltages
-        axp2101->setDC3Voltage(3300);  // for external OLED display
-        axp2101->setALDO2Voltage(3300); // LORA VDD 3v3
-        axp2101->setALDO3Voltage(3300); // GPS VDD 3v3
+        pmu->setSysPowerDownVoltage(2700);
+        pmu->setVbusCurrentLimit(XPOWERS_AXP2101_VBUS_CUR_LIM_1000MA);
 
         // configure PEK button settings
-        axp2101->setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
-        axp2101->setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
+        pmu->setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
+        pmu->setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
 
         // set battery temperature sensing pin off to save power
-        axp2101->disableTSPinMeasure();
+        pmu->disableTSPinMeasure();
 
         // Enable internal ADC detection
-        axp2101->enableBattDetection();
-        axp2101->enableVbusVoltageMeasure();
-        axp2101->enableBattVoltageMeasure();
-        axp2101->enableSystemVoltageMeasure();
+        pmu->enableBattDetection();
+        pmu->enableVbusVoltageMeasure();
+        pmu->enableBattVoltageMeasure();
+        pmu->enableSystemVoltageMeasure();
 
         #ifdef PMU_INT
         pinMode(PMU_INT, INPUT_PULLUP);
         attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
         // disable all interrupts
-        axp2101->disableIRQ(XPOWERS_AXP2101_ALL_IRQ);
+        pmu->disableIRQ(XPOWERS_AXP2101_ALL_IRQ);
         // clear all interrupt flags
-        axp2101->clearIrqStatus();
+        pmu->clearIrqStatus();
         // enable the required interrupt function
-        axp2101->enableIRQ(XPOWERS_AXP2101_BAT_INSERT_IRQ |
+        pmu->enableIRQ(XPOWERS_AXP2101_BAT_INSERT_IRQ |
                         XPOWERS_AXP2101_BAT_REMOVE_IRQ | // BATTERY
                         XPOWERS_AXP2101_VBUS_INSERT_IRQ |
                         XPOWERS_AXP2101_VBUS_REMOVE_IRQ | // VBUS
@@ -196,9 +210,8 @@ void AXP2101_init(void) {
 
         // set charging parameters according to user settings if we have (see power.h)
         #ifdef PMU_CHG_CURRENT
-        axp2101->setChargerConstantCurr(PMU_CHG_CURRENT);
-        axp2101->setChargeTargetVoltage(PMU_CHG_CUTOFF);
-        axp2101->enableCellbatteryCharge();
+        pmu->setChargerConstantCurr(PMU_CHG_CURRENT);
+        pmu->setChargeTargetVoltage(PMU_CHG_CUTOFF);
         #endif
 
         // switch power rails on

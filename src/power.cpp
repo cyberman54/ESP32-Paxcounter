@@ -22,29 +22,27 @@ static const adc_unit_t unit = ADC_UNIT_1;
 
 #ifdef HAS_PMU
 
-static const uint8_t i2c_sda = SDA;
-static const uint8_t i2c_scl = SCL;
-//static const uint8_t pmu_irq_pin = CONFIG_PMU_IRQ;
+static const uint8_t i2c_sda = PMU_SDA;
+static const uint8_t i2c_scl = PMU_SCL;
 
 XPowersLibInterface *pmu = NULL;
-//XPowersPMU pmu(Wire, SCL, SDA, AXP192_PRIMARY_ADDRESS);
 
 bool AXPxxx_init() {
-  #if defined(XPOWERS_CHIP_AXP2101)
+#if defined(XPOWERS_CHIP_AXP2101)
     if (!pmu) {
-        pmu = new XPowersAXP2101(Wire, i2c_sda, i2c_scl, AXP192_PRIMARY_ADDRESS);
+        pmu = new XPowersAXP2101(Wire1, i2c_sda, i2c_scl, AXP192_PRIMARY_ADDRESS);
         if (!pmu->init()) {
             delete pmu;
             pmu = NULL;
         } else {
             ESP_LOGI(TAG, "AXP2101 PMU init succeeded, using AXP2101 PMU\n");
-//            AXP2101_init();
+            AXP2101_init();
         }
     }
 #endif
 #if defined(XPOWERS_CHIP_AXP192)
     if (!pmu) {
-        pmu = new XPowersAXP192(Wire, i2c_sda, i2c_scl, AXP192_PRIMARY_ADDRESS);
+        pmu = new XPowersAXP192(Wire1, i2c_sda, i2c_scl, AXP192_PRIMARY_ADDRESS);
         if (!pmu->init()) {
             delete pmu;
             pmu = NULL;
@@ -56,13 +54,13 @@ bool AXPxxx_init() {
 #endif
 #if defined(XPOWERS_CHIP_AXP202)
     if (!pmu) {
-        pmu = new XPowersAXP202(Wire, i2c_sda, i2c_scl, AXP192_PRIMARY_ADDRESS);
+        pmu = new XPowersAXP202(Wire1, i2c_sda, i2c_scl, AXP192_PRIMARY_ADDRESS);
         if (!pmu->init()) {
             delete pmu;
             pmu = NULL;
         } else {
             ESP_LOGI(TAG, "AXP202 PMU init succeeded, using AXP202 PMU\n");
-//            AXP202_init();
+            AXP202_init();
         }
     }
 #endif
