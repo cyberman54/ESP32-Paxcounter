@@ -146,10 +146,10 @@ void AXP2101_init(void) {
 
         // gnss
         pmu->setPowerChannelVoltage(XPOWERS_ALDO3, 3300);
-        pmu->enablePowerOutput(XPOWERS_ALDO4);
+        pmu->enablePowerOutput(XPOWERS_ALDO3);
         // lora
         pmu->setPowerChannelVoltage(XPOWERS_ALDO2, 3300);
-        pmu->enablePowerOutput(XPOWERS_ALDO3);
+        pmu->enablePowerOutput(XPOWERS_ALDO2);
         // oled
         pmu->setPowerChannelVoltage(XPOWERS_DCDC3, 3300);
         pmu->enablePowerOutput(XPOWERS_DCDC3);
