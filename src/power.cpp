@@ -30,7 +30,6 @@ TwoWire i2c_pmu = Wire1;
 static const uint8_t i2c_sda = SDA;
 static const uint8_t i2c_scl = SCL;
 TwoWire i2c_pmu = Wire;
-#define PMU_BUS Wire
 #endif
 
 XPowersLibInterface *pmu = NULL;
