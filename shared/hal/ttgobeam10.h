@@ -2,8 +2,8 @@
 // upload_speed 921600
 // board ttgo-t-beam
 
-#ifndef _TTGOBEAM_H
-#define _TTGOBEAM_H
+#ifndef _TTGOBEAM_1_0_H
+#define _TTGOBEAM_1_0_H
 
 #include <stdint.h>
 
@@ -11,6 +11,8 @@
 Hardware related definitions for TTGO T-Beam board
 for T-Beam version T22_V10 + T22_V11
 pinouts taken from https://github.com/lewisxhe/TTGO-T-Beam
+Due to archiving, older boards are removed from the main repositories.
+See archived: https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series/tree/v0.0.1/schematic
 
 /// Button functions: ///
 Power, short press -> set device on / while device is on: goto sleep
@@ -61,12 +63,14 @@ Reset -> reset device
 /*
 
 // T-Beam V10/V11 has on board power management by AXP192 PMU chip:
-//
-// DCDC1 0.7-3.5V @ 1200mA -> OLED
-// DCDC3 0.7-3.5V @ 700mA -> ESP32 (keep this on!)
-// LDO1 30mA -> GPS Backup
-// LDO2 200mA -> LORA
-// LDO3 200mA -> GPS
+
+DC1         0.7V-3.5V /1.2A     -> OLED
+DC2         0.7-2.275V /1.6A
+DC3         0.7-3.5V /0.7A      -> ESP32 (keep this on!)
+LDO1(VRTC)  3.3V /30mA          -> GPS Backup
+LDO2        1.8V-3.3V /200mA    -> LORA
+LDO3        1.8-3.3V /200mA     -> GPS
+LDO5/IO0    1.8-3.3V /50mA
 
 // Wiring for I2C OLED display:
 //

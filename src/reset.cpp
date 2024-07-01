@@ -160,7 +160,7 @@ void enter_deepsleep(uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
 
 // reduce power if has PMU or VEXT
 #ifdef HAS_PMU
-  AXP192_power(pmu_power_sleep);
+  AXPxxx_power(pmu_power_sleep);
 #elif EXT_POWER_SW
   digitalWrite(EXT_POWER_SW, EXT_POWER_OFF);
 #endif

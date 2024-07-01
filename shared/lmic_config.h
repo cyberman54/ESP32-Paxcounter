@@ -23,9 +23,16 @@
 //#define LMIC_USE_INTERRUPTS 1
 //#endif
 
-// avoid lmic warning if we don't configure radio in case we haven't one
-#if !(defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio))
+// ensure that a radio is defined.
+#if !(defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio) || defined(CFG_sx1261_radio) || defined(CFG_sx1262_radio))
+# warning Target radio not defined, assuming CFG_sx1276_radio
 #define CFG_sx1276_radio 1
+#elif defined(CFG_sx1272_radio) && (defined(CFG_sx1276_radio) || defined(CFG_sx1261_radio) || defined(CFG_sx1262_radio))
+# error You can define at most one target radio
+#elif defined(CFG_sx1276_radio) && (defined(CFG_sx1261_radio) || defined(CFG_sx1262_radio))
+# error You can define at most one target radio
+#elif defined(CFG_sx1261_radio) && (defined(CFG_sx1261_radio))
+# error You can define at most one target radio
 #endif
 
 // time sync via LoRaWAN network, note: not supported by TTNv2
