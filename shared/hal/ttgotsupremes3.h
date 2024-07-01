@@ -62,9 +62,9 @@
 #define LORA_BUSY (4)
 
 // BME280 sensor on I2C bus
-//#define HAS_BME 1 // Enable BME sensors in general
-//#define HAS_BME280 SDA, SCL // SDA, SCL
-//#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring
+#define HAS_BME 1 // Enable BME sensor
+#define HAS_BME280 SDA, SCL
+#define BME280_ADDR 0x77
 
 // power management settings
 #define HAS_PMU 1 // has AXP2101 chip at i2c 0x68/0x69
