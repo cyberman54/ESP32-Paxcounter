@@ -14,7 +14,7 @@
 // 0x3c -> OLED Display
 // 0x77 -> BME280 Environmental Sensor
 
-// Real time clock PCF8583
+// Real time clock PCF8583 -> not yet supported by rtctime.cpp
 //#define RTC_INT (14)
 
 // 6-achsis unit MPU6886
@@ -59,7 +59,7 @@
 #define LORA_IRQ  (1)
 #define LORA_IO1  LMIC_UNUSED_PIN
 #define LORA_IO2  LMIC_UNUSED_PIN
-#define PIN_SX1262_BUSY (4)
+#define LORA_BUSY (4)
 
 // BME280 sensor on I2C bus
 //#define HAS_BME 1 // Enable BME sensors in general

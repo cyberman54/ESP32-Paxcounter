@@ -32,8 +32,8 @@ public:
   // ostime_t setModuleActive(bool state) override
 
   virtual u1_t queryBusyPin(void) override {
-  #ifdef PIN_SX1262_BUSY
-    return PIN_SX1262_BUSY;
+  #ifdef LORA_BUSY
+    return LORA_BUSY;
   #else
     return LMIC_UNUSED_PIN;
   #endif 
