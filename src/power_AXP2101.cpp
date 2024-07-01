@@ -141,20 +141,32 @@ void AXP2101_init(void) {
 
         ESP_LOGD(TAG, "AXP2101 ChipID:0x%x", pmu->getChipID());
 
-        // Setting for Lilygo T-Beam Supreme S3
+        #ifdef _TTGOBEAM_1_2_H
+        // Settings for Lilygo T-Beam V1.2 (yet untested!)
+
+        // gnss
+        pmu->setPowerChannelVoltage(XPOWERS_ALDO3, 3300);
+        pmu->enablePowerOutput(XPOWERS_ALDO4);
+        // lora
+        pmu->setPowerChannelVoltage(XPOWERS_ALDO2, 3300);
+        pmu->enablePowerOutput(XPOWERS_ALDO3);
+        // oled
+        pmu->setPowerChannelVoltage(XPOWERS_DCDC3, 3300);
+        pmu->enablePowerOutput(XPOWERS_DCDC3);
+        #endif // T-Beam v1.2
+
+        #ifdef _TTGOTSUPREMES3_H 
+        // Settings for Lilygo T-Beam Supreme S3
 
         // gnss
         pmu->setPowerChannelVoltage(XPOWERS_ALDO4, 3300);
         pmu->enablePowerOutput(XPOWERS_ALDO4);
-
         // lora
         pmu->setPowerChannelVoltage(XPOWERS_ALDO3, 3300);
         pmu->enablePowerOutput(XPOWERS_ALDO3);
-
         // oled
         pmu->setPowerChannelVoltage(XPOWERS_DCDC3, 3300);
         pmu->enablePowerOutput(XPOWERS_DCDC3);
-
         /**
          * ALDO2 cannot be turned off.
          * It is a necessary condition for sensor communication.
@@ -163,14 +175,13 @@ void AXP2101_init(void) {
          */
         pmu->setPowerChannelVoltage(XPOWERS_ALDO2, 3300);
         pmu->enablePowerOutput(XPOWERS_ALDO2);
-
         // 6-axis, magnetomete, bme280, oled screen power channel
         pmu->setPowerChannelVoltage(XPOWERS_ALDO1, 3300);
         pmu->enablePowerOutput(XPOWERS_ALDO1);
-
         // sdcard power channel
         pmu->setPowerChannelVoltage(XPOWERS_BLDO1, 3300);
         pmu->enablePowerOutput(XPOWERS_BLDO1);
+        #endif // TTGO Supreme
 
         // set pmu operating voltages
         pmu->setSysPowerDownVoltage(2700);
