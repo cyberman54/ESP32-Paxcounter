@@ -34,9 +34,9 @@ bool AXPxxx_init() {
 #if defined(XPOWERS_CHIP_AXP2101)
     if (!pmu) {
         #if (defined(PMU_SDA) && defined(PMU_SCL))
-          pmu = new XPowersAXP2101(i2c_pmu, i2c_sda, i2c_scl, AXP2101_PRIMARY_ADDRESS);
+          pmu = new XPowersAXP2101(i2c_pmu, i2c_sda, i2c_scl, AXP2101_SLAVE_ADDRESS);
         #else
-          pmu = new XPowersAXP2101(AXP2101_PRIMARY_ADDRESS, i2c_readBytes, i2c_writeBytes);
+          pmu = new XPowersAXP2101(AXP2101_SLAVE_ADDRESS, i2c_readBytes, i2c_writeBytes);
         #endif
         if (!pmu->init()) {
             delete pmu;
@@ -50,9 +50,9 @@ bool AXPxxx_init() {
 #if defined(XPOWERS_CHIP_AXP192)
     if (!pmu) {
         #if (defined(PMU_SDA) && defined(PMU_SCL))
-          pmu = new XPowersAXP192(i2c_pmu, i2c_sda, i2c_scl, AXP192_PRIMARY_ADDRESS);
+          pmu = new XPowersAXP192(i2c_pmu, i2c_sda, i2c_scl, AXP192_SLAVE_ADDRESS);
         #else
-          pmu = new XPowersAXP192(AXP192_PRIMARY_ADDRESS, i2c_readBytes, i2c_writeBytes);
+          pmu = new XPowersAXP192(AXP192_SLAVE_ADDRESS, i2c_readBytes, i2c_writeBytes);
         #endif
         if (!pmu->init()) {
             delete pmu;
@@ -66,9 +66,9 @@ bool AXPxxx_init() {
 #if defined(XPOWERS_CHIP_AXP202)
     if (!pmu) {
         #if (defined(PMU_SDA) && defined(PMU_SCL))
-          pmu = new XPowersAXP202(i2c_pmu, i2c_sda, i2c_scl, AXP202_PRIMARY_ADDRESS);
+          pmu = new XPowersAXP202(i2c_pmu, i2c_sda, i2c_scl, AXP202_SLAVE_ADDRESS);
         #else
-          pmu = new XPowersAXP202(AXP202_PRIMARY_ADDRESS, i2c_readBytes, i2c_writeBytes);
+          pmu = new XPowersAXP202(AXP202_SLAVE_ADDRESS, i2c_readBytes, i2c_writeBytes);
         #endif
         if (!pmu->init()) {
             delete pmu;
