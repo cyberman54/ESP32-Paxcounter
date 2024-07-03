@@ -30,7 +30,7 @@ bool AXPxxx_init() {
         #if (defined(PMU_SDA) && defined(PMU_SCL))
           pmu = new XPowersAXP2101(Wire1, PMU_SDA, PMU_SCL, AXP2101_SLAVE_ADDRESS);
         #else
-          pmu = new XPowersAXP2101(AXP2101_SLAVE_ADDRESS, i2c_readBytes, i2c_writeBytes);
+          pmu = new XPowersAXP2101(Wire);
         #endif
         if (!pmu->init()) {
             delete pmu;
@@ -46,7 +46,7 @@ bool AXPxxx_init() {
         #if (defined(PMU_SDA) && defined(PMU_SCL))
           pmu = new XPowersAXP192(Wire1, PMU_SDA, PMU_SCL, AXP192_SLAVE_ADDRESS);
         #else
-          pmu = new XPowersAXP192(AXP192_SLAVE_ADDRESS, i2c_readBytes, i2c_writeBytes);
+          pmu = new XPowersAXP192(Wire);
         #endif
         if (!pmu->init()) {
             delete pmu;
@@ -62,7 +62,7 @@ bool AXPxxx_init() {
         #if (defined(PMU_SDA) && defined(PMU_SCL))
           pmu = new XPowersAXP202(Wire1, PMU_SDA, PMU_SCL, AXP202_SLAVE_ADDRESS);
         #else
-          pmu = new XPowersAXP202(AXP202_SLAVE_ADDRESS, i2c_readBytes, i2c_writeBytes);
+          pmu = new XPowersAXP202(Wire);
         #endif
         if (!pmu->init()) {
             delete pmu;
