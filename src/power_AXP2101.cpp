@@ -96,6 +96,7 @@ void AXP2101_power(pmu_power_t powerlevel) {
             pmu->setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
             pmu->disablePowerOutput(XPOWERS_DCDC3); // oled off
             pmu->disablePowerOutput(XPOWERS_ALDO4); // gps off
+            pmu->disablePowerOutput(XPOWERS_VBACKUP); // charge GPS backup battery off
             pmu->disablePowerOutput(XPOWERS_ALDO3); // lora off
             pmu->enableSleep();
             break;
@@ -103,6 +104,7 @@ void AXP2101_power(pmu_power_t powerlevel) {
         default:
             pmu->enablePowerOutput(XPOWERS_DCDC3); // oled on
             pmu->enablePowerOutput(XPOWERS_ALDO4); // gps on
+            pmu->enablePowerOutput(XPOWERS_VBACKUP); // charge GPS backup battery
             pmu->enablePowerOutput(XPOWERS_ALDO3); // lora on
             pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
             break;
@@ -153,6 +155,10 @@ void AXP2101_init(void) {
         // oled
         pmu->setPowerChannelVoltage(XPOWERS_DCDC3, 3300);
         pmu->enablePowerOutput(XPOWERS_DCDC3);
+        // gnss backup battery
+        pmu->setPowerChannelVoltage(XPOWERS_VBACKUP, 3300);
+        pmu->enablePowerOutput(XPOWERS_VBACKUP); // charge GPS backup battery
+
         #endif // T-Beam v1.2
 
         #ifdef _TTGOTSUPREMES3_H 
@@ -161,6 +167,10 @@ void AXP2101_init(void) {
         // gnss
         pmu->setPowerChannelVoltage(XPOWERS_ALDO4, 3300);
         pmu->enablePowerOutput(XPOWERS_ALDO4);
+
+        // gnss backup battery
+        pmu->setPowerChannelVoltage(XPOWERS_VBACKUP, 3300);
+        pmu->enablePowerOutput(XPOWERS_VBACKUP); // charge GPS backup battery
         // lora
         pmu->setPowerChannelVoltage(XPOWERS_ALDO3, 3300);
         pmu->enablePowerOutput(XPOWERS_ALDO3);
