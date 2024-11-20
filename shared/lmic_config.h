@@ -23,13 +23,26 @@
 //#define LMIC_USE_INTERRUPTS 1
 //#endif
 
+// ensure that a radio is defined.
 // avoid lmic warning if we don't configure radio in case we haven't one
-#if !(defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio))
+#if !(defined(CFG_sx1272_radio) || defined(CFG_sx1276_radio) || defined(CFG_sx1261_radio) || defined(CFG_sx1262_radio))
+//# warning Target radio not defined, assuming CFG_sx1276_radio
 #define CFG_sx1276_radio 1
+#elif defined(CFG_sx1272_radio) && (defined(CFG_sx1276_radio) || defined(CFG_sx1261_radio) || defined(CFG_sx1262_radio))
+# error You can define at most one target radio
+#elif defined(CFG_sx1276_radio) && (defined(CFG_sx1261_radio) || defined(CFG_sx1262_radio))
+# error You can define at most one target radio
+#elif defined(CFG_sx1261_radio) && (defined(CFG_sx1261_radio))
+# error You can define at most one target radio
 #endif
 
 // time sync via LoRaWAN network, note: not supported by TTNv2
-#define LMIC_ENABLE_DeviceTimeReq 1
+// LMIC_ENABLE_DeviceTimeReq
+// enable support for MCMD_DeviceTimeReq and MCMD_DeviceTimeAns
+// this is always defined, and non-zero to enable it.
+#if !defined(LMIC_ENABLE_DeviceTimeReq)
+# define LMIC_ENABLE_DeviceTimeReq 1
+#endif
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
