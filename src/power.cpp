@@ -39,9 +39,9 @@ void AXP192_powerevent_IRQ(void) {
     ESP_LOGI(TAG, "Battery is connected.");
   if (pmu.isBatRemoveIrq())
     ESP_LOGI(TAG, "Battery was removed.");
-  if (pmu.isBatChagerStartIrq())
+  if (pmu.isBatChargeStartIrq())
     ESP_LOGI(TAG, "Battery charging started.");
-  if (pmu.isBatChagerDoneIrq())
+  if (pmu.isBatChargeDoneIrq())
     ESP_LOGI(TAG, "Battery charging done.");
   if (pmu.isBattTempLowIrq())
     ESP_LOGI(TAG, "Battery high temperature.");
@@ -82,7 +82,7 @@ void AXP192_power(pmu_power_t powerlevel) {
   default:
     pmu.enableLDO2(); // Lora on T-Beam V1.0/1.1
     pmu.enableLDO3(); // Gps on T-Beam V1.0/1.1
-    pmu.enableDC1();  // OLED on T-Beam v1.0/1.1
+    pmu.enableDC2();  // OLED on T-Beam v1.0/1.1
     pmu.setChargingLedMode(XPOWERS_CHG_LED_ON);
     break;
   }
@@ -117,7 +117,7 @@ void AXP192_init(void) {
     pmu.setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
 
     // set device operating voltages
-    pmu.setDC1Voltage(3300);  // for external OLED display
+    pmu.setDC2Voltage(3300);  // for external OLED display
     pmu.setLDO2Voltage(3300); // LORA VDD 3v3
     pmu.setLDO3Voltage(3300); // GPS VDD 3v3
 
