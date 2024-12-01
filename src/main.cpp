@@ -186,7 +186,7 @@ void setup() {
 
 #if defined HAS_PMU || defined HAS_IP5306
 #ifdef HAS_PMU
-  AXP192_init();
+  PMU_init();
 #elif defined HAS_IP5306
   IP5306_init();
 #endif

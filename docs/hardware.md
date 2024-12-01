@@ -35,7 +35,7 @@ Depending on board hardware following features are supported:
 - [OLED Display](display-led.md) (shows detailed status)
 - RGB LED (shows colorized status)
 - Button (short press: flip display page / long press: send alarm message)
-- Battery voltage monitoring (analog read / AXP192 / IP5306)
+- Battery voltage monitoring (analog read / AXP192 / AXP202 / AXP2101 / IP5306)
 - GPS (Generic serial NMEA, or Quectel L76 I2C)
 - Environmental sensors (Bosch BMP180/BME280/BME680/BMP280 I2C; SDS011 serial)
 - Real Time Clock (Maxim DS3231 I2C)

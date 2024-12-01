@@ -33,8 +33,8 @@ Reset -> reset device
 #define LED_ACTIVE_LOW 1
 
 // power management settings
-#define HAS_PMU 1 // has AXP192 chip
-#define XPOWERS_CHIP_AXP192 1
+#define HAS_PMU 1 // has PMU chip
+#define XPOWERS_CHIP_AXP192 1 // PMU chip type AXP192
 #define PMU_INT GPIO_NUM_35 // battery interrupt
 #define PMU_CHG_CURRENT XPOWERS_AXP192_CHG_CUR_1000MA // battery charge current
 // possible values (mA):

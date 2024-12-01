@@ -26,10 +26,14 @@ public:
   void begin(void) override {
     SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
   }
-
   // void end(void) override
-
   // ostime_t setModuleActive(bool state) override
+  #ifdef LORA_BUSY // assuming SX126x chip
+  u1_t queryBusyPin(void) override { return LORA_BUSY; };
+  bool queryUsingDcdc(void) override { return true; };
+  bool queryUsingDIO2AsRfSwitch(void) override { return true; };
+  bool queryUsingDIO3AsTCXOSwitch(void) override { return true; };
+  #endif
 };
 
 static MyHalConfig_t myHalConfig{};
@@ -39,7 +43,7 @@ static const lmic_pinmap myPinmap = {
     .nss = LORA_CS,
     .rxtx = LMIC_UNUSED_PIN,
     .rst = LORA_RST == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_RST,
-    .dio = {LORA_IRQ == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IRQ,
+    .dio = {LORA_IRQ,
             LORA_IO1 == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IO1,
             LORA_IO2 == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IO2},
     .rxtx_rx_active = LMIC_UNUSED_PIN,

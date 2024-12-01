@@ -46,8 +46,8 @@ This way the display is still positioned correctly to fit in the many available 
 
 Some boards like the TTGO T-beam v1.0 and newer do have a power management chip.
 
-- T-beam v1.0 and v1.1 use the AXP192
-- T-beam v1.2 uses AXP2101
+- T-Beam v1.0 and v1.1 use AXP192
+- T-Beam v1.2 and T-Supreme use AXP2101
 
 At least the ones using the AXP192 power management chip do have a annoying oversight in the board design.
 

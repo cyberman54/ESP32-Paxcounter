@@ -25,7 +25,7 @@ XPowersPMU pmu;
 
 void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
 
-void AXP192_powerevent_IRQ(void) {
+void PMU_powerevent_IRQ(void) {
   pmu.getIrqStatus();
 
   if (pmu.isVbusOverVoltageIrq())
@@ -51,7 +51,7 @@ void AXP192_powerevent_IRQ(void) {
   // PEK button handling:
   // long press -> shutdown power, must be exited by another longpress
   if (pmu.isPekeyLongPressIrq())
-    AXP192_power(pmu_power_off); // switch off Lora, GPS, display
+    PMU_power(pmu_power_off); // switch off Lora, GPS, display
 #ifdef HAS_BUTTON
   // short press -> esp32 deep sleep mode, must be exited by user button
   if (pmu.isPekeyShortPressIrq())
@@ -64,7 +64,7 @@ void AXP192_powerevent_IRQ(void) {
   read_battlevel();
 }
 
-void AXP192_power(pmu_power_t powerlevel) {
+void PMU_power(pmu_power_t powerlevel) {
   switch (powerlevel) {
   case pmu_power_off:
     pmu.setChargingLedMode(XPOWERS_CHG_LED_OFF);
@@ -88,7 +88,7 @@ void AXP192_power(pmu_power_t powerlevel) {
   }
 }
 
-void AXP192_showstatus(void) {
+void PMU_showstatus(void) {
   if (pmu.isBatteryConnect())
     if (pmu.isCharging())
       ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
@@ -105,11 +105,11 @@ void AXP192_showstatus(void) {
     ESP_LOGI(TAG, "USB not present");
 }
 
-void AXP192_init(void) {
-  if (!pmu.begin(Wire, AXP192_PRIMARY_ADDRESS, SCL, SDA))
-    ESP_LOGI(TAG, "AXP192 PMU initialization failed");
+void PMU_init(void) {
+  if (!pmu.begin(Wire, PMU_PRIMARY_ADDRESS, SCL, SDA))
+    ESP_LOGI(TAG, "PMU initialization failed");
   else {
-    ESP_LOGD(TAG, "AXP192 ChipID:0x%x", pmu.getChipID());
+    ESP_LOGD(TAG, "PMU ChipID:0x%x", pmu.getChipID());
 
     // set pmu operating voltages
     pmu.setSysPowerDownVoltage(2700);
@@ -138,18 +138,18 @@ void AXP192_init(void) {
     pinMode(PMU_INT, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
     // disable all interrupts
-    pmu.disableIRQ(XPOWERS_AXP192_ALL_IRQ);
+    pmu.disableIRQ(XPOWERS_ALL_INT);
     // clear all interrupt flags
     pmu.clearIrqStatus();
     // enable the required interrupt function
-    pmu.enableIRQ(XPOWERS_AXP192_BAT_INSERT_IRQ |
-                  XPOWERS_AXP192_BAT_REMOVE_IRQ | // BATTERY
-                  XPOWERS_AXP192_VBUS_INSERT_IRQ |
-                  XPOWERS_AXP192_VBUS_REMOVE_IRQ | // VBUS
-                  XPOWERS_AXP192_PKEY_SHORT_IRQ |
-                  XPOWERS_AXP192_PKEY_LONG_IRQ | // POWER KEY
-                  XPOWERS_AXP192_BAT_CHG_DONE_IRQ |
-                  XPOWERS_AXP192_BAT_CHG_START_IRQ // CHARGE
+    pmu.enableIRQ(XPOWERS_BATTERY_INSERT_INT |
+                  XPOWERS_BATTERY_REMOVE_INT | // battery state
+                  XPOWERS_USB_INSERT_INT |
+                  XPOWERS_USB_REMOVE_INT | // USB state
+                  XPOWERS_PWR_BTN_CLICK_INT |
+                  XPOWERS_PWR_BTN_LONGPRESSED_INT | // Power button
+                  XPOWERS_CHARGE_DONE_INT |
+                  XPOWERS_CHARGE_START_INT // Battery charging state
     );
 #endif // PMU_INT
 
@@ -161,8 +161,8 @@ void AXP192_init(void) {
 #endif
 
     // switch power rails on
-    AXP192_power(pmu_power_on);
-    ESP_LOGI(TAG, "AXP192 PMU initialized");
+    PMU_power(pmu_power_on);
+    ESP_LOGI(TAG, "PMU initialized");
   }
 }
 
