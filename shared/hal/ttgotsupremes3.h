@@ -47,9 +47,10 @@
 #define HAS_LORA 1 // use on board LORA
 #define CFG_sx1262_radio 1 // HPD16A
 // Pins for LORA chip SPI interface, reset line and interrupt lines
-#define LORA_IRQ  NOT_A_PIN
-#define LORA_IO1  (1)   // RADIO_DIO1
-#define LORA_IO2  (4)   // RADIO_BUSY
+#define LORA_IRQ  (1)   // RADIO_DIO1
+#define LORA_IO1  LMIC_UNUSED_PIN
+#define LORA_IO2  LMIC_UNUSED_PIN
+#define LORA_BUSY (4)   // RADIO_BUSY
 #define LORA_RST  (5)   // RADIO_NRSET
 #define LORA_CS   (10)  // RADIO_CD
 #define LORA_MOSI (11)  // RADIO_MOSI
