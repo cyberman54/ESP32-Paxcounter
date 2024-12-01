@@ -1,8 +1,5 @@
 // COUNTRY AND PROJECT SPECIFIC DEFINITIONS FOR LMIC STACK
 
-// workaround for arduino-espressif32 v2.0.0 (see isse #714 @ MCCI_LMIC)
-#define hal_init LMICHAL_init
-
 // COUNTRY SETTINGS
 // --> please check with you local regulations for ISM band frequency use!
 
