@@ -79,6 +79,18 @@ BME_IRQ         <- setBMEIRQ() <- Ticker.h
 // Basic Config
 #include "main.h"
 
+#ifndef HOMECYCLE
+#define HOMECYCLE 30  // Default home cycle in seconds if not defined elsewhere
+#endif
+
+#ifndef WIFI_MY_COUNTRY
+#define WIFI_MY_COUNTRY "01"  // Default to world safe mode if not defined elsewhere
+#endif
+
+#ifndef HAS_LED
+#define HAS_LED NOT_A_PIN  // Default to no LED if not defined elsewhere
+#endif
+
 char clientId[20] = {0}; // unique ClientID
 
 void setup() {
@@ -403,6 +415,17 @@ void setup() {
   strcat_P(features, " IF482");
 #endif
 
+  // cyclic function interrupts
+  ESP_LOGI(TAG, "Attaching cyclic timer...");
+  cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
+  ESP_LOGI(TAG, "Cyclic timer attached");
+
+  // show compiled features
+  ESP_LOGI(TAG, "Features:%s", features);
+
+  // set runmode to normal
+  RTC_runmode = RUNMODE_NORMAL;
+
   // start state machine
   ESP_LOGI(TAG, "Starting Interrupt Handler...");
   xTaskCreatePinnedToCore(irqHandler,      // task function
@@ -437,25 +460,25 @@ void setup() {
   ESP_LOGI(TAG, "Starting Timers...");
 
 // display interrupt
-#ifdef HAS_DISPLAY
-  dp_clear();
-  dp_contrast(DISPLAYCONTRAST);
-  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
-  displayIRQ = timerBegin(0, 80, true);
-  timerAttachInterrupt(displayIRQ, &DisplayIRQ, false);
-  timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
-  timerAlarmEnable(displayIRQ);
-#endif
+// #ifdef HAS_DISPLAY
+//   dp_clear();
+//   dp_contrast(DISPLAYCONTRAST);
+//   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
+//   displayIRQ = timerBegin(0, 80, true);
+//   timerAttachInterrupt(displayIRQ, &DisplayIRQ, false);
+//   timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
+//   timerAlarmEnable(displayIRQ);
+// #endif
 
 // LED Matrix display interrupt
-#ifdef HAS_MATRIX_DISPLAY
-  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
-  matrixDisplayIRQ = timerBegin(3, 80, true);
-  timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ, false);
-  timerAlarmWrite(matrixDisplayIRQ, MATRIX_DISPLAY_SCAN_US, true);
-  timerAlarmEnable(matrixDisplayIRQ);
-#endif
+// #ifdef HAS_MATRIX_DISPLAY
+//   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
+//   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
+//   matrixDisplayIRQ = timerBegin(3, 80, true);
+//   timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ, false);
+//   timerAlarmWrite(matrixDisplayIRQ, MATRIX_DISPLAY_SCAN_US, true);
+//   timerAlarmEnable(matrixDisplayIRQ);
+// #endif
 
 // initialize button
 #ifdef HAS_BUTTON
@@ -465,7 +488,6 @@ void setup() {
 #else
   strcat_P(features, "PD");
 #endif // BUTTON_PULLUP
-  button_init();
 #endif // HAS_BUTTON
 
 // only if we have a timesource we do timesync
@@ -473,15 +495,6 @@ void setup() {
   time_init();
   strcat_P(features, " TIME");
 #endif // timesync
-
-  // cyclic function interrupts
-  cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
-
-  // show compiled features
-  ESP_LOGI(TAG, "Features:%s", features);
-
-  // set runmode to normal
-  RTC_runmode = RUNMODE_NORMAL;
 
   vTaskDelete(NULL);
 } // setup()

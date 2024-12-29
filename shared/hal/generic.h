@@ -75,7 +75,9 @@
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
-#define HAS_LED (21) // on board  LED
+#ifndef HAS_LED
+#define HAS_LED NOT_A_PIN  // Define as NOT_A_PIN if no LED is present
+#endif
 #define HAS_BUTTON (39) // on board button
 //#define RGB_LED_COUNT 1 // we have 1 LED
 //#define HAS_RGB_LED FastLED.addLeds<WS2812, GPIO_NUM_0, GRB>(leds, RGB_LED_COUNT);
