@@ -12,5 +12,3 @@
 .gcc-flags.json
 shared/loraconf.h
 shared/ota.conf
-platformio.ini
-shared/paxcounter.conf

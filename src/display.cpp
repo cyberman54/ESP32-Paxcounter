@@ -178,7 +178,8 @@ void dp_refresh(bool nextPage) {
 #endif
 
   if (nextPage) {
-    DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
+    // DisplayPage = (DisplayPage >= DISPLAY_PAGES - 1) ? 0 : (DisplayPage + 1);
+    DisplayPage = 0;
     dp_clear();
   } else
     dp->setCursor(0, 0);

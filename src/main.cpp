@@ -440,12 +440,11 @@ void setup() {
 #ifdef HAS_DISPLAY
   dp_clear();
   dp_contrast(DISPLAYCONTRAST);
-  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
-    displayIRQ = timerBegin(0, 80, true);
+  displayIRQ = timerBegin(0, 80, true);
   timerAttachInterrupt(displayIRQ, &DisplayIRQ, false);
-    timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
-    timerAlarmEnable(displayIRQ);
+  timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
+  timerAlarmEnable(displayIRQ);
 #endif
 
 // LED Matrix display interrupt
