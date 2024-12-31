@@ -1,6 +1,6 @@
 // Basic Config
 #include "senddata.h"
-
+#include "mqtthandler.h"
 // void setSendIRQ(TimerHandle_t xTimer) {
 //  xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
 //}
@@ -82,6 +82,9 @@ void sendData() {
       if (cfg.blescan)
         payload.addCount(count.ble_count, MAC_SNIFF_BLE);
 #endif
+
+// Enqueue data for MQTT
+pax_mqtt_enqueue(count.pax, count.wifi_count, count.ble_count);
 
 #if (HAS_GPS)
       if (GPSPORT == COUNTERPORT) {

@@ -17,16 +17,16 @@ void doHousekeeping() {
 
   // print heap and task storage information
   ESP_LOGD(TAG, "Heap: Free:%d, Min:%d, Size:%d, Alloc:%d, StackHWM:%d",
-           ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
-           ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
+          ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getHeapSize(),
+          ESP.getMaxAllocHeap(), uxTaskGetStackHighWaterMark(NULL));
 
   if (irqHandlerTask != NULL)
     ESP_LOGD(TAG, "IRQhandler %d bytes left | Taskstate = %d",
-             uxTaskGetStackHighWaterMark(irqHandlerTask),
-             eTaskGetState(irqHandlerTask));
+            uxTaskGetStackHighWaterMark(irqHandlerTask),
+            eTaskGetState(irqHandlerTask));
   if (rcmdTask != NULL)
     ESP_LOGD(TAG, "Rcommand interpreter %d bytes left | Taskstate = %d",
-             uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
+            uxTaskGetStackHighWaterMark(rcmdTask), eTaskGetState(rcmdTask));
 
 #if (HAS_LORA)
   if (lmicTask != NULL)

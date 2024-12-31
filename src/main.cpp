@@ -78,6 +78,7 @@ BME_IRQ         <- setBMEIRQ() <- Ticker.h
 
 // Basic Config
 #include "main.h"
+#include "mqtthandler.h"
 
 #ifndef HOMECYCLE
 #define HOMECYCLE 30  // Default home cycle in seconds if not defined elsewhere
@@ -292,6 +293,10 @@ void setup() {
     start_boot_menu();
 #endif
 
+#if defined HAS_IF482
+  strcat_P(features, " IF482");
+#endif
+
   // start local webserver on rcommand request
   if (RTC_runmode == RUNMODE_MAINTENANCE)
     start_boot_menu();
@@ -326,95 +331,6 @@ void setup() {
   ESP_LOGI(TAG, "Starting rcommand interpreter...");
   rcmd_init();
 
-// initialize gps
-#if (HAS_GPS)
-  strcat_P(features, " GPS");
-  if (gps_init()) {
-    ESP_LOGI(TAG, "Starting GPS Feed...");
-    xTaskCreatePinnedToCore(gps_loop,  // task function
-                            "gpsloop", // name of task
-                            8192,      // stack size of task
-                            (void *)1, // parameter of the task
-                            1,         // priority of the task
-                            &GpsTask,  // task handle
-                            1);        // CPU core
-  }
-#endif
-
-// initialize sensors
-#if (HAS_SENSORS)
-#if (HAS_SENSOR_1)
-  strcat_P(features, " SENS(1)");
-  sensor_init();
-#endif
-#if (HAS_SENSOR_2)
-  strcat_P(features, " SENS(2)");
-  sensor_init();
-#endif
-#if (HAS_SENSOR_3)
-  strcat_P(features, " SENS(3)");
-  sensor_init();
-#endif
-#endif
-
-// initialize LoRa
-#if (HAS_LORA)
-  strcat_P(features, " LORA");
-  _ASSERT(lmic_init() == ESP_OK);
-#endif
-
-// initialize SPI
-#ifdef HAS_SPI
-  strcat_P(features, " SPI");
-  _ASSERT(spi_init() == ESP_OK);
-#endif
-
-// initialize MQTT
-/*
-#ifdef HAS_MQTT
-  strcat_P(features, " MQTT");
-  _ASSERT(mqtt_init() == ESP_OK);
-#endif
-*/
-
-#if (HAS_SDS011)
-  ESP_LOGI(TAG, "init fine-dust-sensor");
-  if (sds011_init())
-    strcat_P(features, " SDS");
-#endif
-
-// initialize matrix display
-#ifdef HAS_MATRIX_DISPLAY
-  strcat_P(features, " LED_MATRIX");
-  MatrixDisplayIsOn = cfg.screenon;
-  init_matrix_display(); // note: blocking call
-#endif
-
-// show payload encoder
-#if PAYLOAD_ENCODER == 1
-  strcat_P(features, " PLAIN");
-#elif PAYLOAD_ENCODER == 2
-  strcat_P(features, " PACKED");
-#elif PAYLOAD_ENCODER == 3
-  strcat_P(features, " LPPDYN");
-#elif PAYLOAD_ENCODER == 4
-  strcat_P(features, " LPPPKD");
-#endif
-
-// initialize RTC
-#ifdef HAS_RTC
-  strcat_P(features, " RTC");
-  _ASSERT(rtc_init());
-#endif
-
-#if defined HAS_DCF77
-  strcat_P(features, " DCF77");
-#endif
-
-#if defined HAS_IF482
-  strcat_P(features, " IF482");
-#endif
-
   // cyclic function interrupts
   ESP_LOGI(TAG, "Attaching cyclic timer...");
   cyclicTimer.attach(HOMECYCLE, setCyclicIRQ);
@@ -436,67 +352,19 @@ void setup() {
                           &irqHandlerTask, // task handle
                           1);              // CPU core
 
-// initialize BME sensor (BME280/BME680)
-#if (HAS_BME)
-#ifdef HAS_BME680
-  strcat_P(features, " BME680");
-#elif defined HAS_BME280
-  strcat_P(features, " BME280");
-#elif defined HAS_BMP180
-  strcat_P(features, " BMP180");
-#elif defined HAS_BMP280
-  strcat_P(features, " BMP280");
-#endif
-  if (bme_init())
-    ESP_LOGI(TAG, "BME sensor initialized");
-  else {
-    ESP_LOGE(TAG, "BME sensor could not be initialized");
-    cfg.payloadmask &= (uint8_t)~MEMS_DATA; // switch off transmit of BME data
-  }
-#endif
-
   // starting timers and interrupts
   _ASSERT(irqHandlerTask != NULL); // has interrupt handler task started?
   ESP_LOGI(TAG, "Starting Timers...");
 
-// display interrupt
-// #ifdef HAS_DISPLAY
-//   dp_clear();
-//   dp_contrast(DISPLAYCONTRAST);
-//   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
-//   displayIRQ = timerBegin(0, 80, true);
-//   timerAttachInterrupt(displayIRQ, &DisplayIRQ, false);
-//   timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
-//   timerAlarmEnable(displayIRQ);
-// #endif
-
-// LED Matrix display interrupt
-// #ifdef HAS_MATRIX_DISPLAY
-//   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-//   // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
-//   matrixDisplayIRQ = timerBegin(3, 80, true);
-//   timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ, false);
-//   timerAlarmWrite(matrixDisplayIRQ, MATRIX_DISPLAY_SCAN_US, true);
-//   timerAlarmEnable(matrixDisplayIRQ);
-// #endif
-
-// initialize button
-#ifdef HAS_BUTTON
-  strcat_P(features, " BTN_");
-#ifdef BUTTON_PULLUP
-  strcat_P(features, "PU");
-#else
-  strcat_P(features, "PD");
-#endif // BUTTON_PULLUP
-#endif // HAS_BUTTON
-
-// only if we have a timesource we do timesync
-#if ((HAS_LORA_TIME) || (HAS_GPS) || defined HAS_RTC)
-  time_init();
-  strcat_P(features, " TIME");
-#endif // timesync
+  // Initialize MQTT handler
+  pax_mqtt_init();
 
   vTaskDelete(NULL);
 } // setup()
 
-void loop() { vTaskDelete(NULL); }
+void loop() {
+  // Handle MQTT operations
+  pax_mqtt_loop();
+  
+  vTaskDelete(NULL);
+}
