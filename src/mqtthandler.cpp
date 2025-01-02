@@ -5,6 +5,7 @@
 #include "esp_task_wdt.h"
 #include "libpax_helpers.h"
 #include "globals.h"
+#include <time.h>
 
 static const char* MQTT_TAG = "MQTT_HANDLER";
 
@@ -19,7 +20,14 @@ static struct {
     uint32_t timestamp;
 } currentCounts = {0};
 
+// Device detection buffer - protected by mutex
+static struct {
+    DeviceData devices[50];  // Buffer for device detections
+    size_t count;
+} deviceBuffer = {0};
+
 static portMUX_TYPE countsMux = portMUX_INITIALIZER_UNLOCKED;
+static portMUX_TYPE deviceMux = portMUX_INITIALIZER_UNLOCKED;
 
 WiFiClient paxWifiClient;
 PubSubClient paxMqttClient(paxWifiClient);
@@ -28,6 +36,37 @@ PubSubClient paxMqttClient(paxWifiClient);
 static QueueHandle_t mqttButtonQueue = NULL;
 static portMUX_TYPE mqttMux = portMUX_INITIALIZER_UNLOCKED;
 volatile bool shouldSendMQTT = false;
+
+// NTP Server settings
+#define NTP_SERVER "time.google.com"
+#define GMT_OFFSET_SEC 3600      // GMT+1 for CET
+#define DAYLIGHT_OFFSET_SEC 3600 // +1 hour for summer time
+
+// Function to sync time with NTP
+bool sync_time_with_ntp() {
+    configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
+    
+    ESP_LOGI(MQTT_TAG, "Waiting for NTP time sync...");
+    time_t now = 0;
+    struct tm timeinfo = { 0 };
+    int retry = 0;
+    const int retry_count = 10;
+    
+    while(timeinfo.tm_year < (2024 - 1900) && ++retry < retry_count) {
+        ESP_LOGI(MQTT_TAG, "Waiting for NTP time... (%d/%d)", retry, retry_count);
+        delay(2000);
+        time(&now);
+        localtime_r(&now, &timeinfo);
+    }
+
+    if (timeinfo.tm_year < (2024 - 1900)) {
+        ESP_LOGE(MQTT_TAG, "Failed to get NTP time");
+        return false;
+    }
+
+    ESP_LOGI(MQTT_TAG, "Time synchronized: %s", asctime(&timeinfo));
+    return true;
+}
 
 // ISR handler for button press
 void IRAM_ATTR buttonISR() {
@@ -78,15 +117,6 @@ void paxMqttTask(void *pvParameters) {
                                 current_count.pax, current_count.wifi_count, current_count.ble_count);
                     }
                     
-                    // Stop libpax counter with retry
-                    ESP_LOGI(MQTT_TAG, "Stopping libpax counter...");
-                    int retries = 0;
-                    while (libpax_counter_stop() != 0 && retries < 3) {
-                        vTaskDelay(pdMS_TO_TICKS(100));
-                        retries++;
-                    }
-                    vTaskDelay(pdMS_TO_TICKS(100));
-                    
                     // Connect to WiFi and send data
                     WiFi.mode(WIFI_STA);
                     ESP_LOGI(MQTT_TAG, "Connecting to WiFi...");
@@ -101,7 +131,10 @@ void paxMqttTask(void *pvParameters) {
                     
                     if (WiFi.status() == WL_CONNECTED) {
                         ESP_LOGI(MQTT_TAG, "WiFi connected successfully!");
+                        
+                        // Send both count data and device detections
                         pax_mqtt_send_data();
+                        pax_mqtt_send_devices();
                         
                         ESP_LOGI(MQTT_TAG, "Disconnecting WiFi...");
                         WiFi.disconnect(true);
@@ -110,13 +143,10 @@ void paxMqttTask(void *pvParameters) {
                         ESP_LOGE(MQTT_TAG, "Failed to connect to WiFi, data not sent");
                     }
                     
-                    // Restart libpax counter with retry
-                    ESP_LOGI(MQTT_TAG, "Restarting libpax counter...");
-                    retries = 0;
-                    while (libpax_counter_start() != 0 && retries < 3) {
-                        vTaskDelay(pdMS_TO_TICKS(100));
-                        retries++;
-                    }
+                    // Clear device buffer after sending
+                    portENTER_CRITICAL(&deviceMux);
+                    deviceBuffer.count = 0;
+                    portEXIT_CRITICAL(&deviceMux);
                     
                     portENTER_CRITICAL(&mqttMux);
                     shouldSendMQTT = false;
@@ -124,10 +154,8 @@ void paxMqttTask(void *pvParameters) {
                 }
             } catch (const std::exception& e) {
                 ESP_LOGE(MQTT_TAG, "Exception in MQTT task: %s", e.what());
-                libpax_counter_start();
             } catch (...) {
                 ESP_LOGE(MQTT_TAG, "Unknown exception in MQTT task");
-                libpax_counter_start();
             }
         }
         taskYIELD();
@@ -136,6 +164,35 @@ void paxMqttTask(void *pvParameters) {
 
 void pax_mqtt_init() {
     ESP_LOGI(MQTT_TAG, "Initializing MQTT Handler...");
+    
+    // Connect to WiFi first for time sync
+    WiFi.mode(WIFI_STA);
+    ESP_LOGI(MQTT_TAG, "Connecting to WiFi for initial time sync...");
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+        ESP_LOGI(MQTT_TAG, "Attempting to connect to WiFi... (%d)", attempts + 1);
+        attempts++;
+    }
+    
+    if (WiFi.status() == WL_CONNECTED) {
+        ESP_LOGI(MQTT_TAG, "WiFi connected successfully!");
+        
+        // Sync time with NTP
+        if (sync_time_with_ntp()) {
+            ESP_LOGI(MQTT_TAG, "Time synchronized successfully");
+        } else {
+            ESP_LOGE(MQTT_TAG, "Failed to sync time");
+        }
+        
+        // Disconnect WiFi after time sync - we'll reconnect when needed
+        WiFi.disconnect(true);
+        WiFi.mode(WIFI_OFF);
+    } else {
+        ESP_LOGE(MQTT_TAG, "Failed to connect to WiFi for initial time sync");
+    }
     
     mqttButtonQueue = xQueueCreate(5, sizeof(uint32_t));
     if (mqttButtonQueue == NULL) {
@@ -182,6 +239,35 @@ void pax_mqtt_enqueue(uint32_t pax_count, uint32_t wifi_count, uint32_t ble_coun
             pax_count, wifi_count, ble_count);
 }
 
+void pax_mqtt_enqueue_device(const uint8_t* mac, int8_t rssi, bool is_wifi) {
+    if (!mac) {
+        ESP_LOGE(MQTT_TAG, "Invalid MAC address pointer");
+        return;
+    }
+
+    // Create temporary device data outside critical section
+    DeviceData tempDevice;
+    memcpy(tempDevice.mac, mac, 6);
+    tempDevice.rssi = rssi;
+    tempDevice.is_wifi = is_wifi;
+    tempDevice.timestamp = millis();
+
+    // Minimize time in critical section
+    portENTER_CRITICAL(&deviceMux);
+    if (deviceBuffer.count < 50) {
+        deviceBuffer.devices[deviceBuffer.count] = tempDevice;
+        deviceBuffer.count++;
+        portEXIT_CRITICAL(&deviceMux);
+        
+        // ESP_LOGI(MQTT_TAG, "Enqueued device: MAC=%02x:%02x:%02x:%02x:%02x:%02x RSSI=%d Type=%s", 
+        //         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
+        //         rssi, is_wifi ? "WiFi" : "BLE");
+    } else {
+        portEXIT_CRITICAL(&deviceMux);
+        // ESP_LOGW(MQTT_TAG, "Device buffer full, dropping packet");
+    }
+}
+
 bool pax_mqtt_connect() {
     if (WiFi.status() != WL_CONNECTED) {
         ESP_LOGE(MQTT_TAG, "Cannot connect to MQTT - WiFi not connected");
@@ -217,17 +303,81 @@ void pax_mqtt_send_data() {
     data["pax"] = currentCounts.pax;
     data["wifi"] = currentCounts.wifi_count;
     data["ble"] = currentCounts.ble_count;
-    data["timestamp"] = currentCounts.timestamp;
+    // Use current time instead of millis
+    time_t now;
+    time(&now);
+    data["timestamp"] = now;
     portEXIT_CRITICAL(&countsMux);
     
     char buffer[256];
     serializeJson(doc, buffer);
     
     if (paxMqttClient.publish(PAX_MQTT_OUTTOPIC, buffer)) {
-        ESP_LOGI(MQTT_TAG, "Successfully sent data to MQTT broker");
+        ESP_LOGI(MQTT_TAG, "Successfully sent count data to MQTT broker");
     } else {
-        ESP_LOGE(MQTT_TAG, "Failed to publish data to MQTT broker");
+        ESP_LOGE(MQTT_TAG, "Failed to publish count data to MQTT broker");
+    }
+}
+
+void pax_mqtt_send_devices() {
+    if (!pax_mqtt_connect()) {
+        return;
+    }
+    
+    // Copy data we want to send while in critical section
+    DeviceData devices_to_send[50];
+    size_t count;
+    
+    portENTER_CRITICAL(&deviceMux);
+    count = deviceBuffer.count;
+    memcpy(devices_to_send, deviceBuffer.devices, count * sizeof(DeviceData));
+    deviceBuffer.count = 0;  // Clear buffer after copying
+    portEXIT_CRITICAL(&deviceMux);
+    
+    // Now send each device outside of critical section
+    for (size_t i = 0; i < count; i++) {
+        StaticJsonDocument<256> doc;
+        JsonObject device = doc.createNestedObject("device");
+        
+        char mac[18];
+        snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x",
+                devices_to_send[i].mac[0], devices_to_send[i].mac[1],
+                devices_to_send[i].mac[2], devices_to_send[i].mac[3],
+                devices_to_send[i].mac[4], devices_to_send[i].mac[5]);
+        
+        device["mac"] = mac;
+        device["rssi"] = devices_to_send[i].rssi;
+        device["type"] = devices_to_send[i].is_wifi ? "wifi" : "ble";
+        // Use current time instead of millis
+        time_t now;
+        time(&now);
+        device["timestamp"] = now;
+        
+        char buffer[256];
+        serializeJson(doc, buffer);
+        
+        // Allow other tasks to run between publishes
+        vTaskDelay(pdMS_TO_TICKS(10));
+        
+        if (paxMqttClient.publish(PAX_MQTT_DEVICE_TOPIC, buffer)) {
+            ESP_LOGI(MQTT_TAG, "Successfully sent device data to MQTT broker");
+        } else {
+            ESP_LOGE(MQTT_TAG, "Failed to publish device data to MQTT broker");
+            // Try to reconnect if we lost connection
+            if (!pax_mqtt_connect()) {
+                ESP_LOGE(MQTT_TAG, "Lost MQTT connection and failed to reconnect");
+                break;
+            }
+        }
     }
     
     paxMqttClient.disconnect();
+}
+
+// Hook function implementation for WiFi sniffer
+void IRAM_ATTR wifi_packet_handler_hook(uint8_t* mac, int8_t rssi) {
+    if (!mac) return;
+    
+    // Minimize logging in ISR context
+    pax_mqtt_enqueue_device(mac, rssi, true);
 } 

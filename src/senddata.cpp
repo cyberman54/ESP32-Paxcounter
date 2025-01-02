@@ -1,11 +1,6 @@
 // Basic Config
 #include "senddata.h"
 #include "mqtthandler.h"
-// void setSendIRQ(TimerHandle_t xTimer) {
-//  xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits);
-//}
-
-// void setSendIRQ(void) { setSendIRQ(NULL); }
 
 void setSendIRQ(void) { xTaskNotify(irqHandlerTask, SENDCYCLE_IRQ, eSetBits); }
 
