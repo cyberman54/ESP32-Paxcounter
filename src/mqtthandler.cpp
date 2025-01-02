@@ -37,37 +37,6 @@ static QueueHandle_t mqttButtonQueue = NULL;
 static portMUX_TYPE mqttMux = portMUX_INITIALIZER_UNLOCKED;
 volatile bool shouldSendMQTT = false;
 
-// NTP Server settings
-#define NTP_SERVER "time.google.com"
-#define GMT_OFFSET_SEC 3600      // GMT+1 for CET
-#define DAYLIGHT_OFFSET_SEC 3600 // +1 hour for summer time
-
-// Function to sync time with NTP
-bool sync_time_with_ntp() {
-    configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
-    
-    ESP_LOGI(MQTT_TAG, "Waiting for NTP time sync...");
-    time_t now = 0;
-    struct tm timeinfo = { 0 };
-    int retry = 0;
-    const int retry_count = 10;
-    
-    while(timeinfo.tm_year < (2024 - 1900) && ++retry < retry_count) {
-        ESP_LOGI(MQTT_TAG, "Waiting for NTP time... (%d/%d)", retry, retry_count);
-        delay(2000);
-        time(&now);
-        localtime_r(&now, &timeinfo);
-    }
-
-    if (timeinfo.tm_year < (2024 - 1900)) {
-        ESP_LOGE(MQTT_TAG, "Failed to get NTP time");
-        return false;
-    }
-
-    ESP_LOGI(MQTT_TAG, "Time synchronized: %s", asctime(&timeinfo));
-    return true;
-}
-
 // ISR handler for button press
 void IRAM_ATTR buttonISR() {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -164,35 +133,6 @@ void paxMqttTask(void *pvParameters) {
 
 void pax_mqtt_init() {
     ESP_LOGI(MQTT_TAG, "Initializing MQTT Handler...");
-    
-    // Connect to WiFi first for time sync
-    WiFi.mode(WIFI_STA);
-    ESP_LOGI(MQTT_TAG, "Connecting to WiFi for initial time sync...");
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    
-    int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-        vTaskDelay(pdMS_TO_TICKS(500));
-        ESP_LOGI(MQTT_TAG, "Attempting to connect to WiFi... (%d)", attempts + 1);
-        attempts++;
-    }
-    
-    if (WiFi.status() == WL_CONNECTED) {
-        ESP_LOGI(MQTT_TAG, "WiFi connected successfully!");
-        
-        // Sync time with NTP
-        if (sync_time_with_ntp()) {
-            ESP_LOGI(MQTT_TAG, "Time synchronized successfully");
-        } else {
-            ESP_LOGE(MQTT_TAG, "Failed to sync time");
-        }
-        
-        // Disconnect WiFi after time sync - we'll reconnect when needed
-        WiFi.disconnect(true);
-        WiFi.mode(WIFI_OFF);
-    } else {
-        ESP_LOGE(MQTT_TAG, "Failed to connect to WiFi for initial time sync");
-    }
     
     mqttButtonQueue = xQueueCreate(5, sizeof(uint32_t));
     if (mqttButtonQueue == NULL) {

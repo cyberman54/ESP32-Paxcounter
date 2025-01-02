@@ -79,6 +79,78 @@ BME_IRQ         <- setBMEIRQ() <- Ticker.h
 // Basic Config
 #include "main.h"
 #include "mqtthandler.h"
+#include <time.h>
+
+// NTP Server settings
+#define NTP_SERVER "time.google.com"
+#define GMT_OFFSET_SEC 3600      // GMT+1 for CET
+#define DAYLIGHT_OFFSET_SEC 3600 // +1 hour for summer time
+
+static const char* MAIN_TAG = "MAIN";
+
+// Function to print current time in human readable format
+void print_current_time() {
+    time_t now;
+    time(&now);
+    struct tm timeinfo;
+    localtime_r(&now, &timeinfo);
+    char strftime_buf[64];
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    ESP_LOGI(MAIN_TAG, "Current time: %s", strftime_buf);
+}
+
+// Function to sync time with NTP
+bool sync_time_with_ntp() {
+    ESP_LOGI(MAIN_TAG, "Connecting to WiFi for time sync...");
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+        ESP_LOGI(MAIN_TAG, "Attempting to connect to WiFi... (%d/20)", attempts + 1);
+        attempts++;
+    }
+    
+    if (WiFi.status() != WL_CONNECTED) {
+        ESP_LOGE(MAIN_TAG, "Failed to connect to WiFi for time sync");
+        return false;
+    }
+    
+    ESP_LOGI(MAIN_TAG, "WiFi connected successfully!");
+    
+    // Configure NTP
+    configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
+    ESP_LOGI(MAIN_TAG, "Waiting for NTP time sync...");
+    
+    time_t now = 0;
+    struct tm timeinfo = { 0 };
+    int retry = 0;
+    const int retry_count = 10;
+    
+    while(timeinfo.tm_year < (2024 - 1900) && ++retry < retry_count) {
+        ESP_LOGI(MAIN_TAG, "Waiting for NTP time... (%d/%d)", retry, retry_count);
+        delay(2000);
+        time(&now);
+        localtime_r(&now, &timeinfo);
+    }
+    
+    // Disconnect WiFi after time sync
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    
+    if (timeinfo.tm_year < (2024 - 1900)) {
+        ESP_LOGE(MAIN_TAG, "Failed to get NTP time");
+        return false;
+    }
+    
+    // Print the synchronized time in human readable format
+    char strftime_buf[64];
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    ESP_LOGI(MAIN_TAG, "Time synchronized: %s", strftime_buf);
+    
+    return true;
+}
 
 #ifndef HOMECYCLE
 #define HOMECYCLE 30  // Default home cycle in seconds if not defined elsewhere
@@ -355,6 +427,14 @@ void setup() {
   // starting timers and interrupts
   _ASSERT(irqHandlerTask != NULL); // has interrupt handler task started?
   ESP_LOGI(TAG, "Starting Timers...");
+
+  // Sync time with NTP before initializing MQTT
+  if (sync_time_with_ntp()) {
+      ESP_LOGI(MAIN_TAG, "Time sync successful");
+      print_current_time();
+  } else {
+      ESP_LOGE(MAIN_TAG, "Time sync failed");
+  }
 
   // Initialize MQTT handler
   pax_mqtt_init();
