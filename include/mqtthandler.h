@@ -4,27 +4,6 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-// MQTT Configuration
-#define PAX_MQTT_SERVER "192.168.2.249"
-#define PAX_MQTT_PORT 1883
-#define PAX_MQTT_KEEPALIVE 60
-#define PAX_MQTT_CLIENTNAME "esp32-paxcounter"
-#define PAX_MQTT_OUTTOPIC "store/wifi_probes"
-#define PAX_MQTT_DEVICE_TOPIC "store/wifi_probes/devices"
-
-// Button Configuration
-#define PAX_MQTT_TRIGGER_PIN 2
-#define PAX_MQTT_TRIGGER_MODE INPUT_PULLUP
-
-// WiFi Configuration Constants
-#ifndef WIFI_SSID
-#define WIFI_SSID "LastrillaWIFI"
-#endif
-
-#ifndef WIFI_PASSWORD
-#define WIFI_PASSWORD "cp880uegkg"
-#endif
-
 // Structure for probe data
 struct ProbeData {
     uint32_t pax;

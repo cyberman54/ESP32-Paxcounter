@@ -7,10 +7,38 @@
 #include "globals.h"
 #include <time.h>
 
+#ifndef MQTT_SERVER
+#define MQTT_SERVER MQTT_SERVER
+#endif
+
+#ifndef MQTT_PORT
+#define MQTT_PORT MQTT_PORT
+#endif
+
+#ifndef MQTT_OUTTOPIC
+#define MQTT_OUTTOPIC MQTT_OUTTOPIC
+#endif
+
+
+#ifndef MQTT_TRIGGER_PIN
+#define MQTT_TRIGGER_PIN MQTT_TRIGGER_PIN
+#endif
+
+#ifndef MQTT_TRIGGER_MODE
+#define MQTT_TRIGGER_MODE MQTT_TRIGGER_MODE
+#endif
+
+#ifndef MQTT_SEND_INTERVAL
+#define MQTT_SEND_INTERVAL MQTT_SEND_INTERVAL
+#endif
+
 static const char* MQTT_TAG = "MQTT_HANDLER";
 
 // Static task handles
 static TaskHandle_t paxMqttTaskHandle = NULL;
+
+// Timer for cyclic sending
+static TimerHandle_t mqttSendTimer = NULL;
 
 // Current probe counts - protected by mutex
 static struct {
@@ -131,6 +159,18 @@ void paxMqttTask(void *pvParameters) {
     }
 }
 
+// Timer callback function
+void mqttSendTimerCallback(TimerHandle_t xTimer) {
+    if (MQTT_SEND_INTERVAL > 0) {  // Only trigger if cyclic sending is enabled
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        uint32_t currentTime = millis();
+        xQueueSendFromISR(mqttButtonQueue, &currentTime, &xHigherPriorityTaskWoken);
+        if (xHigherPriorityTaskWoken) {
+            portYIELD_FROM_ISR();
+        }
+    }
+}
+
 void pax_mqtt_init() {
     ESP_LOGI(MQTT_TAG, "Initializing MQTT Handler...");
     
@@ -140,8 +180,31 @@ void pax_mqtt_init() {
         return;
     }
     
-    pinMode(PAX_MQTT_TRIGGER_PIN, PAX_MQTT_TRIGGER_MODE);
-    ESP_LOGI(MQTT_TAG, "Setting up trigger button on pin %d", PAX_MQTT_TRIGGER_PIN);
+    // Create and start timer if cyclic sending is enabled
+    if (MQTT_SEND_INTERVAL > 0) {
+        mqttSendTimer = xTimerCreate(
+            "MQTTSendTimer",
+            pdMS_TO_TICKS(MQTT_SEND_INTERVAL * 1000),  // Convert seconds to milliseconds
+            pdTRUE,  // Auto reload
+            (void *)0,
+            mqttSendTimerCallback
+        );
+        
+        if (mqttSendTimer == NULL) {
+            ESP_LOGE(MQTT_TAG, "Failed to create MQTT send timer");
+        } else {
+            if (xTimerStart(mqttSendTimer, 0) != pdPASS) {
+                ESP_LOGE(MQTT_TAG, "Failed to start MQTT send timer");
+            } else {
+                ESP_LOGI(MQTT_TAG, "MQTT cyclic sending enabled, interval: %d seconds", MQTT_SEND_INTERVAL);
+            }
+        }
+    } else {
+        ESP_LOGI(MQTT_TAG, "MQTT cyclic sending disabled");
+    }
+    
+    pinMode(MQTT_TRIGGER_PIN, MQTT_TRIGGER_MODE);
+    ESP_LOGI(MQTT_TAG, "Setting up trigger button on pin %d", MQTT_TRIGGER_PIN);
     
     BaseType_t xReturned = xTaskCreatePinnedToCore(
         paxMqttTask,
@@ -158,7 +221,7 @@ void pax_mqtt_init() {
         return;
     }
     
-    attachInterrupt(digitalPinToInterrupt(PAX_MQTT_TRIGGER_PIN), buttonISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(MQTT_TRIGGER_PIN), buttonISR, FALLING);
     
     ESP_LOGI(MQTT_TAG, "MQTT Handler initialized successfully");
 }
@@ -216,10 +279,10 @@ bool pax_mqtt_connect() {
     
     if (!paxMqttClient.connected()) {
         ESP_LOGI(MQTT_TAG, "Connecting to MQTT broker...");
-        paxMqttClient.setServer(PAX_MQTT_SERVER, PAX_MQTT_PORT);
-        paxMqttClient.setKeepAlive(PAX_MQTT_KEEPALIVE);
+        paxMqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+        paxMqttClient.setKeepAlive(MQTT_KEEPALIVE);
         
-        if (paxMqttClient.connect(PAX_MQTT_CLIENTNAME)) {
+        if (paxMqttClient.connect(MQTT_CLIENTNAME)) {
             ESP_LOGI(MQTT_TAG, "Connected to MQTT broker");
             return true;
         } else {
@@ -252,7 +315,7 @@ void pax_mqtt_send_data() {
     char buffer[256];
     serializeJson(doc, buffer);
     
-    if (paxMqttClient.publish(PAX_MQTT_OUTTOPIC, buffer)) {
+    if (paxMqttClient.publish(MQTT_OUTTOPIC, buffer)) {
         ESP_LOGI(MQTT_TAG, "Successfully sent count data to MQTT broker");
     } else {
         ESP_LOGE(MQTT_TAG, "Failed to publish count data to MQTT broker");
@@ -299,7 +362,7 @@ void pax_mqtt_send_devices() {
         // Allow other tasks to run between publishes
         vTaskDelay(pdMS_TO_TICKS(10));
         
-        if (paxMqttClient.publish(PAX_MQTT_DEVICE_TOPIC, buffer)) {
+        if (paxMqttClient.publish(MQTT_DEVICE_TOPIC, buffer)) {
             ESP_LOGI(MQTT_TAG, "Successfully sent device data to MQTT broker");
         } else {
             ESP_LOGE(MQTT_TAG, "Failed to publish device data to MQTT broker");
