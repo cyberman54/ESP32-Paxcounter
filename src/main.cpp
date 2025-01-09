@@ -78,8 +78,11 @@ BME_IRQ         <- setBMEIRQ() <- Ticker.h
 
 // Basic Config
 #include "main.h"
+#include "configportal.h"
 #include "mqtthandler.h"
-#include <time.h>
+#include "wificonfig.h"
+#include <SPIFFS.h>
+#include <ArduinoJson.h>
 
 // NTP Server settings
 #define NTP_SERVER "time.google.com"
@@ -103,7 +106,7 @@ void print_current_time() {
 bool sync_time_with_ntp() {
     ESP_LOGI(MAIN_TAG, "Connecting to WiFi for time sync...");
     WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.begin(wifiConfig.ssid.c_str(), wifiConfig.password.c_str());
     
     int attempts = 0;
     while (WiFi.status() != WL_CONNECTED && attempts < 20) {
@@ -169,6 +172,39 @@ char clientId[20] = {0}; // unique ClientID
 void setup() {
   char features[100] = "";
 
+  // Initialize configuration portal
+  init_config_portal();
+  
+  // hash 6 byte device MAC to 4 byte clientID
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
+  const uint32_t hashedmac = myhash((const char *)mac, 6);
+  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
+
+  // Load saved WiFi configuration if available
+  if (SPIFFS.begin(true)) {
+    if (SPIFFS.exists("/config.json")) {
+      File configFile = SPIFFS.open("/config.json", "r");
+      if (configFile) {
+        StaticJsonDocument<512> doc;
+        DeserializationError error = deserializeJson(doc, configFile);
+        
+        if (!error) {
+          // Store configuration in our structure
+          wifiConfig.ssid = doc["wifi_ssid"].as<String>();
+          wifiConfig.password = doc["wifi_password"].as<String>();
+          wifiConfig.mqtt_server = doc["mqtt_server"].as<String>();
+          wifiConfig.mqtt_topic = doc["mqtt_topic"].as<String>();
+          wifiConfig.mqtt_port = doc["mqtt_port"].as<int>();
+          
+          ESP_LOGI(TAG, "Loaded saved configuration");
+        }
+        configFile.close();
+      }
+    }
+  }
+
   // Reduce power consumption (optional)
   // This reduces the power consumption with about 50 mWatt.
   // Typically a TTGO T-beam v1.0 uses 660 mWatt when the CPU frequency is set to 80 MHz.
@@ -182,13 +218,6 @@ void setup() {
   // register with brownout is at address DR_REG_RTCCNTL_BASE + 0xd4
   (*((uint32_t volatile *)ETS_UNCACHED_ADDR((DR_REG_RTCCNTL_BASE + 0xd4)))) = 0;
 #endif
-
-  // hash 6 byte device MAC to 4 byte clientID
-  uint8_t mac[6];
-  esp_read_mac(mac, ESP_MAC_WIFI_STA);
-
-  const uint32_t hashedmac = myhash((const char *)mac, 6);
-  snprintf(clientId, 20, "paxcounter_%08x", hashedmac);
 
   // setup debug output or silence device
 #if (VERBOSE)
@@ -443,8 +472,16 @@ void setup() {
 } // setup()
 
 void loop() {
-  // Handle MQTT operations
-  pax_mqtt_loop();
-  
-  vTaskDelete(NULL);
+    if (is_config_portal_active()) {
+        start_config_portal();
+        while (is_config_portal_active()) {
+            handle_config_portal();
+            delay(10);
+        }
+    }
+    
+    // Handle MQTT operations
+    pax_mqtt_loop();
+    
+    vTaskDelete(NULL);
 }

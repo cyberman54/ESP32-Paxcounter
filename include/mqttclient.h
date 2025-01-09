@@ -14,6 +14,10 @@
 #define MQTT_CLIENTNAME clientId
 #endif
 
+#ifndef MQTT_KEEPALIVE
+#define MQTT_KEEPALIVE 60
+#endif
+
 extern TaskHandle_t mqttTask;
 
 void mqtt_enqueuedata(MessageBuffer_t *message);
