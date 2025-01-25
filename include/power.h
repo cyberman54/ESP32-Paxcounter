@@ -56,6 +56,12 @@ bool batt_sufficient(void);
 extern int8_t batt_level;
 
 #ifdef HAS_PMU
+#ifndef PMU_SDA
+#define PMU_SDA SDA
+#endif
+#ifndef PMU_SCL
+#define PMU_SDA SCL
+#endif
 #include <XPowersLib.h>
 extern XPowersPMU pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };

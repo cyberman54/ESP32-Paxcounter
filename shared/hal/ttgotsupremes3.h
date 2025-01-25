@@ -4,6 +4,8 @@
 
 // for pinouts see https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series/blob/master/schematic/LilyGo_T-BeamS3Supreme.pdf
 
+// i2c bus addresses: 0x77 = BME280, 0x1c = ?, 0x3c = ?
+
 #ifndef _TTGOTSUPREMES3_H
 #define _TTGOTSUPREMES3_H
 
@@ -63,11 +65,10 @@
 //#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring
 
 // power management settings
-#define I2C_SDA1 42 // Used for PMU management and PCF8563
-#define I2C_SCL1 41 // Used for PMU management and PCF8563
-//
-#define HAS_PMU 1 // has AXP202 chip
-#define XPOWERS_CHIP_AXP202 1
+#define HAS_PMU 1 // has AXP2101 chip
+#define XPOWERS_CHIP_AXP2101 1
+#define PMU_SDA GPIO_NUM_42 // Used for PMU management and PCF8563
+#define PMU_SCL GPIO_NUM_41 // Used for PMU management and PCF8563
 #define PMU_INT GPIO_NUM_40 // battery interrupt
 #define PMU_CHG_CURRENT XPOWERS_AXP202_CHG_CUR_1000MA // battery charge current
 // See: xpowers_AXP202_chg_curr_t
