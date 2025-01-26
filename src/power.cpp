@@ -2,7 +2,6 @@
 #include "globals.h"
 #include "power.h"
 
-
 int8_t batt_level = -1; // percent batt level, global variable, -1 means no batt
 
 #ifdef BAT_MEASURE_ADC
@@ -21,44 +20,46 @@ static const adc_unit_t unit = ADC_UNIT_1;
 #endif // BAT_MEASURE_ADC
 
 #ifdef HAS_PMU
-XPowersPMU pmu;
+XPowersPMU *pmu = NULL;
 
 void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
 
 void PMU_powerevent_IRQ(void) {
-  pmu.getIrqStatus();
+  pmu->getIrqStatus();
 
-  if (pmu.isVbusOverVoltageIrq())
-    ESP_LOGI(TAG, "USB voltage %.2fV too high.", pmu.getVbusVoltage() / 1000);
-  if (pmu.isVbusInsertIrq())
-    ESP_LOGI(TAG, "USB plugged, %.2fV @ %.0mA", pmu.getVbusVoltage() / 1000,
-             pmu.getVbusCurrent());
-  if (pmu.isVbusRemoveIrq())
-    ESP_LOGI(TAG, "USB unplugged.");
-  if (pmu.isBatInsertIrq())
+  if (pmu->isBatInsertIrq())
     ESP_LOGI(TAG, "Battery is connected.");
-  if (pmu.isBatRemoveIrq())
+  if (pmu->isBatRemoveIrq())
     ESP_LOGI(TAG, "Battery was removed.");
-  if (pmu.isBatChargeStartIrq())
+  if (pmu->isBatChargeStartIrq())
     ESP_LOGI(TAG, "Battery charging started.");
-  if (pmu.isBatChargeDoneIrq())
+  if (pmu->isBatChargeDoneIrq())
     ESP_LOGI(TAG, "Battery charging done.");
-  if (pmu.isBattTempLowIrq())
+
+  #ifdef XPOWERS_CHIP_AXP192
+  if (pmu->isVbusOverVoltageIrq())
+    ESP_LOGI(TAG, "USB voltage %.2fV too high.", pmu->getVbusVoltage() / 1000);
+  if (pmu->isVbusInsertIrq())
+    ESP_LOGI(TAG, "USB plugged, %.2fV @ %.0mA", pmu->getVbusVoltage() / 1000, pmu->getVbusCurrent());
+  if (pmu->isVbusRemoveIrq())
+    ESP_LOGI(TAG, "USB unplugged.");
+  if (pmu->isBattTempLowIrq())
     ESP_LOGI(TAG, "Battery high temperature.");
-  if (pmu.isBattTempHighIrq())
+  if (pmu->isBattTempHighIrq())
     ESP_LOGI(TAG, "Battery low temperature.");
+  #endif // XPOWERS_CHIP_AXP192
 
   // PEK button handling:
   // long press -> shutdown power, must be exited by another longpress
-  if (pmu.isPekeyLongPressIrq())
+  if (pmu->isPekeyLongPressIrq())
     PMU_power(pmu_power_off); // switch off Lora, GPS, display
 #ifdef HAS_BUTTON
   // short press -> esp32 deep sleep mode, must be exited by user button
-  if (pmu.isPekeyShortPressIrq())
+  if (pmu->isPekeyShortPressIrq())
     enter_deepsleep(0UL, HAS_BUTTON);
 #endif
 
-  pmu.clearIrqStatus();
+  pmu->clearIrqStatus();
 
   // refresh stored voltage value
   read_battlevel();
@@ -67,82 +68,130 @@ void PMU_powerevent_IRQ(void) {
 void PMU_power(pmu_power_t powerlevel) {
   switch (powerlevel) {
   case pmu_power_off:
-    pmu.setChargingLedMode(XPOWERS_CHG_LED_OFF);
-    pmu.shutdown();
+    pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
+    pmu->shutdown();
     break;
   case pmu_power_sleep:
-    pmu.setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+    pmu->setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
     // we don't cut off DCDC1, because OLED display will then block i2c bus
-    // pmu.disableDC1(); // OLED off
-    pmu.disableLDO3(); // gps off
-    pmu.disableLDO2(); // lora off
-    pmu.enableSleep();
+    // pmu->disableDC1(); // OLED off
+    #ifdef XPOWERS_CHIP_AXP192
+    pmu->disableLDO3(); // gps off
+    pmu->disableLDO2(); // lora off
+    #endif
+    #ifdef XPOWERS_CHIP_AXP2101
+    pmu->disableALDO3(); // gps off
+    pmu->disableALDO2(); // lora off
+    #endif
+    pmu->enableSleep();
     break;
   case pmu_power_on:
   default:
-    pmu.enableLDO2(); // Lora on T-Beam V1.0/1.1
-    pmu.enableLDO3(); // Gps on T-Beam V1.0/1.1
-    pmu.enableDC2();  // OLED on T-Beam v1.0/1.1
-    pmu.setChargingLedMode(XPOWERS_CHG_LED_ON);
+    #ifdef XPOWERS_CHIP_AXP192
+    pmu->enableLDO2(); // Lora on T-Beam V1.0/1.1
+    pmu->enableLDO3(); // Gps on T-Beam V1.0/1.1
+    #endif
+    #ifdef XPOWERS_CHIP_AXP2101
+    pmu->enableALDO2(); // Lora on T-Beam V1.0/1.1
+    pmu->enableALDO3(); // Gps on T-Beam V1.0/1.1
+    #endif
+    pmu->enableDC2();  // OLED on T-Beam v1.0/1.1
+    pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
     break;
   }
 }
 
 void PMU_showstatus(void) {
-  if (pmu.isBatteryConnect())
-    if (pmu.isCharging())
+  if (pmu->isBatteryConnect())
+    if (pmu->isCharging())
+    #ifdef XPOWERS_CHIP_AXP192
       ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
-               pmu.getBattVoltage() / 1000.0, pmu.getBatteryChargeCurrent());
+               pmu->getBattVoltage() / 1000.0, pmu->getBatteryChargeCurrent());
+    #else
+      ESP_LOGI(TAG, "Battery charging");
+    #endif
     else
       ESP_LOGI(TAG, "Battery not charging");
   else
     ESP_LOGI(TAG, "Battery not present");
 
-  if (pmu.isVbusIn())
+  if (pmu->isVbusIn())
+  #ifdef XPOWERS_CHIP_AXP192
     ESP_LOGI(TAG, "USB powered, %.0fmW",
-             pmu.getVbusVoltage() / 1000 * pmu.getVbusCurrent());
+             pmu->getVbusVoltage() / 1000 * pmu->getVbusCurrent());
+  #else
+    ESP_LOGI(TAG, "USB powered");
+  #endif
   else
     ESP_LOGI(TAG, "USB not present");
 }
 
 void PMU_init(void) {
-  if (!pmu.begin(Wire, PMU_PRIMARY_ADDRESS, SCL, SDA))
-    ESP_LOGI(TAG, "PMU initialization failed");
-  else {
-    ESP_LOGD(TAG, "PMU ChipID:0x%x", pmu.getChipID());
+  #if defined(XPOWERS_CHIP_AXP2101)
+  if (!pmu) {
+    pmu = new XPowersAXP2101(PMU_WIRE, PMU_SDA, PMU_SCL);
+    if (!pmu->init()) {
+        delete pmu;
+        pmu = NULL;
+    } else {
+        ESP_LOGI(TAG,"AXP2101 PMU initialized");
+    }
+  }
+  #endif
+  #if defined(XPOWERS_CHIP_AXP192)
+  if (!pmu) {
+      pmu = new XPowersAXP192(PMU_WIRE, PMU_SDA, PMU_SCL);
+      if (!pmu->init()) {
+          delete pmu;
+          pmu = NULL;
+      } else {
+          ESP_LOGI(TAG,"AXP192 PMU initialized");
+      }
+  }
+  #endif
+  if (!pmu) {
+      ESP_LOGE(TAG,"PMU initialization failed");
+      return;
+  }
 
     // set pmu operating voltages
-    pmu.setSysPowerDownVoltage(2700);
-    pmu.setVbusVoltageLimit(XPOWERS_AXP192_VBUS_VOL_LIM_4V5);
-    pmu.setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
+    pmu->setSysPowerDownVoltage(2700);
+    pmu->setVbusVoltageLimit(XPOWERS_AXP192_VBUS_VOL_LIM_4V5);
+    pmu->setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
 
     // set device operating voltages
-    pmu.setDC2Voltage(3300);  // for external OLED display
-    pmu.setLDO2Voltage(3300); // LORA VDD 3v3
-    pmu.setLDO3Voltage(3300); // GPS VDD 3v3
+    pmu->setDC2Voltage(3300);  // for external OLED display
+    #ifdef XPOWERS_CHIP_AXP192
+    pmu->setLDO2Voltage(3300); // LORA VDD 3v3
+    pmu->setLDO3Voltage(3300); // GPS VDD 3v3
+    #endif
+    #ifdef XPOWERS_CHIP_AXP2101
+    pmu->setALDO2Voltage(3300); // LORA VDD 3v3
+    pmu->setALDO3Voltage(3300); // GPS VDD 3v3
+    #endif
 
     // configure PEK button settings
-    pmu.setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
-    pmu.setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
+    pmu->setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
+    pmu->setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
 
     // set battery temperature sensing pin off to save power
-    pmu.disableTSPinMeasure();
+    pmu->disableTSPinMeasure();
 
     // Enable internal ADC detection
-    pmu.enableBattDetection();
-    pmu.enableVbusVoltageMeasure();
-    pmu.enableBattVoltageMeasure();
-    pmu.enableSystemVoltageMeasure();
+    pmu->enableBattDetection();
+    pmu->enableVbusVoltageMeasure();
+    pmu->enableBattVoltageMeasure();
+    pmu->enableSystemVoltageMeasure();
 
 #ifdef PMU_INT
     pinMode(PMU_INT, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PMU_INT), PMUIRQ, FALLING);
     // disable all interrupts
-    pmu.disableIRQ(XPOWERS_ALL_INT);
+    pmu->disableIRQ(XPOWERS_ALL_INT);
     // clear all interrupt flags
-    pmu.clearIrqStatus();
+    pmu->clearIrqStatus();
     // enable the required interrupt function
-    pmu.enableIRQ(XPOWERS_BATTERY_INSERT_INT |
+    pmu->enableIRQ(XPOWERS_BATTERY_INSERT_INT |
                   XPOWERS_BATTERY_REMOVE_INT | // battery state
                   XPOWERS_USB_INSERT_INT |
                   XPOWERS_USB_REMOVE_INT | // USB state
@@ -155,15 +204,19 @@ void PMU_init(void) {
 
 // set charging parameters according to user settings if we have (see power.h)
 #ifdef PMU_CHG_CURRENT
-    pmu.setChargerConstantCurr(PMU_CHG_CURRENT);
-    pmu.setChargeTargetVoltage(PMU_CHG_CUTOFF);
-    pmu.enableCharge();
+    pmu->setChargerConstantCurr(PMU_CHG_CURRENT);
+    pmu->setChargeTargetVoltage(PMU_CHG_CUTOFF);
+  #ifdef XPOWERS_CHIP_AXP192
+    pmu->enableCharge();
+  #endif
+  #ifdef XPOWERS_CHIP_AXP2101
+    pmu->enableButtonBatteryCharge();
+  #endif
 #endif
 
     // switch power rails on
     PMU_power(pmu_power_on);
     ESP_LOGI(TAG, "PMU initialized");
-  }
 }
 
 #endif // HAS_PMU
@@ -200,7 +253,7 @@ uint16_t read_voltage(void) {
   uint16_t voltage = 0;
 
 #ifdef HAS_PMU
-  voltage = pmu.getBattVoltage();
+  voltage = pmu->getBattVoltage();
 #else
 
 #ifdef BAT_MEASURE_ADC
@@ -241,7 +294,7 @@ int8_t read_battlevel(mapFn_t mapFunction) {
 #ifdef HAS_IP5306
   batt_percent = IP5306_GetBatteryLevel();
 #elif defined HAS_PMU
-  batt_percent = pmu.getBatteryPercent();
+  batt_percent = pmu->getBatteryPercent();
 #else
   const uint16_t batt_voltage = read_voltage();
   if (batt_voltage <= BAT_MIN_VOLTAGE)
@@ -271,7 +324,7 @@ int8_t read_battlevel(mapFn_t mapFunction) {
 
 // overwrite calculated value if we have external power
 #ifdef HAS_PMU
-  if (pmu.isVbusIn())
+  if (pmu->isVbusIn())
     LMIC_setBatteryLevel(MCMD_DEVS_EXT_POWER);
 #elif defined HAS_IP5306
   if (IP5306_GetPowerSource())
