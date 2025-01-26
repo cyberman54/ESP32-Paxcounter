@@ -80,8 +80,10 @@ void PMU_power(pmu_power_t powerlevel) {
     pmu->disableLDO2(); // lora off
     #endif
     #ifdef XPOWERS_CHIP_AXP2101
-    pmu->disableALDO3(); // gps off
-    pmu->disableALDO2(); // lora off
+    pmu->disableALDO3(); // lora
+    pmu->disableALDO2(); // ?
+    pmu->disableALDO4(); // gps
+    pmu->disableALDO1(); // SD Card + BME280 + QMC6310
     #endif
     pmu->enableSleep();
     break;
@@ -92,8 +94,10 @@ void PMU_power(pmu_power_t powerlevel) {
     pmu->enableLDO3(); // Gps on T-Beam V1.0/1.1
     #endif
     #ifdef XPOWERS_CHIP_AXP2101
-    pmu->enableALDO2(); // Lora on T-Beam V1.0/1.1
-    pmu->enableALDO3(); // Gps on T-Beam V1.0/1.1
+    pmu->enableALDO3(); // lora
+    pmu->enableALDO2(); // ?
+    pmu->enableALDO4(); // gps
+    pmu->enableALDO1(); // SD Card + BME280 + QMC6310
     #endif
     pmu->enableDC2();  // OLED on T-Beam v1.0/1.1
     pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
