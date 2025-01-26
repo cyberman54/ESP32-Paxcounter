@@ -73,6 +73,7 @@ void i2c_scan(void) {
   }
 }
 
+/*
 // functions for i2c r/w access, mutexing is done by Wire.cpp
 int i2c_readBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
   uint8_t ret = 0;
@@ -106,3 +107,4 @@ int i2c_writeBytes(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len) {
 
   return ret ? ret : 0xFF;
 }
+*/
