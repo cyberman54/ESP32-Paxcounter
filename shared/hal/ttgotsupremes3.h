@@ -4,8 +4,8 @@
 
 // for pinouts see https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series/blob/master/schematic/LilyGo_T-BeamS3Supreme.pdf
 
-// i2c bus #1 (sda=17, scl=18) addresses: 0x77 = BME280, 0x1c = RTC (irq=14), 0x3c = OLED
-// i2c bus #2 (sda=42, scl=41) addresses: 0x?? = PMU AXP2101 (irq=40)
+// i2c bus #1 (sda=17, scl=18) addresses: 0x77=BME280, 0x1c=RTC (irq=14), 0x3c=OLED
+// i2c bus #2 (sda=42, scl=41) addresses: 0x34=PMU AXP2101 (irq=40)
 
 #ifndef _TTGOTSUPREMES3_H
 #define _TTGOTSUPREMES3_H
