@@ -4,7 +4,8 @@
 
 // for pinouts see https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series/blob/master/schematic/LilyGo_T-BeamS3Supreme.pdf
 
-// i2c bus addresses: 0x77 = BME280, 0x1c = ?, 0x3c = ?
+// i2c bus #1 (sda=17, scl=18) addresses: 0x77 = BME280, 0x1c = RTC (irq=14), 0x3c = OLED
+// i2c bus #2 (sda=42, scl=41) addresses: 0x?? = PMU AXP2101 (irq=40)
 
 #ifndef _TTGOTSUPREMES3_H
 #define _TTGOTSUPREMES3_H
@@ -26,7 +27,7 @@
 //#define SDCARD_MISO  (37)
 //#define SDCARD_SCLK  (36)
 
-// display SSH1106 address 0x1c
+// display SSH1106 address 0x3c
 #define HAS_DISPLAY 1
 #define MY_DISPLAY_SDA (17)
 #define MY_DISPLAY_SCL (18)
@@ -60,16 +61,17 @@
 #define LORA_MISO (13)  // RADIO_MISO
 
 // BME280 sensor on I2C bus
-//#define HAS_BME 1 // Enable BME sensors in general
+//#define HAS_BME 1 // Enable BME sensor
 //#define HAS_BME280 SDA, SCL // SDA, SCL
-//#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring
+//#define BME280_ADDR 0x77 // I2C address
 
 // power management settings
 #define HAS_PMU 1 // has AXP2101 chip
 #define XPOWERS_CHIP_AXP2101 1
-#define PMU_SDA GPIO_NUM_42 // Used for PMU management and PCF8563
-#define PMU_SCL GPIO_NUM_41 // Used for PMU management and PCF8563
-#define PMU_INT GPIO_NUM_40 // battery interrupt
+#define PMU_SDA 42 // PMU is on I2C bus #2
+#define PMU_SCL 41 // PMU is on I2C bus #2
+#define PMU_INT GPIO_NUM_40 // PMU interrupt
+#define PMU_WIRE Wire1 // use I2C bus #2
 #define PMU_CHG_CURRENT XPOWERS_AXP202_CHG_CUR_1000MA // battery charge current
 // See: xpowers_AXP202_chg_curr_t
 // possible values (mA):
