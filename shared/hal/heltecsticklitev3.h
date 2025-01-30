@@ -1,5 +1,5 @@
 // clang-format off
-// upload_speed 1500000
+// upload_speed 921600
 // board heltec_wifi_lora_32_V3
 
 #ifndef _HELTECSTICKLITEV3_H
