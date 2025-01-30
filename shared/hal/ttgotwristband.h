@@ -1,5 +1,5 @@
 // clang-format off
-// upload_speed 1500000
+// upload_speed 921600
 // board pico32
 
 #ifndef _TTGOTWRISTBAND_H

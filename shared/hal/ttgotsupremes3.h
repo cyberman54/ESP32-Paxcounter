@@ -1,5 +1,5 @@
 // clang-format off
-// upload_speed 1500000
+// upload_speed 921600
 // board esp32-s3-devkitc-1
 
 // for pinouts see https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series/blob/master/schematic/LilyGo_T-BeamS3Supreme.pdf
