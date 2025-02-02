@@ -61,9 +61,9 @@
 #define LORA_MISO (13)  // RADIO_MISO
 
 // BME280 sensor on I2C bus
-//#define HAS_BME 1 // Enable BME sensor
-//#define HAS_BME280 SDA, SCL // SDA, SCL
-//#define BME280_ADDR 0x77 // I2C address
+#define HAS_BME 1 // Enable BME sensor
+#define HAS_BME280 SDA, SCL // SDA, SCL
+#define BME280_ADDR 0x77 // I2C address
 
 // power management settings
 #define HAS_PMU 1 // has AXP2101 chip
