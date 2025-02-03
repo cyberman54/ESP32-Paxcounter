@@ -192,8 +192,6 @@ void enter_deepsleep(uint32_t wakeup_sec, gpio_num_t wakeup_gpio) {
     #else
     esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ANY_LOW);
     #endif
-    //for arduinio-esp32 v6.10.0
-    //esp_sleep_enable_ext1_wakeup(1ULL << wakeup_gpio, ESP_EXT1_WAKEUP_ANY_LOW);
   }
 
   // time stamp sleep start time and save system monotonic time. Deep sleep.
