@@ -2,9 +2,7 @@
 #define _LED_H
 
 #ifdef HAS_RGB_LED
-#define FASTLED_INTERNAL
 #include <FastLED.h>
-#include "libpax_helpers.h"
 #endif
 
 #ifdef HAS_LORA
