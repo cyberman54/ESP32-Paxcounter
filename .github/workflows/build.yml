@@ -169,7 +169,7 @@ jobs:
           - os: windows-latest
             path: ~\AppData\Local\pip\Cache
             platformio-path: ~\AppData\Local\platformio\Cache
-        board: [ttgotdongles3.h, ttgotdongledisplays3.h]
+        board: [ttgotdongles3.h, ttgotdongledisplays3.h, heltecsticklitev3.h, ttgotsupremes3.h]
     runs-on: ${{ matrix.os }}
 
     steps:
