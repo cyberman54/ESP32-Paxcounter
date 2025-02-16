@@ -1,0 +1,1034 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="ESP32-Paxcounter Documentation">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../../integrations/">
+      
+      
+      <link rel="icon" href="../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
+    
+    
+      
+        <title>Custom Sensors - Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.8608ea7d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#custom-sensors" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../../assets/paxcounter_logo_white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Custom Sensors
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/cyberman54/ESP32-Paxcounter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../../assets/paxcounter_logo_white.svg" alt="logo">
+
+    </a>
+    Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/cyberman54/ESP32-Paxcounter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intro
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../hardware/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Hardware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../display-led/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Display & LED
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../legalnote/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Legal note
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Custom Sensors
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Custom Sensors
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-custom-temperature-and-humidity-sensor-gy-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Custom Temperature and Humidity Sensor GY-21
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example 1: Custom Temperature and Humidity Sensor GY-21">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-add-variables-or-needed-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Add variables or needed libraries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-add-sensor-specific-code-to-sensor_init-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Add sensor specific code to sensor_init function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-add-sensor-specific-code-to-sensor_read-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Add sensor specific code to sensor_read function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-payload-functions-for-a-custom-sensor" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Payload functions for a custom sensor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-sending-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Sending the data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../payloadformat/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Payload Format
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../remotecontrol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Remote control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../license-credits/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Licence & Credits
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-custom-temperature-and-humidity-sensor-gy-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Custom Temperature and Humidity Sensor GY-21
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example 1: Custom Temperature and Humidity Sensor GY-21">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-add-variables-or-needed-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Add variables or needed libraries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-add-sensor-specific-code-to-sensor_init-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Add sensor specific code to sensor_init function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-add-sensor-specific-code-to-sensor_read-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Add sensor specific code to sensor_read function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-payload-functions-for-a-custom-sensor" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Payload functions for a custom sensor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-sending-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Sending the data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="custom-sensors">Custom sensors</h1>
+<p>You can add up to 3 user defined sensors. Insert your sensor's payload scheme in <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp"><code>sensor.cpp</code></a>.
+The following exampls show how to add a custom temperature and humidty sensor.</p>
+<ol>
+<li>Add variables or needed libraries</li>
+<li>Add sensor specific code to <code>sensor_init</code> in <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp"><code>sensor.cpp</code></a></li>
+<li>Add sensor specific code to <code>sensor_read</code> function in <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp"><code>sensor.cpp</code></a></li>
+<li>Add Payload functions to <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/include/payload.h"><code>payload.h</code></a> and <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/payload.cpp"><code>payload.cpp</code></a> (Optional)</li>
+<li>Use payload functions in <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp"><code>sensor.cpp</code></a> to send sensor data</li>
+</ol>
+<h2 id="example-1-custom-temperature-and-humidity-sensor-gy-21">Example 1: Custom Temperature and Humidity Sensor <em>GY-21</em></h2>
+<p>To use a custom sensor you first have to enable the Sensor which you want to use. For this you have to edit or add <code>HAS_SENSOR_1</code> in either the <code>paxcounter.conf</code> or the <code>hal</code> file of your board.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Activate Sensor 1</label><label for="__tabbed_1_2">Activate Sensor 2</label><label for="__tabbed_1_3">Activate Sensor 3</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-132">132</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="cp">#define HAS_SENSOR_1 1</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-132">132</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-132" name="__codelineno-1-132"></a><span class="cp">#define HAS_SENSOR_2 1</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-132">132</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-132" name="__codelineno-2-132"></a><span class="cp">#define HAS_SENSOR_3 1</span>
+</code></pre></div></td></tr></table></div>
+</div>
+</div>
+</div>
+<p>You might also add a constant for your custom sensor in the <code>paxcounter.conf</code> file. This is optional but can be used to identify the sensor type.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-133">133</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-133" name="__codelineno-3-133"></a><span class="cp">#define HAS_GY21 1 </span><span class="c1">// (1)</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>See usage of this in the example below</li>
+</ol>
+<h3 id="1-add-variables-or-needed-libraries">1. Add variables or needed libraries</h3>
+<p>If you want to use any libary for you custom sensor you have to add it to the <code>platformio.ini</code> file.</p>
+<p>In this example we use the <a href="https://github.com/enjoyneering/HTU2xD_SHT2x_Si70xx.git"><code>HTU2xD_SHT2x_Si70xx</code></a> for the GY-21 sensor.</p>
+<!-- FIXME comments did not work for ini file type-->
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">platformio.ini</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-127">127</a></span>
+<span class="normal"><a href="#__codelineno-4-128">128</a></span>
+<span class="normal"><a href="#__codelineno-4-129">129</a></span>
+<span class="normal"><a href="#__codelineno-4-130">130</a></span>
+<span class="normal"><a href="#__codelineno-4-131">131</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-127" name="__codelineno-4-127"></a><span class="p p-Indicator">[</span><span class="nv">env</span><span class="p p-Indicator">:</span><span class="nv">usb</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># (1)</span>
+<a id="__codelineno-4-128" name="__codelineno-4-128"></a><span class="l l-Scalar l-Scalar-Plain">upload_protocol = esptool</span>
+<a id="__codelineno-4-129" name="__codelineno-4-129"></a><span class="l l-Scalar l-Scalar-Plain">lib_deps =</span><span class="w"> </span><span class="c1"># (2)</span>
+<a id="__codelineno-4-130" name="__codelineno-4-130"></a><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">${common.lib_deps_all}</span>
+<a id="__codelineno-4-131" name="__codelineno-4-131"></a><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/enjoyneering/HTU2xD_SHT2x_Si70xx.git</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Selected the env you want to use. In this example we use the <code>usb</code> env.</li>
+<li>Add the libary to the <code>lib_deps</code> section.</li>
+</ol>
+<p>Add the import of libary in the <code>sensor.cpp</code> file.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">sensor.cpp</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-5">5</a></span>
+<span class="normal"><a href="#__codelineno-5-6">6</a></span>
+<span class="normal"><a href="#__codelineno-5-7">7</a></span>
+<span class="normal"><a href="#__codelineno-5-8">8</a></span>
+<span class="normal"><a href="#__codelineno-5-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-5-5" name="__codelineno-5-5"></a><span class="cp">#if (HAS_GY21) </span><span class="c1">// (1)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;HTU2xD_SHT2x_Si70xx.h&gt;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7"></a><span class="n">HTU2xD_SHT2x_SI70xx</span><span class="w"> </span><span class="nf">ht2x</span><span class="p">(</span><span class="n">HTU2xD_SENSOR</span><span class="p">,</span><span class="w"> </span><span class="n">HUMD_12BIT_TEMP_14BIT</span><span class="p">);</span><span class="w"> </span><span class="c1">// sensor type, resolution</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8"></a><span class="kt">double</span><span class="w"> </span><span class="n">temperature</span><span class="p">,</span><span class="w"> </span><span class="n">humidity</span><span class="p">;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9"></a><span class="cp">#endif </span><span class="c1">// HAS_GY21</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Define <code>HAS_GY21</code> either in hal file of your board or in <code>paxcounter.conf</code> file.</li>
+</ol>
+<h3 id="2-add-sensor-specific-code-to-sensor_init-function">2. Add sensor specific code to <code>sensor_init</code> function</h3>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/sensor.cpp</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-6-1">1</a></span>
+<span class="normal"><a href="#__codelineno-6-2">2</a></span>
+<span class="normal"><a href="#__codelineno-6-3">3</a></span>
+<span class="normal"><a href="#__codelineno-6-4">4</a></span>
+<span class="normal"><a href="#__codelineno-6-5">5</a></span>
+<span class="normal"><a href="#__codelineno-6-6">6</a></span>
+<span class="normal"><a href="#__codelineno-6-7">7</a></span>
+<span class="normal"><a href="#__codelineno-6-8">8</a></span>
+<span class="normal"><a href="#__codelineno-6-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="cp">#if (HAS_GY21) </span><span class="c1">// (1)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ht2x</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w"> </span><span class="c1">// reset sensor, set heater off, set resolution, check power</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3"></a><span class="w">                          </span><span class="c1">// (sensor doesn&#39;t operate correctly if VDD &lt; +2.25v)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4"></a><span class="p">{</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;HTU2xD/SHT2x not connected, fail or VDD &lt; +2.25v&quot;</span><span class="p">);</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6"></a><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;HTU2xD/SHT2x/GY21 found&quot;</span><span class="p">);</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8"></a><span class="p">}</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9"></a><span class="cp">#endif </span><span class="c1">// HAS_GY21</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Define <code>HAS_GY21</code> either in hal file of your board or in <code>paxcounter.conf</code> file.</li>
+</ol>
+<h3 id="3-add-sensor-specific-code-to-sensor_read-function">3. Add sensor specific code to sensor_read function</h3>
+<p>In this case we choose that our custom sensor is Sensor 3. This means the data will be sent on <code>SENSOR3PORT</code> which is by default <code>12</code>. You can change this in the <code>paxcounter.conf</code> file.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/sensor.cpp</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-7-78">78</a></span>
+<span class="normal"><a href="#__codelineno-7-79">79</a></span>
+<span class="normal"><a href="#__codelineno-7-80">80</a></span>
+<span class="normal"><a href="#__codelineno-7-81">81</a></span>
+<span class="normal"><a href="#__codelineno-7-82">82</a></span>
+<span class="normal"><a href="#__codelineno-7-83">83</a></span>
+<span class="normal"><a href="#__codelineno-7-84">84</a></span>
+<span class="normal"><a href="#__codelineno-7-85">85</a></span>
+<span class="normal"><a href="#__codelineno-7-86">86</a></span>
+<span class="normal"><a href="#__codelineno-7-87">87</a></span>
+<span class="normal"><a href="#__codelineno-7-88">88</a></span>
+<span class="normal"><a href="#__codelineno-7-89">89</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-7-78" name="__codelineno-7-78"></a><span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="mi">3</span><span class="p">:</span>
+<a id="__codelineno-7-79" name="__codelineno-7-79"></a><span class="w">    </span><span class="cp">#if (HAS_GY21)</span>
+<a id="__codelineno-7-80" name="__codelineno-7-80"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Reading Sensor 3, GY21&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// (1)</span>
+<a id="__codelineno-7-81" name="__codelineno-7-81"></a><span class="w">    </span><span class="n">temperature</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-7-82" name="__codelineno-7-82"></a><span class="w">        </span><span class="n">ht2x</span><span class="p">.</span><span class="n">readTemperature</span><span class="p">();</span><span class="w"> </span><span class="c1">// accuracy +-0.3C in range 0C..60C at  14-bit</span>
+<a id="__codelineno-7-83" name="__codelineno-7-83"></a><span class="w">    </span><span class="n">delay</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+<a id="__codelineno-7-84" name="__codelineno-7-84"></a><span class="w">    </span><span class="n">humidity</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-7-85" name="__codelineno-7-85"></a><span class="w">        </span><span class="n">ht2x</span><span class="p">.</span><span class="n">readHumidity</span><span class="p">();</span><span class="w"> </span><span class="c1">// accuracy +-2% in range 20%..80%/25C at 12-bit</span>
+<a id="__codelineno-7-86" name="__codelineno-7-86"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;GY21: Temperature: %f&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">temperature</span><span class="p">);</span><span class="w"> </span><span class="c1">// (2)</span>
+<a id="__codelineno-7-87" name="__codelineno-7-87"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;GY21: Humidity: %f&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">humidity</span><span class="p">);</span><span class="w"> </span><span class="c1">// (3)</span>
+<a id="__codelineno-7-88" name="__codelineno-7-88"></a><span class="w">    </span><span class="cp">#endif </span><span class="c1">// HAS_GY21</span>
+<a id="__codelineno-7-89" name="__codelineno-7-89"></a><span class="w">    </span><span class="k">break</span><span class="p">;</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>These logs are only for debugging. You can remove them if you want.</li>
+<li>These logs are only for debugging. You can remove them if you want.</li>
+<li>These logs are only for debugging. You can remove them if you want.</li>
+</ol>
+<h3 id="4-payload-functions-for-a-custom-sensor">4. Payload functions for a custom sensor</h3>
+<p>If you have added your custom sensor code as described before you can also add custom payload function if you need others than the provided ones. For this you have to change two files. First you have to add your payload function to the <code>payload.h</code> file.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Example for a custom temperature / humidity payload function</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/payload.h</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-8-57">57</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-8-57" name="__codelineno-8-57"></a><span class="kt">void</span><span class="w"> </span><span class="nf">addTempHum</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">temperature</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">humidity</span><span class="p">);</span>
+</code></pre></div></td></tr></table></div>
+</div>
+</div>
+</div>
+<p>Then you have to add your payload function to the <code>payload.cpp</code> file. You can provide functions for all payload formates (see <a href="../../payloadformat/">Payload Formats</a>) or just add it for the one you are using.</p>
+<p>Example for a custom temperature / humidity payload function</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Plain payload format</label><label for="__tabbed_3_2">Packed payload format</label><label for="__tabbed_3_3">Cayenne payload format</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/payload.cpp</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-9-128">128</a></span>
+<span class="normal"><a href="#__codelineno-9-129">129</a></span>
+<span class="normal"><a href="#__codelineno-9-130">130</a></span>
+<span class="normal"><a href="#__codelineno-9-131">131</a></span>
+<span class="normal"><a href="#__codelineno-9-132">132</a></span>
+<span class="normal"><a href="#__codelineno-9-133">133</a></span>
+<span class="normal"><a href="#__codelineno-9-134">134</a></span>
+<span class="normal"><a href="#__codelineno-9-135">135</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-9-128" name="__codelineno-9-128"></a><span class="kt">void</span><span class="w"> </span><span class="nf">PayloadConvert::addTempHum</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">temperature</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">humidity</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-129" name="__codelineno-9-129"></a><span class="kt">int16_t</span><span class="w"> </span><span class="n">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">int16_t</span><span class="p">)(</span><span class="n">temperature</span><span class="p">);</span><span class="w"> </span><span class="c1">// float -&gt; int</span>
+<a id="__codelineno-9-130" name="__codelineno-9-130"></a><span class="kt">uint16_t</span><span class="w"> </span><span class="n">humidity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">uint16_t</span><span class="p">)(</span><span class="n">humidity</span><span class="p">);</span><span class="w">     </span><span class="c1">// float -&gt; int</span>
+<a id="__codelineno-9-131" name="__codelineno-9-131"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">highByte</span><span class="p">(</span><span class="n">temperature</span><span class="p">);</span>
+<a id="__codelineno-9-132" name="__codelineno-9-132"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lowByte</span><span class="p">(</span><span class="n">temperature</span><span class="p">);</span>
+<a id="__codelineno-9-133" name="__codelineno-9-133"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">highByte</span><span class="p">(</span><span class="n">humidity</span><span class="p">);</span>
+<a id="__codelineno-9-134" name="__codelineno-9-134"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lowByte</span><span class="p">(</span><span class="n">humidity</span><span class="p">);</span>
+<a id="__codelineno-9-135" name="__codelineno-9-135"></a><span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/payload.cpp</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-10-230">230</a></span>
+<span class="normal"><a href="#__codelineno-10-231">231</a></span>
+<span class="normal"><a href="#__codelineno-10-232">232</a></span>
+<span class="normal"><a href="#__codelineno-10-233">233</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-10-230" name="__codelineno-10-230"></a><span class="kt">void</span><span class="w"> </span><span class="nf">PayloadConvert::addTempHum</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">temperature</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">humidity</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-231" name="__codelineno-10-231"></a><span class="n">writeFloat</span><span class="p">(</span><span class="n">temperature</span><span class="p">);</span>
+<a id="__codelineno-10-232" name="__codelineno-10-232"></a><span class="n">writeFloat</span><span class="p">(</span><span class="n">humidity</span><span class="p">);</span>
+<a id="__codelineno-10-233" name="__codelineno-10-233"></a><span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/payload.cpp</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-11-488">488</a></span>
+<span class="normal"><a href="#__codelineno-11-489">489</a></span>
+<span class="normal"><a href="#__codelineno-11-490">490</a></span>
+<span class="normal"><a href="#__codelineno-11-491">491</a></span>
+<span class="normal"><a href="#__codelineno-11-492">492</a></span>
+<span class="normal"><a href="#__codelineno-11-493">493</a></span>
+<span class="normal"><a href="#__codelineno-11-494">494</a></span>
+<span class="normal"><a href="#__codelineno-11-495">495</a></span>
+<span class="normal"><a href="#__codelineno-11-496">496</a></span>
+<span class="normal"><a href="#__codelineno-11-497">497</a></span>
+<span class="normal"><a href="#__codelineno-11-498">498</a></span>
+<span class="normal"><a href="#__codelineno-11-499">499</a></span>
+<span class="normal"><a href="#__codelineno-11-500">500</a></span>
+<span class="normal"><a href="#__codelineno-11-501">501</a></span>
+<span class="normal"><a href="#__codelineno-11-502">502</a></span>
+<span class="normal"><a href="#__codelineno-11-503">503</a></span>
+<span class="normal"><a href="#__codelineno-11-504">504</a></span>
+<span class="normal"><a href="#__codelineno-11-505">505</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-11-488" name="__codelineno-11-488"></a><span class="kt">void</span><span class="w"> </span><span class="nf">PayloadConvert::addTempHum</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">temperature</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">humidity</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-489" name="__codelineno-11-489"></a><span class="c1">// data value conversions to meet cayenne data type definition</span>
+<a id="__codelineno-11-490" name="__codelineno-11-490"></a><span class="c1">// 0.1°C per bit =&gt; -3276,7 .. +3276,7 °C</span>
+<a id="__codelineno-11-491" name="__codelineno-11-491"></a><span class="kt">int16_t</span><span class="w"> </span><span class="n">temp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">temperature</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<a id="__codelineno-11-492" name="__codelineno-11-492"></a><span class="c1">// 0.5% per bit =&gt; 0 .. 128 %C</span>
+<a id="__codelineno-11-493" name="__codelineno-11-493"></a><span class="kt">uint16_t</span><span class="w"> </span><span class="n">hum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">humidity</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<a id="__codelineno-11-494" name="__codelineno-11-494"></a><span class="cp">#if (PAYLOAD_ENCODER == 3)</span>
+<a id="__codelineno-11-495" name="__codelineno-11-495"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LPP_TEMPERATURE_CHANNEL</span><span class="p">;</span>
+<a id="__codelineno-11-496" name="__codelineno-11-496"></a><span class="cp">#endif</span>
+<a id="__codelineno-11-497" name="__codelineno-11-497"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LPP_TEMPERATURE</span><span class="p">;</span><span class="w"> </span><span class="c1">// 2 bytes 0.1 °C Signed MSB</span>
+<a id="__codelineno-11-498" name="__codelineno-11-498"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">highByte</span><span class="p">(</span><span class="n">temperature</span><span class="p">);</span>
+<a id="__codelineno-11-499" name="__codelineno-11-499"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lowByte</span><span class="p">(</span><span class="n">temperature</span><span class="p">);</span>
+<a id="__codelineno-11-500" name="__codelineno-11-500"></a><span class="cp">#if (PAYLOAD_ENCODER == 3)</span>
+<a id="__codelineno-11-501" name="__codelineno-11-501"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LPP_HUMIDITY_CHANNEL</span><span class="p">;</span>
+<a id="__codelineno-11-502" name="__codelineno-11-502"></a><span class="cp">#endif</span>
+<a id="__codelineno-11-503" name="__codelineno-11-503"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LPP_HUMIDITY</span><span class="p">;</span><span class="w"> </span><span class="c1">// 1 byte 0.5 % Unsigned</span>
+<a id="__codelineno-11-504" name="__codelineno-11-504"></a><span class="n">buffer</span><span class="p">[</span><span class="n">cursor</span><span class="o">++</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">humidity</span><span class="p">;</span>
+<a id="__codelineno-11-505" name="__codelineno-11-505"></a><span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+</div>
+</div>
+</div>
+<h3 id="5-sending-the-data">5. Sending the data</h3>
+<p>After you have added your custom sensor code and payload function you can send the data. For this you have to add the following code to the <code>sensor.cpp</code> file.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">src/sensor.cpp</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-12-78">78</a></span>
+<span class="normal"><a href="#__codelineno-12-79">79</a></span>
+<span class="normal"><a href="#__codelineno-12-80">80</a></span>
+<span class="normal"><a href="#__codelineno-12-81">81</a></span>
+<span class="normal"><a href="#__codelineno-12-82">82</a></span>
+<span class="normal"><a href="#__codelineno-12-83">83</a></span>
+<span class="normal"><a href="#__codelineno-12-84">84</a></span>
+<span class="normal"><a href="#__codelineno-12-85">85</a></span>
+<span class="normal"><a href="#__codelineno-12-86">86</a></span>
+<span class="normal"><a href="#__codelineno-12-87">87</a></span>
+<span class="normal"><a href="#__codelineno-12-88">88</a></span>
+<span class="normal"><a href="#__codelineno-12-89">89</a></span>
+<span class="normal"><a href="#__codelineno-12-90">90</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-12-78" name="__codelineno-12-78"></a><span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="mi">3</span><span class="p">:</span>
+<a id="__codelineno-12-79" name="__codelineno-12-79"></a><span class="w">    </span><span class="cp">#if (HAS_GY21)</span>
+<a id="__codelineno-12-80" name="__codelineno-12-80"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Reading Sensor 3, GY21&quot;</span><span class="p">);</span>
+<a id="__codelineno-12-81" name="__codelineno-12-81"></a><span class="w">    </span><span class="n">temperature</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-12-82" name="__codelineno-12-82"></a><span class="w">        </span><span class="n">ht2x</span><span class="p">.</span><span class="n">readTemperature</span><span class="p">();</span><span class="w"> </span><span class="c1">// accuracy +-0.3C in range 0C..60C at  14-bit</span>
+<a id="__codelineno-12-83" name="__codelineno-12-83"></a><span class="w">    </span><span class="n">delay</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+<a id="__codelineno-12-84" name="__codelineno-12-84"></a><span class="w">    </span><span class="n">humidity</span><span class="w"> </span><span class="o">=</span>
+<a id="__codelineno-12-85" name="__codelineno-12-85"></a><span class="w">        </span><span class="n">ht2x</span><span class="p">.</span><span class="n">readHumidity</span><span class="p">();</span><span class="w"> </span><span class="c1">// accuracy +-2% in range 20%..80%/25C at 12-bit</span>
+<a id="__codelineno-12-86" name="__codelineno-12-86"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;GY21: Temperature: %f&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">temperature</span><span class="p">);</span>
+<a id="__codelineno-12-87" name="__codelineno-12-87"></a><span class="w">    </span><span class="n">ESP_LOGE</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;GY21: Humidity: %f&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">humidity</span><span class="p">);</span>
+<a id="__codelineno-12-88" name="__codelineno-12-88"></a><span class="hll"><span class="w">    </span><span class="n">payload</span><span class="p">.</span><span class="n">addTempHum</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span><span class="w"> </span><span class="n">humidity</span><span class="p">);</span><span class="w"> </span><span class="c1">// (1)</span>
+</span><a id="__codelineno-12-89" name="__codelineno-12-89"></a><span class="w">    </span><span class="cp">#endif </span><span class="c1">// HAS_GY21</span>
+<a id="__codelineno-12-90" name="__codelineno-12-90"></a><span class="w">    </span><span class="k">break</span><span class="p">;</span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Add your custom payload function here.</li>
+</ol>
+<p>Now you can build and upload the code to your ESP. Do not forget to erase the flash before uploading since you probably changed the <code>paxcounter.conf</code> file.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.indexes", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      
+    
+  </body>
+</html>

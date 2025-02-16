@@ -1,0 +1,1142 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="ESP32-Paxcounter Documentation">
+      
+      
+      
+      
+        <link rel="prev" href="../legalnote/">
+      
+      
+        <link rel="next" href="custom-sensors/">
+      
+      
+      <link rel="icon" href="../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
+    
+    
+      
+        <title>Configuration - Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../assets/paxcounter_logo_white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/cyberman54/ESP32-Paxcounter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../assets/paxcounter_logo_white.svg" alt="logo">
+
+    </a>
+    Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/cyberman54/ESP32-Paxcounter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intro
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Hardware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../display-led/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Display & LED
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../legalnote/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Legal note
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="./" class="md-nav__link md-nav__link--active">
+              
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link md-nav__link--active" for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="custom-sensors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Custom Sensors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../payloadformat/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Payload Format
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../remotecontrol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Remote control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../license-credits/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Licence & Credits
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sensors-and-peripherals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sensors and Peripherals
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sensors and Peripherals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-peripherals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported Peripherals
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#power-saving-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power saving mode
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time sync
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syncing-multiple-paxcounters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syncing multiple paxcounters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wall-clock-controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wall clock controller
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mobile-paxcounter-using-opensensemap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mobile PaxCounter using openSenseMap
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sd-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      SD-card
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="configuration">Configuration</h1>
+<h2 id="sensors-and-peripherals">Sensors and Peripherals</h2>
+<p>You can add up to 3 user defined sensors. Insert your sensor's payload scheme in <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/sensor.cpp"><code>sensor.cpp</code></a>. More examples and a detailed description can be found in the <a href="custom-sensors/">sensor documentation</a>.</p>
+<h3 id="supported-peripherals">Supported Peripherals</h3>
+<ul>
+<li>Bosch BMP180 / BME280 / BMP280 / BMP680</li>
+<li>SDS011</li>
+<li>RTC DS3231</li>
+<li>generic serial NMEA GPS</li>
+<li>I2C Lopy GPS</li>
+</ul>
+<p>For these peripherals no additional code is needed. To activate configure them in the board's hal file before building the code.</p>
+<p>See <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/hal/generic.h"><code>generic.h</code></a> for all options and for proper configuration of BME280/BME680.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:4"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">BME/ BMP Configuration</label><label for="__tabbed_1_2">SDS011 Configuration</label><label for="__tabbed_1_3">Custom Sensors Configuration</label><label for="__tabbed_1_4">Complete <code>generic.h</code></label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/hal/generic.h</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span>
+<span class="normal"><a href="#__codelineno-0-40">40</a></span>
+<span class="normal"><a href="#__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="c1">// BME680 sensor on I2C bus</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="c1">//#define HAS_BME680 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="c1">//#define BME680_ADDR BME68X_I2C_ADDR_LOW // connect SDIO of BME680 to GND</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="c1">// BME280 sensor on I2C bus</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="c1">//#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="c1">//#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="c1">// BMP180 sensor on I2C bus</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="c1">//#define HAS_BMP180</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="c1">//#define BMP180_ADDR 0x77</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="c1">// BMP280 sensor on I2C bus</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="c1">//#define HAS_BMP280</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="c1">//#define BMP280_ADDR 0x76</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/hal/generic.h</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-51">51</a></span>
+<span class="normal"><a href="#__codelineno-1-52">52</a></span>
+<span class="normal"><a href="#__codelineno-1-53">53</a></span>
+<span class="normal"><a href="#__codelineno-1-54">54</a></span>
+<span class="normal"><a href="#__codelineno-1-55">55</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-51" name="__codelineno-1-51"></a><span class="c1">// SDS011 dust sensor settings</span>
+<a id="__codelineno-1-52" name="__codelineno-1-52"></a><span class="c1">//#define HAS_SDS011 1 // use SDS011</span>
+<a id="__codelineno-1-53" name="__codelineno-1-53"></a><span class="c1">// used pins on the ESP-side:</span>
+<a id="__codelineno-1-54" name="__codelineno-1-54"></a><span class="c1">//#define SDS_TX 19     // connect to RX on the SDS011</span>
+<a id="__codelineno-1-55" name="__codelineno-1-55"></a><span class="c1">//#define SDS_RX 23     // connect to TX on the SDS011</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/hal/generic.h</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-57">57</a></span>
+<span class="normal"><a href="#__codelineno-2-58">58</a></span>
+<span class="normal"><a href="#__codelineno-2-59">59</a></span>
+<span class="normal"><a href="#__codelineno-2-60">60</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-57" name="__codelineno-2-57"></a><span class="c1">// up to three user defined sensors (if connected)</span>
+<a id="__codelineno-2-58" name="__codelineno-2-58"></a><span class="c1">//#define HAS_SENSOR_1 1 // comment out if device has user defined sensor #1</span>
+<a id="__codelineno-2-59" name="__codelineno-2-59"></a><span class="c1">//#define HAS_SENSOR_2 1 // comment out if device has user defined sensor #2</span>
+<a id="__codelineno-2-60" name="__codelineno-2-60"></a><span class="c1">//#define HAS_SENSOR_3 1 // comment out if device has user defined sensor #3</span>
+</code></pre></div></td></tr></table></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/hal/generic.h</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1">  1</a></span>
+<span class="normal"><a href="#__codelineno-3-2">  2</a></span>
+<span class="normal"><a href="#__codelineno-3-3">  3</a></span>
+<span class="normal"><a href="#__codelineno-3-4">  4</a></span>
+<span class="normal"><a href="#__codelineno-3-5">  5</a></span>
+<span class="normal"><a href="#__codelineno-3-6">  6</a></span>
+<span class="normal"><a href="#__codelineno-3-7">  7</a></span>
+<span class="normal"><a href="#__codelineno-3-8">  8</a></span>
+<span class="normal"><a href="#__codelineno-3-9">  9</a></span>
+<span class="normal"><a href="#__codelineno-3-10"> 10</a></span>
+<span class="normal"><a href="#__codelineno-3-11"> 11</a></span>
+<span class="normal"><a href="#__codelineno-3-12"> 12</a></span>
+<span class="normal"><a href="#__codelineno-3-13"> 13</a></span>
+<span class="normal"><a href="#__codelineno-3-14"> 14</a></span>
+<span class="normal"><a href="#__codelineno-3-15"> 15</a></span>
+<span class="normal"><a href="#__codelineno-3-16"> 16</a></span>
+<span class="normal"><a href="#__codelineno-3-17"> 17</a></span>
+<span class="normal"><a href="#__codelineno-3-18"> 18</a></span>
+<span class="normal"><a href="#__codelineno-3-19"> 19</a></span>
+<span class="normal"><a href="#__codelineno-3-20"> 20</a></span>
+<span class="normal"><a href="#__codelineno-3-21"> 21</a></span>
+<span class="normal"><a href="#__codelineno-3-22"> 22</a></span>
+<span class="normal"><a href="#__codelineno-3-23"> 23</a></span>
+<span class="normal"><a href="#__codelineno-3-24"> 24</a></span>
+<span class="normal"><a href="#__codelineno-3-25"> 25</a></span>
+<span class="normal"><a href="#__codelineno-3-26"> 26</a></span>
+<span class="normal"><a href="#__codelineno-3-27"> 27</a></span>
+<span class="normal"><a href="#__codelineno-3-28"> 28</a></span>
+<span class="normal"><a href="#__codelineno-3-29"> 29</a></span>
+<span class="normal"><a href="#__codelineno-3-30"> 30</a></span>
+<span class="normal"><a href="#__codelineno-3-31"> 31</a></span>
+<span class="normal"><a href="#__codelineno-3-32"> 32</a></span>
+<span class="normal"><a href="#__codelineno-3-33"> 33</a></span>
+<span class="normal"><a href="#__codelineno-3-34"> 34</a></span>
+<span class="normal"><a href="#__codelineno-3-35"> 35</a></span>
+<span class="normal"><a href="#__codelineno-3-36"> 36</a></span>
+<span class="normal"><a href="#__codelineno-3-37"> 37</a></span>
+<span class="normal"><a href="#__codelineno-3-38"> 38</a></span>
+<span class="normal"><a href="#__codelineno-3-39"> 39</a></span>
+<span class="normal"><a href="#__codelineno-3-40"> 40</a></span>
+<span class="normal"><a href="#__codelineno-3-41"> 41</a></span>
+<span class="normal"><a href="#__codelineno-3-42"> 42</a></span>
+<span class="normal"><a href="#__codelineno-3-43"> 43</a></span>
+<span class="normal"><a href="#__codelineno-3-44"> 44</a></span>
+<span class="normal"><a href="#__codelineno-3-45"> 45</a></span>
+<span class="normal"><a href="#__codelineno-3-46"> 46</a></span>
+<span class="normal"><a href="#__codelineno-3-47"> 47</a></span>
+<span class="normal"><a href="#__codelineno-3-48"> 48</a></span>
+<span class="normal"><a href="#__codelineno-3-49"> 49</a></span>
+<span class="normal"><a href="#__codelineno-3-50"> 50</a></span>
+<span class="normal"><a href="#__codelineno-3-51"> 51</a></span>
+<span class="normal"><a href="#__codelineno-3-52"> 52</a></span>
+<span class="normal"><a href="#__codelineno-3-53"> 53</a></span>
+<span class="normal"><a href="#__codelineno-3-54"> 54</a></span>
+<span class="normal"><a href="#__codelineno-3-55"> 55</a></span>
+<span class="normal"><a href="#__codelineno-3-56"> 56</a></span>
+<span class="normal"><a href="#__codelineno-3-57"> 57</a></span>
+<span class="normal"><a href="#__codelineno-3-58"> 58</a></span>
+<span class="normal"><a href="#__codelineno-3-59"> 59</a></span>
+<span class="normal"><a href="#__codelineno-3-60"> 60</a></span>
+<span class="normal"><a href="#__codelineno-3-61"> 61</a></span>
+<span class="normal"><a href="#__codelineno-3-62"> 62</a></span>
+<span class="normal"><a href="#__codelineno-3-63"> 63</a></span>
+<span class="normal"><a href="#__codelineno-3-64"> 64</a></span>
+<span class="normal"><a href="#__codelineno-3-65"> 65</a></span>
+<span class="normal"><a href="#__codelineno-3-66"> 66</a></span>
+<span class="normal"><a href="#__codelineno-3-67"> 67</a></span>
+<span class="normal"><a href="#__codelineno-3-68"> 68</a></span>
+<span class="normal"><a href="#__codelineno-3-69"> 69</a></span>
+<span class="normal"><a href="#__codelineno-3-70"> 70</a></span>
+<span class="normal"><a href="#__codelineno-3-71"> 71</a></span>
+<span class="normal"><a href="#__codelineno-3-72"> 72</a></span>
+<span class="normal"><a href="#__codelineno-3-73"> 73</a></span>
+<span class="normal"><a href="#__codelineno-3-74"> 74</a></span>
+<span class="normal"><a href="#__codelineno-3-75"> 75</a></span>
+<span class="normal"><a href="#__codelineno-3-76"> 76</a></span>
+<span class="normal"><a href="#__codelineno-3-77"> 77</a></span>
+<span class="normal"><a href="#__codelineno-3-78"> 78</a></span>
+<span class="normal"><a href="#__codelineno-3-79"> 79</a></span>
+<span class="normal"><a href="#__codelineno-3-80"> 80</a></span>
+<span class="normal"><a href="#__codelineno-3-81"> 81</a></span>
+<span class="normal"><a href="#__codelineno-3-82"> 82</a></span>
+<span class="normal"><a href="#__codelineno-3-83"> 83</a></span>
+<span class="normal"><a href="#__codelineno-3-84"> 84</a></span>
+<span class="normal"><a href="#__codelineno-3-85"> 85</a></span>
+<span class="normal"><a href="#__codelineno-3-86"> 86</a></span>
+<span class="normal"><a href="#__codelineno-3-87"> 87</a></span>
+<span class="normal"><a href="#__codelineno-3-88"> 88</a></span>
+<span class="normal"><a href="#__codelineno-3-89"> 89</a></span>
+<span class="normal"><a href="#__codelineno-3-90"> 90</a></span>
+<span class="normal"><a href="#__codelineno-3-91"> 91</a></span>
+<span class="normal"><a href="#__codelineno-3-92"> 92</a></span>
+<span class="normal"><a href="#__codelineno-3-93"> 93</a></span>
+<span class="normal"><a href="#__codelineno-3-94"> 94</a></span>
+<span class="normal"><a href="#__codelineno-3-95"> 95</a></span>
+<span class="normal"><a href="#__codelineno-3-96"> 96</a></span>
+<span class="normal"><a href="#__codelineno-3-97"> 97</a></span>
+<span class="normal"><a href="#__codelineno-3-98"> 98</a></span>
+<span class="normal"><a href="#__codelineno-3-99"> 99</a></span>
+<span class="normal"><a href="#__codelineno-3-100">100</a></span>
+<span class="normal"><a href="#__codelineno-3-101">101</a></span>
+<span class="normal"><a href="#__codelineno-3-102">102</a></span>
+<span class="normal"><a href="#__codelineno-3-103">103</a></span>
+<span class="normal"><a href="#__codelineno-3-104">104</a></span>
+<span class="normal"><a href="#__codelineno-3-105">105</a></span>
+<span class="normal"><a href="#__codelineno-3-106">106</a></span>
+<span class="normal"><a href="#__codelineno-3-107">107</a></span>
+<span class="normal"><a href="#__codelineno-3-108">108</a></span>
+<span class="normal"><a href="#__codelineno-3-109">109</a></span>
+<span class="normal"><a href="#__codelineno-3-110">110</a></span>
+<span class="normal"><a href="#__codelineno-3-111">111</a></span>
+<span class="normal"><a href="#__codelineno-3-112">112</a></span>
+<span class="normal"><a href="#__codelineno-3-113">113</a></span>
+<span class="normal"><a href="#__codelineno-3-114">114</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="c1">// clang-format off</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="c1">// upload_speed 115200</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="c1">// board esp32dev</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="cp">#ifndef _GENERIC_H</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="cp">#define _GENERIC_H</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdint.h&gt;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10"></a><span class="c1">// Hardware related definitions for generic ESP32 boards</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11"></a><span class="c1">// generic.h is kitchensink with all available options</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13"></a><span class="cp">#define HAS_LORA 1 </span><span class="c1">// comment out if device shall not send data via LoRa or has no LoRa</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14"></a><span class="c1">//#define HAS_SPI 1  // comment out if device shall not send data via SPI</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15"></a><span class="c1">// pin definitions for SPI slave interface</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16"></a><span class="c1">//#define SPI_MOSI GPIO_NUM_23</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17"></a><span class="c1">//#define SPI_MISO GPIO_NUM_19</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18"></a><span class="c1">//#define SPI_SCLK GPIO_NUM_18</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19"></a><span class="c1">//#define SPI_CS   GPIO_NUM_5</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20"></a>
+<a id="__codelineno-3-21" name="__codelineno-3-21"></a><span class="c1">// enable only if you want to store a local paxcount table on the device</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22"></a><span class="cp">#define HAS_SDCARD  1      </span><span class="c1">// this board has an SD-card-reader/writer</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23"></a><span class="c1">// Pins for SD-card</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24"></a><span class="cp">#define SDCARD_CS    (13)</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25"></a><span class="cp">#define SDCARD_MOSI  (15)</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26"></a><span class="cp">#define SDCARD_MISO  (2)</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27"></a><span class="cp">#define SDCARD_SCLK  (14)</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28"></a>
+<a id="__codelineno-3-29" name="__codelineno-3-29"></a><span class="c1">// enable only if device has these sensors, otherwise comment these lines</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30"></a><span class="c1">// tutorial to connect BME sensor see here:</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31"></a><span class="c1">// https://sbamueller.wordpress.com/2019/02/26/paxcounter-mit-umweltsensor/</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32"></a><span class="c1">//</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33"></a><span class="c1">// in platformio.ini append</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34"></a><span class="c1">// lib_deps = &lt;...&gt; ${common.lib_deps_sensors}</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35"></a><span class="c1">// for loading necessary libraries</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36"></a>
+<a id="__codelineno-3-37" name="__codelineno-3-37"></a><span class="c1">// BME680 sensor on I2C bus</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39"></a><span class="c1">//#define HAS_BME680 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40"></a><span class="c1">//#define BME680_ADDR BME68X_I2C_ADDR_LOW // connect SDIO of BME680 to GND</span>
+<a id="__codelineno-3-41" name="__codelineno-3-41"></a>
+<a id="__codelineno-3-42" name="__codelineno-3-42"></a><span class="c1">// BME280 sensor on I2C bus</span>
+<a id="__codelineno-3-43" name="__codelineno-3-43"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-3-44" name="__codelineno-3-44"></a><span class="c1">//#define HAS_BME280 GPIO_NUM_21, GPIO_NUM_22 // SDA, SCL</span>
+<a id="__codelineno-3-45" name="__codelineno-3-45"></a><span class="c1">//#define BME280_ADDR 0x76 // change to 0x77 depending on your wiring</span>
+<a id="__codelineno-3-46" name="__codelineno-3-46"></a>
+<a id="__codelineno-3-47" name="__codelineno-3-47"></a><span class="c1">// BMP180 sensor on I2C bus</span>
+<a id="__codelineno-3-48" name="__codelineno-3-48"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-3-49" name="__codelineno-3-49"></a><span class="c1">//#define HAS_BMP180</span>
+<a id="__codelineno-3-50" name="__codelineno-3-50"></a><span class="c1">//#define BMP180_ADDR 0x77</span>
+<a id="__codelineno-3-51" name="__codelineno-3-51"></a>
+<a id="__codelineno-3-52" name="__codelineno-3-52"></a><span class="c1">// BMP280 sensor on I2C bus</span>
+<a id="__codelineno-3-53" name="__codelineno-3-53"></a><span class="c1">//#define HAS_BME 1 // Enable BME sensors in general</span>
+<a id="__codelineno-3-54" name="__codelineno-3-54"></a><span class="c1">//#define HAS_BMP280</span>
+<a id="__codelineno-3-55" name="__codelineno-3-55"></a><span class="c1">//#define BMP280_ADDR 0x76</span>
+<a id="__codelineno-3-56" name="__codelineno-3-56"></a>
+<a id="__codelineno-3-57" name="__codelineno-3-57"></a><span class="c1">// SDS011 dust sensor settings</span>
+<a id="__codelineno-3-58" name="__codelineno-3-58"></a><span class="c1">//#define HAS_SDS011 1 // use SDS011</span>
+<a id="__codelineno-3-59" name="__codelineno-3-59"></a><span class="c1">// used pins on the ESP-side:</span>
+<a id="__codelineno-3-60" name="__codelineno-3-60"></a><span class="c1">//#define SDS_TX 19     // connect to RX on the SDS011</span>
+<a id="__codelineno-3-61" name="__codelineno-3-61"></a><span class="c1">//#define SDS_RX 23     // connect to TX on the SDS011</span>
+<a id="__codelineno-3-62" name="__codelineno-3-62"></a>
+<a id="__codelineno-3-63" name="__codelineno-3-63"></a><span class="c1">// up to three user defined sensors (if connected)</span>
+<a id="__codelineno-3-64" name="__codelineno-3-64"></a><span class="c1">//#define HAS_SENSOR_1 1 // comment out if device has user defined sensor #1</span>
+<a id="__codelineno-3-65" name="__codelineno-3-65"></a><span class="c1">//#define HAS_SENSOR_2 1 // comment out if device has user defined sensor #2</span>
+<a id="__codelineno-3-66" name="__codelineno-3-66"></a><span class="c1">//#define HAS_SENSOR_3 1 // comment out if device has user defined sensor #3</span>
+<a id="__codelineno-3-67" name="__codelineno-3-67"></a>
+<a id="__codelineno-3-68" name="__codelineno-3-68"></a><span class="cp">#define CFG_sx1276_radio 1 </span><span class="c1">// select LoRa chip</span>
+<a id="__codelineno-3-69" name="__codelineno-3-69"></a><span class="c1">//#define CFG_sx1272_radio 1 // select LoRa chip</span>
+<a id="__codelineno-3-70" name="__codelineno-3-70"></a><span class="c1">//#define BOARD_HAS_PSRAM // use if board has external SPIRAM, note: this will reduce IRAM0 by 64KB for SPIRAM cache</span>
+<a id="__codelineno-3-71" name="__codelineno-3-71"></a><span class="cp">#define DISABLE_BROWNOUT 1 </span><span class="c1">// comment out if you want to keep brownout feature</span>
+<a id="__codelineno-3-72" name="__codelineno-3-72"></a>
+<a id="__codelineno-3-73" name="__codelineno-3-73"></a><span class="c1">//#define HAS_DISPLAY 1</span>
+<a id="__codelineno-3-74" name="__codelineno-3-74"></a><span class="c1">//#define MY_DISPLAY_FLIP  1 // use if display is rotated</span>
+<a id="__codelineno-3-75" name="__codelineno-3-75"></a><span class="cp">#define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL </span><span class="c1">// battery probe GPIO pin -&gt; ADC1_CHANNEL_7</span>
+<a id="__codelineno-3-76" name="__codelineno-3-76"></a><span class="cp">#define BAT_VOLTAGE_DIVIDER 2 </span><span class="c1">// voltage divider 100k/100k on board</span>
+<a id="__codelineno-3-77" name="__codelineno-3-77"></a>
+<a id="__codelineno-3-78" name="__codelineno-3-78"></a><span class="cp">#define HAS_LED (21) </span><span class="c1">// on board  LED</span>
+<a id="__codelineno-3-79" name="__codelineno-3-79"></a><span class="cp">#define HAS_BUTTON (39) </span><span class="c1">// on board button</span>
+<a id="__codelineno-3-80" name="__codelineno-3-80"></a><span class="c1">//#define RGB_LED_COUNT 1 // we have 1 LED</span>
+<a id="__codelineno-3-81" name="__codelineno-3-81"></a><span class="c1">//#define HAS_RGB_LED FastLED.addLeds&lt;WS2812, GPIO_NUM_0, GRB&gt;(leds, RGB_LED_COUNT);</span>
+<a id="__codelineno-3-82" name="__codelineno-3-82"></a>
+<a id="__codelineno-3-83" name="__codelineno-3-83"></a><span class="c1">// GPS settings</span>
+<a id="__codelineno-3-84" name="__codelineno-3-84"></a><span class="c1">//#define HAS_GPS 1 // use on board GPS</span>
+<a id="__codelineno-3-85" name="__codelineno-3-85"></a><span class="c1">//#define GPS_SERIAL 9600, SERIAL_8N1, GPIO_NUM_12, GPIO_NUM_15 // UBlox NEO 6M RX, TX</span>
+<a id="__codelineno-3-86" name="__codelineno-3-86"></a><span class="c1">//#define GPS_INT GPIO_NUM_13 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -&gt; GPIO13</span>
+<a id="__codelineno-3-87" name="__codelineno-3-87"></a>
+<a id="__codelineno-3-88" name="__codelineno-3-88"></a><span class="c1">// Pins for I2C interface of OLED Display</span>
+<a id="__codelineno-3-89" name="__codelineno-3-89"></a><span class="c1">//#define MY_DISPLAY_SDA (4)</span>
+<a id="__codelineno-3-90" name="__codelineno-3-90"></a><span class="c1">//#define MY_DISPLAY_SCL (15)</span>
+<a id="__codelineno-3-91" name="__codelineno-3-91"></a><span class="c1">//#define MY_DISPLAY_RST (16)</span>
+<a id="__codelineno-3-92" name="__codelineno-3-92"></a>
+<a id="__codelineno-3-93" name="__codelineno-3-93"></a><span class="c1">// Settings for on board DS3231 RTC chip</span>
+<a id="__codelineno-3-94" name="__codelineno-3-94"></a><span class="c1">//#define HAS_RTC MY_DISPLAY_SDA, MY_DISPLAY_SCL // SDA, SCL</span>
+<a id="__codelineno-3-95" name="__codelineno-3-95"></a><span class="c1">//#define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day</span>
+<a id="__codelineno-3-96" name="__codelineno-3-96"></a>
+<a id="__codelineno-3-97" name="__codelineno-3-97"></a><span class="c1">// Settings for IF482 interface</span>
+<a id="__codelineno-3-98" name="__codelineno-3-98"></a><span class="c1">//#define HAS_IF482 9600, SERIAL_7E1, GPIO_NUM_12, GPIO_NUM_14 // IF482 serial port parameters</span>
+<a id="__codelineno-3-99" name="__codelineno-3-99"></a>
+<a id="__codelineno-3-100" name="__codelineno-3-100"></a><span class="c1">// Settings for DCF77 interface</span>
+<a id="__codelineno-3-101" name="__codelineno-3-101"></a><span class="c1">//#define HAS_DCF77 GPIO_NUM_1</span>
+<a id="__codelineno-3-102" name="__codelineno-3-102"></a><span class="c1">//#define DCF77_ACTIVE_LOW 1</span>
+<a id="__codelineno-3-103" name="__codelineno-3-103"></a>
+<a id="__codelineno-3-104" name="__codelineno-3-104"></a><span class="c1">// Pins for LORA chip SPI interface, reset line and interrupt lines</span>
+<a id="__codelineno-3-105" name="__codelineno-3-105"></a><span class="cp">#define LORA_SCK  (5) </span>
+<a id="__codelineno-3-106" name="__codelineno-3-106"></a><span class="cp">#define LORA_CS   (18)</span>
+<a id="__codelineno-3-107" name="__codelineno-3-107"></a><span class="cp">#define LORA_MISO (19)</span>
+<a id="__codelineno-3-108" name="__codelineno-3-108"></a><span class="cp">#define LORA_MOSI (27)</span>
+<a id="__codelineno-3-109" name="__codelineno-3-109"></a><span class="cp">#define LORA_RST  (14)</span>
+<a id="__codelineno-3-110" name="__codelineno-3-110"></a><span class="cp">#define LORA_IRQ  (26)</span>
+<a id="__codelineno-3-111" name="__codelineno-3-111"></a><span class="cp">#define LORA_IO1  (33)</span>
+<a id="__codelineno-3-112" name="__codelineno-3-112"></a><span class="cp">#define LORA_IO2  LMIC_UNUSED_PIN</span>
+<a id="__codelineno-3-113" name="__codelineno-3-113"></a>
+<a id="__codelineno-3-114" name="__codelineno-3-114"></a><span class="cp">#endif</span>
+</code></pre></div></td></tr></table></div>
+</div>
+</div>
+</div>
+<p>Output of user sensor data can be switched by user remote control command <code>0x14</code> sent to Port 2.</p>
+<p>Output of sensor and peripheral data is internally switched by a bitmask register. Default mask can be tailored by editing <em>cfg.payloadmask</em> initialization value in <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/configmanager.cpp"><code>configmanager.cpp</code></a> following this scheme:</p>
+<table>
+<thead>
+<tr>
+<th>Bit</th>
+<th>Sensordata</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Paxcounter</td>
+<td>on</td>
+</tr>
+<tr>
+<td>1</td>
+<td>unused</td>
+<td>off</td>
+</tr>
+<tr>
+<td>2</td>
+<td>BME280/680</td>
+<td>on</td>
+</tr>
+<tr>
+<td>3</td>
+<td>GPS*</td>
+<td>on</td>
+</tr>
+<tr>
+<td>4</td>
+<td>User sensor 1</td>
+<td>on</td>
+</tr>
+<tr>
+<td>5</td>
+<td>User sensor 2</td>
+<td>on</td>
+</tr>
+<tr>
+<td>6</td>
+<td>User sensor 3</td>
+<td>on</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Batterylevel</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<p>*) GPS data can also be combined with paxcounter payload on port 1, <code>#define GPSPORT 1</code> in paxcounter.conf to enable</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-102">102</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-102" name="__codelineno-4-102"></a><span class="cp">#define GPSPORT                         4       </span><span class="c1">// gps - NOTE: set to 1 to send combined GPS+COUNTERPORT payload</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="power-saving-mode">Power saving mode</h2>
+<p>Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT / SD-Card). Set <code>#define SLEEPCYCLE</code> in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-20">20</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-5-20" name="__codelineno-5-20"></a><span class="cp">#define SLEEPCYCLE                      0       </span><span class="c1">// sleep time after a send cycle [seconds/10], 0 .. 65535; 0 means no sleep [default = 0]</span>
+</code></pre></div></td></tr></table></div>
+<p>Power consumption in deep sleep mode depends on your hardware, i.e. if on board peripherals can be switched off or set to a chip specific sleep mode either by MCU or by power management unit (PMU) as found on TTGO T-BEAM v1.0/V1.1. See <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/power.cpp"><code>power.cpp</code></a> for power management, and <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/reset.cpp"><code>reset.cpp</code></a> for sleep and wakeup logic.</p>
+<h2 id="time-sync">Time sync</h2>
+<p>Paxcounter can keep a time-of-day synced with external or on board time sources. Set <code>#define TIME_SYNC_INTERVAL</code> in <code>paxcounter.conf</code> to enable time sync.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-6-88">88</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-6-88" name="__codelineno-6-88"></a><span class="cp">#define TIME_SYNC_INTERVAL              60      </span><span class="c1">// sync time attempt each .. minutes from time source [default = 60], 0 means off</span>
+</code></pre></div></td></tr></table></div>
+<p>Supported external time sources are GPS, LORAWAN network time and LORAWAN application timeserver time. Supported on board time sources are the RTC of ESP32 and a DS3231 RTC chip, both are kept sycned as fallback time sources. Time accuracy depends on board's time base which generates the pulse per second. Supported are GPS PPS, SQW output of RTC, and internal ESP32 hardware timer. Time base is selected by #defines in the board's hal file, see example in <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/hal/generic.h"><code>generic.h</code></a>.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/hal/generic.h</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-7-87">87</a></span>
+<span class="normal"><a href="#__codelineno-7-88">88</a></span>
+<span class="normal"><a href="#__codelineno-7-89">89</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-7-87" name="__codelineno-7-87"></a><span class="c1">// Settings for on board DS3231 RTC chip</span>
+<a id="__codelineno-7-88" name="__codelineno-7-88"></a><span class="c1">//#define HAS_RTC MY_DISPLAY_SDA, MY_DISPLAY_SCL // SDA, SCL</span>
+<a id="__codelineno-7-89" name="__codelineno-7-89"></a><span class="c1">//#define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day</span>
+</code></pre></div></td></tr></table></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If your LORAWAN network does not support network time, you can run a Node-Red timeserver application using the enclosed <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/src/Node-RED/Timeserver.json"><strong>Timeserver code</strong></a>. Configure the MQTT nodes in Node-Red for the LORAWAN application used by your paxcounter device. Time can also be set without precision liability, by simple remote command, see section remote control.</p>
+</div>
+<h2 id="syncing-multiple-paxcounters">Syncing multiple paxcounters</h2>
+<p>A fleet of paxcounters can be synchronized to keep all devices wake up and start scanning at the same time. Synchronization is based on top-of-hour as common time point of reference. This feature requires time-of-day to be present on each device. Thus, <code>TIME_SYNC_INTERVAL</code> option, as explained above, must be enabled. Wake up syncing is enabled by setting <code>SYNCWAKEUP</code> in <code>paxcounter.conf</code> to a value X, in seconds, greater than zero, and smaller than <code>SLEEPCYCLE</code> (in seconds/10). This defines a time window, centered at top-of-hour, sized +/- X seconds. If a device, returning from sleep, would wakeup within this time window, it's wakeup will be adjusted to top-of-hour.</p>
+<h2 id="wall-clock-controller">Wall clock controller</h2>
+<p>Paxcounter can be used to sync a wall clock which has a DCF77 or IF482 time telegram input. Set <code>#define HAS_IF482</code> or <code>#define HAS_DCF77</code> in board's hal file to setup clock controller. Use case of this function is to integrate paxcounter and clock. Accurary of the synthetic DCF77 signal depends on accuracy of on board's time base, see above.</p>
+<h2 id="mobile-paxcounter-using-opensensemap">Mobile PaxCounter using <A HREF="https://opensensemap.org/">openSenseMap</A></h2>
+<p>This describes how to set up a mobile PaxCounter:<br> Follow all steps so far for preparing the device, selecting the packed payload format. In <code>paxcounter.conf</code> set <code>PAYLOAD_OPENSENSEBOX</code> to <code>1</code>.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-8-60">60</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-8-60" name="__codelineno-8-60"></a><span class="cp">#define PAYLOAD_OPENSENSEBOX            0       </span><span class="c1">// send payload compatible to sensebox.de (swap geo position and pax data)</span>
+</code></pre></div></td></tr></table></div>
+<p>Register a new sensebox on <a href="https://opensensemap.org">https://opensensemap.org/</a>. In the sensor configuration select "TheThingsNetwork" and set decoding profile to "LoRa serialization". Enter your TTN Application and Device ID. Setup decoding option using:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;decoder&quot;</span><span class="p">:</span><span class="s2">&quot;latLng&quot;</span><span class="p">},{</span><span class="nt">&quot;decoder&quot;</span><span class="p">:</span><span class="s2">&quot;uint16&quot;</span><span class="p">,</span><span class="err">se</span><span class="kc">ns</span><span class="err">or_id</span><span class="s2">&quot;:&quot;</span><span class="err">yourse</span><span class="kc">ns</span><span class="err">orid&quot;}]</span>
+</code></pre></div>
+<h2 id="sd-card">SD-card</h2>
+<p>Data can be stored on a FAT32 (pre-)formatted SD-card if the board provides an SD card interface, either with SPI or MMC mode. To enable this feature, specify interface mode and hardware pins in board's hal file (<code>shared/hal/&lt;board.h\&gt;</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="w">    </span><span class="cp">#define HAS_SDCARD 1     </span><span class="c1">// SD-card interface, using SPI mode</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="c1">//OR</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="cp">#define HAS_SDCARD 2     </span><span class="c1">// SD-card interface, using MMC mode</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="c1">// Pins for SPI interface</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="cp">#define SDCARD_CS   (13) </span><span class="c1">// fill in the correct numbers for your board</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="cp">#define SDCARD_MOSI (15)</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="cp">#define SDCARD_MISO (2)</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="cp">#define SDCARD_SCLK (14)</span>
+</code></pre></div>
+<p>This is an example of a board with MMC SD-card interface: <a href="https://www.aliexpress.com/item/32915894264.html">https://www.aliexpress.com/item/32915894264.html</a>. For this board use file <a href="https://github.com/cyberman54/ESP32-Paxcounter/blob/master/shared/hal/ttgov21new.h"><code>shared/hal/ttgov21new.h</code></a> and add the lines given above.</p>
+<p>Another approach would be this tiny board: <a href="https://www.aliexpress.com/item/32424558182.html">https://www.aliexpress.com/item/32424558182.html</a> (needs 5V).
+In this case you choose the correct file for your ESP32-board in the shared/hal-directory and add the lines given above. Edit the pin numbers given in the example, according to your wiring.</p>
+<p>Data is written on SD-card to a single file. After 3 write operations the data is flushed to the disk to minimize flash write cycles. Thus, up to the last 3 records of data will get lost when the Paxcounter looses power during operation.</p>
+<p>Format of the resulting file is CSV, thus easy import in LibreOffice, Excel, InfluxDB, etc. Each record contains timestamp (in ISO8601 format), paxcount (wifi and ble) and battery voltage (optional). Voltage is logged if the device has a battery voltage sensor (to be configured in board hal file).</p>
+<p>File contents example:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>    timestamp,wifi,ble[,voltage]
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    2022-01-30T21:12:41Z,11,25[,4100]
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    2022-01-30T21:14:24Z,10,21[,4070]
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    2022-01-30T21:16:08Z,12,26[,4102]
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    2022-01-30T21:17:52Z,11,26[,4076]
+</code></pre></div>
+If you want to change this, modify <code>src/sdcard.cpp</code> and <code>include/sdcard.h</code>.</p>
+<p>Additionally, it's possible to redirect system console output to a plain text file on SD card. This can be useful for debugging headless devices in the field. In <code>paxcounter.conf</code> set <code>SDLOGGING</code> to <code>1</code>.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">shared/paxcounter_orig.conf</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-12-16">16</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-12-16" name="__codelineno-12-16"></a><span class="cp">#define SDLOGGING                       0       </span><span class="c1">// set to 1 for system logging to SD card (if device has one)</span>
+</code></pre></div></td></tr></table></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.indexes", "content.code.annotate"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      
+    
+  </body>
+</html>
