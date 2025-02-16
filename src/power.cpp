@@ -20,7 +20,7 @@ static const adc_unit_t unit = ADC_UNIT_1;
 #endif // BAT_MEASURE_ADC
 
 #ifdef HAS_PMU
-XPowersPMU *pmu = NULL;
+XPowersLibInterface *pmu = NULL;
 
 void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
 
@@ -73,35 +73,36 @@ void PMU_power(pmu_power_t powerlevel) {
     break;
   case pmu_power_sleep:
     pmu->setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
-    // we don't cut off DCDC1, because OLED display will then block i2c bus
-    // pmu->disableDC1(); // OLED off
-    #ifdef XPOWERS_CHIP_AXP192
-    pmu->disableLDO3(); // gps off
-    pmu->disableLDO2(); // lora off
-    #endif
-    #ifdef XPOWERS_CHIP_AXP2101
-    pmu->disableALDO3(); // lora
-    pmu->disableALDO2(); // ?
-    pmu->disableALDO4(); // gps
-    pmu->disableALDO1(); // SD Card + BME280 + QMC6310
-    #endif
+    if (pmu->getChipModel() == XPOWERS_AXP192) {
+      pmu->disablePowerOutput(XPOWERS_LDO2);
+      pmu->disablePowerOutput(XPOWERS_LDO3);
+    }
+    if (pmu->getChipModel() == XPOWERS_AXP2101) {
+      pmu->disablePowerOutput(XPOWERS_ALDO2);
+      pmu->disablePowerOutput(XPOWERS_ALDO2);
+      pmu->disablePowerOutput(XPOWERS_ALDO3);
+      pmu->disablePowerOutput(XPOWERS_ALDO4);
+      pmu->disablePowerOutput(XPOWERS_DCDC3);
+      pmu->disablePowerOutput(XPOWERS_BLDO1);
+    }
     pmu->enableSleep();
     break;
   case pmu_power_on:
   default:
-    #ifdef XPOWERS_CHIP_AXP192
-    pmu->enableLDO2(); // Lora on T-Beam V1.0/1.1
-    pmu->enableLDO3(); // Gps on T-Beam V1.0/1.1
-    #endif
-    #ifdef XPOWERS_CHIP_AXP2101
-    pmu->enableALDO3(); // lora
-    pmu->enableALDO2(); // ?
-    pmu->enableALDO4(); // gps
-    pmu->enableALDO1(); // SD Card + BME280 + QMC6310
-    #endif
-    pmu->enableDC2();  // OLED on T-Beam v1.0/1.1
-    pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
-    break;
+  if (pmu->getChipModel() == XPOWERS_AXP192) {
+    pmu->enablePowerOutput(XPOWERS_LDO2);
+    pmu->enablePowerOutput(XPOWERS_LDO3);
+  }
+  if (pmu->getChipModel() == XPOWERS_AXP2101) {
+    pmu->enablePowerOutput(XPOWERS_ALDO2);
+    pmu->enablePowerOutput(XPOWERS_ALDO2);
+    pmu->enablePowerOutput(XPOWERS_ALDO3);
+    pmu->enablePowerOutput(XPOWERS_ALDO4);
+    pmu->enablePowerOutput(XPOWERS_DCDC3);
+    pmu->enablePowerOutput(XPOWERS_BLDO1);
+  }
+  pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
+  break;
   }
 }
 
@@ -131,61 +132,125 @@ void PMU_showstatus(void) {
 }
 
 void PMU_init(void) {
-  #if defined(XPOWERS_CHIP_AXP2101)
+  // try AXP2101
   if (!pmu) {
     pmu = new XPowersAXP2101(PMU_WIRE, PMU_SDA, PMU_SCL);
     if (!pmu->init()) {
         delete pmu;
         pmu = NULL;
     } else {
-        ESP_LOGI(TAG,"AXP2101 PMU initialized");
+        ESP_LOGI(TAG,"AXP2101 PMU found");
     }
   }
-  #endif
-  #if defined(XPOWERS_CHIP_AXP192)
+  // try AXP192
   if (!pmu) {
       pmu = new XPowersAXP192(PMU_WIRE, PMU_SDA, PMU_SCL);
       if (!pmu->init()) {
           delete pmu;
           pmu = NULL;
       } else {
-          ESP_LOGI(TAG,"AXP192 PMU initialized");
+          ESP_LOGI(TAG,"AXP192 PMU found");
       }
   }
-  #endif
   if (!pmu) {
-      ESP_LOGE(TAG,"PMU initialization failed");
+      ESP_LOGE(TAG,"No PMU found");
       return;
   }
+
+  // configure PMU
+  if (pmu->getChipModel() == XPOWERS_AXP192) {
+
+    // lora power
+    pmu->setPowerChannelVoltage(XPOWERS_LDO2, 3300);
+    pmu->enablePowerOutput(XPOWERS_LDO2);
+
+    // oled power, must keep enabled, otherwise i2c bus will be blocked
+    pmu->setPowerChannelVoltage(XPOWERS_DCDC1, 3300);
+    pmu->enablePowerOutput(XPOWERS_DCDC1);
+    pmu->setProtectedChannel(XPOWERS_DCDC1);
+
+    // gnss power
+    pmu->setPowerChannelVoltage(XPOWERS_LDO3, 3300);
+    pmu->enablePowerOutput(XPOWERS_LDO3);
+    
+    // esp32 power, must keep enabled
+    pmu->setProtectedChannel(XPOWERS_DCDC3);
+    
+    // disable unused channel
+    pmu->disablePowerOutput(XPOWERS_DCDC2);
+
+    // set charging parameters according to user settings if we have (see power.h)
+    #ifdef PMU_CHG_CURRENT
+      pmu->setChargerConstantCurr(PMU_CHG_CURRENT);
+      pmu->setChargeTargetVoltage(PMU_CHG_CUTOFF);
+    #else
+      pmu->setChargerConstantCurr(XPOWERS_AXP192_CHG_CUR_450MA);
+      pmu->setChargeTargetVoltage(XPOWERS_AXP192_CHG_VOL_4V2);
+    #endif
 
     // set pmu operating voltages
     pmu->setSysPowerDownVoltage(2700);
     pmu->setVbusVoltageLimit(XPOWERS_AXP192_VBUS_VOL_LIM_4V5);
     pmu->setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
+    
+} else if (pmu->getChipModel() == XPOWERS_AXP2101) {
 
-    // set device operating voltages
-    pmu->setDC2Voltage(3300);  // for external OLED display
-    #ifdef XPOWERS_CHIP_AXP192
-    pmu->setLDO2Voltage(3300); // LORA VDD 3v3
-    pmu->setLDO3Voltage(3300); // GPS VDD 3v3
+    // gnss power
+    pmu->setPowerChannelVoltage(XPOWERS_ALDO4, 3300);
+    pmu->enablePowerOutput(XPOWERS_ALDO4);
+
+    // lora power
+    pmu->setPowerChannelVoltage(XPOWERS_ALDO3, 3300);
+    pmu->enablePowerOutput(XPOWERS_ALDO3);
+
+    // S3 core m.2 interface
+    pmu->setPowerChannelVoltage(XPOWERS_DCDC3, 3300);
+    pmu->enablePowerOutput(XPOWERS_DCDC3);
+
+    // sensor power
+    pmu->setPowerChannelVoltage(XPOWERS_ALDO2, 3300);
+    pmu->enablePowerOutput(XPOWERS_ALDO2);
+
+    // 6-axis , magnetometer ,bme280 , oled power
+    pmu->setPowerChannelVoltage(XPOWERS_ALDO1, 3300);
+    pmu->enablePowerOutput(XPOWERS_ALDO1);
+
+    // sdcard power
+    pmu->setPowerChannelVoltage(XPOWERS_BLDO1, 3300);
+    pmu->enablePowerOutput(XPOWERS_BLDO1);
+
+    // pmu->setPowerChannelVoltage(XPOWERS_DCDC4, 3300);
+    // pmu->enablePowerOutput(XPOWERS_DCDC4);
+
+    // unused channels
+    pmu->disablePowerOutput(XPOWERS_DCDC2);
+    pmu->disablePowerOutput(XPOWERS_DCDC5);
+    pmu->disablePowerOutput(XPOWERS_DLDO1);
+    pmu->disablePowerOutput(XPOWERS_DLDO2);
+    pmu->disablePowerOutput(XPOWERS_VBACKUP);
+
+    // set charging parameters according to user settings if we have (see power.h)
+    #ifdef PMU_CHG_CURRENT
+      pmu->setChargerConstantCurr(PMU_CHG_CURRENT);
+      pmu->setChargeTargetVoltage(PMU_CHG_CUTOFF);
+    #else
+      pmu->setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_500MA);
+      pmu->setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V2);
     #endif
-    #ifdef XPOWERS_CHIP_AXP2101
-    pmu->setALDO2Voltage(3300); // LORA VDD 3v3
-    pmu->setALDO3Voltage(3300); // GPS VDD 3v3
-    #endif
+}
 
-    // configure PEK button settings
-    pmu->setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
-    pmu->setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
+  // configure PEK button settings
+  pmu->setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
+  pmu->setPowerKeyPressOnTime(XPOWERS_POWERON_128MS);
 
-    // set battery temperature sensing pin off to save power
-    pmu->disableTSPinMeasure();
+  // set battery temperature sensing pin off to save power
+  pmu->disableTSPinMeasure();
 
-    // Enable internal ADC detection
-    pmu->enableBattDetection();
-    pmu->enableVbusVoltageMeasure();
-    pmu->enableBattVoltageMeasure();
-    pmu->enableSystemVoltageMeasure();
+  // Enable internal ADC detection
+  pmu->enableBattDetection();
+  pmu->enableVbusVoltageMeasure();
+  pmu->enableBattVoltageMeasure();
+  pmu->enableSystemVoltageMeasure();
 
 #ifdef PMU_INT
     pinMode(PMU_INT, INPUT_PULLUP);
@@ -206,21 +271,9 @@ void PMU_init(void) {
     );
 #endif // PMU_INT
 
-// set charging parameters according to user settings if we have (see power.h)
-#ifdef PMU_CHG_CURRENT
-    pmu->setChargerConstantCurr(PMU_CHG_CURRENT);
-    pmu->setChargeTargetVoltage(PMU_CHG_CUTOFF);
-  #ifdef XPOWERS_CHIP_AXP192
-    pmu->enableCharge();
-  #endif
-  #ifdef XPOWERS_CHIP_AXP2101
-    pmu->enableButtonBatteryCharge();
-  #endif
-#endif
-
-    // switch power rails on
-    PMU_power(pmu_power_on);
-    ESP_LOGI(TAG, "PMU initialized");
+  // switch power rails on
+  PMU_power(pmu_power_on);
+  ESP_LOGI(TAG, "PMU initialized");
 }
 
 #endif // HAS_PMU
