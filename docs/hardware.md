@@ -5,8 +5,8 @@
 *With LoRa radio data transfer*:
 
 - **LILYGO®: [Paxcounter LoRa V2.1*](https://de.aliexpress.com/item/32915894264.html)**
-- TTGO: T1*, T2*, T3*, T-Beam, T-Fox
-- Heltec: LoRa-32 v1 and v2
+- TTGO: T1*, T2*, T3*, T-Beam (1.0/1.1/1.2), T-Fox, T-Supreme*, T-Display, T-Dongle
+- Heltec: LoRa-32 v1/v2/v3, Stick Lite V3
 - Pycom: LoPy, LoPy4, FiPy
 - Radioshuttle.de: [ECO Power Board](https://www.radioshuttle.de/esp32-eco-power/esp32-eco-power-board/)
 - WeMos: LoLin32 + [LoraNode32 shield](https://github.com/hallard/LoLin32-Lora),
