@@ -38,7 +38,6 @@
 // switches battery voltage divider, switch logic 0 = on / 1 = off
 #define ADC_SW 37
 #define ADC_POWER_ON 0
-#endif
 
 // Pins for I2C interface of OLED Display
 #define MY_DISPLAY_SDA SDA_OLED
