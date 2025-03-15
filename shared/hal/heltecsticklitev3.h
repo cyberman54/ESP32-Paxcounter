@@ -30,8 +30,11 @@
 #define BAT_MEASURE_ADC ADC1_CHANNEL_0 // battery probe pin is GPIO1
 #define BAT_VOLTAGE_DIVIDER 4 // voltage divider 100k/390k on board
 
-// switches battery power and Vext, switch logic 0 = on / 1 = off
+// switches Vext, switch logic 0 = on / 1 = off
 #define EXT_POWER_SW Vext
 #define EXT_POWER_ON 0
 
+// switches battery voltage divider, switch logic 0 = on / 1 = off
+#define ADC_SW 37
+#define ADC_POWER_ON 0
 #endif

@@ -314,6 +314,12 @@ uint16_t read_voltage(void) {
 #else
 
 #ifdef BAT_MEASURE_ADC
+  // enable battery path on boards with voltage divider cut off switch
+#ifdef ADC_SW
+  pinMode(ADC_SW, OUTPUT);
+  digitalWrite(ADC_SW, ADC_POWER_ON);
+#endif
+
   // multisample ADC
   uint32_t adc_reading = 0;
 #ifndef BAT_MEASURE_ADC_UNIT // ADC1
@@ -334,7 +340,13 @@ uint16_t read_voltage(void) {
   adc_reading /= NO_OF_SAMPLES;
   // Convert ADC reading to voltage in mV
   voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_characs);
-#endif                       // BAT_MEASURE_ADC
+
+// disable battery path on boards with voltage divider cut off switch
+#ifdef ADC_SW
+  pinMode(ADC_SW, OUTPUT);
+  digitalWrite(ADC_SW, !ADC_POWER_ON);
+#endif // ADC_SW
+#endif // BAT_MEASURE_ADC
 
 #ifdef BAT_VOLTAGE_DIVIDER
   voltage *= BAT_VOLTAGE_DIVIDER;

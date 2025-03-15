@@ -43,6 +43,15 @@
 #endif
 #endif
 
+#ifdef ADC_SW
+#ifndef ADC_POWER_ON
+#define ADC_POWER_ON 1
+#endif
+#ifndef ADC_POWER_OFF
+#define ADC_POWER_OFF (!ADC_POWER_ON)
+#endif
+#endif
+
 #ifdef BAT_MEASURE_ADC_UNIT // ADC2 wifi bug workaround
 extern RTC_NOINIT_ATTR uint64_t RTC_reg_b;
 #include "soc/sens_reg.h" // needed for adc pin reset
