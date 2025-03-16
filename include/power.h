@@ -65,9 +65,14 @@ bool batt_sufficient(void);
 extern int8_t batt_level;
 
 #ifdef HAS_PMU
-#include "XPowersAXP192.tpp"
-#include "XPowersAXP2101.tpp"
-#include "XPowersLibInterface.hpp"
+
+#include "XPowersLib.h"
+extern XPowersLibInterface *pmu;
+#ifdef XPOWERS_CHIP_AXP192
+extern XPowersAXP192 *axp192;
+#elif defined XPOWERS_CHIP_AXP2101
+extern XPowersAXP2101 *axp2101;
+#endif
 
 #ifndef PMU_SDA
 #define PMU_SDA SDA
@@ -85,7 +90,6 @@ extern int8_t batt_level;
 #define SCL1 PMU_SCL
 #endif
 
-extern XPowersLibInterface *pmu;
 enum pmu_power_t { pmu_power_on, pmu_power_off, pmu_power_sleep };
 void IRAM_ATTR PMUIRQ();
 void PMU_powerevent_IRQ(void);

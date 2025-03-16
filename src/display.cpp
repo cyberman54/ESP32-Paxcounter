@@ -394,8 +394,8 @@ void dp_refresh(bool nextPage) {
       #ifdef XPOWERS_CHIP_AXP192
       const bool charging = pmu->isCharging();
       const float current_mA = charging 
-          ? pmu->getBatteryChargeCurrent()
-          : pmu->getBattDischargeCurrent();
+          ? axp192->getBatteryChargeCurrent()
+          : axp192->getBattDischargeCurrent();
       const float power_mw = volt * current_mA;
       if (pmu->isVbusIn()) {
         dp_setFont(MY_FONT_NORMAL); // 8x8px = 16 chars / line @ 8 lines
@@ -439,11 +439,11 @@ void dp_refresh(bool nextPage) {
       if (filtered_m_volt < 0.0f)
         filtered_m_volt = pmu->getVbusVoltage();
       if (filtered_m_amp < 0.0f)
-        filtered_m_amp = pmu->getVbusCurrent();
+        filtered_m_amp = axp192->getVbusCurrent();
       if (filtered_m_watt < 0.0f)  
         filtered_m_watt = filtered_m_volt * filtered_m_amp / 1000.0f;
       const float m_volt = pmu->getVbusVoltage();
-      const float m_amp  = pmu->getVbusCurrent();
+      const float m_amp  = axp192->getVbusCurrent();
       filtered_m_volt = (3 * filtered_m_volt + m_volt) / 4;
       filtered_m_amp  = (3 * filtered_m_amp + m_amp) / 4;
       const float m_watt = (filtered_m_volt * filtered_m_amp) / 1000.0f;

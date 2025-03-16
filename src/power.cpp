@@ -20,7 +20,14 @@ static const adc_unit_t unit = ADC_UNIT_1;
 #endif // BAT_MEASURE_ADC
 
 #ifdef HAS_PMU
-XPowersLibInterface *pmu = NULL;
+// configure xpowers lib parent and child classes
+#ifdef XPOWERS_CHIP_AXP192
+XPowersLibInterface *pmu = new XPowersAXP192(PMU_WIRE, PMU_SDA, PMU_SCL);
+XPowersAXP192 *axp192 = static_cast<XPowersAXP192 *>(pmu);
+#elif defined XPOWERS_CHIP_AXP2101
+XPowersLibInterface *pmu = new XPowersAXP2101(PMU_WIRE, PMU_SDA, PMU_SCL);
+XPowersAXP2101 *axp2101 = static_cast<XPowersAXP2101 *>(pmu);
+#endif
 
 void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
 
@@ -37,15 +44,15 @@ void PMU_powerevent_IRQ(void) {
     ESP_LOGI(TAG, "Battery charging done.");
 
   #ifdef XPOWERS_CHIP_AXP192
-  if (pmu->isVbusOverVoltageIrq())
+  if (axp192->isVbusOverVoltageIrq())
     ESP_LOGI(TAG, "USB voltage %.2fV too high.", pmu->getVbusVoltage() / 1000);
   if (pmu->isVbusInsertIrq())
-    ESP_LOGI(TAG, "USB plugged, %.2fV @ %.0mA", pmu->getVbusVoltage() / 1000, pmu->getVbusCurrent());
+    ESP_LOGI(TAG, "USB plugged, %.2fV @ %.0mA", pmu->getVbusVoltage() / 1000, axp192->getVbusCurrent());
   if (pmu->isVbusRemoveIrq())
     ESP_LOGI(TAG, "USB unplugged.");
-  if (pmu->isBattTempLowIrq())
+  if (axp192->isBattTempLowIrq())
     ESP_LOGI(TAG, "Battery high temperature.");
-  if (pmu->isBattTempHighIrq())
+  if (axp192->isBattTempHighIrq())
     ESP_LOGI(TAG, "Battery low temperature.");
   #endif // XPOWERS_CHIP_AXP192
 
@@ -111,7 +118,7 @@ void PMU_showstatus(void) {
     if (pmu->isCharging())
     #ifdef XPOWERS_CHIP_AXP192
       ESP_LOGI(TAG, "Battery charging, %.2fV @ %.0fmAh",
-               pmu->getBattVoltage() / 1000.0, pmu->getBatteryChargeCurrent());
+               pmu->getBattVoltage() / 1000.0, axp192->getBatteryChargeCurrent());
     #else
       ESP_LOGI(TAG, "Battery charging");
     #endif
@@ -123,7 +130,7 @@ void PMU_showstatus(void) {
   if (pmu->isVbusIn())
   #ifdef XPOWERS_CHIP_AXP192
     ESP_LOGI(TAG, "USB powered, %.0fmW",
-             pmu->getVbusVoltage() / 1000 * pmu->getVbusCurrent());
+             pmu->getVbusVoltage() / 1000 * axp192->getVbusCurrent());
   #else
     ESP_LOGI(TAG, "USB powered");
   #endif
@@ -132,33 +139,23 @@ void PMU_showstatus(void) {
 }
 
 void PMU_init(void) {
-  // try AXP2101
-  if (!pmu) {
-    pmu = new XPowersAXP2101(PMU_WIRE, PMU_SDA, PMU_SCL);
-    if (!pmu->init()) {
-        delete pmu;
-        pmu = NULL;
-    } else {
-        ESP_LOGI(TAG,"AXP2101 PMU found");
+  // init xpower pmu driver
+  if (!pmu->init()) {
+    ESP_LOGE(TAG, "PMU initialization failed");
+    return;
+  }
+  else {
+    if (pmu->getChipModel() == XPOWERS_UNDEFINED) {
+      ESP_LOGE(TAG, "PMU chip model undefined");
+      return;
+    }
+    else {
+      ESP_LOGI(TAG, "PMU initialized, chip model %d", pmu->getChipModel());
     }
   }
-  // try AXP192
-  if (!pmu) {
-      pmu = new XPowersAXP192(PMU_WIRE, PMU_SDA, PMU_SCL);
-      if (!pmu->init()) {
-          delete pmu;
-          pmu = NULL;
-      } else {
-          ESP_LOGI(TAG,"AXP192 PMU found");
-      }
-  }
-  if (!pmu) {
-      ESP_LOGE(TAG,"No PMU found");
-      return;
-  }
-
-  // configure PMU
-  if (pmu->getChipModel() == XPOWERS_AXP192) {
+  // configure PMU settings
+  #ifdef XPOWERS_CHIP_AXP192 // settings for T-Beam 1.0/1.1
+    axp192->enableCoulomb();
 
     // lora power
     pmu->setPowerChannelVoltage(XPOWERS_LDO2, 3300);
@@ -193,7 +190,10 @@ void PMU_init(void) {
     pmu->setVbusVoltageLimit(XPOWERS_AXP192_VBUS_VOL_LIM_4V5);
     pmu->setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
     
-} else if (pmu->getChipModel() == XPOWERS_AXP2101) {
+  #elif defined XPOWERS_CHIP_AXP2101 // settings for T-Beam 1.2 & T-Supreme
+    axp2101->fuelGaugeControl(true, true);
+    axp2101->setPrechargeCurr(XPOWERS_AXP2101_PRECHARGE_50MA);
+    axp2101->setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_25MA);
 
     // gnss power
     pmu->setPowerChannelVoltage(XPOWERS_ALDO4, 3300);
@@ -237,7 +237,8 @@ void PMU_init(void) {
       pmu->setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_500MA);
       pmu->setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V2);
     #endif
-}
+  
+  #endif
 
   // configure PEK button settings
   pmu->setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
@@ -273,7 +274,7 @@ void PMU_init(void) {
 
   // switch power rails on
   PMU_power(pmu_power_on);
-  ESP_LOGI(TAG, "PMU initialized");
+  ESP_LOGI(TAG, "PMU power on");
 }
 
 #endif // HAS_PMU
