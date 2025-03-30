@@ -28,6 +28,7 @@ Reset -> reset device
 
 #define HAS_LORA 1       // comment out if device shall not send data via LoRa
 #define CFG_sx1262_radio 1 // HPD13A LoRa SoC
+//#define CFG_sx1276_radio 1 // use instead, if your board has a sx1276 LoRa chip
 #define HAS_BUTTON GPIO_NUM_38 // middle on board button
 #define HAS_LED GPIO_NUM_4 // not present on all T-Beam 1.0 boards
 #define LED_ACTIVE_LOW 1
