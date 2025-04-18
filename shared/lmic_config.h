@@ -52,7 +52,8 @@
 // RF settings used during transmission and reception. Set to 2 to
 // enable more verbose output. Make sure that printf is actually
 // configured (e.g. on AVR it is not by default), otherwise using it can
-// cause crashing.
+// cause crashing. Be careful with this, as it can cause a lot of output and
+// slow down the program a lot, crashing lmic timing. This is not recommended for production
 //#define LMIC_DEBUG_LEVEL 1
 
 // Enable this to allow using printf() to print to the given serial port
