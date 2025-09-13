@@ -12,6 +12,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <BintrayClient.h>
+#include <wifiManager.h>
 
 int do_ota_update();
 void start_ota_update();
