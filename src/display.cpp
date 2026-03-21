@@ -288,7 +288,7 @@ void dp_refresh(bool nextPage) {
     dp_setFont(MY_FONT_SMALL);
     dp->setCursor(0, MY_DISPLAY_FIRSTLINE);
     dp->printf("Net:%06X   Pwr:%2u\r\n", LMIC.netid & 0x001FFFFF,
-               LMIC.radio_txpow);
+               LMIC.radio.txpow);
     dp->printf("Dev:%08X DR:%1u\r\n", LMIC.devaddr, LMIC.datarate);
     dp->printf("ChMsk:%04X Nonce:%04X\r\n", LMIC.channelMap, LMIC.devNonce);
     dp->printf("fUp:%-6u fDn:%-6u\r\n", LMIC.seqnoUp ? LMIC.seqnoUp - 1 : 0,
