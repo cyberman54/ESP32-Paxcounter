@@ -7,7 +7,7 @@
 OneButton button(HAS_BUTTON, !BUTTON_ACTIVEHIGH, !!BUTTON_PULLUP);
 TaskHandle_t buttonLoopTask;
 
-void IRAM_ATTR readButton(void) { button.tick(); }
+void readButton(void) { button.tick(); }
 
 void singleClick(void) {
 #ifdef HAS_DISPLAY

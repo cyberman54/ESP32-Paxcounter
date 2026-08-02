@@ -18,6 +18,6 @@
 extern TaskHandle_t buttonLoopTask;
 
 void button_init(void);
-void IRAM_ATTR readButton(void);
+void readButton(void);
 
 #endif
