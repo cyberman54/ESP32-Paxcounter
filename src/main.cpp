@@ -123,6 +123,18 @@ void setup() {
   // load device configuration from NVRAM and set runmode
   do_after_reset();
 
+// after a real power on / coldstart, wait a random time before continuing
+// initialization. This helps to avoid simultaneous power surge and network
+// congestion (e.g. LoRaWAN join storm) when many devices are powered on at
+// the same time, e.g. after a power outage.
+#if (COLDSTART_DELAY_MAX > 0)
+  if (RTC_runmode == RUNMODE_POWERCYCLE) {
+    uint32_t coldstart_delay = random(COLDSTART_DELAY_MAX * 1000);
+    ESP_LOGI(TAG, "Coldstart, waiting %u ms before continuing", coldstart_delay);
+    delay(coldstart_delay);
+  }
+#endif
+
   ESP_LOGI(TAG, "Starting %s v%s (runmode=%d / restarts=%d)", clientId,
            PROGVERSION, RTC_runmode, RTC_restarts);
   ESP_LOGI(TAG, "code build date: %d", compileTime());
