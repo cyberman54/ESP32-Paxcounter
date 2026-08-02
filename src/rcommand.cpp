@@ -259,6 +259,12 @@ void set_loraadr(uint8_t val[]) {
 void set_blescan(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: set BLE scanner to %s", val[0] ? "on" : "off");
   cfg.blescan = val[0] ? 1 : 0;
+  if (cfg.blescan && cfg.beacon) {
+    ESP_LOGW(TAG, "Beacon transmitter shares the BLE radio with the BLE "
+                  "scanner, switching beacon off");
+    cfg.beacon = 0;
+    beacon_stop();
+  }
   libpax_counter_stop();
   libpax_config_t current_config;
   libpax_get_current_config(&current_config);
@@ -393,6 +399,27 @@ void set_flush(uint8_t val[]) {
   ESP_LOGI(TAG, "Remote command: flush");
   // does nothing
   // used to open receive window on LoRaWAN class a nodes
+}
+
+void set_beacon(uint8_t val[]) {
+  ESP_LOGI(TAG, "Remote command: set BLE beacon to %s", val[0] ? "on" : "off");
+  cfg.beacon = val[0] ? 1 : 0;
+  if (cfg.beacon) {
+    if (cfg.blescan)
+      ESP_LOGW(TAG, "Beacon transmitter shares the BLE radio with the BLE "
+                    "scanner, disable BLE scanner first");
+    else
+      beacon_start();
+  } else
+    beacon_stop();
+}
+
+void set_beaconid(uint8_t val[]) {
+  cfg.beaconmajor = (uint16_t)((val[0] << 8) | val[1]);
+  cfg.beaconminor = (uint16_t)((val[2] << 8) | val[3]);
+  ESP_LOGI(TAG, "Remote command: set beacon major/minor to %u/%u",
+           cfg.beaconmajor, cfg.beaconminor);
+  beacon_update();
 }
 
 void set_loadconfig(uint8_t val[]) {
