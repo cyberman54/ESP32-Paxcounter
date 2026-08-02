@@ -56,6 +56,14 @@ Output of sensor and peripheral data is internally switched by a bitmask registe
 ```
 
 
+## Cold start delay
+
+To avoid power supply inrush and LoRaWAN network/join congestion when a whole fleet of devices is powered on at the same time (e.g. after a power outage), Paxcounter can insert a randomized delay before continuing boot. This delay is only applied after a real power-on / cold start, not after waking up from deep sleep or a software reset. Set `#define COLDSTART_DELAY_MAX` in `paxcounter.conf` to the maximum delay in seconds; default is `0` (disabled).
+
+```c linenums="17" title="shared/paxcounter_orig.conf"
+--8<-- "shared/paxcounter_orig.conf:17:17"
+```
+
 ## Power saving mode
 
 Paxcounter supports a battery friendly power saving mode. In this mode the device enters deep sleep, after all data is polled from all sensors and the dataset is completeley sent through all user configured channels (LORAWAN / SPI / MQTT / SD-Card). Set `#define SLEEPCYCLE` in paxcounter.conf to enable power saving mode and to specify the duration of a sleep cycle.
