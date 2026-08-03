@@ -7,14 +7,12 @@
 
 [Tutorial (in german language)](https://www.heise.de/select/make/2019/1/1551099236518668)
 
-[Paxcounter dashboard with Pax.Express](https://www.pax.express/)
-
 [![CodeFactor](https://www.codefactor.io/repository/github/cyberman54/esp32-paxcounter/badge)](https://www.codefactor.io/repository/github/cyberman54/esp32-paxcounter)
 [![PlatformIO CI](https://github.com/cyberman54/ESP32-Paxcounter/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/cyberman54/ESP32-Paxcounter/actions/workflows/build.yml)
 
 ---
 
-**Documentation**: <a href="https://cyberman54.github.io/ESP32-Paxcounter" target="_blank">https://cyberman54.github.io/ESP32-Paxcounter</a>
+**Documentation**: <a href="https://paxcounter.org" target="_blank">https://paxcounter.org</a>
 
 **Source Code**: <a href="https://github.com/cyberman54/ESP32-Paxcounter" target="_blank">https://github.com/cyberman54/ESP32-Paxcounter</a>
 
