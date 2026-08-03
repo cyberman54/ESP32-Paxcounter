@@ -1,5 +1,8 @@
 name: PlatformIO CI/CD
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths-ignore:
@@ -17,13 +20,35 @@ on:
       - 'LICENSE'
       - 'README.md'
   schedule:
-    # do a build once a week at 06:07Z Sunday
-    - cron: '7 6 * * 0'
+    # check every Tuesday at 06:07Z, but only actually build every 3rd week (see check-schedule job)
+    - cron: '7 6 * * 2'
   workflow_dispatch:
 
 jobs:
+  check-schedule:
+    name: Check if scheduled run is due (every 3 weeks)
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+    steps:
+      - name: Determine if this scheduled run falls in the 3-week cycle
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+          else
+            week=$(date -u +%V)
+            if [ $(( 10#$week % 3 )) -eq 0 ]; then
+              echo "should-run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "should-run=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   build-for-all-boards:
     name: Build code for all ESP32 boards
+    needs: check-schedule
+    if: needs.check-schedule.outputs.should-run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -104,6 +129,8 @@ jobs:
 
   build-windows-macos:
     name: Build code on platforms Windows and MAC
+    needs: check-schedule
+    if: needs.check-schedule.outputs.should-run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -155,6 +182,8 @@ jobs:
 
   build-s3-usb-stick:
     name: Build code for ESP32-S3 boards
+    needs: check-schedule
+    if: needs.check-schedule.outputs.should-run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -209,6 +238,8 @@ jobs:
 
   deploy-on-testboard:
       name: Deploy code on testboard
+      needs: check-schedule
+      if: needs.check-schedule.outputs.should-run == 'true'
       runs-on: windows-latest
       steps:
         - uses: actions/checkout@v4
