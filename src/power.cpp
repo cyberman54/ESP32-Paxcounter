@@ -29,7 +29,12 @@ XPowersLibInterface *pmu = new XPowersAXP2101(PMU_WIRE, PMU_SDA, PMU_SCL);
 XPowersAXP2101 *axp2101 = static_cast<XPowersAXP2101 *>(pmu);
 #endif
 
-void IRAM_ATTR PMUIRQ() { doIRQ(PMU_IRQ); }
+void IRAM_ATTR PMUIRQ() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xTaskNotifyFromISR(irqHandlerTask, PMU_IRQ, eSetBits, &xHigherPriorityTaskWoken);
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
 
 void PMU_powerevent_IRQ(void) {
   pmu->getIrqStatus();
