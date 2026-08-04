@@ -24,7 +24,17 @@
 void irqHandler(void *pvParameters);
 void mask_user_IRQ();
 void unmask_user_IRQ();
+
+// doIRQ() only needs to live in IRAM when it is invoked directly from a
+// hardware ISR context (DisplayIRQ, MatrixDisplayIRQ, PMUIRQ). When none of
+// these are enabled (e.g. boards with only HAS_BUTTON), doIRQ() is called
+// exclusively from a regular FreeRTOS task, so keeping it in flash saves
+// scarce IRAM without any safety impact.
+#if defined HAS_DISPLAY || defined HAS_MATRIX_DISPLAY || defined HAS_PMU
 void IRAM_ATTR doIRQ(int irq);
+#else
+void doIRQ(int irq);
+#endif
 
 extern TaskHandle_t irqHandlerTask;
 

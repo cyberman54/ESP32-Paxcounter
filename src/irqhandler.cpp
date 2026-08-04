@@ -85,7 +85,11 @@ void irqHandler(void *pvParameters) {
 // timer triggered interrupt service routines
 // they notify the irq handler task
 
+#if defined HAS_DISPLAY || defined HAS_MATRIX_DISPLAY || defined HAS_PMU
 void IRAM_ATTR doIRQ(int irq) {
+#else
+void doIRQ(int irq) {
+#endif
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   xTaskNotifyFromISR(irqHandlerTask, irq, eSetBits, &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
