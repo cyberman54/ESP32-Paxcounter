@@ -85,7 +85,7 @@ void irqHandler(void *pvParameters) {
 // timer triggered interrupt service routines
 // they notify the irq handler task
 
-void IRAM_ATTR doIRQ(int irq) {
+void doIRQ(int irq) {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   xTaskNotifyFromISR(irqHandlerTask, irq, eSetBits, &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
@@ -93,11 +93,23 @@ void IRAM_ATTR doIRQ(int irq) {
 }
 
 #ifdef HAS_DISPLAY
-void IRAM_ATTR DisplayIRQ() { doIRQ(DISPLAY_IRQ); }
+void IRAM_ATTR DisplayIRQ() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xTaskNotifyFromISR(irqHandlerTask, DISPLAY_IRQ, eSetBits,
+                     &xHigherPriorityTaskWoken);
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
 #endif
 
 #ifdef HAS_MATRIX_DISPLAY
-void IRAM_ATTR MatrixDisplayIRQ() { doIRQ(MATRIX_DISPLAY_IRQ); }
+void IRAM_ATTR MatrixDisplayIRQ() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xTaskNotifyFromISR(irqHandlerTask, MATRIX_DISPLAY_IRQ, eSetBits,
+                     &xHigherPriorityTaskWoken);
+  if (xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR();
+}
 #endif
 
 void mask_user_IRQ() { xTaskNotify(irqHandlerTask, MASK_IRQ, eSetBits); }

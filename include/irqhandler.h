@@ -24,7 +24,7 @@
 void irqHandler(void *pvParameters);
 void mask_user_IRQ();
 void unmask_user_IRQ();
-void IRAM_ATTR doIRQ(int irq);
+void doIRQ(int irq);
 
 extern TaskHandle_t irqHandlerTask;
 
