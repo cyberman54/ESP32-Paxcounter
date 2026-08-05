@@ -142,7 +142,7 @@ jobs:
           - os: windows-latest
             path: ~\AppData\Local\pip\Cache
             platformio-path: ~\AppData\Local\platformio\Cache
-        board: [generic.h, ttgov21new.h]
+        board: [ttgov21new.h]
     runs-on: ${{ matrix.os }}
 
     steps:
