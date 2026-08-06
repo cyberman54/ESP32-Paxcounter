@@ -93,7 +93,7 @@ void set_wifichancycle(uint8_t val[]) {
 
   if (cfg.wifichancycle == 0) {
     ESP_LOGI(TAG, "Remote command: set Wifi channel hopping to off");
-    current_config.wifi_channel_map = WIFI_CHANNEL_1;
+    current_config.wifi_channel_map = LIBPAX_WIFI_CHANNEL_1;
   } else {
     ESP_LOGI(
         TAG,
