@@ -50,7 +50,14 @@ void IRAM_ATTR GPSIRQ(void) {
 #endif
 
 // interrupt service routine triggered by esp32 hardware timer
+// Only needs IRAM when performing time-critical ISR work (task notification or
+// RTC pulse timestamping). For boards that only flip a display tick, IRAM is
+// not required and can be omitted to save scarce IRAM space.
+#if defined(HAS_IF482) || defined(HAS_DCF77) || defined(RTC_INT)
 void IRAM_ATTR CLOCKIRQ(void) {
+#else
+void CLOCKIRQ(void) {
+#endif
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 // advance wall clock, if we have
