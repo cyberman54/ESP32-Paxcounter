@@ -73,6 +73,10 @@ typedef struct __attribute__((packed)) {
   uint8_t wifiant;       // 0=internal, 1=external (for LoPy/LoPy4)
   uint8_t rgblum;        // RGB Led luminosity (0..100%)
   uint8_t payloadmask;   // bitswitches for payload data
+  uint8_t beacon;         // 0=disabled, 1=enabled: BLE iBeacon transmitter
+  uint8_t beaconuuid[16]; // iBeacon proximity UUID
+  uint16_t beaconmajor;   // iBeacon major number
+  uint16_t beaconminor;   // iBeacon minor number
 
 #ifdef HAS_BME680
   uint8_t
