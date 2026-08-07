@@ -196,7 +196,8 @@ void PMU_init(void) {
     pmu->setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
     
   #elif defined XPOWERS_CHIP_AXP2101 // settings for T-Beam 1.2 & T-Supreme
-    axp2101->fuelGaugeControl(true, true);
+    axp2101->enableBattDetection();
+    axp2101->enableBattVoltageMeasure();
     axp2101->setPrechargeCurr(XPOWERS_AXP2101_PRECHARGE_50MA);
     axp2101->setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_25MA);
 
