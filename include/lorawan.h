@@ -7,6 +7,7 @@
 #include "rcommand.h"
 #include "timekeeper.h"
 #include <driver/rtc_io.h>
+#include <esp_mac.h>
 
 // LMIC-Arduino LoRaWAN Stack
 #include <lmic.h>

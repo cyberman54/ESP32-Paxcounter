@@ -33,7 +33,8 @@ MY_FONT_LARGE:     16x32px = 8 chars / line @ 2 lines
 */
 
 // Basic Config
-#include <esp_flash.h> // needed for reading ESP32 chip attributes
+#include <esp_flash.h>
+#include <esp_chip_info.h> // needed for reading ESP32 chip attributes
 #include "globals.h"
 #include "display.h"
 
