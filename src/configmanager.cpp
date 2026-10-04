@@ -49,6 +49,11 @@ static void defaultConfig(configData_t *myconfig) {
   myconfig->wifiant = 0;            // 0=internal, 1=external (for LoPy/LoPy4)
   myconfig->rgblum = RGBLUMINOSITY; // RGB Led luminosity (0..100%)
   myconfig->payloadmask = PAYLOADMASK; // payloads as defined in default
+  myconfig->beacon = BEACON_ON;        // 0=disabled, 1=enabled
+  const uint8_t beaconuuid[16] = BEACON_UUID; // 16 byte iBeacon proximity UUID
+  memcpy(myconfig->beaconuuid, beaconuuid, sizeof(myconfig->beaconuuid));
+  myconfig->beaconmajor = BEACON_MAJOR; // iBeacon major number
+  myconfig->beaconminor = BEACON_MINOR; // iBeacon minor number
 
 #ifdef HAS_BME680
   // initial BSEC state for BME680 sensor
