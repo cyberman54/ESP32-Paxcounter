@@ -151,7 +151,7 @@ void setup() {
              chip_info.cores,
              (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
              (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "",
-             chip_info.revision, spi_flash_get_chip_size() / (1024 * 1024),
+             chip_info.revision, ESP.getFlashChipSize() / (1024 * 1024),
              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                            : "external");
     ESP_LOGI(TAG, "Internal Total heap %d, internal Free Heap %d",
@@ -451,21 +451,19 @@ void setup() {
   dp_clear();
   dp_contrast(DISPLAYCONTRAST);
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 0, count up
-  displayIRQ = timerBegin(0, 80, true);
-  timerAttachInterrupt(displayIRQ, &DisplayIRQ, false);
-  timerAlarmWrite(displayIRQ, DISPLAYREFRESH_MS * 1000, true);
-  timerAlarmEnable(displayIRQ);
+  // timer tick 1 MHz
+  displayIRQ = timerBegin(1000000);
+  timerAttachInterrupt(displayIRQ, &DisplayIRQ);
+  timerAlarm(displayIRQ, DISPLAYREFRESH_MS * 1000, true, 0);
 #endif
 
 // LED Matrix display interrupt
 #ifdef HAS_MATRIX_DISPLAY
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-  // prescaler 80 -> divides 80 MHz CPU freq to 1 MHz, timer 3, count up
-  matrixDisplayIRQ = timerBegin(3, 80, true);
-  timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ, false);
-  timerAlarmWrite(matrixDisplayIRQ, MATRIX_DISPLAY_SCAN_US, true);
-  timerAlarmEnable(matrixDisplayIRQ);
+  // timer tick 1 MHz
+  matrixDisplayIRQ = timerBegin(1000000);
+  timerAttachInterrupt(matrixDisplayIRQ, &MatrixDisplayIRQ);
+  timerAlarm(matrixDisplayIRQ, MATRIX_DISPLAY_SCAN_US, true, 0);
 #endif
 
 // initialize button

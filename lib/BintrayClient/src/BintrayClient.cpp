@@ -15,6 +15,9 @@
  limitations under the License.
 **/
 
+#ifndef TAG
+#define TAG __FILE__
+#endif
 #include <Arduino.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>

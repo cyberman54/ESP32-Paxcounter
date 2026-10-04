@@ -33,7 +33,8 @@ MY_FONT_LARGE:     16x32px = 8 chars / line @ 2 lines
 */
 
 // Basic Config
-#include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
+#include <esp_flash.h>
+#include <esp_chip_info.h> // needed for reading ESP32 chip attributes
 #include "globals.h"
 #include "display.h"
 
@@ -106,7 +107,7 @@ void dp_init(bool verbose) {
     dp->printf("WiFi%s%s\r\n",
                (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
                (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-    dp->printf("%dMB %s Flash", spi_flash_get_chip_size() / (1024 * 1024),
+    dp->printf("%dMB %s Flash", ESP.getFlashChipSize() / (1024 * 1024),
                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "int." : "ext.");
     dp_dump();
     delay(2000);

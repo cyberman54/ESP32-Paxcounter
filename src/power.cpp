@@ -5,18 +5,12 @@
 int8_t batt_level = -1; // percent batt level, global variable, -1 means no batt
 
 #ifdef BAT_MEASURE_ADC
-esp_adc_cal_characteristics_t *adc_characs =
-    (esp_adc_cal_characteristics_t *)calloc(
-        1, sizeof(esp_adc_cal_characteristics_t));
-
 #ifndef BAT_MEASURE_ADC_UNIT // ADC1
-static const adc1_channel_t adc_channel = BAT_MEASURE_ADC;
-#else // ADC2
-static const adc2_channel_t adc_channel = BAT_MEASURE_ADC;
-RTC_NOINIT_ATTR uint64_t RTC_reg_b;
-#endif
-static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
+#else // ADC2
+static const adc_unit_t unit = ADC_UNIT_2;
+#endif
+static int adc_pin = -1; // GPIO of battery probe, derived from ADC channel
 #endif // BAT_MEASURE_ADC
 
 #ifdef HAS_PMU
@@ -287,29 +281,13 @@ void PMU_init(void) {
 
 void calibrate_voltage(void) {
 #ifdef BAT_MEASURE_ADC
-// configure ADC
-#ifndef BAT_MEASURE_ADC_UNIT // ADC1
-  adc1_config_width(ADC_WIDTH_BIT_12);
-  adc1_config_channel_atten(adc_channel, atten);
-#else // ADC2
-  adc2_config_channel_atten(adc_channel, atten);
-  // ADC2 wifi bug workaround, see
-  // https://github.com/espressif/arduino-esp32/issues/102
-  RTC_reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
-#endif
-  // calibrate ADC
-  esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
-      unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_characs);
-  // show ADC characterization base
-  if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-    ESP_LOGI(TAG,
-             "ADC characterization based on Two Point values stored in eFuse");
-  } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-    ESP_LOGI(TAG,
-             "ADC characterization based on reference voltage stored in eFuse");
-  } else {
-    ESP_LOGI(TAG, "ADC characterization based on default reference voltage");
-  }
+  // derive GPIO from ADC channel, calibrated readings are done by
+  // analogReadMilliVolts() using eFuse calibration data if available
+  if (adc_oneshot_channel_to_io(unit, (adc_channel_t)BAT_MEASURE_ADC,
+                                &adc_pin) != ESP_OK)
+    ESP_LOGE(TAG, "invalid ADC channel for battery measurement");
+  else
+    analogSetPinAttenuation(adc_pin, ADC_11db);
 #endif
 }
 
@@ -327,26 +305,15 @@ uint16_t read_voltage(void) {
   digitalWrite(ADC_SW, ADC_POWER_ON);
 #endif
 
-  // multisample ADC
+  // multisample ADC, returns calibrated millivolts
   uint32_t adc_reading = 0;
-#ifndef BAT_MEASURE_ADC_UNIT // ADC1
-  for (int i = 0; i < NO_OF_SAMPLES; i++) {
-    adc_reading += adc1_get_raw(adc_channel);
+  if (adc_pin >= 0) {
+    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+      adc_reading += analogReadMilliVolts(adc_pin);
+    }
   }
-#else                        // ADC2
-  int adc_buf = 0;
-  for (int i = 0; i < NO_OF_SAMPLES; i++) {
-    // ADC2 wifi bug workaround, see
-    // https://github.com/espressif/arduino-esp32/issues/102
-    WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, RTC_reg_b);
-    SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
-    adc2_get_raw(adc_channel, ADC_WIDTH_BIT_12, &adc_buf);
-    adc_reading += adc_buf;
-  }
-#endif                       // BAT_MEASURE_ADC_UNIT
   adc_reading /= NO_OF_SAMPLES;
-  // Convert ADC reading to voltage in mV
-  voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_characs);
+  voltage = adc_reading;
 
 // disable battery path on boards with voltage divider cut off switch
 #ifdef ADC_SW
