@@ -225,7 +225,7 @@ TickType_t tx_Ticks(uint32_t framesize, unsigned long baud, uint32_t config,
   uint32_t txTime = (databits + stopbits + 1) * framesize * 1000.0 / baud;
   // +1 for the startbit
 
-  return round(txTime);
+  return txTime;
 }
 
 void clock_loop(void *taskparameter) { // ClockTask
