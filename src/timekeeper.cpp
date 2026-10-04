@@ -192,10 +192,9 @@ void timepulse_init(void) {
   ESP_LOGI(TAG, "Timepulse: external (RTC)");
 #else
   // use ESP32 hardware timer as time base for calendar time
-  ppsIRQ = timerBegin(1, 8000, true);   // set 80 MHz prescaler to 1/10000 sec
-  timerAlarmWrite(ppsIRQ, 10000, true); // 1000ms
-  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ, false);
-  timerAlarmEnable(ppsIRQ);
+  ppsIRQ = timerBegin(10000);                // 10 kHz timer tick
+  timerAttachInterrupt(ppsIRQ, &CLOCKIRQ);
+  timerAlarm(ppsIRQ, 10000, true, 0);        // 1000ms, autoreload
   ESP_LOGI(TAG, "Timepulse: internal (ESP32 hardware timer)");
 #endif
 

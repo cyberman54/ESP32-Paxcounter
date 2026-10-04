@@ -1,7 +1,7 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
-#include <esp_spi_flash.h> // needed for reading ESP32 chip attributes
+#include <esp_flash.h> // needed for reading ESP32 chip attributes
 #include <esp_event.h>       // needed for Wifi event handler
 #include <esp32-hal-timer.h> // needed for timers
 #include <esp_coexist.h>     // needed for coex version display
