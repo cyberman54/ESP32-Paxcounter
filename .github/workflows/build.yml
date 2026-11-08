@@ -93,21 +93,21 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.path }}
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Cache PlatformIO
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.platformio-path }}
           key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install PlatformIO
@@ -146,21 +146,21 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.path }}
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Cache PlatformIO
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.platformio-path }}
           key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install PlatformIO
@@ -202,21 +202,21 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.path }}
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Cache PlatformIO
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.platformio-path }}
           key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install PlatformIO
@@ -242,21 +242,21 @@ jobs:
       if: needs.check-schedule.outputs.should-run == 'true'
       runs-on: windows-latest
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v7
         - name: Cache pip
-          uses: actions/cache@v4
+          uses: actions/cache@v6
           with:
             path: ~\AppData\Local\pip\Cache
             key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
               ${{ runner.os }}-pip-
         - name: Cache PlatformIO
-          uses: actions/cache@v4
+          uses: actions/cache@v6
           with:
             path: ~\AppData\Local\platformio\Cache
             key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         - name: Set up Python
-          uses: actions/setup-python@v5
+          uses: actions/setup-python@v7
           with:
             python-version: "3.12"
         - name: Install PlatformIO
