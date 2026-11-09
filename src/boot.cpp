@@ -91,10 +91,9 @@ void start_boot_menu(void) {
       &RestartHandle);
 
   // setup watchdog, based on esp32 timer2 interrupt
-  wdTimer = timerBegin(0, 80, true);              // timer 0, div 80, countup
-  timerAttachInterrupt(wdTimer, &watchdog, false); // callback for device reset
-  timerAlarmWrite(wdTimer, BOOTDELAY * 1000000, false); // set time in us
-  timerAlarmEnable(wdTimer);                            // enable watchdog
+  wdTimer = timerBegin(1000000);          // 1 MHz timer tick, countup
+  timerAttachInterrupt(wdTimer, &watchdog); // callback for device reset
+  timerAlarm(wdTimer, BOOTDELAY * 1000000, false, 0); // set time in us, enable
 
   WiFi.disconnect(true);
   WiFi.config(INADDR_NONE, INADDR_NONE,
@@ -127,7 +126,7 @@ void start_boot_menu(void) {
   });
 
   server.on("/serverIndex", HTTP_GET, []() {
-    timerAlarmWrite(wdTimer, BOOTTIMEOUT * 1000000, false); // set time in us
+    timerAlarm(wdTimer, BOOTTIMEOUT * 1000000, false, 0); // set time in us
     server.sendHeader("Connection", "keep-alive");
     server.send(200, "text/html", serverIndex);
   });

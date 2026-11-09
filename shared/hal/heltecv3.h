@@ -28,7 +28,7 @@
 #define HAS_LED LED_BUILTIN           
 #define HAS_BUTTON 0
 
-#define BAT_MEASURE_ADC ADC1_CHANNEL_0 // battery probe pin is GPIO1
+#define BAT_MEASURE_ADC ADC_CHANNEL_0 // battery probe pin is GPIO1
 #define BAT_VOLTAGE_DIVIDER 4 // voltage divider 100k/390k on board
 
 // switches battery power and Vext, switch logic 0 = on / 1 = off

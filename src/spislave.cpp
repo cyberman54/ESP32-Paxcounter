@@ -28,7 +28,7 @@ licenses. Refer to LICENSE.txt file in repository for more details.
 
 #include <driver/spi_slave.h>
 #include <sys/param.h>
-#include <rom/crc.h>
+#include <esp_rom_crc.h>
 
 #define HEADER_SIZE 4
 // SPI transaction size needs to be at least 8 bytes and dividable by 4, see
@@ -70,7 +70,7 @@ void spi_slave_task(void *param) {
     // calculate crc16 checksum over txbuf and insert checksum at pos 0+1 of
     // txbuf
     uint16_t *crc = (uint16_t *)txbuf;
-    *crc = crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
+    *crc = esp_rom_crc16_be(0, messageType, msg.MessageSize + HEADER_SIZE - 2);
 
     // set length for spi slave driver
     transaction_size = HEADER_SIZE + msg.MessageSize;

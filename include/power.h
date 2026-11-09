@@ -2,13 +2,12 @@
 #define _POWER_H
 
 #include <Arduino.h>
-#include <esp_adc_cal.h>
+#include <esp_adc/adc_oneshot.h>
 #include <soc/adc_channel.h>
 
 #include "i2c.h"
 #include "reset.h"
 
-#define DEFAULT_VREF 1100 // tbd: use adc2_vref_to_gpio() for better estimate
 #define NO_OF_SAMPLES 64  // we do some multisampling to get better values
 
 #ifndef BAT_MAX_VOLTAGE
@@ -50,11 +49,6 @@
 #ifndef ADC_POWER_OFF
 #define ADC_POWER_OFF (!ADC_POWER_ON)
 #endif
-#endif
-
-#ifdef BAT_MEASURE_ADC_UNIT // ADC2 wifi bug workaround
-extern RTC_NOINIT_ATTR uint64_t RTC_reg_b;
-#include "soc/sens_reg.h" // needed for adc pin reset
 #endif
 
 typedef uint8_t (*mapFn_t)(uint16_t, uint16_t, uint16_t);
